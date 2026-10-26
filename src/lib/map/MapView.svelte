@@ -10,6 +10,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { focusFirstItem } from '$lib/actions/menu';
 	import { download, safeFileName } from '$lib/verbonden/export';
@@ -142,7 +143,6 @@
 		);
 	const focusAdd = () => afterTick(() => document.getElementById(`erbij-${anchor}`)?.focus());
 	/** The field takes the whole name on opening, to type over it. */
-	const selectAll = (field: HTMLInputElement) => field.select();
 	function confirm() {
 		if (!m) return;
 		if (asking === 'delete') {
@@ -196,7 +196,7 @@
 				`${fileBase}.csv`,
 				csv(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde, vandaag())
 			)
-		)}>Download CSV</button
+		)}>Exporteer CSV</button
 	>
 	<button
 		type="button"
@@ -208,7 +208,7 @@
 				cslJson(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde, vandaag()),
 				'application/json'
 			)
-		)}>Download CSL-JSON</button
+		)}>Exporteer CSL-JSON</button
 	>
 	{#if m}
 		{@const own = m}
@@ -217,7 +217,7 @@
 			role="menuitem"
 			class="tekstmenu__item"
 			onclick={act(close, () => download(mapFileName([own]), mapFile([own]), 'application/json'))}
-			>Download bestand</button
+			>Exporteer bestand</button
 		>
 	{/if}
 	<button
@@ -329,12 +329,11 @@
 				focusHead();
 			}}
 		>
-			<!-- svelte-ignore a11y_autofocus -->
-			<input
+			<Tekstveld
 				name="naam"
-				autofocus
-				use:selectAll
-				aria-label="Naam van de bundel"
+				focus
+				selectAll
+				label="Naam van de bundel"
 				value={own.naam}
 				onblur={(e) => {
 					kaart.hernoem(own.id, e.currentTarget.value);
@@ -494,18 +493,8 @@
 		margin: 0;
 	}
 	.hernoem {
-		margin: 0;
-	}
-	.hernoem input {
-		box-sizing: border-box;
-		width: 100%;
 		max-width: 480px;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 600;
+		margin: 0;
 	}
 	.vraag {
 		display: flex;

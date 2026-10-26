@@ -70,9 +70,9 @@ describe('FilterBar', () => {
 		expect(text(html)).toContain('Rechtsgebied een');
 		expect(text(html)).toMatch(/In werking getreden: Sinds 2020/);
 		expect(html).toContain('aria-label="Rechtsgebied een wissen"');
-		// Two chips: Wissen; Verfijnen (2) on a phone.
-		expect(text(html)).toContain('Wissen');
-		expect(text(html)).toContain('Verfijnen (2)');
+		// Two chips: Wis alles; Filter (2) on a phone.
+		expect(text(html)).toContain('Wis alles');
+		expect(text(html)).toContain('Filter (2)');
 	});
 
 	it('names a chosen value on its button for a screen reader', () => {

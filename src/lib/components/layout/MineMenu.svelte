@@ -2,9 +2,9 @@
 	// Mijn at the right of the top bar: a menu of Bundels and Gevolgd, what the reader keeps
 	// and follows. A sign on it (NewMark) until the reader has been at the item that has one.
 	import { menu } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
 	import { page } from '$app/state';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import MenuList from '$lib/components/ui/MenuList.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { MINE, mineAt } from '$lib/nav/mine';
@@ -29,12 +29,7 @@
 		/></button
 	>
 	{#if open && button}
-		<div
-			class="tekstmenu__lijst"
-			role="menu"
-			aria-label="Mijn"
-			use:topLayer={{ anchor: button, close, align: 'right' }}
-		>
+		<MenuList anchor={button} label="Mijn" {close} align="right">
 			{#each MINE as m (m.id)}
 				<a
 					href={m.href}
@@ -45,7 +40,7 @@
 					>{m.label}{#if sign.has(m.id)}<NewMark />{/if}</a
 				>
 			{/each}
-		</div>
+		</MenuList>
 	{/if}
 </div>
 

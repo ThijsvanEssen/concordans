@@ -45,12 +45,35 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		const eigen: Uitzondering[] = [
 			{ pad: 'lib/styles/basis.css', reden: 'the Knop itself' },
 			{ pad: 'lib/components/ui/IconButton.svelte', reden: 'the one icon button' },
+			{ pad: 'lib/components/ui/Tekstveld.svelte', reden: 'the one text field' },
 			{
 				pad: 'lib/components/layout/TopBar.svelte',
 				reden: 'the search in the bar looks as the field it opens'
 			}
 		];
 		expect(overtreders((t) => regels(t).some(knop), eigen)).toEqual([]);
+	});
+
+	it('draws a text field as the Tekstveld, with the 16 px of a phone', () => {
+		// A text input or a textarea is the field's one form (ui/Tekstveld.svelte). The files below
+		// still draw their own; the list only gets shorter (P2, A250, A254, A255).
+		const veld = (t: string) =>
+			[...t.replace(/<!--[\s\S]*?-->/g, '').matchAll(/<(input|textarea)\b[^>]*>/g)].some(
+				([tag]) => !/type="(checkbox|radio|file|range|hidden)"/.test(tag)
+			);
+		const nog = (pad: string, reden: string): Uitzondering => ({ pad, reden });
+		expect(
+			overtreders(
+				(t) => t.includes('<script') && veld(t.replace(/<script[\s\S]*?<\/script>/g, '')),
+				[
+					plek('lib/components/ui/Tekstveld.svelte', 'the one text field'),
+					nog('lib/search/Search.svelte', 'the search overlay (P2)'),
+					nog('lib/verbonden/FilterSheet.svelte', 'the filter sheet of Verbonden (A255)'),
+					nog('lib/components/graph/GraphView.svelte', 'the work place (A254)'),
+					nog('lib/components/ui/Periode.svelte', 'the dates of Periode (A250)')
+				]
+			)
+		).toEqual([]);
 	});
 
 	it('draws an item of a menu with tekstmenu__item', () => {

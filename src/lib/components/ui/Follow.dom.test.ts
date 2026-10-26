@@ -26,13 +26,21 @@ describe('Follow', () => {
 		expect(screen.getByRole('button', { name: 'Gekopieerd' })).toBeTruthy();
 	});
 
-	it('opens a menu with the local way and the Atom link', async () => {
+	it('follows at once where it has a way of its own', async () => {
+		const onFollow = vi.fn();
+		render(Follow, { href, onFollow });
+		await fireEvent.click(screen.getByRole('button', { name: 'Volg' }));
+		expect(onFollow).toHaveBeenCalledOnce();
+		expect(write).not.toHaveBeenCalled();
+	});
+
+	it('opens a menu with the local way and the Atom link once followed', async () => {
 		clipboard();
 		const local = createRawSnippet(() => ({
 			render: () => '<button role="menuitem">Bewaar bij Gevolgd</button>'
 		}));
-		render(Follow, { href, local });
-		await fireEvent.click(screen.getByRole('button', { name: 'Volg' }));
+		render(Follow, { href, followed: true, local });
+		await fireEvent.click(screen.getByRole('button', { name: 'Gevolgd' }));
 		expect(screen.getByRole('menuitem', { name: 'Bewaar bij Gevolgd' })).toBeTruthy();
 		await fireEvent.click(screen.getByRole('menuitem', { name: 'Kopieer Atom-link' }));
 		await tick();

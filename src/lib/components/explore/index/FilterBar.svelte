@@ -6,7 +6,7 @@
 	// dimensions of a list have a button of their own, the rest stand under Meer. Under the row
 	// one head line: the count, and every filter chosen as a chip that takes it off; it is one
 	// control high, so nothing moves when the counts come. On a phone the row is one button,
-	// Verfijnen (n), that opens the filters as a sheet, its groups folded (A192), ending in Toon.
+	// Filter (n), that opens the filters as a sheet, its groups folded (A192), ending in Toon.
 	// The Kamer is a choice, not a filter: the first of the row, on a phone its own line over it, never a chip.
 	import { scrollLock } from '$lib/actions/scroll-lock';
 	import type { Snippet } from 'svelte';
@@ -82,7 +82,7 @@
 		if (!open) return;
 		afterTick(() => sheet?.querySelector<HTMLElement>('.sluit')?.focus());
 	});
-	/** Closed: the focus back on Verfijnen, or with Toon on the list, brought into view. */
+	/** Closed: the focus back on Filter, or with Toon on the list, brought into view. */
 	function close(toList = false) {
 		open = false;
 		afterTick(() => {
@@ -180,7 +180,7 @@
 					aria-haspopup="dialog"
 					aria-expanded={open}
 					bind:this={opener}
-					onclick={() => (open = true)}>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
+					onclick={() => (open = true)}>Filter{chips.length ? ` (${chips.length})` : ''}</button
 				>
 			{/if}
 			{#if end}<span class="end">{@render end()}</span>{/if}
@@ -197,7 +197,7 @@
 					>{c.label}<span class="x" aria-hidden="true">×</span></button
 				>
 			{/each}
-			{#if chips.length > 1}<TekstLink onclick={onClear}>Wissen</TekstLink>{/if}
+			{#if chips.length > 1}<TekstLink onclick={onClear}>Wis alles</TekstLink>{/if}
 			{#if countEnd}<span class="head-end">{@render countEnd()}</span>{/if}
 		</div>
 	{/if}
@@ -215,7 +215,7 @@
 		onkeydown={onKey}
 	>
 		<div class="sheet-head">
-			<h2 class="sheet-title" id="{uid}-title">Verfijnen</h2>
+			<h2 class="sheet-title" id="{uid}-title">Filter</h2>
 			<IconButton class="sluit" label="Sluiten" onclick={() => close()}>×</IconButton>
 		</div>
 		<div class="sheet-body">
@@ -237,7 +237,7 @@
 			{/each}
 		</div>
 		<div class="sheet-foot">
-			{#if chips.length}<TekstLink onclick={onClear}>Wissen</TekstLink>{/if}
+			{#if chips.length}<TekstLink onclick={onClear}>Wis alles</TekstLink>{/if}
 			<button type="button" class="btn is-primary show" onclick={() => close(true)}>{show}</button>
 		</div>
 	</div>
@@ -333,7 +333,7 @@
 		background: var(--paper);
 	}
 
-	/* A phone: Verfijnen (n) in place of the row, a finger's 44 px for every control. */
+	/* A phone: Filter (n) in place of the row, a finger's 44 px for every control. */
 	@media (max-width: 768px) {
 		.wide {
 			display: none;

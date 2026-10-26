@@ -735,21 +735,33 @@
 	const volgende = $derived.by(() => {
 		if (lokaal && lokaal.length > lokaalGetoond)
 			return {
-				label: `Volgende stemmingen, nog ${getal(lokaal.length - lokaalGetoond)}`,
+				noun: 'stemmingen',
+				step: STEP,
+				rest: lokaal.length - lokaalGetoond,
 				loading: false,
 				onclick: () => (lokaalGetoond += STEP)
 			};
 		if (lijstSoort === 'besluiten' && apiLijst.length < (lijstTotaal ?? 0))
 			return {
-				label: `Volgende stemmingen, nog ${getal((lijstTotaal ?? 0) - apiLijst.length)}`,
+				noun: 'stemmingen',
+				step: STEP,
+				rest: (lijstTotaal ?? 0) - apiLijst.length,
 				loading: lijstLaden,
 				onclick: volgendeBesluiten
 			};
 		if (lijstSoort === 'feed' && feedCursor)
-			return { label: 'Volgende stukken', loading: feedLijstLaden, onclick: volgendeStukken };
+			return {
+				noun: 'stukken',
+				step: null,
+				rest: null,
+				loading: feedLijstLaden,
+				onclick: volgendeStukken
+			};
 		if (lijstSoort === 'amendementen' && celAmendementen.length > amendementenGetoond)
 			return {
-				label: `Volgende amendementen, nog ${getal(celAmendementen.length - amendementenGetoond)}`,
+				noun: 'amendementen',
+				step: STEP,
+				rest: celAmendementen.length - amendementenGetoond,
 				loading: false,
 				onclick: () => (amendementenGetoond += STEP)
 			};

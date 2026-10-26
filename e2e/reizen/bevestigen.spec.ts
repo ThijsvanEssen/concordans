@@ -17,11 +17,11 @@ test('Bewaar says where it went, marks Bundels until visited, and marks the lid'
 		'href',
 		'/bundels/losse-markeringen'
 	);
-	await expect(page.getByRole('button', { name: 'Bewaard', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^Bewaard/ })).toBeVisible();
 	// The sign: at Mijn, on its button in the bar or on the tab of a phone, and at Bundels in it.
 	await expect(mineSign(page).locator('[aria-label="nieuw"]')).toHaveCount(1);
-	// Gone after two seconds.
-	await expect(status).toHaveText('', { timeout: 4000 });
+	// Gone after the seconds of the way back (Ongedaan maken).
+	await expect(status).toHaveText('', { timeout: 9000 });
 
 	await mineSign(page).click();
 	const bundels = page
@@ -69,10 +69,25 @@ test('Citeer with the date says the day the page says (T5)', async ({ page }) =>
 	);
 });
 
+test('Ongedaan maken takes the bron out of the bundel again, and the line waits for the pointer', async ({
+	page
+}) => {
+	await page.goto(ARTICLE);
+	await page.getByRole('button', { name: 'Bewaar', exact: true }).click();
+	const status = page.getByRole('status');
+	await expect(status).toContainText('Bewaard in Losse markeringen. Ongedaan maken');
+	// The pointer in the line holds it past the seconds it would stand.
+	await status.hover();
+	await page.waitForTimeout(6000);
+	await expect(status).toContainText('Ongedaan maken');
+	await status.getByRole('button', { name: 'Ongedaan maken' }).click();
+	await expect(page.getByRole('button', { name: 'Bewaar', exact: true })).toBeVisible();
+	await expect(status).toHaveText('');
+});
+
 test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => {
 	await page.goto('/dossiers/36496');
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	const status = page.getByRole('status');
 	await expect(status).toContainText('Bewaard bij Gevolgd');
 	await expect(status.getByRole('link', { name: 'Gevolgd' })).toHaveAttribute(
@@ -85,7 +100,6 @@ test('Volg a dossier says where it went and marks Gevolgd', async ({ page }) => 
 test('Volg a dossier then stays one button, Gevolgd, and never flips back', async ({ page }) => {
 	await page.goto('/dossiers/36496');
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	const kop = page.locator('.kop-acties');
 	await expect(kop.getByRole('button', { name: 'Gevolgd', exact: true })).toBeVisible();
 	// Over the next seconds: the one button, never a second one, never Volg again.

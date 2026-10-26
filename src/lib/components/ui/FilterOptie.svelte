@@ -168,6 +168,12 @@
 	.label.wrap {
 		white-space: normal;
 	}
+	/* A finger's line: 44 px, whoever uses it (a menu, a sheet, the strip of the network). */
+	@media (pointer: coarse), (max-width: 768px) {
+		.optie {
+			min-height: var(--veld-h-raak);
+		}
+	}
 	.aantal {
 		display: inline-flex;
 		align-items: center;

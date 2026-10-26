@@ -9,6 +9,7 @@
 	// research question). The note of an arcering (O4) stands under its place in the text, and
 	// a click opens the menu of its arcering (`onOpen`), where it is changed.
 	import Picto from '$lib/components/ui/Picto.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 
 	let {
 		tekst,
@@ -44,9 +45,6 @@
 		bundel ? `Aantekening, ${bundel}` : waar ? `Aantekening bij ${waar}` : 'Aantekening'
 	);
 
-	/** The field takes the focus on opening. */
-	const focus = (field: HTMLTextAreaElement) => field.focus();
-
 	function done(value: string) {
 		if (!open) return;
 		onBewaar?.(value);
@@ -80,16 +78,16 @@
 
 {#if !tekst && !open && placeholder && onBewaar}
 	<div class="aantekening" class:compact>
-		<textarea
-			class="aantekening-veld"
-			rows="2"
-			aria-label="Aantekening bij {bij}"
+		<Tekstveld
+			multiline
+			rows={2}
+			label="Aantekening bij {bij}"
 			{placeholder}
 			onkeydown={emptyKey}
 			onblur={(e) => {
 				if (e.currentTarget.value.trim()) onBewaar(e.currentTarget.value);
 			}}
-		></textarea>
+		/>
 	</div>
 {:else if (open && onBewaar) || tekst}
 	<div class="aantekening" class:compact>
@@ -105,16 +103,15 @@
 				}}>{tekst}</button
 			>
 		{:else if open && onBewaar}
-			<textarea
-				class="aantekening-veld"
-				rows="2"
-				aria-label="Aantekening bij {bij}"
-				placeholder="Aantekening bij {bij}"
+			<Tekstveld
+				multiline
+				rows={2}
+				focus
+				label="Aantekening bij {bij}"
 				value={tekst ?? ''}
-				use:focus
 				onkeydown={onKey}
 				onblur={(e) => done(e.currentTarget.value)}
-			></textarea>
+			/>
 		{:else if onBewaar}
 			<button
 				type="button"
@@ -177,19 +174,5 @@
 	button.tekst:focus-visible {
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
-	}
-	/* The field at 16px: below that a phone zooms in on focus. */
-	.aantekening-veld {
-		box-sizing: border-box;
-		width: 100%;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		line-height: var(--lh-body);
-		color: var(--ink);
-		resize: vertical;
 	}
 </style>

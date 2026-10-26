@@ -10,7 +10,10 @@
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import { votesSentence } from '$lib/votes/stemming';
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
+	import AllN from '$lib/components/ui/AlleN.svelte';
+	import Choice from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import Section from '$lib/components/ui/Sectie.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { korteDatum } from '$lib/text/datum';
@@ -68,8 +71,14 @@
 		canSaveCoding: boolean;
 		onSaveCoding: () => void;
 		onLoadCoding: (file: File) => void;
-		/** The next rows, where there are more. */
-		more: { label: string; loading: boolean; onclick: () => void } | null;
+		/** The next rows, where there are more: AlleN says them (`Volgende 25 stemmingen, nog 219`). */
+		more: {
+			noun: string;
+			step: number | null;
+			rest: number | null;
+			loading: boolean;
+			onclick: () => void;
+		} | null;
 		/** What the list could not load, with Opnieuw asking exactly that again. */
 		error: { error: unknown; retry: () => void } | null;
 		loading: boolean;
@@ -99,43 +108,39 @@
 	}
 </script>
 
-<section class="lijst" aria-labelledby="t-lijst">
-	<div class="lijst__kop">
-		<h2 id="t-lijst">Stukken</h2>
-		<span class="aantal">{count}</span>
+<Section title="Stukken" id="t-lijst" niveau={2} aantal={count} inklapbaar={false}>
+	{#snippet naast()}
 		<!-- Bewaren and laden behind one quiet word, where the coding is done. -->
-		<span class="lijst__rechts">
-			<TekstMenu rechts label="Codering" tekst="Codering">
-				{#snippet inhoud(sluit)}
-					<button
-						type="button"
-						role="menuitem"
-						class="tekstmenu__item menu-regel"
-						disabled={!canSaveCoding}
-						onclick={() => {
+		<TekstMenu rechts label="Codering" tekst="Codering">
+			{#snippet inhoud(sluit)}
+				<button
+					type="button"
+					role="menuitem"
+					class="tekstmenu__item menu-regel"
+					disabled={!canSaveCoding}
+					onclick={() => {
+						sluit();
+						onSaveCoding();
+					}}>Bewaren als CSV</button
+				>
+				<label class="tekstmenu__item menu-regel">
+					Laden uit CSV
+					<input
+						type="file"
+						accept=".csv,text/csv"
+						class="sr-only"
+						onchange={(e) => {
 							sluit();
-							onSaveCoding();
-						}}>Bewaren als CSV</button
-					>
-					<label class="tekstmenu__item menu-regel">
-						Laden uit CSV
-						<input
-							type="file"
-							accept=".csv,text/csv"
-							class="sr-only"
-							onchange={(e) => {
-								sluit();
-								const input = e.currentTarget;
-								const file = input.files?.[0];
-								input.value = '';
-								if (file) onLoadCoding(file);
-							}}
-						/>
-					</label>
-				{/snippet}
-			</TekstMenu>
-		</span>
-	</div>
+							const input = e.currentTarget;
+							const file = input.files?.[0];
+							input.value = '';
+							if (file) onLoadCoding(file);
+						}}
+					/>
+				</label>
+			{/snippet}
+		</TekstMenu>
+	{/snippet}
 	{#if selection}
 		<p class="selectie">
 			<span>{selection.label}</span>
@@ -143,7 +148,7 @@
 		</p>
 	{:else if allHref}
 		<p class="selectie">
-			<TekstLink href={allHref}>Alle besluiten</TekstLink>
+			<AllN noun="besluiten" href={allHref} />
 		</p>
 	{/if}
 	<ol class="rijen">
@@ -169,30 +174,23 @@
 									>{/if}</span
 							>
 							{#if isMotie(d)}
-								<!-- The researcher's reading, quiet: three words, the chosen one in ink;
-								     a second click clears it. -->
-								<span
-									class="rij__strekking"
-									role="group"
-									aria-label={`Strekking ten opzichte van ${topicName}`}
-								>
-									{#each STREKKINGEN as r (r)}
-										<button
-											type="button"
-											class="keus"
-											aria-pressed={coding[d.key] === r}
-											onclick={() => onStrekking(d, coding[d.key] === r ? null : r)}
-											>{STREKKING_LABEL[r]}</button
-										>
-									{/each}
+								<!-- The researcher's reading: one of three, or Alles for none. -->
+								<span class="rij__strekking">
+									<Choice
+										label={`Strekking ten opzichte van ${topicName}`}
+										opties={[
+											{ waarde: 'alles', label: 'Alles' },
+											...STREKKINGEN.map((r) => ({ waarde: r, label: STREKKING_LABEL[r] }))
+										]}
+										waarde={coding[d.key] ?? 'alles'}
+										onSelect={(w) => onStrekking(d, w === 'alles' ? null : (w as Strekking))}
+									/>
 									<!-- Only where the motie has a dictum (the decision's own `dictum`, null
 									     for a motie without text): the rule of Actueel (UX-toets 10 Oct). -->
 									{#if d.dictum}
-										<button
-											type="button"
-											class="keus keus--dictum"
+										<TekstLink
 											aria-expanded={dictumOpen.has(d.key)}
-											onclick={() => toggleDictum(d.key)}>Dictum</button
+											onclick={() => toggleDictum(d.key)}>Dictum</TekstLink
 										>
 									{/if}
 								</span>
@@ -245,7 +243,14 @@
 	</ol>
 	{#if more}
 		<p class="volgende">
-			{#if more.loading}Laden…{:else}<TekstLink onclick={more.onclick}>{more.label}</TekstLink>{/if}
+			<AllN
+				volgende
+				noun={more.noun}
+				stap={more.step}
+				rest={more.rest}
+				laden={more.loading}
+				onclick={more.onclick}
+			/>
 		</p>
 	{/if}
 	{#if error}
@@ -255,35 +260,9 @@
 			retry={error.retry}
 		/>
 	{:else if loading}<p class="status stil">Laden…</p>{/if}
-</section>
+</Section>
 
 <style>
-	.lijst {
-		margin-top: var(--s-7);
-	}
-	.lijst h2 {
-		margin: 0;
-		font-size: var(--t-h3);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.lijst__kop {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-2) var(--s-3);
-		margin-bottom: var(--s-2);
-		padding-bottom: var(--s-2);
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.lijst__rechts {
-		margin-left: auto;
-	}
-	.aantal {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	/* What is chosen in the grid, and the way back: one line over the list. */
 	.selectie {
 		display: flex;
@@ -354,35 +333,9 @@
 	.rij__strekking {
 		display: inline-flex;
 		flex-wrap: wrap;
+		align-items: center;
 		gap: var(--s-1) var(--s-3);
 		margin-left: auto;
-	}
-	.keus {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.keus:hover {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-	}
-	.keus[aria-pressed='true'] {
-		color: var(--ink);
-		font-weight: 600;
-		text-decoration: underline;
-		text-decoration-thickness: 2px;
-		text-underline-offset: 3px;
-	}
-	.keus--dictum {
-		margin-left: var(--s-2);
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 2px;
 	}
 	.rij__dictum {
 		margin: var(--s-1) 0 0;

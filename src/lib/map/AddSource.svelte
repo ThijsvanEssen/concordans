@@ -7,6 +7,7 @@
 	import { articleRef } from '$lib/text/bw';
 	import { page } from '$app/state';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import {
 		externalItem,
@@ -86,7 +87,6 @@
 		return lawName(law, null) ?? 'deze wet';
 	});
 
-	const focus = (field: HTMLInputElement) => field.focus();
 	/** A field's own Escape (isEscape leaves a field alone) closes the form. */
 	const leave = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') onClose();
@@ -103,17 +103,17 @@
 
 <form class="bron-erbij" aria-label="Andere bron toevoegen" novalidate onsubmit={submit}>
 	<label for="{uid}-citation">Citeervorm</label>
-	<input
+	<Tekstveld
 		id="{uid}-citation"
 		required
 		autocomplete="off"
 		placeholder="Asser/Hartkamp & Sieburgh 6-IV 2019/45"
 		bind:value={citation}
 		onkeydown={leave}
-		use:focus
+		focus
 	/>
 	<label for="{uid}-url">Adres</label>
-	<input
+	<Tekstveld
 		id="{uid}-url"
 		type="url"
 		inputmode="url"
@@ -167,20 +167,6 @@
 	.label {
 		color: var(--ink-3);
 	}
-	/* The fields at 16px: below that a phone zooms in on focus. */
-	input {
-		box-sizing: border-box;
-		width: 100%;
-		min-width: 0;
-		height: var(--veld-h);
-		padding: 0 var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
-	}
 	.keuze {
 		justify-self: start;
 	}
@@ -210,7 +196,7 @@
 			grid-template-columns: minmax(0, 1fr);
 			gap: var(--s-1);
 		}
-		.bron-erbij > input,
+		.bron-erbij > :global(.tekstveld),
 		.keuze {
 			margin-bottom: var(--s-2);
 		}

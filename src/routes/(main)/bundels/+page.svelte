@@ -11,7 +11,8 @@
 	import { navigate } from '$lib/util/address';
 	import { SvelteSet } from 'svelte/reactivity';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { download } from '$lib/verbonden/export';
@@ -128,12 +129,11 @@
 							if (field.value.trim()) goto(bundlePageHref(kaart.nieuw(field.value)));
 						}}
 					>
-						<!-- svelte-ignore a11y_autofocus -->
-						<input
+						<Tekstveld
 							name="naam"
-							autofocus
-							placeholder="Naam"
-							aria-label="Naam van de nieuwe bundel"
+							focus
+							placeholder="Naam van de bundel"
+							label="Naam van de nieuwe bundel"
 							onkeydown={(e) => {
 								if (e.key === 'Escape') naming = false;
 							}}
@@ -163,7 +163,7 @@
 							onclick={() => {
 								close();
 								download(mapFileName(kaart.mappen), mapFile(kaart.mappen), 'application/json');
-							}}>Alle bundels downloaden</button
+							}}>Exporteer alle bundels</button
 						>
 					{/snippet}
 				</TekstMenu>
@@ -182,13 +182,13 @@
 			{#if shared === BROKEN || oldLink}
 				<p class="melding" role="status">
 					<span>Link onvolledig of beschadigd</span>
-					<TekstLink onclick={() => sharedDone('none')}>Sluiten</TekstLink>
+					<IconButton label="Sluiten" onclick={() => sharedDone('none')}>×</IconButton>
 				</p>
 			{/if}
 			{#if opened && 'error' in opened}
 				<p class="melding" role="status">
 					<span>{opened.error}</span>
-					<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
+					<IconButton label="Sluiten" onclick={() => (opened = null)}>×</IconButton>
 				</p>
 			{/if}
 
@@ -314,20 +314,9 @@
 		flex-wrap: nowrap;
 	}
 	.naam {
-		margin: 0;
-	}
-	/* The field at 16px: below that a phone zooms in on focus. */
-	.naam input {
-		box-sizing: border-box;
 		width: 14rem;
 		max-width: 100%;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
+		margin: 0;
 	}
 	/* On a phone the row keeps its number at the right of the name. */
 	@media (max-width: 768px) {

@@ -34,8 +34,8 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		expect(v).toMatch(/<TekstMenu\b[^>]*tekst="Meer"/);
 		for (const label of [
 			'Kopieer citaten',
-			'Download CSV',
-			'Download bestand',
+			'Exporteer CSV',
+			'Exporteer bestand',
 			'>PDF<',
 			'>Hernoem<',
 			'>Bundel verwijderen<',
@@ -106,7 +106,7 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 		expect(o).toMatch(/class="blad__kop"[\s\S]*?class="blad__titel">Bundels</);
 		expect(o).toContain('Nieuwe bundel');
 		expect(o).toMatch(/<TekstMenu\b[^>]*tekst="Meer"/);
-		for (const label of ['Bestand openen', 'Alle bundels downloaden']) expect(o).toContain(label);
+		for (const label of ['Bestand openen', 'Exporteer alle bundels']) expect(o).toContain(label);
 		// Gone: every bundel in full, the facet column, the words of before.
 		for (const gone of [
 			'<MapView {m}',
@@ -132,7 +132,7 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 		const list = bron('lib/map/BundleChecklist.svelte');
 		expect(list).toMatch(/<Picto naam="tick"/);
 		expect(list).toContain('kaart.toggleIn(');
-		expect(list).toContain('placeholder="Naam"');
+		expect(list).toContain('placeholder="Naam van de bundel"');
 		// Nothing out of every bundel in one click: Bewaard, a row's bookmark and a place's menu
 		// open the bundels with their ticks (UX-toets A14, the coordinator's choice 1).
 		expect(overtreders((t) => /\bkaart\.wissel\(/.test(t))).toEqual([]);
@@ -148,9 +148,9 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 
 	it('asks a new bundel’s name in place, and says Sluiten for a broken link as for a file', () => {
 		const o = overview();
-		expect(o).toContain('placeholder="Naam"');
+		expect(o).toContain('placeholder="Naam van de bundel"');
 		expect(o).not.toMatch(/Link onvolledig of beschadigd<\/span>\s*<TekstLink[^>]*>Niet bewaren/);
-		expect(o.match(/>Sluiten</g)).toHaveLength(2);
+		expect(o.match(/label="Sluiten"/g)).toHaveLength(2);
 	});
 
 	it('shows a bundel from a file as a row, marked, with Bewaar and its ⋯', () => {

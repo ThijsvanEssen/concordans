@@ -31,7 +31,7 @@ test('a new bundel is named in the menu and keeps the bron at once', async ({ pa
 	await expect(name).toBeFocused();
 	await name.fill('Onrechtmatige daad');
 	await name.press('Enter');
-	await expect(page.getByRole('button', { name: 'Bewaard', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^Bewaard/ })).toBeVisible();
 
 	await page.goto('/bundels');
 	await expect(page.getByRole('link', { name: 'Onrechtmatige daad' })).toBeVisible();

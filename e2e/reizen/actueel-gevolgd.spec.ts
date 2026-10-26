@@ -66,7 +66,7 @@ test('Actueel: who submitted and who voted are two filters, each under its own n
 	// is chosen there.
 	await openFilter(page, touch, 'Ingediend door');
 	if (touch) {
-		const sheet = page.getByRole('dialog', { name: 'Verfijnen' });
+		const sheet = page.getByRole('dialog', { name: 'Filter' });
 		await expect(sheet.getByRole('button', { name: 'Stemde', exact: true })).toBeVisible();
 		await expect(sheet.getByRole('button', { name: 'Stem', exact: true })).toHaveCount(0);
 	} else {
@@ -154,7 +154,6 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 		/\/api\/feed\.atom\?dossier=36496$/
 	);
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd in its menu.
 	await page.locator('#main-content').getByRole('button', { name: 'Gevolgd', exact: true }).click();
 	await expect(page.getByRole('menuitem', { name: 'Open Gevolgd' })).toHaveAttribute(
@@ -199,7 +198,9 @@ test('Volg copies the Atom link of the view: on Actueel, in a list and in a doss
 	expect(await copied()).toMatch(/\/api\/feed\.atom\?.*kind=stemming/);
 
 	await page.goto('/dossiers/36496');
+	// Volg keeps the dossier under Gevolgd at once; its menu then keeps the Atom link.
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await page.locator('#main-content').getByRole('button', { name: 'Gevolgd', exact: true }).click();
 	await page.getByRole('menuitem', { name: 'Kopieer Atom-link' }).click();
 	expect(await copied()).toMatch(/\/api\/feed\.atom\?dossier=36496$/);
 });

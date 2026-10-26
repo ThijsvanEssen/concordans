@@ -77,6 +77,10 @@ describe('errors that are not swallowed', () => {
 					plek(
 						'lib/components/explore/IndexView.svelte',
 						'Volgende becomes Opnieuw in its own place under the rows loaded'
+					),
+					plek(
+						'lib/onderwerpen/Kruiswoord.svelte',
+						'the columns whose count broke off: no one request to ask again, the sentence is LoadState’s'
 					)
 				]
 			)

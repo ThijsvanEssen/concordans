@@ -2,7 +2,8 @@
 	// The Verloop of a topic: its events in the Kruiswoord, with the switches over it (the
 	// strekking as a layer, per week) and a line for what was not counted in full.
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
-	import KeuzeKnoppen from '$lib/components/ui/Keuze.svelte';
+	import Choice from '$lib/components/ui/Keuze.svelte';
+	import Section from '$lib/components/ui/Sectie.svelte';
 	import Kruiswoord from './Kruiswoord.svelte';
 	import StrekkingTeken from './StrekkingTeken.svelte';
 	import { LAAG_LABEL, STREKKING_LAGEN, type StrekkingLaag } from './strekking';
@@ -25,73 +26,61 @@
 	} = $props();
 </script>
 
-<section class="sectie" aria-labelledby="t-verloop">
-	<div class="sectie__kop">
-		<h2 id="t-verloop">Verloop</h2>
-		<span class="schakels">
-			<!-- The strekking as a layer: one chosen, every number counts its moties. -->
-			<span class="as">
-				<span class="as__label" aria-hidden="true">Strekking</span>
-				<KeuzeKnoppen
-					label="Strekking"
-					opties={[
-						{ waarde: 'alle', label: 'Alle' },
-						...STREKKING_LAGEN.map((r) => ({ waarde: r, label: LAAG_LABEL[r] }))
-					]}
-					waarde={layer ?? 'alle'}
-					onSelect={(w) => onLayer(w === 'alle' ? null : (w as StrekkingLaag))}
-				>
-					{#snippet voor(w)}{#if w !== 'alle'}<StrekkingTeken
-								strekking={w as StrekkingLaag}
-							/>{/if}{/snippet}
-				</KeuzeKnoppen>
-			</span>
-			<FilterOptie inline label="Per week" on={!!grid.week} onToggle={onWeek} />
+<!-- The switches stand in the heading's line; on a phone they are too wide for it and stand
+     under it, the same snippet in the other place. -->
+{#snippet switches(cls: string)}
+	<span class="switches {cls}">
+		<!-- The strekking as a layer: one chosen, every number counts its moties. -->
+		<span class="as">
+			<span class="as__label" aria-hidden="true">Strekking</span>
+			<Choice
+				label="Strekking"
+				opties={[
+					{ waarde: 'alle', label: 'Alle' },
+					...STREKKING_LAGEN.map((r) => ({ waarde: r, label: LAAG_LABEL[r] }))
+				]}
+				waarde={layer ?? 'alle'}
+				onSelect={(w) => onLayer(w === 'alle' ? null : (w as StrekkingLaag))}
+			>
+				{#snippet voor(w)}{#if w !== 'alle'}<StrekkingTeken
+							strekking={w as StrekkingLaag}
+						/>{/if}{/snippet}
+			</Choice>
 		</span>
-	</div>
+		<FilterOptie inline label="Per week" on={!!grid.week} onToggle={onWeek} />
+	</span>
+{/snippet}
+
+<Section title="Verloop" id="t-verloop" niveau={2} inklapbaar={false}>
+	{#snippet naast()}{@render switches('switches--kop')}{/snippet}
+	{@render switches('switches--onder')}
 	{#if notes.length}
-		<p class="sectie__regel">
+		<p class="regel">
 			{#each notes as note (note)}<span>{note}</span>{/each}
 		</p>
 	{/if}
 	<Kruiswoord {...grid} />
-</section>
+</Section>
 
 <style>
-	.sectie h2 {
-		margin: 0 0 var(--s-2);
-		font-size: var(--t-h3);
-		font-weight: 600;
-		color: var(--ink);
-	}
 	/* A state line under a heading, with its quiet actions (rung 6). */
-	.sectie__regel {
+	.regel {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
 		justify-content: space-between;
 		gap: var(--s-1) var(--s-4);
-		margin: 0 0 var(--s-2);
+		margin: 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	/* The section's head: its title at the left, its two switches at the right. */
-	.sectie__kop {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--s-1) var(--s-4);
-		padding-top: var(--s-3);
-		border-top: 1px solid var(--rule);
-	}
-	.sectie__kop h2 {
-		margin: 0 0 var(--s-2);
-	}
-	.schakels {
+	.switches {
 		display: inline-flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-4);
+	}
+	.switches--onder {
+		display: none;
 	}
 	/* An axis as a choice: its name before it, over it on a phone. */
 	.as {
@@ -106,9 +95,15 @@
 	}
 
 	@media (max-width: 640px) {
+		.switches--kop {
+			display: none;
+		}
+		.switches--onder {
+			display: flex;
+		}
 		/* The Strekking on a phone: its name over it, its options in words only and a step
 		   closer, so the five fit the width of the page. */
-		.schakels,
+		.switches,
 		.as {
 			width: 100%;
 		}

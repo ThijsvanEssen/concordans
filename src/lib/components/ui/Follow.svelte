@@ -1,27 +1,32 @@
 <script lang="ts">
-	// Volg, the same on Actueel, a list and a dossier: the Atom link of exactly this view, to
-	// follow it in a feed reader, copied (no account, nothing kept by Concordans). Where the view
-	// can also be kept under Gevolgd in this browser, Volg opens a menu with both; else the
-	// button copies at once, and says Gekopieerd.
+	// Volg, the same on Actueel, a list and a dossier. Not followed: one Knop, Volg. On a list it
+	// copies the Atom link of exactly this view, to follow it in a feed reader (no account,
+	// nothing kept by Concordans) and says Gekopieerd; where the view can be kept under Gevolgd in
+	// this browser (`onFollow`) it does that at once. Followed (`followed`): the Knop says Gevolgd
+	// with a tick, and its menu leads to Gevolgd, takes the follow back and keeps the Atom link.
 	import type { Snippet } from 'svelte';
 	import { report } from '$lib/api/errors';
 	import { menu } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
+	import MenuList from './MenuList.svelte';
+	import Tick from './Vinkje.svelte';
 	import { createCopier } from './copy.svelte';
 
 	let {
 		href,
 		buttonClass = 'btn',
-		label = 'Volg',
+		followed = false,
+		onFollow,
 		local
 	}: {
 		/** The Atom link of the view (`atomHref`). */
 		href: string;
 		buttonClass?: string;
-		/** The button's word: Volg, or Gevolgd where it is followed already. */
-		label?: string;
-		/** The ways to follow in this browser, as menu items; given the function that closes the menu. */
+		/** Followed in this browser: Gevolgd with a tick, and the menu. */
+		followed?: boolean;
+		/** Not followed: Volg keeps it under Gevolgd at once, in place of copying the Atom link. */
+		onFollow?: () => void;
+		/** Followed: the ways on in this browser, as menu items; given the function that closes the menu. */
 		local?: Snippet<[() => void]>;
 	} = $props();
 
@@ -35,7 +40,7 @@
 	}
 </script>
 
-{#if local}
+{#if followed}
 	<span class="volg" use:menu={{ open, close: () => (open = false) }}>
 		<button
 			type="button"
@@ -43,28 +48,26 @@
 			bind:this={button}
 			aria-haspopup="menu"
 			aria-expanded={open}
-			onclick={() => (open = !open)}>{copier.label('atom', label)}<Caret {open} /></button
+			onclick={() => (open = !open)}
+			><Tick aan />{copier.label('atom', 'Gevolgd')}<Caret {open} /></button
 		>
 		{#if open && button}
-			<div
-				class="tekstmenu__lijst"
-				role="menu"
-				aria-label="Volg"
-				use:topLayer={{ anchor: button, close: () => (open = false), align: 'right' }}
-			>
-				{@render local(() => (open = false))}
+			<MenuList anchor={button} label="Gevolgd" close={() => (open = false)} align="right">
+				{@render local?.(() => (open = false))}
 				<button type="button" role="menuitem" class="tekstmenu__item" onclick={copy}
 					>Kopieer Atom-link</button
 				>
-			</div>
+			</MenuList>
 		{/if}
 	</span>
+{:else if onFollow}
+	<button type="button" class={buttonClass} onclick={onFollow}>Volg</button>
 {:else}
 	<button
 		type="button"
 		class={buttonClass}
 		title="Kopieer de Atom-link van deze lijst"
-		onclick={copy}>{copier.label('atom', label)}</button
+		onclick={copy}>{copier.label('atom', 'Volg')}</button
 	>
 {/if}
 

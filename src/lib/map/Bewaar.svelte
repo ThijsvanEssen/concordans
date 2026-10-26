@@ -14,6 +14,7 @@
 	import BundleChecklist from './BundleChecklist.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { bundlePageHref } from './page';
+	import { formatCount } from '$lib/text/getal';
 
 	let {
 		item,
@@ -31,6 +32,16 @@
 	const into = $derived(kaart.keepsIn);
 	const titel = $derived(
 		aan ? `${item.kort}: bewaard in ${namesOf(held)}` : `${item.kort}: in ${into.naam} bewaren`
+	);
+	/** Where it is kept, said in the button: the bundel it keeps in, else the one that holds it. */
+	const place = $derived(
+		keeping
+			? keeping.naam
+			: !aan
+				? ''
+				: held.length === 1
+					? held[0].naam
+					: `${formatCount(held.length)} bundels`
 	);
 	let open = $state(false);
 	let knop = $state<HTMLButtonElement>();
@@ -52,7 +63,7 @@
 		onclick={() => (aan ? (open = true) : kaart.keep(item, into.id))}
 		><Picto naam={aan ? 'bewaard' : 'bewaar'} />{aan ? 'Bewaard' : 'Bewaar'}{wat
 			? ` ${wat}`
-			: ''}{keeping ? ` in ${keeping.naam}` : ''}</button
+			: ''}{place ? ` in ${place}` : ''}</button
 	>
 	<TekstMenu rechts label="Bewaar {item.kort} in bundel" tekst="" bind:open>
 		{#snippet inhoud(close)}<BundleChecklist {item} {close} />{/snippet}

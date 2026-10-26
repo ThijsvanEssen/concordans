@@ -11,7 +11,7 @@ export const JUDGMENT = '/uitspraken/ECLI:NL:HR:2019:2006';
 export async function keepArticle(page: Page) {
 	await page.goto(ARTICLE);
 	await page.getByRole('button', { name: 'Bewaar', exact: true }).click();
-	await expect(page.getByRole('button', { name: 'Bewaard', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^Bewaard/ })).toBeVisible();
 }
 
 /** Lid 2 of 6:162 BW and r.o. 5.3.2 of Urgenda, each through its own menu. */

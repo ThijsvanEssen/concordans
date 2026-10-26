@@ -32,6 +32,7 @@
 	import { kaart } from '$lib/map/map.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { formatCount } from '$lib/text/getal';
 
 	let {
@@ -90,7 +91,6 @@
 	/** The field of the aantekening, open in place in the menu. */
 	let writing = $state(false);
 	let note = $state('');
-	const focus = (field: HTMLTextAreaElement) => field.focus();
 
 	const copier = createCopier();
 	const aan = $derived(!!bewaar && kaart.heeft(bewaar));
@@ -154,18 +154,19 @@
 				sluit();
 			}}
 		>
-			<textarea
+			<Tekstveld
+				multiline
 				bind:value={note}
-				rows="3"
 				placeholder="Aantekening"
-				aria-label="Aantekening bij {head}"
-				use:focus
-				onkeydown={(e) => {
+				label="Aantekening bij {head}"
+				focus
+				onkeydown={(e: KeyboardEvent) => {
 					// The arrows move in the note, not to the menu's items; Escape still closes it.
 					if (/^(Arrow(Up|Down)|Home|End)$/.test(e.key)) e.stopPropagation();
-					if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
+					if (e.key === 'Enter' && (e.metaKey || e.ctrlKey))
+						(e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
 				}}
-			></textarea>
+			/>
 			<button type="submit" class="tekstmenu__item">Bewaar aantekening</button>
 		</form>
 	{:else if fragment?.shade}
@@ -296,19 +297,6 @@
 		gap: var(--s-1);
 		margin: 0;
 		padding: var(--s-1) var(--s-3);
-	}
-	/* The field at 16px: below that a phone zooms in on focus. */
-	.aantekening textarea {
-		box-sizing: border-box;
-		width: 100%;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
-		resize: vertical;
 	}
 	.aantekening .tekstmenu__item {
 		padding-inline: 0;

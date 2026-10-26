@@ -6,6 +6,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { scrollInReader } from '$lib/bron/landing';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { collectText, findHits, hitsAsRanges, MIN_QUERY } from './search-in-text';
 
 	let { root, onClose }: { root: HTMLElement | null; onClose: () => void } = $props();
@@ -13,7 +14,6 @@
 	let query = $state('');
 	let ranges = $state.raw<Range[]>([]);
 	let at = $state(0);
-	let field = $state<HTMLInputElement | null>(null);
 
 	const HITS = 'zoek-treffer';
 	const CURRENT = 'zoek-huidig';
@@ -73,12 +73,9 @@
 		};
 	});
 
-	onMount(() => {
-		field?.focus();
-		return () => {
-			highlights?.delete(HITS);
-			highlights?.delete(CURRENT);
-		};
+	onMount(() => () => {
+		highlights?.delete(HITS);
+		highlights?.delete(CURRENT);
 	});
 
 	function onKey(e: KeyboardEvent) {
@@ -102,13 +99,12 @@
 </script>
 
 <div class="search" role="search" data-search-ui>
-	<input
-		bind:this={field}
+	<Tekstveld
 		bind:value={query}
-		class="search__field"
+		focus
 		type="search"
 		placeholder="Zoek in dit stuk"
-		aria-label="Zoek in dit stuk"
+		label="Zoek in dit stuk"
 		autocomplete="off"
 		spellcheck="false"
 		onkeydown={onKey}
@@ -137,28 +133,10 @@
 		border-bottom: 1px solid var(--rule);
 		font-size: var(--t-ui);
 	}
-	input.search__field {
-		flex: 1;
-		min-width: 0;
-		height: var(--veld-h);
-		padding: 0 var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		color: var(--ink);
-		font: inherit;
-		font-family: var(--font-ui);
-	}
 	.search__count {
 		flex: none;
 		min-width: var(--s-8);
 		color: var(--ink-3);
 		white-space: nowrap;
-	}
-	/* A finger's target. */
-	@media (pointer: coarse), (max-width: 768px) {
-		input.search__field {
-			height: var(--veld-h-raak);
-		}
 	}
 </style>

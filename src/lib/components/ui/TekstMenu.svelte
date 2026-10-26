@@ -7,8 +7,8 @@
 	import type { Option } from './option';
 	import type { Snippet } from 'svelte';
 	import { menu } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
+	import MenuList from './MenuList.svelte';
 
 	/** `uit`: shown, not to be chosen now (its reason in `titel`). */
 
@@ -75,14 +75,7 @@
 		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
 	>
 	{#if open && button}
-		<!-- In the top layer (actions/top-layer.ts), so no column that scrolls on its own (the
-		     facets of Bladeren, the Overzicht) cuts it off; its keys and clicks stay the menu's. -->
-		<div
-			class="tekstmenu__lijst {breed ? 'is-breed' : ''}"
-			role="menu"
-			aria-label={label}
-			use:topLayer={{ anchor: button, close: sluit, align: rechts ? 'right' : 'left' }}
-		>
+		<MenuList anchor={button} {label} close={sluit} align={rechts ? 'right' : 'left'} wide={breed}>
 			{#if inhoud}
 				{@render inhoud(sluit)}
 			{:else}
@@ -104,7 +97,7 @@
 			{#if onder}
 				<div class="tekstmenu__onder">{@render onder(sluit)}</div>
 			{/if}
-		</div>
+		</MenuList>
 	{/if}
 </div>
 

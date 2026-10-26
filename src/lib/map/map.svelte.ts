@@ -274,10 +274,12 @@ class Kaarten {
 	}
 	/** Into a bundel by its id, once. */
 	add(i: MapItem, id: string) {
+		const was = this.holding(i).some((m) => m.id === id);
 		keepStorage();
 		this.#change(id, (m) => ({ items: withItems(m.items, [i]) }));
 		const m = this.#stand.mappen.find((x) => x.id === id);
-		if (m) keptIn(m.naam, bundlePageHref(m));
+		// Ongedaan maken takes it out again, unless it was there before.
+		if (m) keptIn(m.naam, bundlePageHref(m), was ? undefined : () => this.weg(i, id));
 	}
 	/** Out of a bundel, with the aantekeningen on it (also those this version cannot read). */
 	weg(i: Pick<MapItem, 'id' | 'at'>, id: string) {

@@ -5,7 +5,7 @@
 // toezeggingen are the feed's events. With a strekking chosen, every number counts the moties
 // so read, from the decisions themselves. A cell is new where it holds a day after the visit
 // before this one (Onderwerpen volgen).
-import { DAY_MS } from '$lib/text/datum';
+import { DAY_MS, addDays, maandagVan } from '$lib/text/datum';
 import { uitkomstVan, type Besluit, type Stem } from './overzicht';
 
 export type Kolom =
@@ -68,13 +68,11 @@ export const vakVan = (dag: string, indeling: Indeling) =>
 
 export const jaarVanVak = (vak: Vak) => vak.slice(0, 4);
 
-/** The Monday of an ISO week. */
-function maandagVan(vak: Vak): Date {
+/** The Monday of an ISO week, as a day. */
+function weekMonday(vak: Vak): string {
 	const [jaar, w] = vak.split('-W').map(Number);
-	const vier = new Date(Date.UTC(jaar, 0, 4));
-	const maandag = new Date(vier);
-	maandag.setUTCDate(vier.getUTCDate() - ((vier.getUTCDay() + 6) % 7) + (w - 1) * 7);
-	return maandag;
+	// The 4th of January is always in week 1.
+	return addDays(maandagVan(`${jaar}-01-04`), (w - 1) * 7);
 }
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -82,10 +80,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 export function grenzenVan(vak: Vak): { van: string; tot: string } {
 	if (vak.length === 4) return { van: `${vak}-01-01`, tot: `${vak}-12-31` };
 	if (vak.includes('-W')) {
-		const m = maandagVan(vak);
-		const z = new Date(m);
-		z.setUTCDate(m.getUTCDate() + 6);
-		return { van: iso(m), tot: iso(z) };
+		const m = weekMonday(vak);
+		return { van: m, tot: addDays(m, 6) };
 	}
 	const [j, mnd] = vak.split('-').map(Number);
 	return { van: `${vak}-01`, tot: iso(new Date(Date.UTC(j, mnd, 0))) };
@@ -96,10 +92,9 @@ export function vakken(van: string, tot: string, indeling: Indeling): Vak[] {
 	if (!van || !tot || van > tot) return [];
 	const uit: Vak[] = [];
 	if (indeling === 'week') {
-		const d = maandagVan(weekVan(tot));
-		const eind = maandagVan(weekVan(van));
-		for (; d >= eind && uit.length < 1000; d.setUTCDate(d.getUTCDate() - 7))
-			uit.push(weekVan(iso(d)));
+		const eind = maandagVan(van);
+		for (let d = maandagVan(tot); d >= eind && uit.length < 1000; d = addDays(d, -7))
+			uit.push(weekVan(d));
 		return uit;
 	}
 	let [j, m] = tot.split('-').map(Number);

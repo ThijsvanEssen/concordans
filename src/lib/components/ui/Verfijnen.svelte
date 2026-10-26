@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The filters of a list on a phone (Bladeren, Actueel, the overview of a topic): behind one
-	// quiet line, Verfijnen, opened in place. Open, they end in Toon with what the list holds
+	// quiet line, Filter, opened in place. Open, they end in Toon with what the list holds
 	// under them, which closes them and brings the list into view: the results never stay out of
 	// sight under the open filters (besluit 30, X4). From 768 up the filters stand in their
 	// column and neither line is there.
@@ -17,7 +17,7 @@
 	}: {
 		/** The id of the filters, for the button's aria-controls. */
 		id: string;
-		/** How many filters are on: after Verfijnen, when there are. */
+		/** How many filters are on: after Filter, when there are. */
 		active?: number;
 		/** What Toon says: "Toon 55 moties", "Toon het overzicht". */
 		label: string;
@@ -43,7 +43,7 @@
 	class="verfijnen-knop"
 	aria-expanded={open}
 	aria-controls={id}
-	onclick={() => (open = !open)}>Verfijnen{active ? ` (${active})` : ''}</button
+	onclick={() => (open = !open)}>Filter{active ? ` (${active})` : ''}</button
 >
 <div class="verfijnen" {id} class:is-open={open}>
 	{@render children()}

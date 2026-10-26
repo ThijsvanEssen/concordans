@@ -19,7 +19,7 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	await expect(count).toBeVisible();
 	const before = await count.textContent();
 
-	// On a phone the filters wait in the sheet of Verfijnen.
+	// On a phone the filters wait in the sheet of Filter.
 	const option = await openFilter(page, touch, 'Rechtsgebied');
 	const filter = option(/./).first();
 	const name = ((await filter.textContent()) ?? '').replace(/[\d.]+$/, '').trim();
@@ -30,7 +30,7 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	// Toon closes the filters on a phone and brings the list into view (besluit 30, X4).
 	if (touch) {
 		await page.getByRole('button', { name: /^Toon [\d.]+ wetten$/ }).click();
-		await expect(page.getByRole('dialog', { name: 'Verfijnen' })).toHaveCount(0);
+		await expect(page.getByRole('dialog', { name: 'Filter' })).toHaveCount(0);
 		await expect(count).toBeInViewport();
 	}
 

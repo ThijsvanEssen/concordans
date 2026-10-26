@@ -38,6 +38,7 @@
 	} from '$lib/components/parliamentary/paper-cite';
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
 	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import {
@@ -237,7 +238,7 @@
 
 <div class="inhoud">
 	{#if inhoud.soort === 'laden'}
-		<p class="stil">Laden…</p>
+		<LoadState state={{ status: 'loading' }} what="De inhoud" />
 	{:else if inhoud.soort === 'artikel'}
 		{@const a = inhoud.d.article}
 		<div class="artikel">

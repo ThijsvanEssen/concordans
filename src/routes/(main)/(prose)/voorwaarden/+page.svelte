@@ -39,7 +39,7 @@
 				Bundels, aantekeningen en gevolgde onderwerpen staan alleen in de browser waarin ze zijn
 				gemaakt. Concordans maakt er geen back-up van: wie de gegevens van de browser wist, is ze
 				kwijt. Wat moet blijven, gaat als bestand mee: <a href={BUNDLES_PATH} class="cite"
-					>Alle bundels downloaden</a
+					>Exporteer alle bundels</a
 				>. Van de gegevens op de server maakt Concordans evenmin back-ups; na verlies worden ze
 				opnieuw uit de officiële bronnen opgebouwd.
 			</p>

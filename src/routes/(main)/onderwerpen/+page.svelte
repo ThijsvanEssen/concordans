@@ -3,10 +3,13 @@
 	import { atLeast } from '$lib/text/getal';
 	import { twoAtATime } from '$lib/util/two-at-a-time';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
+	import AllN from '$lib/components/ui/AlleN.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import Section from '$lib/components/ui/Sectie.svelte';
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -416,7 +419,7 @@
 			<!-- A topic as a group of the page (Sectie): the ink rule, its words as the heading that
 			     opens and closes it, remembered per topic in this browser (Thijs, 10 Oct), its
 			     actions at the right on the same line, what is new under it. -->
-			<Sectie
+			<Section
 				title={naamVan(o)}
 				id="onderwerp-{n}"
 				niveau={2}
@@ -444,19 +447,17 @@
 						<ul>
 							{#each o.termen as term (term)}
 								<li>
-									{term}{#if o.termen.length > 1}<button
-											type="button"
-											class="weg-knop"
-											aria-label="‘{term}’ weghalen"
-											onclick={() => haalWeg(o, term)}>×</button
+									{term}{#if o.termen.length > 1}<IconButton
+											label="‘{term}’ weghalen"
+											onclick={() => haalWeg(o, term)}>×</IconButton
 										>{/if}
 								</li>
 							{/each}
 						</ul>
 						<form class="nieuw nieuw--klein" onsubmit={(e) => voegWoordToe(e, o)}>
-							<input
+							<Tekstveld
 								type="text"
-								aria-label="Woord toevoegen aan dit onderwerp"
+								label="Woord toevoegen aan dit onderwerp"
 								bind:value={erbij}
 								placeholder="Woord of synoniem"
 							/>
@@ -493,13 +494,16 @@
 							/>
 						{/each}
 					</div>
-					{#if !alle}
+					{#if s.items.length > EERST + 2}
 						<p class="alle">
-							<TekstLink
+							<AllN
+								aantal={s.items.length}
+								noun="gebeurtenissen"
+								open={alle}
 								onclick={() => {
-									uitgeklapt[vak(o)] = true;
-								}}>Alle {s.items.length} tonen</TekstLink
-							>
+									uitgeklapt[vak(o)] = !alle;
+								}}
+							/>
 						</p>
 					{/if}
 				{/if}
@@ -523,7 +527,7 @@
 					<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
 					<a href={atomHref(vraagVan(o))} rel="alternate" type="application/atom+xml">Atom-feed</a>
 				</p>
-			</Sectie>
+			</Section>
 		{/each}
 	</div>
 </div>
@@ -545,22 +549,6 @@
 		display: flex;
 		gap: var(--s-2);
 		margin-bottom: var(--s-3);
-	}
-	.nieuw input {
-		flex: 1;
-		min-width: 0;
-		box-sizing: border-box;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-	}
-	.nieuw input::placeholder {
-		color: var(--ink-3);
 	}
 	.alle {
 		margin: var(--s-2) 0 0;
@@ -606,24 +594,8 @@
 	.woorden li {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--s-1);
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
+		gap: var(--s-2);
 		font-size: var(--t-meta);
-	}
-	.weg-knop {
-		padding: 0 0 0 var(--s-1);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.weg-knop:hover {
-		color: var(--ink);
 	}
 	.nieuw--klein {
 		max-width: 420px;

@@ -1,7 +1,7 @@
 <script lang="ts">
-	// The actions of a list row: Bewaar and In het netwerk (Thijs, 10 Oct: "Vinkje en +-je zijn niet
+	// The actions of a list row: Bewaar and Aan het netwerk toevoegen (Thijs, 10 Oct: "Vinkje en +-je zijn niet
 	// intuïtief"). One look in every state (Thijs, 10 Oct: "toch wat raar met de verschillen in
-	// hoe ze weergegeven worden"): two fixed places, Bewaar then In het netwerk, so nothing moves from
+	// hoe ze weergegeven worden"): two fixed places, Bewaar then the network, so nothing moves from
 	// row to row; a glyph without a frame, open in ink-3 when off, filled in ink when on. Off they
 	// show on the row's hover or focus (always on a touch screen), on always. A hover on the glyph
 	// gives it ink and a wash behind it; the keyboard's focus the ink ring. A row with more to do
@@ -9,7 +9,7 @@
 	// shows as they do, and closes on a tap outside (actions/menu.ts).
 	import type { Snippet } from 'svelte';
 	import { menu as menuAction } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
+	import MenuList from './MenuList.svelte';
 	import Picto from './Picto.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { namesOf, type MapItem } from '$lib/map/map';
@@ -30,7 +30,7 @@
 		 * without it its place stays empty. */
 		netwerk?: { aan: boolean; voegToe: () => void; haalWeg?: () => void } | null;
 		/** What the ⋯ holds, with the function that closes it; without it no ⋯. A row with a ⋯
-		 *  alone has no places for Bewaar and In het netwerk. */
+		 *  alone has no places for Bewaar and the network. */
 		menu?: Snippet<[() => void]>;
 		/** After the ⋯ closes, however: a menu that changed what it shows goes back. */
 		onClose?: () => void;
@@ -68,18 +68,9 @@
 				onclick={() => (open ? close() : (open = true))}>⋯</button
 			>
 			{#if open && button}
-				<!-- A click in the list is the menu's, not the row's under it. -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="tekstmenu__lijst"
-					role="menu"
-					tabindex="-1"
-					aria-label="{naam}: meer"
-					use:topLayer={{ anchor: button, close, align: 'right' }}
-					onclick={(e) => e.stopPropagation()}
-				>
+				<MenuList anchor={button} label="{naam}: meer" {close} align="right" ownClick>
 					{@render menu(close)}
-				</div>
+				</MenuList>
 			{/if}
 		</span>
 	{/if}
@@ -105,17 +96,15 @@
 				><Picto naam={bewaard ? 'bewaard' : 'bewaar'} /></button
 			>
 			{#if bundlesOpen && keptButton}
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="tekstmenu__lijst"
-					role="menu"
-					tabindex="-1"
-					aria-label="{naam}: bundels"
-					use:topLayer={{ anchor: keptButton, close: closeBundles, align: 'right' }}
-					onclick={(e) => e.stopPropagation()}
+				<MenuList
+					anchor={keptButton}
+					label="{naam}: bundels"
+					close={closeBundles}
+					align="right"
+					ownClick
 				>
 					<BundleChecklist item={kept} close={closeBundles} />
-				</div>
+				</MenuList>
 			{/if}
 		{/if}
 	</span>
@@ -129,10 +118,14 @@
 				aria-pressed={n.aan}
 				aria-label={n.aan
 					? n.haalWeg
-						? `${naam} uit het netwerk halen`
+						? `${naam} uit het netwerk weghalen`
 						: `${naam} staat in het netwerk`
 					: `${naam} aan het netwerk toevoegen`}
-				title={n.aan ? (n.haalWeg ? 'Uit het netwerk halen' : 'In het netwerk') : 'In het netwerk'}
+				title={n.aan
+					? n.haalWeg
+						? 'Uit het netwerk weghalen'
+						: 'Staat in het netwerk'
+					: 'Aan het netwerk toevoegen'}
 				onclick={() => (n.aan ? n.haalWeg?.() : n.voegToe())}
 				><Picto naam={n.aan ? 'netwerk' : 'netwerk-o'} /></button
 			>

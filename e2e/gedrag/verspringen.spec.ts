@@ -3,7 +3,7 @@
 import { expect, test } from '../support/test';
 
 test('Actueel: the filters keep their place while the counts come in', async ({ page, touch }) => {
-	test.skip(touch, 'the filters of a phone wait behind Verfijnen');
+	test.skip(touch, 'the filters of a phone wait behind Filter');
 	let release!: () => void;
 	const held = new Promise<void>((done) => (release = done));
 	// The facets answer last, as they do on a cold start.

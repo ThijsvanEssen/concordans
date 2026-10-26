@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The facets of the overview of a topic, at the left of the figures and the list as in
-	// Actueel and Bladeren: the fractie whose votes are counted. On a phone behind Verfijnen,
+	// Actueel and Bladeren: the fractie whose votes are counted. On a phone behind Filter,
 	// opened in place.
 	import { getFactions } from '$lib/api/factions';
 	import { fractieNaam } from '$lib/bron/menselijk';
@@ -44,7 +44,7 @@
 	];
 </script>
 
-<aside class="facetten blad__facetten" aria-label="Verfijnen">
+<aside class="facetten blad__facetten" aria-label="Filter">
 	<Verfijnen
 		id="overzicht-facetten"
 		active={faction ? 1 : 0}

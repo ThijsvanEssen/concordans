@@ -68,7 +68,7 @@
 	} from '$lib/components/explore/index/facets';
 	// The filters as on every list page (FilterBar, besluit 40): the field on one line, the bar
 	// of filters over the list with the Kamer first, the filters chosen as chips by the count; on
-	// a phone behind Verfijnen (N), the Kamer over it.
+	// a phone behind Filter (N), the Kamer over it.
 	import { type Cabinet } from '$lib/components/explore/index/government';
 	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
