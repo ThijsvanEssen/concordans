@@ -11,6 +11,7 @@ import { fakeApi } from '$lib/test/fakeApi';
 import { open } from '$lib/test/navigation.svelte';
 import fixture from '$lib/test/paper-paint.json';
 import voted from '$lib/test/paper-vote-paint.json';
+import { zetOpen } from '$lib/components/ui/dicht.svelte';
 import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 import { COMPONENTS, type Classes } from './classes';
 import { frame } from './paint';
@@ -126,7 +127,7 @@ describe('the first paint of a Kamerstuk', () => {
 		expect(PAPERS_SOURCE).toBe(sourceOfCollection('documents').label);
 	});
 
-	it('sets a second vote on it and what a memorie explains as closed sections, as the reader does', async () => {
+	it('sets a second vote on it and what a memorie explains as the headings of sections, as the reader does', async () => {
 		const [vote] = voted.document.decisions;
 		const document = {
 			...voted.document,
@@ -149,27 +150,50 @@ describe('the first paint of a Kamerstuk', () => {
 			'/api/instruments/{identifier}': { bwb_id: 'BWBR0005537', citation_title: 'Awb' },
 			'/api/instruments': { items: [] }
 		});
-		const { container } = render(DocumentReader, { node: { key: voted.light.node.key } });
-		await settle();
-		const painted = parse({
+		const paperPaint = {
 			...PAINT,
 			document,
 			light: voted.light as unknown as NodeGraph
-		} as unknown as PaperPaint).querySelector('.reader-frame__col')!;
-		const parts = '.r-document > section, .r-document > .body > :not([aria-hidden])';
-		const paint = [...painted.querySelectorAll(parts)].map(shape);
-		expect(paint.filter(([tag]) => tag === 'SECTION').map(([, , w]) => w)).toEqual([
+		} as unknown as PaperPaint;
+		const sections = '.r-document > section';
+		const heads = '.r-document > section > .kop, .r-document > .body > :not([aria-hidden])';
+		// Open until the reader closes it: the heading stands where the app draws it, its rows
+		// are the app's.
+		const open = render(DocumentReader, { node: { key: voted.light.node.key } });
+		await settle();
+		const painted = parse(paperPaint).querySelector('.reader-frame__col')!;
+		const paint = [...painted.querySelectorAll(heads)].map(shape);
+		expect(paint.filter(([tag]) => tag === 'H2').map(([, , w]) => w)).toEqual([
 			'Licht toe 1',
 			'Stemming'
 		]);
-		expect(paint).toEqual([...container.querySelectorAll(parts)].map(shape).slice(0, paint.length));
-		// A section opened in this browser draws its rows: the app's alone.
+		expect(paint).toEqual(
+			[...open.container.querySelectorAll(heads)].map(shape).slice(0, paint.length)
+		);
+		expect(painted.querySelectorAll(`${sections} .caret.is-side`)).toHaveLength(0);
+		open.unmount();
+		// Closed in this browser: the whole section is the paint's, as the app draws it.
+		zetOpen('Licht toe', false);
+		zetOpen('Stemming', false);
 		vi.stubGlobal('localStorage', {
 			getItem: (key: string) =>
-				key === 'concordans:kopjes' ? JSON.stringify({ Stemming: true }) : null
+				key === 'concordans:kopjes' ? JSON.stringify({ 'Licht toe': false, Stemming: false }) : null
 		});
-		expect(paperPaint({ ...PAINT, document } as never, K)).toBeNull();
+		const closed = render(DocumentReader, { node: { key: voted.light.node.key } });
+		await settle();
+		const dicht = parse(paperPaint).querySelector('.reader-frame__col')!;
+		const parts = '.r-document > section, .r-document > .body > :not([aria-hidden])';
+		const shut = [...dicht.querySelectorAll(parts)].map(shape);
+		expect(shut.filter(([tag]) => tag === 'SECTION').map(([, , w]) => w)).toEqual([
+			'Licht toe 1',
+			'Stemming'
+		]);
+		expect(shut).toEqual(
+			[...closed.container.querySelectorAll(parts)].map(shape).slice(0, shut.length)
+		);
 		vi.unstubAllGlobals();
+		zetOpen('Licht toe', true);
+		zetOpen('Stemming', true);
 	});
 
 	it('leaves to the app a text without its alineas', () => {

@@ -6,7 +6,7 @@
 	// search can be shared. Asked in full (`mode=full`): up to RESULT_LIMIT hits per soort.
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ChooseLine from '$lib/components/ui/Bepaalregel.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import AllN from '$lib/components/ui/AlleN.svelte';
@@ -228,15 +228,15 @@
 			{@const lane = results.laneOf(group.kind)}
 			<!-- The API gave its limit: there may be more than it gave, which the count says. -->
 			{@const capped = group.hits.length >= RESULT_LIMIT}
-			<section class="groep" aria-labelledby="groep-{group.kind}">
-				<h2 class="groep__kop" id="groep-{group.kind}">
-					<KindGlyph collection={group.kind} />
-					{groupLabel(group.kind)}
-					<span class="aantal">{atLeast(group.hits.length, capped)}</span>
-					{#if lane.matched === 'any'}
-						<span class="deel">treffers met een deel van de woorden</span>
-					{/if}
-				</h2>
+			<Sectie
+				id="groep-{group.kind}"
+				title={groupLabel(group.kind)}
+				aantal={atLeast(group.hits.length, capped)}
+				inklapbaar={false}
+			>
+				{#snippet naast()}{#if lane.matched === 'any'}<span class="deel"
+							>treffers met een deel van de woorden</span
+						>{/if}{/snippet}
 				{#if lane.searched[group.kind]}
 					<p class="gezocht"><Coverage searched={lane.searched[group.kind]} /></p>
 				{/if}
@@ -274,17 +274,13 @@
 						/>
 					</p>
 				{/if}
-			</section>
+			</Sectie>
 		{/each}
 
 		{#if waitingJudgments && q.length >= 2}
-			<section class="groep" aria-labelledby="groep-judgments-laden">
-				<h2 class="groep__kop" id="groep-judgments-laden">
-					<KindGlyph collection="judgments" />
-					{groupLabel('judgments')}
-					<span class="laden">laden…</span>
-				</h2>
-			</section>
+			<Sectie id="groep-judgments-laden" title={groupLabel('judgments')} inklapbaar={false}>
+				<p class="stil">Laden…</p>
+			</Sectie>
 		{/if}
 
 		{#each failedNames as lane (lane.id)}
@@ -338,28 +334,9 @@
 		font-weight: 400;
 		color: var(--ink-3);
 	}
-	.groep {
-		margin: 0 0 var(--s-6);
-	}
-	.groep__kop {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		margin: 0 0 var(--s-2);
-		padding-bottom: var(--s-2);
-		border-bottom: 1px solid var(--ink);
-		font: var(--niveau-1-sectie);
-	}
-	.aantal,
-	.laden,
-	.deel {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 400;
-		color: var(--ink-3);
-	}
 	.deel {
 		font-style: italic;
+		color: var(--ink-3);
 	}
 	.gezocht {
 		margin: 0 0 var(--s-1) var(--s-3);

@@ -96,7 +96,6 @@
 		id={FOLD.amendments}
 		sleutel={FOLD.amendments}
 		title="Amendementen"
-		collection="documents"
 		aantal={regeling?.rijen.length ?? null}
 	>
 		{#if timetable.state.status === 'error'}

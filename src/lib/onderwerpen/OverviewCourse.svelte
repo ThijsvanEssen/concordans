@@ -83,7 +83,7 @@
 		justify-content: space-between;
 		gap: var(--s-1) var(--s-4);
 		padding-top: var(--s-3);
-		border-top: 2px solid var(--ink);
+		border-top: 1px solid var(--rule);
 	}
 	.sectie__kop h2 {
 		margin: 0 0 var(--s-2);

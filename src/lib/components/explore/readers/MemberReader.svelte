@@ -410,7 +410,7 @@
 				<!-- The committees they sat on (API 0.75, BE-30), those they sit on now first: the
 				     seat that stands for them, its role where it is more than a seat, and the other
 				     periods beside it, as Loopbaan names a role. -->
-				<Sectie title="Commissies" collection="committees" aantal={m.committees?.length}>
+				<Sectie title="Commissies" aantal={m.committees?.length}>
 					<Tijdlijn
 						perioden
 						groepen={[
@@ -458,11 +458,7 @@
 				     (`in_office`); the rest are what they voted as a Kamerlid alone. Null-safe
 				     without it: a vote with no post in `in_office` is a Kamerlid's. -->
 				{#if ambt.length > 0}
-					<Sectie
-						title="Als bewindspersoon"
-						collection="decisions"
-						aantal={atLeast(ambt.length, meer)}
-					>
+					<Sectie title="Als bewindspersoon" aantal={atLeast(ambt.length, meer)}>
 						{@render voteGroups(groupVotes(shown(ambt), ambt, meer))}
 						{#if !showAllVotes && ambt.length > VOTES_PREVIEW}
 							<!-- No number while more pages follow: the heading says "200+" (FE1, live 0.79.44). -->
@@ -487,7 +483,6 @@
 				{#if eigen.length > 0 || ambt.length === 0}
 					<Sectie
 						title={apart ? 'Als Kamerlid' : 'Stemgeschiedenis'}
-						collection="decisions"
 						aantal={apart ? eigen.length : atLeast(stemmen.count, stemmen.next_offset != null)}
 					>
 						{@render voteGroups(groupVotes(shown(eigen), eigen))}

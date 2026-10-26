@@ -225,7 +225,7 @@
 					{/if}
 				{/snippet}
 				<!-- The course of the dossier stands open: the line to read it by (mockup V1-c). -->
-				<Sectie title="Procedure" standaardOpen>
+				<Sectie title="Procedure">
 					<Tijdlijn
 						groepen={p.groepen.map((g) => ({
 							...g,

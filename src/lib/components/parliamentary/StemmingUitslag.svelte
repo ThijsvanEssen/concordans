@@ -20,7 +20,7 @@
 </script>
 
 {#if rest.length > 0}
-	<Sectie title="Stemming" collection="decisions">
+	<Sectie title="Stemming">
 		{#each rest as d (d.key)}
 			<div class="stemming"><VoteLine decision={d} /></div>
 		{/each}
