@@ -18,8 +18,6 @@ const props = (selectionCollection: 'documents' | null) => ({
 	selectionCollection,
 	onFilter: () => {},
 	onOpenFilter: () => {},
-	depth: 1,
-	onDepth: () => {},
 	hiddenRelations: new Set<never>(),
 	onToggleRelation: () => {},
 	canvasCounts: { kinds: { stemmingen: 49, wetsvoorstellen: 30 } },

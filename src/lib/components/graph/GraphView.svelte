@@ -17,6 +17,7 @@
 	import { readingOrder } from './canvas-keys';
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
+	import NetworkChoice from './NetworkChoice.svelte';
 	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
@@ -95,8 +96,6 @@
 		ComponentProps<typeof GraphSidebar>,
 		| 'onFilter'
 		| 'onOpenFilter'
-		| 'depth'
-		| 'onDepth'
 		| 'onLaadSoort'
 		| 'laadtSoort'
 		| 'onToggleHeat'
@@ -128,6 +127,8 @@
 		canvasOverlay,
 		balk,
 		viewChoice,
+		depth,
+		onDepth,
 		meer,
 		midden,
 		surroundings = false,
@@ -191,6 +192,9 @@
 			hidden: ReadonlySet<Relation>;
 			toggle: (r: Relation) => void;
 		} | null;
+		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
+		depth: number;
+		onDepth: (d: number) => void;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -1262,7 +1266,6 @@
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
 		{overlay}
 		inFluxCount={inFluxMap.size}
-		{netwerkActive}
 		{hasNodes}
 		{kindRowsShown}
 		{kindsSettled}
@@ -1276,7 +1279,18 @@
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
 	<aside class="strook strook--links" aria-label="Bronnen en filters">
 		{@render canvasOverlay?.()}
-		{@render viewChoice?.()}
+		<NetworkChoice
+			view={!midden ? 'omgeving' : middenZoom ? 'verband' : 'keten'}
+			viewSlot={viewChoice}
+			{depth}
+			{onDepth}
+			{netwerkActive}
+			hasSelection={!!selection}
+			reach={externCounts ? null : reach}
+			empty={!hasNodes && !midden}
+			relations={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).relations}
+			refersFrom={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).refersFrom}
+		/>
 		<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 		{#if hasNodes || midden}
 			<button
@@ -1287,7 +1301,7 @@
 				onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
 			>
 			<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
-				<section class="legenda-inhoud" aria-label="Legenda">
+				<section class="legenda-inhoud" aria-label="Filters">
 					{@render sidebar()}
 				</section>
 			</div>

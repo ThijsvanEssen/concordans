@@ -23,7 +23,7 @@ async function legenda(page: Page): Promise<Locator> {
 		timeout: 30_000
 	});
 	if (await toggle.isVisible()) await toggle.click();
-	return strip(page).getByRole('region', { name: 'Legenda' });
+	return strip(page).getByRole('region', { name: 'Filters' });
 }
 
 /** The rows of Soort as label and count, once every count is in. */
@@ -88,7 +88,7 @@ test('a soort cut off says of how many, in the legend and on its cluster (N2)', 
 	// A fractie's leden of every period, and the key to its marking (N13).
 	expect(rijen.has('Leden ooit')).toBe(true);
 	// The legend stands open: Filter on a phone opened it.
-	const legend = strip(page).getByRole('region', { name: 'Legenda' });
+	const legend = strip(page).getByRole('region', { name: 'Filters' });
 	await expect(legend.getByText('Huidig lid')).toBeVisible();
 	await expect(legend.getByText('Oud-lid')).toBeVisible();
 	test.skip(touch, 'a tap on the cluster: its card is the same at both widths');

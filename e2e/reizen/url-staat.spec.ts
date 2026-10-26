@@ -21,7 +21,7 @@ async function legend(page: Page) {
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
 	await expect(strip(page).getByRole('heading', { name: 'Weergave' }).or(toggle)).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
-	return strip(page).getByRole('region', { name: 'Legenda' });
+	return strip(page).getByRole('region', { name: 'Filters' });
 }
 
 test('a clean link draws the same with and without a netwerk kept in this browser (N7)', async ({

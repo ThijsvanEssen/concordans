@@ -37,7 +37,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
-	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
+	import { type NeighborhoodReach } from '$lib/graph/store/types';
 	import { kindRowCount, type KindRow } from './kind-rows';
 
 	let {
@@ -46,8 +46,6 @@
 		selectionCollection,
 		onFilter,
 		onOpenFilter,
-		depth,
-		onDepth,
 		onLaadSoort,
 		laadtSoort = new Set<string>(),
 		hiddenRelations,
@@ -60,7 +58,6 @@
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
-		netwerkActive = false,
 		hasNodes = false,
 		reach = null,
 		counting = false,
@@ -75,8 +72,6 @@
 		selectionCollection: Collection | null;
 		onFilter: (f: VerbondenFilter) => void;
 		onOpenFilter: () => void;
-		depth: number;
-		onDepth: (d: number) => void;
 		/** All the focus's direct neighbours of one kind (the per-kind step). */
 		onLaadSoort?: (collection: Collection) => void;
 		/** The kinds being loaded so. */
@@ -99,8 +94,6 @@
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
-		/** With a netwerk, a depth adds context around the selection instead of setting the view. */
-		netwerkActive?: boolean;
 		hasNodes?: boolean;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
@@ -125,17 +118,9 @@
 	// the drawing, open as closed; the focus's direct verbindingen are in Verbonden (besluit 29).
 	const totals = $derived(canvasCounts.kinds ?? {});
 
-	// Diepte: the steps that add nothing, as the API cut the neighbourhood off at its cap.
-	const DEPTHS = [1, 2, 3];
-	const grens = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
-	const CAPPED_REASON = $derived(
-		`Maximaal ${grens} bronnen getoond; een stap verder voegt niets toe.`
-	);
-	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
 	// Per kind drawn, the whole where the API cut it off: "63 van 10.395" in the count's column
 	// (Thijs, 10 Oct: "maak duidelijk dat we niet alles zien"; 23 Oct: one list, one grid).
 	const cuts = $derived(kindCuts(reach?.buckets ?? [], totals));
-	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
 	// Relatie: the lines drawn, one row per relation, in the words of the mockup (A197-b) where
 	// one relation is read two ways (a judgment haalt aan, a Kamerstuk noemt).
 	/** The kind of bron a filter group draws, for its colour (kleur.ts). */
@@ -407,38 +392,6 @@
 								</svg>{/snippet}
 						</FilterOptie>
 					{/each}
-				</section>
-
-				<section class="block">
-					<!-- The label says what the buttons do; the rest in a title (Thijs, 9 Oct: what the
-			     interface makes clear is not written out under it). -->
-					<div
-						class="block__label"
-						title={netwerkActive
-							? 'De verbonden bronnen van de gekozen bron erbij; het netwerk blijft'
-							: `Stappen vanaf de bron, per stap hooguit ${grens} bronnen`}
-					>
-						Aantal stappen
-					</div>
-					<Keuze
-						label="Aantal stappen"
-						waarde={netwerkActive ? null : String(depth)}
-						opties={DEPTHS.map((d) => {
-							const reden =
-								netwerkActive && !selectionCollection
-									? NO_SELECTION_REASON
-									: beyondCap(d)
-										? CAPPED_REASON
-										: null;
-							return {
-								waarde: String(d),
-								label: String(d),
-								uit: !!reden,
-								titel: reden ?? undefined
-							};
-						})}
-						onSelect={(d) => onDepth(Number(d))}
-					/>
 				</section>
 
 				{#if lids.length > 0}
