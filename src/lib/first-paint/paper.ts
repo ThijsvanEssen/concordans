@@ -27,16 +27,15 @@ import type { Classes } from './classes';
 import {
 	band,
 	caret,
-	closedSection,
 	coverage,
 	esc,
 	glyph,
 	headRow,
 	readerHead,
+	sectionHead,
 	sectionOpen,
 	type BandLine
 } from './markup';
-import type { Collection } from '$lib/vocabulary';
 import type { PaintedColumn } from './paint';
 
 type Doc = Schema<'DocumentTextResponse'>;
@@ -91,8 +90,7 @@ export function paperPaint(v: PaperPaint, k: Classes): PaintedColumn | null {
 	// The vote that settled it, in the head; a vote without its fracties is asked apart.
 	const deciding = settledBy(doc);
 	if (deciding && !hasSides(deciding)) return null;
-	const sections = closedSections(doc, deciding, k);
-	if (sections === null) return null;
+	const sections = sectionHeads(doc, deciding, k);
 	const props = (v.light.node?.props ?? {}) as Record<string, unknown>;
 	const kind = textOf(props.kind) ?? doc.kind ?? '';
 	if (
@@ -365,23 +363,20 @@ function table(m: VoteBarModel, c: string): string {
 }
 
 /**
- * The sections between the head and the text, closed as a reader's start (Sectie): the
- * articles a memorie explains (Licht toe), the other votes on it (Stemming). Null where one
- * stands open in this browser: its rows are the app's.
+ * The headings of the sections between the head and the text, open until the reader closed
+ * them (Sectie): the articles a memorie explains (Licht toe), the other votes on it
+ * (Stemming). Their rows are the app's.
  */
-function closedSections(doc: Doc, deciding: Decision | null, k: Classes): string | null {
+function sectionHeads(doc: Doc, deciding: Decision | null, k: Classes): string {
 	const explained = (doc.explains ?? []).filter(
 		(e) => e.collection === 'articles' && e.bwb_id && e.article_number
 	);
 	const others = (hasOwnOutcome(doc) ? (doc.decisions ?? []) : []).filter(
 		(d) => d.key !== deciding?.key
 	);
-	const shown: (readonly [string, Collection, number | null])[] = [
-		...(explained.length ? [['Licht toe', 'articles', doc.explains!.length] as const] : []),
-		...(others.length ? [['Stemming', 'decisions', null] as const] : [])
+	const shown: (readonly [string, number | null])[] = [
+		...(explained.length ? [['Licht toe', doc.explains!.length] as const] : []),
+		...(others.length ? [['Stemming', null] as const] : [])
 	];
-	if (shown.some(([title]) => sectionOpen(title))) return null;
-	return shown
-		.map(([title, collection, count]) => closedSection(title, collection, count, k))
-		.join('');
+	return shown.map(([title, count]) => sectionHead(title, count, sectionOpen(title), k)).join('');
 }

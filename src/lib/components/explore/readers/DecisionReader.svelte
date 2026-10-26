@@ -189,7 +189,7 @@
 				<LoadState state={tekst.state} what="De tekst" retry={tekst.retry}>
 					{#snippet children(doc)}
 						{#if doc?.text}
-							<Sectie title={doc.kind ?? 'Document'} collection="documents">
+							<Sectie title={doc.kind ?? 'Document'}>
 								<p class="document-text">{doc.text}</p>
 							</Sectie>
 						{:else if chamber !== 'EK'}
@@ -216,7 +216,7 @@
 			{#if chamber === 'EK'}
 				{@const groups = ekFactionGroups(d)}
 				{#if groups.length > 0}
-					<Sectie title="Stemverdeling per fractie" collection="factions">
+					<Sectie title="Stemverdeling per fractie">
 						<dl class="ek-factions">
 							{#each groups as g (g.label)}
 								<dt>{g.label}</dt>

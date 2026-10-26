@@ -119,7 +119,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		border-top: 2px solid var(--ink);
+		border-top: 1px solid var(--rule);
 		padding-top: var(--s-2);
 	}
 	.ing a {

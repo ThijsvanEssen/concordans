@@ -10,6 +10,7 @@
 		noun,
 		open = false,
 		volgende = false,
+		woord = 'Volgende',
 		stap = null,
 		rest = null,
 		laden = false,
@@ -25,6 +26,8 @@
 		open?: boolean;
 		/** The list goes on in pages: "Volgende {stap} {noun}, nog {rest}" loads the next one in place. */
 		volgende?: boolean;
+		/** `volgende`: the first word; a list from new to old says `Eerdere`: "Eerdere dagen". */
+		woord?: string;
 		/** `volgende`: how many the next page brings; without it "Volgende {noun}". */
 		stap?: number | null;
 		/** `volgende`: how many are still to come, this page included; without it no "nog". */
@@ -42,7 +45,7 @@
 	const volgendeWoorden = $derived.by(() => {
 		const aantalNu = rest != null && stap != null ? Math.min(stap, rest) : stap;
 		const eerst =
-			aantalNu != null ? `Volgende ${formatCount(aantalNu)} ${noun}` : `Volgende ${noun}`;
+			aantalNu != null ? `${woord} ${formatCount(aantalNu)} ${noun}` : `${woord} ${noun}`;
 		return rest != null && (stap == null || rest > stap)
 			? `${eerst}, nog ${formatCount(rest)}`
 			: eerst;

@@ -379,7 +379,7 @@
 			</ReaderHead>
 
 			{#if toegelicht.length > 0}
-				<Sectie title="Licht toe" collection="articles" aantal={doc.explains?.length ?? 0}>
+				<Sectie title="Licht toe" aantal={doc.explains?.length ?? 0}>
 					<ul class="toegelicht">
 						{#each toegelicht as w (w.bwbId)}
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}

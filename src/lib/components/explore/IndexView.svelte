@@ -954,12 +954,13 @@
 		color: var(--ink-3);
 		margin-top: 2px;
 	}
-	/* A dossier by name in the narrow lead: two lines at most, the whole on hover. */
+	/* A dossier by name in the narrow lead: three lines at most (a long name never ends after
+	   its first word), the whole on hover. */
 	.results :global(.row-id-naam) {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
 		overflow: hidden;
 		overflow-wrap: break-word;
 	}

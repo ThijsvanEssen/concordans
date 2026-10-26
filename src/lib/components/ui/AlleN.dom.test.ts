@@ -34,6 +34,10 @@ describe('AlleN, the form volgende', () => {
 		expect(text({ rest: 244 })).toBe('Volgende uitspraken, nog 244');
 	});
 
+	it('takes its own first word, for a list from new to old', () => {
+		expect(text({ woord: 'Eerdere', noun: 'dagen' })).toBe('Eerdere dagen');
+	});
+
 	it('names the last page by its size, without "nog"', () => {
 		expect(text({ stap: 25, rest: 7 })).toBe('Volgende 7 uitspraken');
 		expect(text({ stap: 25, rest: 25 })).toBe('Volgende 25 uitspraken');

@@ -19,7 +19,7 @@
 
 <p class="doorzocht">
 	Doorzocht {fromDate(vanaf)}.
-	<AlleN volgende noun="dagen" laden={loading} onclick={onVerder} />
+	<AlleN volgende woord="Eerdere" noun="dagen" laden={loading} onclick={onVerder} />
 </p>
 
 <style>

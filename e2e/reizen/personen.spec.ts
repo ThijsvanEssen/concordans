@@ -20,18 +20,22 @@ test('a lid names the office, the fractie and the record', async ({ page }) => {
 		page.getByRole('navigation', { name: 'Behoort bij' }).getByRole('link', { name: /^D66/ })
 	).toHaveAttribute('href', /\/fracties\//);
 	const career = page.getByRole('button', { name: 'Loopbaan' });
-	await career.click();
 	await expect(career).toHaveAttribute('aria-expanded', 'true');
+	await career.click();
+	await expect(career).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('a fractie gives its seats, its chair and its leden', async ({ page }) => {
 	await page.goto('/fracties/d66');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('D66');
 	await expect(page.getByText(/^26\s+zetels, fractie sinds/)).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Jan Paternotte', exact: true })).toBeVisible();
+	await expect(
+		page.getByRole('link', { name: 'Jan Paternotte', exact: true }).first()
+	).toBeVisible();
 	const leden = page.getByRole('button', { name: /^Leden( \d+)?$/ });
-	await leden.click();
 	await expect(leden).toHaveAttribute('aria-expanded', 'true');
+	await leden.click();
+	await expect(leden).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('a cabinet names its coalition and shows its seats in both Kamers', async ({ page }) => {

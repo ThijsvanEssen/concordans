@@ -45,7 +45,7 @@ export type SketchGroup = {
 	/** The API cut the group off: its rows are not all there is, so it stands as one. */
 	capped?: boolean;
 	/** Its parts as the API counts them (instanties), else none. */
-	parts?: readonly TierCount[] | null;
+	parts?: readonly Pick<TierCount, 'tier' | 'label' | 'count'>[] | null;
 };
 
 /** How a line of the drawing runs: its relation, whom it comes from, and to whom it points. */

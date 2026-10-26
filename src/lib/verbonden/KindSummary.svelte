@@ -18,6 +18,8 @@
 	import type { TierCount } from './tiers';
 	import VerbondenRow from './VerbondenRow.svelte';
 	import TierBar from './TierBar.svelte';
+	import TierSwatch from './TierSwatch.svelte';
+	import { shapeOfTier } from './tiers';
 
 	let {
 		kinds,
@@ -66,6 +68,11 @@
 		void selection.id;
 		opened = null;
 	});
+	/** The vlak of the instantie of a judgment's row; none for another bron. */
+	const tierShapeOf = (row: Row) =>
+		row.ref.collection === 'judgments' && typeof row.props?.tier === 'string'
+			? shapeOfTier(row.props.tier)
+			: null;
 	const toggle = (row: Row) => (opened = opened === rowKey(row) ? null : rowKey(row));
 
 	/**
@@ -123,17 +130,23 @@
 						</ul>
 					</li>
 				{:else}
+					{@const shape = tierShapeOf(row)}
 					<li class="kind__row" class:kind__onder={isNested(row)}>
-						<a
-							class="kind__title"
-							href={openHref(row.ref, { at: ankerVanRij(row) })}
-							aria-expanded="false"
-							onclick={(e) => terPlekke(e, () => toggle(row))}
-							>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
-									row
-								)}{/if}</a
-						>
-						{#if shortLine(row)}<span class="kind__line">{shortLine(row)}</span>{/if}
+						<div class="kind__kop">
+							{#if shape}<span class="kind__vlak"><TierSwatch {shape} /></span>{/if}
+							<a
+								class="kind__title"
+								href={openHref(row.ref, { at: ankerVanRij(row) })}
+								aria-expanded="false"
+								onclick={(e) => terPlekke(e, () => toggle(row))}
+								>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
+										row
+									)}{/if}</a
+							>
+						</div>
+						{#if shortLine(row)}<span class="kind__line" class:kind__line--vlak={!!shape}
+								>{shortLine(row)}</span
+							>{/if}
 					</li>
 				{/if}
 			{:else}
@@ -217,6 +230,19 @@
 	/* A regulation issued under the one above it. */
 	.kind__onder {
 		padding-left: var(--s-4);
+	}
+	.kind__kop {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--s-2);
+	}
+	/* On the first line of the title (24 px). */
+	.kind__vlak {
+		flex: none;
+		margin-top: var(--s-2);
+	}
+	.kind__line--vlak {
+		padding-left: calc(var(--s-3) + var(--s-2));
 	}
 	.kind__title {
 		display: block;

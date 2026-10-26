@@ -142,11 +142,18 @@
 	}
 	.sides {
 		display: grid;
-		grid-template-columns: max-content minmax(0, 1fr);
-		gap: var(--s-1) var(--s-3);
+		/* The term column of every Stemregel (Design System, Stemregel); on a phone the term only. */
+		grid-template-columns: var(--voorkolom) minmax(0, 1fr);
+		gap: var(--s-1) 0;
 		margin: 0;
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
+	}
+	@media (max-width: 768px) {
+		.sides {
+			grid-template-columns: max-content minmax(0, 1fr);
+			column-gap: var(--s-3);
+		}
 	}
 	.sides dd {
 		margin: 0;
