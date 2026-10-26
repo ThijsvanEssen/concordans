@@ -352,7 +352,15 @@
 	const centerName = $derived(networkName ?? selection.label ?? '');
 	// On a phone fewer bronnen stand on their own: past a dozen a soort is one circle with its
 	// count, so no names lie over each other in the narrow drawing (A208e).
-	const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
+	let phone = $state(typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches);
+	$effect(() => {
+		if (typeof matchMedia !== 'function') return;
+		const query = matchMedia('(max-width: 768px)');
+		const update = () => (phone = query.matches);
+		update();
+		query.addEventListener('change', update);
+		return () => query.removeEventListener('change', update);
+	});
 	const sketched = $derived(
 		showNetwork
 			? drawSketch(sketchGroups, centerName, phone ? PHONE_SKETCH_LIMIT : undefined)

@@ -14,7 +14,7 @@
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
-	import { readingOrder } from './canvas-keys';
+	import { readingOrder, stepPointer } from './canvas-keys';
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
@@ -122,8 +122,6 @@
 		netwerkActive = false,
 		onEdgeClick,
 		onClear,
-		onBack,
-		onGoForward,
 		canvasOverlay,
 		balk,
 		viewChoice,
@@ -164,8 +162,6 @@
 		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
-		onBack?: () => void;
-		onGoForward?: () => void;
 		/** The panel Netwerk, in the strip at the left. */
 		canvasOverlay?: Snippet;
 		/** At the top right of the canvas: Deel. */
@@ -424,7 +420,10 @@
 	const kindsSettled = $derived(
 		!!kindFocusOf?.own && panelSettled(verbonden) && drawnIds.length > 0
 	);
+	// The bron in focus in the keyboard's list: it lights up on the canvas, nothing more (R9).
 	let keyNode = $state<GraphNode | null>(null);
+	// The bron the arrows point at on the canvas itself, in the list's order (stepPointer).
+	let pijl = $state<GraphNode | null>(null);
 	const listNodes = $derived(
 		readingOrder(
 			drawnIds.flatMap((id) => lookup.get(id) ?? []),
@@ -432,25 +431,33 @@
 		)
 	);
 	function onKeyNode(n: GraphNode | null) {
-		if (n && stilNa === n.id) {
-			// Back from its card with Escape: the bron has the focus, its card stays closed.
-			stilNa = null;
-			keyNode = n;
-			return;
-		}
-		stilNa = null;
 		keyNode = n;
-		hoverNode = n;
+		if (n) pijl = null;
 	}
+	/** ← and → on the canvas: the bron pointed at moves, from the one marked if any. */
+	function wijs(key: string) {
+		const at = pijl?.id ?? gemarkeerd?.id ?? null;
+		const id = stepPointer(
+			key,
+			at,
+			listNodes.map((n) => n.id)
+		);
+		if (id === undefined) return false;
+		pijl = lookup.get(id) ?? null;
+		return true;
+	}
+	// A bron that left the canvas is pointed at no longer.
+	$effect(() => {
+		if (pijl && !drawnIds.includes(pijl.id)) pijl = null;
+	});
 	// The card of the bron in the keyboard's list: Tab goes into it, Escape and Shift+Tab back
 	// to that bron, Tab past its last action on to the canvas (UX test 10 Oct, #14).
 	let citeEl = $state<HTMLElement | null>(null);
 	let keyOpener: HTMLElement | null = null;
-	let stilNa: string | null = null;
 	function kaartIn(opener: HTMLElement) {
 		const eerste = citeEl?.querySelector<HTMLElement>('a[href], button');
 		const kaart = citeEl;
-		if (!keyNode || !kaart || !eerste) return false;
+		if (!keyNode || hoverNode?.id !== keyNode.id || !kaart || !eerste) return false;
 		keyOpener = opener;
 		// Focus that leaves card and list elsewhere (a click on the page) closes the card.
 		const weg = (e: FocusEvent) => {
@@ -460,42 +467,34 @@
 			if (!naar || kaart.contains(naar) || naar === canvasWrap) return;
 			kaart.removeEventListener('focusout', weg);
 			if (naar && opener.closest('ul')?.contains(naar)) return;
-			if (keyNode) {
-				keyNode = null;
-				hoverNode = null;
-			}
+			keyNode = null;
 		};
 		kaart.addEventListener('focusout', weg);
 		eerste.focus();
 		return true;
 	}
-	// A click or tap outside the card and the list of bronnen closes the card of the keyboard's
-	// bron, as a menu does.
+	// A click or tap outside the card and the list of bronnen: the keyboard's bron no longer
+	// lights up, as a menu closes.
 	$effect(() => {
 		if (!keyNode) return;
 		return clickOutside(
 			() => [citeEl, canvasWrap?.parentElement?.querySelector('.canvas-node-list')],
-			() => {
-				keyNode = null;
-				hoverNode = null;
-			}
+			() => (keyNode = null)
 		);
 	});
-	/** Escape on the bron in the list: its card closes, the focus stays (UX-toets B6). */
+	/** Escape on the bron in the list: the card of the bron chosen closes, the focus stays (B6). */
 	function closeCard() {
 		if (!keyNode || !hoverNode) return false;
-		stilNa = keyNode.id;
-		hoverNode = null;
+		ontmarkeer();
 		return true;
 	}
 	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
-		if (sluit) stilNa = keyNode?.id ?? null;
+		if (sluit) ontmarkeer();
 		if (focus === 'canvas') {
 			keyNode = null;
-			hoverNode = null;
+			pijl = gemarkeerd;
 			canvasWrap?.focus({ preventScroll: true });
 		} else {
-			if (sluit) hoverNode = null;
 			keyOpener?.focus();
 		}
 	}
@@ -506,7 +505,6 @@
 	function markeer(n: GraphNode) {
 		if (gemarkeerd?.id === n.id) return open(n);
 		gemarkeerd = n;
-		keyNode = null;
 		hoverNode = n;
 		onMark?.(n.id);
 	}
@@ -893,7 +891,7 @@
 
 	function drawNodes(nodes: GraphNode[]) {
 		const newIds = new Set(nodes.map((n) => n.id));
-		skipNextFit = keepsCamera('full', newIds);
+		skipNextFit = keepsCamera(newIds);
 
 		let changed = false;
 		const addedThisSync = new Set<string>();
@@ -1100,28 +1098,29 @@
 			clusterCard = null;
 			return;
 		}
+		const opCanvas = !!canvasWrap?.contains(document.activeElement);
+		// Escape: first the bron pointed at, then the one chosen.
+		if (e.key === 'Escape' && pijl && opCanvas) {
+			pijl = null;
+			return;
+		}
 		if (e.key === 'Escape' && gemarkeerd) {
 			ontmarkeer();
 			return;
 		}
-		if (e.key === 'Enter' && gemarkeerd && canvasWrap?.contains(document.activeElement)) {
+		// Enter chooses the bron pointed at, as a click does; on the one chosen it reads it.
+		const kies = pijl ?? gemarkeerd;
+		if (e.key === 'Enter' && kies && opCanvas) {
 			e.preventDefault();
-			open(gemarkeerd);
+			if (isClusterId(kies.id)) openCluster(kies.id, canvasWrap);
+			else markeer(kies);
 			return;
 		}
 		if (e.key === 'Escape') {
 			onClear?.();
 			return;
 		}
-		if (!canvasWrap?.contains(document.activeElement)) return;
-		if (e.key === 'ArrowLeft' && onBack) {
-			e.preventDefault();
-			onBack();
-		}
-		if (e.key === 'ArrowRight' && onGoForward) {
-			e.preventDefault();
-			onGoForward();
-		}
+		if (opCanvas && wijs(e.key)) e.preventDefault();
 	}
 
 	function toggleGroup(kind: ContainerKind) {
@@ -1344,6 +1343,8 @@
 				nodes={listNodes}
 				isChosen={(id) => pinnedIds.has(id)}
 				onFocusNode={onKeyNode}
+				onKies={markeer}
+				aangewezen={pijl}
 				onTab={kaartIn}
 				onEscape={closeCard}
 				houdt={(el) => !!el && (!!citeEl?.contains(el) || el === canvasWrap)}
@@ -1357,7 +1358,12 @@
 				bind:this={canvasWrap}
 				role="application"
 				aria-label="Netwerk. Pijl links en rechts: vorige en volgende bron."
+				data-aangewezen={pijl?.id}
 				tabindex="0"
+				onfocusout={(e) => {
+					// Tab elsewhere: no bron pointed at. A tap (focus to nowhere) keeps it.
+					if (e.relatedTarget && !canvasWrap?.contains(e.relatedTarget as Node)) pijl = null;
+				}}
 				onpointerenter={() => {
 					fitFollows = false;
 					handOpCanvas = true;
@@ -1395,7 +1401,7 @@
 					heatActive={overlay.kind === 'heat'}
 					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
 					mutatieActive={overlay.kind === 'open'}
-					externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
+					externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
 					{notitieIds}
 					onNodeClick={(id) => {
 						if (isClusterId(id)) return openCluster(id);
@@ -1425,7 +1431,7 @@
 					onReady={(api) => {
 						canvas = api;
 						canvas.refresh();
-						const camera = skipNextFit && savedCamera('full');
+						const camera = skipNextFit && savedCamera();
 						if (camera) {
 							canvas.restoreCamera(camera);
 							skipNextFit = false;
@@ -1434,7 +1440,7 @@
 						}
 					}}
 					onCameraChange={(state) => {
-						saveCamera('full', state);
+						saveCamera(state);
 					}}
 				/>
 
@@ -1813,18 +1819,20 @@
 		position: relative;
 		overflow: hidden;
 	}
-	/* The list of bronnen holds the focus for the keyboard: the canvas shows it. */
-	:global(.buhne:has(.canvas-node-list :focus-visible) .graph-canvas-wrap) {
-		outline: 2px solid var(--focus);
-		outline-offset: -2px;
+	/* The list of bronnen holds the focus for the keyboard: the canvas shows it. The ring is
+	   drawn over the canvas, which would cover an outline of its own box. */
+	:global(.buhne:has(.canvas-node-list :focus-visible) .graph-canvas-wrap)::after,
+	.graph-canvas-wrap:focus-visible::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		box-shadow: inset 0 0 0 2px var(--netwerk-focus);
+		pointer-events: none;
 	}
 
 	.graph-canvas-wrap:focus {
 		outline: none;
-	}
-	.graph-canvas-wrap:focus-visible {
-		outline: 2px solid var(--netwerk-focus);
-		outline-offset: -2px;
 	}
 
 	/* Zoom in, out and back to everything, as on a map. */

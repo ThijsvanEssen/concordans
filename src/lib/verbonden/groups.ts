@@ -796,7 +796,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'dossiers',
-			label: 'Lopende dossiers',
+			label: 'Openstaande dossiers',
 			noun: 'dossiers',
 			load: 'ministry-dossiers',
 			countsOpenOnly: true

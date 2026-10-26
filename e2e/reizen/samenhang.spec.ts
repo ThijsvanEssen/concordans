@@ -114,16 +114,14 @@ test('an empty werkplek is empty: the field Bron toevoegen, no example', async (
 			.or(network.getByRole('button', { name: 'Bron toevoegen' }))
 	).toBeVisible();
 	await expect(network.getByRole('button', { pressed: true })).toHaveCount(0);
-	await page.waitForTimeout(500);
+	// The werkplek has drawn its empty canvas: the heading is there, and no bron on the list.
+	await expect(page.getByTestId('werkplek')).toBeVisible();
+	await expect(page.locator('.canvas-node-list li')).toHaveCount(0);
 	await expect(page).toHaveURL(/\/explore$/);
 	await expect(page.getByText(/^Voorbeeld/)).toHaveCount(0);
 });
 
-test('a bron in the network becomes the focus, and Samenhang follows it', async ({
-	page,
-	touch
-}) => {
-	test.skip(touch, 'the list of the network is the keyboard way at 1440');
+test('a bron in the network becomes the focus, and Samenhang follows it', async ({ page }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
 	// Past forty, the stukken of 6:162 stand as one cluster (UX review N4): an article beside it.
 	const artikel = drawn(page)
@@ -131,6 +129,9 @@ test('a bron in the network becomes the focus, and Samenhang follows it', async 
 		.nth(1);
 	const name = (await artikel.getAttribute('aria-label')) ?? (await artikel.textContent())!;
 	await artikel.focus();
+	// Enter chooses it as a click does (R9); Enter again reads it.
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/[?&]kies=/);
 	await page.keyboard.press('Enter');
 	await expect(page).toHaveURL(/\/artikel\//);
 	await expect(page).not.toHaveURL(/6:162/);
