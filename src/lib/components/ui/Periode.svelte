@@ -396,7 +396,7 @@
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	@media (pointer: coarse), (max-width: 768px) {
 		.trigger {
