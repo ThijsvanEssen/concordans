@@ -942,7 +942,7 @@
 			}
 		]
 	},
-	"/api/instruments/{identifier}/eu-links {\"identifier\":\"bwbr0005537\"} {\"limit\":50}": {
+	"/api/instruments/{identifier}/eu-links {\"identifier\":\"bwbr0005537\"} {\"limit\":50,\"sort\":\"importance\"}": {
 		"instrument": {
 			"id": "instruments/bwbr0005537",
 			"key": "bwbr0005537",
@@ -957,62 +957,18 @@
 		"implements": [
 			{
 				"instrument": {
-					"id": "instruments/31979l0409",
-					"key": "31979l0409",
-					"bwb_id": null,
-					"celex": "31979L0409",
-					"title": "Richtlijn 79/409/EEG van de Raad van 2 april 1979 inzake het behoud van de vogelstand",
-					"citation_title": "Richtlijn 79/409/EEG",
-					"kind": null,
-					"jurisdiction": "eu",
-					"path": "/wetten/31979L0409"
-				},
-				"relation": "IMPLEMENTS",
-				"confidence": 1,
-				"bases": [
-					"national_implementing_measure"
-				],
-				"source": "bwb-implements",
-				"via": [
-					{
-						"publication": "stb-2005-282",
-						"citation": "Stb. 2005, 282",
-						"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
-						"type": "Wet"
-					}
-				],
-				"meta": {
-					"celex": "31979L0409",
-					"bases": [
-						"national_implementing_measure"
-					],
-					"publications": [
-						"stb-2005-282"
-					],
-					"measures": [
-						{
-							"publication": "stb-2005-282",
-							"citation": "Stb. 2005, 282",
-							"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
-							"type": "Wet"
-						}
-					]
-				}
-			},
-			{
-				"instrument": {
 					"id": "instruments/31992l0043",
 					"key": "31992l0043",
 					"bwb_id": null,
 					"celex": "31992L0043",
 					"title": "Richtlijn 92/43/EEG van de Raad van 21 mei 1992 inzake de instandhouding van de natuurlijke habitats en de wilde flora en fauna",
 					"citation_title": "Richtlijn 92/43/EEG",
-					"kind": null,
+					"kind": "richtlijn",
 					"jurisdiction": "eu",
 					"path": "/wetten/31992L0043"
 				},
 				"relation": "IMPLEMENTS",
-				"confidence": 1,
+				"confidence": 1.0,
 				"bases": [
 					"national_implementing_measure"
 				],
@@ -1022,16 +978,14 @@
 						"publication": "stb-2005-282",
 						"citation": "Stb. 2005, 282",
 						"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
-						"type": "Wet"
+						"type": "Wet",
+						"id": "instruments/stb_2005_282",
+						"path": "/stb/2005/282"
 					}
 				],
 				"meta": {
-					"celex": "31992L0043",
 					"bases": [
 						"national_implementing_measure"
-					],
-					"publications": [
-						"stb-2005-282"
 					],
 					"measures": [
 						{
@@ -1040,94 +994,159 @@
 							"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
 							"type": "Wet"
 						}
+					],
+					"publications": [
+						"stb-2005-282"
 					]
 				}
 			},
 			{
 				"instrument": {
-					"id": "instruments/31993l0006",
-					"key": "31993l0006",
+					"id": "instruments/31979l0409",
+					"key": "31979l0409",
 					"bwb_id": null,
-					"celex": "31993L0006",
-					"title": "Richtlijn 93/6/EEG van de Raad van 15 maart 1993 inzake de kapitaaltoereikendheid van beleggingsondernemingen en kredietinstellingen",
-					"citation_title": "Richtlijn 93/6/EEG",
-					"kind": null,
+					"celex": "31979L0409",
+					"title": "Richtlijn 79/409/EEG van de Raad van 2 april 1979 inzake het behoud van de vogelstand",
+					"citation_title": "Richtlijn 79/409/EEG",
+					"kind": "richtlijn",
 					"jurisdiction": "eu",
-					"path": "/wetten/31993L0006"
+					"path": "/wetten/31979L0409"
 				},
 				"relation": "IMPLEMENTS",
-				"confidence": 1,
+				"confidence": 1.0,
 				"bases": [
 					"national_implementing_measure"
 				],
 				"source": "bwb-implements",
 				"via": [
 					{
-						"publication": "stb-1995-250",
-						"citation": "Stb. 1995, 250",
-						"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
-						"type": "Wet"
+						"publication": "stb-2005-282",
+						"citation": "Stb. 2005, 282",
+						"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
+						"type": "Wet",
+						"id": "instruments/stb_2005_282",
+						"path": "/stb/2005/282"
 					}
 				],
 				"meta": {
-					"celex": "31993L0006",
 					"bases": [
 						"national_implementing_measure"
 					],
-					"publications": [
-						"stb-1995-250"
-					],
 					"measures": [
 						{
-							"publication": "stb-1995-250",
-							"citation": "Stb. 1995, 250",
-							"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
+							"publication": "stb-2005-282",
+							"citation": "Stb. 2005, 282",
+							"title": "Wet van 26 mei 2005 tot aanpassing van diverse wetten aan de Wet uniforme openbare voorbereidingsprocedure Awb (Aanpassingswet uniforme openbare voorbereidingsprocedure)",
 							"type": "Wet"
 						}
+					],
+					"publications": [
+						"stb-2005-282"
 					]
 				}
 			},
 			{
 				"instrument": {
-					"id": "instruments/31994l0063",
-					"key": "31994l0063",
+					"id": "instruments/32008l0057",
+					"key": "32008l0057",
 					"bwb_id": null,
-					"celex": "31994L0063",
-					"title": "Richtlijn 94/63/EG van het Europees Parlement en de Raad van 20 december 1994 betreffende de beheersing van de uitstoot van vluchtige organische stoffen (VOS) als gevolg van de opslag van benzine en de distributie van benzine vanaf terminals naar benzinestations",
-					"citation_title": "Richtlijn 94/63/EG",
-					"kind": null,
+					"celex": "32008L0057",
+					"title": "Richtlijn 2008/57/EG van het Europees Parlement en de Raad van 17 juni 2008 betreffende de interoperabiliteit van het spoorwegsysteem in de Gemeenschap",
+					"citation_title": "Richtlijn 2008/57/EG",
+					"kind": "richtlijn",
 					"jurisdiction": "eu",
-					"path": "/wetten/31994L0063"
+					"path": "/wetten/32008L0057"
 				},
 				"relation": "IMPLEMENTS",
-				"confidence": 1,
+				"confidence": 1.0,
 				"bases": [
 					"national_implementing_measure"
 				],
 				"source": "bwb-implements",
 				"via": [
 					{
-						"publication": "stb-1995-250",
-						"citation": "Stb. 1995, 250",
-						"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
-						"type": "Wet"
+						"publication": "stb-2009-383",
+						"citation": "Stb. 2009, 383",
+						"title": "Wet van 28 augustus 2009 tot aanvulling van de\nAlgemene wet bestuursrecht met\ndoeltreffendere rechtsmiddelen tegen niet tijdig\nbeslissen door bestuursorganen (Wet dwangsom\nen beroep bij niet tijdig beslissen)",
+						"type": "Wet",
+						"id": "instruments/stb_2009_383",
+						"path": "/stb/2009/383"
 					}
 				],
 				"meta": {
-					"celex": "31994L0063",
 					"bases": [
 						"national_implementing_measure"
 					],
+					"measures": [
+						{
+							"publication": "stb-2009-383",
+							"citation": "Stb. 2009, 383",
+							"title": "Wet van 28 augustus 2009 tot aanvulling van de\nAlgemene wet bestuursrecht met\ndoeltreffendere rechtsmiddelen tegen niet tijdig\nbeslissen door bestuursorganen (Wet dwangsom\nen beroep bij niet tijdig beslissen)",
+							"type": "Wet"
+						}
+					],
 					"publications": [
-						"stb-1995-250"
+						"stb-2009-383"
+					]
+				}
+			},
+			{
+				"instrument": {
+					"id": "instruments/32018l1972",
+					"key": "32018l1972",
+					"bwb_id": null,
+					"celex": "32018L1972",
+					"title": "Richtlijn (EU) 2018/1972 van het Europees Parlement en de Raad van 11 december 2018 tot vaststelling van het Europees wetboek voor elektronische communicatie",
+					"citation_title": "Richtlijn (EU) 2018/1972",
+					"kind": "richtlijn",
+					"jurisdiction": "eu",
+					"path": "/wetten/32018L1972"
+				},
+				"relation": "IMPLEMENTS",
+				"confidence": 1.0,
+				"bases": [
+					"national_implementing_measure"
+				],
+				"source": "bwb-implements",
+				"via": [
+					{
+						"publication": "stb-1992-315",
+						"citation": "Stb. 1992, 315",
+						"title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+						"type": "Wet",
+						"id": "instruments/stb_1992_315",
+						"path": "/stb/1992/315"
+					},
+					{
+						"publication": "stb-2013-102",
+						"citation": "Stb. 2013, 102",
+						"title": "Wet van 28 februari 2013, houdende regels omtrent de instelling van de Autoriteit Consument en Markt (Instellingswet Autoriteit Consument en Markt)",
+						"type": "Wet",
+						"id": "instruments/stb_2013_102",
+						"path": "/stb/2013/102"
+					}
+				],
+				"meta": {
+					"bases": [
+						"national_implementing_measure"
 					],
 					"measures": [
 						{
-							"publication": "stb-1995-250",
-							"citation": "Stb. 1995, 250",
-							"title": "Regeling aanwijzing bevoegde autoriteiten wettoezicht effectenverkeer 1995, Staatscourant nummer 250 van 27/12/1995",
+							"publication": "stb-1992-315",
+							"citation": "Stb. 1992, 315",
+							"title": "Wet van 4 juni 1992, houdende algemene regels van bestuursrecht (Algemene wet bestuursrecht)",
+							"type": "Wet"
+						},
+						{
+							"publication": "stb-2013-102",
+							"citation": "Stb. 2013, 102",
+							"title": "Wet van 28 februari 2013, houdende regels omtrent de instelling van de Autoriteit Consument en Markt (Instellingswet Autoriteit Consument en Markt)",
 							"type": "Wet"
 						}
+					],
+					"publications": [
+						"stb-1992-315",
+						"stb-2013-102"
 					]
 				}
 			}
@@ -1138,45 +1157,60 @@
 		"mentions": [
 			{
 				"instrument": {
+					"id": "instruments/32014l0059",
+					"key": "32014l0059",
+					"bwb_id": null,
+					"celex": "32014L0059",
+					"title": "Richtlijn 2014/59/EU van het Europees Parlement en de Raad van 15 mei 2014 betreffende de totstandbrenging van een kader voor het herstel en de afwikkeling van kredietinstellingen en beleggingsondernemingen en tot wijziging van Richtlijn 82/891/EEG van de Raad en de Richtlijnen 2001/24/EG, 2002/47/EG, 2004/25/EG, 2005/56/EG, 2007/36/EG, 2011/35/EU, 2012/30/EU en 2013/36/EU en de Verordeningen (EU) nr. 1093/2010 en (EU) nr. 648/2012, van het Europees Parlement en de Raad",
+					"citation_title": "Richtlijn 2014/59/EU",
+					"kind": "richtlijn",
+					"jurisdiction": "eu",
+					"path": "/wetten/32014L0059"
+				},
+				"relation": "REFERS_TO",
+				"confidence": 1.0,
+				"bases": [],
+				"source": "bwb-implements",
+				"via": [],
+				"meta": {}
+			},
+			{
+				"instrument": {
 					"id": "instruments/32000l0031",
 					"key": "32000l0031",
 					"bwb_id": null,
 					"celex": "32000L0031",
 					"title": "Richtlijn 2000/31/EG van het Europees Parlement en de Raad van 8 juni 2000 betreffende bepaalde juridische aspecten van de diensten van de informatiemaatschappij, met name de elektronische handel, in de interne markt (\"Richtlijn inzake elektronische handel\")",
 					"citation_title": "Richtlijn 2000/31/EG",
-					"kind": null,
+					"kind": "richtlijn",
 					"jurisdiction": "eu",
 					"path": "/wetten/32000L0031"
 				},
 				"relation": "REFERS_TO",
-				"confidence": 1,
+				"confidence": 1.0,
 				"bases": [],
 				"source": "bwb-implements",
 				"via": [],
-				"meta": {
-					"celex": "32000L0031"
-				}
+				"meta": {}
 			},
 			{
 				"instrument": {
-					"id": "instruments/32002l0047",
-					"key": "32002l0047",
+					"id": "instruments/32012r0648",
+					"key": "32012r0648",
 					"bwb_id": null,
-					"celex": "32002L0047",
-					"title": "Richtlijn 2002/47/EG van het Europees Parlement en de Raad van 6 juni 2002 betreffende financiëlezekerheidsovereenkomsten",
-					"citation_title": "Richtlijn 2002/47/EG",
-					"kind": null,
+					"celex": "32012R0648",
+					"title": "Verordening (EU) nr. 648/2012 van het Europees Parlement en de Raad van 4 juli 2012 betreffende otc-derivaten, centrale tegenpartijen en transactieregisters",
+					"citation_title": "Verordening (EU) nr. 648/2012",
+					"kind": "verordening",
 					"jurisdiction": "eu",
-					"path": "/wetten/32002L0047"
+					"path": "/wetten/32012R0648"
 				},
 				"relation": "REFERS_TO",
-				"confidence": 1,
+				"confidence": 1.0,
 				"bases": [],
 				"source": "bwb-implements",
 				"via": [],
-				"meta": {
-					"celex": "32002L0047"
-				}
+				"meta": {}
 			},
 			{
 				"instrument": {
@@ -1186,39 +1220,16 @@
 					"celex": "32003L0071",
 					"title": "Richtlijn 2003/71/EG van het Europees Parlement en de Raad van 4 november 2003 betreffende het prospectus dat gepubliceerd moet worden wanneer effecten aan het publiek worden aangeboden of tot de handel worden toegelaten en tot wijziging van Richtlijn 2001/34/EG (Voor de EER relevante tekst)",
 					"citation_title": "Richtlijn 2003/71/EG",
-					"kind": null,
+					"kind": "richtlijn",
 					"jurisdiction": "eu",
 					"path": "/wetten/32003L0071"
 				},
 				"relation": "REFERS_TO",
-				"confidence": 1,
+				"confidence": 1.0,
 				"bases": [],
 				"source": "bwb-implements",
 				"via": [],
-				"meta": {
-					"celex": "32003L0071"
-				}
-			},
-			{
-				"instrument": {
-					"id": "instruments/32004l0025",
-					"key": "32004l0025",
-					"bwb_id": null,
-					"celex": "32004L0025",
-					"title": "Richtlijn 2004/25/EG van het Europees Parlement en de Raad van 21 april 2004 betreffende het openbaar overnamebod",
-					"citation_title": "Richtlijn 2004/25/EG",
-					"kind": null,
-					"jurisdiction": "eu",
-					"path": "/wetten/32004L0025"
-				},
-				"relation": "REFERS_TO",
-				"confidence": 1,
-				"bases": [],
-				"source": "bwb-implements",
-				"via": [],
-				"meta": {
-					"celex": "32004L0025"
-				}
+				"meta": {}
 			}
 		],
 		"mentions_total": 20,

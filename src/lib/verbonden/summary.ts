@@ -15,13 +15,16 @@ import type { Bucket } from '$lib/api/nodes';
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
 import { bucketsRead, groupCount, type Group } from './groups';
 import { byImportance } from './importance';
-import { isNested, type Row } from './rows';
+import type { Row } from './rows';
 
 type KindId =
 	| 'judgments'
 	| 'documents'
 	| 'regelingen'
 	| 'laws'
+	| 'artikelen'
+	| 'europees'
+	| 'publicaties'
 	| 'dossiers'
 	| 'decisions'
 	| 'activities'
@@ -58,7 +61,10 @@ const KIND_LABELS = Object.fromEntries(
 	(Object.entries(KIND_OF) as [Collection, KindId][]).map(([collection, id]) => {
 		const [one, many] = BRON_LABEL[collection];
 		return id === 'laws'
-			? [id, { label: 'Wetten', one: 'wet of artikel', many: 'wetten en artikelen' }]
+			? [
+					id,
+					{ label: 'Wetten en regelingen', one: 'wet of regeling', many: 'wetten en regelingen' }
+				]
 			: [
 					id,
 					{
@@ -68,7 +74,10 @@ const KIND_LABELS = Object.fromEntries(
 					}
 				];
 	})
-) as Record<Exclude<KindId, 'regelingen'>, { label: string; one: string; many: string }>;
+) as Record<
+	Exclude<KindId, 'regelingen' | 'artikelen' | 'europees' | 'publicaties'>,
+	{ label: string; one: string; many: string }
+>;
 
 /**
  * The regulations whose Gelet op names the bron (group `based-on`) are a soort of their own,
@@ -83,7 +92,16 @@ export const SOORT_LABEL: Record<KindId, { label: string; one: string; many: str
 		label: 'Uitvoeringsregelingen',
 		one: 'uitvoeringsregeling',
 		many: 'uitvoeringsregelingen'
-	}
+	},
+	// What the laws of a bron are, each a soort of its own (T11: one group held Staatsbladen,
+	// regulations, acts of the EU and articles alike).
+	artikelen: { label: 'Artikelen', one: 'artikel', many: 'artikelen' },
+	europees: {
+		label: 'Europees en internationaal',
+		one: 'Europese of internationale bron',
+		many: 'Europese en internationale bronnen'
+	},
+	publicaties: { label: 'Publicaties', one: 'publicatie', many: 'publicaties' }
 };
 
 /** What the persons of a bron are: its Leden in a fractie or commissie, its Bewindspersonen in a kabinet. */
@@ -109,6 +127,9 @@ const ORDER: KindId[] = [
 	'documents',
 	'regelingen',
 	'laws',
+	'artikelen',
+	'europees',
+	'publicaties',
 	'dossiers',
 	'decisions',
 	'activities',
@@ -233,17 +254,21 @@ export function kindsOf(
 			: KIND_OF[key.split('/')[1] as Collection];
 	const order = ORDER_OF[selection] ?? ORDER;
 	const ranked = [...order, ...ORDER.filter((k) => !order.includes(k))];
-	return ranked.flatMap((id): Kind[] => {
+	const kinds = ranked.flatMap((id): Kind[] => {
 		const gs = byKind.get(id);
 		if (!gs) return [];
 		const fromGroups = gs.reduce((sum, g) => sum + groupCount(g), 0);
 		const fromBuckets = counted
 			.filter(([key]) => bucketKind(key) === id)
 			.reduce((sum, [, n]) => sum + n, 0);
-		const own = gs.some((g) => g.countsOwnRows) && !gs.some((g) => g.laden || g.failed);
-		const count = own ? fromGroups : Math.max(fromGroups, fromBuckets);
-		// The overview names the regulations themselves; those issued under them stand in the group.
-		const rows = kindRows(gs, id, selection).filter((r) => id !== REGULATIONS || !isNested(r));
+		// Once its groups are in, a soort counts what they hold: what "Alle" opens (T11: 184
+		// counted over a list of 56, the law's own articles and every edge to an act of the EU
+		// in the buckets). Until then the buckets stand for it.
+		const settled = !gs.some((g) => g.laden || g.failed);
+		const count = settled ? fromGroups : Math.max(fromGroups, fromBuckets);
+		// A regulation issued under another stands right under it; the overview names the
+		// regulations themselves (KindSummary), the opened soort all of them (T11: 13 counted, 7 shown).
+		const rows = kindRows(gs, id, selection);
 		const failed = gs.find((g) => g.failed && g.rows.length === 0);
 		if (count === 0 && rows.length === 0 && !failed) return [];
 		const label = id === 'members' ? membersLabel(selection) : SOORT_LABEL[id];
@@ -265,6 +290,84 @@ export function kindsOf(
 				partial: rows.length < count || gs.some((g) => g.capped),
 				failed: failed ? { error: failed.error, noun: failed.noun ?? null } : null,
 				collection: rows[0]?.ref.collection ?? collectionOfGroup(gs[0])
+			}
+		];
+	});
+	const split = kinds.flatMap((k) => (k.id === 'laws' ? splitLaws(k) : [k]));
+	return ranked.flatMap((id) => split.filter((k) => k.id === id));
+}
+
+/** The soort of the laws a row is: an article, an act of the EU or a treaty, a publication
+ *  of the Staatsblad or Staatscourant, else a law or a regulation. */
+function lawClass(row: Row): KindId {
+	const c = row.ref.collection;
+	if (c === 'articles' || c === 'annexes') return 'artikelen';
+	const p = (row.props ?? {}) as Record<string, unknown>;
+	if (p.publication_kind || /^(stb|stcrt|trb)[_-]/i.test(row.ref.key)) return 'publicaties';
+	if (p.celex || p.jurisdiction === 'eu' || /^celex|^\d{5}[a-z]\d{4}/i.test(row.ref.key))
+		return 'europees';
+	if (typeof p.kind === 'string' && /verdrag/i.test(p.kind)) return 'europees';
+	return 'laws';
+}
+
+/** The soort a group of laws holds mostly: its own (Europees en internationaal, the
+ *  publications that amend), else that of most of its rows. */
+function groupClass(g: Group): KindId {
+	if (g.id === 'international') return 'europees';
+	if (g.id === 'amended-by') return 'publicaties';
+	const tally = new Map<KindId, number>();
+	for (const r of g.rows) tally.set(lawClass(r), (tally.get(lawClass(r)) ?? 0) + 1);
+	return [...tally].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'laws';
+}
+
+/**
+ * The soort Wetten in its soorten (T11): Wetten en regelingen, Artikelen, Europees en
+ * internationaal, Publicaties. Each counts its rows; what a group holds beyond its rows
+ * counts with the soort it holds mostly. An act of the EU it implements comes first, then
+ * the newest; the others keep the order of their importance.
+ */
+function splitLaws(k: Kind): Kind[] {
+	const byClass = new Map<KindId, Row[]>();
+	for (const r of k.rows) byClass.set(lawClass(r), [...(byClass.get(lawClass(r)) ?? []), r]);
+	const rest = new Map<KindId, number>();
+	for (const g of k.groups) {
+		const more = Math.max(0, groupCount(g) - g.rows.length);
+		if (more) rest.set(groupClass(g), (rest.get(groupClass(g)) ?? 0) + more);
+	}
+	// What the buckets count beyond the groups stays with the laws.
+	const loaded = k.groups.reduce((sum, g) => sum + groupCount(g), 0);
+	const beyond = Math.max(0, k.count - Math.max(loaded, k.rows.length));
+	if (beyond) rest.set('laws', (rest.get('laws') ?? 0) + beyond);
+	const ids: KindId[] = ['laws', 'artikelen', 'europees', 'publicaties'];
+	return ids.flatMap((id): Kind[] => {
+		const rows0 = byClass.get(id) ?? [];
+		const count = rows0.length + (rest.get(id) ?? 0);
+		if (count === 0) return [];
+		const rows =
+			id === 'europees'
+				? [...rows0].sort(
+						(a, b) =>
+							Number(b.relation === 'IMPLEMENTS') - Number(a.relation === 'IMPLEMENTS') ||
+							(b.date ?? '').localeCompare(a.date ?? '')
+					)
+				: id === 'publicaties'
+					? [...rows0].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+					: rows0;
+		const label = SOORT_LABEL[id];
+		const groups = k.groups.filter(
+			(g) => groupClass(g) === id || g.rows.some((r) => lawClass(r) === id)
+		);
+		return [
+			{
+				...k,
+				id,
+				label: label.label,
+				count,
+				noun: plural(count, label.one, label.many),
+				rows,
+				groups,
+				partial: rows.length < count || groups.some((g) => g.capped),
+				collection: rows[0]?.ref.collection ?? k.collection
 			}
 		];
 	});

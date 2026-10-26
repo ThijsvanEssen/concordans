@@ -90,6 +90,44 @@ export const getBuckets = (
 		)
 	).then((results) => results.flatMap(neighborsOf));
 
+/** A page of a group's rows: fifty a bucket, never the whole at once (T11, A216). */
+export const BUCKET_PAGE = 50;
+
+/**
+ * The next page of each of `buckets`, from its offset: the rows and where the next page
+ * starts (`next_offset`, null at the end).
+ */
+export const getBucketPages = (
+	collection: Collection,
+	key: string,
+	buckets: { bucket: Bucket; offset: number }[],
+	signal?: AbortSignal,
+	edgeMeta?: 'passages'
+): Promise<{ items: Neighbor[]; next: (number | null)[] }> =>
+	Promise.all(
+		buckets.map(({ bucket: b, offset }) =>
+			getNodeGraph(collection, key, {
+				limit: BUCKET_PAGE,
+				offset: offset || undefined,
+				relations: [b.relation].flat().join(','),
+				nodeTypes: [b.collection]
+					.flat()
+					.map((c) => NODE_TYPES[c])
+					.join(','),
+				direction: b.direction,
+				signal,
+				edgeMeta
+			})
+		)
+	).then((results) => ({
+		items: results.flatMap(neighborsOf),
+		next: results.map((r) => {
+			const bs = r.neighbors.buckets ?? [];
+			const offsets = bs.map((x) => x.next_offset ?? null).filter((o): o is number => o != null);
+			return offsets.length ? Math.min(...offsets) : null;
+		})
+	}));
+
 /** The neighbours of a node response, whatever bucket they are in. */
 export const neighborsOf = (response: NodeGraph): Neighbor[] =>
 	response.neighbors.buckets?.flatMap((b) => b.items) ?? [];

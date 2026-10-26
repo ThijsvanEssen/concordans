@@ -8,11 +8,12 @@
 	import { openHref, refId } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
 	import { PREVIEW_ROWS } from './view';
-	import { ankerVanRij, caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
+	import { ankerVanRij, caseNumberOf, isNested, repeatedTitles, rowKey, type Row } from './rows';
 	import { shortLine, type Kind } from './summary';
 	import type { TierCount } from './tiers';
 	import VerbondenRow from './VerbondenRow.svelte';
@@ -25,6 +26,8 @@
 		tiersPending = false,
 		open = new Set<string>(),
 		kindTools,
+		hasMore = () => false,
+		onMore,
 		onOpen,
 		onRetry,
 		onProposedText,
@@ -42,6 +45,10 @@
 		open?: Set<string>;
 		/** What a soort opened in place shows over its rows: the order of the judgments. */
 		kindTools?: Snippet<[string]>;
+		/** Whether a soort opened in place has a further page of rows to ask. */
+		hasMore?: (id: string) => boolean;
+		/** Ask the next page of a soort's rows (fifty a bucket, T11). */
+		onMore?: (id: string) => void;
 		onOpen: (id: string) => void;
 		/** Ask a group whose rows did not come again. */
 		onRetry?: () => void;
@@ -58,6 +65,16 @@
 	});
 	const toggle = (row: Row) => (opened = opened === rowKey(row) ? null : rowKey(row));
 
+	/**
+	 * The count of a soort as its rows stand once every page of its own buckets is in: the
+	 * bronnen it lists, each once (T11: "Alle 13" listed 7). A loader's group keeps the API's
+	 * count: its pages are its own.
+	 */
+	const countOf = (k: Kind) =>
+		open.has(k.id) && !hasMore(k.id) && k.groups.every((g) => !g.load && !g.laden)
+			? k.rows.length
+			: k.count;
+
 	/** Whether the group of a row is read beside the selected bron (a judgment at its r.o.). */
 	const inPlace = (k: Kind, row: Row) =>
 		k.groups.some((g) => g.inPlace && g.rows.some((r) => refId(r.ref) === refId(row.ref)));
@@ -68,7 +85,7 @@
 	{@const repeated = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
-			<span>{k.label}</span><span class="kind__count">{formatCount(k.count)}</span>
+			<span>{k.label}</span><span class="kind__count">{formatCount(countOf(k))}</span>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
 			<TierBar parts={tiers} pending={tiersPending} />
@@ -83,9 +100,11 @@
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
 		<ul class="kind__rows">
-			{#each open.has(k.id) ? k.rows : k.rows.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
+			{#each open.has(k.id) ? k.rows : k.rows
+						.filter((r) => !isNested(r))
+						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 				{#if opened === rowKey(row)}
-					<li class="kind__open">
+					<li class="kind__open" class:kind__onder={isNested(row)}>
 						<ul class="rows">
 							<VerbondenRow
 								{row}
@@ -101,7 +120,7 @@
 						</ul>
 					</li>
 				{:else}
-					<li class="kind__row">
+					<li class="kind__row" class:kind__onder={isNested(row)}>
 						<a
 							class="kind__title"
 							href={openHref(row.ref, { at: ankerVanRij(row) })}
@@ -122,10 +141,23 @@
 				{/each}
 			{/each}
 		</ul>
+		<!-- Opened, the rows come a page at a time: how many of how many stand, and the next
+		     page one click further, never the whole at once (T11). -->
+		{#if open.has(k.id) && hasMore(k.id)}
+			<p class="kind__all kind__meer">
+				<span class="kind__stand">{formatCount(k.rows.length)} van {formatCount(k.count)}</span>
+				<TekstLink onclick={() => onMore?.(k.id)}>Meer laden</TekstLink>
+			</p>
+		{/if}
 		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
 		{#if k.count > PREVIEW_ROWS}
 			<p class="kind__all">
-				<AlleN aantal={k.count} noun={k.noun} open={open.has(k.id)} onclick={() => onOpen(k.id)} />
+				<AlleN
+					aantal={countOf(k)}
+					noun={k.noun}
+					open={open.has(k.id)}
+					onclick={() => onOpen(k.id)}
+				/>
 			</p>
 		{/if}
 	</section>
@@ -149,6 +181,14 @@
 		line-height: 24px;
 		color: var(--ink);
 	}
+	.kind__meer {
+		display: flex;
+		gap: var(--s-4);
+		align-items: baseline;
+	}
+	.kind__stand {
+		color: var(--ink-3);
+	}
 	.kind__count {
 		font-weight: 400;
 		color: var(--ink-3);
@@ -170,6 +210,10 @@
 	}
 	.kind__open {
 		margin: 0 calc(-1 * var(--s-4));
+	}
+	/* A regulation issued under the one above it. */
+	.kind__onder {
+		padding-left: var(--s-4);
 	}
 	.kind__title {
 		display: block;

@@ -150,8 +150,7 @@
 
 	/** A group opened and in view: from the network, or "Bekijk in Verbonden". */
 	function showGroup(id: string) {
-		const g = groepen.find((x) => x.id === id);
-		const kind = g ? kindOfGroup(g) : null;
+		const kind = kinds.find((k) => k.groups.some((g) => g.id === id))?.id;
 		if (onShowNetwork && kind) openKind(kind);
 		expanded = new Set([...expanded, id]);
 		// Once its rows are drawn: a smooth scroll is cut off while they render.
@@ -307,6 +306,9 @@
 	const overview = $derived(!!onShowNetwork && !filtering);
 	/** A soort opened in place with its rows, from "Alle N" or a circle of the network; again
 	 *  "Alle N" (Minder) closes it. */
+	/** The groups whose rows a soort shows: the laws hold several soorten (T11). */
+	const groupsOfKind = (id: string) =>
+		kinds.find((k) => k.id === id)?.groups ?? groepen.filter((g) => kindOfGroup(g) === id);
 	function openKind(id: string, toggle = false) {
 		if (toggle && openKinds.has(id)) {
 			openKinds = new Set([...openKinds].filter((k) => k !== id));
@@ -315,10 +317,11 @@
 		openKinds = new Set([...openKinds, id]);
 		// "Alle N" opens the soort with its rows at once, not its first rows and a second "Alle N"
 		// (R3-L F5): its groups open, the rest of their rows asked.
-		const groups = groepen.filter((g) => kindOfGroup(g) === id);
+		const groups = groupsOfKind(id);
 		expanded = new Set([...expanded, ...groups.map((g) => g.id)]);
+		// Its first page; what has a page more already waits for "Meer laden".
 		for (const g of groups)
-			if ((g.total ?? 0) > g.rows.length) onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
+			if (!verbonden.meer?.has(g.id)) onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
 		afterTick(() =>
 			root?.querySelector(`[data-kind="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'start' })
 		);
@@ -536,6 +539,12 @@
 				open={openKinds}
 				onOpen={(id) => openKind(id, true)}
 				{kindTools}
+				hasMore={(id) => groupsOfKind(id).some((g) => !!verbonden.meer?.has(g.id))}
+				onMore={(id) => {
+					for (const g of groupsOfKind(id))
+						if (verbonden.meer?.has(g.id))
+							onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
+				}}
 				{onRetry}
 				{onProposedText}
 				{onAddToNetwerk}

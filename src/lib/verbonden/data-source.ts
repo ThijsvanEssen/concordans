@@ -9,6 +9,7 @@ import { isAborted, report } from '$lib/api/errors';
 import {
 	bucketKey,
 	bucketTotals,
+	getBucketPages,
 	getBuckets,
 	lidCountsByCollection,
 	lidCountsOf,
@@ -90,6 +91,8 @@ export type VerbondenState = {
 	options: LoaderOptions;
 	/** What the API counts per bucket (`relation/collection/direction`): the counts per soort. */
 	buckets?: Map<string, number> | null;
+	/** The groups with a further page of rows (`groep` asks it): "Meer laden". */
+	meer?: ReadonlySet<string>;
 };
 
 type VerbondenSource = Readable<VerbondenState> & {
@@ -118,8 +121,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	const state = writable<VerbondenState>({ ...EMPTY, options });
 	/** What the API counts per bucket of the current bron (`bucketTotals`), as soon as known. */
 	let buckets: Map<string, number> | null = null;
-	const put = (st: Omit<VerbondenState, 'options' | 'buckets'>) =>
-		state.set({ ...st, options, buckets });
+	/** The groups with a further page: kept with every state. */
+	let meer = new Set<string>();
+	const put = (st: Omit<VerbondenState, 'options' | 'buckets' | 'meer'>) =>
+		state.set({ ...st, options, buckets, meer });
 	/** Runs the loader of a group of the current bron again; null before its groups stand. */
 	let rerun: ((id: string) => void) | null = null;
 	let controller: AbortController | null = null;
@@ -138,24 +143,54 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		signal: AbortSignal;
 		volledig: boolean;
 		geopend: Map<string, Promise<void>>;
+		/** Per group, where the next page of each of its buckets starts (null: at the end). */
+		paginas: Map<string, (number | null)[]>;
 	} | null = null;
 	let groups: Group[] = [];
 	// A loader's rest, asked when its group is opened, the table or an export (`Loaded.meer`).
 	const vervolg = new Map<string, () => Promise<Loaded>>();
+	// A loader's next page, asked by "Meer laden" (`Loaded.pagina`): never all at once (T11).
+	const paginaVan = new Map<string, () => Promise<Loaded>>();
+	const nogEen = (id: string, pagina: (() => Promise<Loaded>) | undefined) => {
+		if (pagina) paginaVan.set(id, pagina);
+		else paginaVan.delete(id);
+		if (pagina ? meer.has(id) : !meer.has(id)) return;
+		meer = new Set(meer);
+		if (pagina) meer.add(id);
+		else meer.delete(id);
+	};
+	const neemOver = (id: string, loaded: Loaded) => {
+		const { rows, total, mentions, years, courts, areas, cutBy, capped } = loaded;
+		groups = groups.map((g) =>
+			g.id === id
+				? { ...g, rows, total, mentions, years, courts, areas, cutBy, capped: !!capped }
+				: g
+		);
+		nogEen(id, loaded.pagina);
+		put({ ...get(state), groups });
+	};
+	const volgendePagina = (id: string): Promise<void> => {
+		const pagina = paginaVan.get(id);
+		if (!pagina) return Promise.resolve();
+		paginaVan.delete(id);
+		const b = basis;
+		return pagina()
+			.then((loaded) => {
+				if (b === basis) neemOver(id, loaded);
+			})
+			.catch((e) => {
+				report(`Verbonden ${id}, volgende pagina`, e);
+				if (b === basis) paginaVan.set(id, pagina);
+			});
+	};
 	const vervolgVan = (id: string): Promise<void> => {
 		const meer = vervolg.get(id);
 		if (!meer) return Promise.resolve();
 		vervolg.delete(id);
 		const b = basis;
 		return meer()
-			.then(({ rows, total, mentions, years, courts, areas, cutBy, capped }) => {
-				if (b !== basis) return;
-				groups = groups.map((g) =>
-					g.id === id
-						? { ...g, rows, total, mentions, years, courts, areas, cutBy, capped: !!capped }
-						: g
-				);
-				put({ ...get(state), groups });
+			.then((loaded) => {
+				if (b === basis) neemOver(id, loaded);
 			})
 			.catch((e) => {
 				report(`Verbonden ${id}, de rest`, e);
@@ -255,6 +290,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		wilVolledig = false;
 		groups = [];
 		vervolg.clear();
+		paginaVan.clear();
 		let lui = true;
 		// An article waits for its light node, to see whether the API counts its leden.
 		// Without it, from the full node.
@@ -287,8 +323,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					totals,
 					signal: ac.signal,
 					volledig: !lui,
-					geopend: new Map()
+					geopend: new Map(),
+					paginas: new Map()
 				};
+				meer = new Set();
 				groups = bouw(basis);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
 				// A loader whose buckets the node counts empty will bring nothing: no place for it.
@@ -363,11 +401,13 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 								areas,
 								cutBy,
 								judgmentsOf,
-								meer,
+								meer: rest,
+								pagina,
 								capped
 							}) => {
 								if (stale()) return;
-								if (meer) vervolg.set(id, meer);
+								if (rest) vervolg.set(id, rest);
+								nogEen(id, pagina);
 								groups = groups.map((g) => {
 									if (g.id === id)
 										return {
@@ -417,6 +457,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					const load = groups.find((g) => g.id === id)?.load;
 					if (!load) return;
 					vervolg.delete(id);
+					nogEen(id, undefined);
 					pending.add(id);
 					groups = groups.map((g) => (g.id === id ? { ...g, rows: [], failed: false } : g));
 					zet();
@@ -469,26 +510,42 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		destroy: () => controller?.abort()
 	};
 
-	/** A group's own buckets, all their rows (up to 200 each); with their passages where it shows them. */
+	/**
+	 * A group's own buckets, a page further each time (fifty a bucket, `BUCKET_PAGE`; never
+	 * the whole at once, T11): the first page, then the next while there is one. With their
+	 * passages where it shows them.
+	 */
 	function groep(id: string, zelfsVolledig = false): Promise<void> {
 		if (vervolg.has(id)) return vervolgVan(id);
+		if (paginaVan.has(id)) return volgendePagina(id);
 		const b = basis;
 		if (!b || (b.volledig && !zelfsVolledig)) return Promise.resolve();
 		const bezig = b.geopend.get(id);
 		if (bezig) return bezig;
 		const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
 		if (!def?.match) return Promise.resolve();
-		const klaar = getBuckets(
+		const vanaf = b.paginas.get(id) ?? def.match.map(() => 0);
+		const asks = def.match
+			.map((bucket, i) => ({ bucket, offset: vanaf[i], i }))
+			.filter((a): a is { bucket: typeof a.bucket; offset: number; i: number } => a.offset != null);
+		if (asks.length === 0) return Promise.resolve();
+		const klaar = getBucketPages(
 			b.collection,
 			b.key,
-			def.match,
+			asks,
 			b.signal,
 			def.passages ? 'passages' : undefined
 		)
-			.then((found) => {
+			.then(({ items, next }) => {
 				if (b !== basis) return;
+				const volgende = [...vanaf];
+				asks.forEach((a, j) => (volgende[a.i] = next[j]));
+				b.paginas.set(id, volgende);
+				meer = new Set(meer);
+				if (volgende.some((o) => o != null)) meer.add(id);
+				else meer.delete(id);
 				const seen = new Map(b.neighbors.map((n, i) => [neighborKey(n), i]));
-				for (const n of found) {
+				for (const n of items) {
 					const i = seen.get(neighborKey(n));
 					// A row the light node gave already takes its passages from this one.
 					if (i != null) {
@@ -502,7 +559,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			})
 			.catch((e) => {
 				report(`Verbonden ${id}, eigen bakken`, e);
-				// Asked again the next time.
+			})
+			.finally(() => {
 				if (b === basis) b.geopend.delete(id);
 			});
 		b.geopend.set(id, klaar);

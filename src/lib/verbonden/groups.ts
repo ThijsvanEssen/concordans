@@ -77,11 +77,6 @@ type GroupDef = {
 	/** A row opens beside the selected bron instead of replacing it. */
 	inPlace?: boolean;
 	/**
-	 * Its loader's rows are its count: the buckets of its soort add nothing (the Staatsblad of a
-	 * law is in the dossier's bucket of instruments, not a wet of its own).
-	 */
-	countsOwnRows?: boolean;
-	/**
 	 * The buckets a loader reads, where the light node counts them: a group whose buckets are
 	 * empty keeps no place while its loader runs, one that may have rows does (`wachtend`).
 	 */
@@ -205,8 +200,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'laws',
 			label: 'Wet uit dit dossier',
 			noun: 'wetten',
-			load: 'dossier-laws',
-			countsOwnRows: true
+			load: 'dossier-laws'
 		},
 		{
 			id: 'same-number',
@@ -396,6 +390,21 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Voorstellen die deze wet wijzigen',
 			noun: 'voorstellen',
 			load: 'instrument-proposals'
+		},
+		{
+			// The Kamerstukken that name the law (T11: 723 of them counted under Stukken, none
+			// listed): fifty at a time, as the API pages its bucket.
+			id: 'documents',
+			label: 'Kamerstukken die deze wet noemen',
+			noun: 'Kamerstukken',
+			match: [
+				{
+					relation: 'REFERS_TO',
+					direction: 'inbound',
+					collection: 'documents',
+					where: (n) => !isChangeRelation(n.relation)
+				}
+			]
 		},
 		{
 			id: 'aard',

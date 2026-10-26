@@ -4,7 +4,14 @@ import { plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
-import { hiddenByGroup, rowPasses, type FilterGroup, type VerbondenFilter } from './filter';
+import {
+	hiddenByGroup,
+	rechterOf,
+	rowPasses,
+	type Court,
+	type FilterGroup,
+	type VerbondenFilter
+} from './filter';
 import { atLeast, formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
@@ -274,4 +281,24 @@ export function yearHistogram(
 		const year = last - years + 1 + i;
 		return { year, count: counts.get(year) ?? 0 };
 	});
+}
+
+/**
+ * The judgments per rechter: as the API counts them over a group where it does (`courts`),
+ * else its rows. What the Filter offers: a rechter without judgments is no choice.
+ */
+export function rechterCounts(groups: Group[]): Partial<Record<Court, number>> {
+	const counts: Partial<Record<Court, number>> = {};
+	for (const g of groups) {
+		if (g.courts) {
+			for (const [c, n] of Object.entries(g.courts) as [Court, number][])
+				counts[c] = (counts[c] ?? 0) + n;
+			continue;
+		}
+		for (const r of g.rows) {
+			const c = rechterOf(r);
+			if (c) counts[c] = (counts[c] ?? 0) + 1;
+		}
+	}
+	return counts;
 }

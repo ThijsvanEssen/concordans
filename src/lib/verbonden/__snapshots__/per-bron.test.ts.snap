@@ -624,14 +624,14 @@ Aanpassingsbesluit vereenvoudiging en digitalisering procesrecht;Wetten;gebaseer
 Besluit buitengerechtelijke kosten;Wetten;gebaseerd op;art. 4:120 lid 2;;;vastgesteld;hoog;2009-07-01;in werking 1 jul. 2009;https://concordans.nl/wetten/BWBR0026012
 Besluit klachtencommissie vergunninghouders interlandelijke adoptie;Wetten;gebaseerd op;art. 9:13, 9:14;;;vastgesteld;hoog;2000-04-01;in werking 1 apr. 2000;https://concordans.nl/wetten/BWBR0011217
 Besluit proceskosten bestuursrecht;Wetten;gebaseerd op;art. 8:75;;;vastgesteld;hoog;1994-01-01;in werking 1 jan. 1994;https://concordans.nl/wetten/BWBR0006358
-Richtlijn 79/409/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31979L0409
 Richtlijn 92/43/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31992L0043
-Richtlijn 93/6/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31993L0006
-Richtlijn 94/63/EG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31994L0063
+Richtlijn 79/409/EEG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/31979L0409
+Richtlijn 2008/57/EG;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32008L0057
+Richtlijn (EU) 2018/1972;Europees en internationaal;implementeert;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32018L1972
+Richtlijn 2014/59/EU;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32014L0059
 Richtlijn 2000/31/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32000L0031
-Richtlijn 2002/47/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32002L0047
+Verordening (EU) nr. 648/2012;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32012R0648
 Richtlijn 2003/71/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32003L0071
-Richtlijn 2004/25/EG;Europees en internationaal;noemt;;;;vastgesteld;hoog;;;https://concordans.nl/wetten/32004L0025
 Stb. 2026, 94;Wetten;wijzigt;;;;vastgesteld;hoog;2026-06-04;;https://concordans.nl/stb/2026/94
 Stcrt. 2025, 39855;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stcrt/2025/39855
 Stb. 2025, 333;Wetten;wijzigt;;;;vastgesteld;hoog;2026-01-01;;https://concordans.nl/stb/2025/333
@@ -737,14 +737,14 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "label": "Europees en internationaal",
     "plaats": "verbonden",
     "rows": [
-      "instruments/31979l0409 | Richtlijn 79/409/EEG |  | uitvoeringsmaatregel Stb. 2005, 282 volgens EUR-Lex",
       "instruments/31992l0043 | Richtlijn 92/43/EEG |  | uitvoeringsmaatregel Stb. 2005, 282 volgens EUR-Lex",
-      "instruments/31993l0006 | Richtlijn 93/6/EEG |  | uitvoeringsmaatregel Stb. 1995, 250 volgens EUR-Lex",
-      "instruments/31994l0063 | Richtlijn 94/63/EG |  | uitvoeringsmaatregel Stb. 1995, 250 volgens EUR-Lex",
+      "instruments/31979l0409 | Richtlijn 79/409/EEG |  | uitvoeringsmaatregel Stb. 2005, 282 volgens EUR-Lex",
+      "instruments/32008l0057 | Richtlijn 2008/57/EG |  | uitvoeringsmaatregel Stb. 2009, 383 volgens EUR-Lex",
+      "instruments/32018l1972 | Richtlijn (EU) 2018/1972 |  | uitvoeringsmaatregel Stb. 1992, 315 en Stb. 2013, 102 volgens EUR-Lex",
+      "instruments/32014l0059 | Richtlijn 2014/59/EU | Genoemd | ",
       "instruments/32000l0031 | Richtlijn 2000/31/EG | Genoemd | ",
-      "instruments/32002l0047 | Richtlijn 2002/47/EG | Genoemd | ",
+      "instruments/32012r0648 | Verordening (EU) nr. 648/2012 | Genoemd | ",
       "instruments/32003l0071 | Richtlijn 2003/71/EG | Genoemd | ",
-      "instruments/32004l0025 | Richtlijn 2004/25/EG | Genoemd | ",
     ],
     "section": null,
   },
@@ -765,6 +765,14 @@ exports[`Verbonden of a 'wet' > keeps its groups, rows, kern and export > groups
     "count": "0",
     "id": "proposals",
     "label": "Voorstellen die deze wet wijzigen",
+    "plaats": "verbonden",
+    "rows": [],
+    "section": null,
+  },
+  {
+    "count": "0",
+    "id": "documents",
+    "label": "Kamerstukken die deze wet noemen",
     "plaats": "verbonden",
     "rows": [],
     "section": null,

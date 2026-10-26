@@ -174,6 +174,8 @@ export type Loaded = {
 	cutBy?: CutBy[];
 	/** The rest of the rows, asked when the group is opened, the table or an export. */
 	meer?: () => Promise<Loaded>;
+	/** The rows with a page more, asked by "Meer laden" only: where the API holds more. */
+	pagina?: () => Promise<Loaded>;
 	/** Rows are missing that the API has (a further page failed): no total, shown as `12+`. */
 	capped?: boolean;
 };
@@ -264,8 +266,12 @@ const JUDGMENTS_SHOWN = LAW_JUDGMENTS;
 
 /** The European and international links of a law read at once, per kind. */
 const EU_LINKS_SHOWN = 50;
+/** The most `eu-links` gives in one answer. */
+const EU_LINKS_MAX = 2000;
 /** The laws connected to a law by the references between their articles, read at once. */
 const RELATED_SHOWN = 50;
+/** The most `related-instruments` gives in one answer. */
+const RELATED_MAX = 500;
 
 /** The laws of a dossier whose own verbindingen are read for the international group. */
 const MAX_LAWS = 3;
@@ -700,7 +706,18 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: data.judgment_total,
 			mentions: data.total,
 			judgmentsOf,
-			...facets
+			...facets,
+			// A page of passages more by "Meer laden", where the API has judgments still (T11:
+			// 3.556 counted, 705 shown).
+			pagina:
+				items.length < data.total && judgments(items) < data.judgment_total
+					? async () => {
+							const next = await page(items.length);
+							return next.items.length
+								? loaded([...items, ...next.items])
+								: { ...loaded(items), pagina: undefined };
+						}
+					: undefined
 		});
 		const first = [...data.items];
 		const judgments = (items: typeof first) => new Set(items.map((item) => item.judgment.key)).size;
@@ -788,84 +805,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	},
 
 	// The European and international instruments of a law (`eu-links`).
-	'instrument-international': async ({ node, signal }) => {
-		const data = await ifExists(abortable(getEuLinks(node.key, EU_LINKS_SHOWN), signal));
-		if (!data) return { rows: [] };
-		const rows = new Map<string, Row>();
-		const add = (row: Row) => {
-			if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);
-		};
-		const implemented = data.implements ?? [];
-		// Which of the measures EUR-Lex names change this law: its AMENDS publications.
-		const bwb = bwbOf(node);
-		const amending =
-			bwb && implemented.some((link) => (link.via ?? []).length > 0)
-				? new Set((await abortable(getAmendedBy(bwb), signal)).items.map((d) => d.id))
-				: new Set<string>();
-		for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
-			const i = link.instrument;
-			add({
-				ref: { collection: 'instruments', key: i.key },
-				title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-				// The other way round (a directive and the laws that implement it), this law's
-				// AMENDS publications are not the ones to test: the measures stand as EUR-Lex has them.
-				context: implementationLine(
-					link,
-					implemented.includes(link) ? amending : new Set<string>()
-				),
-				filterGroup: 'internationaal',
-				derived: isDerived(link.confidence),
-				relation: 'IMPLEMENTS',
-				direction: implemented.includes(link) ? 'outbound' : 'inbound'
-			});
-		}
-		// An act the text names by its CELEX number without implementing it (API 0.67).
-		const mentions = data.mentions ?? [];
-		for (const link of [...mentions, ...(data.mentioned_by ?? [])]) {
-			const i = link.instrument;
-			add({
-				ref: { collection: 'instruments', key: i.key },
-				title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-				// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
-				context: null,
-				filterGroup: 'internationaal',
-				derived: isDerived(link.confidence),
-				relation: 'REFERS_TO',
-				direction: mentions.includes(link) ? 'outbound' : 'inbound'
-			});
-		}
-		for (const link of data.international ?? []) {
-			if (link.instrument) {
-				add({
-					ref: { collection: 'instruments', key: link.instrument.key },
-					title:
-						link.instrument.citation_title ??
-						link.instrument.title ??
-						naamVan('instruments', link.instrument),
-					context: null,
-					filterGroup: 'internationaal',
-					derived: isDerived(link.confidence)
-				});
-			} else if (link.judgment) {
-				const j = link.judgment;
-				add({
-					ref: { collection: 'judgments', key: j.key },
-					...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
-					filterGroup: 'internationaal',
-					derived: isDerived(link.confidence)
-				});
-			}
-		}
-		return {
-			rows: [...rows.values()],
-			total:
-				(data.implements_total ?? 0) +
-				(data.implemented_by_total ?? 0) +
-				(data.mentions_total ?? 0) +
-				(data.mentioned_by_total ?? 0) +
-				(data.international_total ?? 0)
-		};
-	},
+	'instrument-international': ({ node, signal }) => euLinks(node, signal, EU_LINKS_SHOWN),
 
 	// TODO(backend B7): the lid a judgment cites is not a field. Where the citation
 	// pipeline made a stub article `{law}_{article}_{lid}`, the lid is in the key; else it
@@ -1058,17 +998,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// The laws whose articles refer to this law's articles, or the other way round, which way
 	// counted on the row (`17 artikelen verwijzen naar deze wet`, hoe.ts). One issued under the
 	// other (`basis`) stands under Uitvoeringsregelingen or Grondslag, and not here again.
-	'instrument-related': async ({ node, signal }) => {
-		const bwb = bwbOf(node);
-		if (!bwb) return { rows: [] };
-		const found = await abortable(getRelatedInstruments(bwb, RELATED_SHOWN), signal);
-		const items = found.items.filter((i) => !i.basis);
-		const dit = ditVan(node.props);
-		return {
-			total: found.total - (found.items.length - items.length),
-			rows: items.map((i) => wetRijVanRelated(i, bwb, dit))
-		};
-	},
+	'instrument-related': ({ node, signal }) => relatedLaws(node, signal, RELATED_SHOWN),
 
 	'instrument-dossiers': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
@@ -1093,28 +1023,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 	},
 
-	'instrument-amended-by': async ({ node, signal }) => {
-		const bwb = bwbOf(node);
-		if (!bwb) return { rows: [] };
-		const found = await abortable(getAmendedBy(bwb), signal);
-		return {
-			total: found.total,
-			// An amending instrument is a publication (`instruments/stb_2026_94`), named by its
-			// display name: `Stb. 2026, 94`. Its identifier is its key, not a second name.
-			rows: found.items.slice(0, AMENDED_SHOWN).map((d) => ({
-				ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
-				title: d.display_name ?? d.identifier ?? naamVanId(d.id),
-				context: null,
-				filterGroup: 'wetten' as const,
-				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
-				date: d.first_effective_date ?? null,
-				// The publication that enacted the law: `Stelt vast` (relation-words.ts).
-				relation: (d.establishes ?? 0) > 0 ? ('ESTABLISHES' as const) : ('AMENDS' as const),
-				direction: 'inbound' as const,
-				edge: { establishes: d.establishes ?? 0 }
-			}))
-		};
-	},
+	'instrument-amended-by': ({ node, signal }) => amendingPublications(node, signal, AMENDED_SHOWN),
 
 	// The pending proposals to change this law, newest first (API 0.79.55): the same answer
 	// as the publications above, asked once.
@@ -1233,58 +1142,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The judgments that cite this law, each with the articles it cites; the total is the
 	// API's, where the node response stops at 30.
-	'instrument-judgments': async ({ node, signal, options }) => {
-		const bwb = bwbOf(node);
-		if (!bwb) return { rows: [] };
-		// One year of them where the bronfilter chooses one (BE-51): all of that year, not
-		// the year's share of the first page.
-		const found = await ifExists(
-			abortable(
-				getInstrumentJudgments(bwb, {
-					limit: JUDGMENTS_SHOWN,
-					sort: options.order,
-					year: options.year ? String(options.year) : undefined,
-					subject_area: options.area ?? undefined
-				}),
-				signal
-			)
-		);
-		if (!found) return { rows: [] };
-		return {
-			total: found.total,
-			// Every citing judgment per year (BE-47), not the page; the oldest first.
-			years: (found.facets?.year ?? [])
-				.filter((f) => f.value)
-				.map((f) => ({ year: Number(f.value), count: f.count })),
-			areas: areasOf(found.facets?.subject_area),
-			cutBy: found.facets?.year?.length ? ['jaar', 'area'] : undefined,
-			rows: found.items
-				.filter((j) => !isInternational({ key: j.key, props: {} }))
-				.map((j) => ({
-					ref: { collection: 'judgments' as const, key: j.key },
-					// The court and the day (API 0.73, BE-7), as every other row of a judgment.
-					...describeBron(
-						'judgments',
-						j.key,
-						j.display_name,
-						{
-							ecli: j.ecli,
-							court: j.court,
-							tier: j.tier,
-							court_kind: j.court_kind,
-							date: j.date,
-							advocate_general: j.advocate_general,
-							advocate_general_role: j.advocate_general_role
-						},
-						j.cite
-					),
-					context: citedLine(j.cited_articles ?? [], bwb),
-					filterGroup: 'uitspraken' as const,
-					relation: 'REFERS_TO' as const,
-					direction: 'inbound' as const
-				}))
-		};
-	},
+	'instrument-judgments': ({ node, signal, options }) => lawJudgments(node, signal, options, [], 0),
 
 	'member-dossiers': ({ node, signal }) => actorDossiers('members', node.key, signal),
 	'faction-dossiers': ({ node, signal }) => actorDossiers('factions', node.key, signal),
@@ -1326,3 +1184,229 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 	}
 };
+
+/**
+ * The European and international instruments of a law (`eu-links`), by importance: the
+ * first `limit`, and where the API has more, the next fifty by "Meer laden" (the endpoint
+ * pages by its limit only).
+ */
+async function euLinks(
+	node: LoaderContext['node'],
+	signal: AbortSignal,
+	limit: number
+): Promise<Loaded> {
+	const data = await ifExists(abortable(getEuLinks(node.key, limit, 'importance'), signal));
+	if (!data) return { rows: [] };
+	const rows = new Map<string, Row>();
+	const add = (row: Row) => {
+		if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);
+	};
+	const implemented = data.implements ?? [];
+	// Which of the measures EUR-Lex names change this law: its AMENDS publications.
+	const bwb = bwbOf(node);
+	const amending =
+		bwb && implemented.some((link) => (link.via ?? []).length > 0)
+			? new Set((await abortable(getAmendedBy(bwb), signal)).items.map((d) => d.id))
+			: new Set<string>();
+	for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
+		const i = link.instrument;
+		add({
+			ref: { collection: 'instruments', key: i.key },
+			title: i.citation_title ?? i.title ?? naamVan('instruments', i),
+			// The other way round (a directive and the laws that implement it), this law's
+			// AMENDS publications are not the ones to test: the measures stand as EUR-Lex has them.
+			context: implementationLine(link, implemented.includes(link) ? amending : new Set<string>()),
+			filterGroup: 'internationaal',
+			derived: isDerived(link.confidence),
+			relation: 'IMPLEMENTS',
+			direction: implemented.includes(link) ? 'outbound' : 'inbound'
+		});
+	}
+	// An act the text names by its CELEX number without implementing it (API 0.67).
+	const mentions = data.mentions ?? [];
+	for (const link of [...mentions, ...(data.mentioned_by ?? [])]) {
+		const i = link.instrument;
+		add({
+			ref: { collection: 'instruments', key: i.key },
+			title: i.citation_title ?? i.title ?? naamVan('instruments', i),
+			// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
+			context: null,
+			filterGroup: 'internationaal',
+			derived: isDerived(link.confidence),
+			relation: 'REFERS_TO',
+			direction: mentions.includes(link) ? 'outbound' : 'inbound'
+		});
+	}
+	for (const link of data.international ?? []) {
+		if (link.instrument) {
+			add({
+				ref: { collection: 'instruments', key: link.instrument.key },
+				title:
+					link.instrument.citation_title ??
+					link.instrument.title ??
+					naamVan('instruments', link.instrument),
+				context: null,
+				filterGroup: 'internationaal',
+				derived: isDerived(link.confidence)
+			});
+		} else if (link.judgment) {
+			const j = link.judgment;
+			add({
+				ref: { collection: 'judgments', key: j.key },
+				...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
+				filterGroup: 'internationaal',
+				derived: isDerived(link.confidence)
+			});
+		}
+	}
+	const total =
+		(data.implements_total ?? 0) +
+		(data.implemented_by_total ?? 0) +
+		(data.mentions_total ?? 0) +
+		(data.mentioned_by_total ?? 0) +
+		(data.international_total ?? 0);
+	const shown = [...rows.values()];
+	return {
+		rows: shown,
+		total,
+		pagina:
+			shown.length < total && limit < EU_LINKS_MAX
+				? () => euLinks(node, signal, Math.min(limit + EU_LINKS_SHOWN, EU_LINKS_MAX))
+				: undefined
+	};
+}
+
+/**
+ * The laws whose articles refer to this law's articles, or the other way round: the first
+ * `limit`, and the next fifty by "Meer laden" (the endpoint pages by its limit only).
+ */
+async function relatedLaws(
+	node: LoaderContext['node'],
+	signal: AbortSignal,
+	limit: number
+): Promise<Loaded> {
+	const bwb = bwbOf(node);
+	if (!bwb) return { rows: [] };
+	const found = await abortable(getRelatedInstruments(bwb, limit), signal);
+	const items = found.items.filter((i) => !i.basis);
+	const dit = ditVan(node.props);
+	return {
+		total: found.total - (found.items.length - items.length),
+		rows: items.map((i) => wetRijVanRelated(i, bwb, dit)),
+		pagina:
+			found.items.length < found.total && limit < RELATED_MAX
+				? () => relatedLaws(node, signal, Math.min(limit + RELATED_SHOWN, RELATED_MAX))
+				: undefined
+	};
+}
+
+/**
+ * The publications that amend a law (`/amended-by`, asked once whole): `shown` of them, and
+ * thirty more by "Meer laden". An amending instrument is a publication
+ * (`instruments/stb_2026_94`), named by its display name: `Stb. 2026, 94`. Its identifier is
+ * its key, not a second name.
+ */
+async function amendingPublications(
+	node: LoaderContext['node'],
+	signal: AbortSignal,
+	shown: number
+): Promise<Loaded> {
+	const bwb = bwbOf(node);
+	if (!bwb) return { rows: [] };
+	const found = await abortable(getAmendedBy(bwb), signal);
+	return {
+		total: found.total,
+		pagina:
+			found.items.length > shown
+				? () => amendingPublications(node, signal, shown + AMENDED_SHOWN)
+				: undefined,
+		rows: found.items.slice(0, shown).map((d) => ({
+			ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
+			title: d.display_name ?? d.identifier ?? naamVanId(d.id),
+			context: null,
+			filterGroup: 'wetten' as const,
+			identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
+			date: d.first_effective_date ?? null,
+			// The publication that enacted the law: `Stelt vast` (relation-words.ts).
+			relation: (d.establishes ?? 0) > 0 ? ('ESTABLISHES' as const) : ('AMENDS' as const),
+			direction: 'inbound' as const,
+			edge: { establishes: d.establishes ?? 0 }
+		}))
+	};
+}
+
+/**
+ * The judgments that cite a law, a page of them at a time: the first, and the next by "Meer
+ * laden" (offset), after the rows of the pages `before`.
+ */
+async function lawJudgments(
+	node: LoaderContext['node'],
+	signal: AbortSignal,
+	options: LoaderContext['options'],
+	before: Row[],
+	offset: number
+): Promise<Loaded> {
+	const bwb = bwbOf(node);
+	if (!bwb) return { rows: [] };
+	// One year of them where the bronfilter chooses one (BE-51): all of that year, not
+	// the year's share of the first page.
+	const found = await ifExists(
+		abortable(
+			getInstrumentJudgments(bwb, {
+				limit: JUDGMENTS_SHOWN,
+				offset: offset || undefined,
+				sort: options.order,
+				year: options.year ? String(options.year) : undefined,
+				subject_area: options.area ?? undefined
+			}),
+			signal
+		)
+	);
+	if (!found) return { rows: before };
+	const next = offset + found.items.length;
+	const rows = [
+		...before,
+		...found.items
+			.filter((j) => !isInternational({ key: j.key, props: {} }))
+			.map(
+				(j): Row => ({
+					ref: { collection: 'judgments' as const, key: j.key },
+					// The court and the day (API 0.73, BE-7), as every other row of a judgment.
+					...describeBron(
+						'judgments',
+						j.key,
+						j.display_name,
+						{
+							ecli: j.ecli,
+							court: j.court,
+							tier: j.tier,
+							court_kind: j.court_kind,
+							date: j.date,
+							advocate_general: j.advocate_general,
+							advocate_general_role: j.advocate_general_role
+						},
+						j.cite
+					),
+					context: citedLine(j.cited_articles ?? [], bwb),
+					filterGroup: 'uitspraken' as const,
+					relation: 'REFERS_TO' as const,
+					direction: 'inbound' as const
+				})
+			)
+	];
+	return {
+		total: found.total,
+		// The next page by "Meer laden", never the whole at once (T11).
+		pagina:
+			found.items.length > 0 && next < found.total
+				? () => lawJudgments(node, signal, options, rows, next)
+				: undefined,
+		// Every citing judgment per year (BE-47), not the page; the oldest first.
+		years: (found.facets?.year ?? [])
+			.filter((f) => f.value)
+			.map((f) => ({ year: Number(f.value), count: f.count })),
+		areas: areasOf(found.facets?.subject_area),
+		cutBy: found.facets?.year?.length ? ['jaar', 'area'] : undefined,
+		rows
+	};
+}

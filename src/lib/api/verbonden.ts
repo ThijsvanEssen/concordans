@@ -27,11 +27,18 @@ export const getDossiersOfNumber = (number: string) =>
 	);
 
 /** The European and international links of a law; `limit` per kind, all without one. */
-export const getEuLinks = (identifier: string, limit?: number) =>
-	once(`instruments/${identifier}/eu-links/${limit ?? ''}`, () =>
+export const getEuLinks = (
+	identifier: string,
+	limit?: number,
+	sort?: 'confidence' | 'importance'
+) =>
+	once(`instruments/${identifier}/eu-links/${limit ?? ''}/${sort ?? ''}`, () =>
 		unwrap(
 			api.GET('/api/instruments/{identifier}/eu-links', {
-				params: { path: { identifier }, query: limit ? { limit } : {} }
+				params: {
+					path: { identifier },
+					query: { ...(limit ? { limit } : {}), ...(sort ? { sort } : {}) }
+				}
 			})
 		)
 	);
@@ -109,7 +116,7 @@ export const getInstrumentJudgments = (
 	query: QueryOf<'/api/instruments/{bwb_id}/judgments'>
 ) =>
 	once(
-		`instruments/${bwbId}/judgments/${query.limit ?? ''}/${query.sort ?? ''}/${query.year ?? ''}/${query.subject_area ?? ''}`,
+		`instruments/${bwbId}/judgments/${query.limit ?? ''}/${query.offset ?? ''}/${query.sort ?? ''}/${query.year ?? ''}/${query.subject_area ?? ''}`,
 		() =>
 			unwrap(
 				api.GET('/api/instruments/{bwb_id}/judgments', {

@@ -29,7 +29,15 @@
 	} from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import type { Group } from './groups';
-	import { allRows, groupTotals, lidCounts, relationCounts, shownCount, totalCount } from './view';
+	import {
+		allRows,
+		groupTotals,
+		lidCounts,
+		rechterCounts,
+		relationCounts,
+		shownCount,
+		totalCount
+	} from './view';
 
 	let {
 		open,
@@ -96,6 +104,26 @@
 	}
 
 	const totals = $derived(groupTotals(groups));
+	const perRechter = $derived(rechterCounts(groups));
+	// Only what holds anything is offered (T11); what is chosen stays, to be undone.
+	const bronnenTeKiezen = $derived(
+		FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !!draft.bronnen?.has(k))
+	);
+	const rechtersTeKiezen = $derived(
+		RECHTERS.filter((r) => (perRechter[r.id] ?? 0) > 0 || draft.rechter === r.id)
+	);
+	const presetsTeKiezen = $derived(
+		PRESETS.filter(
+			(p) =>
+				activePreset(draft)?.id === p.id ||
+				p.bronnen === null ||
+				(p.rechter
+					? (perRechter[p.rechter] ?? 0) > 0
+					: p.bronnen.some((k) => (totals[k] ?? 0) > 0) &&
+						// Not the same as Alles: a preset that leaves nothing out is no choice.
+						FILTER_GROUPS.some((k) => (totals[k] ?? 0) > 0 && !p.bronnen?.includes(k)))
+		)
+	);
 	const relations = $derived(relationCounts(groups, selection));
 	const perLid = $derived(lidTellingen ?? lidCounts(allRows(groups)));
 	const lids = $derived(
@@ -223,7 +251,7 @@
 
 			<div class="block">
 				<div class="block__label">Snel</div>
-				{#each PRESETS as p (p.id)}
+				{#each presetsTeKiezen as p (p.id)}
 					<FilterOptie
 						label={p.label}
 						on={activePreset(draft)?.id === p.id}
@@ -234,14 +262,13 @@
 
 			<div class="block">
 				<div class="block__label">Bronnen</div>
-				{#each FILTER_GROUPS as k (k)}
+				{#each bronnenTeKiezen as k (k)}
 					{@const n = totals[k] ?? 0}
 					<FilterOptie
 						label={FILTER_GROUP_LABEL[k]}
 						on={isOn(k)}
 						onToggle={() => (draft = toggleFilterGroup(draft, k))}
 						count={n}
-						empty={n === 0}
 					>
 						{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
 					</FilterOptie>
@@ -289,16 +316,19 @@
 				</div>
 			{/if}
 
-			<div class="block">
-				<div class="block__label">Rechter</div>
-				{#each RECHTERS as r (r.id)}
-					<FilterOptie
-						label={r.label}
-						on={draft.rechter === r.id}
-						onToggle={() => (draft = { ...draft, rechter: draft.rechter === r.id ? null : r.id })}
-					/>
-				{/each}
-			</div>
+			{#if rechtersTeKiezen.length > 0}
+				<div class="block">
+					<div class="block__label">Rechter</div>
+					{#each rechtersTeKiezen as r (r.id)}
+						<FilterOptie
+							label={r.label}
+							count={perRechter[r.id] ?? 0}
+							on={draft.rechter === r.id}
+							onToggle={() => (draft = { ...draft, rechter: draft.rechter === r.id ? null : r.id })}
+						/>
+					{/each}
+				</div>
+			{/if}
 
 			{#if gebieden.length > 0}
 				<div class="block">

@@ -60,21 +60,22 @@ describe('the regulations issued under a law', () => {
 		const kinds = kindsOf(groups(), 'instruments', new Map());
 		expect(kinds.map((k) => [k.id, k.label, k.count])).toEqual([
 			['regelingen', 'Uitvoeringsregelingen', 2],
-			['laws', 'Wetten', 1]
+			['laws', 'Wetten en regelingen', 1]
 		]);
 		expect(kinds[0].noun).toBe('uitvoeringsregelingen');
 	});
 
-	it('show those issued under another in the group, not among the first of the overview', () => {
+	it('hold those issued under another right under it, as many rows as they count', () => {
 		const [regelingen] = kindsOf(groups(), 'instruments', new Map());
-		expect(regelingen.rows.map((r) => r.ref.key)).toEqual(['cbb']);
+		expect(regelingen.rows.map((r) => r.ref.key)).toEqual(['cbb', 'regeling']);
+		expect(regelingen.rows.length).toBe(regelingen.count);
 	});
 
 	it('say their kind and day in the overview', () => {
 		expect(shortLine(regulation('cbb')).replace(/\s/g, ' ')).toBe('AMvB, 15 aug. 2026');
 	});
 
-	it('take the buckets of the article they are based on out of the laws', () => {
+	it('count what their loader brings, not the edges of the bucket, once it is in', () => {
 		const buckets = new Map([[bucketKey('BASED_ON', 'instruments', 'inbound'), 5]]);
 		const g = buildGroups('articles', []).map((x) => ({
 			...x,
@@ -82,15 +83,19 @@ describe('the regulations issued under a law', () => {
 			total: x.id === 'based-on' ? 1 : 0
 		}));
 		const kinds = kindsOf(g, 'articles', buckets);
-		expect(kinds.map((k) => [k.id, k.count])).toEqual([['regelingen', 5]]);
+		expect(kinds.map((k) => [k.id, k.count])).toEqual([['regelingen', 1]]);
+		const laden = g.map((x) => (x.id === 'based-on' ? { ...x, laden: true } : x));
+		expect(kindsOf(laden, 'articles', buckets).map((k) => [k.id, k.count])).toEqual([
+			['regelingen', 5]
+		]);
 	});
 });
 
 describe('Verbonden at a glance', () => {
-	it('counts a soort over the whole, as the API counts its buckets, the kern left out', () => {
+	it('counts a soort over the whole, as its groups count their buckets, the kern left out', () => {
 		const groups = groupsOf(
 			{ judgments: [row('judgments', 'a')], documents: [row('documents', 'b')] },
-			{ judgments: 10394 }
+			{ judgments: 10394, documents: 132 }
 		);
 		const buckets = new Map([
 			[bucketKey('REFERS_TO', 'judgments', 'inbound'), 10394],
@@ -108,15 +113,18 @@ describe('Verbonden at a glance', () => {
 	});
 
 	it('counts the wetten of a dossier by its rows, not by the bucket that holds the Staatsblad too', () => {
+		const wet: Row = {
+			...row('articles', 'bwbr0049889'),
+			ref: { collection: 'instruments', key: 'bwbr0049889' }
+		};
 		const buckets = new Map([[bucketKey('LEGISLATED_IN', 'instruments', 'inbound'), 2]]);
 		const laws = (extra: Partial<Group>) =>
 			[
 				{
 					id: 'laws',
 					label: 'Wet',
-					rows: [row('articles', 'bwbr0049889')],
+					rows: [wet],
 					capped: false,
-					countsOwnRows: true,
 					...extra
 				}
 			] as Group[];
@@ -129,12 +137,18 @@ describe('Verbonden at a glance', () => {
 		const dossier = kindsOf(
 			[
 				{ id: 'd', label: 'D', rows: [row('documents', 'x')], total: 3, capped: false },
-				{ id: 'l', label: 'L', rows: [row('articles', 'y')], total: 1, capped: false }
+				{
+					id: 'l',
+					label: 'L',
+					rows: [{ ...row('articles', 'y'), ref: { collection: 'instruments', key: 'y' } }],
+					total: 1,
+					capped: false
+				}
 			] as Group[],
 			'dossiers',
 			null
 		);
-		expect(dossier.map((k) => k.label)).toEqual(['Wetten', 'Stukken']);
+		expect(dossier.map((k) => k.label)).toEqual(['Wetten en regelingen', 'Stukken']);
 	});
 
 	it('says a judgment by where and how often it is cited, a Kamerstuk by its kind and day', () => {
@@ -174,5 +188,54 @@ describe('Verbonden at a glance', () => {
 				.map((g) => `${c}/${g.id}`)
 		);
 		expect(loose).toEqual([]);
+	});
+});
+
+describe('the laws of a bron, each in its soort (T11)', () => {
+	const inst = (key: string, more: Partial<Row> = {}): Row => ({
+		ref: { collection: 'instruments', key },
+		title: key,
+		context: null,
+		filterGroup: 'wetten',
+		...more
+	});
+	const groups = (): Group[] =>
+		buildGroups('instruments', []).map((g) => ({
+			...g,
+			rows:
+				g.id === 'international'
+					? [
+							inst('32019l0001', { props: { celex: '32019L0001' }, date: '2019-01-01' }),
+							inst('32022l2555', {
+								props: { celex: '32022L2555' },
+								date: '2022-12-14',
+								relation: 'IMPLEMENTS'
+							}),
+							inst('32020r0001', { props: { celex: '32020R0001' }, date: '2020-01-01' })
+						]
+					: g.id === 'amended-by'
+						? [inst('stb_2026_94', { date: '2026-03-01' })]
+						: g.id === 'related'
+							? [
+									inst('bwbr0001'),
+									{ ...inst('a'), ref: { collection: 'articles', key: 'bwbr0001_1' } }
+								]
+							: [],
+			total: g.id === 'international' ? 71 : g.id === 'amended-by' ? 1 : g.id === 'related' ? 2 : 0
+		}));
+
+	it('splits the laws into Wetten en regelingen, Artikelen, Europees en internationaal and Publicaties', () => {
+		const kinds = kindsOf(groups(), 'instruments', new Map());
+		expect(kinds.map((k) => [k.label, k.count])).toEqual([
+			['Wetten en regelingen', 1],
+			['Artikelen', 1],
+			['Europees en internationaal', 71],
+			['Publicaties', 1]
+		]);
+	});
+
+	it('orders the acts of the EU by what the law implements, then the newest, not by CELEX', () => {
+		const eu = kindsOf(groups(), 'instruments', new Map()).find((k) => k.id === 'europees');
+		expect(eu?.rows.map((r) => r.ref.key)).toEqual(['32022l2555', '32020r0001', '32019l0001']);
 	});
 });
