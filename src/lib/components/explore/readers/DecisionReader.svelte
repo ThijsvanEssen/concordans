@@ -15,6 +15,8 @@
 	import { coalitionFactionsOf } from '$lib/components/parliamentary/coalitie';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
+	import { fromDocument } from '$lib/bron/submitters';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import Uitkomst from '$lib/components/parliamentary/Uitkomst.svelte';
 	import { outcomeTone } from '$lib/votes/vote-line';
@@ -51,8 +53,12 @@
 	const zonderDictum = $derived(
 		!!loaded && !loaded.dictum?.trim() && !isAdvicePaper(loaded.primary_document)
 	);
+	// A motie also asks it, for its indieners (`submitters` of the stuk).
+	const vraagtStuk = $derived(
+		zonderDictum || (!!loaded?.motion_kind && !isAdvicePaper(loaded.primary_document))
+	);
 	const tekst = load(
-		() => (zonderDictum ? node.key : null),
+		() => (vraagtStuk ? node.key : null),
 		(key) => (key ? getDecisionDocument(key) : Promise.resolve(null)),
 		'Stemmingstekst'
 	);
@@ -166,6 +172,9 @@
 					<p class="over__regel">
 						Over: <BronLink ref={{ collection: 'documents', key: p.key }}>{stukNaam(p)}</BronLink>
 					</p>
+					{#if doc?.submitters?.length}
+						<p class="over__regel"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
+					{/if}
 					{#if d.dictum?.trim()}
 						<p class="over__dictum">{d.dictum}</p>
 					{:else}
@@ -207,7 +216,7 @@
 			{#if chamber === 'EK'}
 				{@const groups = ekFactionGroups(d)}
 				{#if groups.length > 0}
-					<Sectie title="Fracties">
+					<Sectie title="Stemverdeling per fractie">
 						<dl class="ek-factions">
 							{#each groups as g (g.label)}
 								<dt>{g.label}</dt>

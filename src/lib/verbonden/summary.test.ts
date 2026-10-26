@@ -139,7 +139,7 @@ describe('Verbonden at a glance', () => {
 			[
 				{
 					id: 'dossiers',
-					label: 'Lopende dossiers',
+					label: 'Openstaande dossiers',
 					rows: [{ ...row('documents', 'd1'), ref: { collection: 'dossiers', key: 'd1' } } as Row],
 					total: 39,
 					capped: false,

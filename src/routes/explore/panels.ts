@@ -1,10 +1,9 @@
-// The three layers of a bron in the Verkenner, in one list: the tabs on a phone and in the
-// narrow read view, and the keys 1, 2 and 3 (Thijs, 10 Oct).
+// The two layers of a bron in the read view, in one list: the tabs on a phone and the keys
+// 1 and 2.
 
 export const PANELS = [
-	{ id: 'reader', label: 'Tekst', key: '1' },
-	{ id: 'graph', label: 'Netwerk', key: '2' },
-	{ id: 'verbonden', label: 'Verbonden', key: '3' }
+	{ id: 'tekst', label: 'Tekst', key: '1' },
+	{ id: 'verbonden', label: 'Verbonden', key: '2' }
 ] as const;
 
 export type Panel = (typeof PANELS)[number]['id'];
