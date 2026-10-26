@@ -198,4 +198,38 @@ describe('the keten of a law', () => {
 			['implementation', 'Implementatie']
 		]);
 	});
+
+	it('puts a wet that hangs under an article in the one layer Wet, with its articles and regelingen under it', () => {
+		const uhw = item('instruments/uhw', 'Uitvoeringswet huurprijzen woonruimte', 'wet', [
+			article('248', 'mentioned')
+		]);
+		uhw.sub_delegated = [
+			{
+				instrument: law('instruments/reg', 'Besluit huurprijzen'),
+				kind: 'amvb',
+				date_in_force: '2006-03-01',
+				expired_on: null,
+				basis_kind: 'delegates',
+				articles: [{ ...article('10'), id: 'articles/uhw_10', key: 'uhw_10' }]
+			}
+		] as never;
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Burgerlijk Wetboek Boek 7' },
+			{ bwb_id: 'BWBR0010346', total: 1, items: [uhw] } as never,
+			null
+		);
+		expect(k.layers.map((l) => l.id)).toEqual(['law', 'article', 'amvb']);
+		expect(k.layers.filter((l) => l.label === 'Wet')).toHaveLength(1);
+		expect(k.layers[0].nodes.map((n) => n.id)).toEqual([
+			'instruments/bwbr0010346',
+			'instruments/uhw'
+		]);
+		const [bw, ownArt] = k.layers[1].nodes;
+		expect(bw.parents).toEqual([
+			{ id: 'instruments/bwbr0010346', way: 'delegates' },
+			{ id: 'instruments/uhw', way: 'mentioned' }
+		]);
+		expect(ownArt.parents).toEqual([{ id: 'instruments/uhw', way: 'delegates' }]);
+		expect(k.layers[2].nodes[0].parents.map((p) => p.id)).toEqual(['articles/uhw_10']);
+	});
 });
