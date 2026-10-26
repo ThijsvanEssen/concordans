@@ -44,7 +44,8 @@ describe('what a failure means', () => {
 		expect(isSlow(status(429))).toBe(false);
 		const e = new E(429, '/api/x', null, 60);
 		expect(retryAt(e)).toBe(e.at + 60_000);
-		expect(retryAt(status(429))).toBe(status(429).at + 30_000);
+		const plain = status(429);
+		expect(retryAt(plain)).toBe(plain.at + 30_000);
 		expect(retryAfterOf('60')).toBe(60);
 		expect(retryAfterOf(null)).toBeNull();
 		expect(retryAfterOf(new Date(10_000).toUTCString(), 0)).toBe(10);
