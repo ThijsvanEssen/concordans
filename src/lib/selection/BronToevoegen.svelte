@@ -166,7 +166,7 @@
 			border-radius: 0;
 		}
 	}
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.toevoegen__toetsen {
 			display: none;
 		}
