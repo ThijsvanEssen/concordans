@@ -8,5 +8,6 @@
 	"/fracties": "/explore?mode=index&kind=factions",
 	"/commissies": "/explore?mode=index&kind=committees",
 	"/kabinetten": "/explore?mode=index&kind=cabinets",
+	"/ministeries": "/explore?mode=index&kind=ministries",
 	"/toezeggingen": "/explore?mode=index&kind=commitments"
 }

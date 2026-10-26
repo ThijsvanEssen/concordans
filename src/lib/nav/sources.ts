@@ -39,8 +39,9 @@ export const SOURCES: readonly Source[] = [
 		'factions',
 		'committees'
 	]),
-	source('regering', 'Regering', 'kabinetten, bewindspersonen, toezeggingen', [
+	source('regering', 'Regering', 'kabinetten, ministeries, bewindspersonen, toezeggingen', [
 		'cabinets',
+		'ministries',
 		'ministers',
 		'commitments'
 	])
@@ -91,6 +92,7 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
 	fracties: 'parlement',
 	commissies: 'parlement',
 	kabinetten: 'regering',
+	ministeries: 'regering',
 	toezeggingen: 'regering'
 };
 

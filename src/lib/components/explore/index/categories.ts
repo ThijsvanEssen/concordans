@@ -13,7 +13,7 @@ const INDEX_GROUPS = [
 	{ label: 'Recht', keys: ['instruments', 'judgments'] },
 	{ label: 'Parlementaire behandeling', keys: ['dossiers', 'decisions', 'documents'] },
 	{ label: 'Parlement', keys: ['members', 'factions', 'committees'] },
-	{ label: 'Regering', keys: ['cabinets', 'ministers', 'commitments'] }
+	{ label: 'Regering', keys: ['cabinets', 'ministries', 'ministers', 'commitments'] }
 ] as const satisfies readonly Group[];
 
 export type IndexCategory = (typeof INDEX_GROUPS)[number]['keys'][number];
@@ -57,6 +57,8 @@ const ABOUT: Record<IndexCategory, string> = {
 	factions: 'Fracties in de Tweede Kamer en de Eerste Kamer, met hun zetels en leden.',
 	committees: 'Commissies van de Tweede Kamer en de Eerste Kamer, met hun leden en activiteiten.',
 	cabinets: 'Kabinetten, met hun periode, coalitie en bewindspersonen.',
+	ministries:
+		'Ministeries, met hun periode en het ministerie dat hen opvolgde.',
 	ministers:
 		'Ministers en staatssecretarissen per kabinet en ministerie, met de dossiers die ze als bewindspersoon ondertekenden.',
 	commitments:

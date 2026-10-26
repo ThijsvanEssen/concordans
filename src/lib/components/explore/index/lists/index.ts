@@ -13,6 +13,7 @@ import { instruments } from './instruments';
 import { judgments } from './judgments';
 import { members } from './members';
 import { ministers } from './ministers';
+import { ministries } from './ministries';
 
 export const LISTS: Record<IndexCategory, IndexList> = {
 	instruments,
@@ -24,6 +25,7 @@ export const LISTS: Record<IndexCategory, IndexList> = {
 	factions,
 	committees,
 	cabinets,
+	ministries,
 	ministers,
 	commitments
 };
