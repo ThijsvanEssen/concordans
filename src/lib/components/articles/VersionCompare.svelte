@@ -19,9 +19,9 @@
 	import type { Schema } from '$lib/api/types';
 	import type { Citation } from '$lib/text/cite';
 	import { citationRecord } from '$lib/text/citation-record';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import Badge from './Badge.svelte';
 	import Marked from './Marked.svelte';
 	import TextCompare from './TextCompare.svelte';
@@ -455,17 +455,22 @@
 					{/each}
 				</ol>
 				<span class="pick__steps">
-					<IconButton
-						class="ab__vorige"
-						label="Vorige wijziging (←)"
-						disabled={prevChange === null}
-						onclick={() => prevChange !== null && showChange(prevChange)}><Caret side /></IconButton
-					>
-					<IconButton
-						label="Volgende wijziging (→)"
-						disabled={nextChange === null}
-						onclick={() => nextChange !== null && showChange(nextChange)}><Caret side /></IconButton
-					>
+					<IconButtonPaar
+						name="Wijzigingen"
+						value={adjacent ? `${newer.index} van ${last}` : undefined}
+						first={{
+							label: 'Vorige wijziging (←)',
+							onclick: () => prevChange !== null && showChange(prevChange),
+							disabled: prevChange === null,
+							sign: '‹'
+						}}
+						second={{
+							label: 'Volgende wijziging (→)',
+							onclick: () => nextChange !== null && showChange(nextChange),
+							disabled: nextChange === null,
+							sign: '›'
+						}}
+					/>
 				</span>
 			</div>
 
@@ -789,10 +794,6 @@
 		stroke-width: 1.4;
 		stroke-linecap: round;
 		stroke-linejoin: round;
-	}
-	/* The chevron points right; the previous change turns it round. */
-	:global(.ab__vorige .caret.is-side) {
-		transform: rotate(90deg);
 	}
 
 	/* A lid's history: what happened to it, and its text. */

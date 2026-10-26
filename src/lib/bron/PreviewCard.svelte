@@ -64,16 +64,17 @@
 		{onpointerenter}
 		{onpointerleave}
 		role="tooltip"
-		><span class="kicker">{card.kicker}{card.date ? `, ${card.date}` : ''}</span><span class="title"
-			>{card.title}</span
-		>{#if card.dossier}<span class="line">{card.dossier}</span>{/if}{#if card.wie}<span class="line"
-				>{card.wie}</span
-			>{/if}{#if card.uitslag}<span class="outcome">{card.uitslag}</span>{/if}{#if card.extra}<span
-				class="line">{card.extra}</span
-			>{/if}{#if card.lines}<span class="lines">{card.lines}</span>{/if}{#if readLabel && href}<a
-				class="verder"
-				{href}
-				data-sveltekit-noscroll>{readLabel}</a
+		><span class="kicker"
+			>{card.kicker}{card.date ? `, ${card.date}` : ''}{readLabel
+				? ''
+				: ', opent in de lezer'}</span
+		><span class="title">{card.title}</span>{#if card.dossier}<span class="line"
+				>{card.dossier}</span
+			>{/if}{#if card.wie}<span class="line">{card.wie}</span>{/if}{#if card.uitslag}<span
+				class="outcome">{card.uitslag}</span
+			>{/if}{#if card.extra}<span class="line">{card.extra}</span>{/if}{#if card.lines}<span
+				class="lines">{card.lines}</span
+			>{/if}{#if readLabel && href}<a class="verder" {href} data-sveltekit-noscroll>{readLabel}</a
 			>{/if}</FloatingCard
 	>{/if}
 

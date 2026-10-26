@@ -41,7 +41,7 @@ describe('an option of a filter', () => {
 		for (const part of ['.voor', '.aantal'])
 			expect(optie).toMatch(new RegExp(`\\n\\t\\${part} \\{[^}]*height: var\\(--regel\\);`));
 		expect(optie).toMatch(
-			/\.vinkje\) \{\s*margin-top: calc\(\(var\(--regel\) - var\(--s-3\)\) \/ 2\);/
+			/\.vinkje\) \{\s*margin-top: calc\(\(var\(--regel\) - var\(--vink\)\) \/ 2\);/
 		);
 	});
 });

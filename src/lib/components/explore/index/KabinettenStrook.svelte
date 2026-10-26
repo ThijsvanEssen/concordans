@@ -8,7 +8,7 @@
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import { pannable } from './pannable';
 	import { cabinetShortName, inOffice, type Cabinet } from './government';
@@ -112,14 +112,21 @@
 {#if periode}
 	<div class="strook">
 		<div class="tools">
-			<IconButton label="Uitzoomen" onclick={() => zoom(-1)} disabled={yearWidth === YEAR_WIDTHS[0]}
-				>−</IconButton
-			>
-			<IconButton
-				label="Inzoomen"
-				onclick={() => zoom(1)}
-				disabled={yearWidth === YEAR_WIDTHS.at(-1)}>+</IconButton
-			>
+			<IconButtonPaar
+				name="Zoom"
+				first={{
+					label: 'Uitzoomen',
+					onclick: () => zoom(-1),
+					disabled: yearWidth === YEAR_WIDTHS[0],
+					sign: '−'
+				}}
+				second={{
+					label: 'Inzoomen',
+					onclick: () => zoom(1),
+					disabled: yearWidth === YEAR_WIDTHS.at(-1),
+					sign: '+'
+				}}
+			/>
 		</div>
 		<div
 			class="scroll"

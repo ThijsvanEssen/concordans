@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The one icon button: 24 px, a frame, for +, ×, zoom and ⋯ (docs/bediening.md). It always
+	// The one icon button: 32 px (a finger's 44), a frame, for +, ×, zoom and ⋯ (docs/bediening.md). It always
 	// names what it does, for a screen reader and on hover.
 	import type { Snippet } from 'svelte';
 
@@ -21,7 +21,7 @@
 
 <button
 	type="button"
-	class="iconknop raakvlak-knop {className}"
+	class="iconknop {className}"
 	aria-label={label}
 	title={label}
 	{disabled}
@@ -33,14 +33,14 @@
 		flex: none;
 		display: inline-grid;
 		place-items: center;
-		width: var(--tik-h);
-		height: var(--tik-h);
+		width: var(--veld-h);
+		height: var(--veld-h);
 		padding: 0;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
 		font-family: var(--font-ui);
-		font-size: var(--t-ui);
+		font-size: var(--t-teken);
 		line-height: 1;
 		color: var(--ink-2);
 		cursor: pointer;
@@ -53,5 +53,12 @@
 	.iconknop:disabled {
 		color: var(--rule);
 		cursor: default;
+	}
+	@media (pointer: coarse), (max-width: 768px) {
+		.iconknop {
+			width: var(--veld-h-raak);
+			height: var(--veld-h-raak);
+			font-size: var(--t-teken-raak);
+		}
 	}
 </style>

@@ -39,6 +39,7 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import { vormVanBron } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import {
@@ -1117,9 +1118,12 @@
 <!-- Deel and the zoom, the same over the canvas and over a weergave of its own. -->
 {#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void, zoomen = true)}
 	{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
-	{#if zoomen}<div class="zoom" role="group" aria-label="Zoomen">
-			<IconButton label="Inzoomen" onclick={zoomIn}>+</IconButton>
-			<IconButton label="Uitzoomen" onclick={zoomOut}>−</IconButton>
+	{#if zoomen}<div class="zoom">
+			<IconButtonPaar
+				name="Zoom"
+				first={{ label: 'Uitzoomen', onclick: zoomOut, sign: '−' }}
+				second={{ label: 'Inzoomen', onclick: zoomIn, sign: '+' }}
+			/>
 			<IconButton label="Alles in beeld" onclick={all}>⤢</IconButton>
 		</div>{/if}
 {/snippet}
@@ -1638,10 +1642,8 @@
 		.strook--links :global(.fold-knop) {
 			min-height: var(--veld-h-raak);
 		}
-		.doek-balk :global(.btn),
-		.zoom :global(button) {
+		.doek-balk :global(.btn) {
 			min-width: var(--veld-h-raak);
-			height: var(--veld-h-raak);
 		}
 		.strook--links :global(.canvas-kaart__kop) {
 			display: none;
@@ -1740,7 +1742,7 @@
 	/* On a touch screen and below 768 the buttons stand a finger's 44 px apart: their targets do not meet. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.zoom {
-			gap: calc(var(--s-6) + var(--s-3) - var(--tik-h));
+			gap: var(--s-2);
 		}
 	}
 
