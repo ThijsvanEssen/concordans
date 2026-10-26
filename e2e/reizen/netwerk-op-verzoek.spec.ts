@@ -46,7 +46,10 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 	const figure = sketch(page);
 	// The judgments that cite 6:162 come per instantie, once their counts are in.
 	await expect(figure.getByRole('button', { name: /^[\d.]+ Hoge Raad$/ })).toBeAttached();
-	const singles = await figure.locator('a.single').count();
+	// The legend and the drawing stand from one state: the bronnen on their own are read from it.
+	await expect(figure.locator('figcaption')).toContainText('groepen');
+	const own = /([\d.]+) afzonderlijk/.exec(await figure.locator('figcaption').innerText());
+	const singles = own ? Number(own[1].replaceAll('.', '')) : 0;
 	const circles = figure.locator('g.cluster');
 	const groups = await circles.count();
 	expect(singles).toBeLessThanOrEqual(40);
@@ -65,7 +68,7 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 		new RegExp(`^${nl(singles + total)} verbindingen$`)
 	);
 	// No name is cut: each line of a name at most 24 characters, no "…".
-	const lines = await figure.locator('text.name tspan').allTextContents();
+	const lines = await figure.locator('g.cluster text.name tspan').allTextContents();
 	expect(lines.filter((n) => n.length > 24 || n.endsWith('…'))).toEqual([]);
 	// A circle opens its soort in place in the one view of Verbonden (A208e): Minder folds it.
 	await figure.getByRole('button', { name: /Stukken$/ }).click();
