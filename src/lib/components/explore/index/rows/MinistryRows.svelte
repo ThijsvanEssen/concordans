@@ -23,10 +23,10 @@
 		<IndexRow {bron} title={m.name} href={openHref(bron)} acties>
 			{#snippet lead()}
 				<span class="row-id-main">
-					{#if isCurrent(m)}
-						{since(m) ? `sinds ${since(m)}` : ''}
-					{:else}
-						tot {m.until?.slice(0, 4)}
+					{#if m.until}
+						tot {m.until.slice(0, 4)}
+					{:else if since(m)}
+						sinds {since(m)}
 					{/if}
 				</span>
 			{/snippet}

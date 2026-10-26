@@ -29,6 +29,19 @@ test('an abolished ministry names its last year and its successor', async ({ pag
 	);
 });
 
+test('a ministry without a TOOI code is abolished, with no year invented', async ({ page }) => {
+	await page.goto('/explore?mode=index&kind=ministries');
+	await expect(page.getByText('Scheepvaart', { exact: true })).toBeVisible();
+	const rows = await page.locator('ul.list > li').allTextContents();
+	const divider = rows.findIndex((t) => t.includes('Opgeheven ministeries'));
+	const scheepvaart = rows.findIndex(
+		(t) => t.startsWith('Scheepvaart') || t.includes('Scheepvaart')
+	);
+	expect(divider).toBeGreaterThanOrEqual(0);
+	expect(scheepvaart).toBeGreaterThan(divider);
+	expect(rows[scheepvaart]).not.toContain('tot ');
+});
+
 test('a row leads to the page of the ministry', async ({ page }) => {
 	await page.goto('/explore?mode=index&kind=ministries');
 	await page.getByRole('link', { name: 'Justitie en Veiligheid', exact: true }).first().click();

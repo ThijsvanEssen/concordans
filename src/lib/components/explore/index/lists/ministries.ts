@@ -4,8 +4,8 @@ import type { Ministry } from '../government';
 import MinistryRows from '../rows/MinistryRows.svelte';
 import { defineList, matches, sorted } from './list';
 
-/** Whether the ministry still has its name; one that was abolished has a last day. */
-export const isCurrent = (m: Ministry) => !m.until;
+/** A ministry that exists has a TOOI code and no last day; without a code it is abolished, dated or not. */
+export const isCurrent = (m: Ministry) => !!m.tooi && !m.until;
 
 export const ministries = defineList<Ministry, object, null>({
 	sorts: [
