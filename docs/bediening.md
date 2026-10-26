@@ -29,8 +29,8 @@ A choice shows in its control (in weight in the menu, as the value of the text m
 Every page and panel, from top to bottom:
 
 1. **Heading**: the title at the left, its actions at the right, at most three buttons (more in ⋯).
-2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken and Kamer where the list has them (Periode where the page has no bar of filters), each labelled above its left edge, all 32 px on one line; on a phone under each other. Nothing else.
-3. **Refine**: on a list page (Bladeren, Actueel, Zoeken) the bar of filters over the list (`explore/index/FilterBar.svelte`, besluit 40): a framed button per dimension, Periode the third, the rest under Meer from five on; each a menu of options with their counts (0 grey, a field to find one in a long list), a choice closes it. Under it the head line: the count and the chips of the filters chosen, Wissen from two. On a phone one button, Verfijnen (N), opens them as a sheet with folded groups and Toon. In a narrow panel behind one text menu or Filter.
+2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken where the list has it, Periode and Kamer where the page has no bar of filters, each labelled above its left edge, all 32 px on one line; on a phone under each other. Nothing else.
+3. **Refine**: on a list page (Bladeren, Actueel, Zoeken) the bar of filters over the list (`explore/index/FilterBar.svelte`, besluit 40): the Kamer first where the list has one, then a framed button per dimension, Periode the third, the rest under Meer from five on; each a menu of options with their counts (0 grey, a field to find one in a long list), a choice closes it. Under it the head line: the count and the chips of the filters chosen, Wissen from two. On a phone the Kamer stands over it on its own line, then one button, Verfijnen (N), opens them as a sheet with folded groups and Toon. In a narrow panel behind one text menu or Filter.
 4. **List**: a group's heading is its fold; at most one switch at its right (netwerk, named "Toon in het netwerk"); at most one line of controls under it (order, refine); one text link at the foot, Alle N.
 
 A row has no buttons of its own: a click on the row does it. Its actions (and a group heading's In het netwerk, for all its rows), Bewaar and In het netwerk, are icon buttons (`ui/RijActies.svelte`: a bookmark, the network with a +) that show on hover or focus of the row (`data-rij`), always on a phone at 32 px. At rest only the state shows: a filled bookmark when kept, the network when in the network. A box is for a choice in a filter, never for an action.
@@ -65,7 +65,7 @@ Two kinds of page, no third.
 
 ## Kamer
 
-Kamer is one choice, never a set of boxes: a Keuze in the choose-line under its label Kamer (Bepaalregel), on a phone under the period. Where both may stand, Beide | Tweede Kamer | Eerste Kamer, Beide filtering nothing (Actueel, the Overzicht); where one must, Tweede Kamer | Eerste Kamer (the halls, Bladeren's Kamerleden and Fracties).
+Kamer is one choice, never a set of boxes: a Keuze, the first of the bar of filters (FilterBar `chamber`, on a phone on its own line over Verfijnen, the width of the page, 44 px); on a page without one in the choose-line under its label Kamer (Bepaalregel), on a phone under the period. Where both may stand, Beide | Tweede Kamer | Eerste Kamer, Beide filtering nothing (Actueel, the Overzicht); where one must, Tweede Kamer | Eerste Kamer (the halls, Bladeren's Kamerleden and Fracties).
 
 ## Cards over the network
 

@@ -528,7 +528,7 @@
 
 	// ── Columns ─────────────────────────────────────────────────────────────
 	const columns = $derived(forParams(list.columns, p));
-	// The Kamer is a choice, not a filter: the first group of the filters, always one of the
+	// The Kamer is a choice, not a filter: the first of the bar of filters, always one of the
 	// two, and no chip above the list.
 	/** Another Kamer: its own list, without the filters that belonged to the other. */
 	const kiesKamer = (c: Chamber) =>
@@ -573,8 +573,8 @@
 			<div class="page blad">
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
 				<h1 class="sr-only">Bronnen: {categoryLabel(category)}</h1>
-				<!-- The choose-line (docs/bediening.md): the field of the list and its Kamer, over
-				     the filters and the list. -->
+				<!-- The choose-line (docs/bediening.md): the field of the list, over the filters and
+				     the list. -->
 				<div class="regel">
 					<Bepaalregel
 						zoek={{
@@ -583,13 +583,6 @@
 							naam: `Zoek in ${labelOf(category)}`,
 							onInput: typeQuery
 						}}
-						kamer={list.chamber
-							? {
-									waarde: kamer,
-									opties: CHAMBER_OPTIONS,
-									onKies: (c) => kiesKamer(c as Chamber)
-								}
-							: null}
 					/>
 				</div>
 
@@ -603,6 +596,13 @@
 				>
 					<FilterBar
 						groups={filters}
+						chamber={list.chamber
+							? {
+									value: kamer,
+									options: CHAMBER_OPTIONS,
+									onChoose: (c) => kiesKamer(c as Chamber)
+								}
+							: null}
 						pending={(!pages[category] && !error) || facettenLaden}
 						stale={facettenFout !== null}
 						show={showLabel}
@@ -1026,7 +1026,7 @@
 		}
 	}
 
-	/* The choose-line over the filters: the field and the Kamer, without rules. */
+	/* The choose-line over the filters: the field, without rules. */
 	.regel {
 		margin-bottom: var(--s-4);
 	}

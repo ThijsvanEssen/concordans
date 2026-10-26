@@ -7,8 +7,11 @@
 	// one head line: the count, and every filter chosen as a chip that takes it off; it is one
 	// control high, so nothing moves when the counts come. On a phone the row is one button,
 	// Verfijnen (n), that opens the filters as a sheet, its groups folded (A192), ending in Toon.
+	// The Kamer is a choice, not a filter: the first of the row, on a phone its own line over it, never a chip.
 	import type { Snippet } from 'svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import type { Option } from '$lib/components/ui/option';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
@@ -25,6 +28,7 @@
 
 	let {
 		groups,
+		chamber = null,
 		pending = false,
 		stale = false,
 		show,
@@ -36,6 +40,8 @@
 		between
 	}: {
 		groups: FacetGroup[];
+		/** The Kamer of the list, where it has one: the first of the row. */
+		chamber?: { value: string; options: Option[]; onChoose: (v: string) => void } | null;
 		/** The first answer is still on its way: no counts yet, rather than zeros. */
 		pending?: boolean;
 		/** The counts did not come for these filters. */
@@ -119,53 +125,65 @@
 {/snippet}
 
 <div class="filterbar">
-	<div class="row">
-		<span class="wide">
-			{#each layout.bar as b (b.id)}
-				{@const on = chosen(b).length > 0}
-				<TekstMenu label={b.label} tekst={words(b) || b.label} gekozen={on} breed>
-					{#snippet knop()}{@render face(b.label, on)}{/snippet}
-					{#snippet inhoud(done)}
-						<div class="menu">
-							<FacetMenu button={b} {pending} {stale} menu close={done} />
-						</div>
-					{/snippet}
-				</TekstMenu>
-			{/each}
-			{#if layout.more.length}
-				<TekstMenu
-					label="Meer"
-					tekst={layout.more
-						.map(words)
-						.filter((w) => w)
-						.join(', ') || 'Meer'}
-					gekozen={moreChosen}
-					breed
-				>
-					{#snippet knop()}{@render face('Meer', moreChosen)}{/snippet}
-					{#snippet inhoud(done)}
-						<div class="menu">
-							{#each layout.more as b (b.id)}
-								<div class="rest">
-									<FacetMenu button={b} {pending} {stale} menu heads folds close={done} />
-								</div>
-							{/each}
-						</div>
-					{/snippet}
-				</TekstMenu>
-			{/if}
-		</span>
-		{#if all.length}
-			<button
-				type="button"
-				class="btn narrow"
-				aria-haspopup="dialog"
-				aria-expanded={open}
-				bind:this={opener}
-				onclick={() => (open = true)}>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
-			>
+	<div class="line">
+		{#if chamber}
+			<span class="chamber">
+				<Keuze
+					label="Kamer"
+					waarde={chamber.value}
+					opties={chamber.options}
+					onSelect={chamber.onChoose}
+				/>
+			</span>
 		{/if}
-		{#if end}<span class="end">{@render end()}</span>{/if}
+		<div class="row">
+			<span class="wide">
+				{#each layout.bar as b (b.id)}
+					{@const on = chosen(b).length > 0}
+					<TekstMenu label={b.label} tekst={words(b) || b.label} gekozen={on} breed>
+						{#snippet knop()}{@render face(b.label, on)}{/snippet}
+						{#snippet inhoud(done)}
+							<div class="menu">
+								<FacetMenu button={b} {pending} {stale} menu close={done} />
+							</div>
+						{/snippet}
+					</TekstMenu>
+				{/each}
+				{#if layout.more.length}
+					<TekstMenu
+						label="Meer"
+						tekst={layout.more
+							.map(words)
+							.filter((w) => w)
+							.join(', ') || 'Meer'}
+						gekozen={moreChosen}
+						breed
+					>
+						{#snippet knop()}{@render face('Meer', moreChosen)}{/snippet}
+						{#snippet inhoud(done)}
+							<div class="menu">
+								{#each layout.more as b (b.id)}
+									<div class="rest">
+										<FacetMenu button={b} {pending} {stale} menu heads folds close={done} />
+									</div>
+								{/each}
+							</div>
+						{/snippet}
+					</TekstMenu>
+				{/if}
+			</span>
+			{#if all.length}
+				<button
+					type="button"
+					class="btn narrow"
+					aria-haspopup="dialog"
+					aria-expanded={open}
+					bind:this={opener}
+					onclick={() => (open = true)}>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
+				>
+			{/if}
+			{#if end}<span class="end">{@render end()}</span>{/if}
+		</div>
 	</div>
 
 	{@render between?.()}
@@ -227,13 +245,16 @@
 	.filterbar {
 		min-width: 0;
 	}
-	/* The row of buttons, the order at its right. */
-	.row {
+	/* The Kamer and the row of buttons on one line, the order at its right. */
+	.line {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--s-2);
 		margin: 0 0 var(--s-4);
+	}
+	.row {
+		display: contents;
 	}
 	.wide {
 		display: contents;
@@ -318,7 +339,29 @@
 		.narrow {
 			display: inline-flex;
 		}
+		/* On a phone the Kamer stands on its own line, the width of the page; the row under it
+		   stays at the top while the list scrolls. */
+		.line {
+			display: contents;
+		}
+		.chamber {
+			display: block;
+			margin-bottom: var(--s-3);
+		}
+		/* The width of the page, every option as wide; a finger's 44 px, as Verfijnen. */
+		.chamber :global(.keuze) {
+			display: flex;
+			height: var(--veld-h-raak);
+		}
+		.chamber :global(.keuze button) {
+			flex: 1 1 0;
+			justify-content: center;
+		}
 		.row {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: var(--s-2);
 			position: sticky;
 			top: var(--filterbar-top, var(--topbar-h));
 			z-index: var(--z-raised);

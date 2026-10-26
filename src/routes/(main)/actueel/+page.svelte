@@ -66,9 +66,9 @@
 		selectOptions,
 		type FacetGroup
 	} from '$lib/components/explore/index/facets';
-	// The filters as on every list page (FilterBar, besluit 40): the field and the Kamer on one
-	// line, the bar of filters over the list, the filters chosen as chips by the count; on a
-	// phone behind Verfijnen (N).
+	// The filters as on every list page (FilterBar, besluit 40): the field on one line, the bar
+	// of filters over the list with the Kamer first, the filters chosen as chips by the count; on
+	// a phone behind Verfijnen (N), the Kamer over it.
 	import { type Cabinet } from '$lib/components/explore/index/government';
 	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
@@ -695,7 +695,7 @@
 		</div>
 	</header>
 
-	<!-- The one line above the list: the page's field and the Kamer, nothing else. -->
+	<!-- The one line above the list: the page's field, nothing else. -->
 	<div class="regel">
 		<Bepaalregel
 			zoek={{
@@ -704,11 +704,6 @@
 				naam: 'Zoek in Actueel',
 				onInput: typeQuery
 			}}
-			kamer={{
-				waarde: chamber || BOTH_CHAMBERS,
-				opties: CHAMBER_CHOICES,
-				onKies: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
-			}}
 		/>
 	</div>
 
@@ -716,6 +711,11 @@
 	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
 		<FilterBar
 			{groups}
+			chamber={{
+				value: chamber || BOTH_CHAMBERS,
+				options: CHAMBER_CHOICES,
+				onChoose: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
+			}}
 			pending={tellen}
 			show={total === null
 				? 'Toon de gebeurtenissen'

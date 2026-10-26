@@ -12,6 +12,18 @@ describe('list pages and the feed', () => {
 		expect(lijsten.filter((p) => !bron(p).includes('<Bepaalregel'))).toEqual([]);
 	});
 
+	it('sets the Kamer of a page with a bar of filters first in that bar (docs/bediening.md, Kamer)', () => {
+		const metBalk = [
+			'lib/components/explore/IndexView.svelte',
+			'routes/(main)/actueel/+page.svelte'
+		];
+		for (const path of metBalk) {
+			const text = bron(path);
+			expect(text, path).toMatch(/<FilterBar[^>]*?chamber=/);
+			expect(text, path).not.toMatch(/<Bepaalregel[^>]*?kamer=/);
+		}
+	});
+
 	it('runs a line that sets the page over both columns, and keeps what belongs to the list in its column (besluit 29)', () => {
 		// docs/bediening.md, Layout: the choose-line of Gevolgd spans the frame; a bundel's
 		// research question is its content and stands over its groups, in the list column.
