@@ -1,38 +1,42 @@
 <script lang="ts">
 	// The period of a list as one line in words ("Alle jaren", "Sinds 2020", "1 jan 2024 tot
-	// 30 jun 2024") that opens a chooser: snelkeuzes, a van and tot, and where the list gives
+	// 30 jun 2024") that opens a chooser: quick choices, a van and tot, and where the list gives
 	// it the distribution per year with two handles (Design System, Periode). A popover under
 	// the line on a wide screen, a sheet from below on a phone. The same in every filter pane
 	// and first in it. Days as the URL and the API hold them; the rule is in docs/README.md.
-	import { afterTick } from '$lib/util/after-tick';
 	import { clickOutside, topLayer } from '$lib/actions/top-layer';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import {
-		FOUT_TOT_VOOR_VAN,
-		SNELKEUZEN,
-		leesGrens,
-		snelkeuzeVan,
-		veldTekst,
-		woorden
+		QUICK_CHOICES,
+		TO_BEFORE_FROM,
+		fieldText,
+		periodInWords,
+		quickChoiceOf,
+		readBound
 	} from '$lib/text/periode';
+	import { afterTick } from '$lib/util/after-tick';
+	import IconButton from './IconButton.svelte';
 	import {
-		BREED,
-		HOOG,
-		inPeriode,
-		jaarBij,
-		stapJaar,
-		staven,
-		type Verdeling
-	} from './periode-verdeling';
+		DRAW_HEIGHT,
+		DRAW_WIDTH,
+		bars,
+		inPeriod,
+		stepYear,
+		yearAt,
+		type Distribution
+	} from './period-distribution';
+	import TekstLink from './TekstLink.svelte';
+
+	type Side = 'van' | 'tot';
 
 	let {
 		from: van,
 		to: tot,
 		onChange,
 		label = 'Periode',
-		verdeling,
-		telt = 'Aantal'
+		distribution,
+		counts = 'Aantal'
 	}: {
 		from: string;
 		to: string;
@@ -40,315 +44,308 @@
 		/** The name of the chooser, for a screen reader. */
 		label?: string;
 		/** The count per year, where the list has it: bars, handles and the count in the period. */
-		verdeling?: Verdeling;
+		distribution?: Distribution;
 		/** What the distribution counts: `Uitspraken`. */
-		telt?: string;
+		counts?: string;
 	} = $props();
 
 	const uid = $props.id();
-	const dag = vandaag();
+	const today = vandaag();
 	let open = $state(false);
-	let knop = $state<HTMLButtonElement | null>(null);
-	let dialoog = $state<HTMLElement | null>(null);
-	let spoor = $state<HTMLElement | null>(null);
-	let tekstVan = $state('');
-	let tekstTot = $state('');
+	let button = $state<HTMLButtonElement | null>(null);
+	let dialog = $state<HTMLElement | null>(null);
+	let track = $state<HTMLElement | null>(null);
+	let typed = $state({ van: '', tot: '' });
 	/** The fields whose reading is shown: after leaving one, or Toepassen; not while typing. */
-	let gecontroleerd = $state({ van: false, tot: false });
+	let checked = $state({ van: false, tot: false });
 	let sheet = $state(false);
 
 	$effect(() => {
-		const mq = matchMedia('(max-width: 767px)');
+		const mq = matchMedia('(max-width: 768px)');
 		sheet = mq.matches;
 		const on = () => (sheet = mq.matches);
 		mq.addEventListener('change', on);
 		return () => mq.removeEventListener('change', on);
 	});
 
-	const wat = $derived(woorden(van, tot, dag));
-	const lees = $derived({ van: leesGrens(tekstVan, 'van'), tot: leesGrens(tekstTot, 'tot') });
-	const dagen = $derived({
-		van: 'dag' in lees.van ? lees.van.dag : van,
-		tot: 'dag' in lees.tot ? lees.tot.dag : tot
+	const words = $derived(periodInWords(van, tot, today));
+	const read = $derived({ van: readBound(typed.van, 'from'), tot: readBound(typed.tot, 'to') });
+	const days = $derived({
+		van: 'day' in read.van ? read.van.day : van,
+		tot: 'day' in read.tot ? read.tot.day : tot
 	});
-	const fouten = $derived({
-		van: 'fout' in lees.van ? lees.van.fout : '',
+	const errors = $derived({
+		van: 'error' in read.van ? read.van.error : '',
 		tot:
-			'fout' in lees.tot
-				? lees.tot.fout
-				: dagen.van && dagen.tot && dagen.tot < dagen.van
-					? FOUT_TOT_VOOR_VAN
+			'error' in read.tot
+				? read.tot.error
+				: days.van && days.tot && days.tot < days.van
+					? TO_BEFORE_FROM
 					: ''
 	});
-	const ongeldig = $derived({
-		van: gecontroleerd.van && !!fouten.van,
-		tot: gecontroleerd.tot && !!fouten.tot
+	const invalid = $derived({
+		van: checked.van && !!errors.van,
+		tot: checked.tot && !!errors.tot
 	});
-	const foutRegel = $derived((ongeldig.van && fouten.van) || (ongeldig.tot && fouten.tot) || '');
-	const snel = $derived(snelkeuzeVan(dagen.van, dagen.tot, dag));
+	const errorLine = $derived((invalid.van && errors.van) || (invalid.tot && errors.tot) || '');
+	const quick = $derived(quickChoiceOf(days.van, days.tot, today));
 
 	// The distribution and the handles on its years.
-	const jaren = $derived(
-		verdeling && verdeling.length > 1
-			? { min: verdeling[0].jaar, max: verdeling[verdeling.length - 1].jaar }
+	const span = $derived(
+		distribution && distribution.length > 1
+			? { min: distribution[0].year, max: distribution[distribution.length - 1].year }
 			: null
 	);
-	const jaarVan = $derived(
-		jaren ? clamp(dagen.van ? Number(dagen.van.slice(0, 4)) : jaren.min) : 0
-	);
-	const jaarTot = $derived(
-		jaren ? clamp(dagen.tot ? Number(dagen.tot.slice(0, 4)) : jaren.max) : 0
-	);
-	function clamp(y: number): number {
-		return jaren ? Math.min(jaren.max, Math.max(jaren.min, y)) : y;
-	}
-	const staafjes = $derived(verdeling && jaren ? staven(verdeling, jaarVan, jaarTot) : []);
-	const deel = (y: number) =>
-		jaren && jaren.max > jaren.min ? (y - jaren.min) / (jaren.max - jaren.min) : 0;
+	const clamp = (y: number) => (span ? Math.min(span.max, Math.max(span.min, y)) : y);
+	const year = $derived({
+		van: span ? clamp(days.van ? Number(days.van.slice(0, 4)) : span.min) : 0,
+		tot: span ? clamp(days.tot ? Number(days.tot.slice(0, 4)) : span.max) : 0
+	});
+	const drawn = $derived(distribution && span ? bars(distribution, year.van, year.tot) : []);
+	const place = (y: number) =>
+		span && span.max > span.min ? (y - span.min) / (span.max - span.min) : 0;
 
-	function openen() {
-		tekstVan = veldTekst(van, 'van');
-		tekstTot = veldTekst(tot, 'tot');
-		gecontroleerd = { van: false, tot: false };
+	function show() {
+		typed = { van: fieldText(van, 'from'), tot: fieldText(tot, 'to') };
+		checked = { van: false, tot: false };
 		open = true;
 		afterTick(() => {
-			const gekozen = dialoog?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]');
-			(gekozen ?? dialoog?.querySelector<HTMLElement>('input'))?.focus();
+			const chosen = dialog?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]');
+			(chosen ?? dialog?.querySelector<HTMLElement>('input'))?.focus();
 		});
 	}
-	function sluit(terug: boolean) {
+	function close(back: boolean) {
 		open = false;
-		if (terug) afterTick(() => knop?.focus());
+		if (back) afterTick(() => button?.focus());
 	}
 	$effect(() => {
 		if (!open) return;
 		return clickOutside(
-			() => [dialoog, knop],
-			() => sluit(false)
+			() => [dialog, button],
+			() => close(false)
 		);
 	});
 
-	function kiesSnel(s: (typeof SNELKEUZEN)[number]) {
-		tekstVan = veldTekst(s.van(dag), 'van');
-		tekstTot = '';
-		gecontroleerd = { van: false, tot: false };
+	function choose(c: (typeof QUICK_CHOICES)[number]) {
+		typed = { van: fieldText(c.from(today), 'from'), tot: '' };
+		checked = { van: false, tot: false };
 	}
-	function verlaat(kant: 'van' | 'tot') {
-		gecontroleerd[kant] = true;
-		const l = lees[kant];
-		if ('dag' in l) {
-			const t = veldTekst(l.dag, kant);
-			if (kant === 'van') tekstVan = t;
-			else tekstTot = t;
-		}
+	function leave(side: Side) {
+		checked[side] = true;
+		const r = read[side];
+		if ('day' in r) typed[side] = fieldText(r.day, side === 'van' ? 'from' : 'to');
 	}
-	function pas() {
-		gecontroleerd = { van: true, tot: true };
-		const eerste = fouten.van ? 'van' : fouten.tot ? 'tot' : null;
-		if (eerste) {
-			dialoog?.querySelector<HTMLElement>(`#${uid}-${eerste}`)?.focus();
+	function apply() {
+		checked = { van: true, tot: true };
+		const first = errors.van ? 'van' : errors.tot ? 'tot' : null;
+		if (first) {
+			dialog?.querySelector<HTMLElement>(`#${uid}-${first}`)?.focus();
 			return;
 		}
-		onChange(dagen.van, dagen.tot);
-		sluit(true);
+		onChange(days.van, days.tot);
+		close(true);
 	}
-	function wis() {
+	function clear() {
 		onChange('', '');
-		sluit(true);
+		close(true);
 	}
 
-	function zetJaar(kant: 'van' | 'tot', y: number) {
-		if (!jaren) return;
-		const j = kant === 'van' ? Math.min(y, jaarTot) : Math.max(y, jaarVan);
-		const rand = kant === 'van' ? j <= jaren.min : j >= jaren.max;
-		const t = rand ? '' : String(j);
-		if (kant === 'van') tekstVan = t;
-		else tekstTot = t;
-		gecontroleerd[kant] = false;
+	function setYear(side: Side, y: number) {
+		if (!span) return;
+		const j = side === 'van' ? Math.min(y, year.tot) : Math.max(y, year.van);
+		const edge = side === 'van' ? j <= span.min : j >= span.max;
+		typed[side] = edge ? '' : String(j);
+		checked[side] = false;
 	}
-	function greepToets(e: KeyboardEvent, kant: 'van' | 'tot') {
-		if (!jaren) return;
-		const nu = kant === 'van' ? jaarVan : jaarTot;
-		const volgend = stapJaar(e.key, nu, jaren.min, jaren.max);
-		if (volgend === null) return;
+	function handleKey(e: KeyboardEvent, side: Side) {
+		if (!span) return;
+		const next = stepYear(e.key, year[side], span.min, span.max);
+		if (next === null) return;
 		e.preventDefault();
-		zetJaar(kant, volgend);
+		setYear(side, next);
 	}
-	function sleep(e: PointerEvent, kant: 'van' | 'tot') {
+	function drag(e: PointerEvent, side: Side) {
 		const el = e.currentTarget as HTMLElement;
 		el.setPointerCapture(e.pointerId);
-		const naar = (ev: PointerEvent) => {
-			if (!spoor || !jaren) return;
-			const r = spoor.getBoundingClientRect();
-			zetJaar(kant, jaarBij((ev.clientX - r.left) / r.width, jaren.min, jaren.max));
+		const to = (ev: PointerEvent) => {
+			if (!track || !span) return;
+			const r = track.getBoundingClientRect();
+			setYear(side, yearAt((ev.clientX - r.left) / r.width, span.min, span.max));
 		};
 		const stop = () => {
-			el.removeEventListener('pointermove', naar);
+			el.removeEventListener('pointermove', to);
 			el.removeEventListener('pointerup', stop);
 			el.removeEventListener('pointercancel', stop);
 		};
-		el.addEventListener('pointermove', naar);
+		el.addEventListener('pointermove', to);
 		el.addEventListener('pointerup', stop);
 		el.addEventListener('pointercancel', stop);
 	}
 
-	const FOCUSBAAR = 'button:not([disabled]), input:not([disabled])';
-	/** The keys stay in the chooser: the menu or sheet round it must not take them. */
-	function toets(e: KeyboardEvent) {
-		e.stopPropagation();
-		if (e.key === 'Escape') {
+	const FOCUSABLE = 'button:not([disabled]), input:not([disabled])';
+	/** The Tab of a sheet goes round inside it. */
+	function trap(e: KeyboardEvent) {
+		if (!sheet || !dialog) return;
+		const els = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)];
+		const [first, last] = [els[0], els.at(-1)];
+		const at = document.activeElement;
+		if (e.shiftKey && at === first) {
 			e.preventDefault();
-			sluit(true);
-		} else if (e.key === 'Tab' && sheet && dialoog) {
-			const els = [...dialoog.querySelectorAll<HTMLElement>(FOCUSBAAR)];
-			const [eerste, laatste] = [els[0], els.at(-1)];
-			const at = document.activeElement;
-			if (e.shiftKey && at === eerste) {
-				e.preventDefault();
-				laatste?.focus();
-			} else if (!e.shiftKey && at === laatste) {
-				e.preventDefault();
-				eerste?.focus();
-			}
-		} else {
-			const at = e.target as HTMLElement;
-			if (at.matches('[role="slider"]')) greepToets(e, at.dataset.kant as 'van' | 'tot');
-			else if (at.matches('[role="radio"]')) snelToets(e, Number(at.dataset.i));
-			else if (at.matches('input')) veldToets(e);
+			last?.focus();
+		} else if (!e.shiftKey && at === last) {
+			e.preventDefault();
+			first?.focus();
 		}
 	}
-	function snelToets(e: KeyboardEvent, i: number) {
-		const stap = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-		if (!stap) return;
+	function radioKey(e: KeyboardEvent, i: number) {
+		const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+		if (!step) return;
 		e.preventDefault();
-		const n = SNELKEUZEN.length;
-		const s = SNELKEUZEN[(i + stap + n) % n];
-		kiesSnel(s);
-		afterTick(() => dialoog?.querySelector<HTMLElement>(`#${uid}-s-${s.id}`)?.focus());
+		const n = QUICK_CHOICES.length;
+		const c = QUICK_CHOICES[(i + step + n) % n];
+		choose(c);
+		afterTick(() => dialog?.querySelector<HTMLElement>(`#${uid}-s-${c.id}`)?.focus());
+	}
+	/** The keys stay in the chooser: the menu or sheet round it must not take them. */
+	function keys(e: KeyboardEvent) {
+		e.stopPropagation();
+		const at = e.target as HTMLElement;
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			close(true);
+		} else if (e.key === 'Tab') trap(e);
+		else if (at.matches('[role="slider"]')) handleKey(e, at.dataset.side as Side);
+		else if (at.matches('[role="radio"]')) radioKey(e, Number(at.dataset.i));
+		else if (at.matches('input') && e.key === 'Enter') {
+			e.preventDefault();
+			apply();
+		}
 	}
 	/** On the box itself, not delegated: a menu round it listens there, and must not get the keys. */
-	function houdToetsen(node: HTMLElement) {
-		node.addEventListener('keydown', toets);
-		return { destroy: () => node.removeEventListener('keydown', toets) };
-	}
-	function veldToets(e: KeyboardEvent) {
-		if (e.key !== 'Enter') return;
-		e.preventDefault();
-		pas();
+	function keepKeys(node: HTMLElement) {
+		node.addEventListener('keydown', keys);
+		return { destroy: () => node.removeEventListener('keydown', keys) };
 	}
 </script>
 
-{#snippet inhoud()}
+{#snippet content()}
 	<div>
-		<p class="kop" id="{uid}-snel">Snelkeuze</p>
+		<p class="veld-kop" id="{uid}-snel">Snelkeuze</p>
 		<div class="snel" role="radiogroup" aria-labelledby="{uid}-snel">
-			{#each SNELKEUZEN as s, i (s.id)}
+			{#each QUICK_CHOICES as c, i (c.id)}
 				<button
 					type="button"
+					class="btn"
 					role="radio"
-					id="{uid}-s-{s.id}"
-					aria-checked={snel === s.id}
-					tabindex={snel === s.id || (snel === null && i === 0) ? 0 : -1}
-					onclick={() => kiesSnel(s)}
-					data-i={i}>{s.label}</button
+					id="{uid}-s-{c.id}"
+					aria-checked={quick === c.id}
+					tabindex={quick === c.id || (quick === null && i === 0) ? 0 : -1}
+					data-i={i}
+					onclick={() => choose(c)}>{c.label}</button
 				>
 			{/each}
 		</div>
 	</div>
-	{#if verdeling && jaren}
+	{#if distribution && span}
 		<div class="bereik">
-			<p class="kop rijkop">
-				<span>{telt} per jaar</span>
-				<span>{formatCount(inPeriode(verdeling, jaarVan, jaarTot))} in de periode</span>
+			<p class="veld-kop rijkop">
+				<span>{counts} per jaar</span>
+				<span>{formatCount(inPeriod(distribution, year.van, year.tot))} in de periode</span>
 			</p>
 			<svg
 				class="verdeling"
-				viewBox="0 0 {BREED} {HOOG}"
+				viewBox="0 0 {DRAW_WIDTH} {DRAW_HEIGHT}"
 				preserveAspectRatio="none"
 				aria-hidden="true"
 			>
-				{#each staafjes as s, i (i)}
-					<rect class:uit={!s.binnen} x={s.x} y={s.y} width={s.breed} height={s.hoog} />
+				{#each drawn as b, i (i)}
+					<rect class:uit={!b.inside} x={b.x} y={b.y} width={b.width} height={b.height} />
 				{/each}
 			</svg>
-			<div class="spoor" bind:this={spoor}>
-				<span class="tussen" style="left:{deel(jaarVan) * 100}%;right:{(1 - deel(jaarTot)) * 100}%"
+			<div class="spoor" bind:this={track}>
+				<span
+					class="tussen"
+					style="left:{place(year.van) * 100}%;right:{(1 - place(year.tot)) * 100}%"
 				></span>
-				{#each [{ kant: 'van', naam: 'Van', nu: jaarVan }, { kant: 'tot', naam: 'Tot', nu: jaarTot }] as g (g.kant)}
+				{#each [{ side: 'van', name: 'Van' }, { side: 'tot', name: 'Tot' }] as g (g.side)}
 					<button
 						type="button"
 						class="greep"
 						role="slider"
-						aria-label={g.naam}
-						aria-valuemin={jaren.min}
-						aria-valuemax={jaren.max}
-						aria-valuenow={g.nu}
-						aria-valuetext={g.kant === 'tot' && !dagen.tot ? 'nu' : undefined}
-						style="left:{deel(g.nu) * 100}%"
-						data-kant={g.kant}
-						onpointerdown={(e) => sleep(e, g.kant as 'van' | 'tot')}
+						aria-label={g.name}
+						aria-valuemin={span.min}
+						aria-valuemax={span.max}
+						aria-valuenow={year[g.side as Side]}
+						aria-valuetext={g.side === 'tot' && !days.tot ? 'nu' : undefined}
+						style="left:{place(year[g.side as Side]) * 100}%"
+						data-side={g.side}
+						onpointerdown={(e) => drag(e, g.side as Side)}
 					></button>
 				{/each}
 			</div>
-			<div class="as" aria-hidden="true"><span>{jaren.min}</span><span>{jaren.max}</span></div>
+			<div class="veld-kop as" aria-hidden="true">
+				<span>{span.min}</span><span>{span.max}</span>
+			</div>
 		</div>
 	{/if}
 	<div class="velden">
 		<label for="{uid}-van">van</label>
 		<input
 			id="{uid}-van"
-			class="veld"
 			autocomplete="off"
 			placeholder="begin"
-			bind:value={tekstVan}
-			aria-invalid={ongeldig.van}
-			aria-describedby={ongeldig.van ? `${uid}-fout` : undefined}
-			oninput={() => (gecontroleerd.van = false)}
-			onblur={() => verlaat('van')}
+			bind:value={typed.van}
+			aria-invalid={invalid.van}
+			aria-describedby={invalid.van ? `${uid}-fout` : undefined}
+			oninput={() => {
+				checked.van = false;
+			}}
+			onblur={() => leave('van')}
 		/>
 		<label for="{uid}-tot">tot</label>
 		<input
 			id="{uid}-tot"
-			class="veld"
 			autocomplete="off"
 			placeholder="nu"
-			bind:value={tekstTot}
-			aria-invalid={ongeldig.tot}
-			aria-describedby={ongeldig.tot ? `${uid}-fout` : undefined}
-			oninput={() => (gecontroleerd.tot = false)}
-			onblur={() => verlaat('tot')}
+			bind:value={typed.tot}
+			aria-invalid={invalid.tot}
+			aria-describedby={invalid.tot ? `${uid}-fout` : undefined}
+			oninput={() => {
+				checked.tot = false;
+			}}
+			onblur={() => leave('tot')}
 		/>
 	</div>
-	{#if foutRegel}<p class="fout" id="{uid}-fout">{foutRegel}</p>{/if}
+	{#if errorLine}<p class="fout" id="{uid}-fout">{errorLine}</p>{/if}
 	<div class="voet">
-		<button type="button" class="tekst" onclick={wis}>Wissen</button>
-		<button type="button" class="btn is-primary" onclick={pas}>Toepassen</button>
+		<TekstLink onclick={clear}>Wissen</TekstLink>
+		<button type="button" class="btn is-primary" onclick={apply}>Toepassen</button>
 	</div>
 {/snippet}
 
 <div class="periode">
 	<button
 		type="button"
-		class="trigger"
-		bind:this={knop}
+		class="btn trigger"
+		bind:this={button}
 		aria-haspopup="dialog"
 		aria-expanded={open}
-		aria-label="{wat} Wijzig"
-		onclick={() => (open ? sluit(true) : openen())}
+		aria-label="{words} Wijzig"
+		onclick={() => (open ? close(true) : show())}
 	>
-		<span class="wat">{wat}</span><span class="wijzig" aria-hidden="true">Wijzig</span>
+		<span class="wat">{words}</span><span class="wijzig" aria-hidden="true">Wijzig</span>
 	</button>
-	{#if open && knop && !sheet}
+	{#if open && button && !sheet}
 		<div
 			class="tekstmenu__lijst pop"
 			role="dialog"
 			aria-label={label}
 			tabindex="-1"
-			bind:this={dialoog}
-			use:topLayer={{ anchor: knop, close: () => sluit(false) }}
-			use:houdToetsen
+			bind:this={dialog}
+			use:topLayer={{ anchor: button, close: () => close(false) }}
+			use:keepKeys
 		>
-			{@render inhoud()}
+			{@render content()}
 		</div>
 	{/if}
 	{#if open && sheet}
@@ -359,17 +356,15 @@
 				aria-modal="true"
 				aria-labelledby="{uid}-kop"
 				tabindex="-1"
-				bind:this={dialoog}
-				use:houdToetsen
+				bind:this={dialog}
+				use:keepKeys
 			>
 				<div class="greepje" aria-hidden="true"></div>
 				<div class="sheetkop">
-					<h3 id="{uid}-kop">{label}</h3>
-					<button type="button" class="sluit" aria-label="Sluiten" onclick={() => sluit(true)}
-						>×</button
-					>
+					<h3 class="veld-kop" id="{uid}-kop">{label}</h3>
+					<IconButton label="Sluiten" onclick={() => close(true)}>×</IconButton>
 				</div>
-				{@render inhoud()}
+				{@render content()}
 			</div>
 		</div>
 	{/if}
@@ -380,28 +375,14 @@
 		display: flex;
 		min-width: 0;
 	}
-	/* In rest: one button over the column, the period in words and "Wijzig" at its right. */
+	/* In rest: one button over the column, the period in words and "Wijzig" at its right. On a
+	   touch screen it keeps the desktop letter, so a long period still fits its column. */
 	.trigger {
 		flex: 1;
 		min-width: 0;
-		display: flex;
-		align-items: center;
 		justify-content: space-between;
-		gap: var(--s-2);
-		box-sizing: border-box;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
 		text-align: left;
 	}
-	.trigger:hover,
 	.trigger[aria-expanded='true'] {
 		background: var(--paper-2);
 	}
@@ -416,6 +397,12 @@
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: var(--underline-offset);
+	}
+	@media (pointer: coarse), (max-width: 768px) {
+		.trigger {
+			font-size: var(--t-ui);
+			padding-inline: var(--s-3);
+		}
 	}
 	:is(button, input):focus-visible {
 		outline: 2px solid var(--focus);
@@ -435,10 +422,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
-		font-family: var(--font-ui);
 	}
-	.kop {
+	.veld-kop {
 		margin: 0 0 var(--s-2);
+		font-family: var(--font-ui);
 		font-size: var(--t-label);
 		font-weight: 500;
 		line-height: 16px;
@@ -454,25 +441,7 @@
 		flex-wrap: wrap;
 		gap: var(--s-2);
 	}
-	.snel button,
-	.tekst,
-	.voet .btn {
-		box-sizing: border-box;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.snel button:hover {
-		background: var(--paper-2);
-	}
-	.snel button[aria-checked='true'] {
+	.snel .btn[aria-checked='true'] {
 		background: var(--paper-2);
 		box-shadow: inset 0 -2px 0 var(--ink);
 	}
@@ -482,6 +451,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
+	}
+	.bereik .veld-kop {
+		margin: 0;
 	}
 	.verdeling {
 		display: block;
@@ -498,7 +470,7 @@
 		--greep-b: 14px;
 		--greep-h: 16px;
 		position: relative;
-		height: 20px;
+		height: calc(var(--s-4) + var(--s-1));
 		margin: 0 calc(var(--greep-b) / 2);
 	}
 	.spoor::before {
@@ -517,6 +489,7 @@
 		margin-top: -1px;
 		background: var(--ink);
 	}
+	/* The frame is a line inside the box, not a border: a handle is not a button. */
 	.greep {
 		position: absolute;
 		top: 50%;
@@ -525,7 +498,8 @@
 		height: var(--greep-h);
 		margin: calc(var(--greep-h) / -2) 0 0 calc(var(--greep-b) / -2);
 		padding: 0;
-		border: 1px solid var(--ink);
+		border: 0;
+		box-shadow: inset 0 0 0 1px var(--ink);
 		border-radius: var(--r-1);
 		background: var(--paper);
 		cursor: ew-resize;
@@ -534,9 +508,6 @@
 	.as {
 		display: flex;
 		justify-content: space-between;
-		font-size: var(--t-label);
-		line-height: 16px;
-		color: var(--ink-3);
 	}
 
 	.velden {
@@ -548,7 +519,7 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.veld {
+	.velden input {
 		box-sizing: border-box;
 		width: 100%;
 		min-width: 0;
@@ -561,7 +532,7 @@
 		font-size: var(--t-ui);
 		color: var(--ink);
 	}
-	.veld::placeholder {
+	.velden input::placeholder {
 		color: var(--ink-3);
 	}
 	.fout {
@@ -569,7 +540,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 18px;
-		color: var(--accent);
+		color: var(--uitkomst-nee);
 	}
 	.voet {
 		display: flex;
@@ -578,21 +549,6 @@
 		gap: var(--s-2);
 		padding-top: var(--s-3);
 		border-top: 1px solid var(--rule);
-	}
-	.tekst {
-		border-color: transparent;
-		background: transparent;
-		color: var(--ink-2);
-	}
-	.tekst:hover {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: var(--underline-offset);
-	}
-	.voet .btn.is-primary {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
 	}
 
 	/* Open on a phone: a sheet from below behind the screen, every control a finger high. */
@@ -627,37 +583,21 @@
 		align-items: center;
 		justify-content: space-between;
 	}
-	.sheetkop h3 {
+	.sheetkop .veld-kop {
 		margin: 0;
 		font-size: var(--t-ui-raak);
 		font-weight: 600;
+		color: var(--ink);
 	}
-	.sluit {
-		width: var(--veld-h-raak);
-		height: var(--veld-h-raak);
-		padding: 0;
-		border: 0;
-		background: transparent;
-		font-size: var(--t-ui-raak);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.sheet .snel button,
-	.sheet .tekst,
-	.sheet .voet .btn {
-		height: var(--veld-h-raak);
-		padding: 0 var(--s-4);
-		font-size: var(--t-ui-raak);
-	}
-	.sheet .snel button[aria-checked='true'] {
+	.sheet .snel .btn[aria-checked='true'] {
 		box-shadow: inset 0 -3px 0 var(--ink);
-	}
-	.sheet .veld {
-		height: var(--veld-h-raak);
-		font-size: var(--t-input);
 	}
 	.sheet .velden {
 		font-size: var(--t-meta);
+	}
+	.sheet .velden input {
+		height: var(--veld-h-raak);
+		font-size: var(--t-input);
 	}
 	.sheet .voet {
 		padding-top: 0;
@@ -667,12 +607,5 @@
 		--greep-b: 20px;
 		--greep-h: 24px;
 		height: var(--veld-h-raak);
-	}
-	/* The line itself is a finger high on a touch screen; its words keep the desktop letter,
-	   so a long period still fits its column. */
-	@media (pointer: coarse), (max-width: 768px) {
-		.trigger {
-			height: var(--veld-h-raak);
-		}
 	}
 </style>

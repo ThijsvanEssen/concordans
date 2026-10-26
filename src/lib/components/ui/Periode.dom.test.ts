@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import Periode from './Periode.svelte';
 
-const VERDELING = [
-	{ jaar: 1995, aantal: 5 },
-	{ jaar: 2010, aantal: 20 },
-	{ jaar: 2026, aantal: 40 }
+const DISTRIBUTION = [
+	{ year: 1995, count: 5 },
+	{ year: 2010, count: 20 },
+	{ year: 2026, count: 40 }
 ];
 
 beforeEach(() => {
@@ -71,7 +71,7 @@ describe('Periode', () => {
 		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it('leaves out bars, handles and the count without a verdeling', async () => {
+	it('leaves out bars, handles and the count without a distribution', async () => {
 		render(Periode, { from: '', to: '', onChange: () => {} });
 		await fireEvent.click(screen.getByRole('button', { name: /Wijzig/ }));
 		expect(screen.queryAllByRole('slider')).toHaveLength(0);
@@ -83,8 +83,8 @@ describe('Periode', () => {
 			from: '2010-01-01',
 			to: '',
 			onChange: () => {},
-			verdeling: VERDELING,
-			telt: 'Uitspraken'
+			distribution: DISTRIBUTION,
+			counts: 'Uitspraken'
 		});
 		await fireEvent.click(screen.getByRole('button', { name: /Wijzig/ }));
 		expect(screen.getByText('Uitspraken per jaar')).toBeTruthy();
