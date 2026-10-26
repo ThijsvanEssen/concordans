@@ -6,7 +6,7 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import TraagLaden from '$lib/components/ui/TraagLaden.svelte';
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
@@ -261,7 +261,7 @@
 						</div>
 					{/each}
 				</div>
-				<TraagLaden label="Actueel laden" />
+				<SlowLoad label="Actueel laden" />
 			{:else if feedState === 'fout'}
 				<LoadState
 					state={{ status: 'error', error: feedError }}

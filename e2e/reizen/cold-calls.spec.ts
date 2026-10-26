@@ -4,7 +4,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
-const TRAAG = 'Laden duurt langer dan gewoonlijk';
+const SLOW = 'Laden duurt langer dan gewoonlijk';
 
 /** Hold every call to `pattern` until `release()`, then answer it as the fixtures do. */
 async function hold(page: Page, pattern: RegExp) {
@@ -23,20 +23,20 @@ test('the werkplek of a fractie waits out a cold dossiers call and says it takes
 	const release = await hold(page, /\/api\/factions\/d66\/dossiers/);
 	await page.goto('/fracties/d66');
 	// The line comes at 3 s; the call is held until it stands, so the old 10 s is not the limit.
-	await expect(page.getByText(TRAAG).first()).toBeVisible({ timeout: 8_000 });
+	await expect(page.getByText(SLOW).first()).toBeVisible({ timeout: 8_000 });
 	await expect(page.getByText(/kon niet (op tijd )?worden geladen/)).toHaveCount(0);
 	release();
-	await expect(page.getByText(TRAAG)).toHaveCount(0);
+	await expect(page.getByText(SLOW)).toHaveCount(0);
 	await expect(page.getByText(/kon niet (op tijd )?worden geladen/)).toHaveCount(0);
 });
 
 test('the start page says Actueel takes longer instead of failing (F6)', async ({ page }) => {
 	const release = await hold(page, /\/api\/feed\/summary/);
 	await page.goto('/');
-	await expect(page.getByText(TRAAG)).toBeVisible({ timeout: 8_000 });
+	await expect(page.getByText(SLOW)).toBeVisible({ timeout: 8_000 });
 	await expect(page.getByText('Actueel kon niet')).toHaveCount(0);
 	release();
-	await expect(page.getByText(TRAAG)).toHaveCount(0);
+	await expect(page.getByText(SLOW)).toHaveCount(0);
 });
 
 test('typing on the start page leaves no empty place for the law network (F6)', async ({

@@ -25,7 +25,7 @@ describe('LoadState', () => {
 		);
 		const block = html({ status: 'loading' }, { form: 'block' });
 		expect(block).toContain('skeleton');
-		expect(block).not.toContain('Laden…');
+		expect(block).toContain('class="sr-only" role="status">Laden…');
 		expect(block).not.toContain('role="alert"');
 	});
 
