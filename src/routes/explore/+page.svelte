@@ -1466,8 +1466,11 @@
 	function toggleChosen(node: GraphNode) {
 		const id = linkIdOf(node);
 		if (!id) return;
-		if (netwerk.ids.includes(id)) setNetwerk(withRemoved(netwerk, id));
-		else addToNetwerk(node);
+		if (!netwerk.ids.includes(id)) return addToNetwerk(node);
+		setNetwerk(withRemoved(netwerk, id));
+		meldNetwerk(`${kort(bronNaam(node, $instrumentMetaStore))} weggehaald uit het netwerk.`, () =>
+			setNetwerk(withAdded(netwerk, id))
+		);
 	}
 
 	// Wissen leaves nothing: no chosen bronnen, no focus, no canvas, nothing remembered for

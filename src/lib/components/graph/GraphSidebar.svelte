@@ -217,7 +217,7 @@
 		<!-- Around one bron: the soorten of Verbonden, how many drawn of how many (N1, N2). -->
 		{#if kindRowsShown}{#if kindRowsShown.length > 0}
 				<section class="block">
-					<h3 class="block__title">Soort</h3>
+					<h3 class="block__title">Tonen</h3>
 					{#each kindRowsShown as r, i (r.id)}
 						{@const on = rowOn(r)}
 						{#if r.further && !kindRowsShown[i - 1]?.further}
@@ -274,7 +274,7 @@
 			<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
 		{:else if kinds.length > 0}
 			<section class="block">
-				<h3 class="block__title">Soort</h3>
+				<h3 class="block__title">Tonen</h3>
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
 					{@const groepen = metGroepUit(k)}

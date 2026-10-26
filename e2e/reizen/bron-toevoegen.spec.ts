@@ -3,6 +3,7 @@
 // focus back to the button.
 import { apiPath, CORS } from '../support/api';
 import { expect, test } from '../support/test';
+import { openSheet } from '../support/sheet';
 
 const CHOSEN = 'instruments/bwbr0005537';
 const NEW = 'instruments/bwbr0010346';
@@ -45,6 +46,7 @@ test('Bron toevoegen: search, Enter adds, a chosen bron says so, Esc gives the f
 		});
 	});
 	await page.goto(`/explore?netwerk=${CHOSEN}`);
+	await openSheet(page);
 	const panel = page.getByRole('region', { name: 'Netwerk' });
 	const open = panel.getByRole('button', { name: 'Bron toevoegen' });
 	await open.click();
@@ -67,6 +69,13 @@ test('Bron toevoegen: search, Enter adds, a chosen bron says so, Esc gives the f
 	await page.keyboard.press('Enter');
 	await expect(page).toHaveURL(new RegExp(`netwerk=[^&]*${NEW.split('/')[1]}`));
 	await expect(dialog).toBeVisible();
+	// Said as a status line with the way back: Bevestiging on a wide screen, the melding on a phone.
+	await expect(
+		page.getByRole('status').filter({ hasText: 'toegevoegd aan het netwerk' })
+	).toBeVisible();
+	await expect(
+		page.getByRole('status').getByRole('button', { name: 'Ongedaan maken' })
+	).toBeVisible();
 
 	await page.keyboard.press('Escape');
 	await expect(dialog).toHaveCount(0);
