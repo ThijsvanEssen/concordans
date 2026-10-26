@@ -219,7 +219,7 @@
 		{/if}
 		{#if onToggleChosen && !node.stub}
 			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
-				>{isChosen ? 'Uit het netwerk' : 'Toevoegen'}</button
+				>{isChosen ? 'Weghalen' : 'Toevoegen'}</button
 			>
 		{/if}
 		{#if bewaar}<Bewaar item={bewaar} />{/if}

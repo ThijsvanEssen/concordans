@@ -31,7 +31,7 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 
 test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
-	await page.getByRole('button', { name: /^Haal .* uit netwerk$/ }).click();
+	await page.getByRole('button', { name: /^Haal .* uit het netwerk$/ }).click();
 	await expect(page).not.toHaveURL(/netwerk=/);
 	await page.waitForTimeout(500);
 	await expect(page).not.toHaveURL(/netwerk=/);
