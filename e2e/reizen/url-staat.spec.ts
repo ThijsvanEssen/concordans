@@ -19,7 +19,9 @@ async function panelText(page: Page) {
 const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
 async function legend(page: Page) {
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
-	await expect(strip(page).getByRole('heading', { name: 'Weergave' }).or(toggle)).toBeVisible();
+	await expect(
+		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
+	).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
 	return strip(page).getByRole('region', { name: 'Filters' });
 }

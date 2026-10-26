@@ -19,7 +19,9 @@ const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen e
 /** The legend, behind Filter on a narrow screen. */
 async function legenda(page: Page): Promise<Locator> {
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
-	await expect(strip(page).getByRole('heading', { name: 'Weergave' }).or(toggle)).toBeVisible({
+	await expect(
+		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
+	).toBeVisible({
 		timeout: 30_000
 	});
 	if (await toggle.isVisible()) await toggle.click();
