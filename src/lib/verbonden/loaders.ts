@@ -581,9 +581,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'dossier-committees': async (ctx) => ({
 		rows: (await hubOf(ctx)).committees
 	}),
-	'dossier-documents-tk': async (ctx) => ({
-		rows: (await hubOf(ctx)).tweedeKamer
-	}),
+	'dossier-documents-tk': async (ctx) => {
+		const hub = await hubOf(ctx);
+		return { rows: hub.tweedeKamer, total: hub.tkTotal };
+	},
 	'dossier-documents-ek': async (ctx) => ({
 		rows: (await hubOf(ctx)).eersteKamer
 	}),

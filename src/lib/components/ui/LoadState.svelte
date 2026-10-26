@@ -28,6 +28,7 @@
 	import RateLimit, { answered } from './RateLimit.svelte';
 	import type { LoadState } from '$lib/util/load.svelte';
 	import Kenmerk from './Kenmerk.svelte';
+	import SlowLoad from './SlowLoad.svelte';
 	import TekstLink from './TekstLink.svelte';
 
 	let {
@@ -66,8 +67,9 @@
 			<div class="skeleton__line"></div>
 			<div class="skeleton__line skeleton__line--short"></div>
 		</div>
+		<SlowLoad label="Laden…" />
 	{:else}
-		<svelte:element this={tag} class="stil">Laden…</svelte:element>
+		<SlowLoad label="Laden…" visible {tag} />
 	{/if}
 {:else if state.status === 'error' && isRateLimited(state.error)}
 	<!-- A 429: the seconds for the eye; a screen reader hears the sentence once. -->

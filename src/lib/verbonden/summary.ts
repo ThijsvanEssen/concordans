@@ -302,15 +302,37 @@ export function kindsOf(
 
 /** The soort of the laws a row is: an article, an act of the EU or a treaty, a publication
  *  of the Staatsblad or Staatscourant, else a law or a regulation. */
-function lawClass(row: Row): KindId {
-	const c = row.ref.collection;
+const lawClass = (row: Row): KindId => lawClassOf(row.ref.collection, row.ref.key, row.props);
+
+function lawClassOf(c: string, key: string, props: Record<string, unknown> | undefined): KindId {
 	if (c === 'articles' || c === 'annexes') return 'lawArticles';
-	const p = (row.props ?? {}) as Record<string, unknown>;
-	if (p.publication_kind || /^(stb|stcrt|trb)[_-]/i.test(row.ref.key)) return 'publicaties';
-	if (p.celex || p.jurisdiction === 'eu' || /^celex|^\d{5}[a-z]\d{4}/i.test(row.ref.key))
-		return 'europees';
+	const p = props ?? {};
+	if (p.publication_kind || /^(stb|stcrt|trb)[_-]/i.test(key)) return 'publicaties';
+	if (p.celex || p.jurisdiction === 'eu' || /^celex|^\d{5}[a-z]\d{4}/i.test(key)) return 'europees';
 	if (typeof p.kind === 'string' && /verdrag/i.test(p.kind)) return 'europees';
 	return 'laws';
+}
+
+/**
+ * The soort of one bron, as Verbonden would list it: by its collection, the laws by what they
+ * are (Artikelen, Europees en internationaal, Publicaties). The legend of the werkplek names a
+ * bron Verbonden does not list (one step further, a soort Verbonden has no group for) by it.
+ */
+export function kindOfBron(
+	collection: string,
+	key: string,
+	props?: Record<string, unknown>
+): KindId | null {
+	const k = KIND_OF[collection as Collection];
+	return k === 'laws' ? lawClassOf(collection, key, props) : (k ?? null);
+}
+
+/** What a soort is called on the page of `selection`: as its heading in Verbonden. */
+export function kindLabelOn(id: KindId, selection: Collection): string {
+	return (
+		LABEL_ON[selection]?.[id] ??
+		(id === 'members' ? membersLabel(selection) : SOORT_LABEL[id]).label
+	);
 }
 
 /** The soort a group of laws holds mostly: its own (Europees en internationaal, the

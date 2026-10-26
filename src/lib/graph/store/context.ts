@@ -6,6 +6,7 @@ import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
 	containerKindOf,
+	focusKindOf,
 	createContainerGroups,
 	type ContainerKind
 } from '../container-membership';
@@ -161,7 +162,7 @@ export function createGraphContext() {
 			protect.add(selected.id);
 			// A selected container has no edges of its own to protect its children by
 			// (they are containment, not peer edges): protect its current hull instead.
-			const selectedContainerKind = selected.raw && containerKindOf(selected.raw.collection);
+			const selectedContainerKind = selected.raw && focusKindOf(selected.raw.collection);
 			const selectedContainerId =
 				selected.raw && selectedContainerKind && containerIdFor(selected.raw);
 			const group = selectedContainerId ? containers.get(selectedContainerId) : undefined;
@@ -279,7 +280,7 @@ export function createGraphContext() {
 	): string | null => {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
-		const centerContainerKind = containerKindOf(response.node.collection);
+		const centerContainerKind = focusKindOf(response.node.collection);
 		// A fractie, commissie, dossier or wet is its hull, and its anchor the point what is
 		// not in it ties to (VVD's stemmingen, "100 stemmingen"): without it those lines had
 		// no end and their bronnen went unseen.
@@ -290,7 +291,11 @@ export function createGraphContext() {
 		}
 		touchNode(center.id, center);
 
-		const near = { ...endOf(response.node.collection, center), drawn: true };
+		const near = {
+			...endOf(response.node.collection, center),
+			hull: centerContainerKind,
+			drawn: true
+		};
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
 			const id = nodeId(neighbor.collection, neighbor.key);
 			if (keep && !keep(id)) continue;
@@ -347,7 +352,7 @@ export function createGraphContext() {
 	 * stays on the canvas with nothing of its own drawn around it yet.
 	 */
 	const anchorContainer = (node: BaseNode): GraphNode | null => {
-		const kind = containerKindOf(node.collection);
+		const kind = focusKindOf(node.collection);
 		const anchor = kind && nodeToGraphNode(node);
 		if (!kind || !anchor) return null;
 		anchor.anchor = true;

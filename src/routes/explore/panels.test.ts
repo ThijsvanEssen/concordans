@@ -24,5 +24,7 @@ describe('Verbonden in view', () => {
 		// F8: /uitspraken/…?tabel=1 loaded directly on a phone said 0 verbindingen.
 		expect(verbondenInView('judgments', phone('reader', true))).toBe(true);
 		expect(verbondenInView('articles', phone('reader'))).toBe(true);
+		// N1: the werkplek's legend counts as Verbonden, on a phone too.
+		expect(verbondenInView('judgments', { ...phone('reader'), canvasOnly: true })).toBe(true);
 	});
 });

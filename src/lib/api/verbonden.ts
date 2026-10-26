@@ -1,8 +1,9 @@
 // The lists the panel Verbonden reads beside the node of a bron, each asked once per
 // session ($lib/api/records `once`): opened again, ordered back, or read by the reader too,
 // a list is not asked again. A failed request is asked again next time (Opnieuw). A caller
-// that may leave wraps the answer in `abortable`.
-import { api, unwrap } from './client';
+// that may leave wraps the answer in `abortable`. Cold, a list takes 6 to 14 s: they wait as
+// long as the API does (`slowApi`), and the panel says after 3 s that it takes longer.
+import { slowApi, unwrap } from './client';
 import { once } from './records';
 import type { QueryOf } from './types';
 
@@ -10,19 +11,23 @@ import type { QueryOf } from './types';
 export const getTouchedInstruments = (who: 'members' | 'factions', key: string) =>
 	once(`${who}/${key}/touched-instruments`, () =>
 		who === 'members'
-			? unwrap(api.GET('/api/members/{key}/touched-instruments', { params: { path: { key } } }))
-			: unwrap(api.GET('/api/factions/{key}/touched-instruments', { params: { path: { key } } }))
+			? unwrap(slowApi.GET('/api/members/{key}/touched-instruments', { params: { path: { key } } }))
+			: unwrap(
+					slowApi.GET('/api/factions/{key}/touched-instruments', { params: { path: { key } } })
+				)
 	);
 
 export const getFactionDossiers = (key: string, limit: number) =>
 	once(`factions/${key}/dossiers/${limit}`, () =>
-		unwrap(api.GET('/api/factions/{key}/dossiers', { params: { path: { key }, query: { limit } } }))
+		unwrap(
+			slowApi.GET('/api/factions/{key}/dossiers', { params: { path: { key }, query: { limit } } })
+		)
 	);
 
 /** The dossiers under one Kamer number (`36000`): `36000-I`, `36000-II`, … */
 export const getDossiersOfNumber = (number: string) =>
 	once(`dossiers?number=${number}`, () =>
-		unwrap(api.GET('/api/dossiers', { params: { query: { number } } }))
+		unwrap(slowApi.GET('/api/dossiers', { params: { query: { number } } }))
 	);
 
 /** The European and international links of a law; `limit` per kind, all without one. */
@@ -33,7 +38,7 @@ export const getEuLinks = (
 ) =>
 	once(`instruments/${identifier}/eu-links/${limit ?? ''}/${sort ?? ''}`, () =>
 		unwrap(
-			api.GET('/api/instruments/{identifier}/eu-links', {
+			slowApi.GET('/api/instruments/{identifier}/eu-links', {
 				params: {
 					path: { identifier },
 					query: { ...(limit ? { limit } : {}), ...(sort ? { sort } : {}) }
@@ -52,7 +57,7 @@ export const getCitedBy = (
 		`articles/${bwbId}/${articleNumber}/cited-by/${query.sort ?? ''}/${query.offset ?? 0}/${query.limit ?? ''}/${query.court ?? ''}/${(query.tier ?? []).join(',')}/${query.year ?? ''}/${query.subject_area ?? ''}`,
 		() =>
 			unwrap(
-				api.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+				slowApi.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
 					params: { path: { bwb_id: bwbId, article_number: articleNumber }, query }
 				})
 			)
@@ -62,7 +67,7 @@ export const getCitedBy = (
 export const getLegislativeHistory = (bwbId: string, articleNumber: string) =>
 	once(`articles/${bwbId}/${articleNumber}/legislative-history`, () =>
 		unwrap(
-			api.GET('/api/articles/{bwb_id}/{article_number}/legislative-history', {
+			slowApi.GET('/api/articles/{bwb_id}/{article_number}/legislative-history', {
 				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
 			})
 		)
@@ -72,7 +77,7 @@ export const getLegislativeHistory = (bwbId: string, articleNumber: string) =>
 export const getRelationshipsWithAard = (law: string, limit: number, offset: number) =>
 	once(`relationships/aard/${law}/${limit}/${offset}`, () =>
 		unwrap(
-			api.GET('/api/relationships/search', {
+			slowApi.GET('/api/relationships/search', {
 				params: { query: { exclude_type: 'cross_reference', law, limit, offset } }
 			})
 		)
@@ -81,7 +86,7 @@ export const getRelationshipsWithAard = (law: string, limit: number, offset: num
 export const getRelatedInstruments = (bwbId: string, limit: number) =>
 	once(`instruments/${bwbId}/related-instruments/${limit}`, () =>
 		unwrap(
-			api.GET('/api/instruments/{bwb_id}/related-instruments', {
+			slowApi.GET('/api/instruments/{bwb_id}/related-instruments', {
 				params: { path: { bwb_id: bwbId }, query: { limit } }
 			})
 		)
@@ -89,7 +94,9 @@ export const getRelatedInstruments = (bwbId: string, limit: number) =>
 
 export const getInstrumentDossiers = (bwbId: string) =>
 	once(`instruments/${bwbId}/dossiers`, () =>
-		unwrap(api.GET('/api/instruments/{bwb_id}/dossiers', { params: { path: { bwb_id: bwbId } } }))
+		unwrap(
+			slowApi.GET('/api/instruments/{bwb_id}/dossiers', { params: { path: { bwb_id: bwbId } } })
+		)
 	);
 
 /** The judgments that cite a law, in an order, of one year where `year` names it. */
@@ -101,7 +108,7 @@ export const getInstrumentJudgments = (
 		`instruments/${bwbId}/judgments/${query.limit ?? ''}/${query.offset ?? ''}/${query.sort ?? ''}/${query.year ?? ''}/${query.subject_area ?? ''}`,
 		() =>
 			unwrap(
-				api.GET('/api/instruments/{bwb_id}/judgments', {
+				slowApi.GET('/api/instruments/{bwb_id}/judgments', {
 					params: { path: { bwb_id: bwbId }, query }
 				})
 			)
@@ -111,7 +118,7 @@ export const getInstrumentJudgments = (
 export const getCommitteeActivities = (slug: string, limit: number) =>
 	once(`committees/${slug}/activities/${limit}`, () =>
 		unwrap(
-			api.GET('/api/committees/{slug}/activities', {
+			slowApi.GET('/api/committees/{slug}/activities', {
 				params: { path: { slug }, query: { limit } }
 			})
 		)
