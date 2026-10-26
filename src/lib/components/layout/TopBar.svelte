@@ -50,6 +50,7 @@
 		{#each SOURCES as s (s.id)}
 			<a
 				href={s.href}
+				title={s.holds}
 				class="nav-link"
 				class:is-active={source?.id === s.id}
 				aria-current={source?.id === s.id ? 'page' : undefined}>{s.label}</a

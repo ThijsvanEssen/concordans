@@ -2,6 +2,7 @@
 // opens its bron with the citation marked, a Kamerstuk that opens in place, and Exporteer
 // with the rows of every group (code-eenvoud F95: before the panel is cut into parts).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { tick } from 'svelte';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { goto } from '$app/navigation';
 import { fakeApi } from '$lib/test/fakeApi';
@@ -222,6 +223,31 @@ describe('Verbonden', () => {
 		);
 		await klik(hr);
 		expect(screen.queryByRole('region', { name: 'Hoge Raad, 20 december 2019' })).toBeNull();
+	});
+
+	it('draws fewer bronnen on its own when the screen turns to a phone width', async () => {
+		let matches = false;
+		const listeners = new Set<() => void>();
+		vi.stubGlobal('matchMedia', () => ({
+			get matches() {
+				return matches;
+			},
+			addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+			removeEventListener: (_: string, fn: () => void) => listeners.delete(fn)
+		}));
+		const veel = Array.from({ length: 14 }, (_, i) => ({
+			...uitspraak,
+			ref: { collection: 'judgments' as const, key: `ecli_${i}` },
+			title: `Uitspraak ${i}`
+		}));
+		paneel({ judgments: veel }, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x' });
+		const namen = () => screen.getByTestId('network-sketch').querySelectorAll('.single').length;
+		expect(namen()).toBe(14);
+		matches = true;
+		listeners.forEach((fn) => fn());
+		await tick();
+		expect(namen()).toBe(0);
+		vi.unstubAllGlobals();
 	});
 
 	it('has no Netwerk tonen beside the canvas', () => {

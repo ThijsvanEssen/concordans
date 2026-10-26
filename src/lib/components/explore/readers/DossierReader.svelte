@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { changeVerb } from '$lib/verbonden/relation-words';
 	import { onDate } from '$lib/text/datum';
 	import { bewaarDossier } from '$lib/map/map';
@@ -125,7 +125,7 @@
 			<ReaderHead
 				collection="dossiers"
 				kindLabel={kamerstukNummer(d.number)}
-				title={d.short_title ?? d.title ?? officialNumber(d.number)}
+				title={capitalize(d.short_title ?? d.title ?? officialNumber(d.number))}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
 					bewaar: bewaarDossier(d),
@@ -225,7 +225,7 @@
 					{/if}
 				{/snippet}
 				<!-- The course of the dossier stands open: the line to read it by (mockup V1-c). -->
-				<Sectie title="Procedure" standaardOpen>
+				<Sectie title="Procedure">
 					<Tijdlijn
 						groepen={p.groepen.map((g) => ({
 							...g,

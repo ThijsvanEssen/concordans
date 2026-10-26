@@ -5,6 +5,7 @@ import { naarAmendementen } from '$lib/components/parliamentary/naar';
 import { FOLD, isOpen, subKey, zetOpen } from './dicht.svelte';
 import FoldButton from './FoldButton.svelte';
 import Sectie from './Sectie.svelte';
+import Tijdlijn from '../tijdlijn/Tijdlijn.svelte';
 
 const tekst = (s: string) => createRawSnippet(() => ({ render: () => `<span>${s}</span>` }));
 
@@ -26,6 +27,9 @@ describe('the keys of what opens and closes', () => {
 					children: tekst('de regeling')
 				}
 			}).body;
+		// Open until the reader closes it; the procedure opens it again.
+		expect(sectie()).toContain('de regeling');
+		zetOpen(FOLD.amendments, false);
 		expect(sectie()).not.toContain('de regeling');
 		naarAmendementen();
 		expect(isOpen(FOLD.amendments, false)).toBe(true);
@@ -46,5 +50,21 @@ describe('the keys of what opens and closes', () => {
 		expect(isOpen(subKey('Tweede Kamer'), true)).toBe(false);
 		expect(knop(false)).toContain('aria-expanded="false"');
 		expect(JSON.parse(setItem.mock.calls[0][1])).toEqual({ 'sub:Tweede Kamer': false });
+	});
+
+	it('keeps the open state of a group of a timeline under the key it always had', () => {
+		const groepen = [
+			{
+				id: '2024',
+				titel: '2024',
+				sub: '1',
+				regels: [{ id: 'a', datum: '2024-05-31', teken: 'stuk' as const, zin: 'De regel' }]
+			}
+		];
+		const tijdlijn = () => render(Tijdlijn, { props: { groepen, inklapbaar: true } }).body;
+		expect(tijdlijn()).toContain('De regel');
+		zetOpen(subKey('2024'), false);
+		expect(tijdlijn()).not.toContain('De regel');
+		expect(subKey('2024')).toBe('sub:2024');
 	});
 });

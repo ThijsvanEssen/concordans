@@ -26,11 +26,11 @@ test('a dossier shows where it stands and opens a stuk of its procedure in place
 	).toHaveAttribute('aria-expanded', 'true');
 	await expect(page).toHaveURL(/\/dossiers\/36496$/);
 
-	await page.getByRole('button', { name: /^Amendementen( \d+)?$/ }).click();
-	await expect(page.getByRole('button', { name: /^Amendementen( \d+)?$/ })).toHaveAttribute(
-		'aria-expanded',
-		'true'
-	);
+	// Every section stands open until the reader closes it; the heading closes it.
+	const amendementen = page.getByRole('button', { name: /^Amendementen( \d+)?$/ });
+	await expect(amendementen).toHaveAttribute('aria-expanded', 'true');
+	await amendementen.click();
+	await expect(amendementen).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('a Kamerstuk names its indiener and its dossier, and folds out its vote', async ({ page }) => {
@@ -42,7 +42,6 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 		page.getByRole('navigation', { name: 'Behoort bij' }).getByRole('link', { name: /36799/ })
 	).toHaveAttribute('href', /\/dossiers\/36799/);
 	const vote = page.getByRole('button', { name: 'Stemming', exact: true });
-	await vote.click();
 	await expect(vote).toHaveAttribute('aria-expanded', 'true');
 	// The vote the head already says is not said again: the section has the earlier one.
 	const sectie = page
@@ -76,7 +75,7 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 			'Vastgesteld als Wet betaalbare huur, Stb. 2024, 193; inwerkingtreding bij Stb. 2024, 197.'
 		)
 	).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Stb. 2024, 193' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Stb. 2024, 193' }).first()).toHaveAttribute(
 		'href',
 		'/stb/2024/193'
 	);
@@ -91,7 +90,7 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 	// A link in the line runs with it, as the ministerie's does: at 375 it stays a sentence.
 	expect((await indiener.boundingBox())!.height).toBeLessThan(80);
 	await expect(page.getByText('Afgerond: in werking sinds 1 juli 2024.')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Stb. 2024, 197' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Stb. 2024, 197' }).first()).toHaveAttribute(
 		'href',
 		'/stb/2024/197'
 	);
@@ -176,7 +175,6 @@ test('a vote gives its outcome and the vote of each fractie', async ({ page }) =
 	);
 	await expect(page.getByText('Aangenomen, Motie')).toBeVisible();
 	await expect(page.getByText('105 voor, 45 tegen')).toBeVisible();
-	await page.getByRole('button', { name: 'Stemverdeling per fractie' }).click();
 	const fracties = page
 		.getByRole('listitem')
 		.filter({ has: page.getByRole('link', { name: 'D66', exact: true }) });

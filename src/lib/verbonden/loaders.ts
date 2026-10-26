@@ -4,7 +4,7 @@
 import { formatCount } from '$lib/text/getal';
 import { isBill, motionOrAmendment } from '$lib/text/document-kind';
 import { NL } from '$lib/text/collator';
-import { capitalize, plural, textOf } from '$lib/text/words';
+import { plural, textOf } from '$lib/text/words';
 import { citationRecord } from '$lib/text/citation-record';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
@@ -859,20 +859,18 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const law = lawId ? names.get(lawId) : null;
 				const number = textOf(n.props.article_number) || key.slice(key.indexOf('_') + 1);
 				row.ref = { collection: 'articles', key };
-				// As the API names an article: `Art. 3 Regeling …`, from its citation record.
+				// As the API names an article: `Artikel 3 Regeling …`, from its citation record.
 				const title = lawName(law, '');
 				row.title =
 					real?.display_name ??
 					(title
-						? capitalize(
-								citationRecord({
-									kind: 'article',
-									bwbId: lawId,
-									articleNumber: number,
-									shortTitle: law?.shortTitle ?? null,
-									citationTitle: title
-								}).short
-							)
+						? citationRecord({
+								kind: 'article',
+								bwbId: lawId,
+								articleNumber: number,
+								shortTitle: law?.shortTitle ?? null,
+								citationTitle: title
+							}).heading
 						: (articleName(lawId, number) ?? number));
 				row.derived = false;
 			}

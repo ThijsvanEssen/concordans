@@ -343,7 +343,7 @@
 		{/if}
 
 		{#if samenhang.length > 0}
-			<Sectie title="Samenhangende zaken" collection="judgments" aantal={samenhang.length}>
+			<Sectie title="Samenhangende zaken" aantal={samenhang.length}>
 				<ul class="samenhang">
 					{#each samenhang as z (z.key)}
 						<li>

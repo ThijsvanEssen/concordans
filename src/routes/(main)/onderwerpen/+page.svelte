@@ -422,7 +422,6 @@
 				niveau={2}
 				aantal={telling(s)}
 				sleutel="onderwerp:{topicKey(o)}"
-				standaardOpen
 			>
 				{#snippet naast()}
 					<span class="onderwerp-acties">

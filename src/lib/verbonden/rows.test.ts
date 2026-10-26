@@ -399,7 +399,7 @@ describe('unresolvedRows', () => {
 		const [row] = unresolvedRows([
 			{ law: 'Rv', article_number: '843a', leden: ['1'], paragraph_ids: ['rov-3.2'] }
 		]);
-		expect(row.title).toBe('Art. 843a Rv');
+		expect(row.title).toBe('Artikel 843a Rv');
 		expect(row.missing).toBe(true);
 		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de gegevens']);
 	});
