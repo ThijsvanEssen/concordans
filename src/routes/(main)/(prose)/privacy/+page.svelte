@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { CONTACT_EMAIL } from '$lib/site/contact';
 </script>
@@ -11,34 +12,30 @@
 		<header class="blad__kop"><h1 class="blad__titel">Privacyverklaring</h1></header>
 		<p class="stub-lede">Concordans verwerkt zo min mogelijk persoonsgegevens.</p>
 
-		<div class="section">
-			<h2 class="section-title">Verwerkingsverantwoordelijke</h2>
+		<Sectie title="Verwerkingsverantwoordelijke" niveau={2} inklapbaar={false}>
 			<p>
 				Concordans. Vragen over de verwerking van persoonsgegevens gaan naar
 				<a href="mailto:{CONTACT_EMAIL}" class="cite">{CONTACT_EMAIL}</a>.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Wat wordt verwerkt</h2>
+		<Sectie title="Wat wordt verwerkt" niveau={2} inklapbaar={false}>
 			<p>
 				Concordans heeft geen accounts, plaatst geen cookies en gebruikt geen externe diensten voor
 				statistiek. Wie Concordans een e-mail stuurt, deelt het e-mailadres en de inhoud van het
 				bericht.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Serverlogbestanden</h2>
+		<Sectie title="Serverlogbestanden" niveau={2} inklapbaar={false}>
 			<p>
 				De server houdt per verzoek een ingekort IP-adres, het tijdstip en het opgevraagde adres
 				zonder zoektermen bij, voor beheer en beveiliging. Dit logboek wordt na hoogstens 30 dagen
 				verwijderd. Zoektermen worden alleen per dag geteld, zonder te bewaren wie zocht.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section" id="browser">
-			<h2 class="section-title">In de browser</h2>
+		<Sectie title="In de browser" niveau={2} inklapbaar={false} id="browser">
 			<ul>
 				<li>
 					De breedte van de panelen, het laatst samengestelde netwerk en of de legenda open staat.
@@ -50,10 +47,9 @@
 				Dit blijft in de browser en gaat niet naar een server. Er is geen back-up van; zie
 				<a href="/voorwaarden#back-ups" class="cite">Geen back-ups</a>.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section" id="server">
-			<h2 class="section-title">Naar de server</h2>
+		<Sectie title="Naar de server" niveau={2} inklapbaar={false} id="server">
 			<ul>
 				<li>De woorden van een gevolgd onderwerp, als zoekterm voor nieuwe stukken.</li>
 				<li>
@@ -61,16 +57,15 @@
 					aantekeningen niet.
 				</li>
 			</ul>
-		</div>
+		</Sectie>
 
-		<div class="section" id="delen">
-			<h2 class="section-title">Delen</h2>
+		<Sectie title="Delen" niveau={2} inklapbaar={false} id="delen">
 			<p>
 				Een bundel of de gevolgde onderwerpen gaan mee als bestand of als link. Een link draagt ze
 				in het deel na het hekje, dat de browser niet naar de server stuurt. Een oudere link met ze
 				achter het vraagteken wordt bij het openen omgezet; die ene keer ziet de server ze wel.
 			</p>
-		</div>
+		</Sectie>
 
 		<div class="updated">Laatste wijziging: oktober 2026</div>
 	</div>

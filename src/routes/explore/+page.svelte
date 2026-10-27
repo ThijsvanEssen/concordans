@@ -120,6 +120,7 @@
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import type { Option } from '$lib/components/ui/option';
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
@@ -1639,6 +1640,10 @@
 
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
 	let readTab = $state<Panel>('tekst');
+	const READ_CHOICE: Option<Panel>[] = [
+		{ waarde: 'tekst', label: 'Tekst' },
+		{ waarde: 'verbonden', label: 'Verbonden' }
+	];
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -2248,28 +2253,19 @@
 				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
-					<div class="lees-tabs" role="tablist" aria-label="Tekst of Verbonden">
-						<button
-							type="button"
-							role="tab"
-							class="mobile-tab"
-							class:is-active={readTab === 'tekst'}
-							aria-selected={readTab === 'tekst'}
-							onclick={() => (readTab = 'tekst')}>Tekst</button
-						>
-						<button
-							type="button"
-							role="tab"
-							class="mobile-tab"
-							class:is-active={readTab === 'verbonden'}
-							aria-selected={readTab === 'verbonden'}
-							onclick={() => (readTab = 'verbonden')}>Verbonden</button
-						>
+					<div class="lees-tabs">
+						<Keuze
+							vol
+							label="Tekst of Verbonden"
+							opties={READ_CHOICE}
+							waarde={readTab}
+							onSelect={(w) => (readTab = w)}
+						/>
 					</div>
 					{#if withContents}
 						<button
 							type="button"
-							class="mobile-tab mobile-tab--toc"
+							class="btn mobile-tab--toc"
 							aria-haspopup="dialog"
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
@@ -2677,42 +2673,24 @@
 	   moved the text under them half a pixel (FE2, 10 Oct: 0 px after the first paint). */
 	.mobile-tabs {
 		display: none;
-		height: var(--veld-h);
+		align-items: center;
+		gap: var(--s-2);
 		box-sizing: border-box;
+		height: var(--veld-h);
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper-2);
 	}
-	/* A finger's 44 px on a touch screen and below 768: the tabs' own height, between the bar and the text. */
-	@media (pointer: coarse), (max-width: 768px) {
+	/* A phone: Tekst and Verbonden are a Keuze, a finger high, with a margin around it. */
+	@media (max-width: 768px) {
 		.mobile-tabs {
-			height: var(--veld-h-raak);
+			height: auto;
+			padding: var(--s-2) var(--s-3);
 		}
 	}
-	.mobile-tabs .mobile-tab {
-		flex: 1;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-3);
-		background: none;
-		border: 0;
-		border-bottom: 2px solid transparent;
-		padding: var(--s-2) var(--s-1) var(--s-2);
-		cursor: pointer;
-		margin-bottom: -1px;
-	}
-
-	/* The tab chosen: ink and a rule under it (A197-a). */
-	.mobile-tabs .mobile-tab.is-active {
-		color: var(--ink);
-		border-bottom-color: var(--ink);
-		font-weight: 500;
-	}
-
+	/* Inhoud beside it is a Knop. */
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;
-		padding-inline: var(--s-4);
-		color: var(--ink-2);
 	}
 
 	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above
