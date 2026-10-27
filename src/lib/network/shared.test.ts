@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { verbandModel, sentence } from './shared';
+import { verbandModel, sentence, rowNotation, groupHead, endNotes } from './shared';
 
 const NAMES: Record<string, { name: string; collection: 'articles' | 'members' | 'factions' }> = {
 	'articles/a': { name: 'Art. 126ffa Sv', collection: 'articles' },
@@ -100,5 +100,58 @@ describe('the weergave Verband', () => {
 		expect(m.direct.map((d) => d.at)).toEqual([['factions/v', 'members/d']]);
 		expect(m.direct[0].text).toMatch(/^Dilan Yeşilgöz .+ VVD$/);
 		expect(m.alone).toEqual(['members/r']);
+	});
+});
+
+describe('Verband as the DS writes it', () => {
+	const paper = (props: Record<string, unknown>) =>
+		({
+			id: 'documents/x',
+			key: 'x',
+			collection: 'documents',
+			type: 'document',
+			display_name: 'Memorie van toelichting: Wijziging van de Gemeentewet en meer en nog…',
+			labels: [],
+			props,
+			links: []
+		}) as never;
+
+	it('names a Kamerstuk by its notation, its title and year under it, never cut off by the API', () => {
+		const r = rowNotation(
+			paper({
+				dossier_number: '36545',
+				sequence: 3,
+				kind: 'Memorie van toelichting',
+				title: 'Wijziging van de Gemeentewet',
+				date: '2018-03-02'
+			})
+		);
+		expect(r.title).toBe('36545, nr. 3 Memorie van toelichting');
+		expect(r.detail).toBe('Wijziging van de Gemeentewet, 2018');
+		expect(r.title).not.toContain('…');
+	});
+	it('keeps the name of any other bron', () => {
+		expect(
+			rowNotation({ ...paper({}), collection: 'instruments', id: 'instruments/a' }).detail
+		).toBeNull();
+	});
+	it('heads the blocks of three to six chosen bronnen: Delen alle drie, Delen er twee', () => {
+		expect(groupHead(3, 3)).toBe('Delen alle drie');
+		expect(groupHead(2, 3)).toBe('Delen er twee');
+		expect(groupHead(4, 6)).toBe('Delen er vier');
+		expect(groupHead(6, 6)).toBe('Delen alle zes');
+		// Two chosen need no head.
+		expect(groupHead(2, 2)).toBeNull();
+	});
+	it('says under a chosen bron how many stukken name the other too', () => {
+		const answer = {
+			ids: ['a', 'b'],
+			total: 6,
+			buckets: [
+				{ collection: 'documents', total: 6, items: [], next_offset: null, type: 'document' }
+			]
+		} as never;
+		expect(endNotes([answer], 2).get('a')).toBe('6 stukken noemen ook de ander');
+		expect(endNotes([answer], 3).get('b')).toBe('6 stukken noemen ook een andere gekozen bron');
 	});
 });

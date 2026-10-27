@@ -23,9 +23,9 @@ test('two steps add the block Twee stappen, with what was cut off said as N of M
 		timeout: 30_000
 	});
 	await expect(shared(page).getByRole('heading', { name: 'Eén stap' })).toBeVisible();
-	// 741 chains, the first 12 drawn, the search ran into its cap: at least.
+	// 281 chains, the first 12 drawn.
 	await expect(
-		shared(page).getByText('12 van ten minste 741 ketens').locator('visible=true').first()
+		shared(page).getByText('12 van 281 ketens').locator('visible=true').first()
 	).toBeVisible();
 	if (touch) {
 		const list = shared(page).getByRole('list', { name: 'Verbindingsketen, 2 stappen' }).first();
@@ -153,4 +153,47 @@ test('a table not built yet (503) says the ketens are not available yet, with Op
 		timeout: 30_000
 	});
 	await expect(shared(page).getByRole('button', { name: 'Opnieuw' })).toBeVisible();
+});
+
+const GEMEENTEWET = 'instruments/bwbr0005416';
+
+test('Verband writes the bronnen out, a Kamerstuk by its notation with title and year, and draws lines with arrows', async ({
+	page,
+	touch
+}) => {
+	await page.goto(`/explore?netwerk=${GEMEENTEWET},${BOEK6}&weergave=verband`);
+	const view = shared(page);
+	if (touch) {
+		const first = view.locator('.ladder__items .ladder__row').first();
+		await expect(first).toBeVisible({ timeout: 30_000 });
+		await expect(view.locator('.ladder__ends')).toContainText('Gemeentewet');
+		await expect(view.locator('.ladder__ends')).not.toContainText('Gemw');
+	} else {
+		const drawing = view.getByRole('group', { name: 'Verband' });
+		await expect(drawing).toBeVisible({ timeout: 30_000 });
+		await expect(drawing.getByText('Gemeentewet', { exact: true })).toBeVisible();
+		await expect(drawing.getByText(/stukken noemen ook de ander/).first()).toBeVisible();
+		// A Kamerstuk row: its notation, never cut off in its name.
+		const rows = drawing.getByRole('button');
+		const names = await rows.evaluateAll((els) =>
+			els.map((e) => e.getAttribute('aria-label') ?? '')
+		);
+		expect(names.some((n) => /^\d+(-[IVX]+)?, nr\. \d+ /.test(n))).toBe(true);
+		expect(names.every((n) => !n.includes('…'))).toBe(true);
+		// The lines have their kind's style: a dashed Aanhaling with an arrow.
+		await expect(drawing.locator('path.line[stroke-dasharray]').first()).toBeAttached();
+		await expect(drawing.locator('polygon.line').first()).toBeAttached();
+	}
+});
+
+test('three bronnen: the blocks are headed Delen alle drie and Delen er twee', async ({ page }) => {
+	await page.goto(
+		`/explore?netwerk=${GEMEENTEWET},${BOEK6},instruments/bwbr0005290&weergave=verband`
+	);
+	await expect(
+		shared(page).getByText('Delen alle drie').locator('visible=true').first()
+	).toBeVisible({ timeout: 30_000 });
+	await expect(
+		shared(page).getByText('Delen er twee').locator('visible=true').first()
+	).toBeVisible();
 });

@@ -106,7 +106,7 @@
 		nodeToGraphNode,
 		syntheticNode
 	} from '$lib/graph/types';
-	import { bronNaam } from '$lib/bron/naam';
+	import { bronNaam, bronFullName } from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
 		padOfFocus,
@@ -128,7 +128,7 @@
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
 	import { parentKind } from '$lib/network/chain';
-	import { verbandModel, type DirectLink } from '$lib/network/shared';
+	import { endNotes, verbandModel, type DirectLink } from '$lib/network/shared';
 	import {
 		chainsModel,
 		MAX_STEPS,
@@ -688,7 +688,7 @@
 			.filter((e) => e.on && e.node)
 			.map((e) => ({
 				id: e.node!.id,
-				name: bronNaam(e.node!, $instrumentMetaStore),
+				name: bronFullName(e.node!, $instrumentMetaStore),
 				collection: e.collection,
 				connections: e.connections ?? null
 			}));
@@ -699,7 +699,7 @@
 		)
 			ends.push({
 				id: selectedNode.id,
-				name: bronNaam(selectedNode, $instrumentMetaStore),
+				name: bronFullName(selectedNode, $instrumentMetaStore),
 				collection: selectedNode.collection,
 				connections: null
 			});
@@ -841,6 +841,12 @@
 				pairSteps
 			)
 		};
+	});
+	/** The chosen bronnen with what they have with the others written under them. */
+	const sharedShown = $derived.by(() => {
+		const here = sharedData?.key === sharedKey && !sharedData.failure ? sharedData : null;
+		const notes = here ? endNotes(here.answers, sharedDrawn.length) : new Map<string, string>();
+		return sharedDrawn.map((e) => ({ ...e, note: notes.get(e.id) ?? null }));
 	});
 	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
@@ -2115,7 +2121,7 @@
 	{:else if view === 'verband'}
 		<SharedView
 			{scale}
-			ends={sharedDrawn}
+			ends={sharedShown}
 			model={sharedState}
 			chosen={marked}
 			gap={sharedGap}

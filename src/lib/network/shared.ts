@@ -5,8 +5,9 @@
 // drawn one by one: a much cited pair shares hundreds.
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
+import { officialNumber } from '$lib/bron/dossier-naam';
 import { relationWords } from '$lib/verbonden/relation-words';
-import { capitalize, joinAnd } from '$lib/text/words';
+import { capitalize, joinAnd, plural, textOf } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 type Shared = Schema<'SharedNeighborsResponse'>;
@@ -20,7 +21,17 @@ export type SharedRow = {
 	/** How it hangs at the chosen bronnen in one line: `Noemt Art. 6:162 BW en Art. 7:658 BW`. */
 	line: string;
 	/** Per chosen bron, how the shared one hangs at it: `Haalt Art. 6:162 BW aan`. */
-	how: { bron: string; text: string; collection: Collection | null }[];
+	how: {
+		bron: string;
+		text: string;
+		collection: Collection | null;
+		/** The line to this bron: its relation, the kind it comes from, and the end its arrow names. */
+		relation: Relation;
+		from: Collection | null;
+		toward: 'row' | 'bron';
+	}[];
+	/** Under it, its title and year: `Wijziging van de Gemeentewet, 2018`; null where it has none. */
+	detail: string | null;
 	/** The relations of its lines, for the filter Relatie. */
 	relations: Relation[];
 	/** The chosen bronnen it hangs at (their ids). */
@@ -68,8 +79,30 @@ function joinLines(
 	].join(', ');
 }
 
-/** The name of a shared bron as the API gives it. */
-const nameOf = (n: Neighbor) => naamVanId(n.id, n.display_name);
+/**
+ * A shared bron by its notation: a Kamerstuk as `36545, nr. 3 Memorie van toelichting`, with
+ * its title and year under it; the API's own name is cut off with "…" and is not used for it.
+ * Any other bron keeps its name.
+ */
+export function rowNotation(n: Neighbor): { title: string; detail: string | null } {
+	const p = (n.props ?? {}) as Record<string, unknown>;
+	const name = naamVanId(n.id, n.display_name);
+	if (n.collection !== 'documents') return { title: name, detail: null };
+	const dossier = textOf(p.dossier_number);
+	const nr = typeof p.sequence === 'number' ? p.sequence : null;
+	const kind = textOf(p.kind);
+	if (!dossier || !kind) return { title: name, detail: textOf(p.title) };
+	const suffix = textOf(p.dossier_suffix);
+	const number = suffix ? `${dossier} ${suffix}` : officialNumber(dossier);
+	const year = textOf(p.date)?.slice(0, 4) ?? null;
+	return {
+		title: `${number}${nr !== null ? `, nr. ${nr}` : ''} ${kind}`,
+		detail: [textOf(p.title), year].filter(Boolean).join(', ') || null
+	};
+}
+
+/** The name of a shared bron: as a Kamerstuk is cited, else as the API gives it. */
+const nameOf = (n: Neighbor) => rowNotation(n).title;
 
 /** A verbinding between two chosen bronnen themselves: `Dilan Yeşilgöz lid van VVD`. */
 export type DirectLink = { from: string; to: string; relation: Relation };
@@ -176,17 +209,57 @@ function rowOf(
 			name: bron.name,
 			active,
 			side,
-			text: sentence(active, bron.name, side)
+			text: sentence(active, bron.name, side),
+			relation,
+			from: van,
+			toward: l.direction === 'outbound' ? ('row' as const) : ('bron' as const)
 		};
 	});
 	return {
 		id: n.id,
 		line: joinLines(how),
 		name: nameOf(n),
+		detail: rowNotation(n).detail,
 		collection: n.collection as Collection,
 		node: n,
-		how,
+		how: how.map(({ bron, text, collection, relation, from, toward }) => ({
+			bron,
+			text,
+			collection,
+			relation,
+			from,
+			toward
+		})),
 		at: [...new Set(n.links.map((l) => l.source))].sort(),
 		relations: [...new Set(n.links.map((l) => (l.relation ?? 'RELATED_TO') as Relation))]
 	};
+}
+
+const COUNT_WORD = ['', '', 'twee', 'drie', 'vier', 'vijf', 'zes'];
+
+/** The head of a block of shared bronnen of three to six chosen: `Delen alle drie`, `Delen er twee`. */
+export function groupHead(sharing: number, ends: number): string | null {
+	if (ends < 3 || sharing < 2 || sharing > ends) return null;
+	return sharing === ends ? `Delen alle ${COUNT_WORD[sharing]}` : `Delen er ${COUNT_WORD[sharing]}`;
+}
+
+/**
+ * Under a chosen bron, what it has with the others: `6 stukken noemen ook de ander` (the most
+ * Kamerstukken of its pairs that name both).
+ */
+export function endNotes(answers: readonly Shared[], ends: number): Map<string, string> {
+	const most = new Map<string, number>();
+	for (const a of answers) {
+		const papers = a.buckets.find((b) => b.collection === 'documents')?.total ?? 0;
+		for (const id of a.ids) most.set(id, Math.max(most.get(id) ?? 0, papers));
+	}
+	const other = ends === 2 ? 'de ander' : 'een andere gekozen bron';
+	return new Map(
+		[...most]
+			.filter(([, n]) => n > 0)
+			.map(([id, n]) => [
+				id,
+				`${n} ${plural(n, 'stuk', 'stukken')} ${plural(n, 'noemt', 'noemen')} ook ${other}`
+			])
+	);
 }

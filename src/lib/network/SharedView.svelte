@@ -6,6 +6,7 @@
 	import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { drawClassOf } from '$lib/graph/types';
+	import type { Relation } from '$lib/vocabulary';
 	// The weergave Verband (besluit 39, mockup A197-b): the chosen bronnen in a column at the
 	// left, their names beside them; at the right, in one column, what joins them: the
 	// verbindingen between them, what pairs of them share (those that more share first) and the
@@ -17,7 +18,8 @@
 	import { joinAnd, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { markOf } from '$lib/bron/vormen';
-	import type { SharedRow, VerbandModel } from './shared';
+	import { groupHead, type SharedRow, type VerbandModel } from './shared';
+	import { drawnLine } from '$lib/components/graph/drawn-line';
 	import type { ChainBron, ChainsState } from './linkchains';
 
 	let {
@@ -37,7 +39,12 @@
 		onSteps = () => {}
 	}: {
 		/** The chosen bronnen: their id and name, in the order Verband draws them. */
-		ends: readonly { id: string; name: string; connections?: number | null }[];
+		ends: readonly {
+			id: string;
+			name: string;
+			connections?: number | null;
+			note?: string | null;
+		}[];
 		model: VerbandModel | null;
 		chosen?: string | null;
 		/** What the data lacks, as one label. */
@@ -63,7 +70,14 @@
 
 	/** One line of the column at the right: a verbinding, a shared bron, or a pair's judgments. */
 	type Item =
-		| { soort: 'direct'; id: string; text: string; at: readonly string[] }
+		| { soort: 'head'; id: string; text: string; at: readonly string[] }
+		| {
+				soort: 'direct';
+				id: string;
+				text: string;
+				at: readonly string[];
+				relation: Relation;
+		  }
 		| { soort: 'row'; id: string; row: SharedRow; at: readonly string[] }
 		| { soort: 'judgments'; id: string; total: number; at: readonly string[] };
 
@@ -90,11 +104,28 @@
 				r.relations.some((rel) => !hiddenLines.has(lineKindOf(rel, drawClassOf(r.collection))))
 			);
 		});
+		let sharing = 0;
+		const body = rows.flatMap((row): Item[] => {
+			const head = row.at.length !== sharing ? groupHead(row.at.length, ends.length) : null;
+			sharing = row.at.length;
+			return [
+				...(head
+					? [{ soort: 'head' as const, id: `kop~${row.at.length}`, text: head, at: [] }]
+					: []),
+				{ soort: 'row' as const, id: row.id, row, at: row.at }
+			];
+		});
 		return [
 			...model.direct
 				.filter((d) => !hiddenLines.has(lineKindOf(d.relation)))
-				.map((d) => ({ soort: 'direct' as const, id: d.at.join('~'), text: d.text, at: d.at })),
-			...rows.map((row) => ({ soort: 'row' as const, id: row.id, row, at: row.at })),
+				.map((d) => ({
+					soort: 'direct' as const,
+					id: d.at.join('~'),
+					text: d.text,
+					at: d.at,
+					relation: d.relation
+				})),
+			...body,
 			...(hiddenKinds.has('uitspraken') ? [] : model.judgments).map((j) => ({
 				soort: 'judgments' as const,
 				id: `uitspraken~${j.at.join('~')}`,
@@ -107,9 +138,9 @@
 		`${formatCount(total)} ${plural(total, 'uitspraak', 'uitspraken')} die ${joinAnd(at.map(nameOf))} aanhalen`;
 
 	let width = $state(760);
-	const ROW = 44;
+	const ROW = 48;
 	const TOP = 56;
-	const END_X = 232;
+	const END_X = 264;
 	const span = $derived(Math.max(items.length, ends.length * 1.6, 4));
 	const height = $derived(TOP + span * ROW + 24);
 	const rowX = $derived(Math.max(END_X + 160, Math.round(width * 0.48)));
@@ -118,6 +149,37 @@
 	const endY = (i: number) =>
 		ends.length < 2 ? TOP : TOP + (i * (span - 1) * ROW) / (ends.length - 1);
 	const place = $derived(new Map(ends.map((e, i) => [e.id, { x: END_X, y: endY(i) }])));
+	/** The line from the chosen bron `a` to what is drawn at row `i`, in the style of its kind. */
+	function lineFor(it: Item, a: string, i: number) {
+		const p = place.get(a)!;
+		const from = { x: p.x + 9, y: p.y };
+		const to = { x: rowX - 8, y: rowY(i) };
+		if (it.soort === 'row') {
+			const how = it.row.how.find((h) => h.bron === a);
+			return drawnLine(from, to, {
+				relation: how?.relation ?? null,
+				from: how?.from ?? null,
+				arrow: how ? (how.toward === 'row' ? 'b' : 'a') : null,
+				ra: 0,
+				rb: 3
+			});
+		}
+		if (it.soort === 'judgments')
+			return drawnLine(from, to, {
+				relation: 'REFERS_TO',
+				from: 'judgments',
+				arrow: 'a',
+				ra: 0,
+				rb: 3
+			});
+		return drawnLine(from, to, {
+			relation: it.soort === 'direct' ? it.relation : null,
+			from: null,
+			arrow: null,
+			ra: 0,
+			rb: 3
+		});
+	}
 	const alone = $derived(new Set(model?.alone ?? []));
 	/** A name over one line as wide as its column allows; a longer one ends in "…". */
 	const cut = (s: string, room: number) => {
@@ -175,15 +237,25 @@
 				{#each items as it, i (it.id)}
 					{#each it.at as a (a)}
 						{@const p = place.get(a)}
-						{#if p}<line
+						{#if p}
+							{@const l = lineFor(it, a, i)}
+							<path
 								class="line"
 								class:is-active={chosen === it.id}
-								class:line--direct={it.soort === 'direct'}
-								x1={p.x + 14}
-								y1={p.y}
-								x2={rowX - 12}
-								y2={rowY(i)}
-							/>{/if}
+								d={l.d}
+								fill="none"
+								stroke={l.colour}
+								stroke-width={l.width}
+								stroke-dasharray={l.dash}
+							/>
+							{#if l.head}<polygon
+									class="line"
+									class:is-active={chosen === it.id}
+									points={l.head}
+									fill={l.colour}
+									stroke="none"
+								/>{/if}
+						{/if}
 					{/each}
 				{/each}
 				{#each items as it, i (it.id)}
@@ -194,12 +266,12 @@
 							class:is-active={chosen === it.id}
 							role="button"
 							tabindex="0"
-							aria-label={it.row.name}
+							aria-label={it.row.detail ? `${it.row.name}, ${it.row.detail}` : it.row.name}
 							aria-pressed={chosen === it.id}
 							onclick={() => onChoose(it.row)}
 							onkeydown={(e) => press(e, it.row)}
 						>
-							<title>{it.row.name}: {it.row.line}</title>
+							<title>{it.row.name}{it.row.detail ? `, ${it.row.detail}` : ''}: {it.row.line}</title>
 							<rect
 								class="hit"
 								x={rowX - 16}
@@ -223,10 +295,15 @@
 								stroke={v.stroke}
 								stroke-width="1.5"
 							/>
-							<text class="name" x={rowX + 18} y={rowY(i) + 4}
+							<text class="name" x={rowX + 18} y={rowY(i) - (it.row.detail ? 2 : -4)}
 								>{cut(it.row.name, width - rowX - 40)}</text
 							>
+							{#if it.row.detail}<text class="name name--detail" x={rowX + 18} y={rowY(i) + 14}
+									>{cut(it.row.detail, width - rowX - 40)}</text
+								>{/if}
 						</g>
+					{:else if it.soort === 'head'}
+						<text class="kop" x={rowX - 8} y={rowY(i) + 4}>{it.text}</text>
 					{:else if it.soort === 'judgments'}
 						<circle class="group" cx={rowX} cy={rowY(i)} r="8" />
 						<text class="name" x={rowX + 18} y={rowY(i) + 4}
@@ -251,6 +328,11 @@
 								x={p.x - 20}
 								y={p.y + 20}
 								text-anchor="end">geen verbinding met de andere</text
+							>{:else if e.note}<text
+								class="name name--alone"
+								x={p.x - 20}
+								y={p.y + 20}
+								text-anchor="end">{cut(e.note, p.x - 40)}</text
 							>{/if}
 					</g>
 				{/each}
@@ -264,14 +346,16 @@
 							<span class="ladder__name"><i class="mark mark--end"></i>{e.name}</span>
 							{#if alone.has(e.id)}<span class="ladder__how"
 									>geen verbinding met de andere gekozen bronnen</span
-								>{/if}
+								>{:else if e.note}<span class="ladder__how">{e.note}</span>{/if}
 						</li>
 					{/each}
 				</ul>
 				<ul class="ladder__items">
 					{#each items as it (it.id)}
-						<li>
-							{#if it.soort === 'row'}
+						<li class:ladder__kop={it.soort === 'head'}>
+							{#if it.soort === 'head'}
+								{it.text}
+							{:else if it.soort === 'row'}
 								<button
 									type="button"
 									class="ladder__row"
@@ -283,6 +367,7 @@
 										><i class="mark" style:background={kindColour(it.row.collection)}></i>{it.row
 											.name}</span
 									>
+									{#if it.row.detail}<span class="ladder__how">{it.row.detail}</span>{/if}
 									{#if it.row.line}<span class="ladder__how">{it.row.line}</span>{/if}
 								</button>
 							{:else if it.soort === 'judgments'}
@@ -367,12 +452,6 @@
 		width: 100%;
 		height: auto;
 	}
-	.line {
-		stroke: var(--rule-strong);
-		stroke-width: 1.2;
-		opacity: 0.7;
-	}
-	.line--direct,
 	.direct-mark {
 		stroke: var(--ink-2);
 		stroke-width: 1.6;
@@ -381,7 +460,30 @@
 	.line.is-active {
 		stroke: var(--ink);
 		stroke-width: 2;
-		opacity: 1;
+	}
+	polygon.line.is-active {
+		fill: var(--ink);
+	}
+	.kop {
+		font-family: var(--font-serif);
+		font-size: var(--t-label);
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		fill: var(--ink-3);
+	}
+	.name--detail {
+		font-size: var(--t-label);
+		fill: var(--ink-3);
+	}
+	.ladder__kop {
+		padding: var(--s-3) 0 var(--s-1);
+		font-family: var(--font-serif);
+		font-size: var(--t-label);
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--ink-3);
 	}
 	.hit {
 		fill: transparent;

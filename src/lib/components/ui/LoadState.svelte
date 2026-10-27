@@ -19,6 +19,9 @@
 	function failureParts(what: string, error: unknown, plural = false): [string, string, string] {
 		const no = plural ? 'konden niet' : 'kon niet';
 		if (isRateLimited(error)) return [`${RATE_LIMIT_TEXT}.`, '', ''];
+		// A table the answer reads is not built yet: said, not broken.
+		if (error instanceof ApiError && error.status === 503)
+			return [`${what} ${plural ? 'zijn' : 'is'} nog niet beschikbaar.`, '', ''];
 		return [what, no, isSlow(error) ? 'op tijd worden geladen.' : 'worden geladen.'];
 	}
 

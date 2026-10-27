@@ -11,6 +11,19 @@ import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
 import { dossierOwnName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 
+/** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
+export function bronFullName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+	if (n.drawClass !== 'instrument') return bronNaam(n, meta);
+	const p = n.raw?.props ?? undefined;
+	const m = meta.get(instrumentLawId(p, n.key));
+	return (
+		m?.citationTitle ??
+		(p?.['citation_title'] as string | undefined) ??
+		(p?.['title'] as string | undefined) ??
+		bronNaam(n, meta)
+	);
+}
+
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
 	if (n.drawClass === 'instrument') {
