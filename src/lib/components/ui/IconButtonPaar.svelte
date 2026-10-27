@@ -93,8 +93,12 @@
 		white-space: nowrap;
 	}
 	@media (pointer: coarse), (max-width: 768px) {
+		/* The frame is an outline inside, so the halves are 44 px high themselves. */
 		.pair {
 			height: var(--veld-h-raak);
+			border: 0;
+			outline: 1px solid var(--rule-strong);
+			outline-offset: -1px;
 		}
 		button {
 			width: var(--veld-h-raak);

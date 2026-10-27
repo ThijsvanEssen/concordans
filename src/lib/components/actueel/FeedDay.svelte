@@ -7,12 +7,12 @@
 	import { korteDatum } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
-	// (rung 2, the timeline is the page), its kinds counted beside it; each line the kind above
+	// (rung 2, the timeline is the page), a date and nothing counted beside it; each line the kind above
 	// its headline, the teken of its kind on the line. An item with content of its own opens it
 	// in place (RijInhoud), a fold of many items of one kind on one dossier its items; the
 	// bron is one step further. Names of persons and dossiers are links, as everywhere. The
-	// counts are the whole day's from the summary when it has come; until then, those of the
-	// lines loaded. The words of a followed topic or a search (`termen`) are marked where the
+	// tally of a fold of votes is the whole day's from the summary when it has come; until then,
+	// that of the lines loaded. The words of a followed topic or a search (`termen`) are marked where the
 	// row shows them; where it does not, a line under the headline says where they are
 	// (`In dossier: …`): the reason the row is there, as the API found it (`matched`). Of a
 	// followed law, how the row is tied to it (`via`). What a row is tied to stands under it
@@ -29,11 +29,9 @@
 	import { fromFeed } from '$lib/bron/submitters';
 	import {
 		KIND_LABEL,
-		countLine,
 		dayLabel,
 		foldTitle,
 		publicationCite,
-		summaryCounts,
 		titleOf,
 		type Day,
 		type DaySummary,
@@ -97,8 +95,6 @@
 	/** A person's fractie colour; a person without a fractie in a quiet rule. */
 	const colorOf = (short: string | null | undefined) =>
 		short ? partyColor(short) : 'var(--rule-strong)';
-
-	const counts = $derived(summary ? summaryCounts(summary) : day.counts);
 
 	const nieuw = (date: string | undefined) =>
 		nieuwSinds && date && date > nieuwSinds ? ', nieuw' : '';
@@ -181,7 +177,7 @@
 </script>
 
 <Tijdlijn
-	groepen={[{ id: day.date, titel: dayLabel(day.date, today), sub: countLine(counts), regels }]}
+	groepen={[{ id: day.date, titel: dayLabel(day.date, today), datum: day.date, regels }]}
 	niveau={2}
 	datums={false}
 	bewaar

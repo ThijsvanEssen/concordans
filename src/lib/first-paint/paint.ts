@@ -49,9 +49,9 @@ export function frame(col: string, k: Classes, contents: boolean, style = ''): s
 		`<div class="explore-read${contents ? ' explore-read--with-nav' : ''} ${p}"${style ? ` style="${style}"` : ''}>` +
 		// The bar of a narrow screen: on a phone the tabs Tekst and Verbonden, Inhoud where the
 		// bron has contents (A197-a).
-		`<nav class="mobile-tabs${contents ? '' : ' mobile-tabs--tabs'} ${p}"><div class="lees-tabs ${p}" role="tablist"><button type="button" role="tab" class="mobile-tab is-active ${p}" tabindex="-1">Tekst</button><button type="button" role="tab" class="mobile-tab ${p}" tabindex="-1">Verbonden</button></div>` +
+		`<nav class="mobile-tabs${contents ? '' : ' mobile-tabs--tabs'} ${p}"><div class="lees-tabs ${p}"><div class="keuze vol ${k.choice}" role="group" aria-label="Tekst of Verbonden"><button type="button" class="${k.choice}" aria-pressed="true" tabindex="-1">Tekst</button><button type="button" class="${k.choice}" aria-pressed="false" tabindex="-1">Verbonden</button></div></div>` +
 		(contents
-			? `<button type="button" class="mobile-tab mobile-tab--toc ${p}" tabindex="-1" data-later>Inhoud</button>`
+			? `<button type="button" class="btn mobile-tab--toc ${p}" tabindex="-1" data-later>Inhoud</button>`
 			: '') +
 		'</nav>' +
 		`<div class="col col--nav toc-column ${p}"${contents ? '' : ' hidden'}></div>` +

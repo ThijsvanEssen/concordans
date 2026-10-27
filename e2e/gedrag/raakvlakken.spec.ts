@@ -6,6 +6,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { ARTICLE } from '../support/bundels';
 import { naarVerbonden } from '../support/navigation';
+import { openSheet } from '../support/sheet';
 
 /** Links that stand in a sentence (WCAG 2.5.8, inline) or are not for a finger at all. */
 const INLINE = [
@@ -90,6 +91,40 @@ test.describe('on a phone', () => {
 			}
 		});
 	}
+
+	// The segments of a Keuze and the halves of a zoom pair are 44 px themselves, measured as
+	// drawn (live toets 27 Oct, B2: 42 px inside a 1 px frame).
+	test('the steps and the zoom buttons of the werkplek are 44 px', async ({ page }) => {
+		await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+		await openSheet(page);
+		const hoogtes = async (group: string) =>
+			page
+				.getByRole('group', { name: group })
+				.getByRole('button')
+				.evaluateAll((els) =>
+					els.map((el) => {
+						const q = el.getBoundingClientRect();
+						return {
+							naam: el.getAttribute('aria-label') ?? el.textContent,
+							w: q.width,
+							h: q.height
+						};
+					})
+				);
+		const stappen = await hoogtes('Aantal stappen');
+		expect(stappen.map((b) => b.naam)).toEqual(['1 stap', '2 stappen', '3 stappen']);
+		for (const b of stappen) expect.soft(b.h, b.naam ?? '').toBeGreaterThanOrEqual(44);
+		await page
+			.getByRole('dialog', { name: 'Weergave' })
+			.getByRole('button', { name: 'Sluiten' })
+			.click();
+		const zoom = await hoogtes('Zoom');
+		expect(zoom.map((b) => b.naam)).toEqual(['Uitzoomen', 'Inzoomen']);
+		for (const b of zoom) {
+			expect.soft(b.h, b.naam ?? '').toBeGreaterThanOrEqual(44);
+			expect.soft(b.w, b.naam ?? '').toBeGreaterThanOrEqual(44);
+		}
+	});
 
 	// A Keuze is whole on a phone: no option cut off at the frame's edge, none out of the
 	// screen (the start page's Alle bronnen to Regering was 7 px too wide, UX-toets A265 B3).

@@ -11,7 +11,7 @@ async function filters(page: Page) {
 	await openSheet(page);
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
 	await expect(
-		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
+		strip(page).getByRole('region', { name: 'Weergave' }).or(toggle).first()
 	).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
 	return strip(page).getByRole('region', { name: 'Filters' });
@@ -86,7 +86,7 @@ test('Verband counts the bron of the page as the first end (R3-I F2)', async ({ 
 	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Verband', pressed: true })).toBeVisible();
 	await expect(page.getByText('Art. 7:658 BW').first()).toBeVisible();
-	await expect(page.getByText('Voeg een tweede bron toe')).toHaveCount(0);
+	await expect(page.getByText('Kies een tweede bron')).toHaveCount(0);
 });
 
 test('no "?" for judgments both cite where one end cites none (R3-N B7)', async ({ page }) => {

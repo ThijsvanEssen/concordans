@@ -2,7 +2,7 @@
 	// Inline term that shows a popover with the full name and a plain explanation on
 	// hover or focus: the kind of a kamerstuk in the document reader (MvT, Motie). A dotted
 	// underline marks the term.
-	import { placement, topOf } from '$lib/actions/top-layer';
+	import { clickOutside, placement, topOf } from '$lib/actions/top-layer';
 	import { GLOSSARY, type GlossaryTerm } from '$lib/glossary';
 
 	let { term, label }: { term: GlossaryTerm; label?: string } = $props();
@@ -10,7 +10,9 @@
 	const display = $derived(label ?? term);
 
 	let open = $state(false);
-	let pillEl: HTMLSpanElement | null = $state(null);
+	/** The last press was a finger's: its tap toggles the card, a mouse's hover has opened it. */
+	let touch = false;
+	let pillEl: HTMLButtonElement | null = $state(null);
 	let popEl: HTMLSpanElement | null = $state(null);
 
 	// The readers scroll inside containers that clip their overflow, so the popover is
@@ -31,7 +33,10 @@
 		const close = () => (open = false);
 		window.addEventListener('scroll', close, { capture: true, passive: true });
 		window.addEventListener('resize', close);
+		// A tap outside closes it (capture phase, as every card does); a tap on the term is its own.
+		const stop = clickOutside(() => [pillEl], close);
 		return () => {
+			stop();
 			window.removeEventListener('scroll', close, { capture: true });
 			window.removeEventListener('resize', close);
 		};
@@ -45,28 +50,37 @@
 	});
 </script>
 
-<span
+<button
+	type="button"
 	class="glossary-pill raakvlak"
 	bind:this={pillEl}
-	onmouseenter={() => (open = true)}
-	onmouseleave={() => (open = false)}
-	onfocusin={() => (open = true)}
-	onfocusout={() => (open = false)}
+	onpointerenter={(e) => {
+		if (e.pointerType === 'mouse') open = true;
+	}}
+	onpointerleave={(e) => {
+		if (e.pointerType === 'mouse') open = false;
+	}}
+	onfocus={() => (open = true)}
+	onfocusout={(e) => {
+		// Closed when the focus goes to another element, never on a focus that goes nowhere
+		// (a tap on the canvas): a tap outside closes (clickOutside).
+		const to = e.relatedTarget;
+		if (to instanceof Node && !pillEl?.contains(to)) open = false;
+	}}
+	onpointerdown={(e) => (touch = e.pointerType !== 'mouse')}
+	onclick={(e) => {
+		// A mouse has opened it by hovering; a finger's first tap opens it, the next closes it.
+		open = touch || e.detail === 0 ? !open : true;
+	}}
 	onkeydown={(e) => {
 		if (e.key === 'Escape') open = false;
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			open = !open;
-		}
 	}}
-	role="button"
-	tabindex="0"
 	aria-describedby={uid}
+	aria-expanded={open}
 	>{display}<span
 		id={uid}
 		class="glossary-pop"
 		class:is-open={open}
-		role="tooltip"
 		bind:this={popEl}
 		style:top="{pos.top}px"
 		style:left="{pos.left}px"
@@ -74,11 +88,18 @@
 		<span class="glossary-pop__full">{entry.full}</span>
 		<span class="glossary-pop__plain">{entry.plain}</span>
 	</span>
-</span>
+</button>
 
 <style>
 	.glossary-pill {
 		position: relative;
+		display: inline;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		text-align: inherit;
 		text-decoration: underline dotted;
 		text-underline-offset: 3px;
 		text-decoration-color: var(--rule-strong);

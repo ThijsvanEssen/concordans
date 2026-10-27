@@ -165,6 +165,14 @@ describe('the frame of a page', () => {
 });
 
 describe('a text page', () => {
+	it('heads its parts with Sectie, not a heading of its own', () => {
+		expect(
+			BRONNEN.filter(({ path }) => path.startsWith('routes/(main)'))
+				.filter(({ text }) => /class="section(-title)?"/.test(text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
 	it('lists key and value with KeyList, which breaks a long value on a phone', () => {
 		// Three copies drifted apart: /docs did not stack, and its addresses ran past their row
 		// at 375 px, cut off (code-eenvoud F24).
