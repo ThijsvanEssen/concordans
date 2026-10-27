@@ -2,7 +2,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import { voteCitation } from '$lib/bron/naam';
-	import { dossierLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
+	import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
 	import { stemmingNaam } from '$lib/votes/stemming';
@@ -11,6 +11,7 @@
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
+	import RowDossier from './RowDossier.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import { motionKindLabel } from '$lib/text/motion-kind';
 	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from '$lib/votes/decision-kind';
@@ -84,26 +85,22 @@
 						>
 						{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 							{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
-							<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-								>{dossierLabel(d)}</span
-							>
+							<span class="row-id-sub">{kamerstukNummer(d.number)}</span>
 						{/if}
 					{:else if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 						{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
 						<span class="row-id-main">{officialNumber(d.number)}</span>
-						{#if dossierOwnName(d)}
-							<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-								>{dossierOwnName(d)}</span
-							>
-						{/if}
 					{/if}
 				{/snippet}
 				{#snippet body()}
-					{#if bar}
+					<!-- Under a subject the dossier is by name here; without one the title says it. -->
+					{#if s.subject?.trim()}<RowDossier dossier={s.dossiers?.[0]} />{/if}
+					<!-- The opened row draws the bar large; the small one goes while it is open. -->
+					{#if bar && ctx.p.open !== bron}
 						<span class="stem-mini"
 							><Stembalk model={bar} compact members={s.vote_kind === 'member'} /></span
 						>
-					{:else if decisionMethod(s)}
+					{:else if !bar && decisionMethod(s)}
 						<span class="row-method">{decisionMethod(s)}</span>
 					{/if}
 				{/snippet}

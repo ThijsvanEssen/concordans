@@ -108,7 +108,7 @@ describe('the first paint of a Kamerstuk', () => {
 			'.reader-rijen .vote-line > *, .reader-title, .r-document > .body > :not([aria-hidden])';
 		const paint = [...painted.querySelectorAll(parts)].map(shape);
 		const app = [...container.querySelectorAll(parts)].map(shape).slice(0, paint.length);
-		expect(paint.some(([, c]) => c === 'side')).toBe(true);
+		expect(paint.some(([, c]) => c === 'sides')).toBe(true);
 		expect(paint).toEqual(app);
 	});
 

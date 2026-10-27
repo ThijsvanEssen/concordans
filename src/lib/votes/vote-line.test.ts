@@ -35,6 +35,7 @@ describe('voteLineOf', () => {
 			})
 		);
 		expect(u).toEqual({
+			method: null,
 			word: 'Aangenomen',
 			tone: 'ja',
 			how: '120 voor, 30 tegen',
@@ -58,6 +59,8 @@ describe('voteLineOf', () => {
 		expect(u.tone).toBe('nee');
 		expect(u.word).toBe('Verworpen');
 		expect(u.how).toBe('19 voor, 130 tegen, 1 niet deelgenomen');
+		// The Stembalk counts voor and tegen; the line keeps only what it does not.
+		expect(u.method).toBe('1 niet deelgenomen');
 	});
 
 	it('names no members on a roll-call, only its tally', () => {
@@ -70,6 +73,7 @@ describe('voteLineOf', () => {
 			})
 		);
 		expect(u.how).toBe('76 voor, 74 tegen, bij hoofdelijke stemming');
+		expect(u.method).toBe('bij hoofdelijke stemming');
 		expect(u.sides).toEqual([]);
 	});
 

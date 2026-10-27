@@ -57,6 +57,8 @@
 				? voteBarOf({ tally, chamber }, null)
 				: null
 	);
+	/** Without the tally where the bar counts the votes: they stand once. */
+	const how = $derived(bar ? line?.method : line?.how);
 </script>
 
 {#if bar && !line}
@@ -70,23 +72,25 @@
 						>&nbsp;op <BronLink ref={{ collection: 'decisions', key: line.decision }}
 							>{langeDatum(line.date)}</BronLink
 						></span
-					>{/if}{#if line.how}<span>, {line.how}</span>{/if}
+					>{/if}{#if how}<span>, {how}</span>{/if}
 			</p>
 		{/if}
 		{#if bar}<Stembalk model={bar} members={shown?.vote_kind === 'member'} />{/if}
-		{#each line.sides as side (side.choice)}
-			{#if side.names.length}
-				<p class="side">
-					<span class="choice"><Stem keuze={side.choice} /></span>
-					<span
-						>{#each side.names as name, i (name)}{i > 0
-								? ', '
-								: ''}{name}{#if side.seats[i]}&nbsp;<span class="zetels">{side.seats[i]}</span
-								>{/if}{/each}</span
-					>
-				</p>
-			{/if}
-		{/each}
+		{#if line.sides.some((side) => side.names.length)}
+			<dl class="sides">
+				{#each line.sides as side (side.choice)}
+					{#if side.names.length}
+						<dt class="choice"><Stem keuze={side.choice} /></dt>
+						<dd class="names">
+							{#each side.names as name, i (name)}{i > 0
+									? ', '
+									: ''}{name}{#if side.seats[i]}&nbsp;<span class="zetels">{side.seats[i]}</span
+									>{/if}{/each}
+						</dd>
+					{/if}
+				{/each}
+			</dl>
+		{/if}
 	</div>
 {/if}
 {#if full.state.status === 'error'}
@@ -116,7 +120,7 @@
 		border-bottom-color: currentColor;
 	}
 	/* Voor and Tegen in the margin column, the fracties at the text edge, wrapping there. */
-	.side {
+	.sides {
 		display: grid;
 		grid-template-columns: minmax(var(--voorkolom), max-content) minmax(0, 1fr);
 		margin: 0;
@@ -127,6 +131,10 @@
 	}
 	.zetels {
 		color: var(--ink-3);
+	}
+	.sides dt,
+	.sides dd {
+		margin: 0;
 	}
 	.choice {
 		padding-right: var(--s-2);

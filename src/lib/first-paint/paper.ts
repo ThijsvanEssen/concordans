@@ -294,7 +294,8 @@ function voteLine(d: Decision, k: Classes): string {
 	const when = line.date
 		? `<span class="${c}">&nbsp;op <a>${esc(langeDatum(line.date))}</a></span>`
 		: '';
-	const how = line.how ? `<span class="${c}">, ${esc(line.how)}</span>` : '';
+	const said = bar ? line.method : line.how;
+	const how = said ? `<span class="${c}">, ${esc(said)}</span>` : '';
 	const sides = line.sides
 		.filter((s) => s.names.length)
 		.map((s) => {
@@ -308,13 +309,13 @@ function voteLine(d: Decision, k: Classes): string {
 						(s.seats[i] ? `&nbsp;<span class="zetels ${c}">${s.seats[i]}</span>` : '')
 				)
 				.join('');
-			return `<p class="side ${c}"><span class="choice ${c}">${outcome(tone, word, k)}</span> <span class="${c}">${names}</span></p>`;
+			return `<dt class="choice ${c}">${outcome(tone, word, k)}</dt><dd class="names ${c}">${names}</dd>`;
 		})
 		.join('');
 	return (
 		`<div class="vote-line ${c}"><p class="outcome ${c}">${outcome(line.tone, line.word, k)}${when}${how}</p>` +
 		(bar ? stembalk(bar, k) : '') +
-		sides +
+		(sides ? `<dl class="sides ${c}">${sides}</dl>` : '') +
 		'</div>'
 	);
 }
