@@ -272,8 +272,8 @@ function createCurveProgram(pijl: number, dash: Dash | null, dot = false) {
  * and a gap of 3, `dotted` 1.5 and 3.5, `dashdot` 9, 3, 1.5, 3.
  */
 export function stippelProgrammas(pijl: number) {
-	const dash = (repeats: number, lit: Dash['lit'], kop = pijl) =>
-		createCurveProgram(kop, { repeats, lit });
+	const dash = (repeats: number, lit: Dash['lit'], arrow = pijl) =>
+		createCurveProgram(arrow, { repeats, lit });
 	return {
 		arrow: createCurveProgram(pijl, null),
 		submitter: createCurveProgram(pijl, null, true),
