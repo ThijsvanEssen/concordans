@@ -1347,9 +1347,23 @@
 			composer.surroundings = omgeving;
 			composer.drawsPaths = omgeving;
 			if (n.ids.length > 0) composer.compose(n);
-			else if (composer.composed) composer.release();
+			else if (composer.composed) {
+				composer.release();
+				if (focus) drawFocusAgain(focus);
+			}
 		});
 	});
+
+	/**
+	 * The last bron of a netwerk taken out while a page's own bron is the focus: the canvas goes
+	 * back to what that page drew, not what the removed bron brought (its 200 uitspraken).
+	 */
+	function drawFocusAgain(id: string) {
+		store.reset();
+		deepenedId = '';
+		loadedFocus = id;
+		loadFocus(id).catch((e) => showFocusError(e, id));
+	}
 
 	/**
 	 * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a

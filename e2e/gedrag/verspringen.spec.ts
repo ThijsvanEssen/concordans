@@ -79,3 +79,37 @@ test('the text of an article keeps its place when the peildatum comes', async ({
 	await expect(page.getByText('Tekst geldend op')).toBeVisible();
 	expect((await text.boundingBox())!.y).toBe(before);
 });
+
+// The card of a bron on the canvas keeps Lees and Toevoegen where they stood while its text comes
+// in (live toets 27 Oct, B1: they dropped 62 px and a click missed).
+test('the card of a bron keeps its actions in place while the text comes in', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'a phone has the sheet, not the strip');
+	let release!: () => void;
+	const held = new Promise<void>((done) => (release = done));
+	await page.route(/\/api\/articles\//, async (route) => {
+		await held;
+		await route.fallback();
+	});
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	const list = page.locator('.canvas-node-list a');
+	await expect(list.nth(1)).toBeAttached();
+	const eerste = list.filter({ hasText: /^Art\./ }).nth(1);
+	await eerste.focus();
+	await page.keyboard.press('Enter');
+	const card = page.locator('.strook--kaart.is-open');
+	const lees = card.getByRole('link', { name: 'Lees', exact: true });
+	const voeg = card.getByRole('button', { name: /^(Toevoegen|Weghalen)$/ });
+	await expect(lees).toBeVisible();
+	await expect(card.getByRole('status')).toBeVisible();
+	const at = async () => ({
+		lees: (await lees.boundingBox())!.y,
+		voeg: (await voeg.boundingBox())!.y
+	});
+	const before = await at();
+	release();
+	await expect(card.getByRole('status')).toHaveCount(0);
+	expect(await at()).toEqual(before);
+});
