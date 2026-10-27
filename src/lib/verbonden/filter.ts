@@ -151,16 +151,16 @@ export const emptyLine = (f: VerbondenFilter): string =>
  * The start page's server HTML (lawgraph, `seo/pages/home.py`) still names the stukken as
  * toelichtingen and wetsvoorstellen; they are one soort, Stukken, until that page says so.
  */
-const START_PAGE_NAME = new Map([
+const START_PAGE_NAME = [
 	['toelichtingen', 'stukken'],
 	['wetsvoorstellen', 'stukken']
-]);
+] as const;
 
 /** The filter the URL holds. */
 export function parseFilter(params: URLSearchParams): VerbondenFilter {
 	const kinds = (params.get('bronnen') ?? '')
 		.split(',')
-		.map((s) => START_PAGE_NAME.get(s.trim()) ?? s.trim())
+		.map((s) => START_PAGE_NAME.find(([old]) => old === s.trim())?.[1] ?? s.trim())
 		.filter(isFilterGroup);
 	const stuksoorten = (params.get('stuksoort') ?? '')
 		.split(',')

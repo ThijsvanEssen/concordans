@@ -30,6 +30,7 @@
 	import { shapeOfTier } from './tiers';
 	import { hoeVan, kleineLetter } from './hoe';
 	import { ankerVanRij, dossierVanRij, metaParts, type Row } from './rows';
+	import { vormVanBron } from '$lib/bron/vormen';
 
 	let {
 		row,
@@ -173,8 +174,9 @@
 			<span class="row__vlak"><TierSwatch shape={tierShape} /></span>
 		{:else}
 			<KindGlyph
-				collection={row.ref.collection}
-				vorm={row.stuksoort === 'wetsvoorstellen' ? 'voorstel' : undefined}
+				vorm={row.stuksoort === 'wetsvoorstellen'
+					? 'voorstel'
+					: vormVanBron(row.ref.collection, row.props, row.ref.key)}
 				size={ROW_GLYPH}
 			/>
 		{/if}
