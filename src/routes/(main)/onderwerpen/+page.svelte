@@ -403,7 +403,6 @@
 	<!-- The topics of the page, as a facet column holds its groups: a way to each. -->
 	{#if lijst.length > 1}
 		<Inhoudsopgave
-			label="Gevolgde onderwerpen op deze pagina"
 			kop="Gevolgd"
 			items={lijst.map((o, n) => ({ label: naamVan(o), id: `onderwerp-${n}` }))}
 		/>

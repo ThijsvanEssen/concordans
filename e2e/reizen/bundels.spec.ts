@@ -82,10 +82,7 @@ test('the Inhoudsopgave of a bundel starts on its first group, as Bronnen’s', 
 	await keepArticle(page);
 	await keepPlaces(page);
 	await page.goto('/bundels/losse-markeringen');
-	const eersteLink = page
-		.getByRole('navigation', { name: 'Groepen van Losse markeringen' })
-		.getByRole('link')
-		.first();
+	const eersteLink = page.getByRole('navigation', { name: 'Inhoud' }).getByRole('link').first();
 	const eerste = page.getByRole('heading', { level: 3, name: 'Burgerlijk Wetboek Boek 6' });
 	await expect(eersteLink).toBeVisible();
 	await expect(eerste).toBeVisible();

@@ -57,6 +57,8 @@ export type TijdGroep<B = unknown> = {
 	id: string;
 	titel: string;
 	sub?: string | null;
+	/** The day the heading names (`Vandaag`, `Dinsdag 22 september`): a time element in the heading. */
+	datum?: string | null;
 	/** Het jaar dat de kop al noemt: dan staat het niet nog eens onder elke dag. */
 	jaar?: string | null;
 	regels: TijdRegel<B>[];

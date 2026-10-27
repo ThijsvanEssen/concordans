@@ -252,7 +252,6 @@ describe('nothing left over', () => {
 			'Row',
 			'Stuk',
 			'Uitkomst',
-			'countLine',
 			'feedQuery',
 			'kolomVan',
 			'matches',

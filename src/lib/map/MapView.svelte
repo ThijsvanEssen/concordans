@@ -453,7 +453,6 @@
 	<div class="voor blad__lijst">{@render voor()}</div>
 	{#if b.volgorde === 'groep' && groups.length > 1}
 		<Inhoudsopgave
-			label="Groepen van {b.naam}"
 			items={groups.map((g) => ({ label: g.groep, id: groupAnchor(g.sleutel) }))}
 			zonderAdres={!m}
 		/>
