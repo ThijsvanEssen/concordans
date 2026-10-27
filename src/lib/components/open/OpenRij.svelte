@@ -19,6 +19,7 @@
 		lezenLabel,
 		netwerk = null,
 		boven,
+		more,
 		opmerkingen = []
 	}: {
 		/** Alleen wat de rij zelf nog niet zegt. */
@@ -33,6 +34,8 @@
 		netwerk?: string | null;
 		/** Iets dat boven de tijdlijn hoort, zoals de standbalk van een dossier. */
 		boven?: Snippet;
+		/** Onder de tijdlijn: de weg naar de rest (AlleN). */
+		more?: Snippet;
 		/** Korte kanttekeningen onder de zin, zoals waarom iemand waarnam. */
 		opmerkingen?: string[];
 	} = $props();
@@ -45,7 +48,7 @@
 	{#if loading}
 		<LoadState state={{ status: 'loading' }} what="De gegevens" />
 	{:else if groepen.some((g) => g.regels.length)}
-		<Tijdlijn {groepen} volgorde="aflopend" />
+		<Tijdlijn {groepen} volgorde="aflopend" meer={more} />
 	{/if}
 	{#if links.length}
 		<p class="links">

@@ -262,6 +262,12 @@
 		   column. */
 		overflow-wrap: anywhere;
 	}
+	/* Lezerkop (DS): on a phone the title is t-h2. */
+	@media (max-width: 767px) {
+		.reader-title {
+			font-size: var(--t-h2);
+		}
+	}
 	.reader-onder {
 		display: flex;
 		flex-direction: column;

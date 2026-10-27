@@ -89,3 +89,17 @@ test('the votes of a bewindspersoon split where the API filters in_office=false'
 	await expect(page.getByRole('heading', { name: /^Als bewindspersoon/ })).toBeVisible();
 	await expect(page.getByRole('heading', { name: /^Als Kamerlid/ })).toBeVisible();
 });
+
+test('on a lid the date column is one for Loopbaan and Toezeggingen', async ({ page }) => {
+	await page.goto('/leden/rob-jetten');
+	const kolom = async (naam: string) => {
+		const sectie = page.locator('section', { has: page.getByRole('button', { name: naam }) });
+		return sectie.locator('.datum').first().boundingBox();
+	};
+	const loopbaan = await kolom('Loopbaan');
+	const toezeggingen = await kolom('Toezeggingen');
+	expect(loopbaan).not.toBeNull();
+	expect(toezeggingen).not.toBeNull();
+	expect(toezeggingen!.x).toBeCloseTo(loopbaan!.x, 0);
+	expect(toezeggingen!.width).toBeCloseTo(loopbaan!.width, 0);
+});

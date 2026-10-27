@@ -11,6 +11,8 @@
 	import type { Snippet } from 'svelte';
 	import { sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
 	import { dagMaand, yearsOf } from '$lib/text/datum';
+	import { dateColumn } from './date-column';
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import Markering from '$lib/components/ui/Markering.svelte';
 	import { subKey } from '$lib/components/ui/dicht.svelte';
@@ -63,7 +65,6 @@
 	} = $props();
 
 	/** Het jaar onder de dag, tenzij de kop het al noemt. */
-	const metJaar = (g: TijdGroep<B>, iso: string) => iso.slice(0, 4) !== g.jaar;
 
 	// One line open at a time.
 	let eigen = $state<string | null>(null);
@@ -87,7 +88,21 @@
 	const uid = $props.id();
 </script>
 
-<div class="tl" class:zonder={!datums} class:perioden class:met-acties={bewaar}>
+<!-- The day of a line: day and month, the year under it where the group does not name it. -->
+{#snippet dayOn(year: string | null | undefined, datum: string)}
+	<DateTime iso={datum} form="dagMaand"
+		>{dagMaand(datum)}{#if datum.slice(0, 4) !== year}<span class="j">{datum.slice(0, 4)}</span
+			>{/if}</DateTime
+	>
+{/snippet}
+
+<div
+	class="tl"
+	class:zonder={!datums}
+	class:perioden
+	class:kolom-voor={dateColumn() === 'term'}
+	class:met-acties={bewaar}
+>
 	{#each groepen as g (g.id)}
 		{#snippet groep()}
 			<ol class="regels">
@@ -112,13 +127,8 @@
 									type="button"
 									class="datum-knop"
 									title={r.datumKnop.titel}
-									onclick={r.datumKnop.actie}
-									>{dagMaand(r.datum)}{#if metJaar(g, r.datum)}<span class="j"
-											>{r.datum.slice(0, 4)}</span
-										>{/if}</button
-								>{:else if r.datum}{dagMaand(r.datum)}{#if metJaar(g, r.datum)}<span class="j"
-										>{r.datum.slice(0, 4)}</span
-									>{/if}{/if}</span
+									onclick={r.datumKnop.actie}>{@render dayOn(g.jaar, r.datum)}</button
+								>{:else if r.datum}{@render dayOn(g.jaar, r.datum)}{/if}</span
 						>
 						{#if !perioden}
 							<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
@@ -178,7 +188,14 @@
 		{#if g.titel}
 			<!-- The group is a Sectie a level down (3 in a section, 2 where the timeline is the page);
 			     its state is kept per heading, as it always was (subKey). -->
-			<Sectie {niveau} title={g.titel} aantal={g.sub} sleutel={subKey(g.titel)} {inklapbaar}>
+			<Sectie
+				{niveau}
+				title={g.titel}
+				datum={g.datum}
+				aantal={g.sub}
+				sleutel={subKey(g.titel)}
+				{inklapbaar}
+			>
 				{@render groep()}
 			</Sectie>
 		{:else}
@@ -206,6 +223,11 @@
 		--tl-datum: var(--s-8);
 		--tl-teken: 20px;
 		--tl-voor: calc(var(--tl-datum) + var(--tl-teken) + 2 * var(--s-2));
+	}
+	/* A page whose date column is the term column (Kamerlid). */
+	.kolom-voor {
+		/* On a phone the term column is 0: the date is then as wide as its day and month. */
+		--tl-datum: max(var(--voorkolom), calc(var(--s-8) + var(--s-2)));
 	}
 	/* A line that leads to a list on the page: read as the other lines, underlined as a link. */
 	.zin--actie,
@@ -448,7 +470,7 @@
 	.zonder .datum {
 		visibility: hidden;
 	}
-	/* Perioden: the years in the reader's term column (96px; on a phone as wide as "2023–2026"), no line, no teken. */
+	/* Perioden: the years in the reader's term column (the term column; on a phone as wide as "2023–2026"), no line, no teken. */
 	.perioden {
 		--tl-datum: max(var(--voorkolom), calc(var(--s-8) + var(--s-2)));
 		--tl-teken: 0px;
