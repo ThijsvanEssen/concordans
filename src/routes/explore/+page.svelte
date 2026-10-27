@@ -1673,7 +1673,7 @@
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
 	const readHref = $derived(withParams(page.url, { tabel: null }));
 
-	const inFlux = new InFlux();
+	const inFlux = new InFlux(() => mode === 'graph');
 
 	let graphView = $state<GraphView | null>(null);
 	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
