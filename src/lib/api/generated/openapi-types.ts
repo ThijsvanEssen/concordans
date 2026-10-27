@@ -1626,7 +1626,7 @@ export interface paths {
         };
         /**
          * The chains of steps between two chosen nodes
-         * @description The chains of 1 to `max_steps` steps from one node of `ids` (two node ids, `collection/key`, comma-separated) to the other. A step joins two sources: by an edge between them (`via` null: one refers to the other), or by a node with an edge to both (`via`: what they share, as `/api/nodes/shared` finds it: a paper that names both, a judgment that cites both). The sources between the ends are laws and articles (`instruments`, `articles`); what two sources share can be any node; each node is once in a chain. So two steps are an end, what it shares with a law, that law, what the law shares with the other end, the other end. One block per length (1, 2, 3), each there when empty: its `total` and its first `limit` chains, the heaviest first (the `inbound_citation_count` of the sources between the ends together), then by their ids. A chain is one row of sources: its steps name their strongest way (the edge, else the shared node cited most, then the lowest id) and count their `ways`. The shortest chains first: a source the ends share or a shorter chain passes starts no longer chain. A chain does not pass through a law by its articles (the `PART_OF` of an article and its law counts only where the law is an end), as on `/api/paths`. No edge is derived. The search reads levels of at most 20,000 nodes (`capped`) for at most 10 s (`partial`); a block is `complete` when neither touched it. 404 when a node is not there.
+         * @description The chains of 1 to `max_steps` steps from one node of `ids` (two node ids, `collection/key`, comma-separated) to the other. A step joins two sources (laws and articles, `instruments`, `articles`): by an edge between them (`via` null: one refers to the other), or by a node with an edge to both and to at most 50 sources (`via`: what they share, as `/api/nodes/shared` finds it: a paper that names both, a judgment that cites both). An end may be any node. So two steps are an end, what it shares with a law, that law, what the law shares with the other end, the other end. Each node is once in a chain. A step's `weight` is the sum over the nodes its sources share of 1 / ln k, k the sources of the node, plus 1 / ln 2 for an edge between them; a chain is as strong as its weakest step (`weight`). One block per length (1 to `max_steps`), each there when empty: its `total` and its first `limit` chains, the strongest first (the weakest step, then the steps together, then the ids), each source between the ends in one of them only. Each step names its way (the edge, else the node they share with the fewest sources, then the lowest id) and counts its `ways`. The shortest chains first: a source the ends share or a shorter chain passes starts no longer chain. A chain does not pass through a law by its articles (the `PART_OF` of an article and its law counts only where the law is an end). No edge is derived. Up to 3 steps every chain is counted (of at most 5,000 sources of an end); longer chains are searched best first, 200 sources a level with their 50 strongest steps each, and their `total` is then at least that many. A search that left a way out is `capped`, one past 10 s `partial`; a block is `complete` when neither touched it. Searched on the steps `semantic graph-steps` builds: 503 until it has. 404 when a node is not there.
          */
         get: operations["get_chains_route_api_chains_get"];
         put?: never;
@@ -4141,17 +4141,17 @@ export interface components {
             steps: number;
             /**
              * Total
-             * @description Its chains; 0 when none joins the ends.
+             * @description Its chains; 0 when none joins the ends. At least that many when the block is not `complete`.
              */
             total: number;
             /**
              * Chains
-             * @description The first `limit`, the heaviest first, then by the ids of their sources.
+             * @description The first `limit`, the strongest first (the weakest step, then the steps together, then the ids of their sources), each source between the ends in one of them only.
              */
             chains: components["schemas"]["ChainDTO"][];
             /**
              * Complete
-             * @description The search read all this length needs: false when it ran out of time or a level reached its cap, and then 0 does not mean none.
+             * @description The search read all this length needs: false when it ran out of time or left a way out, and then `total` is a lower bound.
              */
             complete: boolean;
         };
@@ -4169,7 +4169,7 @@ export interface components {
             steps: components["schemas"]["ChainStepDTO"][];
             /**
              * Weight
-             * @description How often the sources between the ends are cited together (`inbound_citation_count`); 0 for one step.
+             * @description The `weight` of its weakest step.
              */
             weight: number;
         };
@@ -4200,9 +4200,14 @@ export interface components {
             edge_ids: string[];
             /**
              * Ways
-             * @description The ways this step has: the edge between its sources, if any, and each node they share; it names the strongest.
+             * @description The ways this step has: the edge between its sources, if any, and each node they share; it names one.
              */
             ways: number;
+            /**
+             * Weight
+             * @description How strong the step is: over the nodes its sources share the sum of 1 / ln k, k the sources of the node, plus 1 / ln 2 for the edge between them.
+             */
+            weight: number;
         };
         /**
          * ChainsResponse
@@ -4235,7 +4240,7 @@ export interface components {
             edges: components["schemas"]["NodeNeighborhoodEdge"][];
             /**
              * Capped
-             * @description A level of the search reached its cap (20,000 nodes, or the edges of a hub its share of the level) or the chains of three steps theirs (50,000): a chain around a hub may have been missed.
+             * @description The search left a way out: more than 5,000 sources of an end (of an end that is no source more than 1,000 neighbours), more than 200 of a level of a longer search, more than 50 steps of one, or one of two ways to a source: a chain may have been missed.
              */
             capped: boolean;
             /**
