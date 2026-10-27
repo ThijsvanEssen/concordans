@@ -340,7 +340,7 @@ describe('the note of an arcering (O4 step 6)', () => {
 		const lid2 = container.querySelector(`[${PLACE}="lid-2"]`)!;
 		const note = lid2.querySelector('.noot .aantekening')!;
 		expect(note.textContent).toContain('Ook ongeschreven');
-		expect(note.querySelector('.label')?.textContent).toBe('Aantekening');
+		expect(note.querySelector('.label')?.textContent).toBe('Losse markeringen');
 		expect(walkText(lid2).text).toBe(placeText(bron, 'lid-2'));
 		expect(container.querySelectorAll('.noot')).toHaveLength(1);
 	});
@@ -363,7 +363,7 @@ describe('the note of an arcering (O4 step 6)', () => {
 		expect(container.querySelector('.noot')?.textContent).toContain('Ongeschreven recht telt mee');
 	});
 
-	it('names its bundel where the notes come from more than one', () => {
+	it('names its bundel in the label of each note', () => {
 		const { container } = open({
 			mappen: [
 				map('losse-markeringen', 'Losse markeringen', here),
@@ -372,7 +372,7 @@ describe('the note of an arcering (O4 step 6)', () => {
 		});
 		expect(
 			[...container.querySelectorAll('.noot .label')].map((l) => l.textContent).sort()
-		).toEqual(['Aantekening, Losse markeringen', 'Aantekening, Onderzoek art. 6:162 BW']);
+		).toEqual(['Losse markeringen', 'Onderzoek art. 6:162 BW']);
 	});
 
 	it('stands under the line of an arcering whose words are no longer found', () => {

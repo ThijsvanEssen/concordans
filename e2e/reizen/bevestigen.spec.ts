@@ -60,6 +60,20 @@ test('Kopieer says what it copied in the status line, seen and heard', async ({
 	await expect(status).toHaveText('', { timeout: 4000 });
 });
 
+test('Link naar dit lid is the first item of the number’s menu and copies its anchor', async ({
+	page,
+	context
+}) => {
+	const copied = await catchClipboard(context);
+	await page.goto(ARTICLE);
+	await page.getByRole('button', { name: 'art. 6:162 lid 2 BW: citeren, bewaren' }).click();
+	const items = page.getByRole('menu').getByRole('menuitem');
+	await expect(items.first()).toHaveText('Link naar dit lid');
+	await items.first().click();
+	await expect(page.getByRole('status')).toContainText('Gekopieerd: link naar');
+	expect(await copied(page)).toMatch(/#.+/);
+});
+
 test('Citeer with the date says the day the page says (T5)', async ({ page }) => {
 	await page.goto(ARTICLE);
 	const dag = await page.getByRole('button', { name: /^Tekst geldend op/ }).textContent();

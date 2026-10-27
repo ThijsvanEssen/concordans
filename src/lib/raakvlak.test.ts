@@ -77,11 +77,11 @@ describe('the touch target', () => {
 		const nav = read('lib/components/explore/LezenNav.svelte');
 		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
 		expect(navCoarse).toMatch(/\.group__head \{[^}]*padding-block: 0/);
-		const sheet = read('routes/explore/TocSheet.svelte');
-		const sheetCoarse = sheet.slice(sheet.indexOf('@media (pointer: coarse)'));
-		expect(sheet).toContain('@media (pointer: coarse)');
-		expect(sheetCoarse).toMatch(
-			/\.close \{[^}]*min-height: var\(--veld-h-raak\)[^}]*min-width: var\(--veld-h-raak\)/
+		// The sheet's close button is the IconButton, which is 44 px on a touch screen.
+		expect(read('routes/explore/TocSheet.svelte')).toContain('<IconButton label="Sluiten"');
+		const icon = read('lib/components/ui/IconButton.svelte');
+		expect(icon.slice(icon.indexOf('@media (pointer: coarse)'))).toMatch(
+			/width: var\(--veld-h-raak\);\s*height: var\(--veld-h-raak\)/
 		);
 	});
 

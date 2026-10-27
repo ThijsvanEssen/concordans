@@ -3,6 +3,7 @@
 	// not fit beside the text, so Inhoud opens the same contents (LezenNav, DocumentToc,
 	// JudgmentToc) over the page. Above it the sheet is not shown; the column stands there.
 	import type { Snippet } from 'svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 
 	let {
 		onClose,
@@ -29,7 +30,7 @@
 	<div class="sheet" role="dialog" aria-modal="true" aria-label="Inhoud" tabindex="-1">
 		<div class="head">
 			<span class="title">Inhoud</span>
-			<button type="button" class="close" aria-label="Sluiten" onclick={onClose}>×</button>
+			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div class="body" onclick={onBodyClick}>
@@ -62,25 +63,6 @@
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
-	}
-	.close {
-		padding: 0 var(--s-1);
-		border: 0;
-		background: none;
-		font-size: var(--t-h3);
-		line-height: 1;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.close:hover {
-		color: var(--ink);
-	}
-	/* A finger's target: 44 px (UX-toets T9). */
-	@media (pointer: coarse), (max-width: 768px) {
-		.close {
-			min-height: var(--veld-h-raak);
-			min-width: var(--veld-h-raak);
-		}
 	}
 	/* The sheet is called Inhoud already: the column's own caption would say it twice. */
 	.body :global(.nav-kolom__label) {

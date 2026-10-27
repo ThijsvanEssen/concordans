@@ -10,6 +10,7 @@
 	import type { Snippet } from 'svelte';
 	import { menu as menuAction } from '$lib/actions/menu';
 	import MenuList from './MenuList.svelte';
+	import TekstMenu from './TekstMenu.svelte';
 	import Picto from './Picto.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { namesOf, type MapItem } from '$lib/map/map';
@@ -42,11 +43,6 @@
 	const bewaard = $derived(held.length > 0);
 	const into = $derived(kaart.keepsIn);
 	let open = $state(false);
-	let button = $state<HTMLElement | null>(null);
-	const close = () => {
-		open = false;
-		onClose?.();
-	};
 	let bundlesOpen = $state(false);
 	let keptButton = $state<HTMLElement | null>(null);
 	const closeBundles = () => (bundlesOpen = false);
@@ -55,23 +51,20 @@
 <span class="rij-acties">
 	{#if !menu || item || netwerk}{@render places()}{/if}
 	{#if menu}
-		<span class="plek plek--menu" use:menuAction={{ open, close }}>
-			<button
-				type="button"
-				class="rij-knop"
-				class:is-open={open}
-				bind:this={button}
-				aria-haspopup="menu"
-				aria-expanded={open}
-				aria-label="{naam}: meer"
+		<span class="plek plek--menu">
+			<TekstMenu
+				label="{naam}: meer"
 				title="Meer"
-				onclick={() => (open ? close() : (open = true))}>⋯</button
+				buttonClass="rij-knop"
+				caret={false}
+				rechts
+				ownClick
+				{onClose}
+				bind:open
 			>
-			{#if open && button}
-				<MenuList anchor={button} label="{naam}: meer" {close} align="right" ownClick>
-					{@render menu(close)}
-				</MenuList>
-			{/if}
+				{#snippet knop()}⋯{/snippet}
+				{#snippet inhoud(close)}{@render menu(close)}{/snippet}
+			</TekstMenu>
 		</span>
 	{/if}
 </span>
@@ -146,7 +139,12 @@
 		width: var(--tik-h);
 		height: var(--tik-h);
 	}
-	.rij-knop {
+	.rij-acties .plek--menu :global(.tekstmenu) {
+		display: grid;
+		width: 100%;
+		height: 100%;
+	}
+	.rij-acties :global(.rij-knop) {
 		display: inline-grid;
 		place-items: center;
 		width: 100%;
@@ -159,29 +157,29 @@
 		cursor: pointer;
 		opacity: 0;
 	}
-	.rij-knop.is-active {
+	.rij-acties :global(.rij-knop.is-active) {
 		color: var(--ink);
 		opacity: 1;
 	}
-	:global([data-rij]:hover) .rij-knop,
-	:global([data-rij]:focus-within) .rij-knop {
+	:global([data-rij]:hover) .rij-acties :global(.rij-knop),
+	:global([data-rij]:focus-within) .rij-acties :global(.rij-knop) {
 		opacity: 1;
 	}
-	.rij-knop:hover {
+	.rij-acties :global(.rij-knop:hover) {
 		color: var(--ink);
 		background: var(--wassing);
 	}
-	.rij-knop:focus-visible,
-	.rij-knop.is-open {
+	.rij-acties :global(.rij-knop:focus-visible),
+	.rij-acties :global(.rij-knop[aria-expanded='true']) {
 		opacity: 1;
 	}
-	.plek--menu .rij-knop {
+	.rij-acties .plek--menu :global(.rij-knop) {
 		font-family: var(--font-ui);
 		font-size: var(--t-body-2);
 		line-height: 1;
 	}
 	@media (hover: none) {
-		.rij-knop {
+		.rij-acties :global(.rij-knop) {
 			opacity: 1;
 		}
 	}

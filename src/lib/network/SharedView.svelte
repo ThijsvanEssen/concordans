@@ -1,5 +1,7 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 	import type { Relation } from '$lib/vocabulary';
 	// The weergave Verband (besluit 39, mockup A197-b): the chosen bronnen in a column at the
@@ -100,6 +102,7 @@
 		return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 	};
 	const vormOf = (r: SharedRow) => VORMEN[vormVanBron(r.collection, r.node.props, r.node.key)];
+	const openSearch = useSearchOpener();
 	const press = (e: KeyboardEvent, r: SharedRow) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -120,7 +123,9 @@
 		</div>
 	{:else if gap}<p class="gap">{gap}</p>{/if}
 	{#if ends.length < 2}
-		<p class="empty stil">Kies een tweede bron</p>
+		<p class="empty stil">
+			Nog één bron nodig. <TekstLink onclick={() => openSearch()}>Toevoegen</TekstLink>
+		</p>
 	{:else if loading}
 		<p class="empty stil" role="status">Verband zoeken</p>
 	{:else if empty && !failure && !gap}

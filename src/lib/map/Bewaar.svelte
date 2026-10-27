@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Kept or not: a framed button in a reader's head, as Citeer beside it (Thijs, 10 Oct: "een
 	// kader"). Its glyph is the bookmark of RijActies, open or filled: an action, not a box.
-	// "Bewaar lid 3" where it names a place; "Bewaard" as soon as any bundel holds it. Bewaar
+	// "Bewaar lid 3" where it names a place; "Bewaard in <bundel>" (or "in 3 bundels") as soon as
+	// any bundel holds it (DS Bewaar). Bewaar
 	// keeps in Losse markeringen. A reader opened from a bundel (Andere bron toevoegen) keeps
 	// in that bundel for the session and says so: "Bewaar in <bundel>", with the way back to
 	// it and Klaar beside it, until the reader ends it (UX-toets A21 #1). Bewaard takes nothing out: it opens the caret's menu, the bundels with a tick at each
@@ -61,9 +62,9 @@
 		aria-haspopup={aan ? 'menu' : undefined}
 		title={titel}
 		onclick={() => (aan ? (open = true) : kaart.keep(item, into.id))}
-		><Picto naam={aan ? 'bewaard' : 'bewaar'} />{aan ? 'Bewaard' : 'Bewaar'}{wat
-			? ` ${wat}`
-			: ''}{place ? ` in ${place}` : ''}</button
+		><Picto naam={aan ? 'bewaard' : 'bewaar'} />{aan
+			? `Bewaard in ${place}`
+			: `Bewaar${wat ? ` ${wat}` : ''}${place ? ` in ${place}` : ''}`}</button
 	>
 	<TekstMenu rechts label="Bewaar {item.kort} in bundel" tekst="" bind:open>
 		{#snippet inhoud(close)}<BundleChecklist {item} {close} />{/snippet}
