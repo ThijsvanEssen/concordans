@@ -25,6 +25,8 @@ export type PairEnd = {
 	name: string;
 	short: string;
 	collection: Collection | null;
+	/** The props of the bron, where its sign depends on them (a European regel). */
+	props?: Record<string, unknown> | null;
 };
 
 /** The value of the Keuze that takes every chosen bron. */
@@ -138,14 +140,14 @@ function namesBoth(row: SharedRow, ats: readonly string[]): string {
 	const say = (h: How) =>
 		h.toward === 'bron'
 			? lineVerb(h.relation, row.collection, h.collection)
-			: lineVerb(h.relation, h.collection, row.collection, true);
+			: lineVerb(h.relation, h.collection, row.collection);
 	const first = hows[0];
 	if (!first) return 'verbindt';
 	const same = hows.every((h) => h.toward === first.toward && say(h) === say(first));
 	if (same)
 		return first.toward === 'bron'
 			? verbOf(say(first), ats.length)
-			: `${say(first)} door ${BOTH[ats.length]}`;
+			: `${BOTH[ats.length]} ${say(first)}`;
 	return joinAnd([...new Set(hows.map(say))]);
 }
 

@@ -692,6 +692,7 @@
 				id: e.node!.id,
 				name: bronFullName(e.node!, $instrumentMetaStore),
 				short: bronNaam(e.node!, $instrumentMetaStore),
+				props: e.node!.raw?.props ?? null,
 				collection: e.collection
 			}));
 		if (
@@ -703,6 +704,7 @@
 				id: selectedNode.id,
 				name: bronFullName(selectedNode, $instrumentMetaStore),
 				short: bronNaam(selectedNode, $instrumentMetaStore),
+				props: selectedNode.raw?.props ?? null,
 				collection: selectedNode.collection
 			});
 		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));

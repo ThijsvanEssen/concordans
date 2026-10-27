@@ -107,6 +107,8 @@ export function rowNotation(n: Pick<Neighbor, 'id' | 'collection' | 'display_nam
 /** The name of a shared bron: as a Kamerstuk is cited, else as the API gives it. */
 const nameOf = (n: Neighbor) => rowNotation(n).title;
 
+const STRUCTURAL = new Set<Collection>(['cabinets', 'factions', 'committees', 'ministries']);
+
 /** A verbinding between two chosen bronnen themselves: `Dilan Yeşilgöz lid van VVD`. */
 export type DirectLink = { from: string; to: string; relation: Relation };
 
@@ -161,11 +163,17 @@ export function verbandModel(
 			});
 		}
 	}
-	// The API's order within a pair (the most cited first), then by id: the same bronnen in
-	// another order give the same Verband.
+	// What ties a bron to its place first (a kabinet, a fractie, a commissie, a ministerie: they
+	// have no citation count to rank by), then the API's order within a pair (the most cited
+	// first), then by id: the same bronnen in another order give the same Verband.
 	const rows = [...merged.values()]
 		.map(({ node, links, rank }) => ({ row: rowOf({ ...node, links }, names), rank }))
-		.sort((x, y) => x.rank - y.rank || x.row.id.localeCompare(y.row.id))
+		.sort(
+			(x, y) =>
+				Number(STRUCTURAL.has(y.row.collection)) - Number(STRUCTURAL.has(x.row.collection)) ||
+				x.rank - y.rank ||
+				x.row.id.localeCompare(y.row.id)
+		)
 		.map((x) => x.row);
 	const said = direct.map((d) => {
 		const from = names(d.from);

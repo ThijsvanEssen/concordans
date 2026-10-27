@@ -57,6 +57,38 @@ test('Alle drie shows only Eén stap, the third bron as a second end', async ({ 
 	await expect(view(page).getByRole('heading', { name: 'Twee stappen' })).toHaveCount(0);
 	if (!touch) {
 		const drawing = view(page).getByRole('group', { name: /^Ketens tussen/ });
-		await expect(drawing.locator('rect.end[width="14"]').first()).toBeAttached();
+		await expect(drawing.locator('g.end[data-kind]').first()).toBeAttached();
 	}
+});
+
+test('a chosen end has the sign of its kind, in the ring of chosen', async ({ page, touch }) => {
+	await page.goto(
+		'/explore?netwerk=members/9ab41898_332f_4c08_a834_d58b4669c990,instruments/bwbr0010346&weergave=verband'
+	);
+	const view = page.locator('.shared');
+	const marks = touch ? view.locator('.ladder__ends svg') : view.locator('g.end[data-kind]');
+	await expect(marks.first()).toBeVisible({ timeout: 30_000 });
+	const shapes = await marks.evaluateAll((els) =>
+		els.map((e) => e.querySelector('path')?.getAttribute('d') ?? '')
+	);
+	expect(shapes).toHaveLength(touch ? 2 : shapes.length);
+	// A person and a wet are not drawn alike, and neither is a plain square.
+	expect(new Set(shapes.slice(0, 2)).size).toBe(2);
+	await expect(view.locator('.end__ring').first()).toBeAttached();
+});
+
+test('two persons: every kind of shared bron is a row, kabinet-Jetten first', async ({
+	page,
+	touch
+}) => {
+	await page.goto(
+		'/explore?netwerk=members/49be3576_cea3_46c0_87eb_89beb108248d,members/9ab41898_332f_4c08_a834_d58b4669c990&weergave=verband'
+	);
+	const view = page.locator('.shared');
+	const first = touch
+		? view.locator('.ladder__pill').first()
+		: view.getByRole('button', { name: /kabinet-Jetten/ });
+	await expect(first).toBeVisible({ timeout: 30_000 });
+	await expect(first).toContainText('kabinet-Jetten');
+	await expect(view.getByText(/beide lid van|beide bewindspersoon/).first()).toBeAttached();
 });

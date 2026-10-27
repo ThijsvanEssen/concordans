@@ -9,7 +9,7 @@
 	import { markOf } from '$lib/bron/vormen';
 	import { drawnLine } from '$lib/components/graph/drawn-line';
 	import type { ChainBlock, ChainBron, ChainRow, ChainStep, StepLeg } from './linkchains';
-	import { drawingLabel, rowIds, stepsText, type PairDrawing } from './pairs';
+	import { drawingLabel, rowIds, stepsText, type PairDrawing, type PairEnd } from './pairs';
 
 	let {
 		drawing,
@@ -112,6 +112,10 @@
 			b.node?.props,
 			b.node?.key ?? ''
 		);
+	/** The sign of a chosen end: the form and colour of its kind. */
+	const endMark = (e: PairEnd) =>
+		markOf(e.collection ?? 'instruments', kindColour(e.collection), e.props, e.id.split('/')[1]);
+	const endOf = (id: string) => drawing.extra.find((e) => e.id === id) ?? drawing.right;
 	const aria = (b: ChainBron, what: string) => `${b.name}, ${what}`;
 
 	type Point = { x: number; y: number };
@@ -266,7 +270,19 @@
 					{#each r.bronnen as b, i (i)}
 						{#if i === 0 || i === r.bronnen.length - 1}
 							{@const x = i === 0 ? LEFT : RIGHT}
-							<rect class="end" x={x - 9} y={y - 9} width="18" height="18" />
+							{@const e = i === 0 ? drawing.left : drawing.right}
+							{@const v = endMark(e)}
+							<g class="end" data-kind={e.collection}>
+								<circle class="end__ring" cx={x} cy={y} r="13" />
+								<path
+									d={v.d}
+									transform="translate({x - 9} {y - 9}) scale(1.125)"
+									fill={v.fill}
+									fill-rule="evenodd"
+									stroke={v.stroke}
+									stroke-width="1.5"
+								/>
+							</g>
 						{:else}
 							{@const v = markFor(b)}
 							{@const x = xAt(i, n)}
@@ -327,7 +343,18 @@
 								points={l.head}
 								fill={active(r) ? 'var(--ink)' : l.colour}
 							/>{/if}
-						<rect class="end" x={RIGHT - 7} y={ey - 7} width="14" height="14" />
+						{@const x3 = endMark(endOf(e.bron.id))}
+						<g class="end" data-kind={e.bron.collection}>
+							<circle class="end__ring" cx={RIGHT} cy={ey} r="10" />
+							<path
+								d={x3.d}
+								transform="translate({RIGHT - 7} {ey - 7}) scale(0.875)"
+								fill={x3.fill}
+								fill-rule="evenodd"
+								stroke={x3.stroke}
+								stroke-width="1.5"
+							/>
+						</g>
 					{/each}
 				</g>
 			{/each}
@@ -338,7 +365,13 @@
 	<div class="ladder">
 		<ul class="ladder__ends">
 			{#each ends as e (e.id)}
-				<li><i class="mark mark--end"></i>{e.name}</li>
+				{@const v = endMark(e)}
+				<li>
+					<svg class="mark--end" viewBox="-3 -3 22 22" width="18" height="18" aria-hidden="true">
+						<circle class="end__ring" cx="8" cy="8" r="10" />
+						<path d={v.d} fill={v.fill} fill-rule="evenodd" stroke={v.stroke} stroke-width="1.5" />
+					</svg>{e.name}
+				</li>
 			{/each}
 		</ul>
 		{#each blocks as b (b.steps)}
@@ -463,8 +496,11 @@
 		font-weight: 600;
 		fill: var(--ink);
 	}
-	.end {
-		fill: var(--ink);
+	/* A chosen end wears the sign of its kind, as on the canvas, in the ring of "chosen". */
+	.end__ring {
+		fill: var(--paper);
+		stroke: var(--ink);
+		stroke-width: 2;
 	}
 	.name {
 		font-family: var(--font-serif);
@@ -517,9 +553,6 @@
 	}
 	.mark--end {
 		flex: none;
-		width: 12px;
-		height: 12px;
-		background: var(--ink);
 	}
 	.ladder section + section {
 		margin-top: var(--s-5);
