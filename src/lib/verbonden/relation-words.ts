@@ -109,7 +109,7 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 	IMPLEMENTS: () => ['implementeert', 'implementeert', 'implementatie van EU-recht'],
 	LEGISLATED_IN: () => [
 		'tot stand gekomen in',
-		'tot stand gekomen in',
+		'aangenomen als',
 		'totstandkoming via een wetsvoorstel'
 	],
 	PUBLISHED_IN: () => ['gepubliceerd in', 'gepubliceerd in', 'publicatie in het Tractatenblad'],

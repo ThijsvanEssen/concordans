@@ -112,4 +112,16 @@ describe('a publication of the Staatsblad (Netwerkcanvas, Staatsblad-publicatie)
 			anchor: 'source'
 		});
 	});
+
+	it('does not put it in its dossier’s outline: the dossier is a line to it, aangenomen als', () => {
+		expect(at({ ...publicatie, drawn: true }, 'LEGISLATED_IN', hull('dossier', true))).toEqual({
+			place: 'line',
+			meta: true
+		});
+		expect(at({ ...publicatie, drawn: true }, 'LEGISLATED_IN', hull('dossier'))).toEqual({
+			place: 'line',
+			meta: true,
+			anchor: 'target'
+		});
+	});
 });

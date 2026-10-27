@@ -19,3 +19,9 @@ describe('bronKind', () => {
 		expect(bronKind('documents', { kind: 'Motie' })).toBe('Stuk');
 	});
 });
+
+describe('a publication of the Staatsblad', () => {
+	it('is a Publicatie, not a Wet', () => {
+		expect(bronKind('instruments', { kind: 'publicatie' })).toBe('Publicatie');
+	});
+});

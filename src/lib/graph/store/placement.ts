@@ -71,6 +71,14 @@ export function placeConnection(c: Connection): Placement {
 	// the article says it; on the canvas a law would gather some 1.300 of them.
 	if (relation === 'TRANSPOSED_TO' && target.hull === 'instrument') return { place: 'none' };
 	const end = (side: Side) => (side === 'source' ? source : target);
+	// A publication of the Staatsblad stands in no outline: its dossier is a line to it,
+	// "aangenomen als" (Netwerkcanvas, Staatsblad-publicatie).
+	if (relation === 'LEGISLATED_IN' && source.publication && target.hull === 'dossier') {
+		if (source.drawn && target.drawn) return { place: 'line', meta: true };
+		if (source.drawn) return { place: 'line', meta: true, anchor: 'target' };
+		if (target.drawn) return { place: 'line', meta: true, anchor: 'source' };
+		return { place: 'none' };
+	}
 	/** The first side, target before source, for which `test` holds with the other end drawn. */
 	const sideWhere = (test: (side: Side) => boolean) =>
 		SIDES.find((side) => end(other(side)).drawn && test(side));
