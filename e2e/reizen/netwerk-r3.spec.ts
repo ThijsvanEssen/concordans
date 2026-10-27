@@ -85,7 +85,20 @@ test('Verband counts the bron of the page as the first end (R3-I F2)', async ({ 
 	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Verband', pressed: true })).toBeVisible();
 	await expect(page.getByText('Art. 7:658 BW').first()).toBeVisible();
+	await expect(page.getByText('Kies een tweede bron')).toHaveCount(0);
+});
+
+// A268, again in A288: Verband with one bron asks for the second in these words, as a link that
+// opens the search; woorden.md forbids "Nog één bron nodig" and "Toevoegen" here.
+test('Verband with one bron says "Kies een tweede bron", a link to the search', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk&weergave=verband');
 	await expect(page.getByText('Nog één bron nodig')).toHaveCount(0);
+	const link = page.getByRole('button', { name: 'Kies een tweede bron' });
+	await expect(link).toBeVisible();
+	await link.click();
+	await expect(page.getByRole('combobox')).toBeVisible();
 });
 
 test('no "?" for judgments both cite where one end cites none (R3-N B7)', async ({ page }) => {

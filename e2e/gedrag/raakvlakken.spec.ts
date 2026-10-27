@@ -148,6 +148,37 @@ test.describe('on a phone', () => {
 		expect(cut).toEqual([]);
 	});
 
+	// Live toets 27 Oct (b), B4: the numbers of the lid (28 px boxes), the breadcrumbs (19 px) and
+	// the "Alle N" links of the sheet Weergave (18 px) are 44 px to the finger as drawn, each
+	// with a target around it that no neighbour covers.
+	test('the lid numbers, the breadcrumbs and the Alle N links of an article are 44 px', async ({
+		page
+	}) => {
+		test.setTimeout(120_000);
+		await page.goto(ARTICLE);
+		await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+		await page.waitForLoadState('networkidle');
+		const markers = page.locator('[data-plaats] button.plaats-marker');
+		await expect(markers.first()).toBeVisible();
+		const crumbs = page.getByRole('navigation', { name: 'Behoort bij' }).getByRole('link');
+		await expect(crumbs.first()).toBeVisible();
+		const small = (await kleine(page)).filter((k) =>
+			/citeren|Wetten|Rechtspraak|Kamerstukken/.test(k.naam)
+		);
+		expect(small).toEqual([]);
+		await page.goto(`${ARTICLE}?mode=netwerk`);
+		await openSheet(page);
+		await page.waitForLoadState('networkidle');
+		await expect(
+			page
+				.getByRole('dialog', { name: 'Weergave' })
+				.getByText(/^Alle \d/)
+				.first()
+		).toBeVisible();
+		const sheet = await kleine(page);
+		expect(sheet.filter((k) => /^Alle \d/.test(k.naam))).toEqual([]);
+	});
+
 	// A Keuze is whole on a phone: no option cut off at the frame's edge, none out of the
 	// screen (the start page's Alle bronnen to Regering was 7 px too wide, UX-toets A265 B3).
 	for (const pad of ['/', '/actueel', ARTICLE, '/leden/rob-jetten', '/dossiers/36496']) {

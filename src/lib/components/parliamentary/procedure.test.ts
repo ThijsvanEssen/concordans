@@ -448,3 +448,40 @@ describe('procedure: how a vote on the bill was taken', () => {
 		expect(zin(vote({}), d)).toBe('Aangenomen zonder stemming');
 	});
 });
+
+describe('procedure: a timeline cut at its limit (live toets 27 Oct b, B5)', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	const wet = (done: boolean) =>
+		({
+			number: '36600-VII',
+			kind: 'Begroting',
+			closed: false,
+			current_phase: 'Stemmingen',
+			tk_decision: null,
+			ek_outcome: null,
+			phases: [
+				{ name: 'Advies Raad van State', chamber: 'TK', done, date: done ? '2024-09-09' : null }
+			]
+		}) as unknown as Detail;
+	const rvs = (d: Detail, cut: boolean) =>
+		procedure(d, [], false, cut).groepen.find((g) => g.id === 'rvs');
+
+	it('does not say "Geen advies" when the oldest entries are not in the list', () => {
+		const zinnen = procedure(wet(true), [], false, true).groepen.flatMap((g) =>
+			g.regels.map((r) => r.zin)
+		);
+		expect(zinnen.join(' ')).not.toMatch(/Geen advies/);
+	});
+	it('names the advice the phases hold, with its day', () => {
+		const g = rvs(wet(true), true);
+		expect(g?.regels.map((r) => [r.datum, r.zin])).toEqual([['2024-09-09', 'Advies uitgebracht']]);
+	});
+	it('says nothing of an advice neither list holds, rather than that there is none', () => {
+		expect(rvs(wet(false), true)).toBeUndefined();
+	});
+	it('keeps the line of the whole list: no entry, no advice', () => {
+		expect(rvs(wet(false), false)?.regels.map((r) => r.zin)).toEqual([
+			'Geen advies in de gegevens.'
+		]);
+	});
+});
