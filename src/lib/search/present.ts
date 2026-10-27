@@ -207,7 +207,8 @@ function instrumentMeta(hit: Hit): string {
 
 /**
  * `neighbours`: the hits listed with it, which its context tells it from. A law or article
- * that has expired says so (API 0.80.4, `extra.expired_on`): a hit stays, marked.
+ * that has expired says so (API 0.80.4, `extra.expired_on`): a hit stays, marked. A law is
+ * ingetrokken, an article vervallen (docs/woorden.md), as in the head of the reader.
  */
 export function presentHit(
 	hit: Hit,
@@ -220,7 +221,10 @@ export function presentHit(
 	return day &&
 		hasPassed(day, now) &&
 		(hit.collection === 'instruments' || hit.collection === 'articles')
-		? { ...shown, expired: `Vervallen ${asOfDate(day)}` }
+		? {
+				...shown,
+				expired: `${hit.collection === 'instruments' ? 'Ingetrokken' : 'Vervallen'} ${asOfDate(day)}`
+			}
 		: shown;
 }
 
