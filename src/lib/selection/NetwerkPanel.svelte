@@ -70,7 +70,9 @@
 	     Aangeklikt op het canvas, Bron toevoegen. Wissen is one click, and Terug sets it back. -->
 <CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
 	{#snippet samenvatting()}
-		{#if folded}<span class="tel">{formatCount(shown.length)} van {formatCount(entries.length)}</span>{/if}
+		{#if folded}<span class="tel"
+				>{formatCount(shown.length)} van {formatCount(entries.length)}</span
+			>{/if}
 		{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
 			></span>{/if}
 	{/snippet}
