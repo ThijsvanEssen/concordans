@@ -15,7 +15,9 @@ export class InFlux {
 			if (!shown() || untrack(() => this.#asked)) return;
 			this.#asked = true;
 			getInFlux()
-				.then((counts) => (this.counts = counts))
+				.then((counts) => {
+					this.counts = counts;
+				})
 				.catch((e) => {
 					this.#asked = false;
 					report('Verkenner lopende dossiers', e);
