@@ -17,53 +17,146 @@ const RING_STEP = 90;
 /** The room of one bron along a ring, so names have space. */
 const ARC = 70;
 
+/** Between the members of one hull, centre to centre. */
+const MEMBER_GAP = 48;
+/** A member of a chosen bron's hull stands this far from that bron. */
+const SATELLITE = 64;
+
 /**
  * The radial order of the canvas. `centre`: the chosen bronnen, or the one bron the canvas is
  * drawn around. `groupOf` names a bron's sector (its kind), `groups` their order around the
  * circle, `compare` the order inside a sector. A sector takes a share of the circle as large as
  * its bronnen; a full ring sends the rest to the next one out.
+ *
+ * `hullOf` names the hull a bron stands in (Netwerkcanvas: a disc around what belongs
+ * together). Its members stand together: around the chosen bron of that hull when it has one,
+ * else as one place on the ring, packed in a small circle.
  */
 export function radialLayout(
 	g: Graph,
 	centre: readonly string[],
 	groupOf: (id: string) => string,
 	groups: readonly string[],
-	compare: (a: string, b: string) => number
+	compare: (a: string, b: string) => number,
+	hullOf: (id: string) => string | null = () => null,
+	holds: (hull: string, id: string) => boolean = () => false
 ): void {
-	const mids = centre.filter((id) => g.hasNode(id));
+	const present = centre.filter((id) => g.hasNode(id));
+	// A chosen hull (a wet, a dossier) is its members: its anchor stands on a chosen member.
+	const anchorOn = new Map<string, string>();
+	for (const id of present) {
+		if (!g.getNodeAttribute(id, 'anchor')) continue;
+		const h = hullOf(id);
+		const own = h && present.find((o) => o !== id && !anchorOn.has(o) && holds(h, o));
+		if (own) anchorOn.set(id, own);
+	}
+	const mids = present.filter((id) => !anchorOn.has(id));
 	mids.forEach((id, i) => moveTo(g, id, (i - (mids.length - 1) / 2) * CENTRE_GAP, 0));
+	const standOn = (id: string): string => (anchorOn.has(id) ? standOn(anchorOn.get(id)!) : id);
+	for (const anchor of anchorOn.keys()) {
+		const on = standOn(anchor);
+		moveTo(g, anchor, g.getNodeAttribute(on, 'x'), g.getNodeAttribute(on, 'y'));
+	}
 	const inner = RING + ((mids.length - 1) * CENTRE_GAP) / 2;
-	const per = new Map<string, string[]>();
+	// The hulls with a chosen member: their other members circle that member.
+	const chosenIn = new Map<string, string>();
+	for (const id of mids) {
+		const h = hullOf(id);
+		if (h && !chosenIn.has(h)) chosenIn.set(h, id);
+	}
+	const satellites = new Map<string, string[]>();
+	// One place on the ring per bron, or per hull: its members together.
+	const per = new Map<string, string[][]>();
+	const slotOf = new Map<string, string[]>();
 	g.forEachNode((id) => {
-		if (mids.includes(id)) return;
+		if (present.includes(id)) return;
+		const h = hullOf(id);
+		const host = h ? chosenIn.get(h) : undefined;
+		if (host) {
+			satellites.set(host, [...(satellites.get(host) ?? []), id]);
+			return;
+		}
+		if (h && slotOf.has(h)) {
+			slotOf.get(h)!.push(id);
+			return;
+		}
+		const slot = [id];
+		if (h) slotOf.set(h, slot);
 		const k = groupOf(id);
-		per.set(k, [...(per.get(k) ?? []), id]);
+		per.set(k, [...(per.get(k) ?? []), slot]);
 	});
+	for (const [host, ids] of satellites) {
+		const x = g.getNodeAttribute(host, 'x') as number;
+		const y = g.getNodeAttribute(host, 'y') as number;
+		ids.sort(compare).forEach((id, i) => {
+			// From below round (sigma's y points up): the top of the disc stays free for its name.
+			const a = -Math.PI / 2 + (i / ids.length) * Math.PI * 2;
+			moveTo(g, id, x + Math.cos(a) * SATELLITE, y + Math.sin(a) * SATELLITE);
+		});
+	}
 	const order = [
 		...groups.filter((k) => per.has(k)),
 		...[...per.keys()].filter((k) => !groups.includes(k))
 	];
-	const total = [...per.values()].reduce((n, ids) => n + ids.length, 0);
+	/** How many places of the ring a slot takes: a hull as wide as its circle. */
+	// A hull takes a place of air beside it more: its margin and its pill (Thijs, 27 Oct: calmer).
+	const width = (slot: string[]) =>
+		slot.length > 1 || g.getNodeAttribute(slot[0], 'anchor')
+			? 2 + Math.ceil(packRadius(slot.length) / (ARC / 2))
+			: 1;
+	const total = [...per.values()].reduce(
+		(n, slots) => n + slots.reduce((m, s) => m + width(s), 0),
+		0
+	);
 	if (!total) return;
 	let start = -Math.PI / 2;
 	for (const k of order) {
-		const ids = per.get(k)!.sort(compare);
-		const span = (ids.length / total) * Math.PI * 2;
+		const slots = per
+			.get(k)!
+			.map((s) => s.sort(compare))
+			.sort((a, b) => compare(a[0], b[0]));
+		const units = slots.reduce((m, s) => m + width(s), 0);
+		const span = (units / total) * Math.PI * 2;
 		let placed = 0;
 		let ring = 0;
-		while (placed < ids.length) {
+		while (placed < slots.length) {
 			const r = inner + ring * RING_STEP;
 			const room = Math.max(1, Math.floor((span * r) / ARC));
-			const these = ids.slice(placed, placed + room);
-			these.forEach((id, i) => {
-				const angle = start + ((i + 0.5) / these.length) * span;
-				moveTo(g, id, Math.cos(angle) * r, Math.sin(angle) * r);
-			});
+			const these: string[][] = [];
+			let used = 0;
+			while (placed + these.length < slots.length) {
+				const w = width(slots[placed + these.length]);
+				if (these.length > 0 && used + w > room) break;
+				these.push(slots[placed + these.length]);
+				used += w;
+			}
+			let at = 0;
+			for (const slot of these) {
+				const w = width(slot);
+				const angle = start + ((at + w / 2) / used) * span;
+				at += w;
+				placeSlot(g, slot, Math.cos(angle) * r, Math.sin(angle) * r);
+			}
 			placed += these.length;
 			ring++;
 		}
 		start += span;
 	}
+}
+
+/** The radius of the circle `n` members of one hull are packed in. */
+const packRadius = (n: number) => (n <= 1 ? 0 : (n * MEMBER_GAP) / (2 * Math.PI) + MEMBER_GAP / 2);
+
+/** A bron, or a hull's members in a small circle (its anchor in the middle). */
+function placeSlot(g: Graph, slot: string[], x: number, y: number) {
+	const drawn = slot.filter((id) => !g.getNodeAttribute(id, 'anchor'));
+	for (const id of slot) if (g.getNodeAttribute(id, 'anchor')) moveTo(g, id, x, y);
+	if (drawn.length === 1) return moveTo(g, drawn[0], x, y);
+	const r = packRadius(drawn.length) - MEMBER_GAP / 2;
+	drawn.forEach((id, i) => {
+		const a = -Math.PI / 2 + (i / drawn.length) * Math.PI * 2;
+		moveTo(g, id, x + Math.cos(a) * r, y + Math.sin(a) * r);
+	});
 }
 
 /** Each bron tied to `id` by a drawn line, passing over a link that is no line (`layoutOnly`). */

@@ -1,4 +1,11 @@
 <script lang="ts">
+	import { stbCitation } from '$lib/text/enacted-law';
+	/** A law whose meta is not loaded, by its id: Stb. 2026, 314; Richtlijn 2004/38 (CELEX). */
+	const fallbackLawName = (id: string): string => {
+		const eu = /^3(\d{4})([LR])0*(\d+)$/.exec(id);
+		if (eu) return `${eu[2] === 'L' ? 'Richtlijn' : 'Verordening'} ${eu[1]}/${eu[3]}`;
+		return stbCitation(id) ?? '';
+	};
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
 	import { forEachRealNeighbor, realDegree } from '$lib/graph/layout';
 	import {
@@ -231,7 +238,9 @@
 		glyphRects = glyphs;
 		const dpr = window.devicePixelRatio || 1;
 		const room = { width: context.canvas.width / dpr, height: context.canvas.height / dpr };
-		return planLabels(candidates, room, hullNames, glyphs);
+		// Netwerkcanvas: hooguit 12 namen in rust; on a phone fewer, the chosen bronnen first.
+		const max = hoveredId !== null ? undefined : narrow?.matches ? 6 : 12;
+		return planLabels(candidates, room, hullNames, glyphs, max);
 	}
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
@@ -500,8 +509,13 @@
 			radiusOf: (id) => view.getNodeDisplayData(id)?.size ?? 4,
 			namesOf: (group) => {
 				const meta = group.kind === 'instrument' ? getInstrumentMeta(group.id) : null;
+				// A law of the Staatsblad whose meta is not loaded: by its publication (Stb. 2026, 314),
+				// so its articles still stand in a named hull (prototype A301; the rework loads the meta).
 				return {
-					short: (meta ? (meta.shortTitle ?? meta.citationTitle) : group.label) || group.label,
+					short:
+						(meta ? (meta.shortTitle ?? meta.citationTitle) : group.label) ||
+						group.label ||
+						(group.kind === 'instrument' ? fallbackLawName(group.id) : ''),
 					full: lawName(meta, group.fullLabel)
 				};
 			},
@@ -625,6 +639,7 @@
 				return;
 			const groups = [...(nodeGroupIds.get(id) ?? [])].map((g) => latestContainerGroups.get(g));
 			if (groups.some((g) => g && drawnGroup(g))) return;
+			if (attrs.inHull) return;
 			const shown = graph.someEdge(
 				id,
 				(_e, a, src, tgt) => !a.layoutOnly && !hiddenEnd(src === id ? tgt : src)
@@ -1060,10 +1075,17 @@
 				// each other sigma leaves some out, never those of the hover, the focus, the chosen
 				// bronnen and a cluster bron, whose name ("250 uitspraken") is what it says.
 				const chosen = latestPinnedIds.has(id);
+				// A cluster says its count in its circle; its name ("56 uitspraken") on a hover.
+				const cluster = !!data.cluster;
 				const forceLabel =
-					(inHover && inFocusGroup) || id === focusedId || chosen || !!data.cluster;
+					(inHover && inFocusGroup && (!cluster || id === hoveredId)) || id === focusedId || chosen;
 				// On a phone only those names: the others would cover each other (UX-toets T10b).
-				const label = forceLabel || !narrow?.matches ? (data.label as string) : '';
+				const label =
+					cluster && id !== hoveredId
+						? ''
+						: forceLabel || !narrow?.matches
+							? (data.label as string)
+							: '';
 
 				if (id !== focusedId && chosen)
 					return {
@@ -1113,8 +1135,11 @@
 				const style = edgeStyleFor(relation, data.status as string | null, sourceClass);
 				const renderColor = edgeColorFor(relation, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
+				// A cluster's one line weighs 1 (Netwerkcanvas, Cluster).
 				const restSize = lineThickness(
-					Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0)
+					srcAttrs.cluster || tgtAttrs.cluster
+						? 1
+						: Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0)
 				);
 				const sourceCollection = srcAttrs.collection as Collection;
 
@@ -1222,7 +1247,8 @@
 						hidden: false,
 						type: edgeType,
 						color: towardPaper(renderColor, 0.25),
-						size: restSize * 0.7,
+						// A thread: 0,6 of the thickness (Netwerkcanvas, Maten).
+						size: restSize * 0.6,
 						label: ''
 					};
 				}
@@ -1366,7 +1392,7 @@
 					class="hull"
 					class:is-dim={h.dim}
 					d={h.path}
-					fill={withAlpha(h.color, 0.05)}
+					fill={h.alone ? h.color : withAlpha(h.color, 0.05)}
 					stroke={h.color}
 					stroke-dasharray={h.dash}
 				/>

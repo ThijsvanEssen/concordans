@@ -341,3 +341,36 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 
 /** The per-axis offset of a vorm's edge at 45° (top right), in units of the node's radius. */
 export const badgeAxisOffset = (vorm: Vorm): number => (EDGE_AT_45[vorm] * VORM_SCALE) / (VB / 2);
+
+/**
+ * The sprite of a cluster (Netwerkcanvas, Cluster): a disc in the colour of its kind on a rim
+ * of paper, its count inside in paper, "250".
+ */
+export function clusterSprite(count: string, colour: string | undefined): string {
+	const k = `cluster:${count}:${colour ?? ''}`;
+	let url = vormCache.get(k);
+	if (url) return url;
+	const t = tokens();
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = SPRITE_PX;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return '';
+	const c = SPRITE_PX / 2;
+	ctx.fillStyle = t.paper;
+	ctx.beginPath();
+	ctx.arc(c, c, c, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = kleurUit(colour, t.ink);
+	ctx.beginPath();
+	ctx.arc(c, c, c * (19 / 21.5), 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = t.paper;
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	const size = count.length > 3 ? 30 : 38;
+	ctx.font = `600 ${size}px ${t.fontSerif}`;
+	ctx.fillText(count, c, c + 2);
+	url = canvas.toDataURL('image/png');
+	vormCache.set(k, url);
+	return url;
+}
