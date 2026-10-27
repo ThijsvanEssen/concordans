@@ -19,11 +19,20 @@
 		hullDashFor
 	} from '$lib/components/graph/nodeSprites';
 	import { AIR, DOT_RADIUS, curvedLine } from '$lib/graph/line-shape';
-	import { LINE_H, SKETCH_LINE, WIDTH, drawnCount, type Sketch, type SketchLine } from './sketch';
+	import {
+		CHAR_WIDTH as CHAR,
+		LINE_H,
+		SKETCH_LINE,
+		WIDTH,
+		drawnCount,
+		type Sketch,
+		type SketchLine
+	} from './sketch';
 
 	let {
 		sketch,
 		name,
+		home = null,
 		open = null,
 		onSingle,
 		onGroup
@@ -31,6 +40,8 @@
 		sketch: Sketch;
 		/** The bron in the middle, short (LABEL_MAX). */
 		name: string;
+		/** The law an article stands in, short (`BW`): the bron is drawn in its omhulling with this pil. */
+		home?: string | null;
 		/** The bron on its own opened under the drawing, by its id. */
 		open?: string | null;
 		/** A bron on its own was clicked: its row opens under the drawing, or closes. */
@@ -133,6 +144,23 @@
 		sketch.clusters.map((b) => ({ id: b.id, ...lineTo(b, b.x, b.y, Math.max(b.r, 14), 1, false) }))
 	);
 	const caption = $derived(drawnCount(sketch));
+	/** The omhulling of the law round the bron and its name, with the pil at its top left. */
+	const hull = $derived.by(() => {
+		if (!home) return null;
+		const half = Math.max(
+			44,
+			(Math.max(...sketch.centerLines.map((l) => l.length), 0) * CHAR) / 2 + 14
+		);
+		const y = m.y - 26;
+		const pill = Math.round(home.length * 7.6 + 18);
+		return {
+			x: m.x - half,
+			y,
+			w: 2 * half,
+			h: 26 + 34 + Math.max(0, sketch.centerLines.length - 1) * LINE_H + 12,
+			pill
+		};
+	});
 </script>
 
 <figure class="sketch" data-testid="network-sketch">
@@ -156,6 +184,17 @@
 			</g>
 		{/each}
 
+		{#if hull && home}
+			<rect
+				class="hull"
+				x={hull.x}
+				y={hull.y}
+				width={hull.w}
+				height={hull.h}
+				rx="22"
+				aria-hidden="true"
+			/>
+		{/if}
 		<g class="focus">
 			<title>{name}</title>
 			<rect
@@ -177,6 +216,13 @@
 					>{/each}</text
 			>
 		</g>
+
+		{#if hull && home}
+			<g class="pil" aria-hidden="true">
+				<rect x={hull.x + 14} y={hull.y - 10} width={hull.pill} height="20" rx="3" />
+				<text x={hull.x + 14 + hull.pill / 2} y={hull.y + 4} text-anchor="middle">{home}</text>
+			</g>
+		{/if}
 
 		{#each sketch.singles as l (l.id)}
 			{@const v = VORMEN[l.shape]}
@@ -260,6 +306,23 @@
 	/* A chosen neighbour: its line in ink, the rest at half. */
 	.line.is-dim {
 		opacity: 0.5;
+	}
+	.hull {
+		fill: color-mix(in srgb, var(--rubriek-wetten) 5%, transparent);
+		stroke: var(--rubriek-wetten);
+		stroke-linecap: round;
+		stroke-width: 1.6;
+	}
+	.pil rect {
+		fill: var(--paper);
+		stroke: var(--rubriek-wetten);
+		stroke-width: 1;
+	}
+	.pil text {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		fill: var(--ink);
 	}
 	.sel {
 		fill: none;

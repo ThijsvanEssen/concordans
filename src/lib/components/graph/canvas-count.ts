@@ -50,6 +50,8 @@ export function countCanvas(o: {
 	selectionId: string | null;
 	hiddenKinds: ReadonlySet<HiddenKind>;
 	rechter: Rechter | null;
+	/** The years of the bronfilter: a dated bron outside them is not counted per kind. */
+	period?: { from: string | null; to: string | null } | null;
 	/** The bronnen hidden with their grouping (`metGroepVerborgen`). */
 	verborgen: ReadonlyMap<string, ContainerKind>;
 	hiddenLines: ReadonlySet<LineKind>;
@@ -68,7 +70,14 @@ export function countCanvas(o: {
 		const kind = attrs.filterGroup as FilterGroup | undefined;
 		const other = attrs.drawClass === 'other' && !attrs.anchor;
 		if (other) annexes++;
-		if (kind && !other)
+		const dated = typeof attrs.date === 'string' ? attrs.date : null;
+		const outside =
+			!!o.period &&
+			id !== selectionId &&
+			dated !== null &&
+			((o.period.from !== null && dated < o.period.from) ||
+				(o.period.to !== null && dated > o.period.to));
+		if (kind && !other && !outside)
 			kinds[kind] = (kinds[kind] ?? 0) + ((attrs.members as number | undefined) ?? 1);
 		if (attrs.stuksoort && !other) {
 			const s = attrs.stuksoort as Stuksoort;

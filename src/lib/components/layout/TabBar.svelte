@@ -9,6 +9,7 @@
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { SOURCES, sourceOf } from '$lib/nav/sources';
+	import { bronRol } from '$lib/nav/bron-rol';
 	import { MINE, mineAt } from '$lib/nav/mine';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
@@ -21,7 +22,7 @@
 	let opener: HTMLElement | null = null;
 
 	const path = $derived(page.url.pathname);
-	const source = $derived(sourceOf(page.url));
+	const source = $derived(sourceOf(page.url, $bronRol));
 	const mine = $derived(mineAt(path));
 	const onActueel = $derived(path.startsWith('/actueel'));
 	const network = $derived(networkState(page.url));

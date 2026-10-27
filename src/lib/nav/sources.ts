@@ -5,7 +5,7 @@
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { isExplorePath } from '$lib/bron/address';
 import { indexHref } from '$lib/bron/href';
-import { RUBRIEK_LABEL, rubriekOf, type Rubriek } from '$lib/bron/rubrieken';
+import { RUBRIEK_LABEL, isMinister, rubriekOf, type Rubriek } from '$lib/bron/rubrieken';
 
 type SourceId = Rubriek;
 
@@ -83,15 +83,19 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
  * The source a page stands under: the list of Bladeren, or the bron read (by its address or its
  * focus). Null on the start page, Actueel, Mijn and a canvas without a bron.
  */
-export function sourceOf(url: URL): Source | null {
+export function sourceOf(url: URL, person?: Record<string, unknown> | null): Source | null {
 	if (url.pathname === '/explore') {
 		const kind = url.searchParams.get('kind');
 		if (url.searchParams.get('mode') === 'index')
 			return kind && SOURCES.some((s) => s.lists.includes(kind)) ? sourceOfList(kind) : null;
 		const focus = parseNodeId(url.searchParams.get('focus') ?? '');
-		return focus ? sourceOfCollection(focus.collection) : null;
+		return focus ? sourceOfCollection(focus.collection, person) : null;
 	}
 	if (!isExplorePath(url.pathname)) return null;
 	const id = SOURCE_OF_PATH[url.pathname.split('/')[1]];
-	return id ? sourceById(id) : null;
+	return id === 'parlement' && person && isMinister(person)
+		? sourceById('regering')
+		: id
+			? sourceById(id)
+			: null;
 }

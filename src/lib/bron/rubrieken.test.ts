@@ -53,7 +53,34 @@ type Bron = {
 	laag?: string;
 };
 
-const POST = [{ function: 'Minister van Justitie', cabinet: 'kabinet-Rutte IV' }];
+// Three persons as the live API gives them (27 Oct 2026): a seated minister (Eelco Heinen, a post
+// since 23 Feb 2026, his seat in the Kamer ended the day before), a former staatssecretaris now
+// Kamerlid again (Chris Jansen) and a Kamerlid without a post (Alexander Kops).
+const POST = [{ function: 'Minister van Financiën', from_date: '2026-02-23', to_date: null }];
+const ZITTEND = {
+	name: 'Eelco Heinen',
+	government_functions: POST,
+	faction_memberships: [{ from_date: '2025-11-12', to_date: '2026-02-22' }]
+};
+const OUD_NU_KAMERLID = {
+	name: 'Chris Jansen',
+	government_functions: [
+		{
+			function: 'Staatssecretaris Openbaar Vervoer en Milieu',
+			from_date: '2024-07-02',
+			to_date: '2025-06-03'
+		}
+	],
+	faction_memberships: [
+		{ from_date: '2019-11-27', to_date: '2021-03-30' },
+		{ from_date: '2025-11-12', to_date: null }
+	]
+};
+const KAMERLID = {
+	name: 'Alexander Kops',
+	government_functions: [],
+	faction_memberships: [{ from_date: '2017-03-23', to_date: null }]
+};
 
 /** The table: every kind of bron of systematiek.md, in the order of the rubrieken. */
 const BRONNEN_TABEL: Bron[] = [
@@ -201,7 +228,7 @@ const BRONNEN_TABEL: Bron[] = [
 		naam: 'Kamerlid',
 		collection: 'members',
 		key: 'rob_jetten',
-		props: { name: 'Rob Jetten', party: 'D66', faction_memberships: [{ faction: 'd66' }] },
+		props: KAMERLID,
 		rubriek: 'parlement',
 		sort: 'kamerleden',
 		label: 'Kamerleden',
@@ -209,6 +236,18 @@ const BRONNEN_TABEL: Bron[] = [
 		lijst: 'members',
 		bevat: true,
 		laag: 'Kamerlid'
+	},
+	{
+		naam: 'oud-bewindspersoon die nu Kamerlid is',
+		collection: 'members',
+		key: 'chris_jansen',
+		props: OUD_NU_KAMERLID,
+		rubriek: 'parlement',
+		sort: 'kamerleden',
+		label: 'Kamerleden',
+		vorm: 'persoon',
+		lijst: 'members',
+		bevat: true
 	},
 	{
 		naam: 'fractie',
@@ -261,7 +300,7 @@ const BRONNEN_TABEL: Bron[] = [
 		naam: 'bewindspersoon',
 		collection: 'members',
 		key: 'f3b1e0b3',
-		props: { name: 'A. Aboutaleb', government_functions: POST },
+		props: ZITTEND,
 		rubriek: 'regering',
 		sort: 'bewindspersonen',
 		label: 'Bewindspersonen',

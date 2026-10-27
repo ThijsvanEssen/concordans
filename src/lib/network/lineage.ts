@@ -9,6 +9,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { isMinister } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
+import { shortDatesIn } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
 import type { ChainLayer, ChainNode } from './chain';
@@ -47,19 +48,23 @@ const layerName = (n: { collection: string; props?: Record<string, unknown> | nu
 	}
 	return n.collection === 'factions'
 		? 'Fractie'
-		: n.collection === 'cabinets'
-			? 'Kabinet'
-			: n.collection === 'committees'
-				? 'Commissie'
-				: isMinister(n.props)
-					? 'Bewindspersoon'
-					: 'Kamerlid';
+		: n.collection === 'ministries'
+			? 'Ministerie'
+			: n.collection === 'cabinets'
+				? 'Kabinet'
+				: n.collection === 'committees'
+					? 'Commissie'
+					: isMinister(n.props)
+						? 'Bewindspersoon'
+						: 'Kamerlid';
 };
 
-/** A judgment as its reader cites it ("HR 20 december 2019"), as the canvas names it. */
+/** A judgment as its reader cites it, its day short ("HR 20 dec. 2019"), as the canvas names it. */
 const nameOf = (n: Pick<Neighbour, 'id' | 'collection' | 'display_name' | 'props' | 'cite'>) =>
-	(n.collection === 'judgments' && citationRecord({ ...n, kind: 'judgment' })?.short) ||
-	naamVanId(n.id, n.display_name);
+	shortDatesIn(
+		(n.collection === 'judgments' && citationRecord({ ...n, kind: 'judgment' })?.short) ||
+			naamVanId(n.id, n.display_name)
+	);
 
 const chainNode = (
 	n: Pick<Neighbour, 'id' | 'collection' | 'display_name' | 'props' | 'cite'>,
@@ -97,7 +102,7 @@ export async function lineage(
 	});
 	if (start.node.collection === 'members') {
 		// A Kamerlid: what it sat in, per kind, in the order of its seats.
-		const order = ['factions', 'cabinets', 'committees'];
+		const order = ['factions', 'ministries', 'cabinets', 'committees'];
 		for (const b of start.neighbors?.buckets ?? []) {
 			if (!relations.includes(b.relation as Relation) || b.direction !== 'outbound') continue;
 			for (const item of b.items)

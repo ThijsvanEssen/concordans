@@ -5,7 +5,7 @@
 // GHAMS:2024:812", not eight times the court and the day).
 import { textOf } from '$lib/text/words';
 import { dossierNumberText, dossierNummer, officialNumber } from '$lib/bron/dossier-naam';
-import { langeDatum, maandJaar } from '$lib/text/datum';
+import { korteDatum, maandJaar } from '$lib/text/datum';
 
 type Bron = {
 	id: string;
@@ -66,7 +66,7 @@ function distinction(b: Bron): string | null {
 	if (b.collection === 'judgments') return ecliTail(b);
 	if (b.collection === 'documents') return paperDossier(b.raw?.props);
 	const date = textOf(b.raw?.props?.date);
-	return date ? langeDatum(date) : null;
+	return date ? korteDatum(date) : null;
 }
 
 /**

@@ -25,6 +25,14 @@ describe('the source a page stands under', () => {
 		expect(sourceOf(at('/explore?focus=judgments/ecli_nl_hr_2019_2006'))?.id).toBe('rechtspraak');
 	});
 
+	it('puts a person under Regering by the posts they hold now, else under Parlement', () => {
+		const url = at('/leden/eelco-heinen');
+		expect(sourceOf(url)?.id).toBe('parlement');
+		const post = { government_functions: [{ from_date: '2026-02-23', to_date: null }] };
+		expect(sourceOf(url, post)?.id).toBe('regering');
+		expect(sourceOf(url, { ...post, government_functions: [] })?.id).toBe('parlement');
+	});
+
 	it('names none for the start page, Actueel, Mijn and a canvas without a bron', () => {
 		for (const path of ['/', '/actueel', '/bundels', '/onderwerpen', '/explore'])
 			expect(sourceOf(at(path)), path).toBeNull();

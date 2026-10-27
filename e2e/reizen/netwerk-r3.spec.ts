@@ -178,7 +178,7 @@ const VIER = ['instruments/bwbr0010346', D, 'articles/bwbr0001903_126ffa', 'fact
 async function verband(page: Page, ids: string[], touch: boolean) {
 	await page.goto(`/explore?netwerk=${ids.join(',')}&weergave=verband`);
 	const shared = page.locator('.shared');
-	const lines = touch ? shared.locator('.ladder__name') : shared.locator('svg text');
+	const lines = touch ? shared.locator('.ladder__name, .ladder__how') : shared.locator('svg text');
 	await expect(lines.filter({ hasText: /lid van/ }).first()).toBeVisible({ timeout: 20_000 });
 	return (await lines.evaluateAll((els) => els.map((e) => e.textContent ?? ''))).map((t) =>
 		t.trim()
@@ -190,7 +190,7 @@ test('Verband draws every chosen bron, the same in any order, and keeps its verb
 	touch
 }) => {
 	const vier = await verband(page, VIER, touch);
-	for (const naam of ['Arbowet', 'Art. 126ffa Sv', 'Dilan Yeşilgöz-Zegerius'])
+	for (const naam of ['Arbeidsomstandighedenwet', 'Art. 126ffa Sv', 'Dilan Yeşilgöz-Zegerius'])
 		expect(vier.some((t) => t.startsWith(naam))).toBe(true);
 	const evaluatie = vier.find((t) => /Evaluat/.test(t))!;
 	expect(evaluatie).toBeTruthy();

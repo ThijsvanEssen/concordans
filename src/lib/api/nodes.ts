@@ -237,6 +237,13 @@ export async function getShared(
 }
 
 /**
+ * The chains of 2 or 3 steps between two bronnen (`/api/chains`, API 0.80.12): cold it takes
+ * 10 to 12 s, so it waits as long as the API does (`slowApi`, 30 s) and stops with the signal.
+ */
+export const getChains = (query: QueryOf<'/api/chains'>, signal?: AbortSignal) =>
+	unwrap(slowApi.GET('/api/chains', { params: { query }, signal }));
+
+/**
  * The surroundings of a stuk, zaak, stemming, toezegging or activiteit in one answer (API
  * 0.80.8, #948): its indieners, its dossier as one node, the laws it changes or names, the
  * votes on it, what it answers and where it was made. Null for another kind or a bron not there.

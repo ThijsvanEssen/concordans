@@ -38,7 +38,11 @@ describe('NetworkChoice', () => {
 	});
 	it('says why a step is off in a line, not in a title alone (C15b)', () => {
 		render(NetworkChoice, { ...base, view: 'omgeving', networkOn: true, hasSelection: false });
-		expect(screen.getByRole('note').textContent).toBe('Kies eerst een bron in het netwerk.');
+		expect(screen.getByRole('note').textContent).toBe('Klik een bron op het canvas.');
+	});
+	it('says in Verband that the steps are for the pair', () => {
+		render(NetworkChoice, { ...base, view: 'verband', networkOn: true, hasSelection: false });
+		expect(screen.getByRole('note').textContent).toBe('Het aantal stappen geldt voor het paar.');
 	});
 	it('greys out the steps beyond the cap and says the cap in their title only (R7)', () => {
 		const { container } = render(NetworkChoice, {

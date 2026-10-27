@@ -139,7 +139,7 @@ Tweede verslag, Kamerstukken I 2025/26, 36764, D;Stukken;stuk in;;;;vastgesteld;
 Aansluitend: Regeling van werkzaamheden;Activiteiten;over;;;;vastgesteld;hoog;2026-04-15;;https://concordans.nl/activiteiten/2026A03119
 Wet weerbaarheid kritieke entiteiten (36765);Activiteiten;over;;;;vastgesteld;hoog;2025-09-04;;https://concordans.nl/activiteiten/2025A05418
 Aanvang middagvergadering: Regeling van werkzaamheden;Activiteiten;over;;;;vastgesteld;hoog;2026-01-29;;https://concordans.nl/activiteiten/2026A00713
-Stemmingen, 7 april 2026;Activiteiten;over;;;;vastgesteld;hoog;2026-04-07;;https://concordans.nl/activiteiten/2026A02872"
+Stemmingen, 7 apr. 2026;Activiteiten;over;;;;vastgesteld;hoog;2026-04-07;;https://concordans.nl/activiteiten/2026A02872"
 `;
 
 exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -292,7 +292,7 @@ exports[`Verbonden of a 'dossier' > keeps its groups, rows, kern and export > gr
       "activities/de3463ac_47a2_421c_918e_17e202134e47 | Aansluitend: Regeling van werkzaamheden |  | 15 apr. 2026",
       "activities/6b2fc9b6_fdcc_45de_9a11_4b945c94fc01 | Wet weerbaarheid kritieke entiteiten (36765) |  | Inbreng verslag (wetsvoorstel), 4 sep. 2025",
       "activities/79e697e9_eeb6_4d20_a039_f9b8aadb7b70 | Aanvang middagvergadering: Regeling van werkzaamheden |  | 29 jan. 2026",
-      "activities/f3b8d88e_d71a_4acb_a6e1_c14e8c8d4fcd | Stemmingen, 7 april 2026 |  | 7 apr. 2026",
+      "activities/f3b8d88e_d71a_4acb_a6e1_c14e8c8d4fcd | Stemmingen, 7 apr. 2026 |  | ",
     ],
     "section": null,
   },
@@ -467,10 +467,10 @@ Artikel 81 RO;Artikelen;haalt aan;;;;vastgesteld;hoog;;;https://concordans.nl/we
 Artikel 29 Sv;Artikelen;haalt aan;;r.o. 2.2.3, 2.3.1 en 1 meer;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/29
 Artikel 27c Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/27c
 Artikel 28 Sv;Artikelen;haalt aan;;r.o. 2.2.3 en 2.3.3;;vastgesteld;hoog;;;https://concordans.nl/wetten/BWBR0001903/artikel/28
-Conclusie A-G Paridaens 1 oktober 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994
-Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20
-HR 20 maart 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368
-HR 6 november 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056"
+Conclusie A-G Paridaens 1 okt. 2024;Uitspraken;conclusie bij;;;;vastgesteld;hoog;2024-10-01;ECLI:NL:PHR:2024:994;https://concordans.nl/uitspraken/ECLI:NL:PHR:2024:994
+Gerechtshof Arnhem-Leeuwarden, 24 jun. 2022, 21-004903-20;Uitspraken;;;;;vastgesteld;hoog;;;https://concordans.nl/explore?focus=judgments/unresolved%3Agerechtshof+Arnhem-Leeuwarden%3A2022-06-24%3A21-004903-20
+HR 20 mrt. 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-03-20;ECLI:NL:HR:2018:368;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:368
+HR 6 nov. 2018;Uitspraken;haalt aan;;;;vastgesteld;hoog;2018-11-06;ECLI:NL:HR:2018:2056;https://concordans.nl/uitspraken/ECLI:NL:HR:2018:2056"
 `;
 
 exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > groups 1`] = `
@@ -502,7 +502,7 @@ exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > 
     "label": "Conclusie in dezelfde zaak",
     "plaats": "kern",
     "rows": [
-      "judgments/ecli_nl_phr_2024_994 | Conclusie A-G Paridaens 1 oktober 2024 | Conclusie bij deze uitspraak [Rechtspraak.nl, formele relatie] | PHR:2024:994",
+      "judgments/ecli_nl_phr_2024_994 | Conclusie A-G Paridaens 1 okt. 2024 | Conclusie bij deze uitspraak [Rechtspraak.nl, formele relatie] | PHR:2024:994",
     ],
     "section": null,
   },
@@ -520,7 +520,7 @@ exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > 
     "label": "Uitspraak in eerdere aanleg",
     "plaats": "kern",
     "rows": [
-      "judgments/unresolved:gerechtshof Arnhem-Leeuwarden:2022-06-24:21-004903-20 | Gerechtshof Arnhem-Leeuwarden, 24 juni 2022, 21-004903-20 |  | niet in de gegevens",
+      "judgments/unresolved:gerechtshof Arnhem-Leeuwarden:2022-06-24:21-004903-20 | Gerechtshof Arnhem-Leeuwarden, 24 jun. 2022, 21-004903-20 |  | niet in de gegevens",
     ],
     "section": null,
   },
@@ -586,8 +586,8 @@ exports[`Verbonden of a 'uitspraak' > keeps its groups, rows, kern and export > 
     "label": "Uitspraken die hier worden aangehaald",
     "plaats": "verbonden",
     "rows": [
-      "judgments/ecli_nl_hr_2018_368 | HR 20 maart 2018 | Aangehaald [ECLI staat letterlijk in de tekst] | HR:2018:368",
-      "judgments/ecli_nl_hr_2018_2056 | HR 6 november 2018 | Aangehaald [ECLI staat letterlijk in de tekst] | HR:2018:2056",
+      "judgments/ecli_nl_hr_2018_368 | HR 20 mrt. 2018 | Aangehaald [ECLI staat letterlijk in de tekst] | HR:2018:368",
+      "judgments/ecli_nl_hr_2018_2056 | HR 6 nov. 2018 | Aangehaald [ECLI staat letterlijk in de tekst] | HR:2018:2056",
     ],
     "section": null,
   },

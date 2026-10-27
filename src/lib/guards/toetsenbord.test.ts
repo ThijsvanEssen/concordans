@@ -68,6 +68,11 @@ describe('the keyboard', () => {
 				'a shared bron clicked: its frame marks it; :focus-visible keeps the ring'
 			),
 			selector(
+				'lib/network/LinkChains.svelte',
+				'.node:focus:not(:focus-visible)',
+				'a tussenbron clicked: its frame marks it; :focus-visible keeps the ring'
+			),
+			selector(
 				'lib/network/ChainView.svelte',
 				'.node:focus:not(:focus-visible)',
 				'a bron of the keten clicked: its frame marks it; :focus-visible keeps the ring'

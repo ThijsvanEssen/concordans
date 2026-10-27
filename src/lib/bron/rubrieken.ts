@@ -2,6 +2,7 @@
 // bladen van de Topbalk), daaronder de soorten bron. Kleur, vorm, naam en volgorde komen
 // overal vandaan: Topbalk, Bladeren, Tonen, Filter Soort, Verbonden, Zoeken en de Keten lezen
 // deze tabel (guardtest `rubrieken.test.ts`).
+import { vandaag } from '$lib/text/datum';
 import { isExplanatory } from '$lib/verbonden/document-chamber';
 import { BILL_KIND, isAmendingRelation, isInternational } from '$lib/vocabulary';
 
@@ -57,20 +58,40 @@ export const sortOne = (sort: Sort): string => SORT_INFO[sort].one;
 export const rubriekOfSort = (sort: Sort): Rubriek => SORT_INFO[sort].rubriek;
 export const sortColour = (sort: Sort): string => rubriekColour(SORT_INFO[sort].rubriek);
 
+type Spell = { from_date?: unknown; to_date?: unknown };
+const spells = (v: unknown): Spell[] => (Array.isArray(v) ? (v as Spell[]) : []);
+/** Whether a spell lasts on `today`: it has begun and has no end, or an end still to come. */
+const lasts = (s: Spell, today: string): boolean =>
+	(typeof s.from_date !== 'string' || s.from_date <= today) &&
+	(typeof s.to_date !== 'string' || s.to_date === '' || s.to_date >= today);
+/** The day a spell last was (the far future where it still lasts). */
+const lastDay = (list: Spell[]): string =>
+	list.reduce(
+		(m, s) =>
+			typeof s.to_date === 'string' && s.to_date ? (s.to_date > m ? s.to_date : m) : '9999',
+		''
+	);
+
 /**
- * Whether a person is a bewindspersoon rather than a Kamerlid: they held a post in a cabinet
- * (`government_functions`, in the light node as the canvas asks it), or are met on a kabinet
- * (`SERVED_IN`). Met as a lid of a fractie or a commissie (`MEMBER_OF`) a person is a Kamerlid
- * whatever they held. Without a known role: a Kamerlid.
+ * Whether a person is a bewindspersoon rather than a Kamerlid, by their current role: a post in a
+ * cabinet that lasts today (`government_functions`, each with `from_date` and `to_date`) makes them
+ * one, a seat in a fractie that lasts (`faction_memberships`) a Kamerlid; without either, the role
+ * that ended last. Met on a kabinet (`SERVED_IN`) a person is a bewindspersoon, met as a lid of a
+ * fractie or a commissie (`MEMBER_OF`) a Kamerlid. Without a known role: a Kamerlid.
  */
 export function isMinister(
 	props: Record<string, unknown> | null | undefined,
-	relation?: string | null
+	relation?: string | null,
+	today = vandaag()
 ): boolean {
 	if (relation === 'SERVED_IN') return true;
 	if (relation === 'MEMBER_OF') return false;
-	const posts = props?.government_functions;
-	return Array.isArray(posts) && posts.length > 0;
+	const posts = spells(props?.government_functions);
+	if (posts.length === 0) return false;
+	if (posts.some((p) => lasts(p, today))) return true;
+	const seats = spells(props?.faction_memberships);
+	if (seats.some((p) => lasts(p, today))) return false;
+	return seats.length === 0 || lastDay(posts) >= lastDay(seats);
 }
 
 /** The soort of a bron of a publication: Staatsblad, Staatscourant, Tractatenblad. */

@@ -334,7 +334,7 @@ describe('an appealed decision the dataset lacks', () => {
 		});
 		const rows = groups.find((g) => g.id === 'earlier-instance')?.rows ?? [];
 		expect(rows.map((r) => [r.title, r.missing])).toEqual([
-			['Rechtbank Gelderland, 9\u00a0juli\u00a02025, 24/6811', true]
+			['Rechtbank Gelderland, 9\u00a0jul.\u00a02025, 24/6811', true]
 		]);
 	});
 	it('leaves the groups as they are without one', () => {

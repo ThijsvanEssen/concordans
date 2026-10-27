@@ -73,15 +73,11 @@ describe('Soort reads Verbonden (N1)', () => {
 		expect(r.map((x) => kindRowCount(x, true))).toEqual(['2 van 146', '1 van 2', '0 van 10']);
 	});
 
-	it('counts a bron Verbonden does not count apart, past the count of its soort', () => {
-		// Two stemmingen in Verbonden, three drawn: the third is none Verbonden counts.
+	it('keeps what Verbonden does not count of a soort in that soort, no row of leftovers', () => {
+		// Two stemmingen in Verbonden, three drawn: the third stands in Stemmingen too.
 		const r = rows([bron('decisions', 's1'), bron('decisions', 's2'), bron('decisions', 'ek1')]);
-		expect(r.find((x) => x.id === 'decisions')).toMatchObject({ drawn: 2, total: null });
-		expect(r.find((x) => x.id === 'overig:decisions')).toMatchObject({
-			label: 'Overige stemmingen',
-			drawn: 1,
-			total: null
-		});
+		expect(r.find((x) => x.id === 'decisions')).toMatchObject({ drawn: 3, total: null });
+		expect(r.some((x) => x.id.startsWith('overig:'))).toBe(false);
 	});
 
 	it('names a soort Verbonden has not by its word, of the whole the API counts (N2)', () => {
