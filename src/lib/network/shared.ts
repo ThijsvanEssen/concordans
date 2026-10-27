@@ -84,7 +84,10 @@ function joinLines(
  * its title and year under it; the API's own name is cut off with "…" and is not used for it.
  * Any other bron keeps its name.
  */
-export function rowNotation(n: Neighbor): { title: string; detail: string | null } {
+export function rowNotation(n: Pick<Neighbor, 'id' | 'collection' | 'display_name' | 'props'>): {
+	title: string;
+	detail: string | null;
+} {
 	const p = (n.props ?? {}) as Record<string, unknown>;
 	const name = naamVanId(n.id, n.display_name);
 	if (n.collection !== 'documents') return { title: name, detail: null };

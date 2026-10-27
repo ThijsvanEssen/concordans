@@ -6,6 +6,7 @@
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { relationWords } from '$lib/verbonden/relation-words';
+import { rowNotation } from './shared';
 import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -77,7 +78,9 @@ type ChainsModel = {
 	none: boolean;
 };
 
-const nameOf = (n: { id: string; display_name?: string | null }) => naamVanId(n.id, n.display_name);
+/** A Kamerstuk by its notation, as the shared bronnen are, else the API's name. */
+const nameOf = (n: ChainsResponse['nodes'][number]) =>
+	n.collection === 'documents' ? rowNotation(n).title : naamVanId(n.id, n.display_name);
 
 /** One line of a step: its relation, the kind it comes from and the end its arrow points to. */
 export type StepLeg = {
