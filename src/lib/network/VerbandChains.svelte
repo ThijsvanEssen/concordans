@@ -13,14 +13,11 @@
 
 	let {
 		result,
-		steps,
 		scale = 1,
 		chosen = null,
 		onChoose
 	}: {
 		result: ChainsState;
-		/** The longest chain asked: 2 or 3. */
-		steps: number;
 		scale?: number;
 		/** The tussenbron marked, its card in the strip. */
 		chosen?: string | null;

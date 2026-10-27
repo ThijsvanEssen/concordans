@@ -309,7 +309,7 @@
 			{/if}
 		{/if}
 		{#if steps > 1 && chains}
-			<VerbandChains result={chains} {steps} {scale} {chosen} onChoose={onChooseBron} />
+			<VerbandChains result={chains} {scale} {chosen} onChoose={onChooseBron} />
 		{/if}
 	{/if}
 </div>
