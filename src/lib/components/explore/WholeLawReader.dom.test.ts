@@ -135,7 +135,7 @@ describe('WholeLawReader, whether the law holds (besluit 30)', () => {
 		await settle();
 		const stand = container.querySelector('.validity')!;
 		expect(stand.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-			'Vervallen per 1 januari 2020, opvolger: Nieuwe wet'
+			'Ingetrokken per 1 januari 2020, opvolger: Nieuwe wet'
 		);
 		const text = container.textContent ?? '';
 		expect(text).not.toContain('Geldende tekst');

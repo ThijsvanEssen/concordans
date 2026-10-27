@@ -51,7 +51,7 @@ test('Bron toevoegen: search, Enter adds, a chosen bron says so, Esc gives the f
 	const open = panel.getByRole('button', { name: 'Bron toevoegen' });
 	await open.click();
 
-	const dialog = page.getByRole('dialog', { name: 'Bron toevoegen aan het netwerk' });
+	const dialog = page.getByRole('dialog', { name: 'Bron toevoegen' });
 	const field = dialog.getByRole('combobox', { name: 'Zoeken' });
 	await expect(field).toBeFocused();
 	await expect(dialog.getByRole('group', { name: 'Soort bron' })).toBeVisible();

@@ -1,16 +1,21 @@
-// The one line that says whether a law or an article holds (besluit 30): "Vervallen per 1
-// januari 2020" or "Nog niet in werking (per 1 januari 2027)". A thing that holds has none
-// (its text says it); the label "Geldend" stands only where the API says it holds.
+// The one line that says whether a law or an article holds (besluit 30): "Ingetrokken per 1
+// januari 2020" for a law, "Vervallen per 1 januari 2020" for an article (docs/worden.md), or
+// "Nog niet in werking (per 1 januari 2027)". A thing that holds has none (its text says it);
+// the label "Geldend" stands only where the API says it holds.
 import type { Validity } from '$lib/api/validity';
 import { langeDatum } from '$lib/text/datum';
 
 type Status = { text: string; negative: boolean };
 
+/** What has the validity: a law is ingetrokken, an article (or a bijlage) vervallen. */
+export type Holder = 'wet' | 'artikel';
+
 /** The words of a validity that is not in force; null for one that holds or is not known. */
-export function statusOf(v: Validity | null | undefined): Status | null {
+export function statusOf(v: Validity | null | undefined, what: Holder = 'artikel'): Status | null {
 	if (v?.state === 'expired') {
 		const day = langeDatum(v.date);
-		return { text: day ? `Vervallen per ${day}` : 'Vervallen', negative: true };
+		const word = what === 'wet' ? 'Ingetrokken' : 'Vervallen';
+		return { text: day ? `${word} per ${day}` : word, negative: true };
 	}
 	if (v?.state === 'not_in_force_yet') {
 		const day = langeDatum(v.date);
