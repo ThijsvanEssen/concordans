@@ -340,7 +340,7 @@
 	}
 	.blok {
 		margin: var(--s-4) var(--s-4) 0;
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;

@@ -241,21 +241,21 @@
 		height: auto;
 	}
 	.head {
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		fill: var(--ink-3);
 	}
 	.kop {
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		fill: var(--ink-3);
 	}
 	.count,
 	.by {
 		font-family: var(--font-serif);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		fill: var(--ink-3);
 	}
 	.by {
@@ -275,7 +275,7 @@
 	}
 	.pill__name {
 		font-family: var(--font-serif);
-		font-size: 13px;
+		font-size: var(--t-micro);
 		font-weight: 600;
 		fill: var(--ink);
 	}
@@ -284,11 +284,11 @@
 	}
 	.name {
 		font-family: var(--font-serif);
-		font-size: 13px;
+		font-size: var(--t-micro);
 		fill: var(--ink-2);
 	}
 	.name--end {
-		font-size: 14px;
+		font-size: var(--t-meta);
 		font-weight: 600;
 		fill: var(--ink);
 	}
@@ -331,7 +331,7 @@
 	}
 	.ladder__head {
 		margin: 0 0 var(--s-2);
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -373,7 +373,7 @@
 	}
 	.ladder__pair {
 		font-family: var(--font-serif);
-		font-size: 15px;
+		font-size: var(--t-body-2);
 		font-weight: 600;
 		line-height: 24px;
 		color: var(--ink);
