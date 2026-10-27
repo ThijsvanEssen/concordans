@@ -63,7 +63,7 @@
 				<Caret {open} />
 			</button>
 		{:else}
-			<span class="canvas-kaart__titel">{title}</span>
+			<h2 class="canvas-kaart__titel">{title}</h2>
 			{#if samenvatting}{@render samenvatting()}{/if}
 		{/if}
 		{#if actie}<span class="canvas-kaart__actie">{@render actie()}</span>{/if}
@@ -124,6 +124,7 @@
 		color: var(--ink);
 	}
 	.canvas-kaart__titel {
+		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 600;
