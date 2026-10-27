@@ -166,7 +166,7 @@
 								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
 										vorm={row.stuksoort === 'wetsvoorstellen'
 											? 'voorstel'
-											: vormVanBron(row.ref.collection, row.props, row.ref.key)}
+											: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
 										size={11}
 									/>{/if}</span
 							>

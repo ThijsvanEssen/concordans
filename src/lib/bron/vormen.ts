@@ -120,16 +120,17 @@ export const shapeOfCategory = (category: string): Vorm =>
 /**
  * De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken; een
  * Europese of internationale regeling het vierkant met een gat; een persoon met een post in een
- * kabinet en zonder fractie de bewindspersoon (indeling.ts, `isMinister`).
+ * kabinet de bewindspersoon (rubrieken.ts, `isMinister`).
  */
 export function vormVanBron(
 	collection: string,
 	props?: Record<string, unknown> | null,
-	key = ''
+	key = '',
+	relation?: string | null
 ): Vorm {
 	const vorm = vormOf(collection);
 	if (vorm === 'regel' && isInternational({ key, props })) return 'regel-int';
-	if (collection === 'members' && isMinister(props)) return 'bewindspersoon';
+	if (collection === 'members' && isMinister(props, relation)) return 'bewindspersoon';
 	if (collection === 'documents' && typeof props?.kind === 'string' && BILL_KIND.test(props.kind))
 		return 'voorstel';
 	return vorm;

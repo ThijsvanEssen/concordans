@@ -176,7 +176,7 @@
 			<KindGlyph
 				vorm={row.stuksoort === 'wetsvoorstellen'
 					? 'voorstel'
-					: vormVanBron(row.ref.collection, row.props, row.ref.key)}
+					: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
 				size={ROW_GLYPH}
 			/>
 		{/if}

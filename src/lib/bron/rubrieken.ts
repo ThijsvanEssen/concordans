@@ -58,20 +58,19 @@ export const rubriekOfSort = (sort: Sort): Rubriek => SORT_INFO[sort].rubriek;
 export const sortColour = (sort: Sort): string => rubriekColour(SORT_INFO[sort].rubriek);
 
 /**
- * Whether a person is a bewindspersoon rather than a Kamerlid: a post in a cabinet and no seat in
- * a fractie (a Kamerlid who was minister stays a Kamerlid among the leden of their fractie), or
- * the person met on a kabinet (`SERVED_IN`). Without a known role: a Kamerlid. `government_functions`
- * is in the light node, as the canvas asks it (props=canvas).
+ * Whether a person is a bewindspersoon rather than a Kamerlid: they held a post in a cabinet
+ * (`government_functions`, in the light node as the canvas asks it), or are met on a kabinet
+ * (`SERVED_IN`). Met as a lid of a fractie or a commissie (`MEMBER_OF`) a person is a Kamerlid
+ * whatever they held. Without a known role: a Kamerlid.
  */
 export function isMinister(
 	props: Record<string, unknown> | null | undefined,
 	relation?: string | null
 ): boolean {
 	if (relation === 'SERVED_IN') return true;
+	if (relation === 'MEMBER_OF') return false;
 	const posts = props?.government_functions;
-	if (!Array.isArray(posts) || posts.length === 0) return false;
-	const seats = props?.faction_memberships;
-	return !(Array.isArray(seats) && seats.length > 0) && !props?.party;
+	return Array.isArray(posts) && posts.length > 0;
 }
 
 /** The soort of a bron of a publication: Staatsblad, Staatscourant, Tractatenblad. */

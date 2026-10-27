@@ -109,11 +109,12 @@ describe('filterGroupOf', () => {
 		expect(filterGroupOf('factions', 'f1', {})).toBe('fracties');
 	});
 
-	it('tells a Kamerlid from a bewindspersoon by the posts and the seat', () => {
+	it('tells a Kamerlid from a bewindspersoon by the posts and the way they are met', () => {
 		expect(filterGroupOf('members', 'm1', {})).toBe('kamerleden');
 		const post = [{ function: 'Minister van Justitie' }];
 		expect(filterGroupOf('members', 'm2', { government_functions: post })).toBe('bewindspersonen');
-		expect(filterGroupOf('members', 'm3', { government_functions: post, party: 'VVD' })).toBe(
+		// Met as a lid of a fractie, a person is a Kamerlid whatever they held.
+		expect(filterGroupOf('members', 'm3', { government_functions: post }, 'MEMBER_OF')).toBe(
 			'kamerleden'
 		);
 		expect(filterGroupOf('members', 'm4', {}, 'SERVED_IN')).toBe('bewindspersonen');
