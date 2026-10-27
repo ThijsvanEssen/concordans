@@ -12,7 +12,6 @@ const OF: Record<string, Collection> = {
 	activities: 'activities',
 	commitments: 'commitments',
 	cases: 'cases',
-	members: 'members',
 	factions: 'factions',
 	committees: 'committees',
 	cabinets: 'cabinets'
@@ -25,6 +24,11 @@ describe('the names of the soorten', () => {
 		expect(soort.label).toBe(many);
 		expect(lowerFirst(soort.many)).toBe(lowerFirst(many));
 		expect(lowerFirst(soort.one)).toBe(lowerFirst(one));
+	});
+
+	it('names the persons by their role: Kamerleden in Parlement, bewindspersonen in Regering', () => {
+		expect(SOORT_LABEL.members.label).toBe('Kamerleden');
+		expect(SOORT_LABEL.ministers.label).toBe('Bewindspersonen');
 	});
 
 	it('differs only for the laws, a soort of wetten and artikelen', () => {

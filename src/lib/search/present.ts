@@ -3,6 +3,7 @@ import { OPEN_STATUS } from '$lib/components/explore/index/government';
 import { escapeRegExp } from '$lib/text/words';
 import { courtName } from '$lib/text/court';
 import { menselijkeNaam } from '$lib/bron/menselijk';
+import { sortLabel } from '$lib/bron/rubrieken';
 // How a search result reads: a title that tells it from its neighbours, the context a
 // lawyer checks it by, and where the API gives one, a line of the text with the words
 // searched for marked. Stukken of one dossier stand under that dossier.
@@ -39,9 +40,14 @@ export function chamberOfHit(hit: Hit): Chamber | undefined {
 	return given === 'TK' || given === 'EK' ? given : undefined;
 }
 
-/** The heading of a group of hits. Leden: a group holds members of both Kamers and bewindspersonen. */
+/**
+ * The heading of a group of hits. A group of members holds Kamerleden of both Kamers and
+ * bewindspersonen, and says both by the names of their soorten (indeling.ts).
+ */
 export const groupLabel = (kind: Collection): string =>
-	kind === 'members' ? 'Leden' : bronPlural(kind);
+	kind === 'members'
+		? `${sortLabel('kamerleden')} en ${sortLabel('bewindspersonen').toLowerCase()}`
+		: bronPlural(kind);
 
 /** The hit's name, never its key ($lib/bron/menselijk). */
 const nameOf = (hit: Hit): string =>

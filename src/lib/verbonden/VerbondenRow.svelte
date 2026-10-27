@@ -174,7 +174,7 @@
 		{:else}
 			<KindGlyph
 				collection={row.ref.collection}
-				vorm={row.filterGroup === 'wetsvoorstellen' ? 'voorstel' : undefined}
+				vorm={row.stuksoort === 'wetsvoorstellen' ? 'voorstel' : undefined}
 				size={ROW_GLYPH}
 			/>
 		{/if}

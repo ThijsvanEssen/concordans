@@ -1,19 +1,19 @@
 // Soort of the werkplek says per kind how many are drawn, and of how many there are where the
 // API cut the neighbourhood off: "63 van 10.395". The drawn come from the canvas (its counts per
 // kind), the whole from the API's buckets per collection. One collection can stand under
-// several kinds (a Kamerstuk is a toelichting, a wetsvoorstel or another stuk): its whole goes
+// several kinds (a person is a bewindspersoon or a Kamerlid): its whole goes
 // to the last of them, less what the others draw.
 import type { FilterGroup } from '$lib/verbonden/filter';
 
 /** The kinds a collection's bronnen stand under, the one that takes its whole last. */
 const KINDS_OF: Record<string, readonly FilterGroup[]> = {
 	articles: ['artikelen'],
-	instruments: ['internationaal', 'wetten'],
+	instruments: ['internationaal', 'publicaties', 'wetten'],
 	judgments: ['uitspraken'],
-	documents: ['toelichtingen', 'wetsvoorstellen', 'dossiers'],
+	documents: ['stukken'],
 	dossiers: ['dossiers'],
 	decisions: ['stemmingen'],
-	members: ['leden']
+	members: ['bewindspersonen', 'kamerleden']
 };
 
 type KindCut = { total: number; collection: string };

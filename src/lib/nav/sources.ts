@@ -5,8 +5,9 @@
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { isExplorePath } from '$lib/bron/address';
 import { indexHref } from '$lib/bron/href';
+import { RUBRIEK_LABEL, rubriekOf, type Rubriek } from '$lib/bron/rubrieken';
 
-type SourceId = 'wetten' | 'uitspraken' | 'kamerstukken' | 'parlement' | 'regering';
+type SourceId = Rubriek;
 
 type Source = {
 	id: SourceId;
@@ -18,32 +19,29 @@ type Source = {
 	href: string;
 };
 
-const source = (id: SourceId, label: string, holds: string, lists: readonly string[]): Source => ({
+const source = (id: SourceId, holds: string, lists: readonly string[]): Source => ({
 	id,
-	label,
+	label: RUBRIEK_LABEL[id],
 	holds,
 	lists,
 	href: indexHref(lists[0])
 });
 
+/** The five rubrieken, in their order and under their names (indeling.ts). */
 export const SOURCES: readonly Source[] = [
-	source('wetten', 'Wetten', 'wetten, regelingen, artikelen', ['instruments']),
-	source('uitspraken', 'Rechtspraak', 'rechtbank tot Hoge Raad', ['judgments']),
-	source('kamerstukken', 'Kamerstukken', 'dossiers, stukken, stemmingen', [
+	source('wetten', 'wetten, regelingen, artikelen', ['instruments']),
+	source('rechtspraak', 'rechtbank tot Hoge Raad', ['judgments']),
+	source('kamerstukken', 'dossiers, stukken, stemmingen, activiteiten, toezeggingen', [
 		'dossiers',
 		'documents',
-		'decisions'
+		'decisions',
+		'commitments'
 	]),
-	source('parlement', 'Parlement', 'Kamerleden, fracties, commissies', [
-		'members',
-		'factions',
-		'committees'
-	]),
-	source('regering', 'Regering', 'kabinetten, ministeries, bewindspersonen, toezeggingen', [
+	source('parlement', 'Kamerleden, fracties, commissies', ['members', 'factions', 'committees']),
+	source('regering', 'kabinetten, ministeries, bewindspersonen', [
 		'cabinets',
 		'ministries',
-		'ministers',
-		'commitments'
+		'ministers'
 	])
 ];
 
@@ -52,29 +50,14 @@ const sourceById = (id: SourceId): Source => SOURCES.find((s) => s.id === id)!;
 /** The source a list of Bladeren belongs to. */
 export const sourceOfList = (list: string): Source => SOURCES.find((s) => s.lists.includes(list))!;
 
-const SOURCE_OF_COLLECTION: Record<Collection, SourceId> = {
-	instruments: 'wetten',
-	instrument_versions: 'wetten',
-	articles: 'wetten',
-	article_versions: 'wetten',
-	annexes: 'wetten',
-	judgments: 'uitspraken',
-	dossiers: 'kamerstukken',
-	cases: 'kamerstukken',
-	documents: 'kamerstukken',
-	activities: 'kamerstukken',
-	decisions: 'kamerstukken',
-	members: 'parlement',
-	factions: 'parlement',
-	committees: 'parlement',
-	cabinets: 'regering',
-	commitments: 'regering',
-	ministries: 'regering'
-};
-
-/** The source a kind of bron belongs to. */
-export const sourceOfCollection = (collection: Collection): Source =>
-	sourceById(SOURCE_OF_COLLECTION[collection]);
+/**
+ * The source a kind of bron belongs to: its rubriek. A person with a post in a kabinet and no
+ * fractie (`props`) stands under Regering, a Kamerlid under Parlement.
+ */
+export const sourceOfCollection = (
+	collection: Collection,
+	props?: Record<string, unknown> | null
+): Source => sourceById(rubriekOf(collection, '', props));
 
 /** The first segment of a readable address, per source (src/lib/bron/address.ts). */
 const SOURCE_OF_PATH: Record<string, SourceId> = {
@@ -82,7 +65,7 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
 	stb: 'wetten',
 	stcrt: 'wetten',
 	trb: 'wetten',
-	uitspraken: 'uitspraken',
+	uitspraken: 'rechtspraak',
 	kamerstukken: 'kamerstukken',
 	dossiers: 'kamerstukken',
 	zaken: 'kamerstukken',
@@ -93,7 +76,7 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
 	commissies: 'parlement',
 	kabinetten: 'regering',
 	ministeries: 'regering',
-	toezeggingen: 'regering'
+	toezeggingen: 'kamerstukken'
 };
 
 /**

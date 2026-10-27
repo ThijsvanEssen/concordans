@@ -19,7 +19,8 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 		rows.set(d.key, {
 			ref: { collection: 'documents', key: d.key },
 			...describeBron('documents', d.key, d.title, { ...d }),
-			filterGroup: 'toelichtingen',
+			filterGroup: 'stukken',
+			stuksoort: 'toelichtingen',
 			at: item.section_anchor ?? null,
 			// The section by its heading as the memorie prints it (API 0.79.55): `§ Artikel 21
 			// (zorgplicht)`; its opening comes with it (`excerpt`), on the row's second line.

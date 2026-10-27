@@ -45,10 +45,10 @@
 		INDEX_CATEGORIES,
 		categoryLabel,
 		categoryNoun,
-		collectionOf,
 		type IndexCategory
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { shapeOfCategory } from '$lib/bron/vormen';
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
@@ -564,7 +564,7 @@
 					data-sveltekit-noscroll
 					data-sveltekit-keepfocus
 				>
-					<KindGlyph collection={collectionOf(cat.key)} size={11} />
+					<KindGlyph vorm={shapeOfCategory(cat.key)} size={11} />
 					<span class="cat-name">{cat.label}</span>
 				</a>
 			{/each}

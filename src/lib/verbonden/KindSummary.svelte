@@ -164,7 +164,7 @@
 							<span class="kind__vlak"
 								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
 										collection={row.ref.collection}
-										vorm={row.filterGroup === 'wetsvoorstellen' ? 'voorstel' : undefined}
+										vorm={row.stuksoort === 'wetsvoorstellen' ? 'voorstel' : undefined}
 										size={11}
 									/>{/if}</span
 							>

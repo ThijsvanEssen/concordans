@@ -9,7 +9,8 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Blad from '$lib/components/ui/Blad.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
+	import { SORT_SHAPE } from '$lib/bron/vormen';
+	import { STUKSOORTEN, STUKSOORT_LABEL } from '$lib/bron/rubrieken';
 	// The filter sheet: soort, relatie, lid, rechter, periode, zekerheid and
 	// status, applied with one button. The same sheet opens from the panel and from
 	// the legend of the network. A Blad: the focus goes to the search field on open, stays inside
@@ -24,7 +25,9 @@
 		PRESETS,
 		RECHTERS,
 		activePreset,
+		stuksoortOn,
 		toggleFilterGroup,
+		toggleStuksoort,
 		withPreset,
 		type Betrouwbaarheid,
 		type Status,
@@ -32,7 +35,15 @@
 	} from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import type { Group } from './groups';
-	import { allRows, groupTotals, lidCounts, courtCounts, relationCounts, shownCount } from './view';
+	import {
+		allRows,
+		groupTotals,
+		lidCounts,
+		courtCounts,
+		relationCounts,
+		shownCount,
+		stuksoortTotals
+	} from './view';
 
 	let {
 		open,
@@ -64,6 +75,11 @@
 	});
 
 	const totals = $derived(groupTotals(groups));
+	const perStuksoort = $derived(stuksoortTotals(groups));
+	// Only what holds anything is offered; with one stuksoort the stukken need no facet.
+	const stuksoortenToChoose = $derived(
+		STUKSOORTEN.filter((s) => (perStuksoort[s] ?? 0) > 0 || !stuksoortOn(draft, s))
+	);
 	const perCourt = $derived(courtCounts(groups));
 	// Only what holds anything is offered (T11); what is chosen stays, to be undone.
 	const sourcesToChoose = $derived(
@@ -207,10 +223,29 @@
 						onToggle={() => (draft = toggleFilterGroup(draft, k))}
 						count={n}
 					>
-						{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
+						{#snippet voor()}<KindGlyph vorm={SORT_SHAPE[k]} size={11} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</div>
+
+			{#if (totals.stukken ?? 0) > 0 && (stuksoortenToChoose.length > 1 || draft.stuksoort)}
+				<div class="block">
+					<div class="block__label">Stuksoort</div>
+					{#each stuksoortenToChoose as s (s)}
+						<FilterOptie
+							label={STUKSOORT_LABEL[s]}
+							on={stuksoortOn(draft, s)}
+							onToggle={() => (draft = toggleStuksoort(draft, s))}
+							count={perStuksoort[s] ?? 0}
+						>
+							{#snippet voor()}<KindGlyph
+									vorm={s === 'wetsvoorstellen' ? 'voorstel' : 'stuk'}
+									size={11}
+								/>{/snippet}
+						</FilterOptie>
+					{/each}
+				</div>
+			{/if}
 
 			{#if relations.length > 0}
 				<div class="block">

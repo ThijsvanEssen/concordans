@@ -6,6 +6,7 @@ import { isBill, motionOrAmendment } from '$lib/text/document-kind';
 import { NL } from '$lib/text/collator';
 import { plural, textOf } from '$lib/text/words';
 import { citationRecord } from '$lib/text/citation-record';
+import { stuksoortOf } from '$lib/bron/rubrieken';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
@@ -1096,6 +1097,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 							}
 						: {}),
 					filterGroup: filterGroupOf('documents', p.key, props, 'AMENDS'),
+					stuksoort: stuksoortOf(props, 'AMENDS'),
 					relation: 'AMENDS' as const,
 					direction: 'inbound' as const,
 					props
@@ -1133,6 +1135,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			ref: { collection: 'documents', key: p.key },
 			...describeBron('documents', p.key, p.title ?? null, props),
 			filterGroup: filterGroupOf('documents', p.key, props, 'ABOUT'),
+			stuksoort: stuksoortOf(props, 'ABOUT'),
 			relation: 'ABOUT',
 			direction: 'outbound',
 			props

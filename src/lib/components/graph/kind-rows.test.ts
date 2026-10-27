@@ -7,7 +7,7 @@ import { kindRows, kindRowCount, lightBuckets, kindFocus, type DrawnBron } from 
 
 const FILTER_OF: Partial<Record<Collection, Row['filterGroup']>> = {
 	judgments: 'uitspraken',
-	members: 'leden',
+	members: 'kamerleden',
 	decisions: 'stemmingen',
 	articles: 'artikelen'
 };
@@ -86,7 +86,7 @@ describe('Soort reads Verbonden (N1)', () => {
 
 	it('names a soort Verbonden has not by its word, of the whole the API counts (N2)', () => {
 		const r = rows([bron('members', 'm1')], [{ collection: 'members', total: 29, kept: 1 }]);
-		expect(r.at(-1)).toMatchObject({ label: 'Personen', drawn: 1, total: 29, load: 'members' });
+		expect(r.at(-1)).toMatchObject({ label: 'Kamerleden', drawn: 1, total: 29, load: 'members' });
 	});
 
 	it('puts what lies one step further under a heading of its own', () => {

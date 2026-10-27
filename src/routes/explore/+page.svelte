@@ -888,7 +888,7 @@
 			// buckets holds (toelichtingen without wetsvoorstellen) are counted from its rows.
 			(f.bronnen &&
 				selectedNode?.collection === 'articles' &&
-				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen)));
+				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen, f.stuksoort)));
 		// Asked again for each bron Verbonden starts on: a readable address names it later.
 		void verbonden.id;
 		if (tableMode || opRijen) source.volledig().catch((e) => report('Verbonden volledig', e));
@@ -914,7 +914,7 @@
 			!filter.status &&
 			!filter.betrouwbaarheid &&
 			!filter.jaar
-			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen)
+			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen, filter.stuksoort)
 			: null
 	);
 	// Else counted from the rows, once they are all in or where the API counts no lid.
@@ -928,14 +928,14 @@
 				: new Map<string, number>())
 	);
 	const billCount = $derived(
-		allRows(verbonden.groups).filter((r) => r.filterGroup === 'wetsvoorstellen').length
+		allRows(verbonden.groups).filter((r) => r.stuksoort === 'wetsvoorstellen').length
 	);
 	// The first lading is the nodes' sample (5 of 21 on UHW 3): while the wijzigingen are on their
 	// way the count says "meer dan", so it does not spring to another number on the same page.
 	const billMore = $derived(
 		!!verbonden.wachtend?.includes('changes') ||
 			verbonden.groups.some(
-				(g) => g.capped && g.rows.some((r) => r.filterGroup === 'wetsvoorstellen')
+				(g) => g.capped && g.rows.some((r) => r.stuksoort === 'wetsvoorstellen')
 			)
 	);
 

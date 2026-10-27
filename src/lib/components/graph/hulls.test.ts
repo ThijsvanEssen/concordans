@@ -9,6 +9,7 @@ import {
 	type HullGroups,
 	type HullScene
 } from './hulls';
+import { FALLBACK } from './nodeSprites';
 
 const group = (
 	id: string,
@@ -96,7 +97,7 @@ describe('the hulls of a small canvas', () => {
 		expect(round(hulls)).toMatchInlineSnapshot(`
 			[
 			  {
-			    "color": "#d3762d",
+			    "color": "#cd7127",
 			    "dash": "6 4",
 			    "dim": false,
 			    "id": "D",
@@ -238,5 +239,64 @@ describe('the names of the hulls (UX review N4, N8)', () => {
 		const links = [link('a', 100, 100), link('b', 104, 106), link('c', 400, 100)];
 		unstacked(links, (t) => t.length * 6 + 18);
 		expect(links.map((l) => l.label)).toEqual(['noemt', null, 'noemt']);
+	});
+});
+
+describe('the hulls of the five soorten', () => {
+	// A wet, a dossier, a fractie, a commissie and a kabinet, each round three members, far apart.
+	const GROUPS = [
+		['W', 'instrument', 0, 'wetten', undefined],
+		['D', 'dossier', 1, 'kamerstukken', '6 4'],
+		['F', 'faction', 2, 'parlement', '1.5 3'],
+		['C', 'committee', 3, 'parlement', '8 3 1.5 3'],
+		['K', 'cabinet', 4, 'regering', '8 3 1.5 3 1.5 3']
+	] as const;
+
+	const five = () => {
+		const graph = new Graph();
+		const groups = new Map<string, ContainerGroup>();
+		const groupsOf = new Map<string, Set<string>>();
+		for (const [id, kind, i] of GROUPS) {
+			const members = [0, 1, 2].map((m) => `${id}${m}`);
+			members.forEach((member, m) => {
+				graph.addNode(member, { x: i * 400 + m * 40, y: m % 2 ? 30 : 0, collection: 'members' });
+				groupsOf.set(member, new Set([id]));
+			});
+			groups.set(id, group(id, kind, id, members));
+		}
+		return scene({ graph, groups, groupsOf });
+	};
+
+	const inside = (p: { x: number; y: number }, polygon: { x: number; y: number }[]) =>
+		polygon.reduce((odd, a, i) => {
+			const b = polygon[(i + 1) % polygon.length];
+			const crosses =
+				a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x;
+			return crosses ? !odd : odd;
+		}, false);
+
+	it('gives each the line and the colour of its soort', () => {
+		const { hulls } = layoutHulls(five());
+		for (const [id, , , rubriek, dash] of GROUPS) {
+			const hull = hulls.find((h) => h.id === id)!;
+			expect(hull.dash, id).toBe(dash);
+			expect(hull.color, id).toBe(
+				FALLBACK[`rubriek${rubriek[0].toUpperCase()}${rubriek.slice(1)}` as keyof typeof FALLBACK]
+			);
+		}
+		// Told apart by line as well as by colour: fractie and commissie share a colour.
+		expect(new Set(hulls.map((h) => h.dash)).size).toBe(GROUPS.length);
+	});
+
+	it('holds its members', () => {
+		const s = five();
+		const { hitAreas } = layoutHulls(s);
+		for (const [id] of GROUPS) {
+			const area = hitAreas.find((a) => a.id === id)!;
+			for (const member of s.groups.get(id)!.members) {
+				const { x, y } = s.graph.getNodeAttributes(member);
+				expect(inside(s.toViewport({ x, y }), area.polygon), member).toBe(true);
+			}
+		}
 	});
 });

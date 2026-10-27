@@ -76,7 +76,7 @@
 		min-width: 0;
 		padding: 0;
 		border: 0;
-		background: var(--soort-rechtspraak);
+		background: var(--rubriek-rechtspraak);
 		opacity: 0.55;
 		cursor: pointer;
 		transition: opacity var(--dur-1) var(--ease);
@@ -92,7 +92,7 @@
 	.years-bar--running {
 		background: repeating-linear-gradient(
 			135deg,
-			var(--soort-rechtspraak) 0 2px,
+			var(--rubriek-rechtspraak) 0 2px,
 			transparent 2px 4px
 		);
 		opacity: 1;

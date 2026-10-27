@@ -8,20 +8,19 @@
 // "Meer …". The lanes ask with the search client, which waits as long as the API does (30 s).
 import type { Collection } from '$lib/vocabulary';
 
-/** The kinds the search covers, in the order their groups stand (#52). */
+/** The kinds the search covers, in the order of the rubrieken (indeling.ts) their groups stand in. */
 export const SEARCH_KINDS = [
 	'instruments',
 	'articles',
 	'judgments',
 	'dossiers',
-	// People and bodies before the papers that merely name them.
-	'cabinets',
-	'members',
+	'documents',
+	'decisions',
 	'commitments',
+	'members',
 	'factions',
 	'committees',
-	'documents',
-	'decisions'
+	'cabinets'
 ] as const satisfies readonly Collection[];
 export type SearchKind = (typeof SEARCH_KINDS)[number];
 

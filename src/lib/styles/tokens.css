@@ -35,13 +35,14 @@
 	--uitkomst-ja: #2c7737;
 	--uitkomst-nee: var(--accent);
 
-	/* The kinds of bron in the network, in four colours (and ink): lines and areas, a hull
-	   around a group told apart also by its line. */
-	--soort-wet: #00487c; /* wet, artikel, bijlage, regeling; solid, a regeling dashed */
-	--soort-parlement: #d3762d; /* dossier, stuk, besluit, commissie; dashed, a commissie dash-dot; never text */
-	--soort-personen: #944078; /* fractie, Kamerlid, bewindspersoon, kabinet; dotted */
-	--soort-rechtspraak: #438365; /* uitspraken; no hull; line and area, not small text */
-	/* The steps of soort-rechtspraak per instantie in Verbonden (areas only). */
+	/* The soorten of the network are the rubrieken of the Topbalk, in five colours (and ink):
+	   lines and areas, a hull around a group told apart also by its line. Never text. */
+	--rubriek-wetten: #00487c; /* wet, regeling, artikel, bijlage; solid, a regeling dashed */
+	--rubriek-rechtspraak: #438365; /* uitspraken; no hull; line and area, not small text */
+	--rubriek-kamerstukken: #cd7127; /* dossier, stuk, stemming, activiteit, toezegging; a dossier dashed */
+	--rubriek-parlement: #ab618e; /* Kamerlid, fractie, commissie; a fractie dotted, a commissie dash-dot */
+	--rubriek-regering: #523c0b; /* kabinet, ministerie, bewindspersoon; a kabinet dash-dot-dot */
+	/* The steps of rubriek-rechtspraak per instantie in Verbonden (areas only). */
 	--rechtspraak-1: #00452b; /* Hoge Raad */
 	--rechtspraak-2: #216246; /* Raad van State, Centrale Raad van Beroep, CBb */
 	--rechtspraak-3: #3e7e60; /* the gerechtshoven */

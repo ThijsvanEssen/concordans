@@ -30,6 +30,7 @@ export type DrawClass =
 	| 'document'
 	| 'activity'
 	| 'committee'
+	| 'cabinet'
 	| 'member'
 	| 'faction'
 	| 'other';
@@ -271,6 +272,7 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 			return naam ? `${officialNumber(d.number)}, ${naam}` : officialNumber(d.number);
 		}
 		case 'committee':
+		case 'cabinet':
 		case 'faction':
 			return textOf(props.abbreviation) ?? textOf(props.name) ?? mens();
 		case 'member': {

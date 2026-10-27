@@ -100,6 +100,7 @@
 			case 'document':
 				return textOf(nodeProps?.['dossier_number']);
 			case 'committee':
+			case 'cabinet':
 			case 'faction':
 				return textOf(nodeProps?.['abbreviation']);
 			default:
@@ -118,6 +119,7 @@
 			case 'document':
 				return textOf(nodeProps?.['title']) ?? textOf(nodeProps?.['subject']);
 			case 'committee':
+			case 'cabinet':
 			case 'faction':
 				return textOf(nodeProps?.['name']);
 			default:

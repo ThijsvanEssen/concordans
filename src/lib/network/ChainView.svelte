@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { FilterGroup } from '$lib/verbonden/filter';
+	import { sortOf } from '$lib/bron/rubrieken';
 	import type { LineKind } from '$lib/graph/line-kind';
 	import type { Relation } from '$lib/vocabulary';
 	// The weergave Keten (besluit 39, mockup A197-c): the law at the top, the articles it gives
@@ -89,14 +90,7 @@
 			// The start's own layer stays; another goes with the kind of what it holds.
 			if (l.id === 'law' || l.nodes.some((n) => n.id === start)) return true;
 			const c = l.nodes[0]?.collection;
-			const kind =
-				l.id === 'article'
-					? 'artikelen'
-					: c === 'judgments'
-						? 'uitspraken'
-						: c === 'members' || c === 'factions' || c === 'committees' || c === 'cabinets'
-							? 'leden'
-							: 'wetten';
+			const kind = l.id === 'article' ? 'artikelen' : c ? sortOf(c, '', null) : 'wetten';
 			return !hiddenKinds.has(kind);
 		})
 	);
@@ -168,7 +162,7 @@
 	});
 	/**
 	 * The omhullingen (Netwerkcanvas, Omhulling): the articles of each wet when the layer holds
-	 * those of more than one (solid, soort-wet), and, in the keten of a Kamerlid, the fracties
+	 * those of more than one (solid, rubriek-wetten), and, in the keten of a Kamerlid, the fracties
 	 * of one layer (dotted) and its commissies (dash-dot).
 	 */
 	const hulls = $derived.by(() => {
@@ -193,7 +187,7 @@
 					x,
 					y: TOP + i * ROW + DROP - 26,
 					w: Math.max(...xs) + 30 - x,
-					colour: c === 'factions' ? 'var(--soort-personen)' : 'var(--soort-parlement)',
+					colour: kindColour(c),
 					dash: hullDashFor(c === 'factions' ? 'faction' : 'committee')
 				});
 			});
@@ -212,7 +206,7 @@
 				x,
 				y: TOP + row * ROW + DROP - 26,
 				w: Math.max(...xs) + 30 - x,
-				colour: 'var(--soort-wet)',
+				colour: kindColour('instruments'),
 				dash: undefined
 			});
 		}
@@ -617,7 +611,7 @@
 
 <style>
 	/* An omhulling as the canvas draws it: a stadion in the colour of its kind (the articles of a
-	   wet: soort-wet, solid), 5 % of it as ground, an edge of 1,6 px. */
+	   wet: rubriek-wetten, solid), 5 % of it as ground, an edge of 1,6 px. */
 	.hull {
 		fill: color-mix(in srgb, var(--hull) 5%, transparent);
 		stroke: var(--hull);

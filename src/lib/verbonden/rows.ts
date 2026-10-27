@@ -21,6 +21,7 @@ import {
 } from '$lib/bron/dossier-naam';
 import { describeBron, UNNAMED } from '$lib/bron/describe';
 import { seatWord } from '$lib/components/parliamentary/career';
+import { stuksoortOf, type Stuksoort } from '$lib/bron/rubrieken';
 import { MODERATE_CONFIDENCE, filterGroupOf, confidenceWord, type FilterGroup } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { relationWords } from './relation-words';
@@ -39,6 +40,8 @@ export type Row = {
 	/** Words about the bron that no other field carries: party, abbreviation, the place in the law. */
 	context: string | null;
 	filterGroup: FilterGroup;
+	/** What a stuk is (a facet of the soort Stukken). */
+	stuksoort?: Stuksoort;
 	/** Position inside the bron the row opens at: `rov-5.1`, `lid-2`. */
 	at?: string | null;
 	/** The lid of the selected article the verbinding names: `2`. Null when it names none. */
@@ -183,6 +186,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		...(edge.noot ? { noot: edge.noot } : {}),
 		...(edge.bereik ? { bereik: edge.bereik } : {}),
 		filterGroup: filterGroupOf(n.collection, n.key, props, n.relation),
+		...(n.collection === 'documents' ? { stuksoort: stuksoortOf(props, n.relation) } : {}),
 		lid: edge.lid,
 		derived: isDerived(n.confidence),
 		proposed: n.status === 'voorgesteld' || undefined,

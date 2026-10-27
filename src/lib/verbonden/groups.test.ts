@@ -172,7 +172,7 @@ describe('buildGroups', () => {
 		} as unknown as Neighbor;
 		const groups = buildGroups('articles', [mvt]);
 		const row = groups.find((g) => g.id === 'documents')!.rows[0];
-		expect(row.filterGroup).toBe('toelichtingen');
+		expect(row.filterGroup).toBe('stukken');
 		expect(row.lid).toBe('2');
 		expect(row.title).toBe('Memorie van toelichting, Kamerstukken II, 36693, nr. 3');
 		expect(row.match).toBe('artikel 300, tweede lid, Sr');

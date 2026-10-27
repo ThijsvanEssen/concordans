@@ -453,7 +453,8 @@
 	const billsHref = $derived(
 		withParams(page.url, {
 			...filterParams(filter ?? ({} as VerbondenFilter)),
-			bronnen: 'wetsvoorstellen',
+			bronnen: 'stukken',
+			stuksoort: 'wetsvoorstellen',
 			lid: null
 		})
 	);

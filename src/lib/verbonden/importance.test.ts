@@ -7,7 +7,7 @@ const rij = (key: string, props: Record<string, unknown>, date: string | null = 
 	ref: { collection: 'documents', key },
 	title: key,
 	context: null,
-	filterGroup: 'toelichtingen',
+	filterGroup: 'stukken',
 	date,
 	props
 });
@@ -51,7 +51,7 @@ describe('the other rules of the order', () => {
 		ref: { collection: 'members', key },
 		title: key,
 		context: null,
-		filterGroup: 'leden',
+		filterGroup: 'kamerleden',
 		period,
 		edge
 	});

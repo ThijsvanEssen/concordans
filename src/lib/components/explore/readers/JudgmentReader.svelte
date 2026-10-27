@@ -537,7 +537,7 @@
 		margin: 0 0 var(--s-5);
 		padding: var(--s-4) var(--s-5);
 		background: var(--paper-2);
-		border-left: 3px solid var(--soort-rechtspraak);
+		border-left: 3px solid var(--rubriek-rechtspraak);
 	}
 
 	.reader-summary-para {

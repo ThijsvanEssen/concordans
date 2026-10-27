@@ -8,7 +8,7 @@ const at = (path: string) => new URL(path, 'https://concordans.nl');
 describe('the source a page stands under', () => {
 	it('names the list of Bladeren by its kind', () => {
 		expect(sourceOf(at('/explore?mode=index&kind=instruments'))?.id).toBe('wetten');
-		expect(sourceOf(at('/explore?mode=index&kind=judgments'))?.id).toBe('uitspraken');
+		expect(sourceOf(at('/explore?mode=index&kind=judgments'))?.id).toBe('rechtspraak');
 		expect(sourceOf(at('/explore?mode=index&kind=decisions'))?.id).toBe('kamerstukken');
 		expect(sourceOf(at('/explore?mode=index&kind=factions'))?.id).toBe('parlement');
 		expect(sourceOf(at('/explore?mode=index&kind=ministers'))?.id).toBe('regering');
@@ -18,11 +18,11 @@ describe('the source a page stands under', () => {
 	it('names a bron read by its address or its focus', () => {
 		expect(sourceOf(at('/wetten/BWBR0005289/artikel/6:162'))?.id).toBe('wetten');
 		expect(sourceOf(at('/stb/2026/94'))?.id).toBe('wetten');
-		expect(sourceOf(at('/uitspraken/ECLI:NL:HR:2019:2006'))?.id).toBe('uitspraken');
+		expect(sourceOf(at('/uitspraken/ECLI:NL:HR:2019:2006'))?.id).toBe('rechtspraak');
 		expect(sourceOf(at('/kamerstukken/36799/31'))?.id).toBe('kamerstukken');
 		expect(sourceOf(at('/leden/rob-jetten'))?.id).toBe('parlement');
-		expect(sourceOf(at('/toezeggingen/TZ202609-124'))?.id).toBe('regering');
-		expect(sourceOf(at('/explore?focus=judgments/ecli_nl_hr_2019_2006'))?.id).toBe('uitspraken');
+		expect(sourceOf(at('/toezeggingen/TZ202609-124'))?.id).toBe('kamerstukken');
+		expect(sourceOf(at('/explore?focus=judgments/ecli_nl_hr_2019_2006'))?.id).toBe('rechtspraak');
 	});
 
 	it('names none for the start page, Actueel, Mijn and a canvas without a bron', () => {

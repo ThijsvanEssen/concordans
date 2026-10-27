@@ -1,12 +1,13 @@
-// Bronnen (Bladeren): the overview in four groups and a list per kind; the documentation,
+// Bronnen (Bladeren): the overview in the five rubrieken of the Topbalk and a list per kind; the documentation,
 // the method, the sources with their coverage, and the API reference.
 import { expect, test } from '../support/test';
 
 const GROUPS = {
-	Recht: ['Wetten', 'Uitspraken'],
-	'Parlementaire behandeling': ['Dossiers', 'Stemmingen', 'Stukken'],
+	Wetten: ['Wetten'],
+	Rechtspraak: ['Uitspraken'],
+	Kamerstukken: ['Dossiers', 'Stukken', 'Stemmingen', 'Toezeggingen'],
 	Parlement: ['Kamerleden', 'Fracties', 'Commissies'],
-	Regering: ['Kabinetten', 'Bewindspersonen', 'Toezeggingen']
+	Regering: ['Kabinetten', 'Bewindspersonen']
 };
 
 test('Bronnen lists every kind in its group, each with its count', async ({ page }) => {

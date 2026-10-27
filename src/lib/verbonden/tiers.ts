@@ -9,7 +9,7 @@ import { getInstrumentJudgments } from '$lib/api/verbonden';
 import { formatCount } from '$lib/text/getal';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 
-/** The step of soort-rechtspraak an instantie stands in (Design System, VerbondenGroep). */
+/** The step of rubriek-rechtspraak an instantie stands in (Design System, VerbondenGroep). */
 type Trap = 1 | 2 | 3 | 4;
 
 type CourtGroup = {

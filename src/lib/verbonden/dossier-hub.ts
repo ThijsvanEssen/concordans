@@ -6,6 +6,7 @@ import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { getDossierDocuments } from '$lib/api/records';
 import { getDossier } from '$lib/api/dossiers';
+import { stuksoortOf } from '$lib/bron/rubrieken';
 import { filterGroupOf } from './filter';
 import { changeRelationOf } from '$lib/vocabulary';
 import { type Row } from './rows';
@@ -93,6 +94,7 @@ export function buildDossierHub(
 			ref: { collection: 'documents', key: d.key },
 			...describeBron('documents', d.key, d.display_name, { ...d }),
 			filterGroup: filterGroupOf('documents', d.key, { ...d }),
+			stuksoort: stuksoortOf({ ...d }),
 			relation: 'PART_OF',
 			direction: 'inbound',
 			props: { ...d }
