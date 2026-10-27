@@ -140,6 +140,7 @@
 			state={{ status: 'error', error: result.error }}
 			what="De ketens"
 			plural
+			unbuilt
 			retry={result.retry}
 			form="block"
 		/>

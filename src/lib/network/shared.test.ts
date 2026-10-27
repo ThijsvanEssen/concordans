@@ -114,7 +114,7 @@ describe('Verband as the DS writes it', () => {
 			labels: [],
 			props,
 			links: []
-		}) as never;
+		}) as unknown as Parameters<typeof rowNotation>[0];
 
 	it('names a Kamerstuk by its notation, its title and year under it, never cut off by the API', () => {
 		const r = rowNotation(

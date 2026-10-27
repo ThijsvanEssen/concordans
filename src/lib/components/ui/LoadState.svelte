@@ -16,11 +16,16 @@
 	 * The sentence in three parts: its subject, "kon niet" (the words in the accent, DS
 	 * LoadState: an error is red, with words beside it) and the rest. A 429 is one part.
 	 */
-	function failureParts(what: string, error: unknown, plural = false): [string, string, string] {
+	function failureParts(
+		what: string,
+		error: unknown,
+		plural = false,
+		unbuilt = false
+	): [string, string, string] {
 		const no = plural ? 'konden niet' : 'kon niet';
 		if (isRateLimited(error)) return [`${RATE_LIMIT_TEXT}.`, '', ''];
-		// A table the answer reads is not built yet: said, not broken.
-		if (error instanceof ApiError && error.status === 503)
+		// What the answer is read from is not built yet (`unbuilt`): said, not broken.
+		if (unbuilt && error instanceof ApiError && error.status === 503)
 			return [`${what} ${plural ? 'zijn' : 'is'} nog niet beschikbaar.`, '', ''];
 		return [what, no, isSlow(error) ? 'op tijd worden geladen.' : 'worden geladen.'];
 	}
@@ -46,6 +51,7 @@
 		state,
 		what,
 		plural = false,
+		unbuilt = false,
 		retry,
 		form = 'line',
 		tag = 'p',
@@ -57,6 +63,8 @@
 		what: string;
 		/** `what` is plural ("De tekstversies"): they konden niet worden geladen. */
 		plural?: boolean;
+		/** A 503 means what the answer is read from is not built yet: "nog niet beschikbaar". */
+		unbuilt?: boolean;
 		retry?: () => void;
 		form?: 'line' | 'block';
 		/** The element of a line: `span` inside running text or a card that is a span. */
@@ -65,7 +73,9 @@
 		children?: Snippet<[T]>;
 	} = $props();
 
-	const parts = $derived(failureParts(what, state.status === 'error' ? state.error : null, plural));
+	const parts = $derived(
+		failureParts(what, state.status === 'error' ? state.error : null, plural, unbuilt)
+	);
 
 	// A 429 asks again by itself once per subject; an answer gives that back.
 	$effect(() => {
