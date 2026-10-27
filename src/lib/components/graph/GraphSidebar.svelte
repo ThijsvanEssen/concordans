@@ -3,8 +3,8 @@
 	import { NL } from '$lib/text/collator';
 	// The filter of the werkplek, which is also its key (besluit 39): Tonen (the kinds drawn,
 	// of how many where the API cut them off, and the step that loads them all), Relatie (the
-	// verbindingen drawn, a line sample each), the Periode the page gives; under Meer the preset,
-	// the grouping, the depth, the lid and the overlays.
+	// lijnsoorten drawn, a line sample each), the Periode the page gives; under Meer the preset,
+	// the lid and the overlays. Omtrekken and Bijlagen are rows of Tonen.
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
@@ -458,7 +458,7 @@
 
 <style>
 	/* In the strip at the left of the werkplek, in Weergave: a block (Sectie) for each of Tonen,
-	   Relatie, Periode, Indeling. */
+	   Relatie, Periode. */
 	.legend {
 		/* The marks of Tonen and Relatie in one column, as wide as a line sample. */
 		--optie-voor: 28px;
