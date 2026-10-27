@@ -47,7 +47,8 @@ writeFileSync(
 	`export { VORMEN } from '${REPO}/src/lib/bron/vormen';
 export { LINE_KIND_SAMPLE } from '${REPO}/src/lib/graph/line-kind';
 export { EDGE_WEIGHT } from '${REPO}/src/lib/graph/types';
-export { edgeColorFor, edgeStyleFor, edgeDashFor, lineThickness, arrowLength, ARROW_WIDTH, hullColorFor, hullDashFor, towardPaper } from '${REPO}/src/lib/components/graph/nodeSprites';
+export { edgeColorFor, edgeStyleFor, edgeDashFor, lineThickness, arrowLength, hullColorFor, hullDashFor, towardPaper } from '${REPO}/src/lib/components/graph/nodeSprites';
+export { ARROW_WIDTH } from '${REPO}/src/lib/graph/line-shape';
 export { HULL_MARGIN, LABEL_GAP } from '${REPO}/src/lib/components/graph/hulls';`
 );
 await build({
