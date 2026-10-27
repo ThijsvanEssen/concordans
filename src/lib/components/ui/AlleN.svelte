@@ -2,7 +2,7 @@
 	// The one way on from a short list: "Alle 244 uitspraken" and "Minder" once open, and
 	// "Volgende 25 uitspraken, nog 219" where the list goes on page by page (docs/bediening.md).
 	// A text link in ink under the list; the count in the words, not in a sentence beside them.
-	import { tick } from 'svelte';
+	import { afterTick } from '$lib/util/after-tick';
 	import TekstLink from './TekstLink.svelte';
 	import { formatCount } from '$lib/text/getal';
 
@@ -16,8 +16,8 @@
 		rest = null,
 		laden = false,
 		opnieuw = false,
-		geladen = null,
-		lijst = null,
+		loaded = null,
+		list = null,
 		href,
 		onclick
 	}: {
@@ -39,27 +39,25 @@
 		laden?: boolean;
 		/** `volgende`: the last ask failed; "Opnieuw" asks it again. */
 		opnieuw?: boolean;
-		/** `volgende`: how many rows the list holds now; with `lijst`, the focus goes to the first new one. */
-		geladen?: number | null;
+		/** `volgende`: how many rows the list holds now; with `list`, the focus goes to the first new one. */
+		loaded?: number | null;
 		/** `volgende`: the list (its rows are its children), to find the first new row in. */
-		lijst?: Element | null;
+		list?: Element | null;
 		href?: string;
 		onclick?: (e: MouseEvent) => void;
 	} = $props();
 
 	// After "Volgende" the focus goes to the first new row (DS AlleN), where the list is known.
-	let vanaf = $state<number | null>(null);
-	const klik = (e: MouseEvent) => {
-		if (volgende && geladen != null && lijst) vanaf = geladen;
+	let from = $state<number | null>(null);
+	const onTap = (e: MouseEvent) => {
+		if (volgende && loaded != null && list) from = loaded;
 		onclick?.(e);
 	};
 	$effect(() => {
-		if (vanaf == null || geladen == null || geladen <= vanaf) return;
-		const n = vanaf;
-		vanaf = null;
-		tick()
-			.then(() => lijst?.children[n]?.querySelector<HTMLElement>('a[href], button')?.focus())
-			.catch(() => {});
+		if (from == null || loaded == null || loaded <= from) return;
+		const n = from;
+		from = null;
+		afterTick(() => list?.children[n]?.querySelector<HTMLElement>('a[href], button')?.focus());
 	});
 
 	// One item is already on show: "Alle 1 besluit" says nothing and is no way on (E9 D).
@@ -93,7 +91,7 @@
 	<TekstLink
 		class="alle-n"
 		{href}
-		onclick={onclick ? klik : undefined}
+		onclick={onclick ? onTap : undefined}
 		aria-expanded={!volgende && !href && onclick ? open : undefined}>{woorden}</TekstLink
 	>
 {/if}

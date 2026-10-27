@@ -153,10 +153,7 @@ export function aardOf(
  * An article of another law names its law: `Artikel 3 HPW`. Where the neighbour carries no
  * abbreviation, the law's own (the cache of names) supplies it, and its full title for the hover.
  */
-export function withLawName(
-	collection: string,
-	props: Record<string, unknown>
-): Record<string, unknown> {
+function withLawName(collection: string, props: Record<string, unknown>): Record<string, unknown> {
 	if (collection !== 'articles' || typeof props.instrument_abbreviation === 'string') return props;
 	const meta = getInstrumentMeta(lawIdOf(props));
 	const short = meta?.abbreviation ?? meta?.shortTitle;

@@ -26,12 +26,12 @@
 		selection,
 		tiers = null,
 		tiersPending = false,
-		tiersVan = null,
+		tiersCounted = null,
 		open = new Set<string>(),
 		kindTools,
 		hasMore = () => false,
 		onMore,
-		stap = () => null,
+		step = () => null,
 		onOpen,
 		onRetry,
 		onProposedText,
@@ -46,7 +46,7 @@
 		/** The bar is asked and not in: its room stands, so the soorten under it do not move. */
 		tiersPending?: boolean;
 		/** The strook counts `geteld` of the `van` judgments: the rows that are in. */
-		tiersVan?: { geteld: number; van: number } | null;
+		tiersCounted?: { counted: number; of: number } | null;
 		/** "Alle N": the soort with its groups. */
 		/** The soorten opened in place with all their rows. */
 		open?: Set<string>;
@@ -57,7 +57,7 @@
 		/** Ask the next page of a soort's rows (fifty a bucket, T11). */
 		onMore?: (id: string) => void;
 		/** How many rows the next page of a soort brings, at most. */
-		stap?: (id: string) => number | null;
+		step?: (id: string) => number | null;
 		onOpen: (id: string) => void;
 		/** Ask a group whose rows did not come again. */
 		onRetry?: () => void;
@@ -68,7 +68,7 @@
 		telt?: boolean;
 	} = $props();
 
-	const lijsten: Record<string, HTMLUListElement | null> = $state({});
+	const lists: Record<string, HTMLUListElement | null> = $state({});
 	/** The row opened in place: one at a time. */
 	let opened = $state<string | null>(null);
 	$effect(() => {
@@ -105,7 +105,7 @@
 			<span>{k.label}</span><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
-			<TierBar parts={tiers} pending={tiersPending} van={tiersVan} />
+			<TierBar parts={tiers} pending={tiersPending} counted={tiersCounted} />
 		{/if}
 		{#if k.failed && k.rows.length === 0}
 			<LoadState
@@ -116,7 +116,7 @@
 			/>
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
-		<ul class="kind__rows" bind:this={lijsten[k.id]}>
+		<ul class="kind__rows" bind:this={lists[k.id]}>
 			{#each open.has(k.id) ? k.rows : k.rows
 						.filter((r) => !isNested(r))
 						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
@@ -180,10 +180,10 @@
 				<AlleN
 					volgende
 					noun={k.noun}
-					stap={stap(k.id)}
+					stap={step(k.id)}
 					rest={k.count > k.rows.length ? k.count - k.rows.length : null}
-					geladen={k.rows.length}
-					lijst={lijsten[k.id]}
+					loaded={k.rows.length}
+					list={lists[k.id]}
 					onclick={() => onMore?.(k.id)}
 				/>
 			</p>

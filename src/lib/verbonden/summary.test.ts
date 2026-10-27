@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bucketKey } from '$lib/api/nodes';
 import { GROUPS, buildGroups, type Group } from './groups';
-import { kindOfGroup, kindsOf, kindsTotal, previewPerSoort, shortLine } from './summary';
+import { kindOfGroup, kindsOf, kindsTotal, previewPerKind, shortLine } from './summary';
 import type { Row } from './rows';
 
 const row = (
@@ -260,7 +260,7 @@ describe('the laws of a bron, each in its soort (T11)', () => {
 	});
 });
 
-describe('previewPerSoort', () => {
+describe('previewPerKind', () => {
 	it('names a head to come as the soort will be named, one per soort', () => {
 		const p = (id: string, kind: string, count: number | null) => ({
 			id,
@@ -270,7 +270,7 @@ describe('previewPerSoort', () => {
 			kindLabel: kind === 'documents' ? 'Stukken' : 'Uitspraken',
 			section: 'Sectie'
 		});
-		const out = previewPerSoort([
+		const out = previewPerKind([
 			p('a', 'documents', 4),
 			p('b', 'documents', 6),
 			p('c', 'judgments', 9)
@@ -284,6 +284,6 @@ describe('previewPerSoort', () => {
 
 	it('counts nothing where one of the groups is not counted yet', () => {
 		const p = (id: string, count: number | null) => ({ id, label: id, count, kind: 'documents' });
-		expect(previewPerSoort([p('a', 4), p('b', null)])[0].count).toBeNull();
+		expect(previewPerKind([p('a', 4), p('b', null)])[0].count).toBeNull();
 	});
 });

@@ -80,22 +80,22 @@ describe('AlleN, the next page', () => {
 	});
 
 	it('moves the focus to the first new row once they are in', async () => {
-		const lijst = document.createElement('ul');
-		for (const t of ['a', 'b']) lijst.innerHTML += `<li><a href="/${t}">${t}</a></li>`;
-		document.body.append(lijst);
+		const list = document.createElement('ul');
+		for (const t of ['a', 'b']) list.innerHTML += `<li><a href="/${t}">${t}</a></li>`;
+		document.body.append(list);
 		const { container, rerender } = render(AlleN, {
 			noun: 'uitspraken',
 			volgende: true,
-			geladen: 2,
-			lijst,
+			loaded: 2,
+			list,
 			onclick: () => {}
 		});
 		await fireEvent.click(container.querySelector('button')!);
-		lijst.innerHTML += '<li><a href="/c">c</a></li><li><a href="/d">d</a></li>';
-		await rerender({ geladen: 4 });
+		list.innerHTML += '<li><a href="/c">c</a></li><li><a href="/d">d</a></li>';
+		await rerender({ loaded: 4 });
 		await tick();
 		await tick();
 		expect(document.activeElement?.getAttribute('href')).toBe('/c');
-		lijst.remove();
+		list.remove();
 	});
 });

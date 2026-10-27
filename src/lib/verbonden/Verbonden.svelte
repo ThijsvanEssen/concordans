@@ -41,7 +41,7 @@
 	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
 	import { panel } from './panel-groups.svelte';
-	import { kindsTotal, kindOfGroup, previewPerSoort } from './summary';
+	import { kindsTotal, kindOfGroup, previewPerKind } from './summary';
 	import { PHONE_SKETCH_LIMIT, sketch as drawSketch, type SketchGroup } from './sketch';
 	import { citingTiers, lawTiers, tierParts, type TierCount } from './tiers';
 	import type { LoaderOptions } from './loaders';
@@ -203,7 +203,9 @@
 	// The filter sheet counts these same groups (panel-groups.svelte.ts).
 	$effect(() => {
 		panel.groups = groepen;
-		return () => (panel.groups = null);
+		return () => {
+			panel.groups = null;
+		};
 	});
 	const alleenKern = $derived(
 		groepen.every((g) => g.rows.length === 0 && !g.failed) &&
@@ -274,8 +276,8 @@
 	const filtering = $derived(Object.values(filterParams(filter)).some((v) => v !== null));
 	const overview = $derived(!!onShowNetwork && !filtering);
 	/** The heads to come: per soort in the overview, as they stay once the rows are in. */
-	const wachtend = $derived(
-		overview ? previewPerSoort(verbonden.preview ?? []) : (verbonden.preview ?? [])
+	const pendingHeads = $derived(
+		overview ? previewPerKind(verbonden.preview ?? []) : (verbonden.preview ?? [])
 	);
 	/** A soort opened in place with its rows, from "Alle N" or a circle of the network; again
 	 *  "Alle N" (Minder) closes it. */
@@ -283,7 +285,7 @@
 	const groupsOfKind = (id: string) =>
 		kinds.find((k) => k.id === id)?.groups ?? groepen.filter((g) => kindOfGroup(g) === id);
 	/** What one click on "Volgende" brings, at most: a page of every group that has one more. */
-	const paginaVan = (id: string) =>
+	const pageSize = (id: string) =>
 		groupsOfKind(id)
 			.filter((g) => verbonden.meer?.has(g.id))
 			.reduce(
@@ -346,7 +348,7 @@
 	const partsApi = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
 	// The judgments that cite a judgment have no facet of the API: the instanties are counted
 	// from the rows that are in, "N van M" while there are more (UX-toets C10).
-	const geteld = $derived.by(() => {
+	const tally = $derived.by(() => {
 		if (selection.collection !== 'judgments') return null;
 		const k = kinds.find((x) => x.id === 'judgments');
 		if (!k || k.rows.length === 0) return null;
@@ -360,13 +362,13 @@
 			k.rows.length
 		);
 		// One instantie is no strook, and "alle" of a part would not be true.
-		return deel.length > 1 ? { parts: deel, van: Math.max(k.count, k.rows.length) } : null;
+		return deel.length > 1 ? { parts: deel, of: Math.max(k.count, k.rows.length) } : null;
 	});
-	const parts = $derived(geteld ? geteld.parts : partsApi);
+	const parts = $derived(tally ? tally.parts : partsApi);
 	/** How many of the soort's judgments the strook counts, where not all. */
-	const tiersVan = $derived(
-		geteld && geteld.van > geteld.parts.reduce((n, p) => n + p.count, 0)
-			? { geteld: geteld.parts.reduce((n, p) => n + p.count, 0), van: geteld.van }
+	const tiersCounted = $derived(
+		tally && tally.of > tally.parts.reduce((n, p) => n + p.count, 0)
+			? { counted: tally.parts.reduce((n, p) => n + p.count, 0), of: tally.of }
 			: null
 	);
 	/** The bar per instantie is asked and not in: its room is held (UX-toets T9b, A202). */
@@ -390,7 +392,7 @@
 					count: k.count,
 					rows: k.rows,
 					capped: k.partial,
-					parts: k.id === 'judgments' && !tiersVan ? parts : null
+					parts: k.id === 'judgments' && !tiersCounted ? parts : null
 				}))
 			: []
 	);
@@ -554,7 +556,7 @@
 				telt={settled}
 				tiers={parts}
 				{tiersPending}
-				{tiersVan}
+				{tiersCounted}
 				open={openKinds}
 				onOpen={(id) => openKind(id, true)}
 				{kindTools}
@@ -564,7 +566,7 @@
 						if (verbonden.meer?.has(g.id))
 							onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
 				}}
-				stap={paginaVan}
+				step={pageSize}
 				{onRetry}
 				{onProposedText}
 				{onAddToNetwerk}
@@ -578,8 +580,8 @@
 			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
 			<!-- Each group in its place, with blank rows as many as it will show (#1): what
 			     comes fills them in, and nothing below moves. -->
-			{#each wachtend.length ? wachtend : [null] as p, i (p?.id ?? i)}
-				{#if p?.section && p.section !== wachtend[i - 1]?.section}
+			{#each pendingHeads.length ? pendingHeads : [null] as p, i (p?.id ?? i)}
+				{#if p?.section && p.section !== pendingHeads[i - 1]?.section}
 					<h3 class="section">{p.section}</h3>
 				{/if}
 				<PendingGroup group={p} collection={selection.collection} />

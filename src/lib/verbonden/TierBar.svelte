@@ -11,12 +11,12 @@
 	let {
 		parts,
 		pending = false,
-		van = null
+		counted = null
 	}: {
 		parts: TierCount[] | null;
 		pending?: boolean;
-		/** The strook counts `geteld` of the `van`: the rows that are in, where the API has no facet. */
-		van?: { geteld: number; van: number } | null;
+		/** The strook counts `counted` of the `of`: the rows that are in, where the API has no facet. */
+		counted?: { counted: number; of: number } | null;
 	} = $props();
 
 	/** While the counts come: four rows of the legend, unseen. */
@@ -52,8 +52,8 @@
 				</li>
 			{/each}
 		</ul>
-		{#if van}<p class="tiers__van">
-				{formatCount(van.geteld)} van {formatCount(van.van)} geteld
+		{#if counted}<p class="tiers__of">
+				{formatCount(counted.counted)} van {formatCount(counted.of)} geteld
 			</p>{/if}
 	</div>
 {/if}
@@ -119,7 +119,7 @@
 			grid-template-columns: minmax(0, 1fr);
 		}
 	}
-	.tiers__van {
+	.tiers__of {
 		margin: var(--s-1) 0 var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);

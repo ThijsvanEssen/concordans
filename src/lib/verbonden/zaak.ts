@@ -77,7 +77,7 @@ export async function stukkenInDezelfdeZaak(
 ): Promise<DezelfdeZaak> {
 	// Asked once per stuk and per zaak: Verbonden, the line Bij wetsvoorstel and the group In
 	// dezelfde zaak all want them on one page.
-	const alle = (
+	const all = (
 		zaken ??
 		(await abortable(
 			once(`zaken-van/${stuk.key}`, () => getBuckets('documents', stuk.key, [NAAR_ZAAK])),
@@ -86,7 +86,7 @@ export async function stukkenInDezelfdeZaak(
 	).filter(
 		(n) => n.relation === 'PART_OF' && n.direction === 'outbound' && n.collection === 'cases'
 	);
-	const cases = alle.slice(0, ZAKEN_MAX);
+	const cases = all.slice(0, ZAKEN_MAX);
 	const rows = new Map<string, Row>();
 	for (const c of cases) {
 		const docs = await abortable(
@@ -113,6 +113,6 @@ export async function stukkenInDezelfdeZaak(
 			new Set(lijst.map(zaakRang)).size > 1
 				? 'Het stuk zelf eerst, de begeleidende brief als laatste'
 				: undefined,
-		capped: alle.length > ZAKEN_MAX
+		capped: all.length > ZAKEN_MAX
 	};
 }

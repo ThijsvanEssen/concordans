@@ -286,7 +286,7 @@
 						<FilterOptie
 							label={capitalize(r.label)}
 							count={r.count}
-							on={draft.relaties === null || draft.relaties.has(r.relation)}
+							on={draft.relations === null || draft.relations.has(r.relation)}
 							onToggle={() =>
 								(draft = toggleRelation(
 									draft,
