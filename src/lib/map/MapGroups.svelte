@@ -155,7 +155,9 @@
 		{#snippet detail()}
 			{#if external}
 				{#if i.url}<p class="adres">
-						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">Bron ↗</TekstLink>
+						<TekstLink href={i.url} target="_blank" rel="external noopener noreferrer"
+							>Bron</TekstLink
+						>
 					</p>{/if}
 			{:else}
 				{#if fresh?.isNew(i)}<FreshList

@@ -7,14 +7,13 @@
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Blad from '$lib/components/ui/Blad.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
 	// The filter sheet: soort, relatie, lid, rechter, periode, zekerheid and
 	// status, applied with one button. The same sheet opens from the panel and from
-	// the legend of the network. A modal dialog: the focus goes to the search field on
-	// open, stays inside while it is open, and returns to where it was on close.
-	import { afterTick } from '$lib/util/after-tick';
+	// the legend of the network. A Blad: the focus goes to the search field on open, stays inside
+	// while it is open, and returns to where it was on close.
 	import type { Collection } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
@@ -55,7 +54,6 @@
 		onClose: () => void;
 	} = $props();
 
-	const uid = $props.id();
 	// The groups as the head of Verbonden counts them, so button and head name one number.
 	const groups = $derived(panel.groups ?? rawGroups);
 
@@ -64,43 +62,6 @@
 	$effect(() => {
 		if (open) draft = filter;
 	});
-
-	let sheet = $state<HTMLElement | null>(null);
-	let opener: HTMLElement | null = null;
-	$effect(() => {
-		if (!open) return;
-		afterTick(() => {
-			const at = document.activeElement;
-			opener =
-				at instanceof HTMLElement && at !== document.body && !sheet?.contains(at) ? at : null;
-			sheet?.querySelector<HTMLElement>('.search')?.focus();
-		});
-		return () => {
-			const back = opener;
-			opener = null;
-			if (back?.isConnected) back.focus();
-		};
-	});
-
-	const FOCUSABLE =
-		'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
-
-	/** Tab and Shift+Tab go round inside the sheet. */
-	function trap(e: KeyboardEvent) {
-		if (e.key !== 'Tab' || !sheet) return;
-		const els = [...sheet.querySelectorAll<HTMLElement>(FOCUSABLE)];
-		const first = els[0];
-		const last = els.at(-1);
-		if (!first || !last) return;
-		const at = document.activeElement;
-		if (e.shiftKey && (at === first || !sheet.contains(at))) {
-			e.preventDefault();
-			last.focus();
-		} else if (!e.shiftKey && (at === last || !sheet.contains(at))) {
-			e.preventDefault();
-			first.focus();
-		}
-	}
 
 	const totals = $derived(groupTotals(groups));
 	const perCourt = $derived(courtCounts(groups));
@@ -173,39 +134,11 @@
 	$effect(() => {
 		if (open) dateMode = filter.geldendOp !== null;
 	});
-
-	function onKey(e: KeyboardEvent) {
-		if (e.key !== 'Escape' || !open || e.defaultPrevented) return;
-		// Stopped, so that Escape does not also clear the selection of the network.
-		e.preventDefault();
-		e.stopPropagation();
-		onClose();
-	}
 </script>
 
-<svelte:window onkeydown={onKey} />
-
 {#if open}
-	<div class="scrim" role="presentation" onclick={onClose}></div>
-	<div
-		class="sheet"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="{uid}-title"
-		tabindex="-1"
-		bind:this={sheet}
-		onkeydown={(e) => {
-			onKey(e);
-			trap(e);
-		}}
-	>
-		<div class="sheet__head">
-			<h2 class="sheet__title" id="{uid}-title">Filter</h2>
-			<span class="sheet__space"></span>
-			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
-		</div>
-
-		<div class="sheet__body">
+	<Blad title="Filter" place="rechts" tall focus=".search" {onClose}>
+		<div class="sheet__inhoud">
 			<div class="block">
 				<Tekstveld
 					class="search"
@@ -384,8 +317,7 @@
 				/>
 			</div>
 		</div>
-
-		<div class="sheet__foot">
+		{#snippet foot()}
 			{#if hasChoice(draft)}
 				<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
 			{/if}
@@ -398,52 +330,19 @@
 					onClose();
 				}}>Toon {formatCount(count)}</button
 			>
-		</div>
-	</div>
+		{/snippet}
+	</Blad>
 {/if}
 
 <style>
-	.scrim {
-		position: fixed;
-		inset: 0;
-		z-index: calc(var(--z-modal) - 1);
-		background: var(--scherm);
-	}
-	.sheet {
-		position: fixed;
-		top: var(--balk-h);
-		right: 0;
-		bottom: 0;
-		z-index: var(--z-modal);
-		width: 400px;
-		max-width: 100vw;
-		display: flex;
-		flex-direction: column;
-		background: var(--paper);
-		border-left: 1px solid var(--rule-strong);
-		box-shadow: var(--shadow-modal);
+	/* The content of the Blad: the serif of the filter panes. */
+	.sheet__inhoud {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 	}
-	.sheet__head {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-4) var(--s-4) var(--s-3);
-	}
-	.sheet__title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		font-weight: 600;
-	}
 	.sheet__space {
 		flex: 1;
-	}
-	.sheet__body {
-		flex: 1;
-		overflow-y: auto;
 	}
 	.block {
 		padding: var(--s-4);
@@ -481,18 +380,5 @@
 	}
 	.muted {
 		color: var(--ink-3);
-	}
-	.sheet__foot {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-4);
-		border-top: 1px solid var(--rule);
-		font-size: var(--t-micro);
-	}
-	@media (max-width: 768px) {
-		.sheet {
-			top: 0;
-		}
 	}
 </style>

@@ -9,6 +9,7 @@ const STATES = [
 	'is-active',
 	'is-afgeleid',
 	'is-b',
+	'is-bottom',
 	'is-dicht',
 	'is-dim',
 	'is-docked',
@@ -23,6 +24,7 @@ const STATES = [
 	'is-quiet',
 	'is-resizing',
 	'is-side',
+	'is-tall',
 	'is-whole'
 ];
 
