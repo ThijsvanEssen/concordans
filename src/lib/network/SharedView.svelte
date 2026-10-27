@@ -1,7 +1,7 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import VerbandChains from './VerbandChains.svelte';
+	import LinkChains from './LinkChains.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
@@ -16,7 +16,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { joinAnd, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
-	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
+	import { markOf } from '$lib/bron/vormen';
 	import type { SharedRow, VerbandModel } from './shared';
 	import type { ChainBron, ChainsState } from './linkchains';
 
@@ -80,7 +80,6 @@
 		empty && (steps === 1 || (chains?.status === 'ready' && chains.model.none))
 	);
 	const incomplete = $derived(chains?.status === 'ready' && chains.model.incomplete);
-	const stepsWord = (n: number) => (n === 1 ? 'stap' : 'stappen');
 	const nameOf = (id: string) => ends.find((e) => e.id === id)?.name ?? id;
 	const items = $derived.by((): Item[] => {
 		if (!model) return [];
@@ -125,7 +124,7 @@
 		const max = Math.max(16, Math.floor(room / 7));
 		return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 	};
-	const vormOf = (r: SharedRow) => VORMEN[vormVanBron(r.collection, r.node.props, r.node.key)];
+	const markFor = (r: SharedRow) => markOf(r.collection, r.node.props, r.node.key);
 	const openSearch = useSearchOpener();
 	const press = (e: KeyboardEvent, r: SharedRow) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -155,7 +154,7 @@
 	{:else if noChain && !failure && !gap}
 		<p class="empty stil">
 			{incomplete ? 'Geen keten gevonden' : 'Geen keten'} binnen {steps}
-			{stepsWord(steps)}{incomplete ? ', het zoeken was niet volledig' : ''}
+			{plural(steps, 'stap', 'stappen')}{incomplete ? ', het zoeken was niet volledig' : ''}
 			{#if steps < 3}<TekstLink onclick={() => onSteps(steps + 1)}
 					>Zoek tot {steps + 1} stappen</TekstLink
 				>{/if}
@@ -188,7 +187,7 @@
 				{/each}
 				{#each items as it, i (it.id)}
 					{#if it.soort === 'row'}
-						{@const v = vormOf(it.row)}
+						{@const v = markFor(it.row)}
 						<g
 							class="node"
 							class:is-active={chosen === it.id}
@@ -309,7 +308,7 @@
 			{/if}
 		{/if}
 		{#if steps > 1 && chains}
-			<VerbandChains result={chains} {scale} {chosen} onChoose={onChooseBron} />
+			<LinkChains result={chains} {scale} {chosen} onChoose={onChooseBron} />
 		{/if}
 	{/if}
 </div>
@@ -341,7 +340,6 @@
 	}
 	.blok {
 		margin: var(--s-4) var(--s-4) 0;
-		font-family: var(--font-ui);
 		font-size: 11px;
 		font-weight: 600;
 		letter-spacing: 0.06em;

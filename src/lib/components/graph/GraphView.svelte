@@ -123,7 +123,7 @@
 		onMetGroep,
 		onToggleChosen,
 		netwerkActive = false,
-		verbandSteps = 1,
+		pairSteps = 1,
 		stepsOff = null,
 		onEdgeClick,
 		onClear,
@@ -167,7 +167,7 @@
 		onToggleChosen?: (node: GraphNode) => void;
 		netwerkActive?: boolean;
 		/** Aantal stappen of Verband (1 to 3): what Aantal stappen shows there, not the canvas's depth. */
-		verbandSteps?: number;
+		pairSteps?: number;
 		/** Why Aantal stappen is off in Verband, said in a line. */
 		stepsOff?: string | null;
 		onEdgeClick?: (edge: GraphEdge) => void;
@@ -1331,7 +1331,7 @@
 			<NetworkChoice
 				{view}
 				viewSlot={viewChoice}
-				depth={view === 'verband' ? verbandSteps : depth}
+				depth={view === 'verband' ? pairSteps : depth}
 				{onDepth}
 				networkOn={netwerkActive && view !== 'verband'}
 				{stepsOff}

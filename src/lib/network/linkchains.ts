@@ -15,7 +15,7 @@ type Edge = ChainsResponse['edges'][number];
 
 /** The longest chain Verband asks for, and the shortest that needs /api/chains. */
 export const MAX_STEPS = 3;
-export const BLOCK_TITLE: Record<number, string> = {
+const BLOCK_TITLE: Record<number, string> = {
 	1: 'Eén stap',
 	2: 'Twee stappen',
 	3: 'Drie stappen'
@@ -30,7 +30,7 @@ export type ChainBron = {
 };
 
 /** One step: two bronnen, joined by a line between them or by what both touch (`via`). */
-export type ChainStep = {
+type ChainStep = {
 	from: ChainBron;
 	to: ChainBron;
 	/** What both share (a Kamerstuk that names both); null where one refers to the other. */
@@ -48,7 +48,7 @@ export type ChainRow = {
 	steps: ChainStep[];
 };
 
-export type ChainBlock = {
+type ChainBlock = {
 	steps: number;
 	title: string;
 	rows: ChainRow[];
@@ -60,7 +60,7 @@ export type ChainBlock = {
 	count: string | null;
 };
 
-export type ChainsModel = {
+type ChainsModel = {
 	ends: [ChainBron, ChainBron];
 	blocks: ChainBlock[];
 	/** The tussenbronnen, each once: where its first chain puts it. */
@@ -181,5 +181,5 @@ export function chainsLabel(model: ChainsModel): string {
 		.map(
 			({ r, n }) => `${BLOCK_TITLE[n].toLowerCase()}, ${r.bronnen.map((b) => b.name).join(', ')}`
 		)
-		.join('; ')}${all.length > rows.length ? `; en ${all.length - rows.length} andere` : ''}`;
+		.join('; ')}${all.length > rows.length ? `; en ${all.length - rows.length} meer` : ''}`;
 }

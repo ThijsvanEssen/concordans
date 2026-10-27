@@ -8,7 +8,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { kindColour } from '$lib/bron/kleur';
-	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
+	import { markOf } from '$lib/bron/vormen';
 	import { chainsLabel, type ChainBron, type ChainRow, type ChainsState } from './linkchains';
 
 	let {
@@ -80,8 +80,8 @@
 		const max = Math.max(8, Math.floor(room / 7));
 		return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 	};
-	const vormOf = (b: ChainBron) =>
-		VORMEN[vormVanBron(b.collection ?? 'instruments', b.node?.props, b.node?.key ?? '')];
+	const markFor = (b: ChainBron) =>
+		markOf(b.collection ?? 'instruments', b.node?.props, b.node?.key ?? '');
 	const press = (e: KeyboardEvent, b: ChainBron) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -162,7 +162,7 @@
 			{#each [...model.between.values()] as m (m.bron.id)}
 				{@const p = placed.get(m.bron.id)}
 				{#if p}
-					{@const v = vormOf(m.bron)}
+					{@const v = markFor(m.bron)}
 					<g
 						class="node"
 						class:is-active={chosen === m.bron.id}
@@ -241,7 +241,6 @@
 		height: auto;
 	}
 	.head {
-		font-family: var(--font-ui);
 		font-size: 11px;
 		font-weight: 600;
 		letter-spacing: 0.06em;
@@ -249,7 +248,6 @@
 		fill: var(--ink-3);
 	}
 	.kop {
-		font-family: var(--font-ui);
 		font-size: 11px;
 		font-weight: 600;
 		fill: var(--ink-3);
@@ -333,7 +331,6 @@
 	}
 	.ladder__head {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-ui);
 		font-size: 11px;
 		font-weight: 600;
 		letter-spacing: 0.06em;
@@ -365,7 +362,6 @@
 		border-radius: var(--r-rond);
 		background: var(--ink);
 		color: var(--paper);
-		font-family: var(--font-ui);
 		font-size: var(--t-ui);
 		font-weight: 600;
 		line-height: 24px;

@@ -96,6 +96,13 @@ export const FILTER_GROUP_VORM: Record<FilterGroup, Vorm> = {
 	internationaal: 'regel-int'
 };
 
+/** The mark of one bron: its outline and whether it is drawn filled or as a line. */
+export const markOf = (
+	collection: string,
+	props?: Record<string, unknown> | null,
+	key = ''
+): { d: string; wijze: Wijze } => VORMEN[vormVanBron(collection, props, key)];
+
 /**
  * De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken; een
  * Europese of internationale regeling het vierkant met een gat.

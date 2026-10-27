@@ -787,11 +787,11 @@
 	 * is 1. With three or more bronnen the ketens are those of the first two (a bron lit up
 	 * will choose the pair).
 	 */
-	const verbandSteps = $derived(Math.min(MAX_STEPS, explicitDepth ?? 1));
+	const pairSteps = $derived(Math.min(MAX_STEPS, explicitDepth ?? 1));
 	const vcPair = $derived(
 		sharedDrawn.length >= 2 ? ([sharedDrawn[0].id, sharedDrawn[1].id] as [string, string]) : null
 	);
-	const vcKey = $derived(vcPair && verbandSteps >= 2 ? `${vcPair.join(',')}:${verbandSteps}` : '');
+	const vcKey = $derived(vcPair && pairSteps >= 2 ? `${vcPair.join(',')}:${pairSteps}` : '');
 	const stepsOff = $derived(sharedEnds.length < 2 ? 'Kies eerst een tweede bron.' : null);
 	let vcData = $state.raw<
 		{ key: string; response: ChainsResponse } | { key: string; error: unknown } | null
@@ -833,7 +833,7 @@
 					name: byId.get(id)?.name ?? id,
 					collection: byId.get(id)?.collection ?? null
 				}),
-				verbandSteps
+				pairSteps
 			)
 		};
 	});
@@ -2118,7 +2118,7 @@
 			{hiddenLines}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
-			steps={verbandSteps}
+			steps={pairSteps}
 			chains={vcState}
 			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
 			onChooseBron={(b) => setUrl({ [MARK_PARAM]: b.id })}
@@ -2170,7 +2170,7 @@
 								{filter}
 								{verbonden}
 								{depth}
-								{verbandSteps}
+								{pairSteps}
 								{stepsOff}
 								reach={netwerkActive
 									? {
