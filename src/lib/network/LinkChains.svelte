@@ -296,7 +296,9 @@
 									<span class="num" aria-hidden="true">{i + 1}</span>
 									<span class="ladder__step">
 										<span class="ladder__pair"
-											>{#each [s.from, s.to] as b, k (k)}{#if k}{' en '}{/if}{#if model.between.has(b.id)}<TekstLink
+											>{#each [s.from, s.to] as b, k (k)}{k
+													? ' en '
+													: ''}{#if model.between.has(b.id)}<TekstLink
 														class="ladder__bron"
 														aria-pressed={chosen === b.id}
 														onclick={() => onChoose(b)}>{b.name}</TekstLink
