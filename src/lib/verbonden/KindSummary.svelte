@@ -11,7 +11,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
-	import { PREVIEW_ROWS } from './view';
+	import { NEXT_ROWS, PREVIEW_ROWS } from './view';
 	import { ankerVanRij, caseNumberOf, isNested, repeatedTitles, rowKey, type Row } from './rows';
 	import { shortLine, type Kind } from './summary';
 	import type { TierCount } from './tiers';
@@ -31,7 +31,6 @@
 		kindTools,
 		hasMore = () => false,
 		onMore,
-		step = () => null,
 		onOpen,
 		onRetry,
 		onProposedText,
@@ -56,8 +55,6 @@
 		hasMore?: (id: string) => boolean;
 		/** Ask the next page of a soort's rows (fifty a bucket, T11). */
 		onMore?: (id: string) => void;
-		/** How many rows the next page of a soort brings, at most. */
-		step?: (id: string) => number | null;
 		onOpen: (id: string) => void;
 		/** Ask a group whose rows did not come again. */
 		onRetry?: () => void;
@@ -71,9 +68,33 @@
 	const lists: Record<string, HTMLUListElement | null> = $state({});
 	/** The row opened in place: one at a time. */
 	let opened = $state<string | null>(null);
+	// Keyed on the id, not the object: a node that comes again as the same bron resets nothing.
+	const selectionId = $derived(selection.id);
 	$effect(() => {
-		void selection.id;
+		void selectionId;
 		opened = null;
+		cap = {};
+	});
+	/**
+	 * How many rows an opened soort shows once "Volgende" is used: `NEXT_ROWS` more a click,
+	 * whatever a page of the API brings, so the N in the words is what the click adds. Before
+	 * the first click the soort shows every row that is in.
+	 */
+	let cap = $state<Record<string, number>>({});
+	const rowsOf = (k: Kind) =>
+		open.has(k.id) && cap[k.id] != null ? k.rows.slice(0, cap[k.id]) : k.rows;
+	const hidden = (k: Kind) => (cap[k.id] != null ? Math.max(0, k.rows.length - cap[k.id]) : 0);
+	const more = (k: Kind) => open.has(k.id) && (hasMore(k.id) || hidden(k) > 0);
+	const next = (k: Kind) => {
+		cap[k.id] = (cap[k.id] ?? k.rows.length) + NEXT_ROWS;
+		if (k.rows.length < cap[k.id]) onMore?.(k.id);
+	};
+	$effect(() => {
+		for (const k of kinds) {
+			if (!open.has(k.id)) delete cap[k.id];
+			// A page that brought fewer than asked: the next one, until the click is met.
+			else if (cap[k.id] != null && k.rows.length < cap[k.id] && hasMore(k.id)) onMore?.(k.id);
+		}
 	});
 	/** The vlak of the instantie of a judgment's row; none for another bron. */
 	const tierShapeOf = (row: Row) =>
@@ -117,7 +138,7 @@
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
 		<ul class="kind__rows" bind:this={lists[k.id]}>
-			{#each open.has(k.id) ? k.rows : k.rows
+			{#each open.has(k.id) ? rowsOf(k) : k.rows
 						.filter((r) => !isNested(r))
 						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 				{#if opened === rowKey(row)}
@@ -175,16 +196,19 @@
 		</ul>
 		<!-- Opened, the rows come a page at a time: the next page one click further, with how
 		     many still wait, never the whole at once (T11). -->
-		{#if open.has(k.id) && hasMore(k.id)}
+		{#if more(k)}
+			{@const shown = rowsOf(k).length}
 			<p class="kind__all kind__vervolg">
 				<AlleN
 					volgende
 					noun={k.noun}
-					stap={step(k.id)}
-					rest={k.count > k.rows.length ? k.count - k.rows.length : null}
-					loaded={k.rows.length}
+					stap={NEXT_ROWS}
+					rest={Math.max(k.count, k.rows.length) > shown
+						? Math.max(k.count, k.rows.length) - shown
+						: null}
+					loaded={shown}
 					list={lists[k.id]}
-					onclick={() => onMore?.(k.id)}
+					onclick={() => next(k)}
 				/>
 			</p>
 		{/if}

@@ -23,6 +23,8 @@ import { kindsOf, type Kind } from './summary';
 
 /** The rows a closed group of the panel shows, and holds the place of while they come. */
 export const PREVIEW_ROWS = 3;
+/** The rows "Volgende" adds to an opened soort: the N in its words. */
+export const NEXT_ROWS = 50;
 
 /** Whether the filter has a criterion that cuts inside a group, so its total no longer holds. */
 const cutsRows = (f: VerbondenFilter) =>
