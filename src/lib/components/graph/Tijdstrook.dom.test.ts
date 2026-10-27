@@ -67,9 +67,46 @@ describe('the Tijdstrook', () => {
 		expect(onPeriode).toHaveBeenCalledWith(2021, 2023);
 	});
 
+	it('stacks the bronnen of a year in one column per year', () => {
+		const onPeriode = vi.fn();
+		const { container } = render(Tijdstrook, {
+			stippen: [...stippen, { jaar: 2021.9, collection: 'documents' }],
+			van: null,
+			tot: null,
+			onPeriode
+		});
+		const kolommen = [...container.querySelectorAll('.kolom')].map(
+			(k) => k.querySelectorAll('.stip').length
+		);
+		expect(kolommen).toEqual([1, 2, 0, 1]);
+	});
+
+	it('shows two grips on a period and none without', () => {
+		expect(strook().band.querySelectorAll('[data-greep]')).toHaveLength(0);
+		const { band } = strook(2021, 2022);
+		expect(
+			[...band.querySelectorAll('[data-greep]')].map((g) => (g as HTMLElement).dataset.greep)
+		).toEqual(['van', 'tot']);
+	});
+
+	it('moves one end with its grip and keeps the other', async () => {
+		const { band, onPeriode } = strook(2021, 2022);
+		const greep = band.querySelector<HTMLElement>('[data-greep="tot"]')!;
+		await fireEvent.pointerDown(greep, { clientX: 300, pointerId: 1 });
+		await op(band, 350, 'pointerMove');
+		await op(band, 350, 'pointerUp');
+		expect(onPeriode).toHaveBeenCalledWith(2021, 2023);
+	});
+
+	it('heads the strip with the period', () => {
+		const { band } = strook(2021, 2023);
+		expect(band.parentElement!.querySelector('.kop')!.textContent).toBe('2021 tot 2023');
+		expect(strook().band.parentElement!.querySelector('.kop')!.textContent).toBe('2020 tot 2023');
+	});
+
 	it('dims the bronnen outside the period chosen', () => {
 		const { band } = strook(2021, 2021);
-		const dim = [...band.querySelectorAll('.stip')].map((s) => s.classList.contains('is-dim'));
+		const dim = [...band.querySelectorAll('.stip')].map((k) => k.classList.contains('is-dim'));
 		expect(dim).toEqual([true, false, true]);
 	});
 });
