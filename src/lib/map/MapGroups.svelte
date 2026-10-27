@@ -96,6 +96,7 @@
 				<Aantekening
 					tekst={i.notitie}
 					bij={i.kort}
+					bundel={map?.naam}
 					bind:open={() => noteOpen === key, (v) => (noteOpen = v ? key : null)}
 					onBewaar={map ? (t) => kaart.notitie(i, t, map.id) : undefined}
 				/>
@@ -242,6 +243,7 @@
 				<Aantekening
 					tekst={note}
 					bij={g.groep}
+					bundel={map?.naam}
 					bind:open={
 						() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)
 					}
