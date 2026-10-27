@@ -2,7 +2,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import { voteCitation } from '$lib/bron/naam';
-	import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+	import { officialNumber } from '$lib/bron/dossier-naam';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
 	import { stemmingNaam } from '$lib/votes/stemming';
@@ -85,7 +85,7 @@
 						>
 						{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 							{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
-							<span class="row-id-sub">{kamerstukNummer(d.number)}</span>
+							<span class="row-id-sub">Dossier {officialNumber(d.number)}</span>
 						{/if}
 					{:else if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 						{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}

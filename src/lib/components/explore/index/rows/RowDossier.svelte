@@ -3,9 +3,9 @@
 	// and nothing that a clamp has to cut (Lijstrij: a dossier always with number and name).
 	// Where the title already says it, the row leaves it out. One form for the stemming and
 	// the Kamerstuk (guards/lijsten.test.ts).
-	import { dossierOwnName, type DossierNaamBron } from '$lib/bron/dossier-naam';
+	import { dossierOwnName } from '$lib/bron/dossier-naam';
 
-	let { dossier }: { dossier: DossierNaamBron | null | undefined } = $props();
+	let { dossier }: { dossier: Parameters<typeof dossierOwnName>[0] | null | undefined } = $props();
 	const label = $derived(dossier ? dossierOwnName(dossier) : null);
 </script>
 
