@@ -96,12 +96,18 @@ export const FILTER_GROUP_VORM: Record<FilterGroup, Vorm> = {
 	internationaal: 'regel-int'
 };
 
-/** The mark of one bron: its outline and whether it is drawn filled or as a line. */
-export const markOf = (
+/** The mark of one bron: its outline, filled in `colour` or drawn as a line of it on paper. */
+export function markOf(
 	collection: string,
+	colour: string,
 	props?: Record<string, unknown> | null,
 	key = ''
-): { d: string; wijze: Wijze } => VORMEN[vormVanBron(collection, props, key)];
+): { d: string; fill: string; stroke: string } {
+	const vorm = VORMEN[vormVanBron(collection, props, key)];
+	return vorm.wijze === 'lijn'
+		? { d: vorm.d, fill: 'var(--paper)', stroke: colour }
+		: { d: vorm.d, fill: colour, stroke: 'none' };
+}
 
 /**
  * De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken; een

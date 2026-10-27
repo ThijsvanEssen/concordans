@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { ApiError } from '$lib/api/client';
 	import { isRateLimited, isSlow } from '$lib/api/errors';
 	import { RATE_LIMIT_TEXT } from './RateLimit.svelte';
 

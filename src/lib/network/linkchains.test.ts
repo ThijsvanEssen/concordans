@@ -30,7 +30,8 @@ const step = (source: string, target: string, via: string | null, edge_ids: stri
 	target,
 	via,
 	edge_ids,
-	ways: 1
+	ways: 1,
+	weight: 1
 });
 
 const A = 'instruments/a';
@@ -109,6 +110,12 @@ describe('chainsModel', () => {
 			['Drie stappen', 1]
 		]);
 		expect(m.none).toBe(false);
+	});
+	it('puts the strongest chain first, as the DS says', () => {
+		const r = response();
+		r.blocks[1].chains[0].weight = 0.5;
+		const m = chainsModel(r, [A, B], names);
+		expect(m.blocks[0].rows.map((x) => x.bronnen[1].id)).toEqual([D, C]);
 	});
 	it('stops at the steps asked', () => {
 		const m = chainsModel(response(), [A, B], names, 2);

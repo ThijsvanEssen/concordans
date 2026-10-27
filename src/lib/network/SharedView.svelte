@@ -124,7 +124,8 @@
 		const max = Math.max(16, Math.floor(room / 7));
 		return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 	};
-	const markFor = (r: SharedRow) => markOf(r.collection, r.node.props, r.node.key);
+	const markFor = (r: SharedRow) =>
+		markOf(r.collection, kindColour(r.collection), r.node.props, r.node.key);
 	const openSearch = useSearchOpener();
 	const press = (e: KeyboardEvent, r: SharedRow) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -217,9 +218,9 @@
 							<path
 								d={v.d}
 								transform="translate({rowX - 8} {rowY(i) - 8})"
-								fill={v.wijze === 'lijn' ? 'var(--paper)' : kindColour(it.row.collection)}
+								fill={v.fill}
 								fill-rule="evenodd"
-								stroke={v.wijze === 'lijn' ? kindColour(it.row.collection) : 'none'}
+								stroke={v.stroke}
 								stroke-width="1.5"
 							/>
 							<text class="name" x={rowX + 18} y={rowY(i) + 4}

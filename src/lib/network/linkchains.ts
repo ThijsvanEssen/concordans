@@ -39,6 +39,8 @@ type ChainStep = {
 	text: string;
 	/** The same for the phone: `beide genoemd in 35133, nr. 3 Memorie van toelichting`. */
 	phone: string;
+	/** How strong it is (API 0.80.13): its line is this times 3 px thick. */
+	weight: number;
 	/** Its lines, in the style of their kind: one, or two by way of `via`. */
 	legs: StepLeg[];
 	/** The step as the phone says it: `Waterschapswet en Woningwet`. */
@@ -158,23 +160,26 @@ export function chainsModel(
 		.filter((b) => b.steps >= 2 && b.steps <= steps)
 		.sort((x, y) => x.steps - y.steps)
 		.map((b, block): ChainBlock => {
-			const rows = b.chains.map((c, row): ChainRow => {
-				const bronnen = c.node_ids.map(bron);
-				bronnen.slice(1, -1).forEach((n, i) => {
-					if (!between.has(n.id)) between.set(n.id, { bron: n, block, row, at: i + 1 });
+			const rows = [...b.chains]
+				.sort((x, y) => y.weight - x.weight)
+				.map((c, row): ChainRow => {
+					const bronnen = c.node_ids.map(bron);
+					bronnen.slice(1, -1).forEach((n, i) => {
+						if (!between.has(n.id)) between.set(n.id, { bron: n, block, row, at: i + 1 });
+					});
+					return {
+						id: c.node_ids.join('~'),
+						bronnen,
+						steps: c.steps.map((s) => ({
+							from: bron(s.source),
+							to: bron(s.target),
+							via: s.via ? bron(s.via) : null,
+							weight: s.weight,
+							...wording(s, edges, bron),
+							pair: joinAnd([bron(s.source).name, bron(s.target).name])
+						}))
+					};
 				});
-				return {
-					id: c.node_ids.join('~'),
-					bronnen,
-					steps: c.steps.map((s) => ({
-						from: bron(s.source),
-						to: bron(s.target),
-						via: s.via ? bron(s.via) : null,
-						...wording(s, edges, bron),
-						pair: joinAnd([bron(s.source).name, bron(s.target).name])
-					}))
-				};
-			});
 			const complete = b.complete && !response.partial;
 			return {
 				steps: b.steps,

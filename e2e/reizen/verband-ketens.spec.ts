@@ -134,3 +134,23 @@ test('a pair without a keten says so, with what the search could not finish, and
 	await shared(page).getByRole('button', { name: 'Zoek tot 3 stappen' }).click();
 	await expect(page).toHaveURL(/diepte=3/);
 });
+
+test('a table not built yet (503) says the ketens are not available yet, with Opnieuw', async ({
+	page,
+	guard
+}) => {
+	guard.allow(/status of 503/);
+	await page.route(/\/api\/chains/, (route) =>
+		route.fulfill({
+			status: 503,
+			contentType: 'application/json',
+			headers: { 'access-control-allow-origin': '*' },
+			body: JSON.stringify({ detail: 'not built' })
+		})
+	);
+	await page.goto(`${PAIR}&diepte=2`);
+	await expect(shared(page).getByText('De ketens zijn nog niet beschikbaar.')).toBeVisible({
+		timeout: 30_000
+	});
+	await expect(shared(page).getByRole('button', { name: 'Opnieuw' })).toBeVisible();
+});

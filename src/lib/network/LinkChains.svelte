@@ -10,16 +10,7 @@
 	import { kindColour } from '$lib/bron/kleur';
 	import { markOf } from '$lib/bron/vormen';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { arrowhead } from '$lib/verbonden/sketch';
-	import { drawClassOf, EDGE_WEIGHT } from '$lib/graph/types';
-	import {
-		ARROW_WIDTH,
-		arrowLength,
-		edgeColorFor,
-		edgeDashFor,
-		edgeStyleFor,
-		lineThickness
-	} from '$lib/components/graph/nodeSprites';
+	import { drawnLine } from '$lib/components/graph/drawn-line';
 	import {
 		chainsLabel,
 		type ChainBron,
@@ -98,51 +89,40 @@
 		return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 	};
 	const markFor = (b: ChainBron) =>
-		markOf(b.collection ?? 'instruments', b.node?.props, b.node?.key ?? '');
+		markOf(
+			b.collection ?? 'instruments',
+			kindColour(b.collection),
+			b.node?.props,
+			b.node?.key ?? ''
+		);
 
 	type Point = { x: number; y: number };
 	/** Room between a line and the mark of a bron, and between a line and a pill. */
 	const GAP = 14;
 	const PILL_GAP = 2;
-	/**
-	 * One line of a step in the style of its kind (Netwerkcanvas, Lijnen), mixed to the paper, the
-	 * arrowhead at the end that is named: a bron that is cited has the arrow, the one that cites not.
-	 */
-	function seg(a: Point, b: Point, l: StepLeg, gapA: number, gapB: number) {
-		const rel = l.relation;
-		const from = drawClassOf(l.from ?? 'instruments');
-		const style = rel ? edgeStyleFor(rel, null, from) : 'lid';
-		const width = rel ? Math.max(lineThickness(EDGE_WEIGHT[rel]), 1.4) : 1.4;
-		const colour = rel
-			? `color-mix(in srgb, ${edgeColorFor(rel, from)} 55%, var(--paper))`
-			: 'var(--rule-strong)';
-		const length = Math.max(width * arrowLength(), 5.5);
-		const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-		const ux = (b.x - a.x) / d;
-		const uy = (b.y - a.y) / d;
-		let [x1, y1, x2, y2] = [a.x + ux * gapA, a.y + uy * gapA, b.x - ux * gapB, b.y - uy * gapB];
-		let head: string | null = null;
-		if (l.arrow && style !== 'lid') {
-			const width2 = length * ARROW_WIDTH;
-			if (l.arrow === 'end') {
-				head = arrowhead(x1, y1, x2, y2, length, width2);
-				[x2, y2] = [x2 - ux * length, y2 - uy * length];
-			} else {
-				head = arrowhead(x2, y2, x1, y1, length, width2);
-				[x1, y1] = [x1 + ux * length, y1 + uy * length];
-			}
-		}
-		return { x1, y1, x2, y2, width, colour, dash: edgeDashFor(style), head };
-	}
+	/** A step's weight gives its line its thickness: weight times 3 px, within what reads. */
+	const thick = (weight: number) => Math.min(4.5, Math.max(1.4, weight * 3));
+	const leg = (a: Point, b: Point, l: StepLeg, weight: number, ra: number, rb: number) =>
+		drawnLine(a, b, {
+			relation: l.relation,
+			from: l.from,
+			arrow: l.arrow === 'end' ? 'b' : l.arrow === 'start' ? 'a' : null,
+			ra,
+			rb,
+			width: thick(weight)
+		});
 	/** The lines of a step from `p` to `q`: one, or two with the pill of what both share between. */
 	function segs(s: ChainRow['steps'][number], p: Point, q: Point, half: number) {
-		if (!s.via) return [seg(p, q, s.legs[0], GAP, GAP)];
+		if (!s.via) return [leg(p, q, s.legs[0], s.weight, GAP, GAP)];
 		const mid = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
 		const d = Math.hypot(q.x - p.x, q.y - p.y) || 1;
 		const t = Math.min(half, d / 2 - GAP) / d;
 		const near = { x: mid.x - (q.x - p.x) * t, y: mid.y - (q.y - p.y) * t };
 		const far = { x: mid.x + (q.x - p.x) * t, y: mid.y + (q.y - p.y) * t };
-		return [seg(p, near, s.legs[0], GAP, PILL_GAP), seg(far, q, s.legs[1], PILL_GAP, GAP)];
+		return [
+			leg(p, near, s.legs[0], s.weight, GAP, PILL_GAP),
+			leg(far, q, s.legs[1], s.weight, PILL_GAP, GAP)
+		];
 	}
 	const press = (e: KeyboardEvent, b: ChainBron) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -198,20 +178,21 @@
 					{#each r.steps as s, si (si)}
 						{@const p = pts[si]}
 						{@const q = pts[si + 1]}
-						{@const mx = (p.x + q.x) / 2}
-						{@const my = (p.y + q.y) / 2}
 						{@const label = cut(s.via ? s.via.name : s.text, (Math.abs(q.x - p.x) - 24) * 0.6)}
-						{#each segs(s, p, q, (label.length * 7.2 + 16) / 2) as l, li (li)}
-							<line
-								x1={l.x1}
-								y1={l.y1}
-								x2={l.x2}
-								y2={l.y2}
+						{@const ss = segs(s, p, q, (label.length * 7.2 + 16) / 2)}
+						{@const mid = s.via ? { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 } : ss[0].middle}
+						{@const mx = mid.x}
+						{@const my = mid.y}
+						{#each ss as l, li (li)}
+							<path
+								d={l.d}
+								fill="none"
 								stroke={l.colour}
 								stroke-width={l.width}
 								stroke-dasharray={l.dash}
 							/>
 							{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
+							{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r="2.6" fill={l.colour} />{/if}
 						{/each}
 						{#if single}<text class="kop" x={mx} y={my - 28} text-anchor="middle"
 								>Stap {si + 1}</text
@@ -260,9 +241,9 @@
 						<path
 							d={v.d}
 							transform="translate({p.x - 9} {p.y - 9}) scale(1.125)"
-							fill={v.wijze === 'lijn' ? 'var(--paper)' : kindColour(m.bron.collection)}
+							fill={v.fill}
 							fill-rule="evenodd"
-							stroke={v.wijze === 'lijn' ? kindColour(m.bron.collection) : 'none'}
+							stroke={v.stroke}
 							stroke-width="1.5"
 						/>
 						<text class="name" x={p.x} y={p.y + 32} text-anchor="middle"
