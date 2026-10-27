@@ -196,7 +196,11 @@ export function kindRows(o: {
 		...(drawnBy.has('eigen:keten')
 			? [makeRow('eigen:keten', CHAIN_LABEL[focus.collection] ?? 'Behoort bij', null, [], null)]
 			: []),
-		...kinds.map((k) => makeRow(k.id, k.label, k.count, k.rows, k.collection)),
+		// Never more drawn than Verbonden counts: the legend and Verbonden say one number.
+		...kinds.map((k) => {
+			const row = makeRow(k.id, k.label, k.count, k.rows, k.collection);
+			return { ...row, drawn: Math.min(row.drawn, k.count) };
+		}),
 		...[...rest]
 			.sort(([a], [b]) => Number(a.startsWith('verder:')) - Number(b.startsWith('verder:')))
 			.map(([id, r]) => {

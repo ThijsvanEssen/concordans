@@ -74,9 +74,9 @@ describe('Soort reads Verbonden (N1)', () => {
 	});
 
 	it('keeps what Verbonden does not count of a soort in that soort, no row of leftovers', () => {
-		// Two stemmingen in Verbonden, three drawn: the third stands in Stemmingen too.
+		// Two stemmingen in Verbonden, three drawn: the third stands in Stemmingen too, uncounted.
 		const r = rows([bron('decisions', 's1'), bron('decisions', 's2'), bron('decisions', 'ek1')]);
-		expect(r.find((x) => x.id === 'decisions')).toMatchObject({ drawn: 3, total: null });
+		expect(r.find((x) => x.id === 'decisions')).toMatchObject({ drawn: 2, total: null });
 		expect(r.some((x) => x.id.startsWith('overig:'))).toBe(false);
 	});
 
