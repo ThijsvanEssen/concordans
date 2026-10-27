@@ -147,7 +147,7 @@
 	{:else if gap}<p class="gap">{gap}</p>{/if}
 	{#if ends.length < 2}
 		<p class="empty stil">
-			Nog één bron nodig. <TekstLink onclick={() => openSearch()}>Toevoegen</TekstLink>
+			<TekstLink onclick={() => openSearch()}>Kies een tweede bron</TekstLink>
 		</p>
 	{:else if loading}
 		<p class="empty stil" role="status">Verband zoeken</p>

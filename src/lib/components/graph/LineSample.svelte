@@ -9,9 +9,9 @@
 		edgeDashFor,
 		edgeStyleFor,
 		lineThickness,
-		arrowLength,
-		ARROW_WIDTH
+		arrowLength
 	} from './nodeSprites';
+	import { ARROW_WIDTH } from '$lib/graph/line-shape';
 
 	const WIDTH = 28;
 	let {

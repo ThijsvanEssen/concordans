@@ -1569,7 +1569,7 @@
 						/>
 					</div>
 				{:else if $netwerkMelding}
-					<p class="netwerk-melding" role="status">
+					<p class="netwerk-melding" role="status" style:--kaart-h="{cardHeight}px">
 						{$netwerkMelding.tekst}
 						{#if $netwerkMelding.terug}
 							<button
@@ -1980,7 +1980,8 @@
 		position: absolute;
 		left: var(--s-3);
 		right: calc(var(--s-3) + 40px + var(--s-2));
-		bottom: calc(var(--s-3) + 48px);
+		/* Above the Weergave button, which stands above the card (--kaart-h): covering neither. */
+		bottom: calc(var(--s-3) + var(--kaart-h, 0px) + var(--veld-h-raak) + var(--s-2));
 		z-index: var(--z-float);
 		display: none;
 		flex-wrap: wrap;

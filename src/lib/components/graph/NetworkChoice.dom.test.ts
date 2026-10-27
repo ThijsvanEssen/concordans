@@ -40,4 +40,14 @@ describe('NetworkChoice', () => {
 		render(NetworkChoice, { ...base, view: 'omgeving', networkOn: true, hasSelection: false });
 		expect(screen.getByRole('note').textContent).toBe('Kies eerst een bron in het netwerk.');
 	});
+	it('greys out the steps beyond the cap and says the cap in their title only (R7)', () => {
+		const { container } = render(NetworkChoice, {
+			...base,
+			view: 'omgeving',
+			reach: { depth: 1, capped: true, cap: 150 } as never
+		});
+		expect(screen.queryByRole('note')).toBeNull();
+		expect(container.textContent).not.toMatch(/Maximaal|voegt niets toe/);
+		expect(container.querySelector('[title="Maximaal 150 bronnen getoond"]')).toBeTruthy();
+	});
 });

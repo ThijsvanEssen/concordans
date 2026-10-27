@@ -1,7 +1,6 @@
 <script lang="ts">
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
 	// groups.ts, under the bronfilter.
-	import { CITED_BY_PAGE } from '$lib/api/first-pages';
 	import { capitalize, joinAnd, plural } from '$lib/text/words';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
@@ -284,15 +283,6 @@
 	/** The groups whose rows a soort shows: the laws hold several soorten (T11). */
 	const groupsOfKind = (id: string) =>
 		kinds.find((k) => k.id === id)?.groups ?? groepen.filter((g) => kindOfGroup(g) === id);
-	/** What one click on "Volgende" brings, at most: a page of every group that has one more. */
-	const pageSize = (id: string) =>
-		groupsOfKind(id)
-			.filter((g) => verbonden.meer?.has(g.id))
-			.reduce(
-				(n, g) =>
-					n + (selection.collection === 'articles' && g.id === 'cited-by' ? CITED_BY_PAGE : 50),
-				0
-			) || null;
 	function openKind(id: string, toggle = false) {
 		if (toggle && openKinds.has(id)) {
 			openKinds = new Set([...openKinds].filter((k) => k !== id));
@@ -566,7 +556,6 @@
 						if (verbonden.meer?.has(g.id))
 							onMeer?.(g.id)?.catch((e) => report('Verbonden meer', e));
 				}}
-				step={pageSize}
 				{onRetry}
 				{onProposedText}
 				{onAddToNetwerk}

@@ -3,7 +3,6 @@ import {
 	WIDTH,
 	LABEL_MAX,
 	SKETCH_LIMIT,
-	arrowhead,
 	sketch,
 	divide,
 	drawnCount,
@@ -185,11 +184,6 @@ describe('a line of the drawing', () => {
 			'judgment'
 		);
 		expect(t.singles[0].source).toBe('judgment');
-	});
-	it('puts the tip of an arrowhead at the end of the line', () => {
-		const punten = arrowhead(0, 0, 100, 0, 6, 5).split(' ');
-		expect(punten[1]).toBe('100,0');
-		expect(punten[0]).toBe('94,2.5');
 	});
 });
 

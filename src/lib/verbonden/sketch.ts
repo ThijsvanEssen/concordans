@@ -114,26 +114,6 @@ const radius = (count: number): number =>
 /** The width of a line in the drawing: 0.8 of the canvas's (Netwerkschets, Maten). */
 export const SKETCH_LINE = 0.8;
 
-/**
- * The points of an arrowhead at (x2, y2) on the line from (x1, y1): `length` long and
- * `wide` wide at its foot, the tip at the end of the line.
- */
-export function arrowhead(
-	x1: number,
-	y1: number,
-	x2: number,
-	y2: number,
-	length: number,
-	wide: number
-): string {
-	const angle = Math.atan2(y2 - y1, x2 - x1);
-	const bx = x2 - length * Math.cos(angle);
-	const by = y2 - length * Math.sin(angle);
-	const nx = (-Math.sin(angle) * wide) / 2;
-	const ny = (Math.cos(angle) * wide) / 2;
-	return `${bx + nx},${by + ny} ${x2},${y2} ${bx - nx},${by - ny}`;
-}
-
 /** `n` angles spread over [from, to] (degrees), at the middle where there is one. */
 function angles(n: number, from: number, to: number): number[] {
 	if (n === 0) return [];

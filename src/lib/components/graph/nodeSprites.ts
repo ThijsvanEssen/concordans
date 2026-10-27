@@ -129,8 +129,6 @@ export const lineThickness = (gewicht: number): number =>
 	gewicht * (parseFloat(tokens().lijn) || 3);
 /** An arrowhead's length in thicknesses of its line (--netwerk-pijl). */
 export const arrowLength = (): number => parseFloat(tokens().pijl) || 3.2;
-/** An arrowhead's width to its length. */
-export const ARROW_WIDTH = 0.8;
 
 const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
 
@@ -200,9 +198,9 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 /**
  * How a line is drawn (Netwerkcanvas, Lijnen): `solid` the band is straight; `dashed` a bron
  * only names the other; `dotted` belongs to; `dashdot` explains; `lid` dotted and without an
- * arrow, as Lid van has no direction.
+ * arrow, as Lid van has no direction; `submitter` solid with a dot at the one who submits.
  */
-type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid';
+type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid' | 'submitter';
 
 /**
  * The style of a line by its soort: a citation (Aanhaling) is dashed, a part dotted, a
@@ -217,6 +215,8 @@ export function edgeStyleFor(
 	switch (lineKindOf(relation, sourceClass)) {
 		case 'member':
 			return 'lid';
+		case 'submitter':
+			return 'submitter';
 		case 'part':
 			return 'dotted';
 		case 'explanation':

@@ -1,7 +1,7 @@
 // The summary per soort: the heading's count is a number, with no unit (E8, N3), and Alle N
 // stands only where it leads to more than the rows shown (N4).
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import type { GraphNode } from '$lib/graph/types';
 import type { Row } from './rows';
 import type { Kind } from './summary';
@@ -81,6 +81,45 @@ describe('KindSummary', () => {
 			hasMore: () => true
 		});
 		expect(container.querySelector('.kind__count')?.textContent).toBe('10');
-		expect(screen.getByText('Volgende wetten en artikelen, nog 7')).toBeTruthy();
+		expect(screen.getByText('Volgende 7 wetten en artikelen')).toBeTruthy();
+	});
+
+	// A1: the N of "Volgende N" is what the click adds, whatever a page of the API brings.
+	it('adds exactly the N it names, whatever size the pages that come in are', async () => {
+		let loaded = 300;
+		let asking = false;
+		const kinds = () => [
+			{ ...soort(2000), rows: Array.from({ length: loaded }, (_, n) => rij(n)) }
+		];
+		const props = {
+			kinds: kinds(),
+			selection: selectie,
+			onOpen: () => {},
+			open: new Set(['laws']),
+			hasMore: () => true,
+			// A page of the API: a different number of judgments each time (77, 82, 301).
+			onMore: () => {
+				// One ask at a time, as the data source does: a second ask meanwhile is nothing.
+				if (asking) return;
+				asking = true;
+				queueMicrotask(() => {
+					asking = false;
+					loaded += [77, 82, 301][Math.floor(loaded / 7) % 3];
+					Promise.resolve(rerender({ ...props, kinds: kinds() })).catch((e) =>
+						expect.fail(String(e))
+					);
+				});
+			}
+		};
+		const { container, rerender } = render(KindSummary, props);
+		const rows = () => container.querySelectorAll('.kind__rows > .kind__row').length;
+		expect(rows()).toBe(300);
+		const button = () => screen.getByRole('button', { name: /^Volgende/ });
+		for (let i = 1; i <= 3; i++) {
+			const n = Number(/Volgende (\d+)/.exec(button().textContent ?? '')?.[1]);
+			const before = rows();
+			await fireEvent.click(button());
+			await vi.waitFor(() => expect(rows() - before).toBe(n));
+		}
 	});
 });

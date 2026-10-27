@@ -69,10 +69,16 @@ function sectieOuders(text: string): string[][] {
 describe('typography', () => {
 	it('sets text in the serif and only controls in the sans (docs/typografie.md, 10 Oct 2026)', () => {
 		expect(overtreders((t) => t.includes('var(--font-sans)'))).toEqual([]);
-		// The sans only where a control is styled.
+		// The sans only where a control is styled, and for the labels of a figure's layers (Keten,
+		// Maten: sans 11 px 600, spaced; they label the drawing as an axis does, they are no text).
 		expect(
 			overtreders((t) =>
-				regels(t).some((r) => r.body.includes('var(--font-ui)') && !isControl(r.selector))
+				regels(t).some(
+					(r) =>
+						r.body.includes('var(--font-ui)') &&
+						!isControl(r.selector) &&
+						!/^\.layer-label$/.test(r.selector.trim())
+				)
 			)
 		).toEqual([]);
 		// The serif is the page's: a paragraph, a heading, a list or a table, which no control

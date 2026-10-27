@@ -49,4 +49,4 @@ Every reader has the same lines (`ReaderFrame.svelte`).
 
 ## Exception
 
-A chart's own labels stay at `--t-label` (11px): the names in the bars and the axes of the cabinet timeline, and the ticks and phases of CabinetOccupancy. At 12px the names in a bar of fixed width are cut off sooner ("Balkenend…"). They are part of the figure, not of the text.
+The labels of the layers of a Keten (`.layer-label` in `ChainView.svelte`) are the one label in the sans: 11px, 600, spaced 0,06em, as the Design System draws them (Keten, Maten); the guard allows that selector. A chart's own labels stay at `--t-label` (11px): the names in the bars and the axes of the cabinet timeline, and the ticks and phases of CabinetOccupancy. At 12px the names in a bar of fixed width are cut off sooner ("Balkenend…"). They are part of the figure, not of the text.

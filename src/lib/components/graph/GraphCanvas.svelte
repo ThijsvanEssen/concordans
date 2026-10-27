@@ -66,9 +66,9 @@
 		withAlpha,
 		tokens,
 		lineThickness,
-		arrowLength,
-		ARROW_WIDTH
+		arrowLength
 	} from './nodeSprites';
+	import { BEND, MIN_ARROW_PX } from '$lib/graph/line-shape';
 
 	export type GraphCanvasApi = {
 		refresh: () => void;
@@ -449,7 +449,7 @@
 	}
 
 	// Around the nodes on a fit: the hull margin and a little air. Above them, the
-	// label pill of a hull (8 px gap, 22 px pill) and the edge gap on top of that.
+	// label pill of a hull (6 px gap, 22 px pill) and the edge gap on top of that.
 	const STAGE_PADDING = HULL_MARGIN + 6;
 	// STAGE_PADDING already holds the hull margin and 6 px of it.
 	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 6;
@@ -483,7 +483,7 @@
 	function labelWidth(text: string): number {
 		labelMeasure ??= document.createElement('canvas').getContext('2d');
 		if (!labelMeasure) return 0;
-		labelMeasure.font = `600 11.5px ${tokens().fontLabel}`;
+		labelMeasure.font = `600 13px ${tokens().fontSerif}`;
 		return labelMeasure.measureText(text).width + 18;
 	}
 
@@ -843,17 +843,12 @@
 		wrap.addEventListener('wheel', handMoved, { passive: true });
 		wrap.addEventListener('pointerdown', handMoved);
 
-		const [
-			{ default: Sigma },
-			{ createEdgeArrowProgram },
-			{ createNodeImageProgram },
-			{ stippelProgrammas }
-		] = await Promise.all([
-			import('sigma'),
-			import('sigma/rendering'),
-			import('@sigma/node-image'),
-			import('./DashedEdgeProgram')
-		]);
+		const [{ default: Sigma }, { createNodeImageProgram }, { stippelProgrammas }] =
+			await Promise.all([
+				import('sigma'),
+				import('@sigma/node-image'),
+				import('./DashedEdgeProgram')
+			]);
 		// Left before sigma had loaded (a quick step to the next bron): no container to draw in.
 		if (destroyed) return;
 		const t = tokens();
@@ -874,7 +869,19 @@
 			const w = context.measureText(data.label).width + 6;
 			const h = size + 4;
 			const room = context.canvas.width / (window.devicePixelRatio || 1);
-			const p = lijnLabelPlaats(source.x, source.y, target.x, target.y, w, h, room);
+			// The middle of the curve, not of the chord: both ends shift by half the bend.
+			const len = Math.hypot(target.x - source.x, target.y - source.y) || 1;
+			const bx = (-(target.y - source.y) / len) * BEND * len * 0.5;
+			const by = ((target.x - source.x) / len) * BEND * len * 0.5;
+			const p = lijnLabelPlaats(
+				source.x + bx,
+				source.y + by,
+				target.x + bx,
+				target.y + by,
+				w,
+				h,
+				room
+			);
 			context.fillStyle = t.paper;
 			context.fillRect(p.x, p.y, w, h);
 			context.fillStyle = t.ink;
@@ -898,20 +905,17 @@
 			// `color` as the ground behind the sprite.
 			nodeProgramClasses: { image: NodeImageProgram },
 			edgeProgramClasses: {
-				arrow: metLijnLabel(
-					createEdgeArrowProgram({
-						lengthToThicknessRatio: arrowLength(),
-						widenessToThicknessRatio: arrowLength() * ARROW_WIDTH
-					}) as never
-				),
+				arrow: metLijnLabel(stippel.arrow as never),
+				submitter: metLijnLabel(stippel.submitter as never),
 				dashed: metLijnLabel(stippel.dashed as never),
 				dotted: metLijnLabel(stippel.dotted as never),
 				dashdot: metLijnLabel(stippel.dashdot as never),
 				lid: metLijnLabel(stippel.lid as never)
 			},
 			defaultDrawEdgeLabel: tekenLijnLabel as never,
-			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 4.5 px long.
-			minEdgeThickness: 1.4,
+			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 5.5 px long
+			// (Netwerkcanvas, Maten).
+			minEdgeThickness: MIN_ARROW_PX / arrowLength(),
 			defaultNodeType: 'image',
 			defaultEdgeType: 'arrow',
 			zIndex: true,
@@ -1362,7 +1366,7 @@
 					class="hull"
 					class:is-dim={h.dim}
 					d={h.path}
-					fill={withAlpha(h.color, 0.08)}
+					fill={withAlpha(h.color, 0.05)}
 					stroke={h.color}
 					stroke-dasharray={h.dash}
 				/>
@@ -1372,10 +1376,11 @@
 					<path
 						d={l.d}
 						stroke={l.color}
-						stroke-dasharray={l.dashed ? '3 3' : undefined}
+						stroke-width={l.width}
+						stroke-dasharray={l.dash}
 						fill="none"
 					/>
-					<path d={l.arrow} fill={l.color} />
+					{#if l.arrow}<path d={l.arrow} fill={l.color} />{/if}
 				</g>
 			{/each}
 		</svg>
@@ -1457,12 +1462,11 @@
 		pointer-events: none;
 	}
 	.hull-overlay .hull {
-		stroke-width: 1.5;
+		stroke-width: 1.6;
 		transition: opacity var(--dur-1) var(--ease);
 	}
-	/* A line between hulls: thin and fine-dashed, so it reads as a relation, not a road. */
+	/* A line between hulls, in the stroke and thickness of its kind. */
 	.hull-link path:first-child {
-		stroke-width: 1.2;
 		stroke-linecap: round;
 	}
 	.hull-link {
@@ -1504,15 +1508,17 @@
 		left: 0;
 		top: 0;
 		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 100%));
-		padding: 2px var(--s-2);
-		border-radius: var(--r-rond);
-		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
+		padding: 1px var(--s-2);
+		border-radius: var(--r-1);
+		/* Pure paper, an edge of 1 px in the colour of its kind (Netwerkcanvas, Omhulling). */
+		background: var(--paper);
 		border: 1px solid var(--hull-color);
 		font-family: var(--font-serif);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
+		line-height: 18px;
 		font-weight: 600;
 		/* The name in ink: the lighter groups (Dossier, 3.1:1) are too faint for text. */
-		color: var(--ink-2);
+		color: var(--ink);
 		white-space: nowrap;
 		/* A dossier's title in full can be wider than the canvas: it wraps (.is-long). */
 		max-width: calc(100% - 20px);
@@ -1522,7 +1528,6 @@
 	.hull-label.is-long {
 		width: max-content;
 		white-space: normal;
-		border-radius: var(--r-1);
 		line-height: var(--lh-snug);
 	}
 

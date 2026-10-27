@@ -14,19 +14,12 @@
 		edgeDashFor,
 		edgeStyleFor,
 		lineThickness,
+		towardPaper,
 		arrowLength,
-		ARROW_WIDTH,
-		towardPaper
+		hullDashFor
 	} from '$lib/components/graph/nodeSprites';
-	import {
-		LINE_H,
-		SKETCH_LINE,
-		WIDTH,
-		arrowhead,
-		drawnCount,
-		type Sketch,
-		type SketchLine
-	} from './sketch';
+	import { AIR, DOT_RADIUS, curvedLine } from '$lib/graph/line-shape';
+	import { LINE_H, SKETCH_LINE, WIDTH, drawnCount, type Sketch, type SketchLine } from './sketch';
 
 	let {
 		sketch,
@@ -53,8 +46,15 @@
 	};
 
 	const colour = kindColour;
-	/** A group of Kamerstukken is dashed, as a dossier on the canvas. */
-	const dashed = (c: Collection | null) => c === 'documents' || c === 'dossiers';
+	/** A group's edge as its hull on the canvas: a dossier dashed, a fractie dotted, a commissie dash-dot. */
+	const hullDash = (c: Collection | null) =>
+		c === 'documents' || c === 'dossiers'
+			? hullDashFor('dossier')
+			: c === 'factions'
+				? hullDashFor('faction')
+				: c === 'committees'
+					? hullDashFor('committee')
+					: undefined;
 
 	const m = $derived(sketch.center);
 	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
@@ -71,20 +71,19 @@
 	const chosen = $derived(open !== null);
 
 	type StrokeLine = {
-		x1: number;
-		y1: number;
-		x2: number;
-		y2: number;
+		d: string;
+		head: string | null;
+		dot: { x: number; y: number } | null;
 		colour: string;
 		width: number;
 		dash: string | undefined;
-		head: string | null;
 		open: boolean;
 		dimmed: boolean;
 	};
 	/**
-	 * A line from the bron in the middle to a neighbour at (x, y), of `radiusStop` radius: in the style of
-	 * its kind (Netwerkcanvas, Lijnen), the arrowhead at the end it points to.
+	 * A line from the bron in the middle to a neighbour at (x, y), of `radiusStop` radius: in the style
+	 * of its kind (Netwerkcanvas, Lijnen), slightly curved, the arrowhead at the end it points to
+	 * and, for Ingediend door, a dot at the one who submits.
 	 */
 	function lineTo(
 		l: SketchLine,
@@ -99,35 +98,28 @@
 		const width = (rel ? lineThickness(EDGE_WEIGHT[rel]) : lineThickness(weight)) * SKETCH_LINE;
 		const base = rel ? edgeColorFor(rel, l.source) : 'var(--rule-strong)';
 		const colour = pick ? 'var(--ink)' : rel ? towardPaper(base, strength) : base;
-		const towards = l.direction === 'inbound' ? 'bron' : 'knoop';
 		const points = rel !== null && style !== 'lid' && l.direction !== null;
-		const length = Math.max(width * arrowLength(), 5.5);
-		// Both ends radiusStop at the edge of their bron.
-		const dx = x - m.x;
-		const dy = y - m.y;
-		const d = Math.hypot(dx, dy) || 1;
-		const ux = dx / d;
-		const uy = dy / d;
-		const gap = FOCUS / 2 + HALO;
-		const x1 = m.x + ux * gap;
-		const y1 = m.y + uy * gap;
-		const x2 = x - ux * radiusStop;
-		const y2 = y - uy * radiusStop;
-		const head = !points
-			? null
-			: towards === 'knoop'
-				? arrowhead(x1, y1, x2, y2, length, length * ARROW_WIDTH)
-				: arrowhead(x2, y2, x1, y1, length, length * ARROW_WIDTH);
-		const thick = pick ? width * 1.3 : width;
+		// Drawn from the middle to the neighbour: the arrowhead at the end it points to.
+		const toMiddle = l.direction === 'inbound';
+		const shape = curvedLine(
+			{ x: m.x, y: m.y },
+			{ x, y },
+			{
+				ra: FOCUS / 2 + HALO - AIR,
+				rb: radiusStop - AIR,
+				width,
+				arrow: arrowLength(),
+				head: points ? (toMiddle ? 'a' : 'b') : null,
+				dot: style === 'submitter' && points ? (toMiddle ? 'b' : 'a') : null
+			}
+		);
 		return {
-			x1: points && towards === 'bron' ? x1 + ux * length : x1,
-			y1: points && towards === 'bron' ? y1 + uy * length : y1,
-			x2: points && towards === 'knoop' ? x2 - ux * length : x2,
-			y2: points && towards === 'knoop' ? y2 - uy * length : y2,
+			d: shape.d,
+			head: shape.head,
+			dot: shape.dot,
 			colour,
-			width: thick,
+			width: pick ? width * 1.3 : width,
 			dash: edgeDashFor(style),
-			head,
 			open: pick,
 			dimmed: chosen && !pick
 		};
@@ -149,16 +141,16 @@
 	>
 		{#each [...lines, ...groupLines] as t (t.id)}
 			<g class="line" class:is-dim={t.dimmed}>
-				<line
-					x1={t.x1}
-					y1={t.y1}
-					x2={t.x2}
-					y2={t.y2}
+				<path
+					d={t.d}
+					fill="none"
 					stroke={t.colour}
 					stroke-width={t.width}
 					stroke-dasharray={t.dash}
+					stroke-linecap="round"
 				/>
 				{#if t.head}<polygon points={t.head} fill={t.colour} />{/if}
+				{#if t.dot}<circle cx={t.dot.x} cy={t.dot.y} r={DOT_RADIUS} fill={t.colour} />{/if}
 			</g>
 		{/each}
 
@@ -234,7 +226,8 @@
 					fill="var(--paper)"
 					stroke={colour(b.collection, b.hue)}
 					stroke-width="2.5"
-					stroke-dasharray={dashed(b.collection) ? '6 4' : undefined}
+					stroke-dasharray={hullDash(b.collection)}
+					stroke-linecap="round"
 				/>
 				<text x={b.x} y={b.y + 4.5} text-anchor="middle" class="count">{formatCount(b.count)}</text>
 				<text x={b.lx} y={b.ly} text-anchor="middle" class="name"

@@ -78,7 +78,9 @@ describe('the touch target', () => {
 		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
 		expect(navCoarse).toMatch(/\.group__head \{[^}]*padding-block: 0/);
 		// The sheet's close button is the IconButton, which is 44 px on a touch screen.
-		expect(read('routes/explore/TocSheet.svelte')).toContain('<IconButton label="Sluiten"');
+		expect(read('lib/components/ui/Blad.svelte')).toContain(
+			'<IconButton class="sluit" label="Sluiten"'
+		);
 		const icon = read('lib/components/ui/IconButton.svelte');
 		expect(icon.slice(icon.indexOf('@media (pointer: coarse)'))).toMatch(
 			/width: var\(--veld-h-raak\);\s*height: var\(--veld-h-raak\)/
