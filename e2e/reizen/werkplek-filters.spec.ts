@@ -19,7 +19,7 @@ test('Alleen verbonden bronnen draws only the bron of the page with its surround
 	// The filters of the strip, behind Filter on a narrow screen, and the option under Meer.
 	const toggle = strip.getByRole('button', { name: 'Filter', exact: true });
 	await expect(
-		strip.getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
+		strip.getByRole('region', { name: 'Weergave' }).or(toggle).first()
 	).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
 	const meer = strip.getByRole('region', { name: 'Filters' }).getByRole('button', { name: 'Meer' });

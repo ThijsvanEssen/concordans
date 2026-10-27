@@ -1,11 +1,12 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import { NL } from '$lib/text/collator';
-	// The legend of the werkplek, which is also its filter (besluit 39): Soort (the kinds drawn,
+	// The filter of the werkplek, which is also its key (besluit 39): Tonen (the kinds drawn,
 	// of how many where the API cut them off, and the step that loads them all), Relatie (the
 	// verbindingen drawn, a line sample each), the Periode the page gives; under Meer the preset,
 	// the grouping, the depth, the lid and the overlays.
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import type { Snippet } from 'svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
@@ -216,8 +217,7 @@
 	{:else}
 		<!-- Around one bron: the soorten of Verbonden, how many drawn of how many (N1, N2). -->
 		{#if kindRowsShown}{#if kindRowsShown.length > 0}
-				<section class="block">
-					<h3 class="block__title">Tonen</h3>
+				<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 					{#each kindRowsShown as r, i (r.id)}
 						{@const on = rowOn(r)}
 						{#if r.further && !kindRowsShown[i - 1]?.further}
@@ -269,12 +269,11 @@
 							</p>
 						{/if}
 					{/each}
-				</section>
+				</Sectie>
 			{/if}
 			<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
 		{:else if kinds.length > 0}
-			<section class="block">
-				<h3 class="block__title">Tonen</h3>
+			<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
 					{@const groepen = metGroepUit(k)}
@@ -313,12 +312,11 @@
 						</p>
 					{/if}
 				{/each}
-			</section>
+			</Sectie>
 		{/if}
 
 		{#if relations.length > 0}
-			<section class="block">
-				<h3 class="block__title">Relatie</h3>
+			<Sectie title="Relatie" niveau={3} inklapbaar={false}>
 				{#each relations as r (r.relation)}
 					{@const rel = r.relation as Relation}
 					{@const on = !hiddenRelations.has(rel)}
@@ -326,7 +324,7 @@
 						{#snippet voor()}<LineSample relation={rel} from={sourceKind(rel)} />{/snippet}
 					</FilterOptie>
 				{/each}
-			</section>
+			</Sectie>
 		{/if}
 		{@render periode?.()}
 		<div class="verder">
@@ -361,8 +359,7 @@
 					</TekstMenu>
 				</section>
 
-				<section class="block">
-					<h3 class="block__title">Indeling</h3>
+				<Sectie title="Indeling" niveau={3} inklapbaar={false}>
 					{#each Object.keys(GROUP_LABEL) as ck (ck)}
 						{@const kind = ck as ContainerKind}
 						<FilterOptie
@@ -392,7 +389,7 @@
 								</svg>{/snippet}
 						</FilterOptie>
 					{/each}
-				</section>
+				</Sectie>
 
 				{#if lids.length > 0}
 					<section class="block">
@@ -466,7 +463,8 @@
 </aside>
 
 <style>
-	/* In the strip at the left of the werkplek: blocks under a rule, as the mockup A197-b. */
+	/* In the strip at the left of the werkplek, in Weergave: a block (Sectie) for each of Tonen,
+	   Relatie, Periode, Indeling. */
 	.legend {
 		/* The marks of Soort and Relatie in one column, as wide as a line sample. */
 		--optie-voor: 28px;
@@ -479,21 +477,11 @@
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
 	}
-	.legend > .block,
-	.legend > :global(.block) {
-		padding: var(--s-4) 0;
-		border-top: 1px solid var(--rule);
-	}
-	.block__title {
-		flex: 1;
-		margin: 0 0 var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.legend {
+		gap: var(--s-4);
 	}
 	.verder {
-		padding: var(--s-3) 0;
+		padding: var(--s-1) 0;
 		border-top: 1px solid var(--rule);
 	}
 	.verder__inhoud {

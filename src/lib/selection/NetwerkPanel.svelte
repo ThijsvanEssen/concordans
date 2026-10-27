@@ -9,6 +9,7 @@
 	// (one werkplek, one panel).
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import BronToevoegen from './BronToevoegen.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import type { NetwerkEntry } from './netwerk';
@@ -97,8 +98,7 @@
 		{/if}
 	{/snippet}
 	{#if entries.length > 0}
-		<section class="blok" aria-labelledby="netwerk-gekozen">
-			<h3 class="blok__label" id="netwerk-gekozen">Gekozen</h3>
+		<Sectie title="Gekozen" niveau={3} inklapbaar={false}>
 			<ul class="rijen">
 				{#each shown as e (e.id)}
 					<li class="rij" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
@@ -160,11 +160,10 @@
 			{:else if entries.length > FOLD_AT + 1}
 				<p class="verder"><TekstLink onclick={() => (showAll = false)}>minder</TekstLink></p>
 			{/if}
-		</section>
+		</Sectie>
 	{/if}
 	{#if selection}
-		<section class="blok" aria-labelledby="netwerk-aangeklikt">
-			<h3 class="blok__label" id="netwerk-aangeklikt">Aangeklikt op het canvas</h3>
+		<Sectie title="Aangeklikt op het canvas" niveau={3} inklapbaar={false}>
 			<div class="aangeklikt">
 				<span class="aangeklikt__naam">{selection.label}</span>
 				<button
@@ -174,7 +173,7 @@
 					aria-label="{selection.label} toevoegen aan het netwerk">Toevoegen</button
 				>
 			</div>
-		</section>
+		</Sectie>
 	{/if}
 	<section class="blok blok--toevoegen">
 		<button type="button" class="btn toevoegen" onclick={() => (searching = true)}
@@ -236,24 +235,6 @@
 		}
 	}
 
-	/* Blocks under a rule, each with a label in the sans. */
-	.blok {
-		padding: var(--s-2) 0 var(--s-3);
-		border-top: 1px solid var(--rule);
-	}
-	.blok:first-child {
-		border-top: 0;
-		padding-top: 0;
-	}
-	.blok:last-child {
-		padding-bottom: 0;
-	}
-	.blok__label {
-		margin: 0 0 var(--s-2);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	.rijen {
 		list-style: none;
 		margin: 0;
