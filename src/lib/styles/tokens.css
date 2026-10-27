@@ -74,6 +74,8 @@
 	   choice rows, fields, keys and menus (Thijs, 10 Oct: "typografie is goed").
 	   docs/typografie.md. */
 	--font-ui: 'Schibsted Grotesk', system-ui, sans-serif;
+	/* The § of the wordmark alone (Woordmerk): Playfair Display italic 800, the site's one display face. */
+	--font-merk: 'Playfair Display', var(--font-serif);
 
 	--t-h1: 30px; /* page titles, weight 600 */
 	--t-h2: 24px;

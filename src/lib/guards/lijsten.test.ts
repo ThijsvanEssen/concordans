@@ -37,18 +37,19 @@ describe('list pages and the feed', () => {
 		}
 		const view = bron('lib/map/MapView.svelte');
 		const voor = /\{#snippet voor\(\)\}([\s\S]*?)\{\/snippet\}/.exec(view)?.[1] ?? '';
-		expect(voor).toMatch(/<Aantekening[^>]*placeholder="Onderzoeksvraag of aantekening"/);
+		expect(voor).toMatch(/<Aantekening[^>]*\bveld\b/);
 		expect(view).toMatch(/class="voor blad__lijst">\{@render voor\(\)\}/);
 		expect(regels(view).filter((r) => /grid-column/.test(r.body))).toEqual([]);
 	});
 
 	it('shows the filters of a list page in FilterBar alone, over the list (besluit 40)', () => {
 		// Bladeren, Actueel and Zoeken: one bar of filters, no column beside the list and no
-		// Verfijnen of their own. What a button holds (FacetMenu) is FilterBar's alone.
+		// Verfijnen of their own, the overview of a topic the same. What a button holds (FacetMenu) is FilterBar's alone.
 		for (const path of [
 			'lib/components/explore/IndexView.svelte',
 			'routes/(main)/actueel/+page.svelte',
-			'routes/(main)/zoeken/+page.svelte'
+			'routes/(main)/zoeken/+page.svelte',
+			'lib/onderwerpen/OverviewFacets.svelte'
 		]) {
 			const text = bron(path);
 			expect(text, path).toContain('<FilterBar');

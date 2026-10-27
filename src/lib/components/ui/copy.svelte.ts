@@ -1,10 +1,13 @@
-// Copying to the clipboard, the same everywhere: the button that copied says
-// Gekopieerd, or Kopiëren mislukt where the clipboard refuses, for two seconds, and the
-// ritual's status line says what was copied, seen and heard (bevestig.svelte.ts).
+// Copying to the clipboard, the same everywhere: the button that copied says Gekopieerd for
+// two seconds, and the ritual's status line says what was copied, seen and heard
+// (bevestig.svelte.ts). Where the clipboard refuses, that is a failure, not a Bevestiging
+// (DS Bevestiging, Niet: een fout): only the button says so, in the words of a failure
+// (LoadState: "kon niet"), and the status line stays as it was.
 
 import { BEVESTIG_MS, announce } from '$lib/bevestig/bevestig.svelte';
 
 export const COPY_MS = BEVESTIG_MS;
+const MISLUKT = 'Kopiëren kon niet';
 
 type Write = (text: string) => Promise<void>;
 
@@ -25,14 +28,14 @@ export function createCopier(write: Write = clipboard) {
 				ok = false;
 			}
 			last = { key, ok };
-			announce(ok ? (wat ? `Gekopieerd: ${wat}` : 'Gekopieerd') : 'Kopiëren mislukt');
+			if (ok) announce(wat ? `Gekopieerd: ${wat}` : 'Gekopieerd');
 			clearTimeout(timer);
 			timer = setTimeout(() => (last = null), COPY_MS);
 			return ok;
 		},
 		/** The label of the button `key`: its own word, or what its last copy did. */
 		label(key: string, idle: string) {
-			return last?.key === key ? (last.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
+			return last?.key === key ? (last.ok ? 'Gekopieerd' : MISLUKT) : idle;
 		}
 	};
 }

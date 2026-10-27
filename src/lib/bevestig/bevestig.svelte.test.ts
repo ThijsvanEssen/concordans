@@ -71,7 +71,7 @@ describe('the ritual of Bewaar, Volg and Kopieer', () => {
 
 	it('says a plain word once, the last one standing', () => {
 		announce('Gekopieerd');
-		announce('Kopiëren mislukt');
-		expect(confirmation.now?.text).toBe('Kopiëren mislukt');
+		announce('Gekopieerd: link');
+		expect(confirmation.now?.text).toBe('Gekopieerd: link');
 	});
 });

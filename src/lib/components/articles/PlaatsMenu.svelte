@@ -19,7 +19,7 @@
 	// The menu of a place in a text (a lid, an onderdeel, a sub), opened from its own marker
 	// ("1.", "a.") or a click on its text (concept 21, variant B; Thijs, 10 Oct: "nummer of lid
 	// of onder-markering als menu"). Nothing stands beside the text at rest. The menu names
-	// the place, then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
+	// the place, Link naar dit lid (its address with its anchor), then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
 	// (its verbindingen, its history). In the top layer by its marker, with the keys of a menu:
 	// Escape gives the focus back to the marker, a click outside closes it.
 	// Words selected in the text open the same menu (O4, besluit 24), by the words: the place
@@ -38,7 +38,7 @@
 	let {
 		anker,
 		title,
-		cite = [],
+		cite: forms = [],
 		tekst,
 		bewaar = null,
 		verbindingen = null,
@@ -53,6 +53,7 @@
 		anker: HTMLElement;
 		/** The place, as it is cited: `art. 1:1 onder q sub 1 Wft`, `Lid 2`. */
 		title: string;
+		/** The forms to cite; its link, the place's address with its anchor, is Link naar dit lid. */
 		cite?: CiteItem[];
 		/** The text Kopieer tekst copies. */
 		tekst: () => string;
@@ -77,6 +78,9 @@
 		onClose: () => void;
 	} = $props();
 
+	/** The address of the place with its anchor: Link naar dit lid, the first item of the menu. */
+	const lidLink = $derived(forms.find((c) => c.kind === 'link')?.text ?? null);
+	const cite = $derived(forms.filter((c) => c.kind !== 'link'));
 	/** The words the menu is of, their start in the head. */
 	const words = $derived(fragment?.exact ?? shading?.exact ?? null);
 	const QUOTE = 32;
@@ -124,6 +128,15 @@
 	use:menu={{ open: true, close: onClose, trigger: anker }}
 >
 	<p class="kop">{head}</p>
+	{#if lidLink}
+		<button
+			type="button"
+			class="tekstmenu__item"
+			role="menuitem"
+			onclick={() => kopieer(lidLink, 'lidlink', `link naar ${title}`)}
+			>{copier.label('lidlink', 'Link naar dit lid')}</button
+		>
+	{/if}
 	{#if cite.length}
 		<p class="label">Kopieer als</p>
 		{#each cite as c (c.kind)}

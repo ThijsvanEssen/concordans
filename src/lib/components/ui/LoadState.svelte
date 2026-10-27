@@ -7,11 +7,22 @@
 	 * tekstversies"), slow, broken or asked too often.
 	 */
 	export function failureText(what: string, error: unknown, plural = false) {
-		const verb = plural ? 'konden' : 'kon';
-		if (isRateLimited(error)) return `${RATE_LIMIT_TEXT}.`;
-		return isSlow(error)
-			? `${what} ${verb} niet op tijd worden geladen.`
-			: `${what} ${verb} niet worden geladen.`;
+		const [subject, no, rest] = failureParts(what, error, plural);
+		return no ? `${subject} ${no} ${rest}` : subject;
+	}
+
+	/**
+	 * The sentence in three parts: its subject, "kon niet" (the words in the accent, DS
+	 * LoadState: an error is red, with words beside it) and the rest. A 429 is one part.
+	 */
+	export function failureParts(
+		what: string,
+		error: unknown,
+		plural = false
+	): [string, string, string] {
+		const no = plural ? 'konden niet' : 'kon niet';
+		if (isRateLimited(error)) return [`${RATE_LIMIT_TEXT}.`, '', ''];
+		return [what, no, isSlow(error) ? 'op tijd worden geladen.' : 'worden geladen.'];
 	}
 
 	/** Nothing to show: no answer, or an empty list. */
@@ -53,6 +64,8 @@
 		empty?: Snippet;
 		children?: Snippet<[T]>;
 	} = $props();
+
+	const parts = $derived(failureParts(what, state.status === 'error' ? state.error : null, plural));
 
 	// A 429 asks again by itself once per subject; an answer gives that back.
 	$effect(() => {
@@ -98,7 +111,8 @@
 		class:failure--block={form === 'block'}
 		role="alert"
 	>
-		{failureText(what, state.error, plural)}
+		{parts[0]} <span class="fout">{parts[1]}</span>
+		{parts[2]}
 		{#if retry}
 			<TekstLink onclick={retry}>Opnieuw</TekstLink>
 		{/if}
@@ -111,6 +125,10 @@
 {/if}
 
 <style>
+	/* "kon niet": the words of a failure in the accent, beside the sentence that says what. */
+	.fout {
+		color: var(--uitkomst-nee);
+	}
 	.failure--block {
 		padding: var(--s-5) 0;
 		font-family: var(--font-serif);

@@ -3,7 +3,8 @@
 	// framed) with the word of its value and a caret. It opens a list under itself; the chosen
 	// option in weight. The one form for every select in
 	// Concordans: Alle bronnen, Per soort, Nieuwste eerst, Alle jaren. A menu that holds more
-	// than a list (two lists side by side) passes its own `inhoud`.
+	// than a list (two lists side by side) passes its own `inhoud`. Mijn, Volg and the ⋯ of a
+	// row are this menu with the button of their place (`klasse`, `knop`, `pijl`).
 	import type { Option } from './option';
 	import type { Snippet } from 'svelte';
 	import { menu } from '$lib/actions/menu';
@@ -25,7 +26,11 @@
 		onClose,
 		gekozen: aan = false,
 		breed = false,
-		open = $bindable(false)
+		open = $bindable(false),
+		klasse = 'btn tekstmenu__knop',
+		pijl = true,
+		titel,
+		eigenKlik = false
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
 		label: string;
@@ -51,6 +56,14 @@
 		breed?: boolean;
 		/** Open; bound, so another control opens the menu too (Bewaard beside Bewaar's caret). */
 		open?: boolean;
+		/** The button's class where it is not a framed Knop: Mijn in the bar, the ⋯ of a row. */
+		klasse?: string;
+		/** The caret after the button's words; a glyph (⋯) has none. */
+		pijl?: boolean;
+		/** The button's hover title. */
+		titel?: string;
+		/** A click in the list is the menu's, not the row's under it. */
+		eigenKlik?: boolean;
 	} = $props();
 
 	let button = $state<HTMLElement | null>(null);
@@ -65,17 +78,25 @@
 <div class="tekstmenu" use:menu={{ open, close: sluit }}>
 	<button
 		type="button"
-		class="btn tekstmenu__knop"
+		class={klasse}
 		class:is-active={aan}
+		title={titel}
 		bind:this={button}
 		aria-haspopup="menu"
 		aria-expanded={open}
 		aria-label={!woorden || label.includes(woorden) ? label : `${label}: ${woorden}`}
 		onclick={() => (open ? sluit() : (open = true))}
-		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
+		>{#if knop}{@render knop()}{:else}{woorden}{/if}{#if pijl}<Caret {open} />{/if}</button
 	>
 	{#if open && button}
-		<MenuList anchor={button} {label} close={sluit} align={rechts ? 'right' : 'left'} wide={breed}>
+		<MenuList
+			anchor={button}
+			{label}
+			close={sluit}
+			align={rechts ? 'right' : 'left'}
+			wide={breed}
+			ownClick={eigenKlik}
+		>
 			{#if inhoud}
 				{@render inhoud(sluit)}
 			{:else}

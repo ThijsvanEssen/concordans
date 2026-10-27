@@ -282,7 +282,7 @@
 										type="button"
 										role="menuitem"
 										class="tekstmenu__item"
-										onclick={act(close, () => (asking = 'delete'))}>Bundel verwijderen</button
+										onclick={act(close, () => (asking = 'delete'))}>Bundel wissen</button
 									>
 								{/if}
 							</div>
@@ -352,13 +352,9 @@
 	{/if}
 	{#if asking}
 		<p class="vraag">
-			<span>{b.naam} {asking === 'delete' ? 'verwijderen' : 'wissen'}?</span>
-			<button type="button" class="btn" onclick={confirm}
-				>{asking === 'delete' ? 'Verwijderen' : 'Wissen'}</button
-			>
-			<TekstLink onclick={() => (asking = null)}
-				>{asking === 'delete' ? 'Niet verwijderen' : 'Niet wissen'}</TekstLink
-			>
+			<span>{b.naam} wissen?</span>
+			<button type="button" class="btn" onclick={confirm}>Wissen</button>
+			<TekstLink onclick={() => (asking = null)}>Niet wissen</TekstLink>
 		</p>
 	{/if}
 	{#if shared?.skipped}
@@ -369,11 +365,12 @@
 		<Aantekening
 			tekst={own.notitie}
 			bij={own.naam}
-			placeholder="Onderzoeksvraag of aantekening"
+			bundel={own.naam}
+			veld
 			onBewaar={(t) => kaart.mapNotitie(t, own.id)}
 		/>
 	{:else}
-		<Aantekening tekst={b.notitie} bij={b.naam} />
+		<Aantekening tekst={b.notitie} bij={b.naam} bundel={b.naam} />
 	{/if}
 	{#if m}<p class="papier">Gewijzigd {korteDatum(vandaag(new Date(m.gewijzigd)))}</p>{/if}
 	<div class="werkregel">

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { textOf } from '$lib/text/words';
 	// The bijlagen of a stuk in its status line (concept 21: "de bijlagen gaan in de
-	// statusregel"): "Bijlagen 15" with a caret; opened, the list under the line, asked then
+	// statusregel"): "Bijlagen 15" as FoldButton, the fold of every heading; opened, the list under the line, asked then
 	// (ACCOMPANIES inbound, one request). Verbonden has them all.
-	import Caret from '$lib/components/ui/Caret.svelte';
+	import FoldButton from '$lib/components/ui/FoldButton.svelte';
+	import { isOpen } from '$lib/components/ui/dicht.svelte';
+	import { untrack } from 'svelte';
 	import { getBuckets } from '$lib/api/nodes';
 	import { layerOf, type Layer } from '$lib/bron/behoort-layer';
 	import { bronHref } from '$lib/bron/href';
@@ -17,7 +19,9 @@
 
 	/** The most rows listed here. */
 	const TOON = 50;
-	let open = $state(false);
+	/** Kept per kind in this browser, closed until the reader opens it (dicht.svelte.ts). */
+	const SLEUTEL = 'bijlagen';
+	const open = $derived(isOpen(SLEUTEL, false));
 	let rijen = $state.raw<State<Layer[]> | null>(null);
 	const attachments = createLoader(
 		(key: string, signal: AbortSignal) =>
@@ -38,23 +42,25 @@
 		(s) => (rijen = s),
 		'Bijlagen'
 	);
+	// Another stuk: its bijlagen are not these.
 	$effect(() => {
 		void bronKey;
-		open = false;
 		rijen = null;
 		return attachments.stop;
 	});
-
-	function wissel() {
-		open = !open;
-		if (!open || (rijen && rijen.status !== 'error')) return;
-		attachments.load(bronKey);
-	}
+	// Opened (or opened already for this kind): asked now, once.
+	$effect(() => {
+		const key = bronKey;
+		if (!open) return;
+		untrack(() => {
+			if (!rijen || rijen.status === 'error') attachments.load(key);
+		});
+	});
 </script>
 
 <span class="bijlagen">
-	<button type="button" class="knop" aria-expanded={open} onclick={wissel}
-		>Bijlagen <span class="aantal">{formatCount(aantal)}</span><Caret {open} /></button
+	<FoldButton sleutel={SLEUTEL} {open}
+		>Bijlagen <span class="aantal">{formatCount(aantal)}</span></FoldButton
 	>
 	{#if open}
 		<div class="lijst">
@@ -87,22 +93,6 @@
 	/* Its button among the words of the status line, its list on a line of its own under it. */
 	.bijlagen {
 		display: contents;
-	}
-	.knop {
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--s-1);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
-	}
-	.knop:hover,
-	.knop:focus-visible {
-		text-decoration: underline;
-		text-underline-offset: 3px;
 	}
 	.aantal {
 		color: var(--ink-3);

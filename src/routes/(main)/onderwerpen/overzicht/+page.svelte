@@ -927,64 +927,62 @@
 				}}
 			/>
 		</div>
-		<div class="indeling blad__indeling">
-			<OverviewFacets
-				faction={fractie}
-				chamber={kamer}
-				list={() => contentEl}
-				onChoose={(x) => zet({ fractie: x, stem: null, cel: null })}
-			/>
-			<div class="inhoud" bind:this={contentEl}>
-				{#if tellenFout && !feed.length}
-					<div class="status">
-						<LoadState state={counts.state} what="Het overzicht" retry={counts.retry} />
-					</div>
-				{:else if leegte}
-					<p class="status stil">
-						Geen gebeurtenissen met deze woorden in de titel{van || tot ? ' in deze periode' : ''}.
-					</p>
-				{:else}
-					<OverviewCourse
-						layer={laag}
-						{notes}
-						onLayer={(l) => zet({ strekking: l, cel: null })}
-						onWeek={() => zet({ per: week ? null : 'week', cel: null })}
-						grid={{
-							kolommen,
-							vakken,
-							rijen,
-							keuze,
-							onSelect: kies,
-							loading: bezig,
-							failed,
-							ongeteld,
-							uit,
-							nieuwSinds: vorige,
-							week
-						}}
-					/>
-					<OverviewList
-						kind={lijstSoort}
-						count={lijstLaadt && !lijstAantal ? '…' : getal(lijstAantal)}
-						selection={selectie}
-						allHref={oudeFilters ? hrefMet({}, true) : null}
-						decisions={besluitRijen}
-						amendments={celAmendementen.slice(0, amendementenGetoond)}
-						feedItems={feedLijst}
-						faction={fractie}
-						voteOf={stemVan}
-						coding={mijn}
-						topicName={naam}
-						onStrekking={kiesStrekking}
-						canSaveCoding={Object.keys(mijn).length > 0}
-						onSaveCoding={bewaarCodering}
-						onLoadCoding={laadCodering}
-						more={volgende}
-						error={lijstFout}
-						loading={lijstLaadt && !lijstAantal}
-					/>
-				{/if}
-			</div>
+		<OverviewFacets
+			faction={fractie}
+			chamber={kamer}
+			list={() => contentEl}
+			onChoose={(x) => zet({ fractie: x, stem: null, cel: null })}
+		/>
+		<div class="inhoud" bind:this={contentEl}>
+			{#if tellenFout && !feed.length}
+				<div class="status">
+					<LoadState state={counts.state} what="Het overzicht" retry={counts.retry} />
+				</div>
+			{:else if leegte}
+				<p class="status stil">
+					Geen gebeurtenissen met deze woorden in de titel{van || tot ? ' in deze periode' : ''}.
+				</p>
+			{:else}
+				<OverviewCourse
+					layer={laag}
+					{notes}
+					onLayer={(l) => zet({ strekking: l, cel: null })}
+					onWeek={() => zet({ per: week ? null : 'week', cel: null })}
+					grid={{
+						kolommen,
+						vakken,
+						rijen,
+						keuze,
+						onSelect: kies,
+						loading: bezig,
+						failed,
+						ongeteld,
+						uit,
+						nieuwSinds: vorige,
+						week
+					}}
+				/>
+				<OverviewList
+					kind={lijstSoort}
+					count={lijstLaadt && !lijstAantal ? '…' : getal(lijstAantal)}
+					selection={selectie}
+					allHref={oudeFilters ? hrefMet({}, true) : null}
+					decisions={besluitRijen}
+					amendments={celAmendementen.slice(0, amendementenGetoond)}
+					feedItems={feedLijst}
+					faction={fractie}
+					voteOf={stemVan}
+					coding={mijn}
+					topicName={naam}
+					onStrekking={kiesStrekking}
+					canSaveCoding={Object.keys(mijn).length > 0}
+					onSaveCoding={bewaarCodering}
+					onLoadCoding={laadCodering}
+					more={volgende}
+					error={lijstFout}
+					loading={lijstLaadt && !lijstAantal}
+				/>
+			{/if}
 		</div>
 	{/if}
 </div>

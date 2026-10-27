@@ -1,12 +1,11 @@
 <script lang="ts">
 	// The reader's own note in a map, one form for an item's, a group's and the map's (Thijs,
 	// 12 Oct: "nu lijkt het alsof het bij de wet hoort"): set apart from the text it is about
-	// by a rule at its left and the label Aantekening with the sign of Bewaar, as the network
-	// marks a bron with a note; the note itself upright, in the reader's letter. Where it can
+	// by a rule at its left and a label: the sign of Bewaar and the name of the bundel it is kept
+	// in (DS Aantekening), as the network marks a bron with a note; the note itself upright, in the reader's letter. Where it can
 	// be changed a click opens it in place: Enter keeps it, Escape leaves it, leaving the
-	// field keeps it. Read only, as on a network card, the label names its place. With a
-	// placeholder an empty note is an empty field that says what goes in it (a bundel's
-	// research question). The note of an arcering (O4) stands under its place in the text, and
+	// field keeps it. Read only, as on a network card, the label names its place. With
+	// `veld` an empty note is an empty field under its label (a bundel's research question). The note of an arcering (O4) stands under its place in the text, and
 	// a click opens the menu of its arcering (`onOpen`), where it is changed.
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
@@ -18,7 +17,7 @@
 		bundel = null,
 		compact = false,
 		open = $bindable(false),
-		placeholder = null,
+		veld = false,
 		onBewaar,
 		onOpen
 	}: {
@@ -27,23 +26,21 @@
 		bij: string;
 		/** Its place in the label, where the note stands apart from it: `lid 3`, a law, a map. */
 		waar?: string | null;
-		/** The bundel it is kept in, in the label, where the text shows notes of more than one. */
+		/** The bundel it is kept in: the label is its name. */
 		bundel?: string | null;
 		/** Without its own margin and measure, in a card that spaces its lines itself. */
 		compact?: boolean;
 		/** The field open; without `onBewaar` it never opens. */
 		open?: boolean;
-		/** Where there is no note: an empty field with these words, in place of nothing. */
-		placeholder?: string | null;
+		/** Where there is no note: an empty field under its label, in place of nothing. */
+		veld?: boolean;
 		/** Keeps the note; without it the note is read only (a shared map). */
 		onBewaar?: (tekst: string) => void;
 		/** A click on the note opens this menu (an arcering's), the note its button. */
 		onOpen?: (button: HTMLElement) => void;
 	} = $props();
 
-	const label = $derived(
-		bundel ? `Aantekening, ${bundel}` : waar ? `Aantekening bij ${waar}` : 'Aantekening'
-	);
+	const label = $derived(bundel ?? (waar ? `Aantekening bij ${waar}` : 'Aantekening'));
 
 	function done(value: string) {
 		if (!open) return;
@@ -76,13 +73,13 @@
 	}
 </script>
 
-{#if !tekst && !open && placeholder && onBewaar}
+{#if !tekst && !open && veld && onBewaar}
 	<div class="aantekening" class:compact>
+		<span class="label"><Picto naam="bewaard" size={10} />{label}</span>
 		<Tekstveld
 			multiline
 			rows={2}
 			label="Aantekening bij {bij}"
-			{placeholder}
 			onkeydown={emptyKey}
 			onblur={(e) => {
 				if (e.currentTarget.value.trim()) onBewaar(e.currentTarget.value);

@@ -18,7 +18,7 @@ describe('KopActies', () => {
 		await tick();
 		expect(
 			screen
-				.getByRole('button', { name: 'Bewaard lid 2 in Losse markeringen' })
+				.getByRole('button', { name: 'Bewaard in Losse markeringen' })
 				.getAttribute('aria-pressed')
 		).toBe('true');
 	});
