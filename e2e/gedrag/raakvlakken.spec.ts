@@ -206,8 +206,12 @@ test('an open row of Verbonden shows its passage once and keeps its title in pla
 }) => {
 	await page.goto(ARTICLE);
 	await naarVerbonden(page);
-	const title = page.locator('a.kind__title[aria-expanded]').first();
+	// The first uitspraak: Verbonden opens with the soorten of the bron's own rubriek (Artikelen).
+	const title = page
+		.locator('section.kind[data-kind="judgments"] a.kind__title[aria-expanded]')
+		.first();
 	await expect(title).toBeVisible();
+	await title.scrollIntoViewIfNeeded();
 	await page.waitForLoadState('networkidle');
 	const before = await title.boundingBox();
 	await title.click();
@@ -216,6 +220,6 @@ test('an open row of Verbonden shows its passage once and keeps its title in pla
 	const row = page.locator('li.kind__open');
 	const text = await row.innerText();
 	expect(text.split('condicio-sine-qua-non-verband').length - 1).toBe(1);
-	const after = await page.locator('a.row__title').first().boundingBox();
+	const after = await row.locator('a.row__title').first().boundingBox();
 	expect(Math.abs(after!.y - before!.y)).toBeLessThan(1);
 });
