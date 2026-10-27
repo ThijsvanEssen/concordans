@@ -8,6 +8,7 @@ SvelteKit + TypeScript, API-client uit OpenAPI (`openapi-fetch`). Uitleg: `docs/
 
 - `npm run dev`; contract: `npm run sync:api` (na een lawgraph-wijziging), `npm run check:api`.
 - Vóór een merge: `npm run gates` (lichte gates, daarna de zware onder een machine-lock). Lokaal liever `npm run lint:changed` en `npm run test:related`; volledige suites in CI.
+- Verse worktree: `npm run check` vóór lint. Poort 4317 bezet: `E2E_PORT=43xx`. Ontbrekende fixtures: `npm run e2e:record -- <spec>`. `e2e/visueel.spec.ts` alleen in de Playwright-docker zoals in `.github/workflows/ci.yml`, niet via `scripts/e2e-update.sh` (dat wist `e2e/api`). Merge-ketens met `&&`.
 - Push naar `main` draait `ci`; de site-deploy is een push naar `release` (fast-forward van `main`, zie `README.md`). Vóór een push: `git diff --stat origin/main` en controleren dat geen ander werk teruggedraaid wordt; vóór `release` een `ux-toets`.
 
 ## Huisregels
