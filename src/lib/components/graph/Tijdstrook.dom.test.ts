@@ -106,7 +106,7 @@ describe('the Tijdstrook', () => {
 
 	it('dims the bronnen outside the period chosen', () => {
 		const { band } = strook(2021, 2021);
-		const dim = [...band.querySelectorAll('.kolom')].map((k) => k.classList.contains('is-dim'));
-		expect(dim).toEqual([true, false, true, true]);
+		const dim = [...band.querySelectorAll('.stip')].map((k) => k.classList.contains('is-dim'));
+		expect(dim).toEqual([true, false, true]);
 	});
 });

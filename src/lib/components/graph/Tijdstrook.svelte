@@ -108,8 +108,11 @@
 			<div class="kolommen">
 				{#each kolommen as n, k (k)}
 					{@const jaar = eerste + k}
-					<div class="kolom" class:is-dim={!!keuze && (jaar < keuze.van || jaar > keuze.tot)}>
-						{#each { length: n } as _, i (i)}<i class="stip"></i>{/each}
+					<div class="kolom">
+						{#each { length: n } as _, i (i)}<i
+								class="stip"
+								class:is-dim={!!keuze && (jaar < keuze.van || jaar > keuze.tot)}
+							></i>{/each}
 					</div>
 				{/each}
 			</div>
@@ -201,7 +204,7 @@
 		border-radius: var(--r-rond);
 		background: var(--ink-2) padding-box;
 	}
-	.kolom.is-dim .stip {
+	.stip.is-dim {
 		background: var(--rule);
 	}
 	.greep {
