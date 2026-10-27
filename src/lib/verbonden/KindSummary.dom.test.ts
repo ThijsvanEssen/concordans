@@ -105,7 +105,7 @@ describe('KindSummary', () => {
 				queueMicrotask(() => {
 					asking = false;
 					loaded += [77, 82, 301][Math.floor(loaded / 7) % 3];
-					void rerender({ ...props, kinds: kinds() });
+					rerender({ ...props, kinds: kinds() });
 				});
 			}
 		};

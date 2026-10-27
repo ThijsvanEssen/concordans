@@ -47,14 +47,19 @@
 	// Steps that add nothing, as the API cut the neighbourhood off at its cap.
 	const cap = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
 	const beyondCap = (d: number) => !networkOn && !!reach?.capped && d > reach.depth;
+	const NO_SELECTION = 'Kies eerst een bron in het netwerk.';
 	const reason = (d: number) =>
 		networkOn && !hasSelection
-			? 'Kies eerst een bron in het netwerk.'
+			? NO_SELECTION
 			: beyondCap(d)
-				? `Maximaal ${cap} bronnen getoond; een stap verder voegt niets toe.`
+				? `Maximaal ${cap} bronnen getoond`
 				: null;
-	/** Why a step is off, said where a finger and the keyboard read it, not in a title alone (C15b). */
-	const stepReason = $derived(STEPS.map(reason).find((r) => r !== null) ?? null);
+	/**
+	 * Why the steps are off where it is the reader's to fix, said where a finger and the keyboard
+	 * read it (C15b). A cut-off neighbourhood greys the steps out and says its cap in their title
+	 * only: no sentence in the panel (R7).
+	 */
+	const stepReason = $derived(STEPS.some((d) => reason(d) === NO_SELECTION) ? NO_SELECTION : null);
 </script>
 
 <CanvasKaart title="Weergave" class="netwerkkeuze">
