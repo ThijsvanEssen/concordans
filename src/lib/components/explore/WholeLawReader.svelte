@@ -333,7 +333,7 @@
 <!-- What the head says besides its facts: whether the law holds, what of it is read, a
      failure, its grondslag, a treaty. Only where it says something: no empty line (A190). -->
 {#snippet lawStatus()}
-	<Validity {validity} soort="wet" />
+	<Validity {validity} what="wet" />
 	{#if lawDetail?.ministry}
 		<span
 			>Ministerie: <MinistryLink

@@ -5,21 +5,21 @@
 	// vervallen, the word beside it; a thing that holds draws nothing here.
 	import type { Validity } from '$lib/api/validity';
 	import { bronHref } from '$lib/bron/href';
-	import { statusOf, type Soort } from '$lib/text/validity';
+	import { statusOf, type Holder } from '$lib/text/validity';
 
 	let {
 		validity,
-		soort = 'artikel',
+		what = 'artikel',
 		opvolger = true
 	}: {
 		validity: Validity | null | undefined;
 		/** A law is ingetrokken, an article vervallen (docs/woorden.md). */
-		soort?: Soort;
+		what?: Holder;
 		/** Leave the successor out where the page names it already (an article's own). */
 		opvolger?: boolean;
 	} = $props();
 
-	const status = $derived(statusOf(validity, soort));
+	const status = $derived(statusOf(validity, what));
 	const next = $derived(opvolger ? (validity?.successors[0] ?? null) : null);
 	const name = $derived(next ? (next.citation_title ?? next.title) : null);
 </script>

@@ -89,17 +89,17 @@
 	/** The words after Zoek, which a phone leaves to a screen reader; with their space. */
 	const FIND_REST = ' in dit stuk';
 	const finder = getContext<FindInText | undefined>(FIND_KEY);
-	const bandTools = $derived(!!finder?.find || !!tools);
+	const hasTools = $derived(!!finder?.find || !!tools);
 	// An article's phrase that comes late has a line of its own, kept from the start: the tools
 	// stand at the right of that last line.
-	const opLater = $derived(!!later || laterPlek);
+	const atLater = $derived(!!later || laterPlek);
 </script>
 
 <!-- Zoek in dit stuk: a tool of the text, not an action on the bron: bare, with its glass. -->
-{#snippet zoek(klasse: string)}
+{#snippet findTool(where: string)}
 	<button
 		type="button"
-		class="find-btn raakvlak {klasse}"
+		class="find-btn raakvlak {where}"
 		class:is-active={finder?.search.open}
 		aria-expanded={finder?.search.open}
 		onclick={() => finder?.search.toggle()}
@@ -117,9 +117,9 @@
 
 <!-- The tools of the text at the right of the block's last line: Zoek in dit stuk (not on a
      phone, where it stands with the actions), then what only this kind has. -->
-{#snippet gereedschap()}
-	{#if bandTools}<span class="reader-gereedschap"
-			>{#if finder?.find}{@render zoek('find-btn--band')}{/if}{@render tools?.()}</span
+{#snippet toolbox()}
+	{#if hasTools}<span class="reader-toolbox"
+			>{#if finder?.find}{@render findTool('find-btn--band')}{/if}{@render tools?.()}</span
 		>{/if}
 {/snippet}
 
@@ -164,7 +164,7 @@
 				follow={acties.follow ?? null}
 				atom={acties.atom ?? null}
 			/>
-			{#if finder?.find}{@render zoek('find-btn--rij')}{/if}
+			{#if finder?.find}{@render findTool('find-btn--rij')}{/if}
 		</span>
 		<!-- A break may fall after a colon (an ECLI); copying keeps the text as it is. -->
 		<!-- The page's one h1: the bron (UX-toets 10 Oct, #21). -->
@@ -176,24 +176,24 @@
 	<!-- The stand and the facts one block under one rule. Zoek in dit stuk, a tool of the text,
 	     stands at the right of the block's last line (the strip; the status where there is no
 	     strip); on a phone it stands in the row of the actions. -->
-	{#if statusLine || statusHeld || facts || later || laterPlek || bandTools}
+	{#if statusLine || statusHeld || facts || later || laterPlek || hasTools}
 		<div
 			class="reader-status"
 			class:reader-status--zoek={!facts && !statusLine && !statusHeld && !later && !laterPlek}
 		>
 			<!-- The words of the status where there are any or their room is kept: no empty line. -->
 			{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
-					{@render statusLine?.()}{#if !facts && !opLater}{@render gereedschap()}{/if}
+					{@render statusLine?.()}{#if !facts && !atLater}{@render toolbox()}{/if}
 				</div>{/if}
 			{#if facts}<div class="reader-facts">
 					<div class="reader-facts__strook">{@render facts()}</div>
-					{#if !opLater}{@render gereedschap()}{/if}
+					{#if !atLater}{@render toolbox()}{/if}
 				</div>{/if}
-			{#if !facts && !statusLine && !statusHeld && !opLater}{@render gereedschap()}{/if}
+			{#if !facts && !statusLine && !statusHeld && !atLater}{@render toolbox()}{/if}
 			<!-- What comes after the text (an article's bills) under the facts: its room is held at
 			     the foot of the head, before the text, not between the actions and the facts. -->
-			{#if opLater}<div class="reader-status__later">
-					{@render later?.()}{@render gereedschap()}
+			{#if atLater}<div class="reader-status__later">
+					{@render later?.()}{@render toolbox()}
 				</div>{/if}
 		</div>
 	{/if}
@@ -377,7 +377,7 @@
 		flex: 1;
 		min-width: 0;
 	}
-	.reader-gereedschap {
+	.reader-toolbox {
 		flex: none;
 		display: inline-flex;
 		align-items: center;
@@ -474,7 +474,7 @@
 			white-space: nowrap;
 		}
 		/* A block with nothing but Zoek has nothing left to draw on a phone. */
-		.reader-status--zoek:not(:has(.reader-gereedschap > :not(.find-btn--band))) {
+		.reader-status--zoek:not(:has(.reader-toolbox > :not(.find-btn--band))) {
 			display: none;
 		}
 	}
