@@ -103,31 +103,33 @@ export const headRow = (bandHtml: string, k: Classes, held = true) =>
 export const findButton = (where: 'rij' | 'band', k: Classes) =>
 	`<button type="button" class="find-btn raakvlak find-btn--${where} ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg><span class="${k.head}">Zoek<span class="find-rest ${k.head}"> in dit stuk</span></span></button>`;
 
-/** The tools at the right of the block's last line (ReaderHead `toolbox`): Zoek, then what
- *  only the kind has (`tools`). */
-export const toolbox = (k: Classes, more = '') =>
-	`<span class="reader-toolbox ${k.head}">${findButton('band', k)}${more}</span>`;
+/** The tools at the right of a line (ReaderHead `toolbox`): Zoek, what only the kind has
+ *  (`more`); nothing where the line has neither. */
+export const toolbox = (k: Classes, find: boolean, more = '') =>
+	find || more
+		? `<span class="reader-toolbox ${k.head}">${find ? findButton('band', k) : ''}${more}</span>`
+		: '';
 
-/** The stand and the facts under one rule, with the tools at the right of the last line
- *  (ReaderHead): in the strip where there is one, else in the status, else on a line of its
- *  own. */
+/** The stand and the facts under one rule, with Zoek at the right of the last line of facts
+ *  and what only the kind has at the right of the phrase that comes late (ReaderHead). */
 export function readerStatus(
 	o: { status?: string; facts?: string; later?: string; tools?: string },
 	k: Classes
 ): string {
-	const gear = toolbox(k, o.tools);
+	const atLater = o.later !== undefined;
+	const find = o.facts ? 'facts' : o.status !== undefined ? 'words' : atLater ? 'later' : 'alone';
+	const at = (here: string) =>
+		toolbox(k, find === here, (atLater ? 'later' : find) === here ? o.tools : '');
 	return (
-		`<div class="reader-status ${o.status === undefined && !o.facts && o.later === undefined ? 'reader-status--zoek ' : ''}${k.head}">` +
+		`<div class="reader-status ${o.status === undefined && !o.facts && !atLater ? 'reader-status--zoek ' : ''}${k.head}">` +
 		(o.status === undefined
 			? ''
-			: `<div class="reader-status__woorden ${k.head}" data-later>${o.status}${o.facts || o.later !== undefined ? '' : gear}</div>`) +
+			: `<div class="reader-status__woorden ${k.head}" data-later>${o.status}${at('words')}</div>`) +
 		(o.facts
-			? `<div class="reader-facts ${k.head}" data-later><div class="reader-facts__strook ${k.head}">${o.facts}</div>${o.later === undefined ? gear : ''}</div>`
+			? `<div class="reader-facts ${k.head}" data-later><div class="reader-facts__strook ${k.head}">${o.facts}</div>${at('facts')}</div>`
 			: '') +
-		(o.status === undefined && !o.facts && o.later === undefined ? gear : '') +
-		(o.later === undefined
-			? ''
-			: `<div class="reader-status__later ${k.head}">${o.later}${gear}</div>`) +
+		at('alone') +
+		(atLater ? `<div class="reader-status__later ${k.head}">${o.later}${at('later')}</div>` : '') +
 		'</div>'
 	);
 }

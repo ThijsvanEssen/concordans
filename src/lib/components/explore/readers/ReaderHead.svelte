@@ -90,9 +90,15 @@
 	const FIND_REST = ' in dit stuk';
 	const finder = getContext<FindInText | undefined>(FIND_KEY);
 	const hasTools = $derived(!!finder?.find || !!tools);
-	// An article's phrase that comes late has a line of its own, kept from the start: the tools
-	// stand at the right of that last line.
+	// Zoek in dit stuk stands at the right of the block's last line of facts: the strip, else
+	// the words of the status, else the line of what comes late, else a line of its own. What
+	// only a kind has (an article's toelichting) stands at the right of a phrase that comes
+	// late, which has a line of its own kept from the start.
 	const atLater = $derived(!!later || laterPlek);
+	const findAt = $derived(
+		facts ? 'facts' : statusLine || statusHeld ? 'words' : atLater ? 'later' : 'alone'
+	);
+	const toolsAt = $derived(atLater ? 'later' : findAt);
 </script>
 
 <!-- Zoek in dit stuk: a tool of the text, not an action on the bron: bare, with its glass. -->
@@ -117,9 +123,11 @@
 
 <!-- The tools of the text at the right of the block's last line: Zoek in dit stuk (not on a
      phone, where it stands with the actions), then what only this kind has. -->
-{#snippet toolbox()}
-	{#if hasTools}<span class="reader-toolbox"
-			>{#if finder?.find}{@render findTool('find-btn--band')}{/if}{@render tools?.()}</span
+{#snippet toolbox(here: string)}
+	{#if (finder?.find && findAt === here) || (tools && toolsAt === here)}<span class="reader-toolbox"
+			>{#if finder?.find && findAt === here}{@render findTool(
+					'find-btn--band'
+				)}{/if}{#if toolsAt === here}{@render tools?.()}{/if}</span
 		>{/if}
 {/snippet}
 
@@ -183,17 +191,17 @@
 		>
 			<!-- The words of the status where there are any or their room is kept: no empty line. -->
 			{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
-					{@render statusLine?.()}{#if !facts && !atLater}{@render toolbox()}{/if}
+					{@render statusLine?.()}{@render toolbox('words')}
 				</div>{/if}
 			{#if facts}<div class="reader-facts">
 					<div class="reader-facts__strook">{@render facts()}</div>
-					{#if !atLater}{@render toolbox()}{/if}
+					{@render toolbox('facts')}
 				</div>{/if}
-			{#if !facts && !statusLine && !statusHeld && !atLater}{@render toolbox()}{/if}
+			{@render toolbox('alone')}
 			<!-- What comes after the text (an article's bills) under the facts: its room is held at
 			     the foot of the head, before the text, not between the actions and the facts. -->
 			{#if atLater}<div class="reader-status__later">
-					{@render later?.()}{@render toolbox()}
+					{@render later?.()}{@render toolbox('later')}
 				</div>{/if}
 		</div>
 	{/if}
