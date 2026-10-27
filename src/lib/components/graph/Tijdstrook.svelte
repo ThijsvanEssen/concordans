@@ -88,7 +88,7 @@
 </script>
 
 {#if stippen.length > 1 && span > 1}
-	<div class="tijdstrook" class:is-sleep={!!sleep} aria-hidden="true">
+	<div class="tijdstrook" class:is-resizing={!!sleep} aria-hidden="true">
 		<p class="kop">{periodeTekst}</p>
 		<div
 			class="band"
@@ -116,13 +116,13 @@
 			{#if keuze}
 				<span
 					class="greep"
-					class:is-sleep={sleep && greepSleep === 'van'}
+					class:is-resizing={sleep && greepSleep === 'van'}
 					data-greep="van"
 					style:left="{plek(Math.max(eerste, keuze.van))}%"
 				></span>
 				<span
 					class="greep"
-					class:is-sleep={sleep && greepSleep === 'tot'}
+					class:is-resizing={sleep && greepSleep === 'tot'}
 					data-greep="tot"
 					style:left="{plek(Math.min(laatste, keuze.tot) + 1)}%"
 				></span>
@@ -131,8 +131,8 @@
 		<div class="as">
 			{#each assen as j, i (j)}
 				<span
-					class:is-binnen={!keuze || (j >= keuze.van && j <= keuze.tot)}
-					class:is-tussen={i % 2 === 1}
+					class:is-in={!keuze || (j >= keuze.van && j <= keuze.tot)}
+					data-tussen={i % 2 === 1 || undefined}
 					style:left="{plek(j + 0.5)}%">{j}</span
 				>
 			{/each}
@@ -153,7 +153,10 @@
 	.kop {
 		display: none;
 		margin: 0 0 var(--s-1);
-		font: 600 11px / 1 var(--font-ui);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		line-height: 1;
 		color: var(--ink);
 	}
 	.band {
@@ -169,7 +172,7 @@
 		bottom: 0;
 		background: var(--paper);
 	}
-	.is-sleep > .band > .keuze {
+	.is-resizing > .band > .keuze {
 		border: 1px dashed var(--ink-2);
 	}
 	.kolommen {
@@ -185,16 +188,18 @@
 		flex-direction: column-reverse;
 		align-items: center;
 		justify-content: flex-start;
-		gap: 1.3px;
 		padding-bottom: var(--s-1);
 		pointer-events: none;
 	}
 	.stip {
 		flex: none;
+		/* The dot is 5.2 px in a cell of 6.5: the stack runs 6.5 px apart. */
+		box-sizing: content-box;
 		width: 5.2px;
 		height: 5.2px;
+		border: 0.65px solid transparent;
 		border-radius: var(--r-rond);
-		background: var(--ink-2);
+		background: var(--ink-2) padding-box;
 	}
 	.kolom.is-dim .stip {
 		background: var(--rule);
@@ -221,15 +226,15 @@
 		border-radius: var(--r-1);
 		background: var(--paper);
 	}
-	.greep.is-sleep {
+	.greep.is-resizing {
 		width: 4px;
 		margin-left: -2px;
 	}
-	.greep.is-sleep::after {
+	.greep.is-resizing::after {
 		background: var(--ink);
 	}
 	/* On touch the grip is a target of 44 px across the band. */
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.greep::before {
 			content: '';
 			position: absolute;
@@ -246,10 +251,12 @@
 		top: 0;
 		transform: translateX(-50%);
 		white-space: nowrap;
-		font: 400 11px / 1 var(--font-ui);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		line-height: 1;
 		color: var(--rule);
 	}
-	.as span.is-binnen {
+	.as span.is-in {
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -269,7 +276,7 @@
 		.band {
 			height: 64px;
 		}
-		.as span.is-tussen {
+		.as span[data-tussen] {
 			display: none;
 		}
 	}
