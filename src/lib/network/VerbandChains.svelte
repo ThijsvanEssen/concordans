@@ -139,16 +139,16 @@
 						{@const q = pts[si + 1]}
 						{@const mx = (p.x + q.x) / 2}
 						{@const my = (p.y + q.y) / 2}
-						{@const label = cut(s.via ? s.via.name : s.text, Math.abs(q.x - p.x) - 24)}
+						{@const label = cut(s.via ? s.via.name : s.text, (Math.abs(q.x - p.x) - 24) * 0.6)}
 						<line class="line" x1={p.x} y1={p.y} x2={q.x} y2={q.y} />
 						{#if single}<text class="kop" x={mx} y={my - 28} text-anchor="middle"
 								>Stap {si + 1}</text
 							>{/if}
 						<rect
 							class="pill"
-							x={mx - label.length * 3.4 - 8}
+							x={mx - label.length * 3.6 - 8}
 							y={my - 11}
-							width={label.length * 6.8 + 16}
+							width={label.length * 7.2 + 16}
 							height="22"
 							style:stroke={s.via ? kindColour(s.via.collection) : undefined}
 						/>
@@ -176,7 +176,7 @@
 						onclick={() => onChoose(m.bron)}
 						onkeydown={(e) => press(e, m.bron)}
 					>
-						<rect class="hit" x={p.x - 56} y={p.y - 16} width="112" height="56" />
+						<rect class="hit" x={p.x - 84} y={p.y - 16} width="168" height="56" />
 						{#if chosen === m.bron.id}<rect
 								class="sel"
 								x={p.x - 13}
@@ -194,7 +194,7 @@
 							stroke-width="1.5"
 						/>
 						<text class="name" x={p.x} y={p.y + 32} text-anchor="middle"
-							>{cut(m.bron.name, 112)}</text
+							>{cut(m.bron.name, 168)}</text
 						>
 						<title>{m.bron.name}</title>
 					</g>
