@@ -198,7 +198,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 export function filterParams(f: VerbondenFilter): Record<string, string | null> {
 	return {
 		bronnen: f.bronnen ? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',') : null,
-		relatie: f.relations ? [...f.relations].sort().join(',') : null,
+		['relatie']: f.relations ? [...f.relations].sort().join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
 		rechtsgebied: f.area,

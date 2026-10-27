@@ -38,7 +38,7 @@
 	let {
 		open,
 		filter,
-		groups: ruweGroepen,
+		groups: rawGroups,
 
 		lidTellingen = null,
 		selection,
@@ -57,7 +57,7 @@
 
 	const uid = $props.id();
 	// The groups as the head of Verbonden counts them, so button and head name one number.
-	const groups = $derived(panel.groups ?? ruweGroepen);
+	const groups = $derived(panel.groups ?? rawGroups);
 
 	// The sheet edits a draft; the button applies it.
 	let draft = $state<VerbondenFilter>(filter);

@@ -7,7 +7,7 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
-	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import MoreLink from '$lib/components/ui/AlleN.svelte';
 	import { richtingKop, verwijzingenPerRichting, type Richting } from './wet-verwijzingen';
 
 	let {
@@ -70,7 +70,7 @@
 		{/each}
 		{#if aantal > GETOOND}
 			<p class="alle">
-				<AlleN {aantal} noun="artikelen" open={alle} onclick={() => (alle = !alle)} />
+				<MoreLink {aantal} noun="artikelen" open={alle} onclick={() => (alle = !alle)} />
 			</p>
 		{/if}
 	</LoadState>
