@@ -157,7 +157,6 @@
 	import { panelOfKey, verbondenInView, type Panel } from './panels';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
-	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { OverlayCounts } from './overlay-counts.svelte';
 	import TocSheet from './TocSheet.svelte';
@@ -1728,8 +1727,6 @@
 	);
 
 	// ── Resizable columns ────────────────────────────────────────────────────
-	const widths = new ColumnWidths();
-	onMount(() => widths.load());
 
 	// ── Keys ─────────────────────────────────────────────────────────────────
 	// L reads the selected bron at full width, or goes back to the network; ignored
@@ -1983,16 +1980,6 @@
 			{/if}
 		</div>
 	{/if}
-{/snippet}
-
-{#snippet handle(which: Column)}
-	<div
-		class="resize-handle resize-handle--{which}"
-		onpointerdown={(e) => widths.start(e, which)}
-		onpointermove={widths.move}
-		onpointerup={widths.end}
-		aria-hidden="true"
-	></div>
 {/snippet}
 
 {#snippet viewMiddle(scale: number)}
@@ -2262,8 +2249,6 @@
 			<div
 				class="explore-read"
 				class:explore-read--with-nav={withContents}
-				class:is-resizing={!!widths.drag}
-				style:--panel-w={widths.css('panel')}
 			>
 				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
@@ -2301,7 +2286,6 @@
 				>
 					{@render reader()}
 				</div>
-				{@render handle('panel')}
 				<div
 					class="col col--panel"
 					class:mobile-hidden={readTab === 'tekst'}
@@ -2400,50 +2384,21 @@
 		z-index: var(--z-float);
 	}
 
-	/* The widths that follow the screen, until a column is dragged. Verbonden is as wide as
-	   a group's heading with its count and its box on one line ("Uitspraken die dit artikel
-	   aanhalen 127", Thijs 10 Oct: "het kader zelf sowieso iets breder altijd"); the room
-	   comes from the network, never from the reader. Below 1440 Verbonden grows with the
-	   screen to 408, so the network keeps 252 at 1280 and the reader 610 down to 1172. At
-	   1440 Verbonden 432 and the network 328, so the reader keeps 670 and its lid numbers
-	   in the margin (ArticleText's container query at 600). From 1600 the room goes to the
-	   network (at least 328): the reader keeps some 850px (a measure of 700 in the middle),
-	   Verbonden grows a little, from 432 to at most 480 at 2080 (Thijs: "niet te veel").
-	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
+	/* Verbonden is as wide with every reader (an article, a stuk, a lid): 400 from 1280, as
+	   mockup V1, with room for the text and its contents beside it (A190, Thijs 23 Oct);
+	   below, it grows with the screen from 340 to 408. The reader cannot drag it. */
 	.explore-read {
 		--nav-w-auto: 200px;
-		--graph-w-auto: 360px;
-		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
-		--panel: var(--panel-w, var(--panel-w-auto));
+		--panel: clamp(340px, calc(100vw - 872px), 408px);
 	}
-	/* Beside the reader's contents (200) Verbonden leaves the reader its room below 1280. */
-	@media (max-width: 1279px) {
-		.explore-read--with-nav {
-			--panel-w-auto: clamp(340px, calc(100vw - 900px), 408px);
-		}
-	}
-	@media (min-width: 1440px) {
-		.explore-read {
-			--graph-w-auto: 328px;
-			--panel-w-auto: 432px;
-		}
-	}
-	@media (min-width: 1600px) {
-		.explore-read {
-			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
-			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
-		}
-	}
-	/* Reading, Verbonden is 400 from 1280, as mockup V1: room for the text and its contents
-	   beside it (A190, Thijs 23 Oct); below, the width above. */
 	@media (min-width: 1280px) {
 		.explore-read {
-			--panel-w-auto: 400px;
+			--panel: 400px;
 		}
 	}
 
 	.explore-read {
-		grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: minmax(0, 1fr) var(--panel);
 	}
 	/* A reader without contents (a kabinet, a lid, a fractie) and Verbonden stand together in
 	   the middle of the screen: the room is the same at both outer edges, none kept for
@@ -2453,7 +2408,7 @@
 		.explore-read:not(.explore-read--with-nav) {
 			grid-template-columns:
 				minmax(0, calc(790px + var(--s-6) + var(--s-8)))
-				5px var(--panel);
+				var(--panel);
 			justify-content: center;
 		}
 		/* No numbers hang at its left: the step to the edge is Verbonden's at the right. */
@@ -2463,9 +2418,7 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) 5px var(
-				--panel
-			);
+		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) var(--panel);
 	}
 	/* The reading view with its contents keeps margins at both sides from 1280 (A208d, Thijs
 	   23 Oct: "meer ruimte aan de zijkanten"): 24, 32 from 1440, and on a wide screen the whole
@@ -2475,9 +2428,6 @@
 	@media (min-width: 1280px) {
 		.explore-read--with-nav {
 			padding-inline: max(var(--s-5), calc((100vw - 1680px) / 2));
-		}
-		.explore-read.explore-read--with-nav .col--panel {
-			padding-right: var(--s-3);
 		}
 	}
 	@media (min-width: 1440px) {
@@ -2512,9 +2462,6 @@
 	}
 	.explore-read .panel {
 		height: auto;
-	}
-	.explore-read .resize-handle--panel::before {
-		background: transparent;
 	}
 
 	.panel {
@@ -2624,39 +2571,6 @@
 		}
 	}
 
-	/* A hairline until touched, not a constant grey bar: the 5px track is the hit
-	   area, drawn as a thin centred line that only widens under the pointer. */
-	.resize-handle {
-		height: 100%;
-		width: 5px;
-		cursor: col-resize;
-		background: transparent;
-		flex-shrink: 0;
-		position: relative;
-		z-index: var(--z-raised);
-	}
-
-	.resize-handle::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 2px;
-		width: 1px;
-		background: var(--rule);
-		transition:
-			left var(--dur-1) var(--ease),
-			width var(--dur-1) var(--ease),
-			background var(--dur-1) var(--ease);
-	}
-
-	.resize-handle:hover::before,
-	.is-resizing .resize-handle::before {
-		left: 1px;
-		width: 3px;
-		background: var(--rule-strong);
-	}
-
 	/* The tabs of a phone and of the narrow read view: shown by the media rules below. */
 	/* A height in whole pixels: the tabs' own grew 32 → 32.5 px when the UI font came, and
 	   moved the text under them half a pixel (FE2, 10 Oct: 0 px after the first paint). */
@@ -2691,7 +2605,7 @@
 	@media (max-width: 1100px) {
 		.explore-read,
 		.explore-read--with-nav {
-			grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+			grid-template-columns: minmax(0, 1fr) var(--panel);
 			grid-template-rows: auto minmax(0, 1fr);
 		}
 		.explore-read .mobile-tabs {
@@ -2699,8 +2613,7 @@
 			grid-column: 1 / -1;
 			grid-row: 1;
 		}
-		.explore-read .col,
-		.explore-read .resize-handle {
+		.explore-read .col {
 			grid-row: 2;
 		}
 		.explore-read .toc-column {
@@ -2747,9 +2660,6 @@
 		/* Verbonden as a tab of its own: the page's margins, its own scroll. */
 		.explore-read .col--panel {
 			padding: var(--s-5) var(--s-4) var(--s-7);
-		}
-		.resize-handle {
-			display: none;
 		}
 	}
 </style>

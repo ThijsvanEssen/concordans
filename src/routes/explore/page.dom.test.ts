@@ -454,11 +454,12 @@ describe('the werkplek (besluit 39)', () => {
 });
 
 describe('the columns', () => {
-	it('keep the widths that were dragged', async () => {
+	it('stand at their own width: no handle to drag, a width kept earlier is not read', async () => {
 		localStorage.setItem('concordans:panel-widths', JSON.stringify({ panelW: 300 }));
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
 		const grid = container.querySelector<HTMLElement>('.explore-read')!;
-		expect(grid.style.getPropertyValue('--panel-w')).toBe('300px');
+		expect(grid.style.getPropertyValue('--panel-w')).toBe('');
+		expect(container.querySelector('.resize-handle')).toBeNull();
 	});
 });
 
