@@ -3,7 +3,6 @@
 	// Netwerk, where a result is picked instead of opened. What it asks and what the list makes
 	// of the answers is the session (session.svelte.ts); this draws it.
 	import { notHeld } from '$lib/text/coverage';
-	import { QUERY_MAX_LENGTH } from '$lib/api/search';
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
