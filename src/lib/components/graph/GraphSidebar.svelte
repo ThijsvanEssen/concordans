@@ -466,19 +466,18 @@
 	/* In the strip at the left of the werkplek, in Weergave: a block (Sectie) for each of Tonen,
 	   Relatie, Periode, Indeling. */
 	.legend {
-		/* The marks of Soort and Relatie in one column, as wide as a line sample. */
+		/* The marks of Tonen and Relatie in one column, as wide as a line sample. */
 		--optie-voor: 28px;
+		--lezer-stap: var(--s-4);
 		display: flex;
 		flex-direction: column;
+		gap: var(--lezer-stap);
 		background: var(--paper);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
-	}
-	.legend {
-		gap: var(--s-4);
 	}
 	.verder {
 		padding: var(--s-1) 0;
@@ -487,7 +486,8 @@
 	.verder__inhoud {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 	}
 	/* The bronnen one step further, under the soorten of Verbonden. */
 	.block__sub {
