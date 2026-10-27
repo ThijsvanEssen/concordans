@@ -3,6 +3,7 @@
 	// regulation its name, a link to its reader, with its kind and date after it and, under a
 	// law, the articles it rests on below. First the names, as the list gives them; kind and
 	// date fill in after. Nothing where there are none.
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { buildBronHref } from '$lib/bron/href';
 	import { report } from '$lib/api/errors';
 	import { korteDatum } from '$lib/text/datum';
@@ -38,8 +39,7 @@
 </script>
 
 {#if lijst.length}
-	<section class="regelingen" aria-label={titel}>
-		<h4 class="kop">{titel}</h4>
+	<Sectie title={titel} niveau={4} inklapbaar={false}>
 		<ul>
 			{#each lijst as r (r.id)}
 				<li>
@@ -49,20 +49,10 @@
 				</li>
 			{/each}
 		</ul>
-	</section>
+	</Sectie>
 {/if}
 
 <style>
-	.regelingen {
-		margin: 0;
-	}
-	/* A label over the list, in the meta's letter. */
-	.kop {
-		margin: 0 0 var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	ul {
 		display: flex;
 		flex-direction: column;

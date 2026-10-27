@@ -9,6 +9,7 @@
 	// (a link, a file) is read only: no notes to change, no order, nothing to take out.
 	import type { SvelteSet } from 'svelte/reactivity';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -166,6 +167,15 @@
 	</IndexRow>
 {/snippet}
 
+{#snippet rijen(items: MapItem[])}
+	<ul class="rijen">
+		{#each placeRows(items) as r (itemKey(r.head))}
+			{@render row(r.head, false, r.kept)}
+			{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
+		{/each}
+	</ul>
+{/snippet}
+
 {#each groups as g (g.sleutel)}
 	{@const note = notes[g.sleutel]}
 	{#if g.groep}
@@ -173,96 +183,81 @@
 		{@const lawOpen = !!law && open.has(`law:${g.sleutel}`)}
 		{@const groupLines = fresh?.group(g.sleutel) ?? []}
 		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
-		<div class="groep-kop" id={groupAnchor(g.sleutel)}>
-			<h3 class="groep">
-				{g.groep}{#if groupLines.length}<button
+		<Sectie title={g.groep} niveau={3} inklapbaar={false} id={groupAnchor(g.sleutel)}>
+			{#snippet merk()}
+				{#if groupLines.length}<button
 						type="button"
 						class="nieuw-knop raakvlak"
 						aria-expanded={linesOpen}
 						aria-label="Nieuw in {g.groep}"
 						onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
 					>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
-			</h3>
-			{#if law || (map && !note)}
-				<RijActies naam={g.groep}>
-					{#snippet menu(close)}
-						{#if law}
-							<button
-								type="button"
-								role="menuitemcheckbox"
-								class="tekstmenu__item"
-								aria-checked={lawOpen}
-								onclick={() => {
-									close();
-									toggle(`law:${g.sleutel}`);
-								}}>Regelingen gebaseerd op</button
-							>
-						{/if}
-						{#if map && !note}
-							<button
-								type="button"
-								role="menuitem"
-								class="tekstmenu__item"
-								onclick={() => {
-									close();
-									groupNoteOpen = g.sleutel;
-								}}>Aantekening</button
-							>
-						{/if}
-					{/snippet}
-				</RijActies>
+			{/snippet}
+			{#snippet naast()}
+				{#if law || (map && !note)}
+					<RijActies naam={g.groep}>
+						{#snippet menu(close)}
+							{#if law}
+								<button
+									type="button"
+									role="menuitemcheckbox"
+									class="tekstmenu__item"
+									aria-checked={lawOpen}
+									onclick={() => {
+										close();
+										toggle(`law:${g.sleutel}`);
+									}}>Regelingen gebaseerd op</button
+								>
+							{/if}
+							{#if map && !note}
+								<button
+									type="button"
+									role="menuitem"
+									class="tekstmenu__item"
+									onclick={() => {
+										close();
+										groupNoteOpen = g.sleutel;
+									}}>Aantekening</button
+								>
+							{/if}
+						{/snippet}
+					</RijActies>
+				{/if}
+			{/snippet}
+			{#if linesOpen && fresh}
+				<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
 			{/if}
-		</div>
-		{#if linesOpen && fresh}
-			<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
-		{/if}
-		{#if law && lawOpen}
-			<div class="wet-open">
-				<MapRegelingen laad={() => onderWet(law)} />
-				<p class="verder">
-					<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(law)}`)}
-						>Wet in de lezer</TekstLink
-					>
-				</p>
-			</div>
-		{/if}
-		<Aantekening
-			tekst={note}
-			bij={g.groep}
-			bind:open={() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)}
-			onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
-		/>
+			{#if law && lawOpen}
+				<div class="wet-open">
+					<MapRegelingen laad={() => onderWet(law)} />
+					<p class="verder">
+						<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(law)}`)}
+							>Wet in de lezer</TekstLink
+						>
+					</p>
+				</div>
+			{/if}
+			<Aantekening
+				tekst={note}
+				bij={g.groep}
+				bind:open={() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)}
+				onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
+			/>
+			{@render rijen(g.items)}
+		</Sectie>
+	{:else}
+		{@render rijen(g.items)}
 	{/if}
-	<ul class="rijen">
-		{#each placeRows(g.items) as r (itemKey(r.head))}
-			{@render row(r.head, false, r.kept)}
-			{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
-		{/each}
-	</ul>
 {/each}
 
 <style>
-	/* A law, dossier or Rechtspraak over its rows, as a day over Actueel's; its ⋯ at the right. */
-	.groep-kop {
-		/* A jump from the column of groups lands under the sticky bar. */
-		scroll-margin-top: calc(var(--balk-h) + var(--s-4));
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--s-2);
-		margin: var(--s-3) 0 0;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.groep {
-		margin: 0;
-		padding: var(--s-1) 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
+	/* One group follows another at the step of a section's groups. */
+	:global(.sectie.niveau-3[id^='groep-']) {
+		margin-top: var(--s-3);
 	}
 	/* The ⋯ of a group's head shows on its hover and focus, as a row's on the row's. */
-	.groep-kop:hover :global(.rij-knop),
-	.groep-kop:focus-within :global(.rij-knop) {
+	:global(.sectie .kop:hover .rij-knop),
+	:global(.sectie .kop:focus-within .rij-knop) {
 		opacity: 1;
 	}
 	/* The mark of a group with something new opens what came in, in place. */
@@ -331,10 +326,10 @@
 	   with what follows; the ⋯ and the hover's grey left out; the address of a source
 	   outside it. */
 	@media print {
-		.groep-kop {
+		:global(.sectie .kop) {
 			break-after: avoid;
 		}
-		.groep-kop :global(.rij-acties) {
+		:global(.sectie .kop .rij-acties) {
 			display: none;
 		}
 		.rijen :global(.row-wrap) {

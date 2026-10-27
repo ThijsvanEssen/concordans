@@ -15,6 +15,7 @@
 		aantal,
 		id,
 		naast,
+		merk,
 		niveau = 2,
 		inklapbaar = true,
 		sleutel,
@@ -26,6 +27,8 @@
 		id?: string;
 		/** Beside the title, at the right: a link or a control. Only while it stands open. */
 		naast?: Snippet;
+		/** After the title, in the heading: a mark such as NewMark, or the button it opens. */
+		merk?: Snippet;
 		/** The level of the heading. 2: a section of a reader or a page, under a hairline.
 		 *  3: a group in a section (a year), 4: a group in that (a law), both without a line. */
 		niveau?: 2 | 3 | 4;
@@ -63,7 +66,9 @@
 			>
 		{:else}
 			{@render kop()}
-		{/if}{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
+		{/if}{#if merk}{@render merk()}{/if}{#if naast && isOpen}<span class="naast"
+				>{@render naast()}</span
+			>{/if}
 	</svelte:element>
 	{#if isOpen}<div class="inhoud" id="{uid}-inhoud">{@render children()}</div>{/if}
 </section>
@@ -74,6 +79,8 @@
 	   sections is --s-5 in all; a parent that spaces its column by a gap names it
 	   (--lezer-stap), and the margin makes up the rest. */
 	.sectie {
+		/* A jump to a section lands under the sticky bar. */
+		scroll-margin-top: calc(var(--balk-h) + var(--s-4));
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);

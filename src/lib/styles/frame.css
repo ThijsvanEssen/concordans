@@ -106,14 +106,6 @@
 	line-height: var(--lh-body);
 	color: var(--ink-2);
 }
-.blad--tekst .section {
-	margin-bottom: var(--s-6);
-}
-.blad--tekst .section-title {
-	margin: 0 0 var(--s-3);
-	font: var(--niveau-1-sectie);
-	color: var(--ink);
-}
 .blad--tekst .cite {
 	text-decoration: underline;
 	text-decoration-color: var(--rule-strong);
