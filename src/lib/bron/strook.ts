@@ -2,9 +2,10 @@
 // scale relative to the busiest year, the years named on the axis as far as they fit, and the
 // count of a period in words. One place for the assignment of kind to colour.
 import type { Collection } from '$lib/vocabulary';
+import { count } from '$lib/text/words';
 import { kindColour } from './kleur';
 
-export type StripKind = 'wetten' | 'rechtspraak' | 'kamerstukken' | 'parlement';
+type StripKind = 'wetten' | 'rechtspraak' | 'kamerstukken' | 'parlement';
 
 /** The order a bar is stacked in, from the base; the words as the hover and the count say them. */
 export const STRIP_KINDS: readonly {
@@ -48,35 +49,35 @@ const KIND_OF: Partial<Record<Collection, StripKind>> = {
 export const kindOf = (c: Collection): StripKind | null => KIND_OF[c] ?? null;
 
 /** A bron on the strip: its year as a fraction, its kind; a wetswijziging is named instead. */
-export type Stip = { jaar: number; collection: Collection; wijziging?: string };
+export type Stip = { jaar: number; collection: Collection; change?: string };
 
-export type Year = {
+type Year = {
 	jaar: number;
 	/** Per kind, in the stacking order. */
-	delen: { id: StripKind; n: number }[];
+	parts: { id: StripKind; n: number }[];
 	total: number;
 	/** The wetswijzigingen of the year, by name. */
-	wijzigingen: string[];
+	changes: string[];
 };
 
-/** The years from `first` to `last`, each with its bronnen per kind and its wijzigingen. */
+/** The years from `first` to `last`, each with its bronnen per kind and its changes. */
 export function perYear(stippen: readonly Stip[], first: number, last: number): Year[] {
 	const years: Year[] = Array.from({ length: last - first + 1 }, (_, i) => ({
 		jaar: first + i,
-		delen: STRIP_KINDS.map((k) => ({ id: k.id, n: 0 })),
+		parts: STRIP_KINDS.map((k) => ({ id: k.id, n: 0 })),
 		total: 0,
-		wijzigingen: []
+		changes: []
 	}));
 	for (const s of stippen) {
 		const y = years[Math.floor(s.jaar) - first];
 		if (!y) continue;
-		if (s.wijziging !== undefined) {
-			y.wijzigingen.push(s.wijziging);
+		if (s.change !== undefined) {
+			y.changes.push(s.change);
 			continue;
 		}
 		const kind = kindOf(s.collection);
 		if (!kind) continue;
-		y.delen.find((d) => d.id === kind)!.n++;
+		y.parts.find((d) => d.id === kind)!.n++;
 		y.total++;
 	}
 	return years;
@@ -85,14 +86,14 @@ export function perYear(stippen: readonly Stip[], first: number, last: number): 
 /** The busiest year in view: the scale of the bars is relative to it, so none overflows. */
 export const busiest = (years: readonly Year[]) => Math.max(1, ...years.map((y) => y.total));
 
-/** The sum of the years from `van` to `tot`, per kind, and the wijzigingen. */
-export function inPeriod(years: readonly Year[], van: number, tot: number) {
+/** The sum of the years from `van` to `tot`, per kind, and the changes. */
+export function sumPeriod(years: readonly Year[], van: number, tot: number) {
 	const per = new Map<StripKind, number>();
 	let changes = 0;
 	for (const y of years) {
 		if (y.jaar < van || y.jaar > tot) continue;
-		for (const d of y.delen) per.set(d.id, (per.get(d.id) ?? 0) + d.n);
-		changes += y.wijzigingen.length;
+		for (const d of y.parts) per.set(d.id, (per.get(d.id) ?? 0) + d.n);
+		changes += y.changes.length;
 	}
 	return { per, changes };
 }
@@ -105,14 +106,13 @@ export function countParts(
 	const parts: { text: string; change?: boolean }[] = [];
 	for (const k of STRIP_KINDS) {
 		const n = counts.get(k.id) ?? 0;
-		if (n) parts.push({ text: `${n} ${n === 1 ? k.one : k.many}` });
+		if (n) parts.push({ text: `${count(n, k.one, k.many)}` });
 	}
-	if (changes)
-		parts.push({ text: `${changes} ${changes === 1 ? 'wijziging' : 'wijzigingen'}`, change: true });
+	if (changes) parts.push({ text: `${count(changes, 'wijziging', 'wijzigingen')}`, change: true });
 	return parts;
 }
 
-export type AxisYear = { jaar: number; align: 'start' | 'mid' | 'end' };
+type AxisYear = { jaar: number; align: 'start' | 'mid' | 'end' };
 
 /**
  * The years named under the bars: the first and the last always, between them every second,

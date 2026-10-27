@@ -32,7 +32,7 @@ function pxInSpacing(text: string): string[] {
 }
 
 // What is left: hairlines of 1 to 3 px and alignments with a line of text. It only goes down.
-const PX_IN_SPACING_MAX = 51;
+const PX_IN_SPACING_MAX = 50;
 
 describe('the type and spacing scale', () => {
 	it('gives no font size in pixels outside the tokens', () => {

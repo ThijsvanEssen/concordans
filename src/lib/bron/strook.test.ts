@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { axisYears, busiest, countParts, inPeriod, kindOf, perYear } from './strook';
+import { axisYears, busiest, countParts, sumPeriod, kindOf, perYear } from './strook';
 
 describe('the strip numbers', () => {
-	it('counts per year and kind, wijzigingen apart', () => {
+	it('counts per year and kind, changes apart', () => {
 		const y = perYear(
 			[
 				{ jaar: 2020.1, collection: 'judgments' },
 				{ jaar: 2020.5, collection: 'judgments' },
 				{ jaar: 2021.2, collection: 'documents' },
-				{ jaar: 2021.9, collection: 'instruments', wijziging: 'Stb. 2021, 1' }
+				{ jaar: 2021.9, collection: 'instruments', change: 'Stb. 2021, 1' }
 			],
 			2020,
 			2022
 		);
 		expect(y.map((a) => a.total)).toEqual([2, 1, 0]);
-		expect(y[1].wijzigingen).toEqual(['Stb. 2021, 1']);
+		expect(y[1].changes).toEqual(['Stb. 2021, 1']);
 		expect(busiest(y)).toBe(2);
-		const { per, changes } = inPeriod(y, 2020, 2021);
+		const { per, changes } = sumPeriod(y, 2020, 2021);
 		expect(countParts(per, changes).map((p) => p.text)).toEqual([
 			'2 uitspraken',
 			'1 stuk',

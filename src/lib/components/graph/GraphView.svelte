@@ -1187,10 +1187,10 @@
 	// Every bron on the canvas with a date, whatever the period: the strip shows what lies
 	// outside it too, so the period can widen again.
 	let stippen = $state<Stip[]>([]);
-	let zonderJaar = $state(0);
+	let undated = $state(0);
 	let stippenSleutel = '';
 	/** A publication of the Staatsblad or the Trb. with a date: a wetswijziging, named by its key. */
-	const wijzigingNaam = (id: string) => {
+	const changeName = (id: string) => {
 		const m = /^instruments\/(stb|trb)_(\d{4})_(\d+)/.exec(id);
 		return m ? `${m[1] === 'stb' ? 'Stb.' : 'Trb.'} ${m[2]}, ${m[3]}` : undefined;
 	};
@@ -1203,7 +1203,7 @@
 				return;
 			}
 			const jaar = yearFraction(date);
-			if (jaar > 1000) nieuw.push({ jaar, collection, wijziging: wijzigingNaam(id) });
+			if (jaar > 1000) nieuw.push({ jaar, collection, change: changeName(id) });
 		};
 		g.forEachNode((id, a) => {
 			// A group counts its members by their years: 143 uitspraken are 143 dots (R3-N B8).
@@ -1212,12 +1212,11 @@
 					add(store.getNodeById(m)?.raw?.props?.date, a.collection as Collection, m);
 			else add(a.date, a.collection as Collection, id);
 		});
-		const sleutel =
-			nieuw.map((s) => `${s.jaar}${s.collection}${s.wijziging ?? ''}`).join() + zonder;
+		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}${s.change ?? ''}`).join() + zonder;
 		if (sleutel !== stippenSleutel) {
 			stippenSleutel = sleutel;
 			stippen = nieuw;
-			zonderJaar = zonder;
+			undated = zonder;
 		}
 	}
 	/** The dots of the strip: the canvas's, or those of a weergave of its own (Keten, Verband). */
@@ -1597,13 +1596,13 @@
 		>
 			<Tijdstrook
 				stippen={legend.counting ? [] : strookStippen}
-				zonderJaar={externStippen ? 0 : zonderJaar}
+				undated={externStippen ? 0 : undated}
 				van={jaarVan(filter.van)}
 				tot={jaarVan(filter.tot)}
-				vanDag={filter.van}
-				totDag={filter.tot}
+				fromDay={filter.van}
+				toDay={filter.tot}
 				onPeriode={kiesPeriode}
-				onDagen={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
+				onDays={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
 			/>
 		</div>
 	</div>

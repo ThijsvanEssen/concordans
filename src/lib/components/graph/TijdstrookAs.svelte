@@ -5,14 +5,14 @@
 	import { axisYears } from '$lib/bron/strook';
 
 	let {
-		eerste,
-		laatste,
+		first,
+		last,
 		van,
 		tot,
 		uiteinden = false
 	}: {
-		eerste: number;
-		laatste: number;
+		first: number;
+		last: number;
 		/** The period chosen, by its years; null where all years are. */
 		van: number | null;
 		tot: number | null;
@@ -20,31 +20,31 @@
 		uiteinden?: boolean;
 	} = $props();
 
-	let breedte = $state(0);
-	const jaren = $derived(
+	let width = $state(0);
+	const years = $derived(
 		uiteinden
 			? [
-					{ jaar: eerste, align: 'start' as const },
-					{ jaar: laatste, align: 'end' as const }
+					{ jaar: first, align: 'start' as const },
+					{ jaar: last, align: 'end' as const }
 				]
-			: axisYears(eerste, laatste, breedte)
+			: axisYears(first, last, width)
 	);
-	const kolom = $derived(breedte / (laatste - eerste + 1));
+	const column = $derived(width / (last - first + 1));
 </script>
 
-<div class="as" aria-hidden="true" bind:clientWidth={breedte}>
-	{#each jaren as j (j.jaar)}
+<div class="as" aria-hidden="true" bind:clientWidth={width}>
+	{#each years as j (j.jaar)}
 		<span
 			data-jaar={j.jaar}
 			data-uitlijning={j.align}
 			class:is-in={(van !== null || tot !== null) &&
-				j.jaar >= (van ?? eerste) &&
-				j.jaar <= (tot ?? laatste)}
+				j.jaar >= (van ?? first) &&
+				j.jaar <= (tot ?? last)}
 			style:left={j.align === 'start'
 				? '0'
 				: j.align === 'end'
 					? '100%'
-					: `${(j.jaar - eerste + 0.5) * kolom}px`}>{j.jaar}</span
+					: `${(j.jaar - first + 0.5) * column}px`}>{j.jaar}</span
 		>
 	{/each}
 </div>

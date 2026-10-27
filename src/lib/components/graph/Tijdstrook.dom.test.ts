@@ -42,23 +42,23 @@ afterEach(() => vi.restoreAllMocks());
 describe('the Tijdstrook', () => {
 	it('names the years from the first bron to the last', () => {
 		const { band } = strook();
-		const jaren = [...band.parentElement!.querySelectorAll('.as span')].map((s) => s.textContent);
+		const years = [...band.parentElement!.querySelectorAll('.as span')].map((s) => s.textContent);
 		// The first and the last always; a width of 0 (jsdom) fits no year between.
-		expect(jaren[0]).toBe('2020');
-		expect(jaren.at(-1)).toBe('2023');
+		expect(years[0]).toBe('2020');
+		expect(years.at(-1)).toBe('2023');
 		expect(band.querySelectorAll('.deel')).toHaveLength(3);
 	});
 
 	it('chooses a year on a tap, and gives every year back on a tap on the one chosen', async () => {
-		const eerste = strook();
-		await op(eerste.band, 150, 'pointerDown');
-		await op(eerste.band, 150, 'pointerUp');
-		expect(eerste.onPeriode).toHaveBeenCalledWith(2021, 2021);
+		const first = strook();
+		await op(first.band, 150, 'pointerDown');
+		await op(first.band, 150, 'pointerUp');
+		expect(first.onPeriode).toHaveBeenCalledWith(2021, 2021);
 
-		const gekozen = strook(2021, 2021);
-		await op(gekozen.band, 150, 'pointerDown');
-		await op(gekozen.band, 150, 'pointerUp');
-		expect(gekozen.onPeriode).toHaveBeenCalledWith(null, null);
+		const range = strook(2021, 2021);
+		await op(range.band, 150, 'pointerDown');
+		await op(range.band, 150, 'pointerUp');
+		expect(range.onPeriode).toHaveBeenCalledWith(null, null);
 	});
 
 	it('chooses the period a drag covers, in either direction', async () => {
@@ -90,12 +90,12 @@ describe('the Tijdstrook', () => {
 	it('has two grips as sliders, hidden at rest and shown on a period', () => {
 		const rust = strook().band;
 		expect(
-			[...rust.querySelectorAll('[role="slider"]')].map((g) => g.classList.contains('is-los'))
+			[...rust.querySelectorAll('[role="slider"]')].map((g) => g.hasAttribute('data-los'))
 		).toEqual([true, true]);
 		const { band } = strook(2021, 2022);
 		const greep = [...band.querySelectorAll<HTMLElement>('[data-greep]')];
 		expect(greep.map((g) => g.dataset.greep)).toEqual(['van', 'tot']);
-		expect(greep.map((g) => g.classList.contains('is-los'))).toEqual([false, false]);
+		expect(greep.map((g) => g.hasAttribute('data-los'))).toEqual([false, false]);
 		expect(greep[0].getAttribute('aria-valuenow')).toBe('2021');
 		expect(greep[1].getAttribute('aria-valuenow')).toBe('2022');
 	});
@@ -123,11 +123,11 @@ describe('the Tijdstrook', () => {
 
 	it('names the period in words, with the count per kind and what has no year', () => {
 		const { container } = render(Tijdstrook, {
-			stippen: [...stippen, { jaar: 2021.1, collection: 'instruments', wijziging: 'Stb. 2021, 9' }],
-			zonderJaar: 41,
+			stippen: [...stippen, { jaar: 2021.1, collection: 'instruments', change: 'Stb. 2021, 9' }],
+			undated: 41,
 			van: 2021,
 			tot: null,
-			vanDag: '2021-01-01',
+			fromDay: '2021-01-01',
 			onPeriode: vi.fn()
 		});
 		expect(container.querySelector('.woorden')!.textContent).toBe('Sinds 2021');
@@ -137,11 +137,11 @@ describe('the Tijdstrook', () => {
 		expect(container.querySelector('[data-wijziging]')).not.toBeNull();
 	});
 
-	it('offers Alle jaren, 5 jaar, the last wijziging and Sinds…', () => {
+	it('offers Alle jaren, 5 jaar, the last change and Sinds…', () => {
 		const { container } = render(Tijdstrook, {
 			stippen: [
 				{ jaar: 2010.1, collection: 'judgments' },
-				{ jaar: 2015.1, collection: 'instruments', wijziging: 'Stb. 2015, 9' },
+				{ jaar: 2015.1, collection: 'instruments', change: 'Stb. 2015, 9' },
 				{ jaar: 2023.1, collection: 'judgments' }
 			],
 			van: null,

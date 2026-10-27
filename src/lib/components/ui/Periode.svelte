@@ -48,7 +48,7 @@
 		distribution?: Distribution;
 		/** What the distribution counts: `Uitspraken`. */
 		counts?: string;
-		/** No line of its own: the page opens the chooser with `toon`, at the element it gives. */
+		/** No line of its own: the page opens the chooser with `openAt`, at the element it gives. */
 		zonderKnop?: boolean;
 	} = $props();
 
@@ -112,7 +112,7 @@
 		span && span.max > span.min ? (y - span.min) / (span.max - span.min) : 0;
 
 	/** Open the chooser under `at` (with `zonderKnop`). */
-	export function toon(at: HTMLElement) {
+	export function openAt(at: HTMLElement) {
 		elsewhere = at;
 		show();
 	}

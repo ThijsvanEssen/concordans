@@ -13,7 +13,7 @@
 		CHANGE_COLOUR,
 		busiest,
 		countParts,
-		inPeriod,
+		sumPeriod,
 		perYear,
 		type Stip
 	} from '$lib/bron/strook';
@@ -25,63 +25,65 @@
 
 	let {
 		stippen,
-		zonderJaar = 0,
+		undated = 0,
 		van,
 		tot,
-		vanDag = null,
-		totDag = null,
+		fromDay = null,
+		toDay = null,
 		onPeriode,
-		onDagen
+		onDays
 	}: {
 		/** Each bron on the canvas with a date: its year as a fraction, its kind. */
 		stippen: readonly Stip[];
 		/** The bronnen on the canvas without a date; counted, never placed. */
-		zonderJaar?: number;
+		undated?: number;
 		/** The period chosen, by its years; null where open. */
 		van: number | null;
 		tot: number | null;
 		/** The period as days, as the address holds it (for the date fields). */
-		vanDag?: string | null;
-		totDag?: string | null;
+		fromDay?: string | null;
+		toDay?: string | null;
 		onPeriode: (van: number | null, tot: number | null) => void;
 		/** A period chosen by days, in the date fields. */
-		onDagen?: (van: string, tot: string) => void;
+		onDays?: (van: string, tot: string) => void;
 	} = $props();
 
-	const telefoon = new MediaQuery('max-width: 768px');
+	const phone = new MediaQuery('max-width: 768px');
 	const today = vandaag();
 
-	const eerste = $derived(Math.floor(Math.min(...stippen.map((s) => s.jaar))));
-	const laatste = $derived(Math.floor(Math.max(...stippen.map((s) => s.jaar))));
+	const first = $derived(Math.floor(Math.min(...stippen.map((s) => s.jaar))));
+	const last = $derived(Math.floor(Math.max(...stippen.map((s) => s.jaar))));
 	/** The years the band spans: the last one whole. */
-	const span = $derived(laatste - eerste + 1);
-	const plek = (jaar: number) => ((jaar - eerste) / span) * 100;
-	const jaren = $derived(perYear(stippen, eerste, laatste));
-	const drukste = $derived(busiest(jaren));
+	const span = $derived(last - first + 1);
+	const plek = (jaar: number) => ((jaar - first) / span) * 100;
+	const years = $derived(perYear(stippen, first, last));
+	const busiestYear = $derived(busiest(years));
 
 	let band = $state<HTMLElement | null>(null);
 	let drag = $state<{ van: number; tot: number } | null>(null);
-	const jaarOp = (e: PointerEvent) => {
+	const yearAt = (e: PointerEvent) => {
 		const r = band?.getBoundingClientRect();
-		if (!r || r.width === 0) return eerste;
+		if (!r || r.width === 0) return first;
 		const f = Math.min(0.9999, Math.max(0, (e.clientX - r.left) / r.width));
-		return eerste + Math.floor(f * span);
+		return first + Math.floor(f * span);
 	};
 	function neer(e: PointerEvent) {
 		band?.setPointerCapture(e.pointerId);
-		const j = jaarOp(e);
+		const j = yearAt(e);
 		const handle = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-greep]')?.dataset
 			.greep;
 		// A grip moves its own end of the period; the other end stays.
-		if (handle && keuze)
+		if (handle && chosen)
 			drag =
-				handle === 'van' ? { van: keuze.tot, tot: keuze.van } : { van: keuze.van, tot: keuze.tot };
+				handle === 'van'
+					? { van: chosen.tot, tot: chosen.van }
+					: { van: chosen.van, tot: chosen.tot };
 		else drag = { van: j, tot: j };
 		hover = null;
 	}
 	function beweeg(e: PointerEvent) {
-		if (drag) drag = { ...drag, tot: jaarOp(e) };
-		else if (e.pointerType === 'mouse') hover = jaarOp(e);
+		if (drag) drag = { ...drag, tot: yearAt(e) };
+		else if (e.pointerType === 'mouse') hover = yearAt(e);
 	}
 	function op() {
 		const s = drag;
@@ -93,24 +95,24 @@
 		else onPeriode(a, b);
 	}
 	/** What stands chosen: the drag under way, else the period of the address. */
-	const keuze = $derived(
+	const chosen = $derived(
 		drag
 			? { van: Math.min(drag.van, drag.tot), tot: Math.max(drag.van, drag.tot) }
 			: van !== null || tot !== null
-				? { van: van ?? eerste, tot: tot ?? laatste }
+				? { van: van ?? first, tot: tot ?? last }
 				: null
 	);
 	/** The end the pointer holds in a drag: the grip that is filled. */
 	const dragHandle = $derived(drag ? (drag.tot < drag.van ? 'van' : 'tot') : null);
-	const gekozen = $derived({ van: keuze?.van ?? eerste, tot: keuze?.tot ?? laatste });
+	const range = $derived({ van: chosen?.van ?? first, tot: chosen?.tot ?? last });
 
 	// The keyboard: a grip is a slider; arrows a year, Page Up and Down five, Home and End the ends.
-	function zet(a: number, b: number) {
-		if (a <= eerste && b >= laatste) onPeriode(null, null);
+	function setRange(a: number, b: number) {
+		if (a <= first && b >= last) onPeriode(null, null);
 		else onPeriode(a, b);
 	}
-	function toets(e: KeyboardEvent, kant: 'van' | 'tot') {
-		const stap: Record<string, number> = {
+	function onKey(e: KeyboardEvent, side: 'van' | 'tot') {
+		const steps: Record<string, number> = {
 			ArrowLeft: -1,
 			ArrowDown: -1,
 			ArrowRight: 1,
@@ -118,53 +120,53 @@
 			PageDown: -5,
 			PageUp: 5
 		};
-		const nu = gekozen[kant];
-		const naar = e.key === 'Home' ? eerste : e.key === 'End' ? laatste : nu + (stap[e.key] ?? NaN);
-		if (Number.isNaN(naar)) return;
+		const nu = range[side];
+		const target = e.key === 'Home' ? first : e.key === 'End' ? last : nu + (steps[e.key] ?? NaN);
+		if (Number.isNaN(target)) return;
 		e.preventDefault();
-		const jaar = Math.min(laatste, Math.max(eerste, naar));
-		if (kant === 'van') zet(Math.min(jaar, gekozen.tot), gekozen.tot);
-		else zet(gekozen.van, Math.max(jaar, gekozen.van));
+		const jaar = Math.min(last, Math.max(first, target));
+		if (side === 'van') setRange(Math.min(jaar, range.tot), range.tot);
+		else setRange(range.van, Math.max(jaar, range.van));
 		hover = jaar;
 	}
 
 	// What the hover or the focus on a year shows: the count per kind of that year.
 	let hover = $state<number | null>(null);
-	const kaartJaar = $derived(hover === null ? null : jaren[hover - eerste]);
+	const cardYear = $derived(hover === null ? null : years[hover - first]);
 
 	// The count of the period, in words; the bronnen without a year stand in it, never placed.
-	const periode = $derived(inPeriod(jaren, gekozen.van, gekozen.tot));
-	const delen = $derived([
-		...countParts(periode.per, periode.changes),
-		...(zonderJaar ? [{ text: `${zonderJaar} zonder jaar` }] : [])
+	const counts = $derived(sumPeriod(years, range.van, range.tot));
+	const parts = $derived([
+		...countParts(counts.per, counts.changes),
+		...(undated ? [{ text: `${undated} zonder jaar` }] : [])
 	]);
-	const woorden = $derived(
-		vanDag || totDag ? periodInWords(vanDag ?? '', totDag ?? '', today) : `${eerste} tot ${laatste}`
+	const words = $derived(
+		fromDay || toDay ? periodInWords(fromDay ?? '', toDay ?? '', today) : `${first} tot ${last}`
 	);
-	const wijzigingsJaar = $derived(jaren.findLast((y) => y.wijzigingen.length > 0)?.jaar ?? null);
+	const changeYear = $derived(years.findLast((y) => y.changes.length > 0)?.jaar ?? null);
 
 	// The quick choices; "Sinds…" opens the date fields.
-	const vijf = $derived(laatste - 4);
-	const heeftTot = $derived(totDag !== null || tot !== null);
-	const staat = $derived({
-		alle: !keuze,
-		vijf: !!keuze && !heeftTot && gekozen.van === vijf,
-		wijziging: !!keuze && !heeftTot && wijzigingsJaar !== null && gekozen.van === wijzigingsJaar
+	const five = $derived(last - 4);
+	const hasTo = $derived(toDay !== null || tot !== null);
+	const pressed = $derived({
+		all: !chosen,
+		five: !!chosen && !hasTo && range.van === five,
+		change: !!chosen && !hasTo && changeYear !== null && range.van === changeYear
 	});
-	const eigen = $derived(!!keuze && !staat.vijf && !staat.wijziging);
-	let periodeVelden = $state<{ toon: (at: HTMLElement) => void } | null>(null);
-	let woordenKnop = $state<HTMLButtonElement | null>(null);
-	let sindsKnop = $state<HTMLButtonElement | null>(null);
+	const custom = $derived(!!chosen && !pressed.five && !pressed.change);
+	let dateFields = $state<{ openAt: (at: HTMLElement) => void } | null>(null);
+	let wordsButton = $state<HTMLButtonElement | null>(null);
+	let sinceButton = $state<HTMLButtonElement | null>(null);
 	let blad = $state(false);
-	const velden = (at: HTMLElement | null) => at && periodeVelden?.toon(at);
+	const openFields = (at: HTMLElement | null) => at && dateFields?.openAt(at);
 </script>
 
 {#snippet ruit()}<i class="ruit" aria-hidden="true" style:background={CHANGE_COLOUR}></i>{/snippet}
 
 {#snippet telling()}
 	<p class="telling" aria-live="polite">
-		{#each delen as d, i (d.text)}<span
-				>{#if 'change' in d && d.change}{@render ruit()}{/if}{d.text}{i < delen.length - 1
+		{#each parts as d, i (d.text)}<span
+				>{#if 'change' in d && d.change}{@render ruit()}{/if}{d.text}{i < parts.length - 1
 					? ', '
 					: ''}</span
 			>{/each}
@@ -175,57 +177,57 @@
 	<div class="snel" role="group" aria-label="Snelkeuze">
 		<button
 			type="button"
-			class="btn"
-			aria-pressed={staat.alle}
+			class="btn is-text"
+			aria-pressed={pressed.all}
 			onclick={() => onPeriode(null, null)}>Alle jaren</button
 		>
 		{#if span > 5}
 			<button
 				type="button"
-				class="btn"
-				aria-pressed={staat.vijf}
-				onclick={() => onPeriode(vijf, null)}>5 jaar</button
+				class="btn is-text"
+				aria-pressed={pressed.five}
+				onclick={() => onPeriode(five, null)}>5 jaar</button
 			>
 		{/if}
-		{#if wijzigingsJaar !== null}
+		{#if changeYear !== null}
 			<button
 				type="button"
-				class="btn"
-				aria-pressed={staat.wijziging}
-				onclick={() => onPeriode(wijzigingsJaar, null)}
-				>Sinds {@render ruit()}de wijziging van {wijzigingsJaar}</button
+				class="btn is-text"
+				aria-pressed={pressed.change}
+				onclick={() => onPeriode(changeYear, null)}
+				>Sinds {@render ruit()}de wijziging van {changeYear}</button
 			>
 		{/if}
 		<button
 			type="button"
-			class="btn"
-			aria-pressed={eigen}
+			class="btn is-text"
+			aria-pressed={custom}
 			aria-haspopup="dialog"
-			bind:this={sindsKnop}
-			onclick={() => velden(sindsKnop)}>Sinds…</button
+			bind:this={sinceButton}
+			onclick={() => openFields(sinceButton)}>Sinds…</button
 		>
 	</div>
 {/snippet}
 
 {#snippet tekening(groot: boolean)}
-	<div class="grafiek" class:is-groot={groot}>
-		{#if kaartJaar && !telefoon.current}
+	<div class="grafiek" data-groot={groot || undefined}>
+		{#if cardYear && !phone.current}
 			<div
 				class="kaart"
-				style:left="clamp(0px, calc({plek(kaartJaar.jaar + 0.5)}% - 92px), calc(100% - 184px))"
+				style:left="clamp(0px, calc({plek(cardYear.jaar + 0.5)}% - 92px), calc(100% - 184px))"
 			>
-				<p class="kaart-kop">{kaartJaar.jaar}</p>
-				{#each kaartJaar.delen.filter((d) => d.n > 0) as d (d.id)}
+				<p class="kaart-kop">{cardYear.jaar}</p>
+				{#each cardYear.parts.filter((d) => d.n > 0) as d (d.id)}
 					{@const k = STRIP_KINDS.find((s) => s.id === d.id)!}
 					<p class="kaart-rij">
 						<i class="teken" style:background={k.colour}></i>{d.n}
 						{d.n === 1 ? k.one : k.many}
 					</p>
 				{/each}
-				{#each kaartJaar.wijzigingen as w (w)}
+				{#each cardYear.changes as w (w)}
 					<p class="kaart-rij">{@render ruit()}{w}</p>
 				{/each}
-				{#if kaartJaar.total === 0 && kaartJaar.wijzigingen.length === 0}
+				{#if cardYear.total === 0 && cardYear.changes.length === 0}
 					<p class="kaart-rij leeg-rij">Geen bronnen met een datum</p>
 				{/if}
 			</div>
@@ -241,32 +243,32 @@
 			onpointerleave={() => (hover = null)}
 			onpointercancel={() => (drag = null)}
 		>
-			{#if keuze}
+			{#if chosen}
 				<span
 					class="keuze"
-					style:left="{plek(Math.max(eerste, keuze.van))}%"
-					style:right="{100 - plek(Math.min(laatste, keuze.tot) + 1)}%"
+					style:left="{plek(Math.max(first, chosen.van))}%"
+					style:right="{100 - plek(Math.min(last, chosen.tot) + 1)}%"
 				></span>
 			{/if}
 			<div class="kolommen" aria-hidden="true">
-				{#each jaren as y (y.jaar)}
+				{#each years as y (y.jaar)}
 					<div
 						class="kolom"
-						class:is-dim={!!keuze && (y.jaar < keuze.van || y.jaar > keuze.tot)}
-						style:--f={y.total / drukste}
+						class:is-dim={!!chosen && (y.jaar < chosen.van || y.jaar > chosen.tot)}
+						style:--f={y.total / busiestYear}
 					>
-						{#if y.wijzigingen.length}<i
+						{#if y.changes.length}<i
 								class="ruit op-staaf"
 								data-wijziging
 								style:background={CHANGE_COLOUR}
 							></i>{/if}
 						{#if y.total}
 							<div class="staaf">
-								{#each y.delen as d (d.id)}
+								{#each y.parts as d (d.id)}
 									{#if d.n}<i
 											class="deel"
 											style:flex-grow={d.n}
-											style:background={STRIP_KINDS.find((k) => k.id === d.id)!.colour}
+											style:background-color={STRIP_KINDS.find((k) => k.id === d.id)!.colour}
 										></i>{/if}
 								{/each}
 							</div>
@@ -274,59 +276,59 @@
 					</div>
 				{/each}
 			</div>
-			{#each ['van', 'tot'] as kant (kant)}
-				{@const k = kant as 'van' | 'tot'}
+			{#each ['van', 'tot'] as side (side)}
+				{@const k = side as 'van' | 'tot'}
 				<span
 					class="greep"
-					class:is-los={!keuze}
+					data-los={!chosen || undefined}
 					class:is-resizing={drag && dragHandle === k}
 					data-greep={k}
 					role="slider"
 					tabindex="0"
 					aria-label={k === 'van' ? 'Van' : 'Tot'}
-					aria-valuemin={eerste}
-					aria-valuemax={laatste}
-					aria-valuenow={gekozen[k]}
-					aria-valuetext={k === 'tot' && !keuze ? 'nu' : undefined}
+					aria-valuemin={first}
+					aria-valuemax={last}
+					aria-valuenow={range[k]}
+					aria-valuetext={k === 'tot' && !chosen ? 'nu' : undefined}
 					style:left="{k === 'van'
-						? plek(Math.max(eerste, gekozen.van))
-						: plek(Math.min(laatste, gekozen.tot) + 1)}%"
-					onkeydown={(e) => toets(e, k)}
-					onfocus={() => (hover = gekozen[k])}
+						? plek(Math.max(first, range.van))
+						: plek(Math.min(last, range.tot) + 1)}%"
+					onkeydown={(e) => onKey(e, k)}
+					onfocus={() => (hover = range[k])}
 					onblur={() => (hover = null)}
 				></span>
 			{/each}
 		</div>
-		<TijdstrookAs {eerste} {laatste} {van} {tot} />
+		<TijdstrookAs {first} {last} {van} {tot} />
 	</div>
 {/snippet}
 
 {#if stippen.length > 1 && span > 1}
-	<div class="tijdstrook" class:is-resizing={!!drag} class:is-rust={telefoon.current}>
-		{#if telefoon.current}
+	<div class="tijdstrook" class:is-resizing={!!drag} data-rust={phone.current || undefined}>
+		{#if phone.current}
 			<button
 				type="button"
 				class="rust"
 				aria-haspopup="dialog"
-				aria-label="Periode, {woorden}. Wijzig"
+				aria-label="Periode, {words}. Wijzig"
 				onclick={() => (blad = true)}
 			>
-				<span class="kop">{woorden}</span>
-				<span class="micro">{delen.map((d) => d.text).join(', ')}</span>
+				<span class="kop">{words}</span>
+				<span class="micro">{parts.map((d) => d.text).join(', ')}</span>
 				<span class="mini" aria-hidden="true">
 					<span class="kolommen">
-						{#each jaren as y (y.jaar)}
+						{#each years as y (y.jaar)}
 							<span
 								class="kolom"
-								class:is-dim={!!keuze && (y.jaar < keuze.van || y.jaar > keuze.tot)}
-								style:--f={y.total / drukste}
+								class:is-dim={!!chosen && (y.jaar < chosen.van || y.jaar > chosen.tot)}
+								style:--f={y.total / busiestYear}
 							>
 								{#if y.total}
 									<span class="staaf">
-										{#each y.delen as d (d.id)}{#if d.n}<i
+										{#each y.parts as d (d.id)}{#if d.n}<i
 													class="deel"
 													style:flex-grow={d.n}
-													style:background={STRIP_KINDS.find((k) => k.id === d.id)!.colour}
+													style:background-color={STRIP_KINDS.find((k) => k.id === d.id)!.colour}
 												></i>{/if}{/each}
 									</span>
 								{:else}<i class="leeg"></i>{/if}
@@ -334,7 +336,7 @@
 						{/each}
 					</span>
 				</span>
-				<TijdstrookAs {eerste} {laatste} {van} {tot} uiteinden />
+				<TijdstrookAs {first} {last} {van} {tot} uiteinden />
 			</button>
 		{:else}
 			<div class="kopblok">
@@ -342,8 +344,8 @@
 					type="button"
 					class="kop woorden"
 					aria-haspopup="dialog"
-					bind:this={woordenKnop}
-					onclick={() => velden(woordenKnop)}>{woorden}</button
+					bind:this={wordsButton}
+					onclick={() => openFields(wordsButton)}>{words}</button
 				>
 				{@render telling()}
 				{@render snelkeuzes()}
@@ -358,8 +360,8 @@
 					type="button"
 					class="kop woorden"
 					aria-haspopup="dialog"
-					bind:this={woordenKnop}
-					onclick={() => velden(woordenKnop)}>{woorden}</button
+					bind:this={wordsButton}
+					onclick={() => openFields(wordsButton)}>{words}</button
 				>
 				{@render telling()}
 				{@render tekening(true)}
@@ -368,11 +370,11 @@
 		</Blad>
 	{/if}
 	<Periode
-		bind:this={periodeVelden}
+		bind:this={dateFields}
 		zonderKnop
-		from={vanDag ?? ''}
-		to={totDag ?? ''}
-		onChange={(a, b) => onDagen?.(a, b)}
+		from={fromDay ?? ''}
+		to={toDay ?? ''}
+		onChange={(a, b) => onDays?.(a, b)}
 	/>
 {/if}
 
@@ -428,13 +430,8 @@
 		gap: 0 var(--s-3);
 	}
 	.snel .btn {
-		min-height: var(--tik-h);
-		padding: 0;
-		border: 0;
 		border-bottom: 2px solid transparent;
 		border-radius: 0;
-		background: none;
-		font-size: var(--t-ui);
 		color: var(--ink-2);
 	}
 	.snel .btn[aria-pressed='true'] {
@@ -455,7 +452,7 @@
 		min-width: 0;
 		--band-h: 44px;
 	}
-	.grafiek.is-groot {
+	.grafiek[data-groot] {
 		--band-h: 64px;
 	}
 	.kaart {
@@ -535,7 +532,6 @@
 	.staaf {
 		display: flex;
 		flex-direction: column-reverse;
-		gap: 1px;
 		width: 70%;
 		min-width: 2px;
 		max-width: 14px;
@@ -543,6 +539,9 @@
 		min-height: 2px;
 	}
 	.deel {
+		box-sizing: content-box;
+		border-top: 1px solid transparent;
+		background-clip: padding-box;
 		flex-basis: 0;
 		min-height: 2px;
 	}
@@ -552,13 +551,12 @@
 		background: var(--rule);
 	}
 	.kolom.is-dim .deel {
-		background: var(--rule) !important;
+		background-color: var(--rule) !important;
 	}
 	.op-staaf {
 		position: absolute;
 		bottom: calc(var(--hoog) * var(--f) + 3px);
-		left: 50%;
-		margin: -3px 0 0 -3px;
+		left: calc(50% - 3px);
 	}
 	.kolom:not(:has(.staaf)) .op-staaf {
 		bottom: 3px;
@@ -575,14 +573,14 @@
 		background: var(--ink);
 		cursor: ew-resize;
 	}
-	.greep.is-los {
+	.greep[data-los] {
 		opacity: 0;
 	}
 	/* In the Blad the grips are there to take, at the ends, period or not. */
-	.is-groot .greep.is-los {
+	[data-groot] .greep[data-los] {
 		opacity: 1;
 	}
-	.greep.is-los:focus-visible {
+	.greep[data-los]:focus-visible {
 		opacity: 1;
 	}
 	.greep:focus-visible {
@@ -618,7 +616,7 @@
 		}
 	}
 	/* A phone at rest: the period, its count and the small bars in one tap target. */
-	.is-rust {
+	[data-rust] {
 		display: block;
 		padding: var(--s-1) var(--s-4);
 	}
@@ -635,7 +633,7 @@
 		font: inherit;
 	}
 	.rust .kop {
-		font-size: 13px;
+		font-size: var(--t-micro);
 	}
 	.rust .micro {
 		overflow: hidden;
