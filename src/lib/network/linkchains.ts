@@ -4,7 +4,6 @@
 // list on a phone read one model. Each tussenbron stands once, in the row of the first chain
 // that reaches it; a later chain that touches it runs to that place.
 import type { Schema } from '$lib/api/types';
-import { naamVanId } from '$lib/bron/menselijk';
 import { relationWords } from '$lib/verbonden/relation-words';
 import { rowNotation } from './shared';
 import { formatCount } from '$lib/text/getal';
@@ -16,6 +15,8 @@ type Edge = ChainsResponse['edges'][number];
 
 /** The longest chain Verband asks for, and the shortest that needs /api/chains. */
 export const MAX_STEPS = 3;
+/** The most rows a block draws. */
+export const MAX_ROWS = 12;
 const BLOCK_TITLE: Record<number, string> = {
 	1: 'Eén stap',
 	2: 'Twee stappen',
@@ -26,12 +27,12 @@ export type ChainBron = {
 	id: string;
 	name: string;
 	collection: Collection | null;
-	/** The node as the answer gives it, for the card of a tussenbron; null for an end it lacks. */
-	node?: ChainsResponse['nodes'][number];
+	/** The node as the answer gives it, for the card of a bron; absent for an end it lacks. */
+	node?: ChainsResponse['nodes'][number] | Schema<'SharedNeighborDTO'>;
 };
 
 /** One step: two bronnen, joined by a line between them or by what both touch (`via`). */
-type ChainStep = {
+export type ChainStep = {
 	from: ChainBron;
 	to: ChainBron;
 	/** What both share (a Kamerstuk that names both); null where one refers to the other. */
@@ -40,8 +41,8 @@ type ChainStep = {
 	text: string;
 	/** The same for the phone: `beide genoemd in 35133, nr. 3 Memorie van toelichting`. */
 	phone: string;
-	/** How strong it is (API 0.80.13): its line is this times 3 px thick. */
-	weight: number;
+	/** How strong it is (API 0.80.13): its line is this times 3 px thick; null: its kind's. */
+	weight: number | null;
 	/** Its lines, in the style of their kind: one, or two by way of `via`. */
 	legs: StepLeg[];
 	/** The step as the phone says it: `Waterschapswet en Woningwet`. */
@@ -53,9 +54,11 @@ export type ChainRow = {
 	/** The ends and the tussenbronnen, in order. */
 	bronnen: ChainBron[];
 	steps: ChainStep[];
+	/** Of one step with more than two chosen bronnen: the ends beyond the second, each with its line. */
+	also?: { bron: ChainBron; leg: StepLeg }[];
 };
 
-type ChainBlock = {
+export type ChainBlock = {
 	steps: number;
 	title: string;
 	rows: ChainRow[];
@@ -70,8 +73,8 @@ type ChainBlock = {
 type ChainsModel = {
 	ends: [ChainBron, ChainBron];
 	blocks: ChainBlock[];
-	/** The tussenbronnen, each once: where its first chain puts it. */
-	between: Map<string, { bron: ChainBron; block: number; row: number; at: number }>;
+	/** Every bron on the rows, each once: the kenmerken and the tussenbronnen, for a card. */
+	known: Map<string, ChainBron>;
 	/** Some block is not complete: a missing chain does not mean none. */
 	incomplete: boolean;
 	/** No chain in any block. */
@@ -79,8 +82,7 @@ type ChainsModel = {
 };
 
 /** A Kamerstuk by its notation, as the shared bronnen are, else the API's name. */
-const nameOf = (n: ChainsResponse['nodes'][number]) =>
-	n.collection === 'documents' ? rowNotation(n).title : naamVanId(n.id, n.display_name);
+const nameOf = (n: ChainsResponse['nodes'][number]) => rowNotation(n).title;
 
 /** One line of a step: its relation, the kind it comes from and the end its arrow points to. */
 export type StepLeg = {
@@ -158,29 +160,33 @@ export function chainsModel(
 		const known = names(id);
 		return n ? { id, name: nameOf(n), collection: n.collection as Collection, node: n } : known;
 	};
-	const between: ChainsModel['between'] = new Map();
+	const known: ChainsModel['known'] = new Map();
 	const blocks = response.blocks
 		.filter((b) => b.steps >= 2 && b.steps <= steps)
 		.sort((x, y) => x.steps - y.steps)
-		.map((b, block): ChainBlock => {
+		.map((b): ChainBlock => {
+			// A chain is as strong as its weakest step (its `weight`); equal, by id.
 			const rows = [...b.chains]
-				.sort((x, y) => y.weight - x.weight)
-				.map((c, row): ChainRow => {
+				.sort((x, y) => y.weight - x.weight || x.node_ids.join().localeCompare(y.node_ids.join()))
+				.slice(0, MAX_ROWS)
+				.map((c): ChainRow => {
 					const bronnen = c.node_ids.map(bron);
-					bronnen.slice(1, -1).forEach((n, i) => {
-						if (!between.has(n.id)) between.set(n.id, { bron: n, block, row, at: i + 1 });
-					});
+					for (const n of bronnen.slice(1, -1)) known.set(n.id, n);
 					return {
 						id: c.node_ids.join('~'),
 						bronnen,
-						steps: c.steps.map((s) => ({
-							from: bron(s.source),
-							to: bron(s.target),
-							via: s.via ? bron(s.via) : null,
-							weight: s.weight,
-							...wording(s, edges, bron),
-							pair: joinAnd([bron(s.source).name, bron(s.target).name])
-						}))
+						steps: c.steps.map((s) => {
+							const via = s.via ? bron(s.via) : null;
+							if (via) known.set(via.id, via);
+							return {
+								from: bron(s.source),
+								to: bron(s.target),
+								via,
+								weight: s.weight,
+								...wording(s, edges, bron),
+								pair: joinAnd([bron(s.source).name, bron(s.target).name])
+							};
+						})
 					};
 				});
 			const complete = b.complete && !response.partial;
@@ -196,7 +202,7 @@ export function chainsModel(
 	return {
 		ends: [bron(ends[0]), bron(ends[1])],
 		blocks,
-		between,
+		known,
 		incomplete: blocks.some((b) => !b.complete),
 		none: blocks.every((b) => b.rows.length === 0)
 	};
@@ -217,16 +223,3 @@ export type ChainsState =
 	| { status: 'loading' }
 	| { status: 'error'; error: unknown; retry: () => void }
 	| { status: 'ready'; model: ChainsModel };
-
-/** The drawing's name, which says the chains in words (for a screen reader). */
-export function chainsLabel(model: ChainsModel): string {
-	const all = model.blocks.flatMap((b) => b.rows.map((r) => ({ r, n: b.steps })));
-	const rows = all.slice(0, 5);
-	if (rows.length === 0)
-		return `Verbindingsketens tussen ${joinAnd(model.ends.map((e) => e.name))}`;
-	return `Verbindingsketens tussen ${joinAnd(model.ends.map((e) => e.name))}: ${rows
-		.map(
-			({ r, n }) => `${BLOCK_TITLE[n].toLowerCase()}, ${r.bronnen.map((b) => b.name).join(', ')}`
-		)
-		.join('; ')}${all.length > rows.length ? `; en ${all.length - rows.length} meer` : ''}`;
-}

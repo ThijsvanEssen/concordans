@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chainsModel, countOf, chainsLabel, type ChainsResponse } from './linkchains';
+import { chainsModel, countOf, type ChainsResponse } from './linkchains';
 import { fakeApi, slow } from '$lib/test/fakeApi';
 import { getChains } from '$lib/api/nodes';
 import { isTimeout } from '$lib/api/client';
@@ -121,11 +121,10 @@ describe('chainsModel', () => {
 		const m = chainsModel(response(), [A, B], names, 2);
 		expect(m.blocks.map((b) => b.steps)).toEqual([2]);
 	});
-	it('puts each tussenbron once, in the row of the first chain that reaches it', () => {
+	it('knows every bron of the rows once, the kenmerk of a step too', () => {
 		const m = chainsModel(response(), [A, B], names);
-		expect([...m.between.keys()].sort()).toEqual([C, D]);
-		expect(m.between.get(C)).toMatchObject({ block: 0, row: 0, at: 1 });
-		expect(m.between.get(D)).toMatchObject({ block: 0, row: 1, at: 1 });
+		expect([...m.known.keys()]).toEqual(expect.arrayContaining([C, D]));
+		expect(m.known.has(X)).toBe(true);
 	});
 	it('names a step by its line, or by what both share', () => {
 		const m = chainsModel(response(), [A, B], names);
@@ -157,11 +156,6 @@ describe('chainsModel', () => {
 		const part = chainsModel(response({ partial: true }), [A, B], names);
 		expect(part.incomplete).toBe(true);
 		expect(part.blocks.every((b) => !b.complete)).toBe(true);
-	});
-	it('names the drawing with the chains in words', () => {
-		const label = chainsLabel(chainsModel(response(), [A, B], names));
-		expect(label).toContain('Verbindingsketens tussen Waterschapswet en Burgerlijk Wetboek Boek 7');
-		expect(label).toContain('twee stappen, Waterschapswet, Woningwet');
 	});
 });
 

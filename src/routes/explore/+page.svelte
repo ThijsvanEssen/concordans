@@ -128,9 +128,11 @@
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
 	import { parentKind } from '$lib/network/chain';
-	import { endNotes, verbandModel, type DirectLink } from '$lib/network/shared';
+	import { verbandModel, type DirectLink } from '$lib/network/shared';
+	import { pairOf, resolveChoice } from '$lib/network/pairs';
 	import {
 		chainsModel,
+		MAX_ROWS,
 		MAX_STEPS,
 		type ChainsResponse,
 		type ChainsState
@@ -689,8 +691,8 @@
 			.map((e) => ({
 				id: e.node!.id,
 				name: bronFullName(e.node!, $instrumentMetaStore),
-				collection: e.collection,
-				connections: e.connections ?? null
+				short: bronNaam(e.node!, $instrumentMetaStore),
+				collection: e.collection
 			}));
 		if (
 			selectedNode &&
@@ -700,8 +702,8 @@
 			ends.push({
 				id: selectedNode.id,
 				name: bronFullName(selectedNode, $instrumentMetaStore),
-				collection: selectedNode.collection,
-				connections: null
+				short: bronNaam(selectedNode, $instrumentMetaStore),
+				collection: selectedNode.collection
 			});
 		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));
 	});
@@ -745,7 +747,7 @@
 			pairs,
 			async (pair) => {
 				if (!pairKept.has(pair))
-					pairKept.set(pair, await getShared({ ids: pair, limit: 8 }, ac.signal));
+					pairKept.set(pair, await getShared({ ids: pair, limit: MAX_ROWS }, ac.signal));
 				return pairKept.get(pair) ?? null;
 			},
 			{ parallel: 2 }
@@ -779,23 +781,21 @@
 		const here = sharedData?.key === sharedKey ? sharedData : null;
 		if (!here || here.failure) return null;
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
-		return verbandModel(
-			sharedDrawn.map((e) => e.id),
-			here.answers,
-			here.direct,
-			(id) => ({ name: byId.get(id)?.name ?? id, collection: byId.get(id)?.collection ?? null })
-		);
+		return verbandModel(here.answers, here.direct, (id) => ({
+			name: byId.get(id)?.name ?? id,
+			collection: byId.get(id)?.collection ?? null
+		}));
 	});
 	/**
 	 * Aantal stappen of Verband: 1 is what the bronnen share (/api/nodes/shared), 2 and 3 add the
 	 * ketens through laws and articles between them (/api/chains). ?diepte, as Omgeving's; unset
-	 * is 1. With three or more bronnen the ketens are those of the first two (a bron lit up
-	 * will choose the pair).
+	 * is 1. With three or more bronnen the Keuze (?paar) names the pair whose ketens are
+	 * sought; Alle has none.
 	 */
 	const pairSteps = $derived(Math.min(MAX_STEPS, explicitDepth ?? 1));
-	const vcPair = $derived(
-		sharedDrawn.length >= 2 ? ([sharedDrawn[0].id, sharedDrawn[1].id] as [string, string]) : null
-	);
+	const PAIR_PARAM = 'paar';
+	const pairChoice = $derived(resolveChoice(params.get(PAIR_PARAM), sharedDrawn, sharedState));
+	const vcPair = $derived(sharedDrawn.length === 2 || sharedState ? pairOf(pairChoice) : null);
 	const vcKey = $derived(vcPair && pairSteps >= 2 ? `${vcPair.join(',')}:${pairSteps}` : '');
 	const stepsOff = $derived(sharedEnds.length < 2 ? 'Kies eerst een tweede bron.' : null);
 	let vcData = $state.raw<
@@ -842,12 +842,6 @@
 			)
 		};
 	});
-	/** The chosen bronnen with what they have with the others written under them. */
-	const sharedShown = $derived.by(() => {
-		const here = sharedData?.key === sharedKey && !sharedData.failure ? sharedData : null;
-		const notes = here ? endNotes(here.answers, sharedDrawn.length) : new Map<string, string>();
-		return sharedDrawn.map((e) => ({ ...e, note: notes.get(e.id) ?? null }));
-	});
 	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
@@ -890,7 +884,8 @@
 		const kinds: Partial<Record<FilterGroup, number>> = {};
 		for (const r of sharedState.rows) {
 			const k = filterGroupOf(r.collection, r.node.key, r.node.props);
-			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
+			// The judgments are counted from their totals, below, not from the rows drawn.
+			if (k && r.collection !== 'judgments') kinds[k] = (kinds[k] ?? 0) + 1;
 		}
 		const judgments = sharedState.judgments.reduce((n, j) => n + j.total, 0);
 		if (judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + judgments;
@@ -911,10 +906,9 @@
 		const r = sharedState?.rows.find((x) => x.id === marked);
 		const node = r ? (store.getNodeById(r.id) ?? nodeToGraphNode(r.node)) : null;
 		if (r && node) return { node, ties: r.how };
-		// A tussenbron of a keten.
-		const between =
-			vcState?.status === 'ready' && marked ? vcState.model.between.get(marked) : null;
-		const bronNode = between?.bron.node ? nodeToGraphNode(between.bron.node) : null;
+		// A kenmerk or a tussenbron of a keten.
+		const known = vcState?.status === 'ready' && marked ? vcState.model.known.get(marked) : null;
+		const bronNode = known?.node ? nodeToGraphNode(known.node) : null;
 		return bronNode ? { node: bronNode, ties: [] } : null;
 	});
 
@@ -2121,8 +2115,10 @@
 	{:else if view === 'verband'}
 		<SharedView
 			{scale}
-			ends={sharedShown}
+			ends={sharedDrawn}
 			model={sharedState}
+			choice={pairChoice}
+			onChoice={(c) => setUrl({ [PAIR_PARAM]: c, [MARK_PARAM]: null })}
 			chosen={marked}
 			gap={sharedGap}
 			{hiddenKinds}
@@ -2131,8 +2127,7 @@
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
 			steps={pairSteps}
 			chains={vcState}
-			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
-			onChooseBron={(b) => setUrl({ [MARK_PARAM]: b.id })}
+			onChoose={(id) => setUrl({ [MARK_PARAM]: id })}
 			onSteps={setDepth}
 		/>
 	{/if}
