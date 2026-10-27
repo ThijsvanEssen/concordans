@@ -3,7 +3,7 @@ import {
 	CLUSTER_MAX_LOOSE,
 	clusterLabel,
 	clustersOf,
-	clusterZinnen,
+	clusterBinding,
 	clusterHeading,
 	TUSSEN_MAX_LOOSE,
 	tussenClustersOf
@@ -68,8 +68,7 @@ describe('clustersOf', () => {
 		expect(rest).toEqual([]);
 		expect(clusterLabel(c)).toBe('137 uitspraken');
 		expect(c.alsoTied).toBe(true);
-		// Its card no longer says they hang on the focus alone.
-		expect(clusterZinnen(c)[0]).toBe('Met deze bron verbonden.');
+		expect(clusterBinding(c)).toBeNull();
 	});
 
 	it('makes no cluster without a focus', () => {
@@ -78,20 +77,11 @@ describe('clustersOf', () => {
 	});
 });
 
-describe('clusterZinnen', () => {
-	const c = { members: Array.from({ length: 172 }, (_, i) => `j${i}`), neighbours: 174 };
-
-	it('says what the count holds against the loose ones (art. 6:162)', () => {
-		expect(clusterZinnen(c)).toEqual([
-			'Alleen met deze bron verbonden.',
-			'2 andere staan los: ook met een andere bron verbonden.'
-		]);
-	});
-
-	it('says no more where none stands loose', () => {
-		expect(clusterZinnen({ members: c.members, neighbours: 172 })).toEqual([
-			'Alleen met deze bron verbonden.'
-		]);
+describe('clusterBinding', () => {
+	it('says no more than a label, and only for a cluster between several bronnen', () => {
+		expect(clusterBinding({})).toBeNull();
+		expect(clusterBinding({ ends: [] }, ['Gemw', 'BW6'])).toBe('Verbonden met Gemw en BW6');
+		expect(clusterBinding({ ends: [] })).toBe('Verbonden met dezelfde bronnen');
 	});
 });
 
@@ -146,8 +136,8 @@ describe('tussenClustersOf', () => {
 
 	it('names the chosen bronnen on its card', () => {
 		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
-		expect(clusterZinnen(c, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toEqual([
-			'Elk alleen verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015.'
-		]);
+		expect(clusterBinding(c, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toBe(
+			'Verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015'
+		);
 	});
 });

@@ -125,3 +125,16 @@ describe('Verband and the API', () => {
 		expect(page).not.toMatch(/Promise\.all\([^)]*getShared/);
 	});
 });
+
+describe('the canvas as the DS draws it (A282)', () => {
+	it('names a repealed article in its name and draws it open in ink-3', () => {
+		const view = bron('lib/components/graph/GraphView.svelte');
+		expect(view).toContain('`${name}, vervallen`');
+		expect(view).toMatch(/const colour = repealed\s*\?\s*tokens\(\)\.ink3/);
+		expect(view).toMatch(/spriteForVorm\(vorm, !!n\.stub \|\| repealed, false, colour\)/);
+	});
+	it('has no handle to drag a column: the columns keep their width', () => {
+		expect(bron('routes/explore/+page.svelte')).not.toMatch(/resize-handle|ColumnWidths/);
+		expect(bron('lib/first-paint/paint.ts')).not.toMatch(/resize-handle|panel-widths/);
+	});
+});

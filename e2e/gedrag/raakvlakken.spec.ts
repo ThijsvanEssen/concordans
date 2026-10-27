@@ -13,7 +13,9 @@ const INLINE = [
 	// The law's own sentences: a reference or a defined term inside a lid (WCAG 2.5.8, inline).
 	'[data-plaats] a',
 	// The skip link shows for a keyboard only, never under a finger.
-	'a.skip-link'
+	'a.skip-link',
+	// The canvas's list of bronnen is the keyboard's and a screen reader's, never drawn.
+	'.canvas-node-list'
 ];
 
 type Small = { naam: string; hoogte: number; plek: string };
@@ -124,6 +126,26 @@ test.describe('on a phone', () => {
 			expect.soft(b.h, b.naam ?? '').toBeGreaterThanOrEqual(44);
 			expect.soft(b.w, b.naam ?? '').toBeGreaterThanOrEqual(44);
 		}
+	});
+
+	// The werkplek (N12, N17a): its sheet Weergave, the chosen bronnen and the canvas's own
+	// buttons are 44 px to a finger, and its Keuzes stand whole in the sheet.
+	test('the werkplek is 44 px to a finger, its choices whole', async ({ page }) => {
+		test.setTimeout(120_000);
+		await page.goto('/explore?netwerk=instruments/bwbr0005537');
+		await expect(page.locator('.canvas-wrap')).toBeAttached();
+		await page.waitForLoadState('networkidle');
+		await openSheet(page);
+		expect.soft(await kleine(page)).toEqual([]);
+		const cut = await page.evaluate(() =>
+			[...document.querySelectorAll<HTMLElement>('[role="group"]')]
+				.filter((g) => g.querySelector(':scope > button[aria-pressed]') && g.checkVisibility())
+				.filter(
+					(g) => g.scrollWidth > g.clientWidth || g.getBoundingClientRect().right > innerWidth
+				)
+				.map((g) => `${g.getAttribute('aria-label')}: ${g.scrollWidth} in ${g.clientWidth}`)
+		);
+		expect(cut).toEqual([]);
 	});
 
 	// A Keuze is whole on a phone: no option cut off at the frame's edge, none out of the

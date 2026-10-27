@@ -348,24 +348,3 @@ export const soortVan = (
 	naar?: Collection | null,
 	meta?: Record<string, unknown> | null
 ): string => relationWords(relation, van, naar, meta).soort;
-
-/** The name of a line in Relatie, where it is not its verb with a capital (relationWords). */
-const LINE_NAME: Partial<Record<Relation, string>> = {
-	BASED_ON: 'Gebaseerd op',
-	MEMBER_OF: 'Lid van'
-};
-
-/**
- * What Relatie calls a line, the same in Omgeving, Verband and Keten (Thijs, 23 Oct: "Relatie
- * heet overal gelijk"): `Gebaseerd op`, `Lid van`; a reference by who makes it, `Haalt aan`
- * from a judgment, `Noemt` from anything else, both where both are drawn (`from`, the kinds
- * the drawn references start at).
- */
-export function lineName(relation: Relation, from: readonly Collection[] = []): string {
-	const own = LINE_NAME[relation];
-	if (own) return own;
-	if (relation !== 'REFERS_TO') return capitalize(relationLabel(relation));
-	const judgments = from.includes('judgments');
-	const others = from.some((c) => c !== 'judgments');
-	return judgments && others ? 'Haalt aan, noemt' : judgments ? 'Haalt aan' : 'Noemt';
-}

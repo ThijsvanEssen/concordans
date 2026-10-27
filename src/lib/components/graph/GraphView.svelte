@@ -2,7 +2,6 @@
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag, yearFraction } from '$lib/text/datum';
-	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onMount, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
@@ -27,6 +26,7 @@
 	import Tijdstrook from './Tijdstrook.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
+	import type { LineKind } from '$lib/graph/line-kind';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
@@ -36,16 +36,17 @@
 		clusterLabel,
 		clustersOf,
 		tussenClustersOf,
-		clusterZinnen,
+		clusterBinding,
 		isClusterId,
 		type Cluster
 	} from '$lib/selection/cluster';
 	import { groupFor, openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
-	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
+	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
@@ -137,7 +138,8 @@
 		extern = null,
 		externStippen = null,
 		middenZoom = true,
-		externRelations = null,
+		externLines = null,
+		onToevoegen,
 		...legend
 	}: {
 		store: GraphStore;
@@ -176,7 +178,7 @@
 		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
 		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
-		externCounts?: Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'> | null;
+		externCounts?: Pick<CanvasCounts, 'kinds' | 'lines'> | null;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
@@ -189,10 +191,12 @@
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
-		externRelations?: {
-			hidden: ReadonlySet<Relation>;
-			toggle: (r: Relation) => void;
+		externLines?: {
+			hidden: ReadonlySet<LineKind>;
+			toggle: (l: LineKind) => void;
 		} | null;
+		/** Empty canvas: what the reader can do, add a bron. */
+		onToevoegen?: () => void;
 		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
 		depth: number;
 		onDepth: (d: number) => void;
@@ -255,7 +259,8 @@
 		);
 		const out: DrawnBron[] = [];
 		const take = (n: GraphNode | undefined, direct: boolean) => {
-			if (!n || n.anchor || n.id.toLowerCase() === focal) return;
+			if (!n || n.anchor || n.id.toLowerCase() === focal || drawClassOf(n.collection) === 'other')
+				return;
 			const props = n.raw?.props ?? undefined;
 			const filterGroup = filterGroupOf(n.collection, n.key, props ?? null);
 			out.push({ id: n.id, collection: n.collection, key: n.key, props, filterGroup, direct });
@@ -321,7 +326,7 @@
 			hiddenKinds,
 			rechter: filter.rechter,
 			verborgen,
-			hiddenRelations: filters.hiddenRelations
+			hiddenLines: filters.hiddenLines
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
@@ -649,7 +654,13 @@
 		const eigen = ownDossiers();
 		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
 	};
-	const nodeLabel = (n: GraphNode) => canvasNames.get(n.id) ?? baseName(n);
+	/** An article that no longer holds (Netwerkcanvas, Vervallen): a dimmed sign, "vervallen" in its name. */
+	const isRepealed = (n: GraphNode) =>
+		n.collection === 'articles' && n.raw?.props?.repealed === true;
+	const nodeLabel = (n: GraphNode) => {
+		const name = canvasNames.get(n.id) ?? baseName(n);
+		return isRepealed(n) ? `${name}, vervallen` : name;
+	};
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -947,6 +958,12 @@
 			if (!isCanvasNode(n)) continue;
 			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
+			const repealed = isRepealed(n);
+			const colour = repealed
+				? tokens().ink3
+				: pinnedIds.has(n.id)
+					? undefined
+					: kindColour(n.collection);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
@@ -966,17 +983,12 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub: !!n.stub,
+				stub: !!n.stub || repealed,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
-				kleur: pinnedIds.has(n.id) ? undefined : kindColour(n.collection),
-				image: spriteForVorm(
-					vorm,
-					!!n.stub,
-					false,
-					pinnedIds.has(n.id) ? undefined : kindColour(n.collection)
-				),
+				kleur: colour,
+				image: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
 				forceLabel: true
 			};
 			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
@@ -1135,10 +1147,14 @@
 		store.setFilters({ hiddenGroups: next });
 	}
 
-	function toggleRelation(r: Relation) {
-		const next = new Set(filters.hiddenRelations);
-		if (!next.delete(r)) next.add(r);
-		store.setFilters({ hiddenRelations: next });
+	function toggleAnnexes() {
+		store.setFilters({ hiddenAnnexes: !filters.hiddenAnnexes });
+	}
+
+	function toggleLine(l: LineKind) {
+		const next = new Set(filters.hiddenLines);
+		if (!next.delete(l)) next.add(l);
+		store.setFilters({ hiddenLines: next });
 	}
 
 	/** The scale of a weergave of its own, by its zoom. */
@@ -1281,10 +1297,12 @@
 		{...legend}
 		{verbonden}
 		{filter}
-		selectionCollection={selection?.collection ?? null}
 		reach={externCounts ? null : reach}
-		hiddenRelations={externRelations?.hidden ?? filters.hiddenRelations}
-		onToggleRelation={externRelations?.toggle ?? toggleRelation}
+		outlines={externCounts ? 0 : containerGroups.size}
+		hiddenAnnexes={filters.hiddenAnnexes}
+		onToggleAnnexes={toggleAnnexes}
+		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
+		onToggleLine={externLines?.toggle ?? toggleLine}
 		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
@@ -1312,7 +1330,7 @@
 				networkOn={netwerkActive}
 				hasSelection={!!selection}
 				reach={externCounts ? null : reach}
-				empty={!hasNodes && !midden}
+				empty={!hasNodes && !midden && !selection}
 			>
 				<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 				{#if hasNodes || midden}
@@ -1399,6 +1417,15 @@
 					() => canvas?.zoom(1 / 1.5),
 					() => canvas?.fit()
 				)}
+				{#if !hasNodes && !midden && !selection && onToevoegen}
+					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
+					<div class="canvas-leeg">
+						<p class="canvas-leeg__kop">Nog geen bron gekozen</p>
+						<button type="button" class="btn raakvlak-knop" onclick={onToevoegen}
+							>+ Bron toevoegen</button
+						>
+					</div>
+				{/if}
 				<GraphCanvas
 					graph={g}
 					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
@@ -1484,17 +1511,21 @@
 								)}
 							</p>
 						{/snippet}
-						{#each clusterZinnen( c, (c.ends ?? []).flatMap((e) => {
+						{@const tied = clusterBinding(
+							c,
+							(c.ends ?? []).flatMap((e) => {
 								const n = lookup.get(e.id);
 								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
-							}) ) as zin (zin)}
-							<p class="cluster-zin">{zin}</p>
-						{/each}
+							})
+						)}
+						{#if tied}<p class="cluster-zin">{tied}</p>{/if}
 						<div class="cluster-knoppen">
 							<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
-							<button type="button" class="btn is-text" onclick={() => showCluster(c)}
-								>Toon alle {formatCount(c.members.length)} in het netwerk</button
-							>
+							<AlleN
+								aantal={c.members.length}
+								noun={bronPlural(c.collection).toLowerCase()}
+								onclick={() => showCluster(c)}
+							/>
 							{#if !c.ends && groupOf(c)}
 								<button
 									type="button"
@@ -1817,6 +1848,24 @@
 		inset: 0;
 		visibility: hidden;
 		pointer-events: none;
+	}
+	.canvas-leeg {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--s-3);
+		pointer-events: none;
+	}
+	.canvas-leeg__kop {
+		margin: 0;
+		color: var(--ink-3);
+	}
+	.canvas-leeg .btn {
+		pointer-events: auto;
 	}
 	.graph-canvas-wrap {
 		flex: 1;

@@ -2,6 +2,7 @@ import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { BaseNode, GraphNode, GraphEdge } from '../types';
+import type { LineKind } from '../line-kind';
 import type { ContainerGroup, ContainerKind, Period } from '../container-membership';
 
 /** The API's default depth of a neighbourhood: three steps. */
@@ -46,8 +47,10 @@ export type CanvasRow = {
 };
 
 export type GraphFilters = {
-	/** Relations the legend switched off; their edges are not drawn. */
-	hiddenRelations: Set<Relation>;
+	/** Lijnsoorten Relatie switched off; their edges are not drawn. */
+	hiddenLines: Set<LineKind>;
+	/** Bijlagen (what is drawn as no kind of its own) switched off in Tonen. */
+	hiddenAnnexes: boolean;
 	/** Groupings the legend switched off: their bronnen stand loose, without a hull. */
 	hiddenGroups: Set<ContainerKind>;
 	/** Semantic edges with a lower confidence are left out. */
@@ -66,7 +69,8 @@ type GraphExpansionOptions = {
 };
 
 export const DEFAULT_FILTERS: GraphFilters = {
-	hiddenRelations: new Set<Relation>(),
+	hiddenLines: new Set<LineKind>(),
+	hiddenAnnexes: false,
 	hiddenGroups: new Set<ContainerKind>(),
 	semanticThreshold: 0.6,
 	neighborLimit: 30,

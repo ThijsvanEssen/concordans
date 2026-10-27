@@ -34,7 +34,7 @@
 		padding: 0 !important;
 		margin: 0 !important;
 	}
-	body:has(.reader-frame) :is(.topbar, .tabbar, .foot, .skip-link, .mobile-tabs, .resize-handle) {
+	body:has(.reader-frame) :is(.topbar, .tabbar, .foot, .skip-link, .mobile-tabs) {
 		display: none !important;
 	}
 	/* What is beside the text: the network, Verbonden, the table of contents, a toelichting. */

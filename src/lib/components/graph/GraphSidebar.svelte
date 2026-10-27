@@ -3,17 +3,17 @@
 	import { NL } from '$lib/text/collator';
 	// The filter of the werkplek, which is also its key (besluit 39): Tonen (the kinds drawn,
 	// of how many where the API cut them off, and the step that loads them all), Relatie (the
-	// verbindingen drawn, a line sample each), the Periode the page gives; under Meer the preset,
-	// the grouping, the depth, the lid and the overlays.
+	// lijnsoorten drawn, a line sample each), the Periode the page gives; under Meer the preset,
+	// the lid and the overlays. Omtrekken and Bijlagen are rows of Tonen.
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import type { Snippet } from 'svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { HEAT_PERIODS, type Overlay } from '$lib/selection/overlay';
-	import type { Collection, Relation } from '$lib/vocabulary';
+	import type { Collection } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
 		FILTER_GROUP_LABEL,
@@ -26,11 +26,14 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { allRows, lidCounts } from '$lib/verbonden/view';
-	import { lineName } from '$lib/verbonden/relation-words';
+	import {
+		LINE_KINDS,
+		LINE_KIND_LABEL,
+		LINE_KIND_SAMPLE,
+		type LineKind
+	} from '$lib/graph/line-kind';
 	import { kindColour } from '$lib/bron/kleur';
-	import { hullColorFor, hullDashFor } from './nodeSprites';
-	import { drawClassOf } from '$lib/graph/types';
-	import { GROUP_LABEL, inLegend } from '$lib/graph/collection-role';
+	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import LineSample from './LineSample.svelte';
 	import { BRON_LABEL } from '$lib/vocabulary';
@@ -44,13 +47,15 @@
 	let {
 		verbonden,
 		filter,
-		selectionCollection,
 		onFilter,
 		onOpenFilter,
 		onLaadSoort,
 		laadtSoort = new Set<string>(),
-		hiddenRelations,
-		onToggleRelation,
+		hiddenLines,
+		onToggleLine,
+		hiddenAnnexes = false,
+		onToggleAnnexes,
+		outlines = 0,
 		hiddenGroups = new Set(),
 		onToggleGroup,
 		canvasCounts,
@@ -70,22 +75,26 @@
 	}: {
 		verbonden: VerbondenState;
 		filter: VerbondenFilter;
-		selectionCollection: Collection | null;
 		onFilter: (f: VerbondenFilter) => void;
 		onOpenFilter: () => void;
 		/** All the focus's direct neighbours of one kind (the per-kind step). */
 		onLaadSoort?: (collection: Collection) => void;
 		/** The kinds being loaded so. */
 		laadtSoort?: ReadonlySet<string>;
-		hiddenRelations: ReadonlySet<Relation>;
-		onToggleRelation: (r: Relation) => void;
+		hiddenLines: ReadonlySet<LineKind>;
+		onToggleLine: (l: LineKind) => void;
+		/** Bijlagen (a bron of no kind of its own) switched off. */
+		hiddenAnnexes?: boolean;
+		onToggleAnnexes?: () => void;
+		/** How many outlines the canvas draws; the Vinkje Omtrekken stands where there are some. */
+		outlines?: number;
 		/** Groupings switched off: no hull around their bronnen. */
 		hiddenGroups?: ReadonlySet<ContainerKind>;
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
-			relations?: Partial<Record<Relation, number>>;
-			refersFrom?: Collection[];
+			lines?: Partial<Record<LineKind, number>>;
+			annexes?: number;
 			metGroep?: Partial<
 				Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 			>;
@@ -138,21 +147,17 @@
 		internationaal: 'instruments'
 	};
 	const kinds = $derived(FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !isOn(k)));
-	const relations = $derived(
-		(Object.entries(canvasCounts.relations ?? {}) as [Relation, number][])
-			.filter(([r]) => inLegend(r))
-			.sort((a, b) => b[1] - a[1])
-			.map(([relation]) => ({
-				relation,
-				label: lineName(relation, canvasCounts.refersFrom)
-			}))
+	// Relatie: one row per lijnsoort (Netwerkcanvas, Lijnen) that is drawn or switched off.
+	const lines = $derived(
+		LINE_KINDS.filter((l) => (canvasCounts.lines?.[l] ?? 0) > 0 || hiddenLines.has(l))
 	);
-	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {
-		instrument: 'een omtrek om de artikelen van een wet of regeling',
-		faction: 'een omtrek om de leden van een fractie',
-		committee: 'een omtrek om de leden van een commissie',
-		dossier: 'een omtrek om de stukken van een dossier'
-	};
+	const annexes = $derived(canvasCounts.annexes ?? 0);
+	/** Omtrekken are on while no grouping is switched off. */
+	const outlinesOn = $derived(hiddenGroups.size === 0);
+	function toggleOutlines() {
+		const kinds = Object.keys(GROUP_LABEL) as ContainerKind[];
+		for (const kind of kinds) if (outlinesOn === !hiddenGroups.has(kind)) onToggleGroup?.(kind);
+	}
 
 	// On the canvas a wet, dossier, fractie or commissie is a hull, never a bron: the kinds
 	// are named by what does stand there (Thijs). Verbonden lists the wetten, dossiers and
@@ -199,16 +204,29 @@
 
 	const mutOn = $derived(overlay.kind === 'open');
 	const heatOn = $derived(overlay.kind === 'heat');
-
-	// The line sample of a relation, in the colour of the edge from this bron.
-	const sourceKind = (relation: Relation) =>
-		drawClassOf(
-			// A citation of the selected bron comes from the other end.
-			relation === 'REFERS_TO' && selectionCollection === 'articles'
-				? 'judgments'
-				: (selectionCollection ?? 'articles')
-		);
 </script>
+
+{#snippet tonenRest()}
+	{#if annexes > 0 || hiddenAnnexes}
+		<FilterOptie
+			label="Bijlagen"
+			on={!hiddenAnnexes}
+			onToggle={() => onToggleAnnexes?.()}
+			count={annexes}
+			loading={counting}
+			empty={annexes === 0}
+		>
+			{#snippet voor()}<KindGlyph
+					vorm="regel-o"
+					size={11}
+					colour={kindColour('annexes')}
+				/>{/snippet}
+		</FilterOptie>
+	{/if}
+	{#if outlines > 0 || hiddenGroups.size > 0}
+		<FilterOptie label="Omtrekken" on={outlinesOn} onToggle={toggleOutlines} />
+	{/if}
+{/snippet}
 
 <aside class="legend">
 	<!-- Nothing on the canvas: nothing to filter, group or count yet. -->
@@ -216,7 +234,7 @@
 		<p class="empty stil">Nog geen bronnen in het netwerk.</p>
 	{:else}
 		<!-- Around one bron: the soorten of Verbonden, how many drawn of how many (N1, N2). -->
-		{#if kindRowsShown}{#if kindRowsShown.length > 0}
+		{#if kindRowsShown}{#if kindRowsShown.length > 0 || annexes > 0 || outlines > 0}
 				<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 					{#each kindRowsShown as r, i (r.id)}
 						{@const on = rowOn(r)}
@@ -244,11 +262,11 @@
 						{#if r.load && onLaadSoort && kindsSettled}
 							{@const c = r.load}
 							<p class="laad">
-								{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<TekstLink
+								{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<AlleN
+										aantal={r.total ?? 0}
+										noun={r.label.toLowerCase()}
 										onclick={() => onLaadSoort(c)}
-										aria-label="Alle {formatCount(r.total ?? 0)} {r.label.toLowerCase()} laden"
-										>Alle laden</TekstLink
-									>{/if}
+									/>{/if}
 							</p>
 						{/if}
 						{#if withCurrentMember && r.collection === 'members'}
@@ -269,10 +287,11 @@
 							</p>
 						{/if}
 					{/each}
+					{@render tonenRest()}
 				</Sectie>
 			{/if}
 			<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
-		{:else if kinds.length > 0}
+		{:else if kinds.length > 0 || annexes > 0 || outlines > 0}
 			<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
@@ -304,24 +323,31 @@
 					{#if cut && onLaadSoort}
 						{@const c = cut.collection as Collection}
 						<p class="laad">
-							{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<TekstLink
+							{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<AlleN
+									aantal={cut.total}
+									noun={BRON_LABEL[c][1].toLowerCase()}
 									onclick={() => onLaadSoort(c)}
-									aria-label="Alle {formatCount(cut.total)} {BRON_LABEL[c][1].toLowerCase()} laden"
-									>Alle laden</TekstLink
-								>{/if}
+								/>{/if}
 						</p>
 					{/if}
 				{/each}
+				{@render tonenRest()}
 			</Sectie>
 		{/if}
 
-		{#if relations.length > 0}
+		{#if lines.length > 0}
 			<Sectie title="Relatie" niveau={3} inklapbaar={false}>
-				{#each relations as r (r.relation)}
-					{@const rel = r.relation as Relation}
-					{@const on = !hiddenRelations.has(rel)}
-					<FilterOptie label={r.label} wrap {on} onToggle={() => onToggleRelation(rel)}>
-						{#snippet voor()}<LineSample relation={rel} from={sourceKind(rel)} />{/snippet}
+				{#each lines as l (l)}
+					{@const sample = LINE_KIND_SAMPLE[l]}
+					<FilterOptie
+						label={LINE_KIND_LABEL[l]}
+						wrap
+						on={!hiddenLines.has(l)}
+						onToggle={() => onToggleLine(l)}
+						count={canvasCounts.lines?.[l] ?? 0}
+						loading={counting}
+					>
+						{#snippet voor()}<LineSample relation={sample.relation} from={sample.from} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</Sectie>
@@ -358,38 +384,6 @@
 						{/snippet}
 					</TekstMenu>
 				</section>
-
-				<Sectie title="Indeling" niveau={3} inklapbaar={false}>
-					{#each Object.keys(GROUP_LABEL) as ck (ck)}
-						{@const kind = ck as ContainerKind}
-						<FilterOptie
-							label={GROUP_LABEL[kind]}
-							title={`${GROUP_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; uit verbergt ook de artikelen' : ''}`}
-							on={kind === 'instrument' ? isOn('artikelen') : !hiddenGroups.has(kind)}
-							count={kind === 'instrument' ? (totals.artikelen ?? 0) : null}
-							onToggle={() =>
-								kind === 'instrument'
-									? onFilter(toggleFilterGroup(filter, 'artikelen'))
-									: onToggleGroup?.(kind)}
-						>
-							<!-- As on the canvas: the colour of the group and its own line. -->
-							{#snippet voor()}<svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
-									<rect
-										x="1"
-										y="1"
-										width="20"
-										height="10"
-										rx="5"
-										fill={hullColorFor(kind)}
-										fill-opacity="0.08"
-										stroke={hullColorFor(kind)}
-										stroke-width="1.5"
-										stroke-dasharray={hullDashFor(kind)}
-									/>
-								</svg>{/snippet}
-						</FilterOptie>
-					{/each}
-				</Sectie>
 
 				{#if lids.length > 0}
 					<section class="block">
@@ -464,7 +458,7 @@
 
 <style>
 	/* In the strip at the left of the werkplek, in Weergave: a block (Sectie) for each of Tonen,
-	   Relatie, Periode, Indeling. */
+	   Relatie, Periode. */
 	.legend {
 		/* The marks of Tonen and Relatie in one column, as wide as a line sample. */
 		--optie-voor: 28px;

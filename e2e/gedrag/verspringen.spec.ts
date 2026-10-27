@@ -117,3 +117,31 @@ test('the card of a bron keeps its actions in place while the text comes in', as
 	await expect(card.getByRole('status')).toHaveCount(0);
 	expect(await at()).toEqual(before);
 });
+
+// The werkplek opens without a shift (N17c): the strip, the canvas and the cards keep their
+// places while the neighbourhood and the uitspraken that cite the article come in; the layout
+// shift of the whole load at most 0.1 ("good"), on a wide screen and on a phone. What is left is
+// the line that says why a step is off, and the dots of the tijdstrook, which find their places
+// when the uitspraken are in.
+test('the werkplek opens without a shift', async ({ page }) => {
+	await page.route(/\/api\/(nodes|verbonden)\//, async (route) => {
+		await new Promise((done) => setTimeout(done, 1200));
+		await route.fallback();
+	});
+	await page.addInitScript(() => {
+		const w = window as unknown as { __cls: number };
+		w.__cls = 0;
+		new PerformanceObserver((list) => {
+			for (const e of list.getEntries() as (PerformanceEntry & {
+				value: number;
+				hadRecentInput: boolean;
+			})[])
+				if (!e.hadRecentInput) w.__cls += e.value;
+		}).observe({ type: 'layout-shift', buffered: true });
+	});
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	await expect(page.locator('.canvas-wrap')).toBeAttached();
+	await page.waitForTimeout(3000);
+	const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+	expect(cls).toBeLessThanOrEqual(0.1);
+});

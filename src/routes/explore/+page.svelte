@@ -9,11 +9,11 @@
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import type { Collection, Relation } from '$lib/vocabulary';
+	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
@@ -89,6 +89,7 @@
 	import { allRows, filterGroups, lidCounts, memberCountsUnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
+	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
 	import {
 		parseOverlay,
@@ -119,6 +120,7 @@
 	import { keyEcli } from '$lib/text/ecli';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import type { Option } from '$lib/components/ui/option';
 	import ChainView from '$lib/network/ChainView.svelte';
@@ -157,7 +159,6 @@
 	import { panelOfKey, verbondenInView, type Panel } from './panels';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
-	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { OverlayCounts } from './overlay-counts.svelte';
 	import TocSheet from './TocSheet.svelte';
@@ -421,13 +422,15 @@
 	 * regulations that only name the law, or only those issued under it (the default: a
 	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
 	 */
+	/** The search for a bron to add, open (the panel's and the empty canvas's button). */
+	let toevoegenOpen = $state(false);
 	let chainExpired = $state(false);
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
 	const chainHidden = $derived(
-		new Set<Relation>([
-			...(chainMentions ? [] : (['REFERS_TO'] as const)),
-			...(chainBasedOff ? (['BASED_ON'] as const) : [])
+		new Set<LineKind>([
+			...(chainMentions ? [] : (['citation'] as const)),
+			...(chainBasedOff ? (['structural'] as const) : [])
 		])
 	);
 	let chainData = $state.raw<{
@@ -775,20 +778,20 @@
 	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
-			? 'gedeelde bronnen niet beschikbaar'
+			? 'gedeelde bronnen nog niet beschikbaar'
 			: sharedEnds.length > SHARED_ENDS
 				? `${formatCount(SHARED_ENDS)} van ${formatCount(sharedEnds.length)} gekozen bronnen`
 				: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
-	let hiddenRelations = $state.raw<ReadonlySet<Relation>>(new Set());
-	store.filters.subscribe((f) => (hiddenRelations = f.hiddenRelations));
+	let hiddenLines = $state.raw<ReadonlySet<LineKind>>(new Set());
+	store.filters.subscribe((f) => (hiddenLines = f.hiddenLines));
 	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
 		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
 	);
 	const chainCounts = $derived.by(() => {
 		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
-		if (!chainModel || !chainAll) return { kinds: {}, relations: {} };
+		if (!chainModel || !chainAll) return { kinds: {}, lines: {} };
 		const nodes = chainModel.layers.flatMap((l) => l.nodes);
 		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -800,19 +803,15 @@
 		}
 		return {
 			kinds,
-			relations: {
-				BASED_ON: lines.filter((l) => l.way === 'delegates').length,
-				REFERS_TO: lines.filter((l) => l.way === 'mentioned').length
-			},
-			// A regulation names the law: Noemt.
-			refersFrom: ['instruments' as const]
-		} satisfies Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'>;
+			// A regulation given by the law is a grondslag (Structureel), one that names it an Aanhaling.
+			lines: {
+				structural: lines.filter((l) => l.way === 'delegates').length,
+				citation: lines.filter((l) => l.way === 'mentioned').length
+			}
+		} satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	});
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
-	const NO_COUNTS = { kinds: {}, relations: {} } satisfies Pick<
-		CanvasCounts,
-		'kinds' | 'relations'
-	>;
+	const NO_COUNTS = { kinds: {}, lines: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	const sharedCounts = $derived.by(() => {
 		if (!sharedState) return null;
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -822,10 +821,11 @@
 		}
 		const judgments = sharedState.judgments.reduce((n, j) => n + j.total, 0);
 		if (judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + judgments;
-		const relations: Partial<Record<Relation, number>> = {};
+		const lines: Partial<Record<LineKind, number>> = {};
 		for (const r of sharedState.rows)
-			for (const rel of r.relations) relations[rel] = (relations[rel] ?? 0) + 1;
-		return { kinds, relations } satisfies Pick<CanvasCounts, 'kinds' | 'relations'>;
+			for (const rel of new Set(r.relations.map((x) => lineKindOf(x, drawClassOf(r.collection)))))
+				lines[rel] = (lines[rel] ?? 0) + 1;
+		return { kinds, lines } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	});
 	/** The tijdstrook of Verband: the shared bronnen with a date. */
 	const sharedDots = $derived(
@@ -1400,11 +1400,20 @@
 	const OFF = 'uit';
 	const filtersOff = $derived(offOf(params.get(OFF)));
 	$effect(() => {
-		const { relations, groups } = filtersOff;
+		const { lines, annexes, groups } = filtersOff;
 		untrack(() => {
 			const now = get(store.filters);
-			if (sameSet(relations, now.hiddenRelations) && sameSet(groups, now.hiddenGroups)) return;
-			store.setFilters({ hiddenRelations: new Set(relations), hiddenGroups: new Set(groups) });
+			if (
+				sameSet(lines, now.hiddenLines) &&
+				annexes === now.hiddenAnnexes &&
+				sameSet(groups, now.hiddenGroups)
+			)
+				return;
+			store.setFilters({
+				hiddenLines: new Set(lines),
+				hiddenAnnexes: annexes,
+				hiddenGroups: new Set(groups)
+			});
 		});
 	});
 	let filtersStart = true;
@@ -1415,10 +1424,20 @@
 			return;
 		}
 		const off = untrack(() => filtersOff);
-		if (sameSet(off.relations, f.hiddenRelations) && sameSet(off.groups, f.hiddenGroups)) return;
+		if (
+			sameSet(off.lines, f.hiddenLines) &&
+			off.annexes === f.hiddenAnnexes &&
+			sameSet(off.groups, f.hiddenGroups)
+		)
+			return;
 		untrack(() =>
 			setUrl({
-				[OFF]: offValue({ ...off, relations: [...f.hiddenRelations], groups: [...f.hiddenGroups] })
+				[OFF]: offValue({
+					...off,
+					lines: [...f.hiddenLines],
+					annexes: f.hiddenAnnexes,
+					groups: [...f.hiddenGroups]
+				})
 			})
 		);
 	});
@@ -1728,8 +1747,6 @@
 	);
 
 	// ── Resizable columns ────────────────────────────────────────────────────
-	const widths = new ColumnWidths();
-	onMount(() => widths.load());
 
 	// ── Keys ─────────────────────────────────────────────────────────────────
 	// L reads the selected bron at full width, or goes back to the network; ignored
@@ -1910,12 +1927,13 @@
 				</div>
 				{#if beside}
 					<div class="reader__beside" bind:this={besideEl}>
-						<a
-							class="reader__close"
-							href={closeBesideHref}
-							data-sveltekit-noscroll
-							aria-label="Sluiten">×</a
-						>
+						<div class="reader__close">
+							<IconButton
+								label="Sluiten"
+								onclick={() => goto(closeBesideHref, { noScroll: true, keepFocus: true })}
+								>×</IconButton
+							>
+						</div>
 						{#if besideJudgmentNode}
 							{#if judgmentReader.component}
 								{@const JudgmentReader = judgmentReader.component}
@@ -1985,16 +2003,6 @@
 	{/if}
 {/snippet}
 
-{#snippet handle(which: Column)}
-	<div
-		class="resize-handle resize-handle--{which}"
-		onpointerdown={(e) => widths.start(e, which)}
-		onpointermove={widths.move}
-		onpointerup={widths.end}
-		aria-hidden="true"
-	></div>
-{/snippet}
-
 {#snippet viewMiddle(scale: number)}
 	{#if view === 'keten'}
 		<ChainView
@@ -2006,7 +2014,7 @@
 			chosen={marked ?? chainArticleId}
 			gap={chainGap}
 			{hiddenKinds}
-			hiddenRelations={chainHidden}
+			hiddenLines={chainHidden}
 			amending={chainModel?.amending.length ?? 0}
 			expired={chainData?.delegated?.expired_total
 				? {
@@ -2036,7 +2044,7 @@
 			chosen={marked}
 			gap={sharedGap}
 			{hiddenKinds}
-			{hiddenRelations}
+			{hiddenLines}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
 			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
@@ -2119,6 +2127,7 @@
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
 								{view}
+								onToevoegen={() => (toevoegenOpen = true)}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
 								middenZoom={view !== 'keten'}
 								surroundings={view === 'omgeving'}
@@ -2128,12 +2137,12 @@
 										? (sharedCounts ?? NO_COUNTS)
 										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
-								externRelations={view === 'keten'
+								externLines={view === 'keten'
 									? {
 											hidden: chainHidden,
-											toggle: (r) => {
-												if (r === 'REFERS_TO') chainMentions = !chainMentions;
-												if (r === 'BASED_ON') chainBasedOff = !chainBasedOff;
+											toggle: (l) => {
+												if (l === 'citation') chainMentions = !chainMentions;
+												if (l === 'structural') chainBasedOff = !chainBasedOff;
 											}
 										}
 									: null}
@@ -2179,6 +2188,7 @@
 								{/snippet}
 								{#snippet canvasOverlay()}
 									<NetwerkPanel
+										bind:searching={toevoegenOpen}
 										entries={netwerkActive
 											? composer.entries.map((e) =>
 													e.node
@@ -2191,7 +2201,8 @@
 										onSelect={addIdToNetwerk}
 										selection={selectedNode &&
 										selectedLinkId &&
-										selectedNode.id !== reach?.focal &&
+										reach &&
+										selectedNode.id !== reach.focal &&
 										!netwerk.ids.includes(selectedLinkId)
 											? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 											: null}
@@ -2259,12 +2270,7 @@
 			</div>
 		{:else if selectedNode}
 			{@const withContents = hasContents}
-			<div
-				class="explore-read"
-				class:explore-read--with-nav={withContents}
-				class:is-resizing={!!widths.drag}
-				style:--panel-w={widths.css('panel')}
-			>
+			<div class="explore-read" class:explore-read--with-nav={withContents}>
 				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
@@ -2301,7 +2307,6 @@
 				>
 					{@render reader()}
 				</div>
-				{@render handle('panel')}
 				<div
 					class="col col--panel"
 					class:mobile-hidden={readTab === 'tekst'}
@@ -2400,50 +2405,21 @@
 		z-index: var(--z-float);
 	}
 
-	/* The widths that follow the screen, until a column is dragged. Verbonden is as wide as
-	   a group's heading with its count and its box on one line ("Uitspraken die dit artikel
-	   aanhalen 127", Thijs 10 Oct: "het kader zelf sowieso iets breder altijd"); the room
-	   comes from the network, never from the reader. Below 1440 Verbonden grows with the
-	   screen to 408, so the network keeps 252 at 1280 and the reader 610 down to 1172. At
-	   1440 Verbonden 432 and the network 328, so the reader keeps 670 and its lid numbers
-	   in the margin (ArticleText's container query at 600). From 1600 the room goes to the
-	   network (at least 328): the reader keeps some 850px (a measure of 700 in the middle),
-	   Verbonden grows a little, from 432 to at most 480 at 2080 (Thijs: "niet te veel").
-	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
+	/* Verbonden is as wide with every reader (an article, a stuk, a lid): 400 from 1280, as
+	   mockup V1, with room for the text and its contents beside it (A190, Thijs 23 Oct);
+	   below, it grows with the screen from 340 to 408. The reader cannot drag it. */
 	.explore-read {
 		--nav-w-auto: 200px;
-		--graph-w-auto: 360px;
-		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
-		--panel: var(--panel-w, var(--panel-w-auto));
+		--panel: clamp(340px, calc(100vw - 872px), 408px);
 	}
-	/* Beside the reader's contents (200) Verbonden leaves the reader its room below 1280. */
-	@media (max-width: 1279px) {
-		.explore-read--with-nav {
-			--panel-w-auto: clamp(340px, calc(100vw - 900px), 408px);
-		}
-	}
-	@media (min-width: 1440px) {
-		.explore-read {
-			--graph-w-auto: 328px;
-			--panel-w-auto: 432px;
-		}
-	}
-	@media (min-width: 1600px) {
-		.explore-read {
-			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
-			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
-		}
-	}
-	/* Reading, Verbonden is 400 from 1280, as mockup V1: room for the text and its contents
-	   beside it (A190, Thijs 23 Oct); below, the width above. */
 	@media (min-width: 1280px) {
 		.explore-read {
-			--panel-w-auto: 400px;
+			--panel: 400px;
 		}
 	}
 
 	.explore-read {
-		grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: minmax(0, 1fr) var(--panel);
 	}
 	/* A reader without contents (a kabinet, a lid, a fractie) and Verbonden stand together in
 	   the middle of the screen: the room is the same at both outer edges, none kept for
@@ -2453,7 +2429,7 @@
 		.explore-read:not(.explore-read--with-nav) {
 			grid-template-columns:
 				minmax(0, calc(790px + var(--s-6) + var(--s-8)))
-				5px var(--panel);
+				var(--panel);
 			justify-content: center;
 		}
 		/* No numbers hang at its left: the step to the edge is Verbonden's at the right. */
@@ -2463,9 +2439,7 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) 5px var(
-				--panel
-			);
+		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) var(--panel);
 	}
 	/* The reading view with its contents keeps margins at both sides from 1280 (A208d, Thijs
 	   23 Oct: "meer ruimte aan de zijkanten"): 24, 32 from 1440, and on a wide screen the whole
@@ -2475,9 +2449,6 @@
 	@media (min-width: 1280px) {
 		.explore-read--with-nav {
 			padding-inline: max(var(--s-5), calc((100vw - 1680px) / 2));
-		}
-		.explore-read.explore-read--with-nav .col--panel {
-			padding-right: var(--s-3);
 		}
 	}
 	@media (min-width: 1440px) {
@@ -2512,9 +2483,6 @@
 	}
 	.explore-read .panel {
 		height: auto;
-	}
-	.explore-read .resize-handle--panel::before {
-		background: transparent;
 	}
 
 	.panel {
@@ -2556,31 +2524,15 @@
 		background: var(--paper-2);
 	}
 
-	/* A finger's target: 24 px on a desktop, 44 px below 768 (a phone, 200% zoom). */
+	/* The close of the toelichting opened beside the text: an IconButton in the corner. */
 	.reader__close {
 		position: absolute;
 		top: var(--s-1);
 		right: var(--s-2);
 		z-index: var(--z-raised);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: var(--tik-h);
-		min-height: var(--tik-h);
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: 1;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-
-	.reader__close:hover {
-		color: var(--ink);
 	}
 	@media (max-width: 768px) {
 		.reader__close {
-			min-width: var(--veld-h-raak);
-			min-height: var(--veld-h-raak);
 			top: 0;
 			right: 0;
 		}
@@ -2624,39 +2576,6 @@
 		}
 	}
 
-	/* A hairline until touched, not a constant grey bar: the 5px track is the hit
-	   area, drawn as a thin centred line that only widens under the pointer. */
-	.resize-handle {
-		height: 100%;
-		width: 5px;
-		cursor: col-resize;
-		background: transparent;
-		flex-shrink: 0;
-		position: relative;
-		z-index: var(--z-raised);
-	}
-
-	.resize-handle::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 2px;
-		width: 1px;
-		background: var(--rule);
-		transition:
-			left var(--dur-1) var(--ease),
-			width var(--dur-1) var(--ease),
-			background var(--dur-1) var(--ease);
-	}
-
-	.resize-handle:hover::before,
-	.is-resizing .resize-handle::before {
-		left: 1px;
-		width: 3px;
-		background: var(--rule-strong);
-	}
-
 	/* The tabs of a phone and of the narrow read view: shown by the media rules below. */
 	/* A height in whole pixels: the tabs' own grew 32 → 32.5 px when the UI font came, and
 	   moved the text under them half a pixel (FE2, 10 Oct: 0 px after the first paint). */
@@ -2691,7 +2610,7 @@
 	@media (max-width: 1100px) {
 		.explore-read,
 		.explore-read--with-nav {
-			grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+			grid-template-columns: minmax(0, 1fr) var(--panel);
 			grid-template-rows: auto minmax(0, 1fr);
 		}
 		.explore-read .mobile-tabs {
@@ -2699,8 +2618,7 @@
 			grid-column: 1 / -1;
 			grid-row: 1;
 		}
-		.explore-read .col,
-		.explore-read .resize-handle {
+		.explore-read .col {
 			grid-row: 2;
 		}
 		.explore-read .toc-column {
@@ -2747,9 +2665,6 @@
 		/* Verbonden as a tab of its own: the page's margins, its own scroll. */
 		.explore-read .col--panel {
 			padding: var(--s-5) var(--s-4) var(--s-7);
-		}
-		.resize-handle {
-			display: none;
 		}
 	}
 </style>

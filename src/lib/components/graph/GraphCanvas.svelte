@@ -33,6 +33,7 @@
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
+	import { lineKindOf } from '$lib/graph/line-kind';
 	import {
 		hoverPlaats,
 		lijnLabelPlaats,
@@ -359,11 +360,11 @@
 	 *  for them (see edge-bundles). */
 	let bundels: Bundels = { linesIntoGroup: new Map(), bundles: new Map() };
 	function recomputeLinesIntoGroup() {
-		const lijnen: Lijn[] = [];
+		const lines: Lijn[] = [];
 		graph.forEachEdge((id, attrs, source, target) => {
-			if (!attrs.layoutOnly) lijnen.push({ id, source, target });
+			if (!attrs.layoutOnly) lines.push({ id, source, target });
 		});
-		bundels = telBundels(lijnen, nodeGroupIds);
+		bundels = telBundels(lines, nodeGroupIds);
 	}
 
 	$effect(() => {
@@ -656,15 +657,30 @@
 	let drawn: ReadonlySet<string> | null = null;
 	/** Tells `onDrawn` what is drawn now, when that changed. */
 	function reportDrawn() {
-		if (!onDrawn) return;
 		const now = new Set<string>();
+		let stepBack = 0;
+		let standing = 0;
 		graph.forEachNode((id, attrs) => {
-			if (!isHiddenNode(id, attrs)) now.add(id);
+			if (isHiddenNode(id, attrs)) return;
+			standing++;
+			if (isDimmedNode(id, attrs)) stepBack++;
+			else now.add(id);
 		});
+		nodeCount = standing;
+		dimmedCount = stepBack;
+		if (!onDrawn) return;
 		if (drawn && drawn.size === now.size && [...now].every((id) => drawn!.has(id))) return;
 		drawn = now;
 		onDrawn(now);
 	}
+
+	/** The bronnen standing on the canvas, and how many of them are dimmed (outside the period). */
+	let nodeCount = $state(0);
+	let dimmedCount = $state(0);
+
+	/** A dated bron outside the chosen period stays, dimmed with its lines (Tijdstrook, 28 %). */
+	const isDimmedNode = (id: string, attrs: Record<string, unknown>) =>
+		id !== focusedId && !latestPinnedIds.has(id) && outsideYears(attrs.date);
 
 	const outsideYears = (date: unknown) =>
 		typeof date === 'string' &&
@@ -676,8 +692,8 @@
 		rechter !== null && attrs.collection === 'judgments' && attrs.rechter !== rechter;
 
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
+		(!!latestFilters?.hiddenAnnexes && attrs.drawClass === 'other') ||
 		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
-		outsideYears(attrs.date) ||
 		otherCourt(attrs);
 
 	// The focus and the chosen bronnen stay drawn under every filter: Soort off for their own
@@ -690,6 +706,28 @@
 	 * a step of the focus woke five, each a render of the whole canvas. Nothing they do reads
 	 * the drawing back; a fit or a measurement after a refresh stays synchronous.
 	 */
+	/** Half a finger's 44 px target: a tap this near a bron chooses it (touch only). */
+	const TAP_RADIUS = 22;
+	/** The bron nearest to a tap, within the radius of a finger's target; touch only. */
+	function tapTarget(x: number, y: number): string | null {
+		if (!renderer || !window.matchMedia('(pointer: coarse)').matches) return null;
+		const r = renderer;
+		let best: string | null = null;
+		let bestD = TAP_RADIUS;
+		graph.forEachNode((id, attrs) => {
+			if (attrs.anchor) return;
+			const d = r.getNodeDisplayData(id);
+			if (!d || d.hidden) return;
+			const p = r.framedGraphToViewport(d);
+			const dist = Math.hypot(p.x - x, p.y - y);
+			if (dist < bestD) {
+				bestD = dist;
+				best = id;
+			}
+		});
+		return best;
+	}
+
 	const redrawInFrame = () => renderer?.refresh({ schedule: true });
 
 	function refresh() {
@@ -963,6 +1001,14 @@
 			nodeReducer: (id, data) => {
 				if (isHiddenNode(id, data)) return { ...data, hidden: true };
 				if (data.anchor) return { ...data, label: '', forceLabel: false };
+				if (isDimmedNode(id, data))
+					return {
+						...data,
+						hidden: false,
+						label: '',
+						color: t.paper2,
+						image: spriteForVorm(data.vorm as Vorm, true, false)
+					};
 
 				const f0 = latestFilters;
 				// No single node to focus around when the selection is a container (a wet,
@@ -1050,7 +1096,8 @@
 					return { ...data, hidden: true };
 
 				const relation = data.relation as Relation;
-				if (latestFilters?.hiddenRelations.has(relation)) return { ...data, hidden: true };
+				if (latestFilters?.hiddenLines.has(lineKindOf(relation, srcAttrs.drawClass as DrawClass)))
+					return { ...data, hidden: true };
 				const h = hullGroups();
 				if (hullLinkOf(src, tgt, h) || anchorWithHull(src, h) || anchorWithHull(tgt, h))
 					return { ...data, hidden: true };
@@ -1091,6 +1138,17 @@
 						zIndex: 3
 					};
 				}
+
+				// A line of a bron outside the period steps back with it.
+				if (isDimmedNode(src, srcAttrs) || isDimmedNode(tgt, tgtAttrs))
+					return {
+						...data,
+						hidden: false,
+						type: edgeType,
+						color: dimColor(0.28),
+						size: restSize * 0.7,
+						label: ''
+					};
 
 				if (hoveredId !== null) {
 					const incident = src === hoveredId || tgt === hoveredId;
@@ -1228,7 +1286,12 @@
 			onNodeDoubleClick?.(node);
 		});
 		renderer.on('clickEdge', ({ edge }) => onEdgeClick?.(edge));
-		renderer.on('clickStage', () => onStageClick?.());
+		renderer.on('clickStage', ({ event }) => {
+			// A finger is no pixel: a tap within 22 px of a bron (a 44 px target) chooses it.
+			const hit = tapTarget(event.x, event.y);
+			if (hit) onNodeClick?.(hit);
+			else onStageClick?.();
+		});
 		renderer.on('enterNode', ({ node, event }) => {
 			sigmaHoveredId = node;
 			setHoveredId(node);
@@ -1278,6 +1341,8 @@
 <div
 	bind:this={wrap}
 	class="canvas-wrap"
+	data-nodes={nodeCount}
+	data-dimmed={dimmedCount}
 	onpointermove={onHullPointer}
 	onpointerleave={() => {
 		if (hoveredHullId !== null) {
@@ -1320,14 +1385,14 @@
 					class="hull-label"
 					class:is-dim={h.dim}
 					class:is-long={h.long}
-					style="left:{h.labelX}px; top:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
+					style="--x:{h.labelX}px; --y:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
 				>
 			{/each}
 			{#each hullLinks as l (l.id)}
 				{#if l.label}
 					<span
 						class="hull-link-label"
-						style="left:{l.labelX}px; top:{l.labelY}px; --link-color:{l.color}">{l.label}</span
+						style="--x:{l.labelX}px; --y:{l.labelY}px; --link-color:{l.color}">{l.label}</span
 					>
 				{/if}
 			{/each}
@@ -1411,7 +1476,9 @@
 	}
 	.hull-link-label {
 		position: absolute;
-		transform: translate(-50%, -50%);
+		left: 0;
+		top: 0;
+		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 50%));
 		padding: 1px var(--s-2);
 		border-radius: var(--r-rond);
 		background: var(--paper);
@@ -1430,9 +1497,13 @@
 		overflow: hidden;
 		z-index: 4;
 	}
+	/* Placed by transform, not left and top: a label that moves with the layout is no layout
+	   shift (N17c). */
 	.hull-label {
 		position: absolute;
-		transform: translate(-50%, -100%);
+		left: 0;
+		top: 0;
+		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 100%));
 		padding: 2px var(--s-2);
 		border-radius: var(--r-rond);
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);

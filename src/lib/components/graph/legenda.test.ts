@@ -22,8 +22,8 @@ describe('the strip of the werkplek', () => {
 	it('puts "Alle laden" under the count, in its column', () => {
 		expect(rule('.laad')).toMatch(/justify-content:\s*flex-end;/);
 	});
-	it('counts nothing in Relatie', () => {
-		expect(relatie).not.toMatch(/count=/);
+	it('counts the lines of each soort in Relatie, as Tonen counts its kinds', () => {
+		expect(relatie).toMatch(/count=\{canvasCounts\.lines/);
 	});
 });
 
@@ -47,9 +47,9 @@ describe('an option of a filter', () => {
 });
 
 describe('Relatie', () => {
-	it('names a line from one definition in every weergave (lineName), no map of its own', () => {
+	it('names a line by its lijnsoort in every weergave, no map of its own', () => {
 		const page = readFileSync(join(process.cwd(), 'src/routes/explore/+page.svelte'), 'utf8');
-		expect(source).toMatch(/lineName\(relation, canvasCounts\.refersFrom\)/);
+		expect(source).toMatch(/LINE_KIND_LABEL\[l\]/);
 		expect(source).not.toMatch(/OWN_WORDS|relationLabels/);
 		expect(page).not.toMatch(/RELATION_WORDS/);
 	});

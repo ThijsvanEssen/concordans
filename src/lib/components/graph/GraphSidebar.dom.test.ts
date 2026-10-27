@@ -6,7 +6,7 @@ import GraphSidebar from './GraphSidebar.svelte';
 import { EMPTY_FILTER } from '$lib/verbonden/filter';
 import { DEFAULT_LOADER_OPTIONS } from '$lib/verbonden/loaders';
 
-const props = (selectionCollection: 'documents' | null) => ({
+const props = (_selectionCollection: 'documents' | null) => ({
 	verbonden: {
 		id: 'documents/x',
 		groups: [],
@@ -15,11 +15,11 @@ const props = (selectionCollection: 'documents' | null) => ({
 		options: DEFAULT_LOADER_OPTIONS
 	},
 	filter: EMPTY_FILTER,
-	selectionCollection,
+
 	onFilter: () => {},
 	onOpenFilter: () => {},
-	hiddenRelations: new Set<never>(),
-	onToggleRelation: () => {},
+	hiddenLines: new Set<never>(),
+	onToggleLine: () => {},
 	canvasCounts: { kinds: { stemmingen: 49, wetsvoorstellen: 30 } },
 	hasNodes: true
 });

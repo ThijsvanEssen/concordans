@@ -124,10 +124,11 @@ describe('the touch target', () => {
 		);
 	});
 
-	it('closes what opens beside the article with a 44 px button below 768 (B32)', () => {
+	it('closes what opens beside the article with an IconButton, a finger high below 768 (B32)', () => {
 		const explore = read('routes/explore/+page.svelte');
-		expect(explore).toMatch(
-			/@media \(max-width: 768px\) \{\s*\.reader__close \{\s*min-width: var\(--veld-h-raak\);\s*min-height: var\(--veld-h-raak\)/
+		expect(explore).toMatch(/<div class="reader__close">\s*<IconButton\s+label="Sluiten"/);
+		expect(read('lib/components/ui/IconButton.svelte')).toMatch(
+			/@media \(pointer: coarse\), \(max-width: 768px\) \{\s*\.iconknop \{\s*width: var\(--veld-h-raak\)/
 		);
 	});
 });

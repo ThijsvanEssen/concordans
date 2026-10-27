@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
+import { NODE_TYPES, type Collection } from '$lib/vocabulary';
 import { kolomVan } from '$lib/selection/kolommen';
-import { COLLECTION_ROLE, GROUP_LABEL, inLegend, isDrawn } from './collection-role';
+import { COLLECTION_ROLE, GROUP_LABEL, isDrawn } from './collection-role';
 import { containerKindOf, focusKindOf } from './container-membership';
 import { drawClassOf } from './types';
 
@@ -53,14 +53,7 @@ describe('the role of a collection', () => {
 		});
 	});
 
-	it('offers in the legend only a relation the canvas draws, never VERSION_OF', () => {
+	it('draws no VERSION_OF: the reader’s version navigation, not the network’s', () => {
 		expect(isDrawn('VERSION_OF')).toBe(false);
-		for (const r of RELATIONS) if (inLegend(r)) expect(isDrawn(r), r).toBe(true);
-		expect(RELATIONS.filter((r) => !inLegend(r))).toEqual([
-			'PART_OF',
-			'VERSION_OF',
-			'LED_BY',
-			'MEMBER_OF'
-		]);
 	});
 });

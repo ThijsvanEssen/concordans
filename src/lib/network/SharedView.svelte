@@ -3,7 +3,8 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
-	import type { Relation } from '$lib/vocabulary';
+	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
+	import { drawClassOf } from '$lib/graph/types';
 	// The weergave Verband (besluit 39, mockup A197-b): the chosen bronnen in a column at the
 	// left, their names beside them; at the right, in one column, what joins them: the
 	// verbindingen between them, what pairs of them share (those that more share first) and the
@@ -24,7 +25,7 @@
 		gap = null,
 		scale = 1,
 		hiddenKinds = new Set(),
-		hiddenRelations = new Set(),
+		hiddenLines = new Set(),
 		failure = null,
 		loading = false,
 		onChoose
@@ -39,7 +40,7 @@
 		scale?: number;
 		/** The kinds and relations the filter of the strip switched off. */
 		hiddenKinds?: ReadonlySet<FilterGroup>;
-		hiddenRelations?: ReadonlySet<Relation>;
+		hiddenLines?: ReadonlySet<LineKind>;
 		/** What could not be loaded, said with Opnieuw (LoadState). */
 		failure?: { what: string; error: unknown; retry: () => void; plural?: boolean } | null;
 		loading?: boolean;
@@ -65,11 +66,14 @@
 		if (!model) return [];
 		const rows = model.rows.filter((r) => {
 			const k = filterGroupOf(r.collection, r.node.key, r.node.props);
-			return (!k || !hiddenKinds.has(k)) && r.relations.some((rel) => !hiddenRelations.has(rel));
+			return (
+				(!k || !hiddenKinds.has(k)) &&
+				r.relations.some((rel) => !hiddenLines.has(lineKindOf(rel, drawClassOf(r.collection))))
+			);
 		});
 		return [
 			...model.direct
-				.filter((d) => !hiddenRelations.has(d.relation))
+				.filter((d) => !hiddenLines.has(lineKindOf(d.relation)))
 				.map((d) => ({ soort: 'direct' as const, id: d.at.join('~'), text: d.text, at: d.at })),
 			...rows.map((row) => ({ soort: 'row' as const, id: row.id, row, at: row.at })),
 			...(hiddenKinds.has('uitspraken') ? [] : model.judgments).map((j) => ({

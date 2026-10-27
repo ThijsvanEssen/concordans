@@ -154,7 +154,6 @@ describe('the first paint of an article', () => {
 			'mobile-tabs K-page',
 			'col col--nav',
 			'col col--reader',
-			'resize-handle resize-handle--panel',
 			'col col--panel'
 		]);
 		expect(read.querySelector('.col--reader .reader-frame.K-frame p')!.textContent).toBe('tekst');

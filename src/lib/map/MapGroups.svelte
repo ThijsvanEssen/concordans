@@ -4,7 +4,7 @@
 	// reader's own order; each item a row of Bladeren on one line of citation. A click on a
 	// row opens what it keeps in place (MapInhoud); the reader is a step further, from there.
 	// What else a row or a group's head does is in its ⋯ (RijActies, as Bladeren's rows):
-	// Aantekening, Omhoog and Omlaag, Haal uit bundel; a law the regulations based on it. The
+	// Aantekening, Omhoog and Omlaag, Weghalen; a law the regulations based on it. The
 	// reader's notes, an item's and a group's, in the one form (Aantekening). A shared bundel
 	// (a link, a file) is read only: no notes to change, no order, nothing to take out.
 	import type { SvelteSet } from 'svelte/reactivity';
@@ -96,6 +96,7 @@
 				<Aantekening
 					tekst={i.notitie}
 					bij={i.kort}
+					bundel={map?.naam}
 					bind:open={() => noteOpen === key, (v) => (noteOpen = v ? key : null)}
 					onBewaar={map ? (t) => kaart.notitie(i, t, map.id) : undefined}
 				/>
@@ -141,10 +142,11 @@
 							type="button"
 							role="menuitem"
 							class="tekstmenu__item"
+							aria-label="{cite.title} uit de bundel weghalen"
 							onclick={() => {
 								close();
 								kaart.weg(i, m.id);
-							}}>Haal uit bundel</button
+							}}>Weghalen</button
 						>
 					{/snippet}
 				</RijActies>
@@ -241,6 +243,7 @@
 				<Aantekening
 					tekst={note}
 					bij={g.groep}
+					bundel={map?.naam}
 					bind:open={
 						() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)
 					}

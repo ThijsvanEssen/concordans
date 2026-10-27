@@ -273,7 +273,7 @@ export class NetwerkComposer {
 							{
 								id,
 								// Never the raw key (`bwbr0005289`): the name is not there yet.
-								label: failedIds.has(id) ? 'Bron laden' : 'Bron onbekend',
+								label: failedIds.has(id) ? 'Bron laden' : 'Bron niet in de gegevens',
 								collection: ref.collection as NetwerkEntry['collection'],
 								on: false,
 								alone: false,

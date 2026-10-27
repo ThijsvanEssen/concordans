@@ -67,10 +67,3 @@ export const GROUP_LABEL: Record<ContainerKind, string> = {
  * versions across time: real, but the reader's version navigation, not the network's.
  */
 export const isDrawn = (relation: Relation): boolean => relation !== 'VERSION_OF';
-
-/** The relations to a hull: it groups them, so the legend offers no line to switch. */
-const TO_A_HULL = new Set<Relation>(['PART_OF', 'MEMBER_OF', 'LED_BY']);
-
-/** Whether the legend offers a relation as a line to switch on or off. */
-export const inLegend = (relation: Relation): boolean =>
-	isDrawn(relation) && !TO_A_HULL.has(relation);
