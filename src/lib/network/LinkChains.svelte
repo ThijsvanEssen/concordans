@@ -9,7 +9,24 @@
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { kindColour } from '$lib/bron/kleur';
 	import { markOf } from '$lib/bron/vormen';
-	import { chainsLabel, type ChainBron, type ChainRow, type ChainsState } from './linkchains';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import { arrowhead } from '$lib/verbonden/sketch';
+	import { drawClassOf, EDGE_WEIGHT } from '$lib/graph/types';
+	import {
+		ARROW_WIDTH,
+		arrowLength,
+		edgeColorFor,
+		edgeDashFor,
+		edgeStyleFor,
+		lineThickness
+	} from '$lib/components/graph/nodeSprites';
+	import {
+		chainsLabel,
+		type ChainBron,
+		type ChainRow,
+		type ChainsState,
+		type StepLeg
+	} from './linkchains';
 
 	let {
 		result,
@@ -82,6 +99,51 @@
 	};
 	const markFor = (b: ChainBron) =>
 		markOf(b.collection ?? 'instruments', b.node?.props, b.node?.key ?? '');
+
+	type Point = { x: number; y: number };
+	/** Room between a line and the mark of a bron, and between a line and a pill. */
+	const GAP = 14;
+	const PILL_GAP = 2;
+	/**
+	 * One line of a step in the style of its kind (Netwerkcanvas, Lijnen), mixed to the paper, the
+	 * arrowhead at the end that is named: a bron that is cited has the arrow, the one that cites not.
+	 */
+	function seg(a: Point, b: Point, l: StepLeg, gapA: number, gapB: number) {
+		const rel = l.relation;
+		const from = drawClassOf(l.from ?? 'instruments');
+		const style = rel ? edgeStyleFor(rel, null, from) : 'lid';
+		const width = rel ? Math.max(lineThickness(EDGE_WEIGHT[rel]), 1.4) : 1.4;
+		const colour = rel
+			? `color-mix(in srgb, ${edgeColorFor(rel, from)} 55%, var(--paper))`
+			: 'var(--rule-strong)';
+		const length = Math.max(width * arrowLength(), 5.5);
+		const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+		const ux = (b.x - a.x) / d;
+		const uy = (b.y - a.y) / d;
+		let [x1, y1, x2, y2] = [a.x + ux * gapA, a.y + uy * gapA, b.x - ux * gapB, b.y - uy * gapB];
+		let head: string | null = null;
+		if (l.arrow && style !== 'lid') {
+			const width2 = length * ARROW_WIDTH;
+			if (l.arrow === 'end') {
+				head = arrowhead(x1, y1, x2, y2, length, width2);
+				[x2, y2] = [x2 - ux * length, y2 - uy * length];
+			} else {
+				head = arrowhead(x2, y2, x1, y1, length, width2);
+				[x1, y1] = [x1 + ux * length, y1 + uy * length];
+			}
+		}
+		return { x1, y1, x2, y2, width, colour, dash: edgeDashFor(style), head };
+	}
+	/** The lines of a step from `p` to `q`: one, or two with the pill of what both share between. */
+	function segs(s: ChainRow['steps'][number], p: Point, q: Point, half: number) {
+		if (!s.via) return [seg(p, q, s.legs[0], GAP, GAP)];
+		const mid = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+		const d = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+		const t = Math.min(half, d / 2 - GAP) / d;
+		const near = { x: mid.x - (q.x - p.x) * t, y: mid.y - (q.y - p.y) * t };
+		const far = { x: mid.x + (q.x - p.x) * t, y: mid.y + (q.y - p.y) * t };
+		return [seg(p, near, s.legs[0], GAP, PILL_GAP), seg(far, q, s.legs[1], PILL_GAP, GAP)];
+	}
 	const press = (e: KeyboardEvent, b: ChainBron) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -117,7 +179,9 @@
 			>
 			{#each model.blocks as b, bi (b.steps)}
 				{@const at = layout.blocks[bi]}
-				<text class="head" x="16" y={at.head + 16} role="heading" aria-level="3">{b.title}</text>
+				<text class="head" x="16" y={at.head + 16} role="heading" aria-level="3"
+					>{single ? `Verbindingsketen, ${b.steps} stappen` : b.title}</text
+				>
 				{#if b.count && at.count !== null}
 					<text class="count" x="16" y={at.count + 16}>{b.count}</text>
 				{/if}
@@ -137,7 +201,18 @@
 						{@const mx = (p.x + q.x) / 2}
 						{@const my = (p.y + q.y) / 2}
 						{@const label = cut(s.via ? s.via.name : s.text, (Math.abs(q.x - p.x) - 24) * 0.6)}
-						<line class="line" x1={p.x} y1={p.y} x2={q.x} y2={q.y} />
+						{#each segs(s, p, q, (label.length * 7.2 + 16) / 2) as l, li (li)}
+							<line
+								x1={l.x1}
+								y1={l.y1}
+								x2={l.x2}
+								y2={l.y2}
+								stroke={l.colour}
+								stroke-width={l.width}
+								stroke-dasharray={l.dash}
+							/>
+							{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
+						{/each}
 						{#if single}<text class="kop" x={mx} y={my - 28} text-anchor="middle"
 								>Stap {si + 1}</text
 							>{/if}
@@ -203,7 +278,9 @@
 		<div class="ladder">
 			{#each model.blocks as b (b.steps)}
 				<section aria-labelledby="ketens-{b.steps}">
-					<h3 id="ketens-{b.steps}" class="ladder__head">{b.title}</h3>
+					<h3 id="ketens-{b.steps}" class="ladder__head">
+						{single ? `Verbindingsketen, ${b.steps} stappen` : b.title}
+					</h3>
 					{#if b.count}<p class="stil ladder__count">{b.count}</p>{/if}
 					{#if b.rows.length === 0}
 						<p class="stil">
@@ -218,8 +295,14 @@
 								<li>
 									<span class="num" aria-hidden="true">{i + 1}</span>
 									<span class="ladder__step">
-										<span class="ladder__pair">{s.pair}</span>
-										<span class="ladder__how">{s.via ? `${s.via.name} ${s.text}` : s.text}</span>
+										<span class="ladder__pair"
+											>{#each [s.from, s.to] as b, k (k)}{#if k}{' en '}{/if}{#if model.between.has(b.id)}<TekstLink
+														class="ladder__bron"
+														aria-pressed={chosen === b.id}
+														onclick={() => onChoose(b)}>{b.name}</TekstLink
+													>{:else}{b.name}{/if}{/each}</span
+										>
+										<span class="ladder__how">{s.phone}</span>
 									</span>
 								</li>
 							{/each}
@@ -261,11 +344,6 @@
 	.by {
 		font-style: italic;
 		fill: var(--ink-2);
-	}
-	.line {
-		stroke: color-mix(in srgb, var(--soort-wet) 55%, var(--paper));
-		stroke-width: 2;
-		stroke-dasharray: 4 3;
 	}
 	.pill {
 		fill: var(--paper);
@@ -377,6 +455,9 @@
 		font-weight: 600;
 		line-height: 24px;
 		color: var(--ink);
+	}
+	.ladder__pair :global(.ladder__bron) {
+		font-weight: 600;
 	}
 	.ladder__how {
 		font-family: var(--font-serif);

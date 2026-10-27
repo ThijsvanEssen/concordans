@@ -37,6 +37,10 @@ type ChainStep = {
 	via: ChainBron | null;
 	/** How it joins, in words: `noemt beide`, `verwijst naar`. */
 	text: string;
+	/** The same for the phone: `beide genoemd in 35133, nr. 3 Memorie van toelichting`. */
+	phone: string;
+	/** Its lines, in the style of their kind: one, or two by way of `via`. */
+	legs: StepLeg[];
 	/** The step as the phone says it: `Waterschapswet en Woningwet`. */
 	pair: string;
 };
@@ -73,27 +77,63 @@ type ChainsModel = {
 
 const nameOf = (n: { id: string; display_name?: string | null }) => naamVanId(n.id, n.display_name);
 
-/** The way a step joins: the verb of its line, `noemt beide` where one bron names both. */
-function stepText(
+/** One line of a step: its relation, the kind it comes from and the end its arrow points to. */
+export type StepLeg = {
+	relation: Relation | null;
+	from: Collection | null;
+	/** The arrow at the start or at the end of the leg; null where the line has none. */
+	arrow: 'start' | 'end' | null;
+};
+
+type Wording = { text: string; phone: string; legs: StepLeg[] };
+
+/**
+ * How a step joins, in words and in lines (DS Verband): the verb of its line; where one bron
+ * names both, `noemt beide` and on a phone `beide genoemd in …`; where the lines differ, the
+ * verb of each. Its lines are the edges: one between the sources, or two by way of `via`.
+ */
+function wording(
 	step: ChainsResponse['blocks'][number]['chains'][number]['steps'][number],
 	edges: ReadonlyMap<string, Edge>,
-	collections: (id: string) => Collection | null
-): string {
+	bron: (id: string) => ChainBron
+): Wording {
 	const lines = step.edge_ids.map((id) => edges.get(id)).filter((e): e is Edge => !!e);
 	const words = (e: Edge) =>
 		relationWords(
 			(e.relation ?? 'RELATED_TO') as Relation,
-			collections(e.source),
-			collections(e.target)
-		).actief;
-	if (!step.via) return lines[0] ? words(lines[0]) : 'verbindt';
-	const [first, second] = lines;
-	// The shared bron names (or cites) both: `noemt beide`.
-	if (first && second && first.source === step.via && second.source === step.via) {
-		const [a, b] = [words(first), words(second)];
-		if (a === b) return `${a} beide`;
+			bron(e.source).collection,
+			bron(e.target).collection
+		);
+	const leg = (e: Edge | undefined, a: string, b: string): StepLeg => ({
+		relation: e ? ((e.relation ?? 'RELATED_TO') as Relation) : null,
+		from: e ? bron(e.source).collection : null,
+		arrow: !e ? null : e.target === b ? 'end' : e.target === a ? 'start' : null
+	});
+	if (!step.via) {
+		const text = lines[0] ? words(lines[0]).actief : 'verbindt';
+		return { text, phone: text, legs: [leg(lines[0], step.source, step.target)] };
 	}
-	return 'gedeeld';
+	const [first, second] = lines;
+	const legs = [leg(first, step.source, step.via), leg(second, step.via, step.target)];
+	const via = bron(step.via).name;
+	if (first && second) {
+		const [x, y] = [words(first), words(second)];
+		const same = first.relation === second.relation;
+		if (first.source === step.via && second.source === step.via)
+			return same
+				? { text: `${x.actief} beide`, phone: `beide ${x.terug} in ${via}`, legs }
+				: { text: `${x.actief} en ${y.actief}`, phone: `${via} ${x.actief} en ${y.actief}`, legs };
+		if (first.target === step.via && second.target === step.via)
+			return same
+				? { text: `${x.terug} door beide`, phone: `${via}, ${x.terug} door beide`, legs }
+				: { text: `${x.terug} en ${y.terug}`, phone: `${via}, ${x.terug} en ${y.terug}`, legs };
+		return {
+			text: `${x.actief} en ${y.actief}`,
+			phone: `${via}, ${x.actief} en ${y.actief}`,
+			legs
+		};
+	}
+	return { text: 'verbindt', phone: via, legs };
 }
 
 /**
@@ -113,7 +153,6 @@ export function chainsModel(
 		const known = names(id);
 		return n ? { id, name: nameOf(n), collection: n.collection as Collection, node: n } : known;
 	};
-	const collections = (id: string) => bron(id).collection;
 	const between: ChainsModel['between'] = new Map();
 	const blocks = response.blocks
 		.filter((b) => b.steps >= 2 && b.steps <= steps)
@@ -131,7 +170,7 @@ export function chainsModel(
 						from: bron(s.source),
 						to: bron(s.target),
 						via: s.via ? bron(s.via) : null,
-						text: stepText(s, edges, collections),
+						...wording(s, edges, bron),
 						pair: joinAnd([bron(s.source).name, bron(s.target).name])
 					}))
 				};

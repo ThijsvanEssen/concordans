@@ -30,6 +30,8 @@ test('two steps add the block Twee stappen, with what was cut off said as N of M
 	if (touch) {
 		const list = shared(page).getByRole('list', { name: 'Verbindingsketen, 2 stappen' }).first();
 		await expect(list.getByRole('listitem')).toHaveCount(2);
+		// The tussenbron is a button, as on a wide screen.
+		await expect(list.getByRole('button').first()).toBeVisible();
 	} else {
 		const drawing = shared(page).getByRole('group', { name: /^Verbindingsketens tussen/ });
 		await expect(drawing).toBeVisible();

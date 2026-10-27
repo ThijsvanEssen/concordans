@@ -129,6 +129,19 @@ describe('chainsModel', () => {
 		expect(direct.steps[0].via).toBeNull();
 		expect(direct.steps[0].text).toBe('noemt');
 	});
+	it('words a step for the phone and gives its lines their arrows', () => {
+		const [via, direct] = chainsModel(response(), [A, B], names).blocks[0].rows;
+		// The Kamerstuk names both laws: one line to each, the arrow at the law it names.
+		expect(via.steps[0].phone).toBe('beide genoemd in 35133, nr. 3');
+		expect(via.steps[0].legs).toEqual([
+			{ relation: 'REFERS_TO', from: 'documents', arrow: 'start' },
+			{ relation: 'REFERS_TO', from: 'documents', arrow: 'end' }
+		]);
+		// An edge between the laws: one line, its arrow at its target.
+		expect(direct.steps[0].legs).toEqual([
+			{ relation: 'REFERS_TO', from: 'instruments', arrow: 'end' }
+		]);
+	});
 	it('says none when no block has a chain, and incomplete when a block ran out', () => {
 		const empty = response({
 			blocks: [2, 3].map((steps) => ({ steps, total: 0, complete: true, chains: [] }))
