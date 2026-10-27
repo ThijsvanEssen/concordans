@@ -42,7 +42,7 @@ describe('FilterSheet', () => {
 		panel.groups = [group('a', 4)];
 		const { container, getByRole } = render(FilterSheet, props([group('a', 4), group('b', 9)]));
 		expect(getByRole('button', { name: 'Toon 4' })).toBeTruthy();
-		expect(container.querySelector('.titel')?.textContent).toBe('Filter');
+		expect(container.querySelector('.title')?.textContent).toBe('Filter');
 		expect(container.querySelector('.sheet__count')).toBeNull();
 	});
 

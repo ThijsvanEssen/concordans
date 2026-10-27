@@ -41,8 +41,8 @@
 
 {#if sheet}
 	<Blad
-		titel={sheet === 'bronnen' ? 'Bronnen' : 'Mijn'}
-		metTabbalk
+		title={sheet === 'bronnen' ? 'Bronnen' : 'Mijn'}
+		aboveTabbar
 		opener={() => opener}
 		onClose={() => (sheet = null)}
 	>

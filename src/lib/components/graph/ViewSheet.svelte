@@ -27,7 +27,7 @@
 {#if !phone.current}
 	{@render children()}
 {:else if open}
-	<Blad titel="Weergave" titelZichtbaar={false} metTabbalk {opener} {onClose}>
+	<Blad title="Weergave" showTitle={false} aboveTabbar {opener} {onClose}>
 		{@render children()}
 	</Blad>
 {/if}

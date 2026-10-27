@@ -176,7 +176,7 @@
 </div>
 
 {#if open}
-	<Blad titel="Filter" hoog opener={() => opener} onClose={() => close()}>
+	<Blad title="Filter" tall opener={() => opener} onClose={() => close()}>
 		<div class="sheet-body">
 			{#each all as b, n (b.id)}
 				{@const unfolded = standsOpen(b, n)}
@@ -195,7 +195,7 @@
 				</section>
 			{/each}
 		</div>
-		{#snippet voet()}
+		{#snippet foot()}
 			{#if chips.length}<TekstLink onclick={onClear}>Wis alles</TekstLink>{/if}
 			<button type="button" class="btn is-primary show" onclick={() => close(true)}>{show}</button>
 		{/snippet}

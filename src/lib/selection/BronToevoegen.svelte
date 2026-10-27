@@ -43,7 +43,7 @@
 	}
 </script>
 
-{#snippet voet()}
+{#snippet foot()}
 	<div class="toevoegen__toetsen" aria-hidden="true">
 		<span><kbd>↑</kbd> <kbd>↓</kbd> kiezen</span>
 		<span><kbd>Enter</kbd> toevoegen</span>
@@ -52,11 +52,11 @@
 {/snippet}
 
 <Blad
-	titel="Bron toevoegen"
+	title="Bron toevoegen"
 	focus="[data-search-field]"
-	hoog
+	tall
 	{onClose}
-	voet={toetsen.current ? voet : undefined}
+	foot={toetsen.current ? foot : undefined}
 >
 	<Search
 		overlay

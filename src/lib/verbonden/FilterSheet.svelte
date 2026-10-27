@@ -137,7 +137,7 @@
 </script>
 
 {#if open}
-	<Blad titel="Filter" plaats="rechts" hoog focus=".search" {onClose}>
+	<Blad title="Filter" place="rechts" tall focus=".search" {onClose}>
 		<div class="sheet__inhoud">
 			<div class="block">
 				<Tekstveld
@@ -317,7 +317,7 @@
 				/>
 			</div>
 		</div>
-		{#snippet voet()}
+		{#snippet foot()}
 			{#if hasChoice(draft)}
 				<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
 			{/if}

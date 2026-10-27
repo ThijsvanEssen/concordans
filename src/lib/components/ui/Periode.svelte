@@ -335,7 +335,7 @@
 		</div>
 	{/if}
 	{#if open && sheet}
-		<Blad titel={label} opener={() => button} onClose={() => close(true)}>
+		<Blad title={label} opener={() => button} onClose={() => close(true)}>
 			<div class="sheet" bind:this={dialog} use:keepKeys>
 				{@render content()}
 			</div>

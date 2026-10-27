@@ -9,7 +9,7 @@
 	// screen, a handle in `rule`, `r-2` above); wider it stands where its afnemer has it:
 	// `midden` under the top bar, `rechts` or `links` as a panel. A tap beside it and Escape
 	// close it, the page behind it stands still (lockScroll), the focus goes into it and comes back
-	// to what opened it. The content is a snippet, an optional `voet` has what ends the sheet
+	// to what opened it. The content is a snippet, an optional `foot` has what ends the sheet
 	// (Wis alles, Toon N). Opened inside another Blad, only the last one answers Escape and Tab.
 	import { onMount, type Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
@@ -17,44 +17,44 @@
 	import IconButton from './IconButton.svelte';
 
 	let {
-		titel,
+		title,
 		onClose,
 		children,
-		voet,
+		foot,
 		opener,
 		focus,
-		plaats = 'midden',
-		onderTot = 'telefoon',
-		metTabbalk = false,
-		hoog = false,
-		titelZichtbaar = true
+		place = 'midden',
+		upTo = 'telefoon',
+		aboveTabbar = false,
+		tall = false,
+		showTitle = true
 	}: {
 		/** The name of the dialog: its head, and for a screen reader. */
-		titel: string;
+		title: string;
 		onClose: () => void;
 		children: Snippet;
 		/** What ends the sheet, under a rule: Wis alles, Toon N. */
-		voet?: Snippet;
+		foot?: Snippet;
 		/** What opened it, where the focus goes back to; else what had the focus when it opened. */
 		opener?: () => HTMLElement | null;
 		/** Where the focus goes on opening, a selector inside the sheet; else Sluiten. */
 		focus?: string;
-		/** Wider than `onderTot`: in the middle under the top bar, or a panel at the right or left. */
-		plaats?: 'midden' | 'rechts' | 'links';
+		/** Wider than `upTo`: in the middle under the top bar, or a panel at the right or left. */
+		place?: 'midden' | 'rechts' | 'links';
 		/** Up to where the sheet comes from below: a phone (768 px), or a tablet (1100 px). */
-		onderTot?: 'telefoon' | 'tablet';
+		upTo?: 'telefoon' | 'tablet';
 		/** Above the tab bar: the bar stays within reach under it. */
-		metTabbalk?: boolean;
+		aboveTabbar?: boolean;
 		/** A phone: always the 88 % of the screen, so the sheet does not move as its content does. */
-		hoog?: boolean;
+		tall?: boolean;
 		/** The head names it; false where the content's own first heading does. */
-		titelZichtbaar?: boolean;
+		showTitle?: boolean;
 	} = $props();
 
 	const uid = $props.id();
 	const telefoon = new MediaQuery('max-width: 768px');
 	const tablet = new MediaQuery('max-width: 1100px');
-	const onder = $derived(onderTot === 'tablet' ? tablet.current : telefoon.current);
+	const bottom = $derived(upTo === 'tablet' ? tablet.current : telefoon.current);
 
 	// Held before the content mounts: a field in it may take the focus first.
 	const was = typeof document === 'undefined' ? null : document.activeElement;
@@ -110,28 +110,28 @@
 	}}
 />
 
-<div class="blad" style:--blad-onder={metTabbalk ? 'var(--tabbar-h)' : '0px'}>
+<div class="blad" style:--blad-below={aboveTabbar ? 'var(--tabbar-h)' : '0px'}>
 	<div class="scrim" role="presentation" onclick={onClose}></div>
 	<div
 		class="sheet"
-		class:is-onder={onder}
-		class:is-hoog={hoog}
-		data-plaats={plaats}
+		class:is-bottom={bottom}
+		class:is-tall={tall}
+		data-place={place}
 		role="dialog"
 		aria-modal="true"
-		aria-label={titelZichtbaar ? undefined : titel}
-		aria-labelledby={titelZichtbaar ? `${uid}-titel` : undefined}
+		aria-label={showTitle ? undefined : title}
+		aria-labelledby={showTitle ? `${uid}-title` : undefined}
 		tabindex="-1"
 		bind:this={el}
 		onkeydown={onKey}
 	>
-		{#if onder}<span class="greep" aria-hidden="true"></span>{/if}
+		{#if bottom}<span class="greep" aria-hidden="true"></span>{/if}
 		<div class="kop">
-			{#if titelZichtbaar}<h2 class="titel" id="{uid}-titel">{titel}</h2>{:else}<span></span>{/if}
+			{#if showTitle}<h2 class="title" id="{uid}-title">{title}</h2>{:else}<span></span>{/if}
 			<IconButton class="sluit" label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
 		<div class="inhoud">{@render children()}</div>
-		{#if voet}<div class="voet">{@render voet()}</div>{/if}
+		{#if foot}<div class="foot">{@render foot()}</div>{/if}
 	</div>
 </div>
 
@@ -141,7 +141,7 @@
 	}
 	.scrim {
 		position: fixed;
-		inset: 0 0 var(--blad-onder) 0;
+		inset: 0 0 var(--blad-below) 0;
 		z-index: var(--z-modal);
 		background: var(--scherm);
 	}
@@ -156,12 +156,9 @@
 		box-shadow: var(--shadow-modal);
 		overscroll-behavior: contain;
 	}
-	.sheet:focus {
-		outline: none;
-	}
 
 	/* Wider: where the afnemer has it. */
-	.sheet[data-plaats='midden'] {
+	.sheet[data-place='midden'] {
 		inset: 96px 0 auto;
 		width: 480px;
 		max-width: calc(100% - var(--s-6));
@@ -170,34 +167,34 @@
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);
 	}
-	.sheet[data-plaats='rechts'] {
+	.sheet[data-place='rechts'] {
 		inset: var(--balk-h) 0 0 auto;
 		width: 400px;
 		max-width: 100vw;
 		border-left: 1px solid var(--rule-strong);
 	}
-	.sheet[data-plaats='links'] {
+	.sheet[data-place='links'] {
 		inset: 0 auto 0 0;
 		width: 360px;
 		max-width: 100vw;
 	}
 
 	/* From below: the sheet of a phone (Netwerkkeuze, Telefoon). */
-	.sheet.is-onder {
-		inset: auto 0 var(--blad-onder) 0;
+	.sheet.is-bottom {
+		inset: auto 0 var(--blad-below) 0;
 		width: auto;
 		max-width: none;
-		max-height: calc(88dvh - var(--blad-onder));
+		max-height: calc(88dvh - var(--blad-below));
 		margin: 0;
 		border: 0;
 		border-top: 1px solid var(--rule-strong);
 		border-radius: var(--r-2) var(--r-2) 0 0;
 	}
-	.sheet.is-onder.is-hoog {
-		height: calc(88dvh - var(--blad-onder));
+	.sheet.is-bottom.is-tall {
+		height: calc(88dvh - var(--blad-below));
 	}
 	@media (min-width: 769px) {
-		.sheet.is-onder {
+		.sheet.is-bottom {
 			max-width: 480px;
 			margin-inline: auto;
 		}
@@ -221,7 +218,7 @@
 		gap: var(--s-3);
 		padding: var(--s-4) var(--s-4) var(--s-3);
 	}
-	.titel {
+	.title {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
@@ -235,7 +232,7 @@
 		overflow-y: auto;
 		overscroll-behavior: contain;
 	}
-	.voet {
+	.foot {
 		flex: none;
 		display: flex;
 		align-items: center;

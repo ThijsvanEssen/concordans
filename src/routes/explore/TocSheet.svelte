@@ -29,7 +29,7 @@
 </script>
 
 {#if always || narrow.current}
-	<Blad titel="Inhoud" plaats="links" onderTot="tablet" {onClose}>
+	<Blad title="Inhoud" place="links" upTo="tablet" {onClose}>
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div class="body" onclick={onBodyClick}>
 			{@render children()}
