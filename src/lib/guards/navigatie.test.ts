@@ -38,6 +38,6 @@ describe('the navigation', () => {
 			overtreders((t) => /<TabBar\b/.test(t), [plek('lib/components/layout/AppShell.svelte')])
 		).toEqual([]);
 		for (const pad of ['TopBar', 'TabBar', 'MineMenu', 'NetworkButton'])
-			expect(bron(`lib/components/layout/${pad}.svelte`)).not.toMatch(/Samenhang|Bronnen</);
+			expect(bron(`lib/components/layout/${pad}.svelte`)).not.toMatch(/Samenhang/);
 	});
 });

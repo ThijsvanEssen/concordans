@@ -246,9 +246,6 @@
 			background: var(--paper);
 			border-top: 1px solid var(--rule-strong);
 		}
-		.sheet:focus {
-			outline: none;
-		}
 		.sheet__head {
 			margin: 0 0 var(--s-2);
 			font-size: var(--t-label);
