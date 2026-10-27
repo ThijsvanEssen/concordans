@@ -60,3 +60,14 @@ test('on the canvas the arrows point at a bron, Enter chooses it, Escape lets go
 	await expect(page).toHaveURL(/[?&]kies=/);
 	await expect(kaart(page)).toHaveClass(/is-open/);
 });
+
+test('Enter on a group opens its card, as a click does', async ({ page, touch }) => {
+	test.skip(touch, 'the keyboard list is the way without a pointer');
+	await page.goto('/uitspraken/ECLI:NL:HR:2009:BH2815?mode=netwerk');
+	const groep = lijst(page).filter({ hasText: /^\d+ uitspraken, groep$/ });
+	await expect(groep).toHaveCount(1);
+	await groep.focus();
+	await expect(kaart(page)).not.toHaveClass(/is-open/);
+	await page.keyboard.press('Enter');
+	await expect(page.getByRole('dialog', { name: /uitspraken$/ })).toBeVisible();
+});

@@ -46,7 +46,6 @@
 	} = $props();
 
 	let searching = $state(false);
-	const shownCount = $derived(entries.filter((e) => e.on && !e.missing).length);
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
 	// does not cover the canvas.
@@ -71,7 +70,9 @@
 	     Aangeklikt op het canvas, Bron toevoegen. Wissen is one click, and Terug sets it back. -->
 <CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
 	{#snippet samenvatting()}
-		{#if entries.length > 0}<span class="tel">{entries.length}, {shownCount} getoond</span>{/if}
+		{#if folded}<span class="tel"
+				>{formatCount(shown.length)} van {formatCount(entries.length)}</span
+			>{/if}
 		{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
 			></span>{/if}
 	{/snippet}
