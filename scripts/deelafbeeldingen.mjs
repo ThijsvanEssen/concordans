@@ -47,7 +47,7 @@ writeFileSync(
 	`export { VORMEN } from '${REPO}/src/lib/bron/vormen';
 export { LINE_KIND_SAMPLE } from '${REPO}/src/lib/graph/line-kind';
 export { EDGE_WEIGHT } from '${REPO}/src/lib/graph/types';
-export { edgeColorFor, edgeStyleFor, edgeDashFor, lineThickness, arrowLength, ARROW_WIDTH, hullColorFor, hullDashFor, withAlpha } from '${REPO}/src/lib/components/graph/nodeSprites';
+export { edgeColorFor, edgeStyleFor, edgeDashFor, lineThickness, arrowLength, ARROW_WIDTH, hullColorFor, hullDashFor, towardPaper } from '${REPO}/src/lib/components/graph/nodeSprites';
 export { HULL_MARGIN, LABEL_GAP } from '${REPO}/src/lib/components/graph/hulls';`
 );
 await build({
@@ -70,98 +70,142 @@ const sectie = favicon.match(/<path[^>]*\/>/)[0];
 
 const fonts = `
 @font-face{font-family:Newsreader;src:url(${FONTS}/Newsreader-Variable.woff2) format('woff2');font-weight:200 800}
+@font-face{font-family:Newsreader;src:url(${FONTS}/Newsreader-VariableItalic.woff2) format('woff2');font-weight:200 800;font-style:italic}
+@font-face{font-family:Schibsted;src:url(${FONTS}/SchibstedGrotesk-Variable.woff2) format('woff2');font-weight:400 800}
 @font-face{font-family:Playfair;src:url(${FONTS}/PlayfairDisplay-Italic-800.woff2) format('woff2');font-style:italic;font-weight:800}`;
 
-// --- De schets, in de taal van Netwerkcanvas -------------------------------------------
-// Getekend in pixels van het canvas en als geheel vergroot (SCHAAL): een teken van 16, een
-// lijn van gewicht × netwerk-lijn, een omhulling met een rand van 1,5 px.
-const SCHAAL = 1.9;
-const VAK = { w: 220, h: 246 };
-const TEKEN = 16;
-const FOCUS = 24;
+// --- De schets, zoals het Design System het canvas tekent --------------------------------
+// Netwerkcanvas, Netwerkschets en Keten in het DS zijn leidend; vormen, kleuren, diktes en
+// streep komen uit de code van het canvas. Getekend in pixels van het DS en als geheel vergroot
+// (SCHAAL): lijnen licht gebogen tot de rand van de knoop, pijlpunten van netwerk-pijl diktes,
+// omhullingen als schijf met de naam in een papieren pil erboven.
+const SCHAAL = 1.75;
+const VAK = { w: 240, h: 266 };
+/** Een bron 14 px, een artikel 13 px, de focus 24 px (Netwerkcanvas, Soortteken). */
+const MAAT = { bron: 14, artikel: 13, focus: 24 };
+/** De papieren rand om een bron, en de halo en inktrand van de focus. */
+const RAND_PAPIER = 2;
 const HALO = 4.5;
-/** De inktring om de focus, op de rand van zijn halo; daar houdt een lijn op. */
-const RING = 17;
-const RAND_FOCUS = RING + 2;
-const RAND = TEKEN / 2 + 2;
+const INKTRAND = 2;
+/** Tussen een lijn en de rand van een bron. */
+const LUCHT = 3;
+/** Hoe ver een lijn buigt: het stuurpunt staat dit deel van de lengte naast het midden. */
+const BOCHT = 0.12;
 
-const pad = (v, x, y, maat) =>
-	`d="${v.d}" transform="translate(${x - maat / 2} ${y - maat / 2}) scale(${maat / 16})"`;
+const RAND = 8; // de straal waarop een lijn ophoudt bij een bron van 14
+const RAND_FOCUS = MAAT.focus / 2 + HALO;
 
 /** Een bron als zijn soortteken (vormen.ts) in zijn soortkleur, op een rand van papier. */
-const teken = (vorm, x, y, kl) => {
+const teken = (vorm, [x, y], kl, maat = MAAT.bron) => {
 	const v = K.VORMEN[vorm];
+	const s = maat / 16;
+	const at = `d="${v.d}" transform="translate(${x - maat / 2} ${y - maat / 2}) scale(${s})"`;
 	const lijn = v.wijze === 'lijn';
 	return (
-		`<path ${pad(v, x, y, TEKEN)} fill="${C.paper}" stroke="${C.paper}" stroke-width="4" stroke-linejoin="round"/>` +
-		`<path ${pad(v, x, y, TEKEN)} fill="${lijn ? C.paper : kl}" fill-rule="${v.wijze === 'gat' ? 'evenodd' : 'nonzero'}"${lijn ? ` stroke="${kl}" stroke-width="2"` : ''}/>`
+		`<path ${at} fill="${C.paper}" stroke="${C.paper}" stroke-width="${(2 * RAND_PAPIER) / s}" stroke-linejoin="round"/>` +
+		(lijn
+			? `<path ${at} fill="${C.paper}" stroke="${kl}" stroke-width="${1.7 / s}"/>`
+			: `<path ${at} fill="${kl}" fill-rule="${v.wijze === 'gat' ? 'evenodd' : 'nonzero'}"/>`)
 	);
 };
 
-/** De focus: zijn vorm in inkt op een papieren halo, met een inktring eromheen. */
-const focus = (vorm, x, y) => {
+/** De focus: zijn vorm in inkt met een inktrand op een papieren halo (Netwerkcanvas, Focus). */
+const focus = (vorm, [x, y], maat = MAAT.focus) => {
 	const v = K.VORMEN[vorm];
-	const s = FOCUS / 16;
+	const s = maat / 16;
+	const at = `d="${v.d}" transform="translate(${x - maat / 2} ${y - maat / 2}) scale(${s})"`;
 	const lijn = v.wijze === 'lijn';
 	return (
-		`<circle cx="${x}" cy="${y}" r="${RING}" fill="${C.paper}" stroke="${C.ink}" stroke-width="2"/>` +
-		`<path ${pad(v, x, y, FOCUS)} fill="${C.paper}" stroke="${C.paper}" stroke-width="${(2 * HALO) / s}" stroke-linejoin="round"/>` +
-		`<path ${pad(v, x, y, FOCUS)} fill="${lijn ? C.paper : C.ink}" fill-rule="${v.wijze === 'gat' ? 'evenodd' : 'nonzero'}" stroke="${C.ink}" stroke-width="${lijn ? 2 : 1.6 / s}" stroke-linejoin="round"/>`
+		`<path ${at} fill="none" stroke="${C.paper}" stroke-width="${(2 * HALO) / s}" stroke-linejoin="round"/>` +
+		`<path ${at} fill="${lijn ? C.paper : 'none'}" stroke="${C.ink}" stroke-width="${(2 * INKTRAND) / s}" stroke-linejoin="round"/>` +
+		(lijn
+			? ''
+			: `<path ${at} fill="${C.ink}" fill-rule="${v.wijze === 'gat' ? 'evenodd' : 'nonzero'}"/>`)
 	);
 };
+
+const eenheid = (dx, dy) => {
+	const d = Math.hypot(dx, dy) || 1;
+	return [dx / d, dy / d];
+};
+const r1 = (n) => Math.round(n * 10) / 10;
 
 /**
- * Een lijn van a naar b in de stijl van zijn lijnsoort (line-kind.ts): kleur, streep, dikte
- * en pijlpunt zoals de Netwerkschets. `pijl` wijst naar 'a' of 'b'.
+ * Een lijn van a naar b in de stijl van zijn lijnsoort (line-kind.ts, Netwerkcanvas Lijnen):
+ * licht gebogen (`buig` 1 of -1 kiest de kant), kleur, streep en dikte van de soort, ophoudend
+ * aan de rand van de bron (ra, rb); de pijlpunt (netwerk-pijl diktes lang, 0,8 daarvan breed)
+ * bij b, of bij a met `pijl` 'a'. Ingediend door heeft een punt bij de indiener.
  */
-const lijn = (a, b, soort, pijl, ra = RAND, rb = RAND) => {
+const lijn = (a, b, soort, { ra = RAND, rb = RAND, buig = 1, pijl = 'b', kleur } = {}) => {
 	const { relation, from } = K.LINE_KIND_SAMPLE[soort];
-	const kl = K.edgeColorFor(relation, from);
+	const kl = kleur ?? K.edgeColorFor(relation, from);
 	const stijl = K.edgeStyleFor(relation, null, from);
 	const dash = K.edgeDashFor(stijl);
 	const w = K.lineThickness(K.EDGE_WEIGHT[relation]);
-	const len = Math.max(w * K.arrowLength(), 5.5);
-	const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
-	const [ux, uy] = [(b[0] - a[0]) / d, (b[1] - a[1]) / d];
-	let [x1, y1, x2, y2] = [a[0] + ux * ra, a[1] + uy * ra, b[0] - ux * rb, b[1] - uy * rb];
-	const punt = (tx, ty, dx, dy) => {
+	const len = w * K.arrowLength();
+	const lengte = Math.hypot(b[0] - a[0], b[1] - a[1]);
+	const [nx, ny] = eenheid(-(b[1] - a[1]), b[0] - a[0]);
+	const c = [
+		(a[0] + b[0]) / 2 + nx * BOCHT * lengte * buig,
+		(a[1] + b[1]) / 2 + ny * BOCHT * lengte * buig
+	];
+	// De einden aan de rand van de bron, langs de raaklijn van de bocht.
+	const [ua, va] = eenheid(c[0] - a[0], c[1] - a[1]);
+	const [ub, vb] = eenheid(b[0] - c[0], b[1] - c[1]);
+	let p = [a[0] + ua * (ra + LUCHT), a[1] + va * (ra + LUCHT)];
+	let q = [b[0] - ub * (rb + LUCHT), b[1] - vb * (rb + LUCHT)];
+	const punt = ([tx, ty], [dx, dy]) => {
 		const [bx, by] = [tx - dx * len, ty - dy * len];
-		const [nx, ny] = [(-dy * len * K.ARROW_WIDTH) / 2, (dx * len * K.ARROW_WIDTH) / 2];
-		return `<polygon points="${bx + nx},${by + ny} ${tx},${ty} ${bx - nx},${by - ny}" fill="${kl}"/>`;
+		const [ox, oy] = [(-dy * len * K.ARROW_WIDTH) / 2, (dx * len * K.ARROW_WIDTH) / 2];
+		return `<path d="M${r1(tx)} ${r1(ty)}L${r1(bx + ox)} ${r1(by + oy)}L${r1(bx - ox)} ${r1(by - oy)}z" fill="${kl}"/>`;
 	};
 	let kop = '';
 	if (stijl !== 'lid' && pijl === 'b') {
-		kop = punt(x2, y2, ux, uy);
-		[x2, y2] = [x2 - ux * len, y2 - uy * len];
+		kop = punt(q, [ub, vb]);
+		q = [q[0] - ub * len, q[1] - vb * len];
 	} else if (stijl !== 'lid' && pijl === 'a') {
-		kop = punt(x1, y1, -ux, -uy);
-		[x1, y1] = [x1 + ux * len, y1 + uy * len];
+		kop = punt(p, [-ua, -va]);
+		p = [p[0] + ua * len, p[1] + va * len];
 	}
+	const stip =
+		soort === 'submitter'
+			? `<circle cx="${r1(pijl === 'b' ? p[0] : q[0])}" cy="${r1(pijl === 'b' ? p[1] : q[1])}" r="2.6" fill="${kl}"/>`
+			: '';
 	const streep = dash ? ` stroke-dasharray="${dash}"` : '';
-	return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${kl}" stroke-width="${w}"${streep}/>${kop}`;
+	return (
+		`<path d="M${r1(p[0])} ${r1(p[1])}Q${r1(c[0])} ${r1(c[1])} ${r1(q[0])} ${r1(q[1])}" fill="none" stroke="${kl}" stroke-width="${w}" stroke-linecap="round"${streep}/>` +
+		kop +
+		stip
+	);
 };
 
 /**
- * Een omhulling: een schijf om de leden plus HULL_MARGIN, vlak 8 % en rand 1,5 px in de
- * soortkleur, met de streep van zijn soort; de naam in een papieren pil erboven (GraphCanvas).
- * Een lid is [x, y] of [x, y, rand]. `opzij`: de pil linksboven op de rand, waar de lijnen
- * van de focus hem niet kruisen (zoals een naam die botst een vrije plaats zoekt).
+ * Een omhulling (Netwerkcanvas, Omhulling): een schijf om de leden plus HULL_MARGIN, vlak 5 %
+ * en lijn 1,6 px in de soortkleur, met de streep van zijn soort; de naam in een papieren pil
+ * met een rand van 1 px in de soortkleur, 6 px boven de schijf. Een lid is [x, y, straal].
  */
-const omhulling = (leden, soort, naam, opzij = false) => {
+const omhulling = (leden, soort, naam) => {
 	const cx = leden.reduce((t, p) => t + p[0], 0) / leden.length;
 	const cy = leden.reduce((t, p) => t + p[1], 0) / leden.length;
-	const ver = (p) => Math.hypot(p[0] - cx, p[1] - cy) + (p[2] ?? RAND) - RAND;
-	const r = Math.max(...leden.map(ver)) + K.HULL_MARGIN;
+	const r =
+		Math.max(...leden.map((p) => Math.hypot(p[0] - cx, p[1] - cy) + (p[2] ?? RAND))) +
+		K.HULL_MARGIN;
 	const kl = K.hullColorFor(soort);
 	const dash = K.hullDashFor(soort);
-	const streep = dash ? ` stroke-dasharray="${dash}"` : '';
+	const streep = dash ? ` stroke-dasharray="${dash}" stroke-linecap="round"` : '';
+	const top = cy - r - 6;
 	return {
-		schijf: `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${K.withAlpha(kl, 0.08)}" stroke="${kl}" stroke-width="1.5"${streep}/>`,
-		pil: opzij
-			? `<span class="pil pil--opzij" style="left:${cx - r * 0.72}px;top:${cy - r * 0.72}px;--kl:${kl}">${naam}</span>`
-			: `<span class="pil" style="left:${cx}px;top:${cy - r - K.LABEL_GAP}px;--kl:${kl}">${naam}</span>`
+		cx,
+		cy,
+		r,
+		schijf: `<circle cx="${r1(cx)}" cy="${r1(cy)}" r="${r1(r)}" fill="${K.towardPaper(kl, 0.05)}" stroke="${kl}" stroke-width="1.6"${streep}/>`,
+		// De breedte van de pil meet de pagina zodra de letter er is (PIL_MATEN).
+		pil: `<g class="pil" data-cx="${r1(cx)}"><rect x="${r1(cx)}" y="${r1(top - 20)}" width="0" height="20" rx="3" fill="${C.paper}" stroke="${kl}" stroke-width="1"/><text x="${r1(cx)}" y="${r1(top - 6)}" text-anchor="middle" class="pl">${naam}</text></g>`
 	};
 };
+/** Een lijn van rand tot rand tussen twee omhullingen (Wijziging van omhulling naar omhulling). */
+const tussen = (h1, h2, soort, opties = {}) =>
+	lijn([h1.cx, h1.cy], [h2.cx, h2.cy], soort, { ra: h1.r - LUCHT, rb: h2.r - LUCHT, ...opties });
 
 /** Een schets: omhullingen, dan lijnen, dan bronnen; de pillen boven alles. */
 const schets = ({ hullen = [], lijnen = [], bronnen = [] }) =>
@@ -169,135 +213,187 @@ const schets = ({ hullen = [], lijnen = [], bronnen = [] }) =>
 	hullen.map((h) => h.schijf).join('') +
 	lijnen.join('') +
 	bronnen.join('') +
-	`</svg>${hullen.map((h) => h.pil).join('')}</div>`;
+	hullen.map((h) => h.pil).join('') +
+	'</svg></div>';
 
-// Het motief: de bron boven, in de omhulling waar hij bij hoort; drie bronnen eronder.
-const F = [110, 92];
-const BOVEN = [
-	[84, 66],
-	[136, 66]
+// Het motief: de bron boven, drie verbonden bronnen eronder. Staat de focus in een omhulling
+// met een omhulling eronder, dan schuin, zoals op het canvas, en één lijn naar die omhulling:
+// herhaalde lijnen naar één omhulling komen pas bij hover.
+const MIDDEN = [120, 98];
+const RIJ = [
+	[44, 222],
+	[120, 244],
+	[196, 222]
 ];
-const ONDER_RIJ = [
-	[48, 206],
-	[110, 218],
-	[172, 206]
+const HOEKEN = [
+	[-28, -28],
+	[28, -28],
+	[-28, 28],
+	[28, 28]
+].map(([dx, dy]) => [MIDDEN[0] + dx, MIDDEN[1] + dy]);
+// Schuin: de focus links boven met twee bronnen links ervan, drie bronnen rechts onder.
+const F = [96, 90];
+const BUREN = [
+	[62, 70],
+	[66, 114]
 ];
-const ONDER_HUL = [
-	[86, 188],
-	[134, 188],
-	[110, 216]
+const ONDER = [
+	[160, 212],
+	[192, 194],
+	[194, 230]
 ];
-/** De leden met de focus, die met zijn ring meetelt. */
-const metFocus = (leden) => [...leden, [...F, RING + RAND - 2]];
+// Zonder omhulling: de bron en zijn drie dichter bij elkaar, zoals de Netwerkschets.
+const LOS = [120, 112];
+const LOS_RIJ = [
+	[54, 208],
+	[120, 230],
+	[186, 208]
+];
+const metFocus = (leden) => [...leden.map((p) => [...p, RAND]), [...F, RAND_FOCUS]];
 
 const SCHETS = {
 	// Een artikel: deel van een wet, aangehaald door een uitspraak, toegelicht in een Kamerstuk.
 	concordans: () =>
 		schets({
 			lijnen: [
-				lijn(F, ONDER_RIJ[0], 'part', 'b', RAND_FOCUS),
-				lijn(F, ONDER_RIJ[1], 'citation', 'a', RAND_FOCUS),
-				lijn(F, ONDER_RIJ[2], 'explanation', 'a', RAND_FOCUS)
+				lijn(LOS, LOS_RIJ[0], 'part', { ra: RAND_FOCUS }),
+				lijn(LOS_RIJ[1], LOS, 'citation', { rb: RAND_FOCUS }),
+				lijn(LOS_RIJ[2], LOS, 'explanation', { rb: RAND_FOCUS })
 			],
 			bronnen: [
-				teken('regel', ...ONDER_RIJ[0], C.wet),
-				teken('uitspraak', ...ONDER_RIJ[1], C.recht),
-				teken('stuk', ...ONDER_RIJ[2], C.parl),
-				focus('regel-o', ...F)
+				teken('regel', LOS_RIJ[0], C.wet),
+				teken('uitspraak', LOS_RIJ[1], C.recht),
+				teken('stuk', LOS_RIJ[2], C.parl),
+				focus('regel-o', LOS)
 			]
 		}),
-	// De wet in zijn omhulling met zijn artikelen; drie uitspraken halen hem aan.
+	// De wet in zijn omhulling met zijn artikelen; drie uitspraken halen hem en zijn artikelen aan.
 	wet: () =>
 		schets({
-			hullen: [omhulling(metFocus(BOVEN), 'instrument', 'Wet')],
-			lijnen: ONDER_RIJ.map((p) => lijn(F, p, 'citation', 'a', RAND_FOCUS)),
-			bronnen: [
-				...BOVEN.map((p) => teken('regel-o', ...p, C.wet)),
-				...ONDER_RIJ.map((p) => teken('uitspraak', ...p, C.recht)),
-				focus('regel', ...F)
-			]
-		}),
-	// Het artikel in zijn wet; drie Kamerstukken uit een dossier lichten het toe.
-	artikel: () =>
-		schets({
 			hullen: [
-				omhulling(metFocus(BOVEN), 'instrument', 'Wet'),
-				omhulling(ONDER_HUL, 'dossier', 'Dossier', true)
+				omhulling(
+					[...HOEKEN.map((p) => [...p, RAND]), [...MIDDEN, RAND_FOCUS]],
+					'instrument',
+					'Wet'
+				)
 			],
-			lijnen: ONDER_HUL.map((p) => lijn(F, p, 'explanation', 'a', RAND_FOCUS)),
+			lijnen: [
+				lijn(RIJ[0], HOEKEN[2], 'citation', { buig: -1 }),
+				lijn(RIJ[1], MIDDEN, 'citation', { rb: RAND_FOCUS, buig: 1 }),
+				lijn(RIJ[2], HOEKEN[3], 'citation', { buig: 1 })
+			],
 			bronnen: [
-				...BOVEN.map((p) => teken('regel-o', ...p, C.wet)),
-				...ONDER_HUL.map((p) => teken('stuk', ...p, C.parl)),
-				focus('regel-o', ...F)
+				...HOEKEN.map((p) => teken('regel-o', p, C.wet, MAAT.artikel)),
+				...RIJ.map((p) => teken('uitspraak', p, C.recht)),
+				focus('regel', MIDDEN)
 			]
 		}),
-	// Het wetsvoorstel in zijn dossier; het wijzigt drie artikelen van een wet.
-	dossier: () =>
-		schets({
-			hullen: [
-				omhulling(metFocus(BOVEN), 'dossier', 'Dossier'),
-				omhulling(ONDER_HUL, 'instrument', 'Wet', true)
-			],
-			lijnen: ONDER_HUL.map((p) => lijn(F, p, 'change', 'b', RAND_FOCUS)),
+	// Het artikel in zijn wet; een Kamerstuk uit een dossier licht het toe.
+	artikel: () => {
+		const boven = omhulling(metFocus(BUREN), 'instrument', 'Wet');
+		const onder = omhulling(
+			ONDER.map((p) => [...p, RAND]),
+			'dossier',
+			'Dossier'
+		);
+		return schets({
+			hullen: [boven, onder],
+			lijnen: [lijn(ONDER[0], F, 'explanation', { rb: RAND_FOCUS, buig: -1 })],
 			bronnen: [
-				...BOVEN.map((p) => teken('stuk', ...p, C.parl)),
-				...ONDER_HUL.map((p) => teken('regel-o', ...p, C.wet)),
-				focus('voorstel', ...F)
+				...BUREN.map((p) => teken('regel-o', p, C.wet, MAAT.artikel)),
+				...ONDER.map((p) => teken('stuk', p, C.parl)),
+				focus('regel-o', F)
 			]
-		}),
-	// Het stuk in zijn dossier, ingediend door drie Kamerleden van een fractie.
-	kamerstuk: () =>
-		schets({
-			hullen: [
-				omhulling(metFocus(BOVEN), 'dossier', 'Dossier'),
-				omhulling(ONDER_HUL, 'faction', 'Fractie', true)
-			],
-			lijnen: ONDER_HUL.map((p) => lijn(F, p, 'submitter', 'a', RAND_FOCUS)),
+		});
+	},
+	// Het wetsvoorstel in zijn dossier; het dossier wijzigt een wet (van omhulling naar omhulling).
+	dossier: () => {
+		const boven = omhulling(metFocus(BUREN), 'dossier', 'Dossier');
+		const onder = omhulling(
+			ONDER.map((p) => [...p, RAND]),
+			'instrument',
+			'Wet'
+		);
+		return schets({
+			hullen: [boven, onder],
+			lijnen: [tussen(boven, onder, 'change', { buig: -1 })],
 			bronnen: [
-				...BOVEN.map((p) => teken('stuk', ...p, C.parl)),
-				...ONDER_HUL.map((p) => teken('persoon', ...p, C.pers)),
-				focus('stuk', ...F)
+				...BUREN.map((p) => teken('stuk', p, C.parl)),
+				...ONDER.map((p) => teken('regel-o', p, C.wet, MAAT.artikel)),
+				focus('voorstel', F)
 			]
-		}),
+		});
+	},
+	// Het stuk in zijn dossier, ingediend door een Kamerlid van een fractie.
+	kamerstuk: () => {
+		const boven = omhulling(metFocus(BUREN), 'dossier', 'Dossier');
+		const onder = omhulling(
+			ONDER.map((p) => [...p, RAND]),
+			'faction',
+			'Fractie'
+		);
+		return schets({
+			hullen: [boven, onder],
+			lijnen: [lijn(ONDER[0], F, 'submitter', { rb: RAND_FOCUS, buig: -1 })],
+			bronnen: [
+				...BUREN.map((p) => teken('stuk', p, C.parl)),
+				...ONDER.map((p) => teken('persoon', p, C.pers)),
+				focus('stuk', F)
+			]
+		});
+	},
 	uitspraak: () => keten()
 };
 
-// --- De keten van een uitspraak, zoals ChainView ---------------------------------------
-// Lagen van 120 met hun naam en een haarlijn; elke instantie in haar soortteken met haar naam
-// eronder; de gekozen uitspraak in inkt in haar kader, de lijnen naar haar vorige en
-// volgende instantie (hoger beroep) in hun kleur en 1,6 keer zo dik.
-const KETEN = { w: 360, h: 400, top: 48, rij: 120, links: 120 };
+// --- De keten van een uitspraak, zoals Keten in het DS ----------------------------------
+// Lagen van 104 met hun naam (sans 11 px 600, spatiëring 0,06 em) en een haarlijn ertussen;
+// elke instantie in haar soortteken met naam en datum eronder; de gekozen uitspraak (Hoge Raad)
+// in inkt. De lijnen hoger beroep, cassatie en conclusie zijn Aanhaling: gestreept, met een
+// pijl naar de vorige instantie; een lijn begint en eindigt onder de naam, zijn label cursief.
+const KETEN = { w: 380, h: 424, rij: 104 };
 const keten = () => {
-	const { w, h, top, rij, links } = KETEN;
-	const lagen = [
-		['Rechtbank', 'Rb. Gelderland'],
-		['Gerechtshof', 'Hof Arnhem-Leeuwarden'],
-		['Hoge Raad', 'Hoge Raad']
+	const { w, h, rij } = KETEN;
+	const X = 260;
+	const lagen = ['Rechtbank', 'Gerechtshof', 'Conclusie P-G', 'Hoge Raad'];
+	const y = (i) => 64 + i * rij;
+	const bronnen = [
+		{ x: X, laag: 0, naam: 'Rb. Gelderland', ru: '7 mrt. 2017' },
+		{ x: X, laag: 1, naam: 'Hof Arnhem-Leeuwarden', ru: '27 nov. 2018' },
+		{ x: 120, laag: 2, naam: 'Conclusie P-G', ru: '29 okt. 2019' },
+		{ x: X, laag: 3, naam: 'HR 18 dec. 2020', ru: 'ECLI:NL:HR:2020:2095', gekozen: true }
 	];
-	const GEKOZEN = 1;
-	const x = links + (w - 24 - links) / 2;
-	const y = (i) => top + i * rij + 30;
-	const kl = K.edgeColorFor('APPEAL_OF', 'article');
-	const dik = K.lineThickness(K.EDGE_WEIGHT.APPEAL_OF) * 1.6;
-	const vorm = K.VORMEN.uitspraak;
+	const kl = K.towardPaper(K.edgeColorFor('APPEAL_OF', 'judgment'), 0.7);
 	let svg = '';
-	// Een haarlijn tussen de lagen; onder de laatste staat de haarlijn van de voet.
-	lagen.forEach(([laag], i) => {
-		const rail = top + (i + 1) * rij - 8;
-		svg += `<text class="laag" x="24" y="${top + i * rij + 4}">${laag.toUpperCase()}</text>`;
+	lagen.forEach((laag, i) => {
+		svg += `<text class="lab" x="16" y="${34 + i * rij}">${laag.toUpperCase()}</text>`;
 		if (i < lagen.length - 1)
-			svg += `<line x1="20" x2="${w - 20}" y1="${rail}" y2="${rail}" stroke="${C.rule}"/>`;
+			svg += `<line x1="16" x2="${w - 16}" y1="${119.5 + i * rij}" y2="${119.5 + i * rij}" stroke="${C.rule}"/>`;
 	});
-	for (let i = 1; i < lagen.length; i++)
-		svg += `<line x1="${x}" y1="${y(i - 1) + 8}" x2="${x}" y2="${y(i) - 8}" stroke="${kl}" stroke-width="${dik}"/>`;
-	lagen.forEach(([, naam], i) => {
-		const gekozen = i === GEKOZEN;
-		const at = `d="${vorm.d}" transform="translate(${x - 8} ${y(i) - 8})"`;
-		if (gekozen)
-			svg += `<rect x="${x - 12}" y="${y(i) - 12}" width="24" height="24" rx="2" fill="${C.paper}" stroke="${C.ink}" stroke-width="2"/><path ${at} fill="${C.ink}"/>`;
-		else svg += `<path ${at} fill="${C.recht}"/>`;
-		svg += `<text class="naam${gekozen ? ' naam--gekozen' : ''}" x="${x}" y="${y(i) + 24}" text-anchor="middle">${naam}</text>`;
+	// Van de latere uitspraak (boven haar teken) naar de vorige (onder haar datum).
+	const aanhaling = (van, naar, label, lx, ly, anker, buig) =>
+		lijn([van.x, y(van.laag) - 12], [naar.x, y(naar.laag) + 45], 'citation', {
+			ra: -LUCHT,
+			rb: -LUCHT,
+			buig,
+			kleur: kl
+		}) + `<text class="kn lijnlab" x="${lx}" y="${ly}" text-anchor="${anker}">${label}</text>`;
+	const [rb, hof, pg, hr] = bronnen;
+	svg += aanhaling(hof, rb, 'hoger beroep', X + 8, 136.5, 'start', 0);
+	svg += aanhaling(hr, hof, 'cassatie', X + 8, 292.5, 'start', 0);
+	svg += lijn([hr.x - 8.5, y(3) - 8.5], [pg.x + 39, pg.laag * rij + 64 + 22.4], 'citation', {
+		ra: -LUCHT,
+		rb: -LUCHT,
+		buig: 0.45,
+		kleur: kl
 	});
+	svg += `<text class="kn lijnlab" x="190" y="344.5" text-anchor="middle">conclusie</text>`;
+	for (const b of bronnen) {
+		svg += b.gekozen
+			? focus('uitspraak', [b.x, y(b.laag)], 18)
+			: teken('uitspraak', [b.x, y(b.laag)], C.recht);
+		svg += `<text class="kn${b.gekozen ? ' wet' : ''}" x="${b.x}" y="${y(b.laag) + 24}" text-anchor="middle">${b.naam}</text>`;
+		svg += `<text class="ru" x="${b.x}" y="${y(b.laag) + 38}" text-anchor="middle">${b.ru}</text>`;
+	}
 	return `<div class="schets schets--keten"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${svg}</svg></div>`;
 };
 
@@ -324,14 +420,15 @@ body{margin:0;width:1200px;height:630px;background:${C.paper};font-family:Newsre
 h1{margin:0 0 18px;font-size:104px;line-height:1;font-weight:600;letter-spacing:-.01em}
 p{margin:0;font-size:${kop ? 32 : 44}px;line-height:1.35;color:${C.ink2}}
 .voet{position:absolute;left:80px;right:80px;top:540px;border-top:1px solid ${C.rule};padding-top:18px;font-size:24px;color:${C.ink3}}
-.schets{position:absolute;right:64px;top:64px;width:${VAK.w}px;height:${VAK.h}px;transform:scale(${SCHAAL});transform-origin:top right}
-.schets--keten{top:70px;width:${KETEN.w}px;height:${KETEN.h}px;transform:scale(${(VAK.w * SCHAAL) / KETEN.w})}
+.schets{position:absolute;right:64px;top:62px;width:${VAK.w}px;height:${VAK.h}px;transform:scale(${SCHAAL});transform-origin:top right}
+.schets--keten{width:${KETEN.w}px;height:${KETEN.h}px;transform:scale(${(VAK.w * SCHAAL) / KETEN.w})}
 svg{display:block;overflow:visible}
-.pil{position:absolute;transform:translate(-50%,-100%);padding:2px 8px;border-radius:999px;background:color-mix(in srgb,${C.paper} 88%,var(--kl) 12%);border:1px solid var(--kl);font-size:11px;font-weight:600;color:${C.ink2};white-space:nowrap}
-.pil--opzij{transform:translate(-100%,-50%)}
-.laag{font-size:13px;font-weight:600;fill:${C.ink3}}
-.naam{font-size:13px;fill:${C.ink2};paint-order:stroke;stroke:${C.paper};stroke-width:6px;stroke-linejoin:round}
-.naam--gekozen{font-weight:600;fill:${C.ink}}
+.pl{font-size:13px;font-weight:600;fill:${C.ink}}
+.lab{font-family:Schibsted;font-size:11px;font-weight:600;letter-spacing:.06em;fill:${C.ink3}}
+.kn{font-size:13px;fill:${C.ink2};paint-order:stroke;stroke:${C.paper};stroke-width:4px;stroke-linejoin:round}
+.kn.wet{font-weight:600;fill:${C.ink}}
+.ru{font-size:12px;fill:${C.ink3}}
+.lijnlab{font-size:12px;fill:${C.ink3};font-style:italic}
 </style></head><body>
 <div class="merk"><b>§</b><span>Concordans</span></div>
 <div class="tekst">${kop ? `<h1>${kop}</h1>` : ''}<p>${zin}</p></div>
@@ -348,6 +445,15 @@ for (const naam of Object.keys(KAART)) {
 	writeFileSync(`${TMP}/${naam}.html`, og(naam));
 	await page.goto(`file://${TMP}/${naam}.html`);
 	await page.evaluate(() => document.fonts.ready);
+	// PIL_MATEN: een pil zo breed als zijn naam plus 9 px aan elke kant.
+	await page.evaluate(() => {
+		for (const g of document.querySelectorAll('.pil')) {
+			const w = g.querySelector('text').getBBox().width + 18;
+			const rect = g.querySelector('rect');
+			rect.setAttribute('x', String(Number(g.dataset.cx) - w / 2));
+			rect.setAttribute('width', String(w));
+		}
+	});
 	await page.screenshot({ path: `${STATIC}/og/${naam}.png` });
 	await page.close();
 }
