@@ -9,12 +9,12 @@ describe('Keten', () => {
 	it('has no omhulling and no pill with a name', () => {
 		expect(chain).not.toMatch(/hullDashFor|class="hull"|class="pil"|hullHeight/);
 	});
-	it('draws its lines through stamboom.ts only, never as a straight or orthogonal path of its own', () => {
-		expect(chain).toMatch(/stamboom\(/);
+	it('draws its lines through tree-lines.ts only, never as a straight or orthogonal path of its own', () => {
+		expect(chain).toMatch(/treeLines\(/);
 		expect(chain).not.toMatch(/curvedLine|clearBend/);
 	});
-	it('takes the order and colours of a person’s layers from persoon-lagen.ts', () => {
-		expect(chain).toMatch(/rubriekKleur/);
-		expect(readFileSync('src/lib/network/lineage.ts', 'utf8')).toMatch(/PERSOON_LAGEN/);
+	it('takes the order and colours of a person’s layers from person-layers.ts', () => {
+		expect(chain).toMatch(/sectionColour/);
+		expect(readFileSync('src/lib/network/lineage.ts', 'utf8')).toMatch(/PERSON_LAYERS/);
 	});
 });

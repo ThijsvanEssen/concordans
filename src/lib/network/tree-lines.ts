@@ -1,4 +1,4 @@
-// The lines of the keten as a stamboom (besluit 39, A306): from the bron one stem down; per
+// The lines of the keten as a stamboom (besluit 39): from the bron one stem down; per
 // layer one tak, in the rail above the layer; from it a short line down to each node. A line
 // to a layer further down keeps to the stem where it can, and runs beside a name where it
 // cannot, so nothing runs through a name. Every bend is a bezier, as the canvas and Verband
@@ -7,10 +7,10 @@
 
 export type Pt = { x: number; y: number };
 /** Where a node stands: its column, its layer, where a line ends above it and leaves under its name. */
-export type StamNode = { x: number; row: number; top: number; bottom: number };
-export type StamEdge = { id: string; parent: string; child: string; kind: string; lead?: number };
+export type TreeNode = { x: number; row: number; top: number; bottom: number };
+type TreeEdge = { id: string; parent: string; child: string; kind: string; lead?: number };
 export type Box = { id: string; x0: number; x1: number; y0: number; y1: number };
-export type StamLine = {
+type TreeLine = {
 	id: string;
 	parent: string;
 	child: string;
@@ -26,9 +26,9 @@ export type StamLine = {
 
 /** How far a bend reaches along a tak, and down a stem or drop, at most. */
 export const REACH = 44;
-export const DIP = 28;
+const DIP = 28;
 /** A tak lies this far above the one below it, where two of one layer would run into each other. */
-export const LEVEL = 4;
+const LEVEL = 4;
 const MAX_LEVEL = 2;
 /** The room kept between a line and a name. */
 const MARGIN = 4;
@@ -103,13 +103,13 @@ export function easePath(pts: Pt[]): string {
 
 type Group = {
 	key: string;
-	parent: StamNode;
+	parent: TreeNode;
 	row: number;
 	x0: number;
 	x1: number;
 	level: number;
 	column: number;
-	edges: StamEdge[];
+	edges: TreeEdge[];
 };
 
 /** A column beside the parent's own where nothing of the layers between stands, nearest first. */
@@ -133,7 +133,7 @@ function freeColumn(
 }
 
 /** The groups of lines that share a stem and a tak: one parent, one layer, one kind. */
-function groups(nodes: ReadonlyMap<string, StamNode>, edges: readonly StamEdge[]): Group[] {
+function groups(nodes: ReadonlyMap<string, TreeNode>, edges: readonly TreeEdge[]): Group[] {
 	const out = new Map<string, Group>();
 	for (const e of edges) {
 		const p = nodes.get(e.parent);
@@ -159,11 +159,11 @@ function groups(nodes: ReadonlyMap<string, StamNode>, edges: readonly StamEdge[]
 }
 
 /** The lines of a keten: a path for each edge, none through a box, the taks of a layer apart. */
-export function stamboom(
-	nodes: ReadonlyMap<string, StamNode>,
-	edges: readonly StamEdge[],
+export function treeLines(
+	nodes: ReadonlyMap<string, TreeNode>,
+	edges: readonly TreeEdge[],
 	o: { rails: readonly number[]; boxes: readonly Box[] }
-): StamLine[] {
+): TreeLine[] {
 	const all = groups(nodes, edges);
 	// Straight down the parent's own column where nothing stands in the way, else beside it.
 	for (const g of all) {
@@ -212,7 +212,7 @@ export function stamboom(
 		const list = (arriving.get(child) ?? []).sort((a, b) => a.from - b.from);
 		return list.findIndex((x) => x.id === id) - (list.length - 1) / 2;
 	};
-	const out: StamLine[] = [];
+	const out: TreeLine[] = [];
 	for (const g of all) {
 		const startRow = g.parent.row;
 		const yg = o.rails[g.row] - LEVEL * g.level;

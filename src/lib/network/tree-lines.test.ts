@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { easePath, stamboom, type Box, type Pt, type StamNode } from './stamboom';
+import { easePath, treeLines, type Box, type Pt, type TreeNode } from './tree-lines';
 
 // A small keten: a person on top, layers of 104 px, rails 14,5 above each layer.
 const rails = [33.5, 137.5, 241.5, 345.5];
-const node = (x: number, row: number): StamNode => ({
+const node = (x: number, row: number): TreeNode => ({
 	x,
 	row,
 	top: 48 + row * 104 + 34 - 12,
 	bottom: 48 + row * 104 + 34 + 31
 });
-const boxOf = (id: string, n: StamNode): Box => ({
+const boxOf = (id: string, n: TreeNode): Box => ({
 	id,
 	x0: n.x - 40,
 	x1: n.x + 40,
 	y0: n.top + 10,
 	y1: n.bottom
 });
-const nodes = new Map<string, StamNode>([
+const nodes = new Map<string, TreeNode>([
 	['p', node(500, 0)],
 	['f1', node(300, 1)],
 	['f2', node(700, 1)],
@@ -42,7 +42,7 @@ const edges = [
 	edge('p', 'k2')
 ];
 const boxes = [...nodes].map(([id, n]) => boxOf(id, n));
-const lines = stamboom(nodes, edges, { rails, boxes });
+const lines = treeLines(nodes, edges, { rails, boxes });
 
 /** Points along a path of M, L, Q and C commands, 2 px apart at most. */
 function sample(d: string): Pt[] {
@@ -92,7 +92,7 @@ const crosses = (a: Pt[], b: Pt[]) => {
 	return false;
 };
 
-describe('stamboom', () => {
+describe('treeLines', () => {
 	it('draws every line as a bezier: no corner is a corner', () => {
 		for (const l of lines) {
 			expect(l.d).toMatch(/^M[\d. -]+(?:[LQC][\d. -]+)+$/);
@@ -126,7 +126,7 @@ describe('stamboom', () => {
 	it('keeps a line to a layer further down beside a name that stands in its way', () => {
 		const blocked = new Map(nodes);
 		blocked.set('f1', node(500, 1));
-		const l = stamboom(blocked, [edge('p', 'c1')], {
+		const l = treeLines(blocked, [edge('p', 'c1')], {
 			rails,
 			boxes: [...blocked].map(([id, n]) => boxOf(id, n))
 		})[0];
@@ -135,13 +135,13 @@ describe('stamboom', () => {
 			expect(q.x > 460 && q.x < 540 && q.y > 184 && q.y < 217).toBe(false);
 	});
 	it('puts the taks of one layer on levels of their own where they would overlap', () => {
-		const two = new Map<string, StamNode>([
+		const two = new Map<string, TreeNode>([
 			['a', node(300, 0)],
 			['b', node(400, 0)],
 			['x', node(250, 1)],
 			['y', node(450, 1)]
 		]);
-		const out = stamboom(two, [edge('a', 'x'), edge('a', 'y'), edge('b', 'x'), edge('b', 'y')], {
+		const out = treeLines(two, [edge('a', 'x'), edge('a', 'y'), edge('b', 'x'), edge('b', 'y')], {
 			rails,
 			boxes: []
 		});
@@ -150,14 +150,14 @@ describe('stamboom', () => {
 	});
 });
 
-describe('stamboom, a node with two parents', () => {
+describe('treeLines, a node with two parents', () => {
 	it('takes the line from the left on the left, so they do not cross on arriving', () => {
-		const two = new Map<string, StamNode>([
+		const two = new Map<string, TreeNode>([
 			['top', node(500, 0)],
 			['side', node(700, 1)],
 			['kid', node(500, 2)]
 		]);
-		const out = stamboom(two, [edge('top', 'kid'), edge('side', 'kid')], { rails, boxes: [] });
+		const out = treeLines(two, [edge('top', 'kid'), edge('side', 'kid')], { rails, boxes: [] });
 		expect(crosses(sample(out[0].d), sample(out[1].d))).toBe(false);
 	});
 });

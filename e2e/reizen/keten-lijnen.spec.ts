@@ -28,7 +28,7 @@ const drawn = (page: Page) =>
 				})
 			};
 		}),
-		names: [...svg.querySelectorAll<SVGTextElement>('.name, .subkop')].map((t) => {
+		names: [...svg.querySelectorAll<SVGTextElement>('.name, .subhead')].map((t) => {
 			const b = t.getBBox();
 			return { x0: b.x + 1, x1: b.x + b.width - 1, y0: b.y + 1, y1: b.y + b.height - 1 };
 		})

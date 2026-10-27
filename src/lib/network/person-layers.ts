@@ -1,10 +1,10 @@
 // The layers of a person's keten, in the order of their rubriek: Parlement (Fractie, Commissie),
 // then Regering (Kabinet, Ministerie), each in the colour of its rubriek. One place for the order
 // and the colours; A296 brings --rubriek-*, which replaces the two tokens here.
-export const PERSOON_LAGEN = ['factions', 'committees', 'cabinets', 'ministries'] as const;
+export const PERSON_LAYERS = ['factions', 'committees', 'cabinets', 'ministries'] as const;
 
 /** The rubriek colour of a layer of a person's keten, or null for any other bron. */
-export function rubriekKleur(collection: string): string | null {
+export function sectionColour(collection: string): string | null {
 	switch (collection) {
 		case 'factions':
 		case 'committees':

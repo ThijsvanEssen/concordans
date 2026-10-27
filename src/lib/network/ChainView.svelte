@@ -20,8 +20,8 @@
 		arrowLength
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
-	import { stamboom, type StamNode } from '$lib/network/stamboom';
-	import { rubriekKleur } from '$lib/network/persoon-lagen';
+	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
+	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
@@ -114,8 +114,8 @@
 	const HALO = 4.5;
 	const INK_EDGE = 2;
 	const TOP = 48;
-	/** The room a subkop takes before the first article of a wet. */
-	const KOP = 36;
+	/** The room a subhead takes before the first article of a wet. */
+	const HEAD = 36;
 	const LEFT = 120;
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
@@ -174,16 +174,16 @@
 					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
 				};
 			});
-			// The articles of one wet stay together, under a subkop of its own; within it, by place.
+			// The articles of one wet stay together, under a subhead of its own; within it, by place.
 			const rank = (k: ChainNode) => layer.nodes.findIndex((q) => q.home === k.home);
 			wish.sort((a, b) => rank(a.k) - rank(b.k) || a.x - b.x);
 			// Apart by a gap from the left, then back within the right edge.
-			// A wet's articles start after room for its subkop, left of its first sign.
+			// A wet's articles start after room for its subhead, left of its first sign.
 			const many = new Set(wish.map((w) => w.k.home)).size > 1 && layer.id === 'article';
-			const sep = (j: number) => gap + (many && wish[j].k.home !== wish[j - 1]?.k.home ? KOP : 0);
+			const sep = (j: number) => gap + (many && wish[j].k.home !== wish[j - 1]?.k.home ? HEAD : 0);
 			const xs: number[] = [];
 			wish.forEach((w, j) =>
-				xs.push(Math.max(w.x, j ? xs[j - 1] + sep(j) : left + sep(0) / 2 + (many ? KOP : 0)))
+				xs.push(Math.max(w.x, j ? xs[j - 1] + sep(j) : left + sep(0) / 2 + (many ? HEAD : 0)))
 			);
 			for (let j = xs.length - 1; j >= 0; j--)
 				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - sep(j + 1));
@@ -206,9 +206,9 @@
 	});
 	/**
 	 * Where a layer holds the articles of more than one wet, each wet's abbreviation as a small
-	 * subkop left of its first article (BW 7, UHW).
+	 * subhead left of its first article (BW 7, UHW).
 	 */
-	const subkoppen = $derived.by(() => {
+	const subheads = $derived.by(() => {
 		const out: { id: string; label: string; x: number; y: number }[] = [];
 		const row = shown.findIndex((l) => l.id === 'article');
 		const nodes = row < 0 ? [] : shown[row].nodes;
@@ -274,7 +274,7 @@
 					y1: p.y + 24 + LINE * ((infoOf.get(k.id)?.lines.length ?? 1) - 1) + 4
 				});
 			}
-		for (const t of subkoppen)
+		for (const t of subheads)
 			out.push({
 				id: `kop:${t.id}`,
 				x0: t.x - t.label.length * 7,
@@ -285,14 +285,14 @@
 		return out;
 	});
 	/**
-	 * The lines (Netwerkcanvas, Lijnen) as a stamboom (stamboom.ts): from under the name of what a
+	 * The lines (Netwerkcanvas, Lijnen) as a stamboom (tree-lines.ts): from under the name of what a
 	 * node hangs under, one stem down, a tak per layer, a short line to each node; in the style of
 	 * its kind. The arrowhead stands where the Design System gives one, at the parent's end; the
 	 * style of the line is this one place.
 	 */
 	const lines = $derived.by(() => {
 		const rails = tops.map((t) => t - 14.5);
-		const nodes = new Map<string, StamNode>();
+		const nodes = new Map<string, TreeNode>();
 		const rows = new Map<string, number>();
 		shown.forEach((l, i) =>
 			l.nodes.forEach((k) => {
@@ -318,7 +318,7 @@
 				})
 			)
 		);
-		const routed = stamboom(
+		const routed = treeLines(
 			nodes,
 			edges.map((e) => ({
 				id: `${e.o.id}~${e.k.id}`,
@@ -359,9 +359,10 @@
 	});
 	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
 	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
-	// In the keten of a person each layer wears the colour of its rubriek (persoon-lagen.ts).
+	// In the keten of a person each layer wears the colour of its rubriek (person-layers.ts).
 	const colour = (k: ChainNode) =>
-		(start?.startsWith('members/') ? rubriekKleur(k.collection) : null) ?? kindColour(k.collection);
+		(start?.startsWith('members/') ? sectionColour(k.collection) : null) ??
+		kindColour(k.collection);
 	const vormOf = (k: ChainNode) =>
 		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
 	/** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
@@ -527,8 +528,8 @@
 		{#each lines.filter((l) => l.lit) as l (l.id)}
 			<g>{@render stroke(l)}</g>
 		{/each}
-		{#each subkoppen as t (t.id)}
-			<text class="subkop" x={t.x} y={t.y} text-anchor="end">{t.label}</text>
+		{#each subheads as t (t.id)}
+			<text class="subhead" x={t.x} y={t.y} text-anchor="end">{t.label}</text>
 		{/each}
 		{#each shown as layer (layer.id)}
 			{#each layer.nodes as k (k.id)}
@@ -672,11 +673,10 @@
 
 <style>
 	/* The wet of a group of articles, small, left of the first (BW 7, UHW). */
-	.subkop {
-		font-family: var(--font-ui);
-		font-size: var(--t-label);
+	.subhead {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
 		font-weight: 600;
-		letter-spacing: 0.06em;
 		fill: var(--ink-3);
 	}
 	.chain {
