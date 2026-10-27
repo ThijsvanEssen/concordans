@@ -226,6 +226,8 @@
 	{#if outlines > 0 || hiddenGroups.size > 0}
 		<FilterOptie label="Omtrekken" on={outlinesOn} onToggle={toggleOutlines} />
 	{/if}
+	<!-- A301: what was first under Meer, as rows of Tonen: Alleen verbonden, de bronnen ertussen. -->
+	{@render meer?.()}
 {/snippet}
 
 <aside class="legend">
@@ -353,106 +355,6 @@
 			</Sectie>
 		{/if}
 		{@render periode?.()}
-		<div class="verder">
-			<FoldButton sleutel={MEER} open={meerOpen} controls="netwerk-meer">Meer</FoldButton>
-		</div>
-		{#if meerOpen}
-			<div class="verder__inhoud" id="netwerk-meer">
-				{#if meer}<section class="block">{@render meer()}</section>{/if}
-				<section class="block">
-					<div class="block__label">Beperk tot</div>
-					<TekstMenu
-						label="Beperk tot"
-						tekst="Beperk tot"
-						waarde={activePreset(filter)?.id ?? null}
-						opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
-						onSelect={(id) => {
-							const p = PRESETS.find((x) => x.id === id);
-							if (p) onFilter(withPreset(filter, p));
-						}}
-					>
-						{#snippet onder(sluit)}
-							<button
-								type="button"
-								role="menuitem"
-								class="tekstmenu__item"
-								onclick={() => {
-									sluit();
-									onOpenFilter();
-								}}>Kies bronnen en verbindingen</button
-							>
-						{/snippet}
-					</TekstMenu>
-				</section>
-
-				{#if lids.length > 0}
-					<section class="block">
-						<div class="block__label">Lid</div>
-						<TekstMenu
-							label="Lid"
-							waarde={filter.lid ?? ''}
-							opties={[
-								{ waarde: '', label: 'Alle leden' },
-								...lids.map((lid) => ({ waarde: lid, label: `Lid ${lid}` })),
-								{ waarde: 'geen', label: 'Lid niet genoemd' }
-							]}
-							onSelect={(v) => onFilter({ ...filter, lid: v === '' ? null : v })}
-						/>
-					</section>
-				{/if}
-
-				<section class="block">
-					<div class="block__label">Markering</div>
-					<div class="block">
-						<TekstMenu
-							label="Markering"
-							waarde={mutOn ? 'mut' : heatOn ? 'heat' : 'geen'}
-							opties={[
-								{ waarde: 'geen', label: 'Geen' },
-								{
-									waarde: 'mut',
-									label: `Openstaande dossiers${mutOn && inFluxCount > 0 ? ` (${inFluxCount})` : ''}`,
-									uit: !onToggleMutatie,
-									titel: 'Een ring om de bronnen die een wetsvoorstel wil wijzigen'
-								},
-								{
-									waarde: 'heat',
-									label: 'Verwijzingen per maand',
-									uit: !onToggleHeat,
-									titel: 'Hoe vaak een bron in de gekozen periode is aangehaald'
-								}
-							]}
-							onSelect={(w) => {
-								if (w === 'geen') {
-									if (mutOn) onToggleMutatie?.();
-									else if (heatOn) onToggleHeat?.();
-								} else if (w === 'mut') {
-									if (heatOn) onToggleHeat?.();
-									if (!mutOn) onToggleMutatie?.();
-								} else {
-									if (mutOn) onToggleMutatie?.();
-									if (!heatOn) onToggleHeat?.();
-								}
-							}}
-						/>
-						{#if heatOn}
-							<div class="sub">
-								<Keuze
-									label="Periode"
-									waarde={overlay.kind === 'heat' ? String(overlay.months) : null}
-									opties={HEAT_PERIODS.map((m) => ({
-										waarde: String(m),
-										label: `${m} maanden`,
-										uit: !onHeatPeriodChange
-									}))}
-									onSelect={(m) => onHeatPeriodChange?.(Number(m))}
-								/>
-							</div>
-						{/if}
-					</div>
-				</section>
-			</div>
-		{/if}
 	{/if}
 </aside>
 
