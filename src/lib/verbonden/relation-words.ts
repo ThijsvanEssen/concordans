@@ -294,17 +294,6 @@ export function relationWords(
 	return { actief, terug, soort };
 }
 
-/** One verb of a line: read from its source to its target, or `back` from the target's side. */
-export const lineVerb = (
-	relation: Relation,
-	van: Collection | null,
-	naar: Collection | null,
-	back = false
-): string => {
-	const w = relationWords(relation, van, naar);
-	return back ? w.terug : w.actief;
-};
-
 /**
  * Per change, the word that heads an article's line under Gewijzigde artikelen; a bill does
  * not enact an article on its own.

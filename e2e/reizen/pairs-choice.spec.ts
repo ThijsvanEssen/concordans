@@ -90,5 +90,5 @@ test('two persons: every kind of shared bron is a row, kabinet-Jetten first', as
 		: view.getByRole('button', { name: /kabinet-Jetten/ });
 	await expect(first).toBeVisible({ timeout: 30_000 });
 	await expect(first).toContainText('kabinet-Jetten');
-	await expect(view.getByText(/beide lid van|beide bewindspersoon/).first()).toBeAttached();
+	await expect(view.getByText(/beide lid van|beide bewindspersoon in/).first()).toBeAttached();
 });

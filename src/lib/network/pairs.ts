@@ -5,7 +5,7 @@
 // drawing on a wide screen and the numbered list on a phone read one model.
 import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
-import { lineVerb } from '$lib/verbonden/relation-words';
+import { bothPhrase, joinsAll } from './both-words';
 import type { Collection } from '$lib/vocabulary';
 import {
 	MAX_ROWS,
@@ -111,20 +111,6 @@ export const pairOf = (choice: string): [string, string] | null =>
 export const stepsText = (n: number) =>
 	['', 'één stap', 'twee stappen', 'drie stappen'][n] ?? `${n} stappen`;
 
-const BOTH = ['', '', 'beide', 'alle drie', 'alle vier', 'alle vijf', 'alle zes'];
-
-/** `noemt beide`, `haalt beide aan`, `verwijst naar alle drie`: a verb with its object. */
-function verbOf(active: string, n: number): string {
-	const object = BOTH[n];
-	const parts = active.split(' ');
-	const prepositional =
-		parts.length > 1 &&
-		['naar', 'bij', 'van', 'met', 'voor', 'over', 'door', 'tot', 'op'].includes(
-			parts[parts.length - 1]
-		);
-	return prepositional ? `${active} ${object}` : [parts[0], object, ...parts.slice(1)].join(' ');
-}
-
 type How = SharedRow['how'][number];
 
 const legOf = (h: How | undefined, side: 'start' | 'end'): StepLeg => ({
@@ -134,21 +120,15 @@ const legOf = (h: How | undefined, side: 'start' | 'end'): StepLeg => ({
 	arrow: !h ? null : (h.toward === 'row') === (side === 'end') ? 'end' : 'start'
 });
 
-/** How a kenmerk joins the chosen bronnen, in words: `noemt beide`, `genoemd door beide`. */
+/** How a kenmerk joins the chosen bronnen, in words: `noemt beide`, `beide lid van`. */
 function namesBoth(row: SharedRow, ats: readonly string[]): string {
 	const hows = ats.map((id) => row.how.find((h) => h.bron === id)).filter((h): h is How => !!h);
-	const say = (h: How) =>
-		h.toward === 'bron'
-			? lineVerb(h.relation, row.collection, h.collection)
-			: lineVerb(h.relation, h.collection, row.collection);
-	const first = hows[0];
-	if (!first) return 'verbindt';
-	const same = hows.every((h) => h.toward === first.toward && say(h) === say(first));
-	if (same)
-		return first.toward === 'bron'
-			? verbOf(say(first), ats.length)
-			: `${BOTH[ats.length]} ${say(first)}`;
-	return joinAnd([...new Set(hows.map(say))]);
+	const phrases = new Set(
+		hows.map((h) => bothPhrase(h.relation, row.collection, h.toward === 'row', ats.length))
+	);
+	// One phrase where every chosen bron is joined alike; where they differ, none claims more.
+	if (phrases.size === 1) return [...phrases][0];
+	return joinsAll(ats.length);
 }
 
 const bronOf = (e: PairEnd): ChainBron => ({ id: e.id, name: e.name, collection: e.collection });
