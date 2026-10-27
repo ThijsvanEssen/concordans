@@ -55,7 +55,7 @@
 	title="Bron toevoegen"
 	focus="[data-search-field]"
 	tall
-	vol
+	full
 	aboveTabbar
 	{onClose}
 	foot={toetsen.current ? foot : undefined}

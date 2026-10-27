@@ -1589,7 +1589,11 @@
 				{/if}
 			</div>
 		</div>
-		<div class="strook-hoogte" class:is-wacht={legend.counting} bind:clientHeight={stripHeight}>
+		<div
+			class="strook-hoogte"
+			data-wacht={legend.counting || undefined}
+			bind:clientHeight={stripHeight}
+		>
 			<Tijdstrook
 				stippen={legend.counting ? [] : strookStippen}
 				van={jaarVan(filter.van)}
@@ -1846,11 +1850,11 @@
 		flex-direction: column;
 	}
 	/* The Tijdstrook is on its way: its place is held, so the canvas above it does not shrink. */
-	.strook-hoogte.is-wacht {
+	.strook-hoogte[data-wacht] {
 		min-height: 92px;
 	}
 	@media (max-width: 768px) {
-		.strook-hoogte.is-wacht {
+		.strook-hoogte[data-wacht] {
 			min-height: 116px;
 		}
 	}

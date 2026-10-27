@@ -27,7 +27,7 @@
 		upTo = 'telefoon',
 		aboveTabbar = false,
 		tall = false,
-		vol = false,
+		full = false,
 		showTitle = true
 	}: {
 		/** The name of the dialog: its head, and for a screen reader. */
@@ -49,7 +49,7 @@
 		/** A phone: always the 88 % of the screen, so the sheet does not move as its content does. */
 		tall?: boolean;
 		/** A phone: the whole screen, as a search of its own (Netwerkkeuze, Bron toevoegen). */
-		vol?: boolean;
+		full?: boolean;
 		/** The head names it; false where the content's own first heading does. */
 		showTitle?: boolean;
 	} = $props();
@@ -119,7 +119,7 @@
 		class="sheet"
 		class:is-bottom={bottom}
 		class:is-tall={tall}
-		class:is-vol={vol}
+		data-full={full || undefined}
 		data-place={place}
 		role="dialog"
 		aria-modal="true"
@@ -197,7 +197,7 @@
 	.sheet.is-bottom.is-tall {
 		height: calc(88dvh - var(--blad-below));
 	}
-	.sheet.is-bottom.is-vol {
+	.sheet.is-bottom[data-full] {
 		height: calc(100dvh - var(--balk-h) - var(--blad-below));
 		max-height: none;
 		border-top: 0;
