@@ -7,7 +7,7 @@ test('a chosen period dims the bronnen outside it and takes none from the canvas
 	touch
 }) => {
 	test.skip(touch, 'a phone keeps Periode in the strip: the band is for the pointer');
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk');
 	const canvas = page.locator('.canvas-wrap');
 	const band = page.locator('.tijdstrook .band');
 	await expect(band.locator('.stip').first()).toBeVisible();
@@ -19,7 +19,7 @@ test('a chosen period dims the bronnen outside it and takes none from the canvas
 	const y = box.y + box.height / 2;
 	await page.mouse.move(box.x + box.width * 0.5, y);
 	await page.mouse.down();
-	await page.mouse.move(box.x + box.width * 0.9, y, { steps: 5 });
+	await page.mouse.move(box.x + box.width * 0.95, y, { steps: 5 });
 	await page.mouse.up();
 	await expect(page).toHaveURL(/[?&]van=/);
 
