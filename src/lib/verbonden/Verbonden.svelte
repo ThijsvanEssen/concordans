@@ -357,12 +357,12 @@
 			const tier = typeof r.props?.tier === 'string' ? r.props.tier : '';
 			facet.set(tier, (facet.get(tier) ?? 0) + 1);
 		}
-		const deel = tierParts(
+		const tierSplit = tierParts(
 			[...facet].map(([value, count]) => ({ value, count })),
 			k.rows.length
 		);
 		// One instantie is no strook, and "alle" of a part would not be true.
-		return deel.length > 1 ? { parts: deel, of: Math.max(k.count, k.rows.length) } : null;
+		return tierSplit.length > 1 ? { parts: tierSplit, of: Math.max(k.count, k.rows.length) } : null;
 	});
 	const parts = $derived(tally ? tally.parts : partsApi);
 	/** How many of the soort's judgments the strook counts, where not all. */

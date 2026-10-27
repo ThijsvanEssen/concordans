@@ -131,8 +131,8 @@
 	const noLid = $derived(perLid.get('') ?? 0);
 	const perStatus = $derived.by(() => {
 		const rows = allRows(groups);
-		const voorgesteld = rows.filter((r) => r.proposed).length;
-		return { voorgesteld, vastgesteld: rows.length - voorgesteld };
+		const proposed = rows.filter((r) => r.proposed).length;
+		return { proposed, enacted: rows.length - proposed };
 	});
 	const count = $derived(shownCount(groups, draft));
 
@@ -372,13 +372,13 @@
 				<div class="block__label">Status</div>
 				<FilterOptie
 					label="Vastgesteld"
-					count={perStatus.vastgesteld}
+					count={perStatus.enacted}
 					on={statusAan('vastgesteld')}
 					onToggle={() => toggleStatus('vastgesteld')}
 				/>
 				<FilterOptie
 					label="Voorgesteld"
-					count={perStatus.voorgesteld}
+					count={perStatus.proposed}
 					on={statusAan('voorgesteld')}
 					onToggle={() => toggleStatus('voorgesteld')}
 				/>
