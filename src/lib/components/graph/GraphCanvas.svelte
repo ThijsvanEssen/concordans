@@ -1385,14 +1385,14 @@
 					class="hull-label"
 					class:is-dim={h.dim}
 					class:is-long={h.long}
-					style="left:{h.labelX}px; top:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
+					style="--x:{h.labelX}px; --y:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
 				>
 			{/each}
 			{#each hullLinks as l (l.id)}
 				{#if l.label}
 					<span
 						class="hull-link-label"
-						style="left:{l.labelX}px; top:{l.labelY}px; --link-color:{l.color}">{l.label}</span
+						style="--x:{l.labelX}px; --y:{l.labelY}px; --link-color:{l.color}">{l.label}</span
 					>
 				{/if}
 			{/each}
@@ -1476,7 +1476,9 @@
 	}
 	.hull-link-label {
 		position: absolute;
-		transform: translate(-50%, -50%);
+		left: 0;
+		top: 0;
+		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 50%));
 		padding: 1px var(--s-2);
 		border-radius: var(--r-rond);
 		background: var(--paper);
@@ -1495,9 +1497,13 @@
 		overflow: hidden;
 		z-index: 4;
 	}
+	/* Placed by transform, not left and top: a label that moves with the layout is no layout
+	   shift (N17c). */
 	.hull-label {
 		position: absolute;
-		transform: translate(-50%, -100%);
+		left: 0;
+		top: 0;
+		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 100%));
 		padding: 2px var(--s-2);
 		border-radius: var(--r-rond);
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);

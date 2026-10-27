@@ -1331,7 +1331,7 @@
 				networkOn={netwerkActive}
 				hasSelection={!!selection}
 				reach={externCounts ? null : reach}
-				empty={!hasNodes && !midden}
+				empty={!hasNodes && !midden && !selection}
 			>
 				<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 				{#if hasNodes || midden}
@@ -1418,7 +1418,7 @@
 					() => canvas?.zoom(1 / 1.5),
 					() => canvas?.fit()
 				)}
-				{#if !hasNodes && !midden && onToevoegen}
+				{#if !hasNodes && !midden && !selection && onToevoegen}
 					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
 					<div class="canvas-leeg">
 						<p class="canvas-leeg__kop">Nog geen bron gekozen</p>

@@ -2201,7 +2201,8 @@
 										onSelect={addIdToNetwerk}
 										selection={selectedNode &&
 										selectedLinkId &&
-										selectedNode.id !== reach?.focal &&
+										reach &&
+										selectedNode.id !== reach.focal &&
 										!netwerk.ids.includes(selectedLinkId)
 											? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 											: null}
