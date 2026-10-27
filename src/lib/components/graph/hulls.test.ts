@@ -121,26 +121,27 @@ describe('the hulls of a small canvas', () => {
 		expect(round(links)).toMatchInlineSnapshot(`
 			[
 			  {
-			    "arrow": "M384,262L380,266L378,262Z",
+			    "arrow": "M384,262L377,269L374,262Z",
 			    "color": "#00487c",
-			    "d": "M140 297Q266 309 379 264",
-			    "dashed": true,
+			    "d": "M140 297Q266 309 375 266",
+			    "dash": "4 3",
 			    "dim": false,
 			    "id": "D->W",
 			    "label": null,
 			    "labelX": 262,
 			    "labelY": 280,
+			    "width": 3,
 			  },
 			  {
-			    "arrow": "M389,248L383,247L386,244Z",
+			    "arrow": "M389,248L382,247L385,242Z",
 			    "color": "#456247",
-			    "d": "M256 106Q305 193 385 245",
-			    "dashed": false,
+			    "d": "M256 106Q305 193 384 245",
 			    "dim": false,
 			    "id": "anker:j->W",
 			    "label": null,
 			    "labelX": 322,
 			    "labelY": 177,
+			    "width": 2,
 			  },
 			]
 		`);
@@ -227,7 +228,8 @@ describe('the names of the hulls (UX review N4, N8)', () => {
 			d: '',
 			arrow: '',
 			color: '',
-			dashed: false,
+			dash: undefined,
+			width: 3,
 			dim: false,
 			label: 'noemt',
 			labelX: x,

@@ -8,6 +8,7 @@
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { textOf } from '$lib/text/words';
+import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
 import type { ChainLayer, ChainNode } from './chain';
 
@@ -52,13 +53,18 @@ const layerName = (n: { collection: string; props?: Record<string, unknown> | nu
 				: 'Kamerlid';
 };
 
+/** A judgment as its reader cites it ("HR 20 december 2019"), as the canvas names it. */
+const nameOf = (n: Pick<Neighbour, 'id' | 'collection' | 'display_name' | 'props' | 'cite'>) =>
+	(n.collection === 'judgments' && citationRecord({ ...n, kind: 'judgment' })?.short) ||
+	naamVanId(n.id, n.display_name);
+
 const chainNode = (
-	n: Pick<Neighbour, 'id' | 'collection' | 'display_name' | 'props'>,
+	n: Pick<Neighbour, 'id' | 'collection' | 'display_name' | 'props' | 'cite'>,
 	parents: ChainNode['parents']
 ): ChainNode => ({
 	id: n.id,
-	name: naamVanId(n.id, n.display_name),
-	short: naamVanId(n.id, n.display_name),
+	name: nameOf(n),
+	short: nameOf(n),
 	collection: n.collection as ChainNode['collection'],
 	kind: null,
 	since: textOf(n.props?.date) ?? null,

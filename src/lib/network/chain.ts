@@ -10,6 +10,7 @@ import { NL } from '$lib/text/collator';
 import { grondslagArtikelen } from '$lib/text/delegaties';
 import { kindName } from '$lib/text/law-kind';
 import type { Relation } from '$lib/vocabulary';
+import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 
 type Delegated = Omit<Schema<'InstrumentDelegatedResponse'>, 'items'> & {
 	items: Schema<'InstrumentDelegatedSummaryItem'>[];
@@ -82,6 +83,17 @@ export type ChainNode = {
 };
 
 /** A layer of a law's keten (LayerId), or of a lineage (`0|Rechtbank`, lineage.ts). */
+/** The relation a line of the keten draws: its own, else a grondslag or a mention. */
+export const parentRelation = (p: ChainNode['parents'][number]): Relation =>
+	p.relation ?? (p.way === 'delegates' ? 'BASED_ON' : 'REFERS_TO');
+
+/** The kind a line of the keten is drawn in: a mention is an Aanhaling, a grondslag Structureel. */
+export const parentKind = (p: ChainNode['parents'][number]): LineKind =>
+	lineKindOf(
+		parentRelation(p),
+		p.relation === 'REFERS_TO' || p.way === 'mentioned' ? 'judgment' : 'article'
+	);
+
 export type ChainLayer = { id: LayerId | `${number}|${string}`; label: string; nodes: ChainNode[] };
 
 /** The layer of a regulation by its BWB kind; a wet under a wet (an organieke wet) is a Wet. */

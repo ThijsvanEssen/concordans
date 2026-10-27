@@ -9,7 +9,16 @@ import type { ContainerGroup } from '$lib/graph/container-membership';
 import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 import type { DrawClass } from '$lib/graph/types';
 import { overlaps, type Rect } from './label-place';
-import { arrowLength, edgeColorFor, hullColorFor, hullDashFor } from './nodeSprites';
+import {
+	arrowLength,
+	edgeColorFor,
+	edgeDashFor,
+	edgeStyleFor,
+	hullColorFor,
+	hullDashFor,
+	lineThickness
+} from './nodeSprites';
+import { EDGE_WEIGHT } from '$lib/graph/types';
 import { curvedLine, AIR } from '$lib/graph/line-shape';
 
 /** Between a hull and its members. */
@@ -20,8 +29,6 @@ export const LABEL_GAP = 6;
 export const LABEL_HEIGHT = 22;
 /** Between a hull's name and the edge of the canvas or a panel over it. */
 export const EDGE_GAP = 10;
-/** The thickness of a line between hulls, and so the length of its arrowhead (line-shape). */
-const LINE_WIDTH = 1.2;
 /** The places a hull's name tries: its own, and three steps down into its hull. */
 const LABEL_STEPS = 4;
 
@@ -45,7 +52,9 @@ export type HullLink = {
 	d: string;
 	arrow: string;
 	color: string;
-	dashed: boolean;
+	/** The stroke of its kind (`edgeDashFor`), and its thickness: weight times --netwerk-lijn. */
+	dash: string | undefined;
+	width: number;
 	dim: boolean;
 	/** The relation in words, shown while one of its hulls is in the hover. */
 	label: string | null;
@@ -158,16 +167,29 @@ function clearOfPanel(x: number, y: number, half: number, avoid: HullScene['avoi
 }
 
 /** The path of a line from `start` to the foot of its arrowhead at `end`, and the arrowhead. */
-function arrowLine(start: Point, end: Point): { d: string; arrow: string } {
+function arrowLine(
+	start: Point,
+	end: Point,
+	relation: Relation,
+	status: unknown,
+	from: DrawClass
+): { d: string; arrow: string; dash: string | undefined; width: number } {
+	const style = edgeStyleFor(relation, status as string | null, from);
+	const width = lineThickness(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));
 	// The ends are already at the edges of their hulls: no air to add.
 	const line = curvedLine(start, end, {
 		ra: -AIR,
 		rb: -AIR,
-		width: LINE_WIDTH,
+		width,
 		arrow: arrowLength(),
-		head: 'b'
+		head: style === 'lid' ? null : 'b'
 	});
-	return { d: line.d, arrow: `M${line.head!.replaceAll(' ', 'L')}Z` };
+	return {
+		d: line.d,
+		arrow: line.head ? `M${line.head.replaceAll(' ', 'L')}Z` : '',
+		dash: edgeDashFor(style),
+		width
+	};
 }
 
 /** What a line says: its words, and `voorgesteld` for a change still proposed. */
@@ -353,9 +375,8 @@ export function layoutHulls(s: HullScene): HullLayout {
 			.join(', ');
 		links.push({
 			id,
-			...arrowLine(start, end),
+			...arrowLine(start, end, relation, status, 'document'),
 			color: edgeColorFor(relation, 'document'),
-			dashed: status === 'voorgesteld',
 			dim: active !== null && !lit,
 			label: lit ? said(byCount, status) : null,
 			labelX: (start.x + end.x) / 2,
@@ -428,14 +449,11 @@ function anchorLines(
 		}
 		const hull = (toHull ?? fromHull)!;
 		const lit = s.hoveredHullId === hull.id || (nodeEnd !== null && s.hoveredId === nodeEnd);
+		const sourceClass = graph.getNodeAttribute(src, 'drawClass') as DrawClass;
 		links.push({
 			id: `anker:${key}`,
-			...arrowLine(start, end),
-			color: edgeColorFor(
-				attrs.relation as Relation,
-				graph.getNodeAttribute(src, 'drawClass') as DrawClass
-			),
-			dashed: attrs.status === 'voorgesteld',
+			...arrowLine(start, end, attrs.relation as Relation, attrs.status, sourceClass),
+			color: edgeColorFor(attrs.relation as Relation, sourceClass),
 			dim: active !== null && !lit && !active.has(hull.id),
 			label: lit ? said(wordOf(graph, attrs, src, tgt), attrs.status) : null,
 			labelX: (start.x + end.x) / 2,

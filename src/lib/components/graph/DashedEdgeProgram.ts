@@ -44,6 +44,7 @@ varying vec2 v_cpC;
 varying float v_targetSize;
 varying vec2 v_dot;
 varying float v_dotR;
+varying float v_pr;
 
 const float bias = 255.0 / 254.0;
 const float epsilon = 0.7;
@@ -90,6 +91,7 @@ void main() {
   // The dot of Ingediend door: on the curve's start, LUCHT beyond the edge of the one who submits.
   v_dot = v_cpA + normalize(v_cpB - v_cpA) * (a_sourceSize * u_pixelRatio / u_sizeRatio + ${AIR.toFixed(1)} * u_pixelRatio);
   v_dotR = u_dot * u_pixelRatio;
+  v_pr = u_pixelRatio;
 
   #ifdef PICKING_MODE
   v_color = a_id;
@@ -117,6 +119,7 @@ varying vec2 v_cpC;
 varying float v_targetSize;
 varying vec2 v_dot;
 varying float v_dotR;
+varying float v_pr;
 uniform float u_lengthToThicknessRatio;
 uniform float u_widenessToThicknessRatio;
 
@@ -159,7 +162,7 @@ void main(void) {
   ${
 		dash
 			? `
-  float pos = fract(nearest.z * ${dash.repeats.toFixed(1)});
+  float pos = fract(nearest.z * length(v_cpC - v_cpA) * 1.01 / (${dash.period.toFixed(1)} * v_pr));
   if (!inHead && !onDot && !(${dash.lit.map(([a, b]) => `(pos >= ${a.toFixed(3)} && pos < ${b.toFixed(3)})`).join(' || ')})) discard;`
 			: ''
 	}
@@ -169,7 +172,8 @@ void main(void) {
 }
 `;
 
-type Dash = { repeats: number; lit: readonly (readonly [number, number])[] };
+/** `period` in px along the curve (its length is its chord plus a hair); `lit` fractions of it. */
+type Dash = { period: number; lit: readonly (readonly [number, number])[] };
 
 const UNIFORMS = [
 	'u_matrix',
@@ -257,7 +261,8 @@ function createCurveProgram(pijl: number, dash: Dash | null, dot = false) {
 				params.height * params.pixelRatio
 			);
 			gl.uniform1f(u['u_minEdgeThickness'], params.minEdgeThickness);
-			gl.uniform1f(u['u_curvature'], BEND);
+			// Negative: in screen pixels (y down) the curve bends to the same side as line-shape's.
+			gl.uniform1f(u['u_curvature'], -BEND);
 			gl.uniform1f(u['u_dot'], dot ? DOT_RADIUS : 0);
 			gl.uniform1f(u['u_lengthToThicknessRatio'], pijl);
 			gl.uniform1f(u['u_widenessToThicknessRatio'], pijl * ARROW_WIDTH);
@@ -268,21 +273,21 @@ function createCurveProgram(pijl: number, dash: Dash | null, dot = false) {
 /**
  * The programs of the lines, each curved by BEND and with an arrowhead of `pijl` times the line's
  * thickness long (--netwerk-pijl), except `lid`, which has none (Lid van has no direction). The
- * patterns are those of Netwerkcanvas, Lijnen, as fractions of one repeat: `dashed` a stroke of 4
+ * patterns are those of Netwerkcanvas, Lijnen, in px, `lit` as fractions of one repeat: `dashed` a stroke of 4
  * and a gap of 3, `dotted` 1.5 and 3.5, `dashdot` 9, 3, 1.5, 3.
  */
 export function stippelProgrammas(pijl: number) {
-	const dash = (repeats: number, lit: Dash['lit'], arrow = pijl) =>
-		createCurveProgram(arrow, { repeats, lit });
+	const dash = (period: number, lit: Dash['lit'], arrow = pijl) =>
+		createCurveProgram(arrow, { period, lit });
 	return {
 		arrow: createCurveProgram(pijl, null),
 		submitter: createCurveProgram(pijl, null, true),
-		dashed: dash(6, [[0, 4 / 7]]),
-		dotted: dash(16, [[0, 0.3]]),
-		dashdot: dash(6, [
+		dashed: dash(7, [[0, 4 / 7]]),
+		dotted: dash(5, [[0, 0.3]]),
+		dashdot: dash(16.5, [
 			[0, 9 / 16.5],
 			[12 / 16.5, 13.5 / 16.5]
 		]),
-		lid: dash(16, [[0, 0.3]], 0)
+		lid: dash(5, [[0, 0.3]], 0)
 	};
 }

@@ -127,6 +127,7 @@
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
+	import { parentKind } from '$lib/network/chain';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 	import { getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
@@ -427,11 +428,15 @@
 	let chainExpired = $state(false);
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
-	const chainHidden = $derived(
-		new Set<LineKind>([
-			...(chainMentions ? [] : (['citation'] as const)),
-			...(chainBasedOff ? (['structural'] as const) : [])
-		])
+	/** The kinds of line a lineage keten (a judgment's appeals, a fractie's continuations) switched off. */
+	let lineageOff = $state.raw<ReadonlySet<LineKind>>(new Set());
+	const chainHidden = $derived<ReadonlySet<LineKind>>(
+		lineageStart
+			? lineageOff
+			: new Set<LineKind>([
+					...(chainMentions ? [] : (['citation'] as const)),
+					...(chainBasedOff ? (['structural'] as const) : [])
+				])
 	);
 	let chainData = $state.raw<{
 		bwb: string;
@@ -571,7 +576,7 @@
 				: null
 			: chainOf(chainMentions)
 	);
-	const chainAll = $derived(chainMentions ? chainModel : chainOf(true));
+	const chainAll = $derived(chainMentions || lineageStart ? chainModel : chainOf(true));
 	/** The article the keten starts from, as the drawing names it: marked until another is. */
 	const chainArticleId = $derived(
 		chainArticle ? (chainModel?.layers.find((l) => l.id === 'article')?.nodes[0]?.id ?? null) : null
@@ -794,6 +799,8 @@
 		if (!chainModel || !chainAll) return { kinds: {}, lines: {} };
 		const nodes = chainModel.layers.flatMap((l) => l.nodes);
 		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
+		const byKind: Partial<Record<LineKind, number>> = {};
+		for (const l of lines) byKind[parentKind(l)] = (byKind[parentKind(l)] ?? 0) + 1;
 		const kinds: Partial<Record<FilterGroup, number>> = {};
 		for (const n of nodes) {
 			const k = filterGroupOf(n.collection, n.id.split('/')[1], {
@@ -803,11 +810,9 @@
 		}
 		return {
 			kinds,
-			// A regulation given by the law is a grondslag (Structureel), one that names it an Aanhaling.
-			lines: {
-				structural: lines.filter((l) => l.way === 'delegates').length,
-				citation: lines.filter((l) => l.way === 'mentioned').length
-			}
+			// Each line of the keten counted as the kind it is drawn in: a regulation given by the law is
+			// a grondslag (Structureel), one that names it, or an appeal, an Aanhaling.
+			lines: byKind
 		} satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	});
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
@@ -2141,8 +2146,12 @@
 									? {
 											hidden: chainHidden,
 											toggle: (l) => {
-												if (l === 'citation') chainMentions = !chainMentions;
-												if (l === 'structural') chainBasedOff = !chainBasedOff;
+												if (lineageStart) {
+													const next = new Set(lineageOff);
+													if (!next.delete(l)) next.add(l);
+													lineageOff = next;
+												} else if (l === 'citation') chainMentions = !chainMentions;
+												else if (l === 'structural') chainBasedOff = !chainBasedOff;
 											}
 										}
 									: null}

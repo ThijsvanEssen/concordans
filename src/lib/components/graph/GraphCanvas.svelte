@@ -68,7 +68,7 @@
 		lineThickness,
 		arrowLength
 	} from './nodeSprites';
-	import { MIN_ARROW_PX } from '$lib/graph/line-shape';
+	import { BEND, MIN_ARROW_PX } from '$lib/graph/line-shape';
 
 	export type GraphCanvasApi = {
 		refresh: () => void;
@@ -869,7 +869,19 @@
 			const w = context.measureText(data.label).width + 6;
 			const h = size + 4;
 			const room = context.canvas.width / (window.devicePixelRatio || 1);
-			const p = lijnLabelPlaats(source.x, source.y, target.x, target.y, w, h, room);
+			// The middle of the curve, not of the chord: both ends shift by half the bend.
+			const len = Math.hypot(target.x - source.x, target.y - source.y) || 1;
+			const bx = (-(target.y - source.y) / len) * BEND * len * 0.5;
+			const by = ((target.x - source.x) / len) * BEND * len * 0.5;
+			const p = lijnLabelPlaats(
+				source.x + bx,
+				source.y + by,
+				target.x + bx,
+				target.y + by,
+				w,
+				h,
+				room
+			);
 			context.fillStyle = t.paper;
 			context.fillRect(p.x, p.y, w, h);
 			context.fillStyle = t.ink;
@@ -1364,10 +1376,11 @@
 					<path
 						d={l.d}
 						stroke={l.color}
-						stroke-dasharray={l.dashed ? '3 3' : undefined}
+						stroke-width={l.width}
+						stroke-dasharray={l.dash}
 						fill="none"
 					/>
-					<path d={l.arrow} fill={l.color} />
+					{#if l.arrow}<path d={l.arrow} fill={l.color} />{/if}
 				</g>
 			{/each}
 		</svg>
@@ -1452,9 +1465,8 @@
 		stroke-width: 1.6;
 		transition: opacity var(--dur-1) var(--ease);
 	}
-	/* A line between hulls: thin and fine-dashed, so it reads as a relation, not a road. */
+	/* A line between hulls, in the stroke and thickness of its kind. */
 	.hull-link path:first-child {
-		stroke-width: 1.2;
 		stroke-linecap: round;
 	}
 	.hull-link {

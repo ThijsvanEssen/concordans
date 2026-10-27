@@ -16,6 +16,7 @@
 		edgeColorFor,
 		edgeDashFor,
 		edgeStyleFor,
+		hullDashFor,
 		lineThickness,
 		arrowLength
 	} from '$lib/components/graph/nodeSprites';
@@ -23,7 +24,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import type { ChainNode, ChainLayer } from '$lib/network/chain';
+	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
 
 	let {
@@ -100,10 +101,6 @@
 			return !hiddenKinds.has(kind);
 		})
 	);
-	/** A line given (delegates) is a grondslag, one named a mention: the filter Relatie. */
-	const lineShown = (way: 'delegates' | 'mentioned') =>
-		!hiddenLines.has(way === 'delegates' ? 'structural' : 'citation');
-
 	let width = $state(760);
 	/** A layer is 104 px high (Keten, Maten). */
 	const ROW = 104;
@@ -115,7 +112,7 @@
 	const RIM = 2;
 	const FOCUS = 18;
 	const HALO = 4.5;
-	const INKTRAND = 2;
+	const INK_EDGE = 2;
 	const TOP = 48;
 	const LEFT = 120;
 	const height = $derived(TOP + shown.length * ROW);
@@ -132,6 +129,14 @@
 		const m = new Map<string, { x: number; y: number }>();
 		const left = LEFT;
 		const right = Math.max(LEFT + 200, width - 24);
+		// A lone bron that a line passes over (the conclusie between the hof and the Hoge Raad) steps
+		// aside, so the line does not run through its name.
+		const rowOf = new Map<string, number>();
+		shown.forEach((l, i) => l.nodes.forEach((k) => rowOf.set(k.id, i)));
+		const bypassed = (i: number) =>
+			shown
+				.slice(i + 1)
+				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
 			const gap = (right - left) / n;
@@ -150,13 +155,49 @@
 			wish.forEach((w, j) => xs.push(Math.max(w.x, j ? xs[j - 1] + gap : left + gap / 2)));
 			for (let j = xs.length - 1; j >= 0; j--)
 				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - gap);
-			wish.forEach((w, j) => m.set(w.k.id, { x: xs[j], y: TOP + i * ROW + DROP }));
+			// Half its name and some air, to the side that has room.
+			const room = Math.ceil((layer.nodes[0]?.name.length ?? 0) * 3.6) + 48;
+			const aside =
+				n === 1 && layer.id !== 'article' && bypassed(i)
+					? xs[0] + room <= right - 40
+						? room
+						: -room
+					: 0;
+			wish.forEach((w, j) => m.set(w.k.id, { x: xs[j] + aside, y: TOP + i * ROW + DROP }));
 		});
 		return m;
 	});
-	/** The articles of each wet in an omhulling, when the layer holds those of more than one. */
+	/**
+	 * The omhullingen (Netwerkcanvas, Omhulling): the articles of each wet when the layer holds
+	 * those of more than one (solid, soort-wet), and, in the keten of a Kamerlid, the fracties
+	 * of one layer (dotted) and its commissies (dash-dot).
+	 */
 	const hulls = $derived.by(() => {
-		const out: { id: string; label: string; x: number; y: number; w: number }[] = [];
+		const out: {
+			id: string;
+			label: string;
+			x: number;
+			y: number;
+			w: number;
+			colour: string;
+			dash: string | undefined;
+		}[] = [];
+		if (start?.startsWith('members/'))
+			shown.forEach((layer, i) => {
+				const c = layer.nodes[0]?.collection;
+				if (c !== 'factions' && c !== 'committees') return;
+				const xs = layer.nodes.flatMap((k) => place.get(k.id)?.x ?? []);
+				const x = Math.min(...xs) - 30;
+				out.push({
+					id: `layer:${layer.id}`,
+					label: layer.label,
+					x,
+					y: TOP + i * ROW + DROP - 26,
+					w: Math.max(...xs) + 30 - x,
+					colour: c === 'factions' ? 'var(--soort-personen)' : 'var(--soort-parlement)',
+					dash: hullDashFor(c === 'factions' ? 'faction' : 'committee')
+				});
+			});
 		const row = shown.findIndex((l) => l.id === 'article');
 		const nodes = row < 0 ? [] : shown[row].nodes;
 		const homes = [...new Set(nodes.map((k) => k.home))];
@@ -171,7 +212,9 @@
 				label: wet.instrument?.abbreviation ?? wet.short,
 				x,
 				y: TOP + row * ROW + DROP - 26,
-				w: Math.max(...xs) + 30 - x
+				w: Math.max(...xs) + 30 - x,
+				colour: 'var(--soort-wet)',
+				dash: undefined
 			});
 		}
 		return out;
@@ -187,7 +230,8 @@
 				);
 				const date = k.collection === 'judgments' && k.since ? korteDatum(k.since) : null;
 				// One date once: a name that already carries it does not repeat it.
-				const named = date && (k.name.includes(date) || k.name.includes(k.since!));
+				// One date once: a name that already carries the year does not repeat it.
+				const named = date && k.name.includes(k.since!.slice(0, 4));
 				m.set(k.id, { lines: name, date: date && !named ? date : null });
 			}
 		return m;
@@ -216,13 +260,13 @@
 		shown.flatMap((l) =>
 			l.nodes.flatMap((k) =>
 				k.parents.flatMap((o) => {
-					if (!lineShown(o.way)) return [];
+					if (hiddenLines.has(parentKind(o))) return [];
 					const a = place.get(o.id);
 					const b = place.get(k.id);
 					if (!a || !b) return [];
-					const relation = o.relation ?? relationOf(o.way);
+					const relation = parentRelation(o);
 					// A mention is an Aanhaling, the text of the law itself a grondslag.
-					const from = relation === 'REFERS_TO' ? 'judgment' : 'article';
+					const from = relation === 'REFERS_TO' || o.way === 'mentioned' ? 'judgment' : 'article';
 					const style = edgeStyleFor(relation, null, from);
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
@@ -259,10 +303,6 @@
 	const colour = (k: ChainNode) => kindColour(k.collection);
 	const vormOf = (k: ChainNode) =>
 		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
-	/** A line as the canvas draws its relation: a grondslag (BASED_ON), a mention (REFERS_TO). */
-	function relationOf(way: 'delegates' | 'mentioned') {
-		return way === 'delegates' ? ('BASED_ON' as const) : ('REFERS_TO' as const);
-	}
 	/** A name over at most two lines of `max` characters; a longer one ends in "…", its title
 	 *  and the card name it whole. */
 	const linesOf = (s: string, max = 24) => {
@@ -401,7 +441,16 @@
 			{/if}
 		{/each}
 		{#each hulls as h (h.id)}
-			<rect class="hull" x={h.x} y={h.y} width={h.w} height="72" rx="22" />
+			<rect
+				class="hull"
+				style:--hull={h.colour}
+				stroke-dasharray={h.dash}
+				x={h.x}
+				y={h.y}
+				width={h.w}
+				height="72"
+				rx="22"
+			/>
 		{/each}
 		{#each lines as l (l.id)}
 			<g class="line" class:is-active={l.lit}>
@@ -429,7 +478,7 @@
 		     in the colour of the kind, on the edge of the omhulling at its top left. -->
 		{#each hulls as h (h.id)}
 			{@const w = Math.round(h.label.length * 7.6 + 18)}
-			<g class="pil">
+			<g class="pil" style:--hull={h.colour}>
 				<rect x={h.x + 14} y={h.y - 10} width={w} height="20" rx="3" />
 				<text x={h.x + 14 + w / 2} y={h.y + 4} text-anchor="middle">{h.label}</text>
 			</g>
@@ -487,7 +536,7 @@
 							transform={at}
 							fill={v.wijze === 'lijn' ? 'var(--paper)' : 'none'}
 							stroke="var(--ink)"
-							stroke-width={(2 * INKTRAND) / sc}
+							stroke-width={(2 * INK_EDGE) / sc}
 							stroke-linejoin="round"
 						/>
 						{#if v.wijze !== 'lijn'}<path
@@ -584,13 +633,14 @@
 	/* An omhulling as the canvas draws it: a stadion in the colour of its kind (the articles of a
 	   wet: soort-wet, solid), 5 % of it as ground, an edge of 1,6 px. */
 	.hull {
-		fill: color-mix(in srgb, var(--soort-wet) 5%, transparent);
-		stroke: var(--soort-wet);
+		fill: color-mix(in srgb, var(--hull) 5%, transparent);
+		stroke: var(--hull);
+		stroke-linecap: round;
 		stroke-width: 1.6;
 	}
 	.pil rect {
 		fill: var(--paper);
-		stroke: var(--soort-wet);
+		stroke: var(--hull);
 		stroke-width: 1;
 	}
 	.pil text {
