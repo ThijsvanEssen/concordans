@@ -65,7 +65,7 @@ import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { aardOf, historyRow, uniqueRows, rowOfNeighbor, unresolvedRows, type Row } from './rows';
-import { describeBron } from '$lib/bron/describe';
+import { describeBron, describeBronShort } from '$lib/bron/describe';
 import { activityLine, rolesLine, citedLine } from './lines';
 import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
@@ -198,7 +198,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 			const props = { ecli: j.ecli };
 			return {
 				ref: { collection: 'judgments' as const, key: j.key },
-				...describeBron('judgments', j.key, j.display_name, props, j.cite),
+				...describeBronShort('judgments', j.key, j.display_name, props, j.cite),
 				filterGroup: filterGroupOf('judgments', j.key, props, 'REFERS_TO'),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
@@ -1345,7 +1345,7 @@ async function euLinks(
 			const j = link.judgment;
 			add({
 				ref: { collection: 'judgments', key: j.key },
-				...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
+				...describeBronShort('judgments', j.key, j.display_name, { ...j }, j.cite),
 				filterGroup: 'internationaal',
 				derived: isDerived(link.confidence)
 			});

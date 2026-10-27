@@ -32,3 +32,18 @@ test('a drag over the band chooses a period; a tap on that one year gives it bac
 	await expect(page).not.toHaveURL(/[?&]van=/);
 	await expect(band.locator('.keuze')).toHaveCount(0);
 });
+
+test('on a phone the button Weergave stands above the tijdstrook, not over its band (A294 B2)', async ({
+	page,
+	touch
+}) => {
+	test.skip(!touch, 'the button is for a phone');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	const strook = page.locator('.tijdstrook');
+	await expect(strook).toBeVisible();
+	const knop = page.getByRole('button', { name: 'Weergave', exact: true });
+	await expect(knop).toBeVisible();
+	const a = (await knop.boundingBox())!;
+	const b = (await strook.boundingBox())!;
+	expect(a.y + a.height).toBeLessThanOrEqual(b.y + 1);
+});

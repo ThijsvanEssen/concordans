@@ -9,6 +9,7 @@ import {
 	fromDate,
 	yearsOf,
 	holdDatesTogether,
+	shortDatesIn,
 	splitDates,
 	dagMaand,
 	dagVan,
@@ -140,5 +141,14 @@ describe('maandagVan', () => {
 		expect(maandagVan('2024-04-25')).toBe('2024-04-22');
 		expect(maandagVan('2024-04-22')).toBe('2024-04-22');
 		expect(maandagVan('2024-04-28')).toBe('2024-04-22');
+	});
+});
+
+describe('shortDatesIn', () => {
+	it('writes the long dates of a text short', () => {
+		expect(shortDatesIn('HR 20 december 2019 (Urgenda)')).toBe('HR 20 dec. 2019 (Urgenda)');
+		expect(shortDatesIn('Conclusie P-G 13 maart 2019')).toBe('Conclusie P-G 13 mrt. 2019');
+		expect(shortDatesIn('Rb. Den Haag 2 mei 2015')).toBe('Rb. Den Haag 2 mei 2015');
+		expect(shortDatesIn('Boek 6 BW')).toBe('Boek 6 BW');
 	});
 });

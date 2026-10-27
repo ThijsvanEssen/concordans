@@ -74,6 +74,15 @@ export const splitDates = (text: string): { text: string; date: boolean }[] => {
 	return parts;
 };
 
+/** A text with its long dates written short: `HR 20 december 2019` becomes `HR 20 dec. 2019`.
+ *  For a name in a list, on the canvas and in the keten (besluit 7); a heading or a sentence
+ *  keeps its long date. */
+export const shortDatesIn = (text: string): string =>
+	text.replace(DATE_IN_TEXT, (_all, d: string, month: string, year?: string) => {
+		const abbr = MAAND_KORT[MONTHS.indexOf(month.toLowerCase())];
+		return `${d}${NBSP}${abbr}${year ? NBSP + year : ''}`;
+	});
+
 type Dag = { j: number; m: number; d: number };
 
 /** The day an ISO date or moment names, or null when it names none. */
