@@ -8,6 +8,7 @@ import {
 	type LoaderContext
 } from './loaders';
 import type { Loader } from './groups';
+import { shortLine } from './summary';
 import type { Neighbor } from '$lib/api/nodes';
 
 describe('basesLine', () => {
@@ -240,5 +241,7 @@ describe('the group Artikelen of a law with an aard (instrument-aard)', () => {
 		});
 		expect(rows[0].title).toBe('Artikel 3');
 		expect(rows[0].edge).toEqual({ doel: 'art. 1 HPW' });
+		// The closed row says it too, under its title, as the open row does.
+		expect(shortLine(rows[0])).toBe('verwijst naar art. 1 HPW, als definitie');
 	});
 });

@@ -15,6 +15,7 @@ import type { Bucket } from '$lib/api/nodes';
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
 import { bucketsRead, groupCount, type Group } from './groups';
 import { byImportance } from './importance';
+import { referenceLine } from './hoe';
 import type { Row } from './rows';
 
 type KindId =
@@ -409,6 +410,9 @@ export const kindsTotal = (kinds: readonly Kind[]): number =>
  * itself and its day. The passage, the ECLI and the source come when the row is opened.
  */
 export function shortLine(row: Row): string {
+	// An article of this law that refers to another: the target, as the open row says it.
+	const refers = referenceLine(row);
+	if (refers) return refers;
 	const props = (row.props ?? {}) as Record<string, unknown>;
 	const cited = typeof props.inbound_citation_count === 'number' ? props.inbound_citation_count : 0;
 	const day = row.date ? korteDatum(row.date) : null;
