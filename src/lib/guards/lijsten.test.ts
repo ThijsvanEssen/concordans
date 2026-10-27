@@ -117,4 +117,19 @@ describe('list pages and the feed', () => {
 		).toEqual([]);
 		expect(overtreders((t) => /<FeedDay\b[^>]*\b(colorOf|ministryName)=?/.test(t))).toEqual([]);
 	});
+
+	it('puts a dossier in a row by number in the lead and by name under the title, never clamped (Lijstrij)', () => {
+		const rijen = [
+			'lib/components/explore/index/rows/DecisionRows.svelte',
+			'lib/components/explore/index/rows/DocumentRows.svelte'
+		];
+		expect(rijen.filter((p) => !bron(p).includes('<RowDossier'))).toEqual([]);
+		expect(overtreders((t) => t.includes('row-id-naam'))).toEqual([]);
+	});
+
+	it('draws the bar of a stemming once while its row is open (DecisionRows, RijInhoud)', () => {
+		expect(bron('lib/components/explore/index/rows/DecisionRows.svelte')).toMatch(
+			/\{#if bar && ctx\.p\.open !== bron\}/
+		);
+	});
 });

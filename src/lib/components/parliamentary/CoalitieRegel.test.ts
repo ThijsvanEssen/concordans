@@ -34,13 +34,13 @@ describe('CoalitieRegel', () => {
 				fractie('CDA', 'Tegen'),
 				fractie('PVV', null)
 			])
-		).toBe('Coalitie verdeeld D66 VVD, CDA PVV verdeeld');
-		expect(text(CASES.verdeeld)).toBe('Coalitie verdeeld 26 zetels 40 zetels');
+		).toBe('Coalitie verdeeld voor: D66 tegen: VVD, CDA PVV verdeeld');
+		expect(text(CASES.verdeeld)).toBe('Coalitie verdeeld voor: 26 zetels tegen: 40 zetels');
 	});
 
 	it('names a wisselmeerderheid and a decisive coalition', () => {
 		expect(text(CASES.wissel, [fractie('D66', 'Voor'), fractie('VVD', 'Tegen')])).toBe(
-			'Coalitie verdeeld D66 VVD wisselmeerderheid doorslaggevend'
+			'Coalitie verdeeld wisselmeerderheid doorslaggevend voor: D66 tegen: VVD'
 		);
 	});
 });

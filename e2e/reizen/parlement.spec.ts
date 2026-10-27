@@ -53,12 +53,22 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 
 test('a motie says at rest how the Kamer voted on it, and which fracties', async ({ page }) => {
 	await page.goto('/kamerstukken/36799/31');
-	await expect(page.getByText('Aangenomen op 29 september 2026, 120 voor, 30 tegen')).toBeVisible();
+	// The tally is in the bar once, not also in the line above it.
+	await expect(page.getByText('Aangenomen op 29 september 2026', { exact: true })).toBeVisible();
+	await expect(page.locator('.vote-line .outcome').first()).not.toContainText('voor');
+	await expect(page.locator('.stembalk')).toHaveCount(1);
 	// The bar above the names: one sentence for a screen reader, the majority marked.
 	await expect(page.getByRole('img', { name: 'Aangenomen, 120 voor, 30 tegen' })).toBeVisible();
 	await expect(page.getByText('meerderheid 76')).toBeVisible();
 	await expect(page.getByText(/^D66.26, VVD.22, PVV.19/)).toBeVisible();
 	await expect(page.getByText(/^PRO.\d+, Groep Markuszower.\d+, PvdD.\d+/)).toBeVisible();
+	// Voor and Tegen begin their names at one x, at 1440 and at 375 (Stemregel).
+	const namen = page.locator('dl.sides dd');
+	await expect(namen).toHaveCount(2);
+	const [voor, tegen] = await namen.evaluateAll((els) =>
+		els.map((el) => Math.round(el.getBoundingClientRect().x))
+	);
+	expect(voor).toBe(tegen);
 	// The stemming itself is one step further, by its day.
 	await expect(page.getByRole('link', { name: '29 september 2026' })).toHaveAttribute(
 		'href',
@@ -157,6 +167,23 @@ test('the Stemmingen say when the Kamer meets', async ({ page }) => {
 	await expect(
 		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
 	).toBeVisible();
+});
+
+test('an open row of the Stemmingen draws its bar once, large, and shows a dossier by number', async ({
+	page
+}) => {
+	await page.goto('/explore?mode=index&kind=decisions');
+	const rij = page
+		.locator('li.row-wrap')
+		.filter({ has: page.locator('.stembalk') })
+		.first();
+	await expect(rij.locator('.stembalk.compact')).toHaveCount(1);
+	// The dossier's number stands in the lead; its name is not cut there.
+	await expect(rij.locator('.row-id')).not.toContainText('…');
+	// The toggle lies under the row's content: its corner is free.
+	await rij.getByRole('button', { name: /^Details van/ }).click({ position: { x: 2, y: 2 } });
+	await expect(rij.locator('.stembalk')).toHaveCount(1);
+	await expect(rij.locator('.stembalk.compact')).toHaveCount(0);
 });
 
 test('a search of several words goes to the API as one q', async ({ page }) => {
