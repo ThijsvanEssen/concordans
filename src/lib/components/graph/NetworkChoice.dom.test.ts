@@ -36,4 +36,8 @@ describe('NetworkChoice', () => {
 		render(NetworkChoice, { ...base, view: 'omgeving', empty: true });
 		expect(screen.getByText('Nog geen bron gekozen')).toBeTruthy();
 	});
+	it('says why a step is off in a line, not in a title alone (C15b)', () => {
+		render(NetworkChoice, { ...base, view: 'omgeving', networkOn: true, hasSelection: false });
+		expect(screen.getByRole('note').textContent).toBe('Kies eerst een bron in het netwerk.');
+	});
 });

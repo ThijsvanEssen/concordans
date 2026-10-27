@@ -28,7 +28,8 @@
 		onAdd,
 		onClearContext,
 		onClear,
-		telefoon = false
+		telefoon = false,
+		searching = $bindable(false)
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -45,9 +46,9 @@
 		onClear: () => void;
 		/** A phone: Gekozen folds after two, Wissen and Meer stand under the list. */
 		telefoon?: boolean;
+		/** The search for a bron to add is open; the page opens it too, from the empty canvas. */
+		searching?: boolean;
 	} = $props();
-
-	let searching = $state(false);
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
 	// does not cover the canvas.

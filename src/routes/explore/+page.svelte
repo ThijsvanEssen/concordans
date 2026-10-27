@@ -422,6 +422,8 @@
 	 * regulations that only name the law, or only those issued under it (the default: a
 	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
 	 */
+	/** The search for a bron to add, open (the panel's and the empty canvas's button). */
+	let toevoegenOpen = $state(false);
 	let chainExpired = $state(false);
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
@@ -2125,6 +2127,7 @@
 								onHeatPeriodChange={setHeatPeriod}
 								onToggleMutatie={toggleMutatie}
 								{view}
+								onToevoegen={() => (toevoegenOpen = true)}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
 								middenZoom={view !== 'keten'}
 								surroundings={view === 'omgeving'}
@@ -2185,6 +2188,7 @@
 								{/snippet}
 								{#snippet canvasOverlay()}
 									<NetwerkPanel
+										bind:searching={toevoegenOpen}
 										entries={netwerkActive
 											? composer.entries.map((e) =>
 													e.node

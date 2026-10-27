@@ -53,6 +53,8 @@
 			: beyondCap(d)
 				? `Maximaal ${cap} bronnen getoond; een stap verder voegt niets toe.`
 				: null;
+	/** Why a step is off, said where a finger and the keyboard read it, not in a title alone (C15b). */
+	const stepReason = $derived(STEPS.map(reason).find((r) => r !== null) ?? null);
 </script>
 
 <CanvasKaart title="Weergave" class="netwerkkeuze">
@@ -74,6 +76,7 @@
 					}))}
 					onSelect={(d) => onDepth(Number(d))}
 				/>
+				{#if stepReason}<p class="stil reden" role="note">{stepReason}</p>{/if}
 			</Sectie>
 		{/if}
 	{/if}
@@ -81,6 +84,9 @@
 </CanvasKaart>
 
 <style>
+	.reden {
+		margin: var(--s-2) 0 0;
+	}
 	.view-slot {
 		margin-bottom: var(--s-3);
 	}

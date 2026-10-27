@@ -706,6 +706,28 @@
 	 * a step of the focus woke five, each a render of the whole canvas. Nothing they do reads
 	 * the drawing back; a fit or a measurement after a refresh stays synchronous.
 	 */
+	/** Half a finger's 44 px target: a tap this near a bron chooses it (touch only). */
+	const TAP_RADIUS = 22;
+	/** The bron nearest to a tap, within the radius of a finger's target; touch only. */
+	function tapTarget(x: number, y: number): string | null {
+		if (!renderer || !window.matchMedia('(pointer: coarse)').matches) return null;
+		const r = renderer;
+		let best: string | null = null;
+		let bestD = TAP_RADIUS;
+		graph.forEachNode((id, attrs) => {
+			if (attrs.anchor) return;
+			const d = r.getNodeDisplayData(id);
+			if (!d || d.hidden) return;
+			const p = r.framedGraphToViewport(d);
+			const dist = Math.hypot(p.x - x, p.y - y);
+			if (dist < bestD) {
+				bestD = dist;
+				best = id;
+			}
+		});
+		return best;
+	}
+
 	const redrawInFrame = () => renderer?.refresh({ schedule: true });
 
 	function refresh() {
@@ -1264,7 +1286,12 @@
 			onNodeDoubleClick?.(node);
 		});
 		renderer.on('clickEdge', ({ edge }) => onEdgeClick?.(edge));
-		renderer.on('clickStage', () => onStageClick?.());
+		renderer.on('clickStage', ({ event }) => {
+			// A finger is no pixel: a tap within 22 px of a bron (a 44 px target) chooses it.
+			const hit = tapTarget(event.x, event.y);
+			if (hit) onNodeClick?.(hit);
+			else onStageClick?.();
+		});
 		renderer.on('enterNode', ({ node, event }) => {
 			sigmaHoveredId = node;
 			setHoveredId(node);

@@ -140,6 +140,7 @@
 		externStippen = null,
 		middenZoom = true,
 		externLijnen = null,
+		onToevoegen,
 		...legend
 	}: {
 		store: GraphStore;
@@ -195,6 +196,8 @@
 			hidden: ReadonlySet<Lijnsoort>;
 			toggle: (l: Lijnsoort) => void;
 		} | null;
+		/** Empty canvas: what the reader can do, add a bron. */
+		onToevoegen?: () => void;
 		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
 		depth: number;
 		onDepth: (d: number) => void;
@@ -1415,6 +1418,15 @@
 					() => canvas?.zoom(1 / 1.5),
 					() => canvas?.fit()
 				)}
+				{#if !hasNodes && !midden && onToevoegen}
+					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
+					<div class="canvas-leeg">
+						<p class="canvas-leeg__kop">Nog geen bron gekozen</p>
+						<button type="button" class="btn raakvlak-knop" onclick={onToevoegen}
+							>+ Bron toevoegen</button
+						>
+					</div>
+				{/if}
 				<GraphCanvas
 					graph={g}
 					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
@@ -1837,6 +1849,24 @@
 		inset: 0;
 		visibility: hidden;
 		pointer-events: none;
+	}
+	.canvas-leeg {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--s-3);
+		pointer-events: none;
+	}
+	.canvas-leeg__kop {
+		margin: 0;
+		color: var(--ink-3);
+	}
+	.canvas-leeg .btn {
+		pointer-events: auto;
 	}
 	.graph-canvas-wrap {
 		flex: 1;
