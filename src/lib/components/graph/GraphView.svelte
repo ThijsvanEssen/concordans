@@ -123,6 +123,8 @@
 		onMetGroep,
 		onToggleChosen,
 		netwerkActive = false,
+		verbandSteps = 1,
+		stepsOff = null,
 		onEdgeClick,
 		onClear,
 		canvasOverlay,
@@ -164,6 +166,10 @@
 		/** Adds a bron to the netwerk, or takes it out. */
 		onToggleChosen?: (node: GraphNode) => void;
 		netwerkActive?: boolean;
+		/** Aantal stappen of Verband (1 to 3): what Aantal stappen shows there, not the canvas's depth. */
+		verbandSteps?: number;
+		/** Why Aantal stappen is off in Verband, said in a line. */
+		stepsOff?: string | null;
 		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
@@ -1325,9 +1331,10 @@
 			<NetworkChoice
 				{view}
 				viewSlot={viewChoice}
-				{depth}
+				depth={view === 'verband' ? verbandSteps : depth}
 				{onDepth}
-				networkOn={netwerkActive}
+				networkOn={netwerkActive && view !== 'verband'}
+				{stepsOff}
 				hasSelection={!!selection}
 				reach={externCounts ? null : reach}
 				empty={!hasNodes && !midden && !selection}

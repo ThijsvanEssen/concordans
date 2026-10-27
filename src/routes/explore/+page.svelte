@@ -128,8 +128,14 @@
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
+	import {
+		chainsModel,
+		MAX_STEPS,
+		type ChainsResponse,
+		type ChainsState
+	} from '$lib/network/linkchains';
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
-	import { getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
+	import { getChains, getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
 	import { getEuLinks } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
@@ -775,6 +781,62 @@
 			(id) => ({ name: byId.get(id)?.name ?? id, collection: byId.get(id)?.collection ?? null })
 		);
 	});
+	/**
+	 * Aantal stappen of Verband: 1 is what the bronnen share (/api/nodes/shared), 2 and 3 add the
+	 * ketens through laws and articles between them (/api/chains). ?diepte, as Omgeving's; unset
+	 * is 1. With three or more bronnen the ketens are those of the first two (a bron lit up
+	 * will choose the pair).
+	 */
+	const verbandSteps = $derived(Math.min(MAX_STEPS, explicitDepth ?? 1));
+	const vcPair = $derived(
+		sharedDrawn.length >= 2 ? ([sharedDrawn[0].id, sharedDrawn[1].id] as [string, string]) : null
+	);
+	const vcKey = $derived(vcPair && verbandSteps >= 2 ? `${vcPair.join(',')}:${verbandSteps}` : '');
+	const stepsOff = $derived(sharedEnds.length < 2 ? 'Kies eerst een tweede bron.' : null);
+	let vcData = $state.raw<
+		{ key: string; response: ChainsResponse } | { key: string; error: unknown } | null
+	>(null);
+	let vcTries = $state(0);
+	$effect(() => {
+		const key = vcKey;
+		void vcTries;
+		if (!key) return;
+		const [ids, steps] = key.split(':');
+		let current = true;
+		const ac = new AbortController();
+		// Cold it takes 10 to 12 s (slowApi, 30 s); another choice breaks the question off.
+		getChains({ ids, max_steps: Number(steps) }, ac.signal)
+			.then((response) => current && (vcData = { key, response }))
+			.catch((error) => {
+				if (!current || isAborted(error)) return;
+				report('Verband, ketens', error);
+				vcData = { key, error };
+			});
+		return () => {
+			current = false;
+			ac.abort();
+		};
+	});
+	const vcState = $derived.by((): ChainsState | null => {
+		if (!vcKey || !vcPair) return null;
+		const here = vcData?.key === vcKey ? vcData : null;
+		if (!here) return { status: 'loading' };
+		if ('error' in here) return { status: 'error', error: here.error, retry: () => vcTries++ };
+		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
+		return {
+			status: 'ready',
+			model: chainsModel(
+				here.response,
+				vcPair,
+				(id) => ({
+					id,
+					name: byId.get(id)?.name ?? id,
+					collection: byId.get(id)?.collection ?? null
+				}),
+				verbandSteps
+			)
+		};
+	});
 	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
@@ -837,7 +899,12 @@
 	const sharedCard = $derived.by(() => {
 		const r = sharedState?.rows.find((x) => x.id === marked);
 		const node = r ? (store.getNodeById(r.id) ?? nodeToGraphNode(r.node)) : null;
-		return r && node ? { node, ties: r.how } : null;
+		if (r && node) return { node, ties: r.how };
+		// A tussenbron of a keten.
+		const between =
+			vcState?.status === 'ready' && marked ? vcState.model.between.get(marked) : null;
+		const bronNode = between?.bron.node ? nodeToGraphNode(between.bron.node) : null;
+		return bronNode ? { node: bronNode, ties: [] } : null;
 	});
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
@@ -1587,6 +1654,10 @@
 	// so a plain "2" click does not remove the param.
 	// With a netwerk a depth adds context around the selection; the netwerk stays.
 	function setDepth(d: number) {
+		if (view === 'verband') {
+			setUrl({ diepte: String(d) });
+			return;
+		}
 		if (!netwerkActive) {
 			setUrl({ diepte: String(d) });
 			return;
@@ -2047,7 +2118,11 @@
 			{hiddenLines}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
+			steps={verbandSteps}
+			chains={vcState}
 			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
+			onChooseBron={(b) => setUrl({ [MARK_PARAM]: b.id })}
+			onSteps={setDepth}
 		/>
 	{/if}
 {/snippet}
@@ -2095,6 +2170,8 @@
 								{filter}
 								{verbonden}
 								{depth}
+								{verbandSteps}
+								{stepsOff}
 								reach={netwerkActive
 									? {
 											focal: '',

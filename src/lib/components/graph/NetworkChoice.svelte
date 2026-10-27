@@ -22,6 +22,7 @@
 		hasSelection = false,
 		reach = null,
 		empty = false,
+		stepsOff = null,
 		children
 	}: {
 		view: View;
@@ -36,6 +37,8 @@
 		reach?: NeighborhoodReach | null;
 		/** No bron chosen yet. */
 		empty?: boolean;
+		/** Why the steps are off whatever the weergave (Verband with one bron): said in a line. */
+		stepsOff?: string | null;
 		/** What belongs to the weergave: Tonen, Relatie, Periode, Meer. */
 		children?: Snippet;
 	} = $props();
@@ -48,11 +51,13 @@
 	const cap = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
 	const beyondCap = (d: number) => !networkOn && !!reach?.capped && d > reach.depth;
 	const reason = (d: number) =>
-		networkOn && !hasSelection
-			? 'Kies eerst een bron in het netwerk.'
-			: beyondCap(d)
-				? `Maximaal ${cap} bronnen getoond; een stap verder voegt niets toe.`
-				: null;
+		stepsOff
+			? stepsOff
+			: networkOn && !hasSelection
+				? 'Kies eerst een bron in het netwerk.'
+				: beyondCap(d)
+					? `Maximaal ${cap} bronnen getoond; een stap verder voegt niets toe.`
+					: null;
 	/** Why a step is off, said where a finger and the keyboard read it, not in a title alone (C15b). */
 	const stepReason = $derived(STEPS.map(reason).find((r) => r !== null) ?? null);
 </script>

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import VerbandChains from './VerbandChains.svelte';
 	import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { drawClassOf } from '$lib/graph/types';
@@ -14,7 +16,8 @@
 	import { joinAnd, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
-	import { SHARED_STEPS, type SharedRow, type VerbandModel } from './shared';
+	import type { SharedRow, VerbandModel } from './shared';
+	import type { ChainBron, ChainsState } from './linkchains';
 
 	let {
 		ends,
@@ -26,7 +29,11 @@
 		hiddenLines = new Set(),
 		failure = null,
 		loading = false,
-		onChoose
+		steps = 1,
+		chains = null,
+		onChoose,
+		onChooseBron = () => {},
+		onSteps = () => {}
 	}: {
 		/** The chosen bronnen: their id and name, in the order Verband draws them. */
 		ends: readonly { id: string; name: string; connections?: number | null }[];
@@ -42,7 +49,15 @@
 		/** What could not be loaded, said with Opnieuw (LoadState). */
 		failure?: { what: string; error: unknown; retry: () => void; plural?: boolean } | null;
 		loading?: boolean;
+		/** Aantal stappen: 1 is what the bronnen share, 2 and 3 add the ketens. */
+		steps?: number;
+		/** The ketens of the pair at 2 and 3 steps; null at 1. */
+		chains?: ChainsState | null;
 		onChoose: (r: SharedRow) => void;
+		/** A tussenbron of a keten marked. */
+		onChooseBron?: (b: ChainBron) => void;
+		/** Geen keten: search with more steps. */
+		onSteps?: (steps: number) => void;
 	} = $props();
 
 	/** One line of the column at the right: a verbinding, a shared bron, or a pair's judgments. */
@@ -59,6 +74,12 @@
 			model.judgments.length === 0 &&
 			model.rest === 0
 	);
+	/** Nothing joins them within `steps`: what they share and, from 2 steps, the ketens. */
+	const noChain = $derived(
+		empty && (steps === 1 || (chains?.status === 'ready' && chains.model.none))
+	);
+	const incomplete = $derived(chains?.status === 'ready' && chains.model.incomplete);
+	const stepsWord = (n: number) => (n === 1 ? 'stap' : 'stappen');
 	const nameOf = (id: string) => ends.find((e) => e.id === id)?.name ?? id;
 	const items = $derived.by((): Item[] => {
 		if (!model) return [];
@@ -127,149 +148,164 @@
 		<p class="empty stil">Kies een tweede bron</p>
 	{:else if loading}
 		<p class="empty stil" role="status">Verband zoeken</p>
-	{:else if empty && !failure && !gap}
-		<p class="empty stil">Geen verband gevonden binnen {SHARED_STEPS} stappen</p>
+	{:else if noChain && !failure && !gap}
+		<p class="empty stil">
+			{incomplete ? 'Geen keten gevonden' : 'Geen keten'} binnen {steps}
+			{stepsWord(steps)}{incomplete ? ', het zoeken was niet volledig' : ''}
+			{#if steps < 3}<TekstLink onclick={() => onSteps(steps + 1)}
+					>Zoek tot {steps + 1} stappen</TekstLink
+				>{/if}
+		</p>
 	{:else}
-		<svg
-			class="drawing"
-			style:width="{scale * 100}%"
-			viewBox="0 0 {width} {height}"
-			role="group"
-			aria-label="Verband"
-		>
-			{#each items as it, i (it.id)}
-				{#each it.at as a (a)}
-					{@const p = place.get(a)}
-					{#if p}<line
-							class="line"
-							class:is-active={chosen === it.id}
-							class:line--direct={it.soort === 'direct'}
-							x1={p.x + 14}
-							y1={p.y}
-							x2={rowX - 12}
-							y2={rowY(i)}
-						/>{/if}
-				{/each}
-			{/each}
-			{#each items as it, i (it.id)}
-				{#if it.soort === 'row'}
-					{@const v = vormOf(it.row)}
-					<g
-						class="node"
-						class:is-active={chosen === it.id}
-						role="button"
-						tabindex="0"
-						aria-label={it.row.name}
-						aria-pressed={chosen === it.id}
-						onclick={() => onChoose(it.row)}
-						onkeydown={(e) => press(e, it.row)}
-					>
-						<title>{it.row.name}: {it.row.line}</title>
-						<rect
-							class="hit"
-							x={rowX - 16}
-							y={rowY(i) - 20}
-							width={Math.max(0, width - rowX)}
-							height="40"
-						/>
-						{#if chosen === it.id}<rect
-								class="sel"
-								x={rowX - 12}
-								y={rowY(i) - 12}
-								width="24"
-								height="24"
-								rx="2"
-							/>{/if}
-						<path
-							d={v.d}
-							transform="translate({rowX - 8} {rowY(i) - 8})"
-							fill={v.wijze === 'lijn' ? 'var(--paper)' : kindColour(it.row.collection)}
-							fill-rule="evenodd"
-							stroke={v.wijze === 'lijn' ? kindColour(it.row.collection) : 'none'}
-							stroke-width="1.5"
-						/>
-						<text class="name" x={rowX + 18} y={rowY(i) + 4}
-							>{cut(it.row.name, width - rowX - 40)}</text
-						>
-					</g>
-				{:else if it.soort === 'judgments'}
-					<circle class="group" cx={rowX} cy={rowY(i)} r="8" />
-					<text class="name" x={rowX + 18} y={rowY(i) + 4}
-						>{cut(judgmentsText(it.total, it.at), width - rowX - 40)}</text
-					>
-				{:else}
-					<line class="direct-mark" x1={rowX - 8} y1={rowY(i)} x2={rowX + 8} y2={rowY(i)} />
-					<text class="name name--direct" x={rowX + 18} y={rowY(i) + 4}
-						>{cut(it.text, width - rowX - 40)}</text
-					>
-				{/if}
-			{/each}
-			{#each ends as e (e.id)}
-				{@const p = place.get(e.id)!}
-				<g class="end">
-					<rect x={p.x - 9} y={p.y - 9} width="18" height="18" fill="var(--ink)" />
-					<text class="name name--end" x={p.x - 20} y={p.y + 4} text-anchor="end"
-						>{cut(e.name, p.x - 40)}</text
-					>
-					{#if alone.has(e.id)}<text
-							class="name name--alone"
-							x={p.x - 20}
-							y={p.y + 20}
-							text-anchor="end">geen verbinding met de andere</text
-						>{/if}
-				</g>
-			{/each}
-		</svg>
-
-		<!-- On a phone: the same as a list, each row saying whom it joins. -->
-		<div class="ladder">
-			<ul class="ladder__ends">
-				{#each ends as e (e.id)}
-					<li>
-						<span class="ladder__name"><i class="mark mark--end"></i>{e.name}</span>
-						{#if alone.has(e.id)}<span class="ladder__how"
-								>geen verbinding met de andere gekozen bronnen</span
-							>{/if}
-					</li>
-				{/each}
-			</ul>
-			<ul class="ladder__items">
-				{#each items as it (it.id)}
-					<li>
-						{#if it.soort === 'row'}
-							<button
-								type="button"
-								class="ladder__row"
+		{#if steps > 1}<h3 class="blok">Eén stap</h3>{/if}
+		{#if empty && steps > 1}
+			<p class="stil blok__leeg">Geen keten van één stap</p>
+		{:else}
+			<svg
+				class="drawing"
+				style:width="{scale * 100}%"
+				viewBox="0 0 {width} {height}"
+				role="group"
+				aria-label="Verband"
+			>
+				{#each items as it, i (it.id)}
+					{#each it.at as a (a)}
+						{@const p = place.get(a)}
+						{#if p}<line
+								class="line"
 								class:is-active={chosen === it.id}
-								aria-pressed={chosen === it.id}
-								onclick={() => onChoose(it.row)}
-							>
-								<span class="ladder__name"
-									><i class="mark" style:background={kindColour(it.row.collection)}></i>{it.row
-										.name}</span
-								>
-								{#if it.row.line}<span class="ladder__how">{it.row.line}</span>{/if}
-							</button>
-						{:else if it.soort === 'judgments'}
-							<span class="ladder__row ladder__row--stil"
-								><span class="ladder__name"
-									><i class="mark mark--round"></i>{judgmentsText(it.total, it.at)}</span
-								></span
-							>
-						{:else}
-							<span class="ladder__row ladder__row--stil"
-								><span class="ladder__name">{it.text}</span></span
-							>
-						{/if}
-					</li>
+								class:line--direct={it.soort === 'direct'}
+								x1={p.x + 14}
+								y1={p.y}
+								x2={rowX - 12}
+								y2={rowY(i)}
+							/>{/if}
+					{/each}
 				{/each}
-			</ul>
-		</div>
-		{#if model && model.rest > 0}
-			<!-- What the drawing leaves out is counted (Principe 7). -->
-			<p class="rest stil">
-				{formatCount(model.rows.length)} van {formatCount(model.rows.length + model.rest)} gedeelde bronnen
-			</p>
+				{#each items as it, i (it.id)}
+					{#if it.soort === 'row'}
+						{@const v = vormOf(it.row)}
+						<g
+							class="node"
+							class:is-active={chosen === it.id}
+							role="button"
+							tabindex="0"
+							aria-label={it.row.name}
+							aria-pressed={chosen === it.id}
+							onclick={() => onChoose(it.row)}
+							onkeydown={(e) => press(e, it.row)}
+						>
+							<title>{it.row.name}: {it.row.line}</title>
+							<rect
+								class="hit"
+								x={rowX - 16}
+								y={rowY(i) - 20}
+								width={Math.max(0, width - rowX)}
+								height="40"
+							/>
+							{#if chosen === it.id}<rect
+									class="sel"
+									x={rowX - 12}
+									y={rowY(i) - 12}
+									width="24"
+									height="24"
+									rx="2"
+								/>{/if}
+							<path
+								d={v.d}
+								transform="translate({rowX - 8} {rowY(i) - 8})"
+								fill={v.wijze === 'lijn' ? 'var(--paper)' : kindColour(it.row.collection)}
+								fill-rule="evenodd"
+								stroke={v.wijze === 'lijn' ? kindColour(it.row.collection) : 'none'}
+								stroke-width="1.5"
+							/>
+							<text class="name" x={rowX + 18} y={rowY(i) + 4}
+								>{cut(it.row.name, width - rowX - 40)}</text
+							>
+						</g>
+					{:else if it.soort === 'judgments'}
+						<circle class="group" cx={rowX} cy={rowY(i)} r="8" />
+						<text class="name" x={rowX + 18} y={rowY(i) + 4}
+							>{cut(judgmentsText(it.total, it.at), width - rowX - 40)}</text
+						>
+					{:else}
+						<line class="direct-mark" x1={rowX - 8} y1={rowY(i)} x2={rowX + 8} y2={rowY(i)} />
+						<text class="name name--direct" x={rowX + 18} y={rowY(i) + 4}
+							>{cut(it.text, width - rowX - 40)}</text
+						>
+					{/if}
+				{/each}
+				{#each ends as e (e.id)}
+					{@const p = place.get(e.id)!}
+					<g class="end">
+						<rect x={p.x - 9} y={p.y - 9} width="18" height="18" fill="var(--ink)" />
+						<text class="name name--end" x={p.x - 20} y={p.y + 4} text-anchor="end"
+							>{cut(e.name, p.x - 40)}</text
+						>
+						{#if alone.has(e.id)}<text
+								class="name name--alone"
+								x={p.x - 20}
+								y={p.y + 20}
+								text-anchor="end">geen verbinding met de andere</text
+							>{/if}
+					</g>
+				{/each}
+			</svg>
+
+			<!-- On a phone: the same as a list, each row saying whom it joins. -->
+			<div class="ladder">
+				<ul class="ladder__ends">
+					{#each ends as e (e.id)}
+						<li>
+							<span class="ladder__name"><i class="mark mark--end"></i>{e.name}</span>
+							{#if alone.has(e.id)}<span class="ladder__how"
+									>geen verbinding met de andere gekozen bronnen</span
+								>{/if}
+						</li>
+					{/each}
+				</ul>
+				<ul class="ladder__items">
+					{#each items as it (it.id)}
+						<li>
+							{#if it.soort === 'row'}
+								<button
+									type="button"
+									class="ladder__row"
+									class:is-active={chosen === it.id}
+									aria-pressed={chosen === it.id}
+									onclick={() => onChoose(it.row)}
+								>
+									<span class="ladder__name"
+										><i class="mark" style:background={kindColour(it.row.collection)}></i>{it.row
+											.name}</span
+									>
+									{#if it.row.line}<span class="ladder__how">{it.row.line}</span>{/if}
+								</button>
+							{:else if it.soort === 'judgments'}
+								<span class="ladder__row ladder__row--stil"
+									><span class="ladder__name"
+										><i class="mark mark--round"></i>{judgmentsText(it.total, it.at)}</span
+									></span
+								>
+							{:else}
+								<span class="ladder__row ladder__row--stil"
+									><span class="ladder__name">{it.text}</span></span
+								>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</div>
+			{#if model && model.rest > 0}
+				<!-- What the drawing leaves out is counted (Principe 7). -->
+				<p class="rest stil">
+					{formatCount(model.rows.length)} van {formatCount(model.rows.length + model.rest)} gedeelde
+					bronnen
+				</p>
+			{/if}
+		{/if}
+		{#if steps > 1 && chains}
+			<VerbandChains result={chains} {steps} {scale} {chosen} onChoose={onChooseBron} />
 		{/if}
 	{/if}
 </div>
@@ -297,6 +333,19 @@
 	}
 	.empty {
 		margin: var(--s-8) var(--s-5);
+		font-size: var(--t-meta);
+	}
+	.blok {
+		margin: var(--s-4) var(--s-4) 0;
+		font-family: var(--font-ui);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.blok__leeg {
+		margin: var(--s-2) var(--s-4);
 		font-size: var(--t-meta);
 	}
 	.rest {
