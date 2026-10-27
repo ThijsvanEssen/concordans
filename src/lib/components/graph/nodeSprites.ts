@@ -10,7 +10,7 @@
 import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { DrawClass } from '$lib/graph/types';
-import { lijnsoortOf } from '$lib/graph/lijnsoort';
+import { lineKindOf } from '$lib/graph/line-kind';
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
 
 type Tokens = {
@@ -108,18 +108,18 @@ export function tokens(): Tokens {
  */
 export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string {
 	const t = tokens();
-	switch (lijnsoortOf(relation, sourceClass)) {
-		case 'structureel':
-		case 'deel':
+	switch (lineKindOf(relation, sourceClass)) {
+		case 'structural':
+		case 'part':
 			return t.moss;
-		case 'wijziging':
+		case 'change':
 			return t.soortWet;
-		case 'aanhaling':
+		case 'citation':
 			return t.slate;
-		case 'toelichting':
-		case 'indiener':
+		case 'explanation':
+		case 'submitter':
 			return t.plum;
-		case 'lid':
+		case 'member':
 			return t.ink3;
 	}
 }
@@ -214,16 +214,16 @@ export function edgeStyleFor(
 	status: string | null | undefined,
 	sourceClass: DrawClass = 'article'
 ): EdgeStyle {
-	switch (lijnsoortOf(relation, sourceClass)) {
-		case 'lid':
+	switch (lineKindOf(relation, sourceClass)) {
+		case 'member':
 			return 'lid';
-		case 'deel':
+		case 'part':
 			return 'dotted';
-		case 'toelichting':
+		case 'explanation':
 			return 'dashdot';
-		case 'aanhaling':
+		case 'citation':
 			return 'dashed';
-		case 'wijziging':
+		case 'change':
 			return isAmendingRelation(relation) && status === 'voorgesteld' ? 'dashed' : 'solid';
 		default:
 			return 'solid';

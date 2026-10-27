@@ -35,7 +35,9 @@ const OWN = new Set(['lib/text/coverage.ts']);
 // The places that keep their own words, each for a reason of its own.
 const STILL_OWN: Record<string, number> = {
 	// Prose that explains the open mark of the network to the reader, not the mark itself.
-	'routes/(main)/docs/+page.svelte': 1
+	'routes/(main)/docs/+page.svelte': 1,
+	// A source the data does not hold, named in the netwerk's list of bronnen.
+	'routes/explore/netwerk-compose.svelte.ts': 1
 };
 
 describe('the mark of what is missing', () => {

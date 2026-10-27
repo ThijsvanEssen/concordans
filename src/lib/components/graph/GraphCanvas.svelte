@@ -33,7 +33,7 @@
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
-	import { lijnsoortOf } from '$lib/graph/lijnsoort';
+	import { lineKindOf } from '$lib/graph/line-kind';
 	import {
 		hoverPlaats,
 		lijnLabelPlaats,
@@ -360,11 +360,11 @@
 	 *  for them (see edge-bundles). */
 	let bundels: Bundels = { linesIntoGroup: new Map(), bundles: new Map() };
 	function recomputeLinesIntoGroup() {
-		const lijnen: Lijn[] = [];
+		const lines: Lijn[] = [];
 		graph.forEachEdge((id, attrs, source, target) => {
-			if (!attrs.layoutOnly) lijnen.push({ id, source, target });
+			if (!attrs.layoutOnly) lines.push({ id, source, target });
 		});
-		bundels = telBundels(lijnen, nodeGroupIds);
+		bundels = telBundels(lines, nodeGroupIds);
 	}
 
 	$effect(() => {
@@ -666,8 +666,8 @@
 			if (isDimmedNode(id, attrs)) stepBack++;
 			else now.add(id);
 		});
-		knopen = standing;
-		gedimd = stepBack;
+		nodeCount = standing;
+		dimmedCount = stepBack;
 		if (!onDrawn) return;
 		if (drawn && drawn.size === now.size && [...now].every((id) => drawn!.has(id))) return;
 		drawn = now;
@@ -675,8 +675,8 @@
 	}
 
 	/** The bronnen standing on the canvas, and how many of them are dimmed (outside the period). */
-	let knopen = $state(0);
-	let gedimd = $state(0);
+	let nodeCount = $state(0);
+	let dimmedCount = $state(0);
 
 	/** A dated bron outside the chosen period stays, dimmed with its lines (Tijdstrook, 28 %). */
 	const isDimmedNode = (id: string, attrs: Record<string, unknown>) =>
@@ -692,7 +692,7 @@
 		rechter !== null && attrs.collection === 'judgments' && attrs.rechter !== rechter;
 
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
-		(!!latestFilters?.hiddenBijlagen && attrs.drawClass === 'other') ||
+		(!!latestFilters?.hiddenAnnexes && attrs.drawClass === 'other') ||
 		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
 		otherCourt(attrs);
 
@@ -1096,7 +1096,7 @@
 					return { ...data, hidden: true };
 
 				const relation = data.relation as Relation;
-				if (latestFilters?.hiddenLijnen.has(lijnsoortOf(relation, srcAttrs.drawClass as DrawClass)))
+				if (latestFilters?.hiddenLines.has(lineKindOf(relation, srcAttrs.drawClass as DrawClass)))
 					return { ...data, hidden: true };
 				const h = hullGroups();
 				if (hullLinkOf(src, tgt, h) || anchorWithHull(src, h) || anchorWithHull(tgt, h))
@@ -1341,8 +1341,8 @@
 <div
 	bind:this={wrap}
 	class="canvas-wrap"
-	data-knopen={knopen}
-	data-gedimd={gedimd}
+	data-nodes={nodeCount}
+	data-dimmed={dimmedCount}
 	onpointermove={onHullPointer}
 	onpointerleave={() => {
 		if (hoveredHullId !== null) {

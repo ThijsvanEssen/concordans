@@ -26,7 +26,7 @@
 	import Tijdstrook from './Tijdstrook.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
-	import type { Lijnsoort } from '$lib/graph/lijnsoort';
+	import type { LineKind } from '$lib/graph/line-kind';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
@@ -138,7 +138,7 @@
 		extern = null,
 		externStippen = null,
 		middenZoom = true,
-		externLijnen = null,
+		externLines = null,
 		onToevoegen,
 		...legend
 	}: {
@@ -178,7 +178,7 @@
 		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
 		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
-		externCounts?: Pick<CanvasCounts, 'kinds' | 'lijnen'> | null;
+		externCounts?: Pick<CanvasCounts, 'kinds' | 'lines'> | null;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
@@ -191,9 +191,9 @@
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
-		externLijnen?: {
-			hidden: ReadonlySet<Lijnsoort>;
-			toggle: (l: Lijnsoort) => void;
+		externLines?: {
+			hidden: ReadonlySet<LineKind>;
+			toggle: (l: LineKind) => void;
 		} | null;
 		/** Empty canvas: what the reader can do, add a bron. */
 		onToevoegen?: () => void;
@@ -326,7 +326,7 @@
 			hiddenKinds,
 			rechter: filter.rechter,
 			verborgen,
-			hiddenLijnen: filters.hiddenLijnen
+			hiddenLines: filters.hiddenLines
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
@@ -655,11 +655,11 @@
 		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
 	};
 	/** An article that no longer holds (Netwerkcanvas, Vervallen): a dimmed sign, "vervallen" in its name. */
-	const isVervallen = (n: GraphNode) =>
+	const isRepealed = (n: GraphNode) =>
 		n.collection === 'articles' && n.raw?.props?.repealed === true;
 	const nodeLabel = (n: GraphNode) => {
-		const naam = canvasNames.get(n.id) ?? baseName(n);
-		return isVervallen(n) ? `${naam}, vervallen` : naam;
+		const name = canvasNames.get(n.id) ?? baseName(n);
+		return isRepealed(n) ? `${name}, vervallen` : name;
 	};
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
@@ -958,8 +958,8 @@
 			if (!isCanvasNode(n)) continue;
 			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
-			const vervallen = isVervallen(n);
-			const kleur = vervallen
+			const repealed = isRepealed(n);
+			const colour = repealed
 				? tokens().ink3
 				: pinnedIds.has(n.id)
 					? undefined
@@ -983,12 +983,12 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub: !!n.stub || vervallen,
+				stub: !!n.stub || repealed,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
-				kleur,
-				image: spriteForVorm(vorm, !!n.stub || vervallen, false, kleur),
+				kleur: colour,
+				image: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
 				forceLabel: true
 			};
 			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
@@ -1147,14 +1147,14 @@
 		store.setFilters({ hiddenGroups: next });
 	}
 
-	function toggleBijlagen() {
-		store.setFilters({ hiddenBijlagen: !filters.hiddenBijlagen });
+	function toggleAnnexes() {
+		store.setFilters({ hiddenAnnexes: !filters.hiddenAnnexes });
 	}
 
-	function toggleLijn(l: Lijnsoort) {
-		const next = new Set(filters.hiddenLijnen);
+	function toggleLine(l: LineKind) {
+		const next = new Set(filters.hiddenLines);
 		if (!next.delete(l)) next.add(l);
-		store.setFilters({ hiddenLijnen: next });
+		store.setFilters({ hiddenLines: next });
 	}
 
 	/** The scale of a weergave of its own, by its zoom. */
@@ -1298,11 +1298,11 @@
 		{verbonden}
 		{filter}
 		reach={externCounts ? null : reach}
-		omtrekken={containerGroups.size}
-		hiddenBijlagen={filters.hiddenBijlagen}
-		onToggleBijlagen={toggleBijlagen}
-		hiddenLijnen={externLijnen?.hidden ?? filters.hiddenLijnen}
-		onToggleLijn={externLijnen?.toggle ?? toggleLijn}
+		outlines={containerGroups.size}
+		hiddenAnnexes={filters.hiddenAnnexes}
+		onToggleAnnexes={toggleAnnexes}
+		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
+		onToggleLine={externLines?.toggle ?? toggleLine}
 		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
@@ -1511,14 +1511,14 @@
 								)}
 							</p>
 						{/snippet}
-						{@const verbonden = clusterBinding(
+						{@const tied = clusterBinding(
 							c,
 							(c.ends ?? []).flatMap((e) => {
 								const n = lookup.get(e.id);
 								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
 							})
 						)}
-						{#if verbonden}<p class="cluster-zin">{verbonden}</p>{/if}
+						{#if tied}<p class="cluster-zin">{tied}</p>{/if}
 						<div class="cluster-knoppen">
 							<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
 							<AlleN

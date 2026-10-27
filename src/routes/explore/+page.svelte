@@ -89,7 +89,7 @@
 	import { allRows, filterGroups, lidCounts, memberCountsUnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
-	import { lijnsoortOf, type Lijnsoort } from '$lib/graph/lijnsoort';
+	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
 	import {
 		parseOverlay,
@@ -428,9 +428,9 @@
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
 	const chainHidden = $derived(
-		new Set<Lijnsoort>([
-			...(chainMentions ? [] : (['aanhaling'] as const)),
-			...(chainBasedOff ? (['structureel'] as const) : [])
+		new Set<LineKind>([
+			...(chainMentions ? [] : (['citation'] as const)),
+			...(chainBasedOff ? (['structural'] as const) : [])
 		])
 	);
 	let chainData = $state.raw<{
@@ -784,14 +784,14 @@
 				: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
-	let hiddenLijnen = $state.raw<ReadonlySet<Lijnsoort>>(new Set());
-	store.filters.subscribe((f) => (hiddenLijnen = f.hiddenLijnen));
+	let hiddenLines = $state.raw<ReadonlySet<LineKind>>(new Set());
+	store.filters.subscribe((f) => (hiddenLines = f.hiddenLines));
 	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
 		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
 	);
 	const chainCounts = $derived.by(() => {
 		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
-		if (!chainModel || !chainAll) return { kinds: {}, lijnen: {} };
+		if (!chainModel || !chainAll) return { kinds: {}, lines: {} };
 		const nodes = chainModel.layers.flatMap((l) => l.nodes);
 		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -804,14 +804,14 @@
 		return {
 			kinds,
 			// A regulation given by the law is a grondslag (Structureel), one that names it an Aanhaling.
-			lijnen: {
-				structureel: lines.filter((l) => l.way === 'delegates').length,
-				aanhaling: lines.filter((l) => l.way === 'mentioned').length
+			lines: {
+				structural: lines.filter((l) => l.way === 'delegates').length,
+				citation: lines.filter((l) => l.way === 'mentioned').length
 			}
-		} satisfies Pick<CanvasCounts, 'kinds' | 'lijnen'>;
+		} satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	});
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
-	const NO_COUNTS = { kinds: {}, lijnen: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lijnen'>;
+	const NO_COUNTS = { kinds: {}, lines: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	const sharedCounts = $derived.by(() => {
 		if (!sharedState) return null;
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -821,11 +821,11 @@
 		}
 		const judgments = sharedState.judgments.reduce((n, j) => n + j.total, 0);
 		if (judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + judgments;
-		const lijnen: Partial<Record<Lijnsoort, number>> = {};
+		const lines: Partial<Record<LineKind, number>> = {};
 		for (const r of sharedState.rows)
-			for (const rel of new Set(r.relations.map((x) => lijnsoortOf(x, drawClassOf(r.collection)))))
-				lijnen[rel] = (lijnen[rel] ?? 0) + 1;
-		return { kinds, lijnen } satisfies Pick<CanvasCounts, 'kinds' | 'lijnen'>;
+			for (const rel of new Set(r.relations.map((x) => lineKindOf(x, drawClassOf(r.collection)))))
+				lines[rel] = (lines[rel] ?? 0) + 1;
+		return { kinds, lines } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	});
 	/** The tijdstrook of Verband: the shared bronnen with a date. */
 	const sharedDots = $derived(
@@ -1400,18 +1400,18 @@
 	const OFF = 'uit';
 	const filtersOff = $derived(offOf(params.get(OFF)));
 	$effect(() => {
-		const { lijnen, bijlagen, groups } = filtersOff;
+		const { lines, annexes, groups } = filtersOff;
 		untrack(() => {
 			const now = get(store.filters);
 			if (
-				sameSet(lijnen, now.hiddenLijnen) &&
-				bijlagen === now.hiddenBijlagen &&
+				sameSet(lines, now.hiddenLines) &&
+				annexes === now.hiddenAnnexes &&
 				sameSet(groups, now.hiddenGroups)
 			)
 				return;
 			store.setFilters({
-				hiddenLijnen: new Set(lijnen),
-				hiddenBijlagen: bijlagen,
+				hiddenLines: new Set(lines),
+				hiddenAnnexes: annexes,
 				hiddenGroups: new Set(groups)
 			});
 		});
@@ -1425,8 +1425,8 @@
 		}
 		const off = untrack(() => filtersOff);
 		if (
-			sameSet(off.lijnen, f.hiddenLijnen) &&
-			off.bijlagen === f.hiddenBijlagen &&
+			sameSet(off.lines, f.hiddenLines) &&
+			off.annexes === f.hiddenAnnexes &&
 			sameSet(off.groups, f.hiddenGroups)
 		)
 			return;
@@ -1434,8 +1434,8 @@
 			setUrl({
 				[OFF]: offValue({
 					...off,
-					lijnen: [...f.hiddenLijnen],
-					bijlagen: f.hiddenBijlagen,
+					lines: [...f.hiddenLines],
+					annexes: f.hiddenAnnexes,
 					groups: [...f.hiddenGroups]
 				})
 			})
@@ -2014,7 +2014,7 @@
 			chosen={marked ?? chainArticleId}
 			gap={chainGap}
 			{hiddenKinds}
-			hiddenLijnen={chainHidden}
+			hiddenLines={chainHidden}
 			amending={chainModel?.amending.length ?? 0}
 			expired={chainData?.delegated?.expired_total
 				? {
@@ -2044,7 +2044,7 @@
 			chosen={marked}
 			gap={sharedGap}
 			{hiddenKinds}
-			{hiddenLijnen}
+			{hiddenLines}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
 			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
@@ -2137,12 +2137,12 @@
 										? (sharedCounts ?? NO_COUNTS)
 										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
-								externLijnen={view === 'keten'
+								externLines={view === 'keten'
 									? {
 											hidden: chainHidden,
 											toggle: (l) => {
-												if (l === 'aanhaling') chainMentions = !chainMentions;
-												if (l === 'structureel') chainBasedOff = !chainBasedOff;
+												if (l === 'citation') chainMentions = !chainMentions;
+												if (l === 'structural') chainBasedOff = !chainBasedOff;
 											}
 										}
 									: null}

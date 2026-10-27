@@ -18,8 +18,8 @@ const props = (_selectionCollection: 'documents' | null) => ({
 
 	onFilter: () => {},
 	onOpenFilter: () => {},
-	hiddenLijnen: new Set<never>(),
-	onToggleLijn: () => {},
+	hiddenLines: new Set<never>(),
+	onToggleLine: () => {},
 	canvasCounts: { kinds: { stemmingen: 49, wetsvoorstellen: 30 } },
 	hasNodes: true
 });

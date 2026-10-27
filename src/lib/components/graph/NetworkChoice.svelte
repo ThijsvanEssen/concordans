@@ -76,7 +76,7 @@
 					}))}
 					onSelect={(d) => onDepth(Number(d))}
 				/>
-				{#if stepReason}<p class="stil reden" role="note">{stepReason}</p>{/if}
+				{#if stepReason}<p class="stil why" role="note">{stepReason}</p>{/if}
 			</Sectie>
 		{/if}
 	{/if}
@@ -84,7 +84,7 @@
 </CanvasKaart>
 
 <style>
-	.reden {
+	.why {
 		margin: var(--s-2) 0 0;
 	}
 	.view-slot {

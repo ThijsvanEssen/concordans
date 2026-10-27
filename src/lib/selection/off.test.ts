@@ -3,14 +3,14 @@ import { offOf, offValue, sameSet } from './off';
 
 describe('?uit', () => {
 	it('holds chosen bronnen, lijnsoorten and groupings in one list', () => {
-		const off = offOf('members/x,aanhaling,dossier,nonsense');
+		const off = offOf('members/x,citation,dossier,nonsense');
 		expect(off).toEqual({
 			chosen: ['members/x'],
-			lijnen: ['aanhaling'],
-			bijlagen: false,
+			lines: ['citation'],
+			annexes: false,
 			groups: ['dossier']
 		});
-		expect(offValue(off)).toBe('members/x,aanhaling,dossier');
+		expect(offValue(off)).toBe('members/x,citation,dossier');
 	});
 	it('is null where nothing is off', () => {
 		expect(offValue(offOf(null))).toBeNull();

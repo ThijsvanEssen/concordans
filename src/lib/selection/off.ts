@@ -2,26 +2,26 @@
 // of Relatie (`aanhaling`) and the groupings (`dossier`). The address holds it, so a reload
 // or a shared link draws the same canvas.
 import { isContainerKind, type ContainerKind } from '$lib/graph/container-membership';
-import { isLijnsoort, type Lijnsoort } from '$lib/graph/lijnsoort';
+import { isLineKind, type LineKind } from '$lib/graph/line-kind';
 import { parseNodeId } from '$lib/vocabulary';
 
-/** The word of the bijlagen switched off in Tonen. */
-const BIJLAGEN = 'bijlagen';
+/** The word of the annexes switched off in Tonen. */
+const ANNEXES = 'bijlagen';
 
 type Off = {
 	chosen: string[];
-	lijnen: Lijnsoort[];
-	bijlagen: boolean;
+	lines: LineKind[];
+	annexes: boolean;
 	groups: ContainerKind[];
 };
 
 /** The parts of ?uit; what is none of them is left out. */
 export function offOf(value: string | null): Off {
-	const off: Off = { chosen: [], lijnen: [], bijlagen: false, groups: [] };
+	const off: Off = { chosen: [], lines: [], annexes: false, groups: [] };
 	for (const t of (value ?? '').split(',').map((s) => s.trim())) {
 		if (parseNodeId(t) !== null) off.chosen.push(t);
-		else if (t === BIJLAGEN) off.bijlagen = true;
-		else if (isLijnsoort(t)) off.lijnen.push(t);
+		else if (t === ANNEXES) off.annexes = true;
+		else if (isLineKind(t)) off.lines.push(t);
 		else if (isContainerKind(t)) off.groups.push(t);
 	}
 	return off;
@@ -29,7 +29,7 @@ export function offOf(value: string | null): Off {
 
 /** ?uit of its parts; null where nothing is off. */
 export function offValue(off: Off): string | null {
-	const all = [...off.chosen, ...off.lijnen, ...(off.bijlagen ? [BIJLAGEN] : []), ...off.groups];
+	const all = [...off.chosen, ...off.lines, ...(off.annexes ? [ANNEXES] : []), ...off.groups];
 	return all.length > 0 ? all.join(',') : null;
 }
 

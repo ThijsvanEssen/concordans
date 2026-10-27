@@ -5,7 +5,7 @@ import type Graph from 'graphology';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Vorm } from '$lib/bron/vormen';
 import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
-import { lijnsoortOf, type Lijnsoort } from '$lib/graph/lijnsoort';
+import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 import type { DrawClass } from '$lib/graph/types';
 import type { Relation } from '$lib/vocabulary';
 
@@ -17,10 +17,10 @@ export type CanvasCounts = {
 	vormen: Partial<Record<Vorm, number>>;
 	/** Per kind, the bronnen hidden with a grouping switched off, and which groupings. */
 	metGroep: Partial<Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>>;
-	/** The bijlagen drawn (a bron of no kind of its own), before the filter: a row of Tonen. */
-	bijlagen: number;
+	/** The annexes drawn (a bron of no kind of its own), before the filter: a row of Tonen. */
+	annexes: number;
 	/** The lines between two bronnen drawn, per lijnsoort, shown or switched off: Relatie. */
-	lijnen: Partial<Record<Lijnsoort, number>>;
+	lines: Partial<Record<LineKind, number>>;
 };
 
 /** Whether two lists of drawn bronnen hold the same ones: the list is not handed on unchanged. */
@@ -36,8 +36,8 @@ export const NO_COUNTS: CanvasCounts = {
 	kinds: {},
 	vormen: {},
 	metGroep: {},
-	bijlagen: 0,
-	lijnen: {}
+	annexes: 0,
+	lines: {}
 };
 
 export function countCanvas(o: {
@@ -49,12 +49,12 @@ export function countCanvas(o: {
 	rechter: Rechter | null;
 	/** The bronnen hidden with their grouping (`metGroepVerborgen`). */
 	verborgen: ReadonlyMap<string, ContainerKind>;
-	hiddenLijnen: ReadonlySet<Lijnsoort>;
+	hiddenLines: ReadonlySet<LineKind>;
 }): { counts: CanvasCounts; drawnIds: string[] } {
 	const { graph, drawn, selectionId, hiddenKinds, rechter, verborgen } = o;
 	let nodes = 0;
 	let edges = 0;
-	let bijlagen = 0;
+	let annexes = 0;
 	const kinds: CanvasCounts['kinds'] = {};
 	const vormen: CanvasCounts['vormen'] = {};
 	const metGroep: CanvasCounts['metGroep'] = {};
@@ -63,7 +63,7 @@ export function countCanvas(o: {
 	graph.forEachNode((id, attrs) => {
 		const kind = attrs.filterGroup as FilterGroup | undefined;
 		const other = attrs.drawClass === 'other' && !attrs.anchor;
-		if (other) bijlagen++;
+		if (other) annexes++;
 		if (kind && !other)
 			kinds[kind] = (kinds[kind] ?? 0) + ((attrs.members as number | undefined) ?? 1);
 		if (drawn.has(id)) {
@@ -82,18 +82,18 @@ export function countCanvas(o: {
 		m.count++;
 		if (!m.groepen.includes(groep)) m.groepen.push(groep);
 	});
-	const lijnen: CanvasCounts['lijnen'] = {};
+	const lines: CanvasCounts['lines'] = {};
 	graph.forEachEdge((_id, attrs, src, tgt) => {
 		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;
 		const relation = attrs.relation as Relation;
-		const soort = lijnsoortOf(relation, graph.getNodeAttribute(src, 'drawClass') as DrawClass);
-		lijnen[soort] = (lijnen[soort] ?? 0) + 1;
-		if (o.hiddenLijnen.has(soort)) return;
+		const kind = lineKindOf(relation, graph.getNodeAttribute(src, 'drawClass') as DrawClass);
+		lines[kind] = (lines[kind] ?? 0) + 1;
+		if (o.hiddenLines.has(kind)) return;
 		edges++;
 	});
 	for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
 	return {
-		counts: { nodes, edges, kinds, vormen, metGroep, bijlagen, lijnen },
+		counts: { nodes, edges, kinds, vormen, metGroep, annexes, lines },
 		drawnIds
 	};
 }

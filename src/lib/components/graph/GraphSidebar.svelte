@@ -27,11 +27,11 @@
 	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { allRows, lidCounts } from '$lib/verbonden/view';
 	import {
-		LIJNSOORTEN,
-		LIJNSOORT_LABEL,
-		LIJNSOORT_VOORBEELD,
-		type Lijnsoort
-	} from '$lib/graph/lijnsoort';
+		LINE_KINDS,
+		LINE_KIND_LABEL,
+		LINE_KIND_SAMPLE,
+		type LineKind
+	} from '$lib/graph/line-kind';
 	import { kindColour } from '$lib/bron/kleur';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -51,11 +51,11 @@
 		onOpenFilter,
 		onLaadSoort,
 		laadtSoort = new Set<string>(),
-		hiddenLijnen,
-		onToggleLijn,
-		hiddenBijlagen = false,
-		onToggleBijlagen,
-		omtrekken = 0,
+		hiddenLines,
+		onToggleLine,
+		hiddenAnnexes = false,
+		onToggleAnnexes,
+		outlines = 0,
 		hiddenGroups = new Set(),
 		onToggleGroup,
 		canvasCounts,
@@ -81,20 +81,20 @@
 		onLaadSoort?: (collection: Collection) => void;
 		/** The kinds being loaded so. */
 		laadtSoort?: ReadonlySet<string>;
-		hiddenLijnen: ReadonlySet<Lijnsoort>;
-		onToggleLijn: (l: Lijnsoort) => void;
+		hiddenLines: ReadonlySet<LineKind>;
+		onToggleLine: (l: LineKind) => void;
 		/** Bijlagen (a bron of no kind of its own) switched off. */
-		hiddenBijlagen?: boolean;
-		onToggleBijlagen?: () => void;
-		/** How many omtrekken the canvas draws; the Vinkje Omtrekken stands where there are some. */
-		omtrekken?: number;
+		hiddenAnnexes?: boolean;
+		onToggleAnnexes?: () => void;
+		/** How many outlines the canvas draws; the Vinkje Omtrekken stands where there are some. */
+		outlines?: number;
 		/** Groupings switched off: no hull around their bronnen. */
 		hiddenGroups?: ReadonlySet<ContainerKind>;
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
-			lijnen?: Partial<Record<Lijnsoort, number>>;
-			bijlagen?: number;
+			lines?: Partial<Record<LineKind, number>>;
+			annexes?: number;
 			metGroep?: Partial<
 				Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 			>;
@@ -148,15 +148,15 @@
 	};
 	const kinds = $derived(FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !isOn(k)));
 	// Relatie: one row per lijnsoort (Netwerkcanvas, Lijnen) that is drawn or switched off.
-	const lijnen = $derived(
-		LIJNSOORTEN.filter((l) => (canvasCounts.lijnen?.[l] ?? 0) > 0 || hiddenLijnen.has(l))
+	const lines = $derived(
+		LINE_KINDS.filter((l) => (canvasCounts.lines?.[l] ?? 0) > 0 || hiddenLines.has(l))
 	);
-	const bijlagen = $derived(canvasCounts.bijlagen ?? 0);
+	const annexes = $derived(canvasCounts.annexes ?? 0);
 	/** Omtrekken are on while no grouping is switched off. */
-	const omtrekkenAan = $derived(hiddenGroups.size === 0);
-	function toggleOmtrekken() {
+	const outlinesOn = $derived(hiddenGroups.size === 0);
+	function toggleOutlines() {
 		const kinds = Object.keys(GROUP_LABEL) as ContainerKind[];
-		for (const kind of kinds) if (omtrekkenAan === !hiddenGroups.has(kind)) onToggleGroup?.(kind);
+		for (const kind of kinds) if (outlinesOn === !hiddenGroups.has(kind)) onToggleGroup?.(kind);
 	}
 
 	// On the canvas a wet, dossier, fractie or commissie is a hull, never a bron: the kinds
@@ -207,14 +207,14 @@
 </script>
 
 {#snippet tonenRest()}
-	{#if bijlagen > 0 || hiddenBijlagen}
+	{#if annexes > 0 || hiddenAnnexes}
 		<FilterOptie
 			label="Bijlagen"
-			on={!hiddenBijlagen}
-			onToggle={() => onToggleBijlagen?.()}
-			count={bijlagen}
+			on={!hiddenAnnexes}
+			onToggle={() => onToggleAnnexes?.()}
+			count={annexes}
 			loading={counting}
-			empty={bijlagen === 0}
+			empty={annexes === 0}
 		>
 			{#snippet voor()}<KindGlyph
 					vorm="regel-o"
@@ -223,8 +223,8 @@
 				/>{/snippet}
 		</FilterOptie>
 	{/if}
-	{#if omtrekken > 0 || hiddenGroups.size > 0}
-		<FilterOptie label="Omtrekken" on={omtrekkenAan} onToggle={toggleOmtrekken} />
+	{#if outlines > 0 || hiddenGroups.size > 0}
+		<FilterOptie label="Omtrekken" on={outlinesOn} onToggle={toggleOutlines} />
 	{/if}
 {/snippet}
 
@@ -234,7 +234,7 @@
 		<p class="empty stil">Nog geen bronnen in het netwerk.</p>
 	{:else}
 		<!-- Around one bron: the soorten of Verbonden, how many drawn of how many (N1, N2). -->
-		{#if kindRowsShown}{#if kindRowsShown.length > 0 || bijlagen > 0 || omtrekken > 0}
+		{#if kindRowsShown}{#if kindRowsShown.length > 0 || annexes > 0 || outlines > 0}
 				<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 					{#each kindRowsShown as r, i (r.id)}
 						{@const on = rowOn(r)}
@@ -291,7 +291,7 @@
 				</Sectie>
 			{/if}
 			<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
-		{:else if kinds.length > 0 || bijlagen > 0 || omtrekken > 0}
+		{:else if kinds.length > 0 || annexes > 0 || outlines > 0}
 			<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
@@ -335,19 +335,19 @@
 			</Sectie>
 		{/if}
 
-		{#if lijnen.length > 0}
+		{#if lines.length > 0}
 			<Sectie title="Relatie" niveau={3} inklapbaar={false}>
-				{#each lijnen as l (l)}
-					{@const vb = LIJNSOORT_VOORBEELD[l]}
+				{#each lines as l (l)}
+					{@const sample = LINE_KIND_SAMPLE[l]}
 					<FilterOptie
-						label={LIJNSOORT_LABEL[l]}
+						label={LINE_KIND_LABEL[l]}
 						wrap
-						on={!hiddenLijnen.has(l)}
-						onToggle={() => onToggleLijn(l)}
-						count={canvasCounts.lijnen?.[l] ?? 0}
+						on={!hiddenLines.has(l)}
+						onToggle={() => onToggleLine(l)}
+						count={canvasCounts.lines?.[l] ?? 0}
 						loading={counting}
 					>
-						{#snippet voor()}<LineSample relation={vb.relation} from={vb.from} />{/snippet}
+						{#snippet voor()}<LineSample relation={sample.relation} from={sample.from} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</Sectie>

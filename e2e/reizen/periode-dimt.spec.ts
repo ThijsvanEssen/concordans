@@ -11,9 +11,9 @@ test('a chosen period dims the bronnen outside it and takes none from the canvas
 	const canvas = page.locator('.canvas-wrap');
 	const band = page.locator('.tijdstrook .band');
 	await expect(band.locator('.stip').first()).toBeVisible();
-	await expect(canvas).not.toHaveAttribute('data-knopen', '0');
-	const voor = await canvas.getAttribute('data-knopen');
-	await expect(canvas).toHaveAttribute('data-gedimd', '0');
+	await expect(canvas).not.toHaveAttribute('data-nodes', '0');
+	const voor = await canvas.getAttribute('data-nodes');
+	await expect(canvas).toHaveAttribute('data-dimmed', '0');
 
 	const box = (await band.boundingBox())!;
 	const y = box.y + box.height / 2;
@@ -23,6 +23,6 @@ test('a chosen period dims the bronnen outside it and takes none from the canvas
 	await page.mouse.up();
 	await expect(page).toHaveURL(/[?&]van=/);
 
-	await expect(canvas).toHaveAttribute('data-knopen', voor!);
-	await expect(canvas).not.toHaveAttribute('data-gedimd', '0');
+	await expect(canvas).toHaveAttribute('data-nodes', voor!);
+	await expect(canvas).not.toHaveAttribute('data-dimmed', '0');
 });

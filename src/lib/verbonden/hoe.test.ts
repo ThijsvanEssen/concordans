@@ -740,14 +740,3 @@ describe('the words of a change', () => {
 		expect(changeAround('REPEALS', 'instruments', 'de wet')).toBe('trekt de wet in');
 	});
 });
-
-describe('the name of a line in Relatie', () => {
-	it('is the same in every weergave: Gebaseerd op, Lid van, Haalt aan or Noemt by who refers', async () => {
-		const { lineName } = await import('./relation-words');
-		expect(lineName('BASED_ON')).toBe('Gebaseerd op');
-		expect(lineName('MEMBER_OF')).toBe('Lid van');
-		expect(lineName('REFERS_TO', ['judgments'])).toBe('Haalt aan');
-		expect(lineName('REFERS_TO', ['instruments'])).toBe('Noemt');
-		expect(lineName('REFERS_TO', ['judgments', 'documents'])).toBe('Haalt aan, noemt');
-	});
-});

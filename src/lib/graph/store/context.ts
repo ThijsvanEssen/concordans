@@ -70,8 +70,8 @@ export function createGraphContext() {
 	const pinnedStore = writable<Set<string>>(new Set());
 	const filtersStore = writable<GraphFilters>({
 		...DEFAULT_FILTERS,
-		hiddenLijnen: new Set(DEFAULT_FILTERS.hiddenLijnen),
-		hiddenBijlagen: DEFAULT_FILTERS.hiddenBijlagen,
+		hiddenLines: new Set(DEFAULT_FILTERS.hiddenLines),
+		hiddenAnnexes: DEFAULT_FILTERS.hiddenAnnexes,
 		hiddenGroups: new Set(DEFAULT_FILTERS.hiddenGroups)
 	});
 	const trimmedCountStore = writable(0);
