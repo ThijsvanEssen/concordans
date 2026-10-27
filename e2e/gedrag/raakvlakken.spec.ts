@@ -115,7 +115,7 @@ test.describe('on a phone', () => {
 		expect(stappen.map((b) => b.naam)).toEqual(['1 stap', '2 stappen', '3 stappen']);
 		for (const b of stappen) expect.soft(b.h, b.naam ?? '').toBeGreaterThanOrEqual(44);
 		await page
-			.getByRole('dialog', { name: 'Weergave en legenda' })
+			.getByRole('dialog', { name: 'Weergave' })
 			.getByRole('button', { name: 'Sluiten' })
 			.click();
 		const zoom = await hoogtes('Zoom');
