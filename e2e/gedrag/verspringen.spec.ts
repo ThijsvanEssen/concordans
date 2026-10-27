@@ -58,7 +58,11 @@ for (const r of READERS) {
 		await page.goto(r.path);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 		// Verbonden is a tab of its own on a phone (A197-a).
-		await expect(page.getByRole('tab', { name: 'Verbonden' })).toBeVisible();
+		await expect(
+			page
+				.getByRole('group', { name: 'Tekst of Verbonden' })
+				.getByRole('button', { name: 'Verbonden' })
+		).toBeVisible();
 		await page.waitForTimeout(1500);
 		const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
 		expect(cls).toBeLessThanOrEqual(0.05);

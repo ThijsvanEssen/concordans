@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -25,8 +26,7 @@
 			gebruik, in de <a href="/voorwaarden" class="cite">Voorwaarden</a>.
 		</p>
 
-		<div class="section" id="onderdelen">
-			<h2 class="section-title">Onderdelen</h2>
+		<Sectie title="Onderdelen" niveau={2} inklapbaar={false} id="onderdelen">
 			<p>
 				Zoeken (startpagina, <kbd>{modKey} K</kbd>) gaat naar een bron. De balk bovenaan toont
 				lijsten per soort bron: Wetten, Uitspraken, Kamerstukken, Parlement en Regering. Actueel
@@ -43,10 +43,9 @@
 				of focus toont waar de verbinding vandaan komt. Een klik op de rij opent de bron in het
 				netwerk. Het netwerk tekent dezelfde verbindingen.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section" id="soorten">
-			<h2 class="section-title">Soorten bronnen</h2>
+		<Sectie title="Soorten bronnen" niveau={2} inklapbaar={false} id="soorten">
 			<p>
 				Een wet of regeling komt uit het Basiswettenbestand; verdragen en Europese regelingen staan
 				ernaast. Een regeling bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen
@@ -65,10 +64,9 @@
 				De herkomst, de dekking en de stand per bron staan bij
 				<a href="/bronnen#dekking" class="cite">Bronnen en hergebruik</a>.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Zoeken</h2>
+		<Sectie title="Zoeken" niveau={2} inklapbaar={false}>
 			<p>
 				Het zoekveld doorzoekt wetten en regelingen, artikelen, uitspraken, dossiers, Kamerstukken,
 				stemmingen, personen, fracties, commissies, kabinetten en toezeggingen. Een treffer op
@@ -100,10 +98,9 @@
 				<KeyRow key="commissie">/commissies/szw</KeyRow>
 				<KeyRow key="toezegging">/toezeggingen/TZ202609-124</KeyRow>
 			</KeyList>
-		</div>
+		</Sectie>
 
-		<div class="section" id="terugvinden">
-			<h2 class="section-title">Terugvinden</h2>
+		<Sectie title="Terugvinden" niveau={2} inklapbaar={false} id="terugvinden">
 			<p>
 				Elke lezer linkt naar de bron bij de uitgever: wetten.overheid.nl, rechtspraak.nl,
 				tweedekamer.nl, eerstekamer.nl, EUR-Lex of HUDOC. Daar staat de officiële tekst. Hoe een
@@ -114,10 +111,9 @@
 				Een plaats in de tekst staat in het adres na het hekje: <code>#lid-2-onder-a</code> in een
 				artikel, <code>#rov-5.3</code> in een uitspraak.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Verbindingen</h2>
+		<Sectie title="Verbindingen" niveau={2} inklapbaar={false}>
 			<p>
 				Een verbinding legt vast wat de ene bron met de andere doet: een uitspraak verwijst naar een
 				artikel, een Kamerstuk wijzigt een artikel, een Kamerlid is lid van een fractie.
@@ -141,10 +137,9 @@
 					</KeyList>
 				{/snippet}
 			</LoadState>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Klikken</h2>
+		<Sectie title="Klikken" niveau={2} inklapbaar={false}>
 			<p>
 				Eén klik op een rij, een titel of een verwijzing opent die ter plekke. Een rij klapt uit;
 				naast een verwijzing verschijnt een kaart met soort, naam, datum en de eerste regels. Met de
@@ -155,10 +150,9 @@
 				met haar verbindingen. Een zoekresultaat opent de bron direct; zie ook de
 				<a href="/docs/sneltoetsen" class="cite">sneltoetsen</a>.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Netwerk</h2>
+		<Sectie title="Netwerk" niveau={2} inklapbaar={false}>
 			<p>
 				Een klik op een bron in het netwerk markeert die bron: zij licht op met haar eigen
 				verbindingen, en een kaart ernaast toont Tekst lezen, Toon verbonden bronnen en In het
@@ -188,10 +182,9 @@
 				<strong>Wissen</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent Netwerk
 				op het laatste netwerk.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Dossiers en Parlement</h2>
+		<Sectie title="Dossiers en Parlement" niveau={2} inklapbaar={false}>
 			<p>
 				Een dossier heeft een nummer, soms met toevoeging: 37020-XV is een ander dossier dan 37020.
 				Bronnen zet dossiers onder één nummer, zoals de hoofdstukken van een begroting, op één
@@ -222,17 +215,16 @@
 				De wetsgeschiedenis van een artikel is de reeks dossiers die het invoerden, wijzigden of
 				introkken, met de dossiers die dat nu voorstellen.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Regering</h2>
+		<Sectie title="Regering" niveau={2} inklapbaar={false}>
 			<p>
 				Regering toont de kabinetten, de bewindspersonen en de toezeggingen. Een kabinet heeft een
 				periode, een minister-president en een coalitie. Per ministerie staat op de tijdlijn van het
 				kabinet wie welke post bekleedde. Een opvolger staat op dezelfde regel; een waarnemer staat
 				gestippeld, met ‘waarnemend’. De demissionaire periode is een stippellijn op de tijdas.
 			</p>
-		</div>
+		</Sectie>
 
 		<div class="meta-row">
 			<a href="/docs/methode" class="meta-link">Methode</a>

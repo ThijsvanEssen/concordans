@@ -24,7 +24,11 @@ test('the werkplek of a fractie waits out a cold dossiers call and says it takes
 	const release = await hold(page, /\/api\/factions\/d66\/dossiers/);
 	await page.goto('/fracties/d66');
 	// On a phone Verbonden is a tab beside Tekst.
-	if (isMobile) await page.getByRole('tab', { name: 'Verbonden' }).click();
+	if (isMobile)
+		await page
+			.getByRole('group', { name: 'Tekst of Verbonden' })
+			.getByRole('button', { name: 'Verbonden' })
+			.click();
 	// The line comes at 3 s; the call is held until it stands, so the old 10 s is not the limit.
 	await expect(page.getByText(SLOW).first()).toBeVisible({ timeout: 8_000 });
 	await expect(page.getByText(/kon niet (op tijd )?worden geladen/)).toHaveCount(0);
