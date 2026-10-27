@@ -5,15 +5,15 @@ import type { Page } from '@playwright/test';
 /** The page is a phone's width: the tab bar, not the links of the bar. */
 export const isPhone = (page: Page) => (page.viewportSize()?.width ?? 1440) <= 768;
 
-/** Goes to a kind of source (Wetten, Uitspraken, Kamerstukken, Parlement, Regering). */
+/** Goes to a kind of source (Wetten, Rechtspraak, Kamerstukken, Parlement, Regering). */
 export async function goToSource(page: Page, label: string) {
 	if (isPhone(page)) {
 		await page
 			.getByRole('navigation', { name: 'Hoofdmenu' })
-			.getByRole('button', { name: 'Bladeren' })
+			.getByRole('button', { name: 'Bronnen' })
 			.click();
 		await page
-			.getByRole('dialog', { name: 'Bladeren op soort bron' })
+			.getByRole('dialog', { name: 'Bronnen' })
 			.getByRole('link', { name: new RegExp(`^${label}`) })
 			.click();
 	} else
@@ -64,3 +64,9 @@ export async function naarTekst(page: Page) {
 			.getByRole('button', { name: 'Tekst' })
 			.click();
 }
+
+/** The Netwerk button: in the top bar on a wide screen, a tab of the tab bar on a phone. */
+export const netwerkKnop = (page: Page) =>
+	isPhone(page)
+		? page.getByRole('navigation', { name: 'Hoofdmenu' }).getByRole('button', { name: /^Netwerk/ })
+		: page.getByRole('banner').getByRole('button', { name: /^Netwerk/ });

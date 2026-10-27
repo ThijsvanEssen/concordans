@@ -28,7 +28,7 @@ const source = (id: SourceId, label: string, holds: string, lists: readonly stri
 
 export const SOURCES: readonly Source[] = [
 	source('wetten', 'Wetten', 'wetten, regelingen, artikelen', ['instruments']),
-	source('uitspraken', 'Uitspraken', 'rechtbank tot Hoge Raad', ['judgments']),
+	source('uitspraken', 'Rechtspraak', 'rechtbank tot Hoge Raad', ['judgments']),
 	source('kamerstukken', 'Kamerstukken', 'dossiers, stukken, stemmingen', [
 		'dossiers',
 		'documents',

@@ -2,7 +2,6 @@
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened. What it asks and what the list makes
 	// of the answers is the session (session.svelte.ts); this draws it.
-	import { notHeld } from '$lib/text/coverage';
 	import { QUERY_MAX_LENGTH } from '$lib/api/search';
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
@@ -17,7 +16,7 @@
 	import type { BronRef } from '$lib/bron/ref';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import { searchedLine } from '$lib/text/coverage';
+	import { notHeld, searchedLine } from '$lib/text/coverage';
 	import { conceptOf, resultsHref } from './results';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
@@ -212,8 +211,8 @@
 		{/if}
 		{#if search.outsideLaw}
 			<p class="state stil" role="status">
-				"{search.q}" staat niet in Concordans.
-				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
+				{notHeld(`"${search.q}"`)}.
+				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="external noopener"
 					>wetten.overheid.nl</a
 				>
 			</p>

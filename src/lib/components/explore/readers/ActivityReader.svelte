@@ -112,8 +112,8 @@
 
 		{#if tkUrl}
 			<footer class="foot">
-				<a href={tkUrl} target="_blank" rel="noopener noreferrer" class="full-link">
-					Open op tweedekamer.nl →
+				<a href={tkUrl} target="_blank" rel="external noopener noreferrer" class="full-link">
+					Open op tweedekamer.nl
 				</a>
 			</footer>
 		{/if}

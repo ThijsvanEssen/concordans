@@ -4,6 +4,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { openSheet } from '../support/sheet';
+import { netwerkKnop } from '../support/navigation';
 
 const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
 /** The filters of the strip, behind Filter on a narrow screen. */
@@ -39,9 +40,7 @@ test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async 
 	await openSheet(page);
 	await page.getByRole('button', { name: /^Haal .* uit het netwerk$/ }).click();
 	// The top bar counting no bron is the signal that the page has taken it out and settled.
-	await expect(
-		page.getByRole('banner').getByRole('button', { name: /^Netwerk/ })
-	).toHaveAccessibleName('Netwerk');
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk');
 	await expect(page).not.toHaveURL(/netwerk=/);
 });
 

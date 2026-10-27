@@ -57,7 +57,7 @@ export type JudgmentPaint = {
 
 /** The source a judgment is under, first in its band (sourceOfCollection in $lib/nav/sources:
  *  a test keeps the two equal). */
-export const JUDGMENTS_SOURCE = 'Uitspraken';
+export const JUDGMENTS_SOURCE = 'Rechtspraak';
 
 /** The articles outside the dataset the head names (JudgmentReader's OUTSIDE_SHOWN). */
 const OUTSIDE_SHOWN = 6;

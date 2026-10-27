@@ -1,6 +1,6 @@
 <script lang="ts">
-	// The tab bar of a phone (768 px and narrower; besluit 36): Zoeken, Bladeren, Actueel, Mijn.
-	// Bladeren and Mijn open a sheet over the page, above the bar, with the soorten bron or
+	// The tab bar of a phone (768 px and narrower; besluit 36): Zoeken, Bronnen, Netwerk, Actueel, Mijn.
+	// Bronnen and Mijn open a sheet over the page, above the bar, with the soorten bron or
 	// what the reader keeps; a tap outside the sheet, Escape or the tab again closes it (a
 	// tap closes by its click, never by the focus that leaves: actions/menu.ts). The menu of
 	// the top bar on a wider screen has the same items (SOURCES, MINE).
@@ -10,10 +10,13 @@
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { SOURCES, sourceOf } from '$lib/nav/sources';
 	import { MINE, mineAt } from '$lib/nav/mine';
+	import Picto from '$lib/components/ui/Picto.svelte';
+	import { count } from '$lib/text/words';
+	import { networkState } from '$lib/nav/network';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
-	type Sheet = 'bladeren' | 'mijn';
+	type Sheet = 'bronnen' | 'mijn';
 	let sheet = $state<Sheet | null>(null);
 	let barEl: HTMLElement | null = $state(null);
 	let sheetEl: HTMLElement | null = $state(null);
@@ -22,6 +25,7 @@
 	const source = $derived(sourceOf(page.url));
 	const mine = $derived(mineAt(path));
 	const onActueel = $derived(path.startsWith('/actueel'));
+	const network = $derived(networkState(page.url));
 	const fresh = $derived(sign.has('bundels') || sign.has('gevolgd'));
 
 	// A page of another place closes the sheet.
@@ -37,6 +41,11 @@
 			() => [sheetEl, barEl],
 			() => (sheet = null)
 		);
+	});
+
+	// The sheet takes the focus when it opens: the next Tab is its first item.
+	$effect(() => {
+		sheetEl?.focus({ preventScroll: true });
 	});
 
 	function onKey(e: KeyboardEvent) {
@@ -57,12 +66,12 @@
 		class="sheet"
 		role="dialog"
 		tabindex="-1"
-		aria-label={sheet === 'bladeren' ? 'Bladeren op soort bron' : 'Mijn'}
+		aria-label={sheet === 'bronnen' ? 'Bronnen' : 'Mijn'}
 		bind:this={sheetEl}
 		onclick={() => (sheet = null)}
 	>
-		{#if sheet === 'bladeren'}
-			<h2 class="sheet__head">Bladeren op soort bron</h2>
+		{#if sheet === 'bronnen'}
+			<h2 class="sheet__head">Bronnen</h2>
 			{#each SOURCES as s (s.id)}
 				<a
 					class="menuitem"
@@ -101,10 +110,10 @@
 	<button
 		type="button"
 		class="tab"
-		class:is-active={sheet ? sheet === 'bladeren' : source !== null}
-		data-sheet="bladeren"
-		aria-expanded={sheet === 'bladeren'}
-		onclick={() => toggle('bladeren')}
+		class:is-active={sheet ? sheet === 'bronnen' : source !== null}
+		data-sheet="bronnen"
+		aria-expanded={sheet === 'bronnen'}
+		onclick={() => toggle('bronnen')}
 	>
 		<svg
 			width="20"
@@ -114,8 +123,19 @@
 			stroke="currentColor"
 			stroke-width="1.5"
 			aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" /></svg
-		>Bladeren
+		>Bronnen
 	</button>
+	<a
+		class="tab"
+		class:is-active={!sheet && network.pressed}
+		href={network.href}
+		role="button"
+		aria-pressed={network.pressed}
+		aria-label={network.count ? `Netwerk, ${count(network.count, 'bron', 'bronnen')}` : undefined}
+		><Picto naam="netwerk-o" size={20} />Netwerk{#if network.count}<span class="tab__aantal"
+				>{network.count}</span
+			>{/if}</a
+	>
 	<a
 		class="tab"
 		class:is-active={!sheet && onActueel}
@@ -189,6 +209,17 @@
 			color: var(--ink-3);
 			text-decoration: none;
 			cursor: pointer;
+		}
+		.tab {
+			position: relative;
+		}
+		.tab__aantal {
+			position: absolute;
+			top: var(--s-2);
+			right: calc(50% - var(--s-6));
+			font-size: var(--t-micro);
+			line-height: 1;
+			color: var(--ink-3);
 		}
 		.tab.is-active {
 			color: var(--ink);

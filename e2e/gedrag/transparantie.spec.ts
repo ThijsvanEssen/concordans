@@ -203,7 +203,7 @@ test('a paper of the Eerste Kamer says its text is at the source, with a link', 
 	await patchApi(page, /^\/api\/documents\/ek_kst_1264285$/, withoutText(part('not_fetched')));
 	await page.goto('/kamerstukken/36600-VIII/AB');
 	const note = page.getByRole('paragraph').filter({ hasText: 'Tekst alleen bij de bron' });
-	await expect(note).toHaveText('Tekst alleen bij de bron, officielebekendmakingen.nl ↗');
+	await expect(note).toHaveText('Tekst alleen bij de bron, officielebekendmakingen.nl');
 	await expect(note.getByRole('link')).toHaveAttribute(
 		'href',
 		'https://zoek.officielebekendmakingen.nl/kst-1264285.html'

@@ -19,7 +19,7 @@
 <footer class="foot">
 	<div class="container foot-grid">
 		<div class="foot-blurb">
-			<a href="/" class="foot-logo no-underline raak-rij" aria-label="Concordans home">
+			<a href="/" class="foot-logo no-underline raak-rij" aria-label="Concordans, startpagina">
 				<Wordmark size={28} />
 			</a>
 			<p>
@@ -28,24 +28,24 @@
 			</p>
 		</div>
 
-		<div class="foot-col">
-			<p class="foot-head">Concordans</p>
+		<nav class="foot-col" aria-labelledby="foot-kop-0">
+			<p class="foot-head" id="foot-kop-0">Concordans</p>
 			<ul>
 				<li><a href="/explore" class="no-underline raak-rij">Netwerk</a></li>
 				<li><a href="/docs" class="no-underline raak-rij">Documentatie</a></li>
 				<li><a href="/docs/methode" class="no-underline raak-rij">Methode</a></li>
 				<li><a href="/api" class="no-underline raak-rij">API</a></li>
 			</ul>
-		</div>
+		</nav>
 
-		<div class="foot-col">
-			<p class="foot-head">Officiële bronnen</p>
+		<nav class="foot-col" aria-labelledby="foot-kop-1">
+			<p class="foot-head" id="foot-kop-1">Officiële bronnen</p>
 			<ul>
 				<li>
 					<a
 						href="https://wetten.overheid.nl"
 						target="_blank"
-						rel="noopener"
+						rel="external noopener"
 						class="no-underline raak-rij">wetten.overheid.nl</a
 					>
 				</li>
@@ -53,7 +53,7 @@
 					<a
 						href="https://www.rechtspraak.nl/uitspraken"
 						target="_blank"
-						rel="noopener"
+						rel="external noopener"
 						class="no-underline raak-rij">rechtspraak.nl</a
 					>
 				</li>
@@ -61,7 +61,7 @@
 					<a
 						href="https://www.tweedekamer.nl"
 						target="_blank"
-						rel="noopener"
+						rel="external noopener"
 						class="no-underline raak-rij">tweedekamer.nl</a
 					>
 				</li>
@@ -69,7 +69,7 @@
 					<a
 						href="https://www.eerstekamer.nl"
 						target="_blank"
-						rel="noopener"
+						rel="external noopener"
 						class="no-underline raak-rij">eerstekamer.nl</a
 					>
 				</li>
@@ -77,7 +77,7 @@
 					<a
 						href="https://www.officielebekendmakingen.nl"
 						target="_blank"
-						rel="noopener"
+						rel="external noopener"
 						class="no-underline raak-rij">officielebekendmakingen.nl</a
 					>
 				</li>
@@ -85,15 +85,15 @@
 					<a
 						href="https://eur-lex.europa.eu"
 						target="_blank"
-						rel="noopener"
+						rel="external noopener"
 						class="no-underline raak-rij">eur-lex.europa.eu</a
 					>
 				</li>
 			</ul>
-		</div>
+		</nav>
 
-		<div class="foot-col">
-			<p class="foot-head">Over</p>
+		<nav class="foot-col" aria-labelledby="foot-kop-2">
+			<p class="foot-head" id="foot-kop-2">Over</p>
 			<ul>
 				<li><a href="/over" class="no-underline raak-rij">Over Concordans</a></li>
 				<li><a href="/bronnen" class="no-underline raak-rij">Bronnen en hergebruik</a></li>
@@ -101,7 +101,7 @@
 				<li><a href="/privacy" class="no-underline raak-rij">Privacy</a></li>
 				<li><a href="/voorwaarden#fouten" class="no-underline raak-rij">Fouten melden</a></li>
 			</ul>
-		</div>
+		</nav>
 	</div>
 
 	<div class="container foot-bottom" use:inView={askStand}>

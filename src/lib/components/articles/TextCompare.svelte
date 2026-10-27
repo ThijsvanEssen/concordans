@@ -103,7 +103,7 @@
 				class="row__source"
 				href={source.url}
 				target="_blank"
-				rel="noopener noreferrer"
+				rel="external noopener noreferrer"
 				title={source.label}>volgens de transponeringstabel</a
 			>{:else}<span class="row__source">volgens de transponeringstabel</span>{/if}
 	{/if}
