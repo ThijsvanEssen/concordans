@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bucketKey } from '$lib/api/nodes';
 import { GROUPS, buildGroups, type Group } from './groups';
-import { kindOfGroup, kindsOf, kindsTotal, shortLine } from './summary';
+import { kindOfGroup, kindsOf, kindsTotal, previewPerSoort, shortLine } from './summary';
 import type { Row } from './rows';
 
 const row = (
@@ -257,5 +257,33 @@ describe('the laws of a bron, each in its soort (T11)', () => {
 	it('orders the acts of the EU by what the law implements, then the newest, not by CELEX', () => {
 		const eu = kindsOf(groups(), 'instruments', new Map()).find((k) => k.id === 'europees');
 		expect(eu?.rows.map((r) => r.ref.key)).toEqual(['32022l2555', '32020r0001', '32019l0001']);
+	});
+});
+
+describe('previewPerSoort', () => {
+	it('names a head to come as the soort will be named, one per soort', () => {
+		const p = (id: string, kind: string, count: number | null) => ({
+			id,
+			label: `Groep ${id}`,
+			count,
+			kind,
+			kindLabel: kind === 'documents' ? 'Stukken' : 'Uitspraken',
+			section: 'Sectie'
+		});
+		const out = previewPerSoort([
+			p('a', 'documents', 4),
+			p('b', 'documents', 6),
+			p('c', 'judgments', 9)
+		]);
+		expect(out.map((o) => [o.label, o.count])).toEqual([
+			['Stukken', 10],
+			['Uitspraken', 9]
+		]);
+		expect(out.every((o) => o.section === undefined)).toBe(true);
+	});
+
+	it('counts nothing where one of the groups is not counted yet', () => {
+		const p = (id: string, count: number | null) => ({ id, label: id, count, kind: 'documents' });
+		expect(previewPerSoort([p('a', 4), p('b', null)])[0].count).toBeNull();
 	});
 });

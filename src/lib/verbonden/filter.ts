@@ -113,6 +113,8 @@ export type Status = 'vastgesteld' | 'voorgesteld';
 export type VerbondenFilter = {
 	/** The kinds that take part; null is all of them. */
 	bronnen: ReadonlySet<FilterGroup> | null;
+	/** The relations that take part (`REFERS_TO`); null is all of them. */
+	relaties: ReadonlySet<string> | null;
 	/** `2`, or `geen` for verbindingen that name no lid. */
 	lid: string | null;
 	rechter: Rechter | null;
@@ -133,6 +135,7 @@ export type VerbondenFilter = {
 
 export const EMPTY_FILTER: VerbondenFilter = {
 	bronnen: null,
+	relaties: null,
 	lid: null,
 	rechter: null,
 	area: null,
@@ -166,12 +169,17 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 		.split(',')
 		.map((s) => s.trim())
 		.filter(isFilterGroup);
+	const relaties = (params.get('relatie') ?? '')
+		.split(',')
+		.map((r) => r.trim())
+		.filter(Boolean);
 	const rechter = params.get('rechter');
 	const betrouwbaarheid = params.get('betrouwbaarheid');
 	const status = params.get('status');
 	const geldendOp = params.get('geldend');
 	return {
 		bronnen: kinds.length > 0 ? new Set(kinds) : null,
+		relaties: relaties.length > 0 ? new Set(relaties) : null,
 		lid: params.get('lid') || null,
 		rechter: isRechter(rechter) ? rechter : null,
 		area: params.get('rechtsgebied')?.trim() || null,
@@ -190,6 +198,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 export function filterParams(f: VerbondenFilter): Record<string, string | null> {
 	return {
 		bronnen: f.bronnen ? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',') : null,
+		relatie: f.relaties ? [...f.relaties].sort().join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
 		rechtsgebied: f.area,
@@ -376,6 +385,7 @@ const day = (d: string | null | undefined) => (d ? d.slice(0, 10) : null);
 /** Whether a row passes the filter. */
 export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	if (f.bronnen && !f.bronnen.has(row.filterGroup)) return false;
+	if (f.relaties && row.relation && !f.relaties.has(row.relation)) return false;
 	if (f.lid !== null) {
 		if (f.lid === 'geen' ? row.lid != null : row.lid !== f.lid) return false;
 	}
@@ -444,3 +454,17 @@ export const askedOfApi = (
 	court: collection === 'articles' ? (f.rechter ?? null) : null,
 	area: collection === 'instruments' || collection === 'articles' ? (f.area ?? null) : null
 });
+
+/** Whether the reader chose anything in the filter: what "Wis alles" would undo. */
+export const hasChoice = (f: VerbondenFilter): boolean => filterActive(f);
+
+/** Turns a relation on or off; all of them on is no choice. */
+export function toggleRelation(
+	f: VerbondenFilter,
+	relation: string,
+	all: readonly string[]
+): VerbondenFilter {
+	const next = new Set(f.relaties ?? all);
+	if (!next.delete(relation)) next.add(relation);
+	return { ...f, relaties: next.size === all.length ? null : next };
+}

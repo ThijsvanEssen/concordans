@@ -192,3 +192,11 @@ describe('a line of the drawing', () => {
 		expect(punten[0]).toBe('94,2.5');
 	});
 });
+
+describe('wrap, a word longer than a line', () => {
+	it('breaks it with a hyphen, so it stays inside the drawing', () => {
+		const lines = wrap('Ondermandaatbesluit Rijkswaterstaat', 14);
+		expect(lines.every((l) => l.length <= 14)).toBe(true);
+		expect(lines.join('').replaceAll('-', '')).toBe('OndermandaatbesluitRijkswaterstaat');
+	});
+});

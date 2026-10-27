@@ -18,6 +18,7 @@
 	import VerbondenRow from './VerbondenRow.svelte';
 	import TierBar from './TierBar.svelte';
 	import TierSwatch from './TierSwatch.svelte';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { shapeOfTier } from './tiers';
 
 	let {
@@ -25,10 +26,12 @@
 		selection,
 		tiers = null,
 		tiersPending = false,
+		tiersVan = null,
 		open = new Set<string>(),
 		kindTools,
 		hasMore = () => false,
 		onMore,
+		stap = () => null,
 		onOpen,
 		onRetry,
 		onProposedText,
@@ -42,6 +45,8 @@
 		tiers?: TierCount[] | null;
 		/** The bar is asked and not in: its room stands, so the soorten under it do not move. */
 		tiersPending?: boolean;
+		/** The strook counts `geteld` of the `van` judgments: the rows that are in. */
+		tiersVan?: { geteld: number; van: number } | null;
 		/** "Alle N": the soort with its groups. */
 		/** The soorten opened in place with all their rows. */
 		open?: Set<string>;
@@ -51,6 +56,8 @@
 		hasMore?: (id: string) => boolean;
 		/** Ask the next page of a soort's rows (fifty a bucket, T11). */
 		onMore?: (id: string) => void;
+		/** How many rows the next page of a soort brings, at most. */
+		stap?: (id: string) => number | null;
 		onOpen: (id: string) => void;
 		/** Ask a group whose rows did not come again. */
 		onRetry?: () => void;
@@ -61,6 +68,7 @@
 		telt?: boolean;
 	} = $props();
 
+	const lijsten: Record<string, HTMLUListElement | null> = $state({});
 	/** The row opened in place: one at a time. */
 	let opened = $state<string | null>(null);
 	$effect(() => {
@@ -97,7 +105,7 @@
 			<span>{k.label}</span><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
-			<TierBar parts={tiers} pending={tiersPending} />
+			<TierBar parts={tiers} pending={tiersPending} van={tiersVan} />
 		{/if}
 		{#if k.failed && k.rows.length === 0}
 			<LoadState
@@ -108,7 +116,7 @@
 			/>
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
-		<ul class="kind__rows">
+		<ul class="kind__rows" bind:this={lijsten[k.id]}>
 			{#each open.has(k.id) ? k.rows : k.rows
 						.filter((r) => !isNested(r))
 						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
@@ -132,9 +140,19 @@
 					{@const shape = tierShapeOf(row)}
 					<li class="kind__row" class:kind__onder={isNested(row)}>
 						<div class="kind__kop">
-							{#if shape}<span class="kind__vlak"><TierSwatch {shape} /></span>{/if}
+							<span class="kind__vlak"
+								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
+										collection={row.ref.collection}
+										vorm={row.filterGroup === 'wetsvoorstellen' ? 'voorstel' : undefined}
+										size={11}
+									/>{/if}</span
+							>
 							<a
 								class="kind__title"
+								title={typeof row.props?.instrument_citation_title === 'string' &&
+								row.ref.collection === 'articles'
+									? row.props.instrument_citation_title
+									: undefined}
 								href={openHref(row.ref, { at: ankerVanRij(row) })}
 								aria-expanded="false"
 								onclick={(e) => terPlekke(e, () => toggle(row))}
@@ -143,8 +161,7 @@
 									)}{/if}</a
 							>
 						</div>
-						{#if shortLine(row)}<span class="kind__line" class:kind__line--vlak={!!shape}
-								>{shortLine(row)}</span
+						{#if shortLine(row)}<span class="kind__line kind__line--vlak">{shortLine(row)}</span
 							>{/if}
 					</li>
 				{/if}
@@ -163,7 +180,10 @@
 				<AlleN
 					volgende
 					noun={k.noun}
+					stap={stap(k.id)}
 					rest={k.count > k.rows.length ? k.count - k.rows.length : null}
+					geladen={k.rows.length}
+					lijst={lijsten[k.id]}
 					onclick={() => onMore?.(k.id)}
 				/>
 			</p>

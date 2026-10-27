@@ -439,3 +439,32 @@ function lawOf(title: string, props: Record<string, unknown>): string | null {
 	const law = props.instrument_citation_title;
 	return typeof law === 'string' && law && !title.includes(law) ? law : null;
 }
+
+type Preview = {
+	id: string;
+	label: string;
+	count: number | null;
+	noun?: string;
+	section?: string;
+	ordered?: boolean;
+	kind?: string;
+	kindLabel?: string;
+};
+
+/**
+ * The groups to come as the overview will show them: one head per soort, in the soort's own
+ * name, so the head that stands while loading is the head that stays (UX-toets N14a).
+ */
+export function previewPerSoort<T extends Preview>(preview: readonly T[]): T[] {
+	const out: T[] = [];
+	for (const p of preview) {
+		const had = p.kind ? out.find((o) => o.kind === p.kind) : undefined;
+		if (!had) {
+			out.push({ ...p, id: p.kind ?? p.id, label: p.kindLabel ?? p.label, section: undefined });
+			continue;
+		}
+		had.count = had.count != null && p.count != null ? had.count + p.count : null;
+		had.ordered = had.ordered || p.ordered;
+	}
+	return out;
+}

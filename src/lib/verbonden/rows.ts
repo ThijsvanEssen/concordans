@@ -4,6 +4,8 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { articleRef } from '$lib/text/bw';
 import { NOT_IN_DATA } from '$lib/text/coverage';
+import { getInstrumentMeta } from '$lib/api/instrument-cache';
+import { lawIdOf } from '$lib/graph/types';
 import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/text/ecli';
@@ -147,9 +149,28 @@ export function aardOf(
 		: label;
 }
 
+/**
+ * An article of another law names its law: `Artikel 3 HPW`. Where the neighbour carries no
+ * abbreviation, the law's own (the cache of names) supplies it, and its full title for the hover.
+ */
+export function withLawName(
+	collection: string,
+	props: Record<string, unknown>
+): Record<string, unknown> {
+	if (collection !== 'articles' || typeof props.instrument_abbreviation === 'string') return props;
+	const meta = getInstrumentMeta(lawIdOf(props));
+	const short = meta?.abbreviation ?? meta?.shortTitle;
+	if (!meta || !short) return props;
+	return {
+		...props,
+		instrument_abbreviation: short,
+		instrument_citation_title: props.instrument_citation_title ?? meta.citationTitle ?? short
+	};
+}
+
 export function rowOfNeighbor(n: Neighbor): Row | null {
 	if (!isCollection(n.collection)) return null;
-	const props = n.props ?? {};
+	const props = withLawName(n.collection, n.props ?? {});
 	const meta = (n.meta ?? {}) as Record<string, unknown>;
 	const inbound = n.direction === 'inbound';
 	// The paragraphs and the passage are the row's own where it is the citing judgment; else

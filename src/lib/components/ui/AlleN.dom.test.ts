@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render } from '@testing-library/svelte';
+import { cleanup, fireEvent, render } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import AlleN from './AlleN.svelte';
 
 afterEach(cleanup);
@@ -63,5 +64,38 @@ describe('AlleN, folding', () => {
 	it('is a plain link where it leads to a page', () => {
 		const { container } = render(AlleN, { aantal: 8, noun: 'besluiten', href: '/x' });
 		expect(container.querySelector('a')?.hasAttribute('aria-expanded')).toBe(false);
+	});
+});
+
+describe('AlleN, the next page', () => {
+	it('names what the next page brings, and what is still to come', () => {
+		const { container } = render(AlleN, {
+			noun: 'uitspraken',
+			volgende: true,
+			stap: 200,
+			rest: 10099,
+			onclick: () => {}
+		});
+		expect(container.textContent).toBe('Volgende 200 uitspraken, nog 10.099');
+	});
+
+	it('moves the focus to the first new row once they are in', async () => {
+		const lijst = document.createElement('ul');
+		for (const t of ['a', 'b']) lijst.innerHTML += `<li><a href="/${t}">${t}</a></li>`;
+		document.body.append(lijst);
+		const { container, rerender } = render(AlleN, {
+			noun: 'uitspraken',
+			volgende: true,
+			geladen: 2,
+			lijst,
+			onclick: () => {}
+		});
+		await fireEvent.click(container.querySelector('button')!);
+		lijst.innerHTML += '<li><a href="/c">c</a></li><li><a href="/d">d</a></li>';
+		await rerender({ geladen: 4 });
+		await tick();
+		await tick();
+		expect(document.activeElement?.getAttribute('href')).toBe('/c');
+		lijst.remove();
 	});
 });
