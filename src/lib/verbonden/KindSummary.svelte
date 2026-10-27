@@ -81,7 +81,7 @@
 	 * the first click the soort shows every row that is in.
 	 */
 	let cap = $state<Record<string, number>>({});
-	const zichtbaar = (k: Kind) =>
+	const shownRows = (k: Kind) =>
 		open.has(k.id) && cap[k.id] != null ? k.rows.slice(0, cap[k.id]) : k.rows;
 	const hidden = (k: Kind) => (cap[k.id] != null ? Math.max(0, k.rows.length - cap[k.id]) : 0);
 	const more = (k: Kind) => open.has(k.id) && (hasMore(k.id) || hidden(k) > 0);
@@ -138,7 +138,7 @@
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
 		<ul class="kind__rows" bind:this={lists[k.id]}>
-			{#each open.has(k.id) ? zichtbaar(k) : k.rows
+			{#each open.has(k.id) ? shownRows(k) : k.rows
 						.filter((r) => !isNested(r))
 						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 				{#if opened === rowKey(row)}
@@ -197,7 +197,7 @@
 		<!-- Opened, the rows come a page at a time: the next page one click further, with how
 		     many still wait, never the whole at once (T11). -->
 		{#if more(k)}
-			{@const shown = zichtbaar(k).length}
+			{@const shown = shownRows(k).length}
 			<p class="kind__all kind__vervolg">
 				<AlleN
 					volgende

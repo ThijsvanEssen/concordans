@@ -114,12 +114,12 @@ describe('KindSummary', () => {
 		const { container, rerender } = render(KindSummary, props);
 		const rows = () => container.querySelectorAll('.kind__rows > .kind__row').length;
 		expect(rows()).toBe(300);
-		const knop = () => screen.getByRole('button', { name: /^Volgende/ });
+		const button = () => screen.getByRole('button', { name: /^Volgende/ });
 		for (let i = 1; i <= 3; i++) {
-			const n = Number(/Volgende (\d+)/.exec(knop().textContent ?? '')?.[1]);
-			const voor = rows();
-			await fireEvent.click(knop());
-			await vi.waitFor(() => expect(rows() - voor).toBe(n));
+			const n = Number(/Volgende (\d+)/.exec(button().textContent ?? '')?.[1]);
+			const before = rows();
+			await fireEvent.click(button());
+			await vi.waitFor(() => expect(rows() - before).toBe(n));
 		}
 	});
 });
