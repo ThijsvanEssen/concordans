@@ -169,26 +169,11 @@ export function tussenClustersOf(
 }
 
 /**
- * What the count of a cluster stands for, in sentences for its card. The cluster holds the
- * neighbours of its kind tied to the focus alone; the others of that kind stand loose beside it.
- * Of how many there are its heading says (`clusterHeading`).
+ * The one label a cluster's card carries beside its heading: with which chosen bronnen the
+ * members are tied (a cluster between several), `Verbonden met Gemw en Boek 6 BW`. A cluster of
+ * one focus has none; its heading says how many (`clusterHeading`).
  */
-export function clusterZinnen(
-	c: Pick<Cluster, 'members' | 'neighbours' | 'ends' | 'alsoTied'>,
-	namen: string[] = []
-): string[] {
-	const n = formatCount;
-	if (c.ends)
-		return [
-			namen.length > 0
-				? `Elk alleen verbonden met ${joinAnd(namen)}.`
-				: 'Elk alleen verbonden met dezelfde gekozen bronnen.'
-		];
-	const zinnen = [c.alsoTied ? 'Met deze bron verbonden.' : 'Alleen met deze bron verbonden.'];
-	const loose = c.neighbours - c.members.length;
-	if (loose > 0)
-		zinnen.push(
-			`${n(loose)} ${plural(loose, 'andere staat', 'andere staan')} los: ook met een andere bron verbonden.`
-		);
-	return zinnen;
+export function clusterBinding(c: Pick<Cluster, 'ends'>, namen: string[] = []): string | null {
+	if (!c.ends) return null;
+	return namen.length > 0 ? `Verbonden met ${joinAnd(namen)}` : 'Verbonden met dezelfde bronnen';
 }

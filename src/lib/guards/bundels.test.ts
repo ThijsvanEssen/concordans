@@ -82,7 +82,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		const g = groups();
 		expect(g).toMatch(/<RijActies\b[^>]*>\s*\{#snippet menu\(/);
 		expect(g).not.toMatch(/<IconButton\b|>↑<|>↓<|>×<|class="knoppen"/);
-		for (const label of ['>Omhoog<', '>Omlaag<', 'Haal uit ']) expect(g, label).toContain(label);
+		for (const label of ['>Omhoog<', '>Omlaag<', '>Weghalen<']) expect(g, label).toContain(label);
 		// The way to the reader in the opened row, not in every row at rest.
 		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(g)?.[1] ?? '';
 		expect(aside).not.toMatch(/In de lezer|Bron ↗/);

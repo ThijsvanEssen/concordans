@@ -179,7 +179,7 @@
 				ertussen, tot vier stappen. <strong>Bronnen ertussen</strong> zet die aan of uit. Een
 				gekozen bron zonder verbinding met de andere staat in het paneel met
 				<em>zonder verbinding</em>.
-				<strong>Wissen</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent Netwerk
+				<strong>Wis alles</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent Netwerk
 				op het laatste netwerk.
 			</p>
 		</Sectie>

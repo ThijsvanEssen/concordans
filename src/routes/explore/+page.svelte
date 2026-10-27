@@ -120,6 +120,7 @@
 	import { keyEcli } from '$lib/text/ecli';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import type { Option } from '$lib/components/ui/option';
 	import ChainView from '$lib/network/ChainView.svelte';
@@ -775,7 +776,7 @@
 	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
-			? 'gedeelde bronnen niet beschikbaar'
+			? 'gedeelde bronnen nog niet beschikbaar'
 			: sharedEnds.length > SHARED_ENDS
 				? `${formatCount(SHARED_ENDS)} van ${formatCount(sharedEnds.length)} gekozen bronnen`
 				: null
@@ -1924,12 +1925,13 @@
 				</div>
 				{#if beside}
 					<div class="reader__beside" bind:this={besideEl}>
-						<a
-							class="reader__close"
-							href={closeBesideHref}
-							data-sveltekit-noscroll
-							aria-label="Sluiten">×</a
-						>
+						<div class="reader__close">
+							<IconButton
+								label="Sluiten"
+								onclick={() => goto(closeBesideHref, { noScroll: true, keepFocus: true })}
+								>×</IconButton
+							>
+						</div>
 						{#if besideJudgmentNode}
 							{#if judgmentReader.component}
 								{@const JudgmentReader = judgmentReader.component}
@@ -2517,31 +2519,15 @@
 		background: var(--paper-2);
 	}
 
-	/* A finger's target: 24 px on a desktop, 44 px below 768 (a phone, 200% zoom). */
+	/* The close of the toelichting opened beside the text: an IconButton in the corner. */
 	.reader__close {
 		position: absolute;
 		top: var(--s-1);
 		right: var(--s-2);
 		z-index: var(--z-raised);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: var(--tik-h);
-		min-height: var(--tik-h);
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: 1;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-
-	.reader__close:hover {
-		color: var(--ink);
 	}
 	@media (max-width: 768px) {
 		.reader__close {
-			min-width: var(--veld-h-raak);
-			min-height: var(--veld-h-raak);
 			top: 0;
 			right: 0;
 		}

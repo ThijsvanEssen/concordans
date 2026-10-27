@@ -37,7 +37,7 @@
 		clusterLabel,
 		clustersOf,
 		tussenClustersOf,
-		clusterZinnen,
+		clusterBinding,
 		isClusterId,
 		type Cluster
 	} from '$lib/selection/cluster';
@@ -47,6 +47,7 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
@@ -1499,17 +1500,21 @@
 								)}
 							</p>
 						{/snippet}
-						{#each clusterZinnen( c, (c.ends ?? []).flatMap((e) => {
+						{@const verbonden = clusterBinding(
+							c,
+							(c.ends ?? []).flatMap((e) => {
 								const n = lookup.get(e.id);
 								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
-							}) ) as zin (zin)}
-							<p class="cluster-zin">{zin}</p>
-						{/each}
+							})
+						)}
+						{#if verbonden}<p class="cluster-zin">{verbonden}</p>{/if}
 						<div class="cluster-knoppen">
 							<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
-							<button type="button" class="btn is-text" onclick={() => showCluster(c)}
-								>Toon alle {formatCount(c.members.length)} in het netwerk</button
-							>
+							<AlleN
+								aantal={c.members.length}
+								noun={bronPlural(c.collection).toLowerCase()}
+								onclick={() => showCluster(c)}
+							/>
 							{#if !c.ends && groupOf(c)}
 								<button
 									type="button"

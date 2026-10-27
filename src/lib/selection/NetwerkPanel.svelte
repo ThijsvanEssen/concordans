@@ -2,6 +2,7 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	// The netwerk of chosen bronnen, in the strip at the left of the werkplek, in three blocks:
 	// Gekozen (each bron on or off, or taken out), Aangeklikt op het canvas (the selected bron,
 	// added with Toevoegen) and the button Bron toevoegen, which opens the search. The context
@@ -68,7 +69,7 @@
 </script>
 
 <!-- Three blocks under a rule, one task each (NetwerkPaneel in the design system): Gekozen,
-	     Aangeklikt op het canvas, Bron toevoegen. Wissen is one click, and Terug sets it back. -->
+	     Aangeklikt op het canvas, Bron toevoegen. Wis alles is one click, and Terug sets it back. -->
 <CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
 	{#snippet samenvatting()}
 		{#if folded}<span class="tel"
@@ -80,7 +81,7 @@
 	{#snippet actie()}
 		{#if entries.length > 0 && !telefoon}
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
-				>Wissen</TekstLink
+				>Wis alles</TekstLink
 			>
 			<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
 			<TekstMenu rechts label="Meer" tekst="Meer">
@@ -143,11 +144,8 @@
 								{/if}
 							</span>
 						</button>
-						<button
-							type="button"
-							class="rij__weg"
-							onclick={() => onRemove(e.id)}
-							aria-label="Haal {e.label} uit het netwerk">×</button
+						<IconButton label="{e.label} uit het netwerk weghalen" onclick={() => onRemove(e.id)}
+							>×</IconButton
 						>
 					</li>
 				{/each}
@@ -185,7 +183,7 @@
 		<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
 		<p class="netwerk-acties">
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
-				>Wissen</TekstLink
+				>Wis alles</TekstLink
 			>
 			<TekstLink onclick={onClearContext}>Alleen de gekozen bronnen tonen</TekstLink>
 		</p>
@@ -307,20 +305,6 @@
 	.rij.is-dim .rij__glyph {
 		opacity: 0.5;
 	}
-	.rij__weg {
-		flex: none;
-		width: var(--s-6);
-		height: var(--s-6);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.rij__weg:hover {
-		color: var(--ink);
-	}
 	.verder {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
@@ -350,11 +334,6 @@
 	@media (pointer: coarse), (max-width: 768px) {
 		.rij__naam {
 			min-height: var(--veld-h-raak);
-		}
-		.rij__weg {
-			align-self: stretch;
-			width: var(--veld-h-raak);
-			height: auto;
 		}
 		.btn {
 			min-height: var(--veld-h-raak);

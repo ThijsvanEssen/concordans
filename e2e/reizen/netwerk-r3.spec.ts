@@ -37,7 +37,7 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 test('the last bron on /explore leaves with × and stays gone (R3-N B2)', async ({ page }) => {
 	await page.goto('/explore?netwerk=instruments/bwbr0005537');
 	await openSheet(page);
-	await page.getByRole('button', { name: /^Haal .* uit het netwerk$/ }).click();
+	await page.getByRole('button', { name: /^.* uit het netwerk weghalen$/ }).click();
 	// The top bar counting no bron is the signal that the page has taken it out and settled.
 	await expect(
 		page.getByRole('banner').getByRole('button', { name: /^Netwerk/ })
