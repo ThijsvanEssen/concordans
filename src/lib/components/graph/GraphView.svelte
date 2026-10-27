@@ -2,7 +2,6 @@
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag, yearFraction } from '$lib/text/datum';
-	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onMount, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';

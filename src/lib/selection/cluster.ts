@@ -2,7 +2,7 @@
 // drawn as hundreds of signs: past CLUSTER_MAX_LOOSE, the bronnen of a kind that hang on the
 // focus alone stand on the canvas as one cluster bron, "250 uitspraken". One click on it
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
-import { joinAnd, plural } from '$lib/text/words';
+import { joinAnd } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
