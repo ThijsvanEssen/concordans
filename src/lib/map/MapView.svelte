@@ -366,7 +366,7 @@
 			tekst={own.notitie}
 			bij={own.naam}
 			bundel={own.naam}
-			veld
+			field
 			onBewaar={(t) => kaart.mapNotitie(t, own.id)}
 		/>
 	{:else}

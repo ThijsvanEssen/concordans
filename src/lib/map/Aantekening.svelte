@@ -5,7 +5,7 @@
 	// in (DS Aantekening), as the network marks a bron with a note; the note itself upright, in the reader's letter. Where it can
 	// be changed a click opens it in place: Enter keeps it, Escape leaves it, leaving the
 	// field keeps it. Read only, as on a network card, the label names its place. With
-	// `veld` an empty note is an empty field under its label (a bundel's research question). The note of an arcering (O4) stands under its place in the text, and
+	// `field` an empty note is an empty field under its label (a bundel's research question). The note of an arcering (O4) stands under its place in the text, and
 	// a click opens the menu of its arcering (`onOpen`), where it is changed.
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
@@ -17,7 +17,7 @@
 		bundel = null,
 		compact = false,
 		open = $bindable(false),
-		veld = false,
+		field = false,
 		onBewaar,
 		onOpen
 	}: {
@@ -33,7 +33,7 @@
 		/** The field open; without `onBewaar` it never opens. */
 		open?: boolean;
 		/** Where there is no note: an empty field under its label, in place of nothing. */
-		veld?: boolean;
+		field?: boolean;
 		/** Keeps the note; without it the note is read only (a shared map). */
 		onBewaar?: (tekst: string) => void;
 		/** A click on the note opens this menu (an arcering's), the note its button. */
@@ -73,7 +73,7 @@
 	}
 </script>
 
-{#if !tekst && !open && veld && onBewaar}
+{#if !tekst && !open && field && onBewaar}
 	<div class="aantekening" class:compact>
 		<span class="label"><Picto naam="bewaard" size={10} />{label}</span>
 		<Tekstveld

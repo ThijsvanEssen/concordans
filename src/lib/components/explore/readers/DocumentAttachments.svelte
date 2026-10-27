@@ -18,11 +18,11 @@
 		$props();
 
 	/** The most rows listed here. */
-	const TOON = 50;
+	const SHOW = 50;
 	/** Kept per kind in this browser, closed until the reader opens it (dicht.svelte.ts). */
-	const SLEUTEL = 'bijlagen';
-	const open = $derived(isOpen(SLEUTEL, false));
-	let rijen = $state.raw<State<Layer[]> | null>(null);
+	const FOLD_KEY = 'bijlagen';
+	const open = $derived(isOpen(FOLD_KEY, false));
+	let rows = $state.raw<State<Layer[]> | null>(null);
 	const attachments = createLoader(
 		(key: string, signal: AbortSignal) =>
 			getBuckets(
@@ -33,19 +33,19 @@
 			).then((ns) =>
 				// A bijlage carries the title of its bill; its own name is its subject ("Advies
 				// Politie"), as the source gives it.
-				ns.slice(0, TOON).map((n) => {
+				ns.slice(0, SHOW).map((n) => {
 					const l = layerOf(n, 'Bijlage');
-					const onderwerp = textOf((n.props as Record<string, unknown> | undefined)?.subject);
-					return onderwerp ? { ...l, naam: onderwerp, vol: l.vol ?? l.naam } : l;
+					const subject = textOf((n.props as Record<string, unknown> | undefined)?.subject);
+					return subject ? { ...l, naam: subject, vol: l.vol ?? l.naam } : l;
 				})
 			),
-		(s) => (rijen = s),
+		(s) => (rows = s),
 		'Bijlagen'
 	);
 	// Another stuk: its bijlagen are not these.
 	$effect(() => {
 		void bronKey;
-		rijen = null;
+		rows = null;
 		return attachments.stop;
 	});
 	// Opened (or opened already for this kind): asked now, once.
@@ -53,34 +53,34 @@
 		const key = bronKey;
 		if (!open) return;
 		untrack(() => {
-			if (!rijen || rijen.status === 'error') attachments.load(key);
+			if (!rows || rows.status === 'error') attachments.load(key);
 		});
 	});
 </script>
 
 <span class="bijlagen">
-	<FoldButton sleutel={SLEUTEL} {open}
+	<FoldButton sleutel={FOLD_KEY} {open}
 		>Bijlagen <span class="aantal">{formatCount(aantal)}</span></FoldButton
 	>
 	{#if open}
 		<div class="lijst">
 			<LoadState
-				state={rijen ?? { status: 'loading' }}
+				state={rows ?? { status: 'loading' }}
 				what="De bijlagen"
 				plural
 				retry={attachments.retry}
 			>
-				{#snippet children(rijen)}
+				{#snippet children(rows)}
 					<ul>
-						{#each rijen as r, i (i)}
+						{#each rows as r, i (i)}
 							<li>
 								{#if r.ref}<a href={bronHref(r.ref)} title={r.vol}>{r.naam}</a>{:else}{r.naam}{/if}
 							</li>
 						{/each}
 					</ul>
-					{#if aantal > rijen.length}
+					{#if aantal > rows.length}
 						<p class="stil">
-							{formatCount(rijen.length)} van {formatCount(aantal)}; alle in Verbonden.
+							{formatCount(rows.length)} van {formatCount(aantal)}; alle in Verbonden.
 						</p>
 					{/if}
 				{/snippet}

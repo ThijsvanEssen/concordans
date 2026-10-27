@@ -37,7 +37,7 @@ describe('list pages and the feed', () => {
 		}
 		const view = bron('lib/map/MapView.svelte');
 		const voor = /\{#snippet voor\(\)\}([\s\S]*?)\{\/snippet\}/.exec(view)?.[1] ?? '';
-		expect(voor).toMatch(/<Aantekening[^>]*\bveld\b/);
+		expect(voor).toMatch(/<Aantekening[^>]*\bfield\b/);
 		expect(view).toMatch(/class="voor blad__lijst">\{@render voor\(\)\}/);
 		expect(regels(view).filter((r) => /grid-column/.test(r.body))).toEqual([]);
 	});

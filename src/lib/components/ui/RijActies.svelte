@@ -54,16 +54,16 @@
 		<span class="plek plek--menu">
 			<TekstMenu
 				label="{naam}: meer"
-				titel="Meer"
-				klasse="rij-knop"
-				pijl={false}
+				title="Meer"
+				buttonClass="rij-knop"
+				caret={false}
 				rechts
-				eigenKlik
+				ownClick
 				{onClose}
 				bind:open
 			>
 				{#snippet knop()}⋯{/snippet}
-				{#snippet inhoud(sluit)}{@render menu(sluit)}{/snippet}
+				{#snippet inhoud(close)}{@render menu(close)}{/snippet}
 			</TekstMenu>
 		</span>
 	{/if}

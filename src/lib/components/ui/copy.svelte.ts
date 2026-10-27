@@ -7,7 +7,7 @@
 import { BEVESTIG_MS, announce } from '$lib/bevestig/bevestig.svelte';
 
 export const COPY_MS = BEVESTIG_MS;
-const MISLUKT = 'Kopiëren kon niet';
+const FAILED = 'Kopiëren kon niet';
 
 type Write = (text: string) => Promise<void>;
 
@@ -35,7 +35,7 @@ export function createCopier(write: Write = clipboard) {
 		},
 		/** The label of the button `key`: its own word, or what its last copy did. */
 		label(key: string, idle: string) {
-			return last?.key === key ? (last.ok ? 'Gekopieerd' : MISLUKT) : idle;
+			return last?.key === key ? (last.ok ? 'Gekopieerd' : FAILED) : idle;
 		}
 	};
 }

@@ -59,7 +59,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 	});
 
 	it('asks the research question as an empty field under its label, not from a menu', () => {
-		expect(view()).toMatch(/<Aantekening[^>]*\bveld\b/);
+		expect(view()).toMatch(/<Aantekening[^>]*\bfield\b/);
 	});
 
 	it('keeps one working line: the place for the view, the order and Alles uitklappen', () => {

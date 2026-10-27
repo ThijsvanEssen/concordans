@@ -42,7 +42,7 @@
 		<TekstMenu
 			label={copier.label('atom', 'Gevolgd')}
 			rechts
-			klasse="{buttonClass} tekstmenu__knop"
+			buttonClass="{buttonClass} tekstmenu__knop"
 			bind:open
 		>
 			{#snippet knop()}<Tick aan />{copier.label('atom', 'Gevolgd')}{/snippet}

@@ -15,11 +15,7 @@
 	 * The sentence in three parts: its subject, "kon niet" (the words in the accent, DS
 	 * LoadState: an error is red, with words beside it) and the rest. A 429 is one part.
 	 */
-	export function failureParts(
-		what: string,
-		error: unknown,
-		plural = false
-	): [string, string, string] {
+	function failureParts(what: string, error: unknown, plural = false): [string, string, string] {
 		const no = plural ? 'konden niet' : 'kon niet';
 		if (isRateLimited(error)) return [`${RATE_LIMIT_TEXT}.`, '', ''];
 		return [what, no, isSlow(error) ? 'op tijd worden geladen.' : 'worden geladen.'];

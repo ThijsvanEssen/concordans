@@ -2,14 +2,14 @@
 	// The one wordmark: § plus the name. Every measure is in em, so `size` scales
 	// the whole mark and the proportions between glyph and name stay fixed. The § is merk, the
 	// name ink. Sizes: 20 in the top bar, 28 in the footer (the § is never under 26 px).
-	// `grond` is what it stands on (DS Woordmerk): paper (the name in ink, the § merk), ink (the
-	// name in paper, the § merk) or ink-2, a button or bar in hover, where merk is too weak and
-	// the § and the name stand in paper.
-	let { size = 20, grond = 'paper' }: { size?: number; grond?: 'paper' | 'ink' | 'ink-2' } =
-		$props();
+	// What it stands on (DS Woordmerk): paper (the name in ink, the § merk), or on a ground
+	// that sets `.op-ink` (the name in paper, the § merk) or `.op-ink-2` (a button or bar in
+	// hover: merk is too weak there, the § and the name stand in paper). The ground is the
+	// parent's, so the mark takes it from there and knows no prop for it.
+	let { size = 20 }: { size?: number } = $props();
 </script>
 
-<span class="wordmark grond-{grond}" style:font-size="{size}px">
+<span class="wordmark" style:font-size="{size}px">
 	<span class="mark" aria-hidden="true">&sect;</span>
 	<span class="name">Concordans</span>
 </span>
@@ -36,11 +36,11 @@
 		color: var(--merk);
 	}
 
-	.grond-ink,
-	.grond-ink-2 {
+	:global(.op-ink) .wordmark,
+	:global(.op-ink-2) .wordmark {
 		color: var(--paper);
 	}
-	.grond-ink-2 .mark {
+	:global(.op-ink-2) .mark {
 		color: var(--paper);
 	}
 

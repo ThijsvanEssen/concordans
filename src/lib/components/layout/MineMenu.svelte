@@ -17,7 +17,7 @@
 		label="Mijn"
 		tekst="Mijn"
 		rechts
-		klasse="mijn__knop"
+		buttonClass="mijn__knop"
 		gekozen={current !== null}
 		bind:open
 	>

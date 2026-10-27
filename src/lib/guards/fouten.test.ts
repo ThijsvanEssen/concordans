@@ -50,6 +50,7 @@ describe('errors that are not swallowed', () => {
 				(l) => EIGEN_FOUT.test(l) && !COMMENTAAR.test(l),
 				[
 					plek('lib/components/ui/copy.svelte.ts', 'a clipboard that refuses, on its button'),
+					plek('lib/components/ui/LoadState.svelte', 'the one sentence of a failure'),
 					plek(
 						'lib/components/explore/BronFailure.svelte',
 						'the heading of the page of a bron that could not be loaded'
