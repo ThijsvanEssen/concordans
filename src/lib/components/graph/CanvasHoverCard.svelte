@@ -176,6 +176,31 @@
 
 	<h2 class="title {node.stub ? 'title--stub' : ''}">{naam}</h2>
 
+	<!-- The actions stand under the title, before what is still loading: the text coming in
+	     moves nothing under a finger. -->
+	<div class="foot">
+		{#if !node.stub}
+			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
+			<a
+				class="btn is-primary"
+				href={openHref(ref)}
+				data-sveltekit-noscroll
+				onclick={(e) => {
+					if (onLezen && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+						e.preventDefault();
+						onLezen(node);
+					} else onOpen(node);
+				}}>Lees</a
+			>
+		{/if}
+		{#if onToggleChosen && !node.stub}
+			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
+				>{isChosen ? 'Weghalen' : 'Toevoegen'}</button
+			>
+		{/if}
+		{#if bewaar}<Bewaar item={bewaar} />{/if}
+	</div>
+
 	{#if node.stub}
 		<p class="snippet stub-note">{capitalize(NOT_IN_DATA)}.</p>
 	{:else if identity && article.state.status !== 'ready'}
@@ -201,29 +226,6 @@
 	{#each notities as n, i (i)}
 		<Aantekening tekst={n.tekst} bij={n.waar ?? 'deze bron'} waar={n.waar} compact />
 	{/each}
-
-	<div class="foot">
-		{#if !node.stub}
-			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
-			<a
-				class="btn is-primary"
-				href={openHref(ref)}
-				data-sveltekit-noscroll
-				onclick={(e) => {
-					if (onLezen && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
-						e.preventDefault();
-						onLezen(node);
-					} else onOpen(node);
-				}}>Lees</a
-			>
-		{/if}
-		{#if onToggleChosen && !node.stub}
-			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
-				>{isChosen ? 'Weghalen' : 'Toevoegen'}</button
-			>
-		{/if}
-		{#if bewaar}<Bewaar item={bewaar} />{/if}
-	</div>
 
 	{#if ties.length > 0}
 		<section class="ties" aria-label={tiesHeading}>

@@ -120,7 +120,7 @@
 		</div>
 	{:else if gap}<p class="gap">{gap}</p>{/if}
 	{#if ends.length < 2}
-		<p class="empty stil">Voeg een tweede bron toe</p>
+		<p class="empty stil">Kies een tweede bron</p>
 	{:else if loading}
 		<p class="empty stil" role="status">Verband zoeken</p>
 	{:else if empty && !failure && !gap}
