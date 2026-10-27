@@ -105,7 +105,9 @@ describe('KindSummary', () => {
 				queueMicrotask(() => {
 					asking = false;
 					loaded += [77, 82, 301][Math.floor(loaded / 7) % 3];
-					rerender({ ...props, kinds: kinds() });
+					Promise.resolve(rerender({ ...props, kinds: kinds() })).catch((e) =>
+						expect.fail(String(e))
+					);
 				});
 			}
 		};
