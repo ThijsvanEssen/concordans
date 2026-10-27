@@ -727,10 +727,16 @@
 	.wet {
 		color: var(--ink);
 	}
+	/* The underline is the text's, not a border: a name that breaks over two lines keeps one
+	   rule under both parts, none of it loose at the break. */
 	.submitted :global(a) {
 		color: var(--ink);
-		text-decoration: none;
-		border-bottom: 1px solid var(--rule-strong);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+		-webkit-box-decoration-break: clone;
+		box-decoration-break: clone;
 	}
 	.submitted :global(a:hover) {
 		color: var(--ink);

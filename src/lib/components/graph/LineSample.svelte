@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The sample of a line (Netwerkcanvas, Lijnen): its colour, stroke and arrowhead, as thick as
-	// on the canvas at the default zoom. The legend's two keys, Relatie and Lijnen, draw it so.
+	// on the canvas at the default zoom. The rows of Relatie draw it so.
 	import type { DrawClass } from '$lib/graph/types';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import type { Relation } from '$lib/vocabulary';

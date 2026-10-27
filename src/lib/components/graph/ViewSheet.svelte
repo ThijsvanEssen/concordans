@@ -1,6 +1,6 @@
 <script lang="ts">
-	// On a phone the bronnen and the filters of the werkplek stand in a sheet from below, behind
-	// the button "Weergave en legenda" at the foot of the canvas, so the canvas has the screen
+	// On a phone the bronnen and the weergave of the werkplek stand in a sheet from below, behind
+	// the button "Weergave" at the foot of the canvas, so the canvas has the screen
 	// (Design System, Netwerkkeuze: Telefoon). Wider it is no frame at all: the strip stays where
 	// it stands. The sheet is a dialog: Esc, a tap outside and Sluiten close it, the page behind
 	// it stands still, and the focus goes back to the button.
@@ -68,7 +68,7 @@
 	class:is-open={open}
 	role={sheet ? 'dialog' : undefined}
 	aria-modal={sheet ? 'true' : undefined}
-	aria-label={sheet ? 'Weergave en legenda' : undefined}
+	aria-label={sheet ? 'Weergave' : undefined}
 	bind:this={el}
 	onkeydown={onKey}
 >

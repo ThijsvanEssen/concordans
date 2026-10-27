@@ -7,25 +7,32 @@
 	// The DS: Sectie en Tijdlijn. docs/typografie.md.
 	import { formatCount } from '$lib/text/getal';
 	import type { Snippet } from 'svelte';
+	import DateTime from './DateTime.svelte';
 	import FoldButton from './FoldButton.svelte';
 	import { isOpen as staatOpen } from './dicht.svelte';
 
 	let {
 		title,
+		datum,
 		aantal,
 		id,
 		naast,
+		mark,
 		niveau = 2,
 		inklapbaar = true,
 		sleutel,
 		children
 	}: {
 		title: string;
+		/** The day the title names: it is drawn as a time element (DateTime). */
+		datum?: string | null;
 		/** The count beside the heading; a string as given (`25+`, `2019–2022`). */
 		aantal?: number | string | null;
 		id?: string;
 		/** Beside the title, at the right: a link or a control. Only while it stands open. */
 		naast?: Snippet;
+		/** After the title, in the heading: a mark such as NewMark, or the button it opens. */
+		mark?: Snippet;
 		/** The level of the heading. 2: a section of a reader or a page, under a hairline.
 		 *  3: a group in a section (a year), 4: a group in that (a law), both without a line. */
 		niveau?: 2 | 3 | 4;
@@ -45,8 +52,8 @@
 </script>
 
 {#snippet kop()}
-	{title}{#if aantal != null}<span class="aantal"
-			>{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
+	{#if datum}<DateTime iso={datum}>{title}</DateTime>{:else}{title}{/if}{#if aantal != null}<span
+			class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 		>{/if}
 {/snippet}
 
@@ -63,7 +70,9 @@
 			>
 		{:else}
 			{@render kop()}
-		{/if}{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
+		{/if}{#if mark}{@render mark()}{/if}{#if naast && isOpen}<span class="naast"
+				>{@render naast()}</span
+			>{/if}
 	</svelte:element>
 	{#if isOpen}<div class="inhoud" id="{uid}-inhoud">{@render children()}</div>{/if}
 </section>
@@ -74,6 +83,8 @@
 	   sections is --s-5 in all; a parent that spaces its column by a gap names it
 	   (--lezer-stap), and the margin makes up the rest. */
 	.sectie {
+		/* A jump to a section lands under the sticky bar. */
+		scroll-margin-top: calc(var(--balk-h) + var(--s-4));
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);

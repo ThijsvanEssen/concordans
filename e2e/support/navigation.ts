@@ -49,12 +49,20 @@ export const mineSign = (page: Page) =>
 /** On a phone Verbonden is a tab of its own (A197-a): choose it; wider, it stands beside the
  *  text and nothing is to be done. */
 export async function naarVerbonden(page: Page) {
-	if (isPhone(page)) await page.getByRole('tab', { name: 'Verbonden' }).click();
+	if (isPhone(page))
+		await page
+			.getByRole('group', { name: 'Tekst of Verbonden' })
+			.getByRole('button', { name: 'Verbonden' })
+			.click();
 }
 
 /** Back to the text, on a phone its tab. */
 export async function naarTekst(page: Page) {
-	if (isPhone(page)) await page.getByRole('tab', { name: 'Tekst' }).click();
+	if (isPhone(page))
+		await page
+			.getByRole('group', { name: 'Tekst of Verbonden' })
+			.getByRole('button', { name: 'Tekst' })
+			.click();
 }
 
 /** The Netwerk button: in the top bar on a wide screen, a tab of the tab bar on a phone. */

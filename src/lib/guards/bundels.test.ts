@@ -93,7 +93,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		// The judgments under Rechtspraak (groepen); every group's places by one placeRows.
 		const g = groups();
 		expect(g).toContain('rowTitle(');
-		expect(g).toMatch(/\{#each placeRows\(g\.items\) as r/);
+		expect(g).toMatch(/\{#each placeRows\(items\) as r/);
 		expect(bron('lib/map/BundleRow.svelte')).toContain('placeRows(');
 	});
 });

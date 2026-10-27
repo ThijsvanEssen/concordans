@@ -172,6 +172,7 @@
 		[...Map.groupBy(lines, (l) => l.date)].map(([date, ls]) => ({
 			id: date,
 			titel: dayHeading(date),
+			datum: date,
 			sub: null,
 			regels: ls.map((l) => ({
 				id: l.id,

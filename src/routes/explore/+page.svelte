@@ -120,6 +120,7 @@
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import type { Option } from '$lib/components/ui/option';
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
@@ -1347,9 +1348,23 @@
 			composer.surroundings = omgeving;
 			composer.drawsPaths = omgeving;
 			if (n.ids.length > 0) composer.compose(n);
-			else if (composer.composed) composer.release();
+			else if (composer.composed) {
+				composer.release();
+				if (focus) drawFocusAgain(focus);
+			}
 		});
 	});
+
+	/**
+	 * The last bron of a netwerk taken out while a page's own bron is the focus: the canvas goes
+	 * back to what that page drew, not what the removed bron brought (its 200 uitspraken).
+	 */
+	function drawFocusAgain(id: string) {
+		store.reset();
+		deepenedId = '';
+		loadedFocus = id;
+		loadFocus(id).catch((e) => showFocusError(e, id));
+	}
 
 	/**
 	 * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
@@ -1639,6 +1654,10 @@
 
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
 	let readTab = $state<Panel>('tekst');
+	const READ_CHOICE: Option<Panel>[] = [
+		{ waarde: 'tekst', label: 'Tekst' },
+		{ waarde: 'verbonden', label: 'Verbonden' }
+	];
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -2126,16 +2145,17 @@
 							>
 								{#snippet viewChoice()}
 									<!-- Nothing chosen, nothing to view three ways: the field Bron toevoegen alone. -->
-									{#if focus || pad || netwerkActive}<div class="view-choice">
-											<Keuze
-												label="Weergave"
-												waarde={view}
-												opties={VIEWS.filter(
-													(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
-												).map((w) => ({ waarde: w.waarde, label: w.label }))}
-												onSelect={chooseView}
-											/>
-										</div>{/if}
+									{#if focus || pad || netwerkActive}
+										<Keuze
+											label="Weergave"
+											vol
+											waarde={view}
+											opties={VIEWS.filter(
+												(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
+											).map((w) => ({ waarde: w.waarde, label: w.label }))}
+											onSelect={chooseView}
+										/>
+									{/if}
 								{/snippet}
 
 								{#snippet balk()}
@@ -2248,28 +2268,19 @@
 				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
-					<div class="lees-tabs" role="tablist" aria-label="Tekst of Verbonden">
-						<button
-							type="button"
-							role="tab"
-							class="mobile-tab"
-							class:is-active={readTab === 'tekst'}
-							aria-selected={readTab === 'tekst'}
-							onclick={() => (readTab = 'tekst')}>Tekst</button
-						>
-						<button
-							type="button"
-							role="tab"
-							class="mobile-tab"
-							class:is-active={readTab === 'verbonden'}
-							aria-selected={readTab === 'verbonden'}
-							onclick={() => (readTab = 'verbonden')}>Verbonden</button
-						>
+					<div class="lees-tabs">
+						<Keuze
+							vol
+							label="Tekst of Verbonden"
+							opties={READ_CHOICE}
+							waarde={readTab}
+							onSelect={(w) => (readTab = w)}
+						/>
 					</div>
 					{#if withContents}
 						<button
 							type="button"
-							class="mobile-tab mobile-tab--toc"
+							class="btn mobile-tab--toc"
 							aria-haspopup="dialog"
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
@@ -2365,32 +2376,6 @@
 	}
 	.werkplek .col--graph {
 		flex: 1;
-	}
-	/* Weergave, a block of the strip at the left (mockup A197-b). */
-	.view-choice {
-		padding: var(--s-4) 0;
-		border-top: 1px solid var(--rule);
-	}
-	@media (max-width: 768px) {
-		.view-choice {
-			padding: 0;
-			border-top: 0;
-		}
-		/* The three over the row's width, as the mockup's 390. */
-		.view-choice :global(.keuze) {
-			display: flex;
-		}
-		.view-choice :global(.keuze > *) {
-			flex: 1;
-			justify-content: center;
-		}
-	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.view-choice :global(.keuze > *) {
-			min-height: var(--veld-h-raak);
-		}
-	}
-	@media (max-width: 768px) {
 	}
 
 	.explore-read {
@@ -2677,42 +2662,24 @@
 	   moved the text under them half a pixel (FE2, 10 Oct: 0 px after the first paint). */
 	.mobile-tabs {
 		display: none;
-		height: var(--veld-h);
+		align-items: center;
+		gap: var(--s-2);
 		box-sizing: border-box;
+		height: var(--veld-h);
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper-2);
 	}
-	/* A finger's 44 px on a touch screen and below 768: the tabs' own height, between the bar and the text. */
-	@media (pointer: coarse), (max-width: 768px) {
+	/* A phone: Tekst and Verbonden are a Keuze, a finger high, with a margin around it. */
+	@media (max-width: 768px) {
 		.mobile-tabs {
-			height: var(--veld-h-raak);
+			height: auto;
+			padding: var(--s-2) var(--s-3);
 		}
 	}
-	.mobile-tabs .mobile-tab {
-		flex: 1;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-3);
-		background: none;
-		border: 0;
-		border-bottom: 2px solid transparent;
-		padding: var(--s-2) var(--s-1) var(--s-2);
-		cursor: pointer;
-		margin-bottom: -1px;
-	}
-
-	/* The tab chosen: ink and a rule under it (A197-a). */
-	.mobile-tabs .mobile-tab.is-active {
-		color: var(--ink);
-		border-bottom-color: var(--ink);
-		font-weight: 500;
-	}
-
+	/* Inhoud beside it is a Knop. */
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;
-		padding-inline: var(--s-4);
-		color: var(--ink-2);
 	}
 
 	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above

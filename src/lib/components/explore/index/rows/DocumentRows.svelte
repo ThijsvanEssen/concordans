@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { openHref } from '$lib/bron/href';
@@ -8,7 +9,6 @@
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { korteDatum } from '$lib/text/datum';
 	import IndexRow from '../IndexRow.svelte';
 	import type { ViewProps } from '../lists/list';
 
@@ -49,7 +49,7 @@
 					>{/if}
 			{/snippet}
 			{#snippet aside()}
-				{#if doc.date}<span class="row-sub">{korteDatum(doc.date)}</span>{/if}
+				{#if doc.date}<span class="row-sub"><DateTime iso={doc.date} /></span>{/if}
 			{/snippet}
 			{#snippet detail()}
 				<RijInhoud

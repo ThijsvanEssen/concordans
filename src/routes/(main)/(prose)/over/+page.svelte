@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { CONTACT_EMAIL } from '$lib/site/contact';
 </script>
@@ -10,8 +11,7 @@
 		<header class="blad__kop"><h1 class="blad__titel">Over Concordans</h1></header>
 		<p class="stub-lede">Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen.</p>
 
-		<div class="section">
-			<h2 class="section-title">De naam</h2>
+		<Sectie title="De naam" niveau={2} inklapbaar={false}>
 			<p>
 				Concordans komt van concordantie: een register van de woorden uit een werk, met de plaatsen
 				waar ze voorkomen (<a
@@ -21,22 +21,20 @@
 					class="cite">Oosthoek Encyclopedie</a
 				>).
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Zelfstandig</h2>
+		<Sectie title="Zelfstandig" niveau={2} inklapbaar={false}>
 			<p>
 				Concordans is niet gelieerd aan een juridische instelling, rechtbank of overheidsorgaan.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section" id="contact">
-			<h2 class="section-title">Contact</h2>
+		<Sectie title="Contact" niveau={2} inklapbaar={false} id="contact">
 			<p>
 				Vragen, opmerkingen, verzoeken voor grootschalig gebruik van de API en vragen over privacy
 				gaan naar <a href="mailto:{CONTACT_EMAIL}" class="cite">{CONTACT_EMAIL}</a>.
 			</p>
-		</div>
+		</Sectie>
 
 		<div class="meta-row">
 			<a href="/bronnen" class="meta-link">Bronnen en hergebruik</a>

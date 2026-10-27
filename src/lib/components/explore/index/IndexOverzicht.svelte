@@ -35,7 +35,6 @@
 
 	<!-- The groups of the page, as a facet column holds its groups: a way to each. -->
 	<Inhoudsopgave
-		label="Groepen van bronnen"
 		items={INDEX_TABS.map((groep) => ({ label: groep.label, id: anker(groep.label) }))}
 	/>
 
