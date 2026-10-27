@@ -43,7 +43,7 @@
 	} from '$lib/selection/cluster';
 	import { groupFor, openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
-	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
+	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
@@ -651,7 +651,13 @@
 		const eigen = ownDossiers();
 		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
 	};
-	const nodeLabel = (n: GraphNode) => canvasNames.get(n.id) ?? baseName(n);
+	/** An article that no longer holds (Netwerkcanvas, Vervallen): a dimmed sign, "vervallen" in its name. */
+	const isVervallen = (n: GraphNode) =>
+		n.collection === 'articles' && n.raw?.props?.repealed === true;
+	const nodeLabel = (n: GraphNode) => {
+		const naam = canvasNames.get(n.id) ?? baseName(n);
+		return isVervallen(n) ? `${naam}, vervallen` : naam;
+	};
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -949,6 +955,12 @@
 			if (!isCanvasNode(n)) continue;
 			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
+			const vervallen = isVervallen(n);
+			const kleur = vervallen
+				? tokens().ink3
+				: pinnedIds.has(n.id)
+					? undefined
+					: kindColour(n.collection);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
@@ -968,17 +980,12 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub: !!n.stub,
+				stub: !!n.stub || vervallen,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
-				kleur: pinnedIds.has(n.id) ? undefined : kindColour(n.collection),
-				image: spriteForVorm(
-					vorm,
-					!!n.stub,
-					false,
-					pinnedIds.has(n.id) ? undefined : kindColour(n.collection)
-				),
+				kleur,
+				image: spriteForVorm(vorm, !!n.stub || vervallen, false, kleur),
 				forceLabel: true
 			};
 			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.

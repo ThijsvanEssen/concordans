@@ -88,7 +88,12 @@
 					: bronNaam(n, $instrumentMetaStore);
 	/** Each its own name: eight judgments of one court on one day by their ECLI (UX review N4). */
 	const names = $derived(distinctNames(nodes, fullName));
-	const nameOf = (n: GraphNode) => names.get(n.id) ?? fullName(n);
+	const nameOf = (n: GraphNode) => {
+		const naam = names.get(n.id) ?? fullName(n);
+		return n.collection === 'articles' && n.raw?.props?.repealed === true
+			? `${naam}, vervallen`
+			: naam;
+	};
 
 	// The arrows on the canvas move the bron pointed at: the list follows (its tab stop) and
 	// the one line reads its name and kind.
