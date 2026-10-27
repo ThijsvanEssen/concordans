@@ -83,6 +83,8 @@ describe('the head of a reader', () => {
 		expect(hoofd).not.toMatch(/\.reader-facts \{[^}]*border-top/);
 		expect(hoofd).toMatch(/\.reader-head \{[^}]*var\(--s-5\) - var\(--lezer-stap/);
 		// An empty row under the title or under the status takes no room.
-		expect(hoofd).toMatch(/\.reader-onder:empty,\s*\.reader-rijen:empty \{\s*display: none/);
+		expect(hoofd).toMatch(
+			/\.reader-onder:not\(:has\(\*\)\),\s*\.reader-rijen:not\(:has\(\*\)\) \{\s*display: none/
+		);
 	});
 });

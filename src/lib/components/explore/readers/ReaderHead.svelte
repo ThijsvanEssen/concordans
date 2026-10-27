@@ -310,8 +310,8 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	.reader-onder:empty,
-	.reader-rijen:empty {
+	.reader-onder:not(:has(*)),
+	.reader-rijen:not(:has(*)) {
 		display: none;
 	}
 	/* The stand and the facts, one block under one rule: s-3 above the rule and under it,
