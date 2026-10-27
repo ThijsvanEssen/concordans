@@ -22,7 +22,7 @@ async function legenda(page: Page): Promise<Locator> {
 	await openSheet(page);
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
 	await expect(
-		strip(page).getByRole('region', { name: 'Weergave en legenda' }).or(toggle).first()
+		strip(page).getByRole('region', { name: 'Weergave' }).or(toggle).first()
 	).toBeVisible({
 		timeout: 30_000
 	});

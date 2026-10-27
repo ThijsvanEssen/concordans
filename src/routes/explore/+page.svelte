@@ -2145,16 +2145,17 @@
 							>
 								{#snippet viewChoice()}
 									<!-- Nothing chosen, nothing to view three ways: the field Bron toevoegen alone. -->
-									{#if focus || pad || netwerkActive}<div class="view-choice">
-											<Keuze
-												label="Weergave"
-												waarde={view}
-												opties={VIEWS.filter(
-													(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
-												).map((w) => ({ waarde: w.waarde, label: w.label }))}
-												onSelect={chooseView}
-											/>
-										</div>{/if}
+									{#if focus || pad || netwerkActive}
+										<Keuze
+											label="Weergave"
+											vol
+											waarde={view}
+											opties={VIEWS.filter(
+												(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
+											).map((w) => ({ waarde: w.waarde, label: w.label }))}
+											onSelect={chooseView}
+										/>
+									{/if}
 								{/snippet}
 
 								{#snippet balk()}
@@ -2375,32 +2376,6 @@
 	}
 	.werkplek .col--graph {
 		flex: 1;
-	}
-	/* Weergave, a block of the strip at the left (mockup A197-b). */
-	.view-choice {
-		padding: var(--s-4) 0;
-		border-top: 1px solid var(--rule);
-	}
-	@media (max-width: 768px) {
-		.view-choice {
-			padding: 0;
-			border-top: 0;
-		}
-		/* The three over the row's width, as the mockup's 390. */
-		.view-choice :global(.keuze) {
-			display: flex;
-		}
-		.view-choice :global(.keuze > *) {
-			flex: 1;
-			justify-content: center;
-		}
-	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.view-choice :global(.keuze > *) {
-			min-height: var(--veld-h-raak);
-		}
-	}
-	@media (max-width: 768px) {
 	}
 
 	.explore-read {
