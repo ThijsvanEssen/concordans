@@ -43,8 +43,10 @@ describe('the Tijdstrook', () => {
 	it('names the years from the first bron to the last', () => {
 		const { band } = strook();
 		const jaren = [...band.parentElement!.querySelectorAll('.as span')].map((s) => s.textContent);
-		expect(jaren).toEqual(['2020', '2021', '2022', '2023']);
-		expect(band.querySelectorAll('.stip')).toHaveLength(3);
+		// The first and the last always; a width of 0 (jsdom) fits no year between.
+		expect(jaren[0]).toBe('2020');
+		expect(jaren.at(-1)).toBe('2023');
+		expect(band.querySelectorAll('.deel')).toHaveLength(3);
 	});
 
 	it('chooses a year on a tap, and gives every year back on a tap on the one chosen', async () => {
@@ -67,7 +69,7 @@ describe('the Tijdstrook', () => {
 		expect(onPeriode).toHaveBeenCalledWith(2021, 2023);
 	});
 
-	it('stacks the bronnen of a year in one column per year', () => {
+	it('stacks the bronnen of a year in one bar per year, on a scale of the busiest year', () => {
 		const onPeriode = vi.fn();
 		const { container } = render(Tijdstrook, {
 			stippen: [...stippen, { jaar: 2021.9, collection: 'documents' }],
@@ -75,18 +77,27 @@ describe('the Tijdstrook', () => {
 			tot: null,
 			onPeriode
 		});
-		const kolommen = [...container.querySelectorAll('.kolom')].map(
-			(k) => k.querySelectorAll('.stip').length
+		const staven = [...container.querySelectorAll('.kolom')].map(
+			(k) => k.querySelectorAll('.deel').length
 		);
-		expect(kolommen).toEqual([1, 2, 0, 1]);
+		expect(staven).toEqual([1, 2, 0, 1]);
+		const f = [...container.querySelectorAll<HTMLElement>('.kolom')].map((k) =>
+			k.style.getPropertyValue('--f')
+		);
+		expect(f).toEqual(['0.5', '1', '0', '0.5']);
 	});
 
-	it('shows two grips on a period and none without', () => {
-		expect(strook().band.querySelectorAll('[data-greep]')).toHaveLength(0);
-		const { band } = strook(2021, 2022);
+	it('has two grips as sliders, hidden at rest and shown on a period', () => {
+		const rust = strook().band;
 		expect(
-			[...band.querySelectorAll('[data-greep]')].map((g) => (g as HTMLElement).dataset.greep)
-		).toEqual(['van', 'tot']);
+			[...rust.querySelectorAll('[role="slider"]')].map((g) => g.classList.contains('is-los'))
+		).toEqual([true, true]);
+		const { band } = strook(2021, 2022);
+		const greep = [...band.querySelectorAll<HTMLElement>('[data-greep]')];
+		expect(greep.map((g) => g.dataset.greep)).toEqual(['van', 'tot']);
+		expect(greep.map((g) => g.classList.contains('is-los'))).toEqual([false, false]);
+		expect(greep[0].getAttribute('aria-valuenow')).toBe('2021');
+		expect(greep[1].getAttribute('aria-valuenow')).toBe('2022');
 	});
 
 	it('moves one end with its grip and keeps the other', async () => {
@@ -98,15 +109,52 @@ describe('the Tijdstrook', () => {
 		expect(onPeriode).toHaveBeenCalledWith(2021, 2023);
 	});
 
-	it('heads the strip with the period', () => {
-		const { band } = strook(2021, 2023);
-		expect(band.parentElement!.querySelector('.kop')!.textContent).toBe('2021 tot 2023');
-		expect(strook().band.parentElement!.querySelector('.kop')!.textContent).toBe('2020 tot 2023');
+	it('chooses the period with the keyboard, without dragging', async () => {
+		const { band, onPeriode } = strook(2021, 2022);
+		const tot = band.querySelector<HTMLElement>('[data-greep="tot"]')!;
+		await fireEvent.keyDown(tot, { key: 'ArrowRight' });
+		expect(onPeriode).toHaveBeenLastCalledWith(2021, 2023);
+		const van = band.querySelector<HTMLElement>('[data-greep="van"]')!;
+		await fireEvent.keyDown(van, { key: 'Home' });
+		expect(onPeriode).toHaveBeenLastCalledWith(2020, 2022);
+		await fireEvent.keyDown(van, { key: 'ArrowRight' });
+		expect(onPeriode).toHaveBeenLastCalledWith(2022, 2022);
+	});
+
+	it('names the period in words, with the count per kind and what has no year', () => {
+		const { container } = render(Tijdstrook, {
+			stippen: [...stippen, { jaar: 2021.1, collection: 'instruments', wijziging: 'Stb. 2021, 9' }],
+			zonderJaar: 41,
+			van: 2021,
+			tot: null,
+			vanDag: '2021-01-01',
+			onPeriode: vi.fn()
+		});
+		expect(container.querySelector('.woorden')!.textContent).toBe('Sinds 2021');
+		expect(container.querySelector('.telling')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
+			'1 wet, 1 uitspraak, 1 wijziging, 41 zonder jaar'
+		);
+		expect(container.querySelector('[data-wijziging]')).not.toBeNull();
+	});
+
+	it('offers Alle jaren, 5 jaar, the last wijziging and Sinds…', () => {
+		const { container } = render(Tijdstrook, {
+			stippen: [
+				{ jaar: 2010.1, collection: 'judgments' },
+				{ jaar: 2015.1, collection: 'instruments', wijziging: 'Stb. 2015, 9' },
+				{ jaar: 2023.1, collection: 'judgments' }
+			],
+			van: null,
+			tot: null,
+			onPeriode: vi.fn()
+		});
+		const knoppen = [...container.querySelectorAll('.snel .btn')].map((b) => b.textContent!.trim());
+		expect(knoppen).toEqual(['Alle jaren', '5 jaar', 'Sinds de wijziging van 2015', 'Sinds…']);
 	});
 
 	it('dims the bronnen outside the period chosen', () => {
 		const { band } = strook(2021, 2021);
-		const dim = [...band.querySelectorAll('.stip')].map((k) => k.classList.contains('is-dim'));
-		expect(dim).toEqual([true, false, true]);
+		const dim = [...band.querySelectorAll('.kolom')].map((k) => k.classList.contains('is-dim'));
+		expect(dim).toEqual([true, false, true, true]);
 	});
 });

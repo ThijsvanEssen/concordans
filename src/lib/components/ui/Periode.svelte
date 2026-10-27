@@ -36,7 +36,8 @@
 		onChange,
 		label = 'Periode',
 		distribution,
-		counts = 'Aantal'
+		counts = 'Aantal',
+		zonderKnop = false
 	}: {
 		from: string;
 		to: string;
@@ -47,12 +48,17 @@
 		distribution?: Distribution;
 		/** What the distribution counts: `Uitspraken`. */
 		counts?: string;
+		/** No line of its own: the page opens the chooser with `toon`, at the element it gives. */
+		zonderKnop?: boolean;
 	} = $props();
 
 	const uid = $props.id();
 	const today = vandaag();
 	let open = $state(false);
-	let button = $state<HTMLButtonElement | null>(null);
+	let own = $state<HTMLButtonElement | null>(null);
+	let elsewhere = $state<HTMLElement | null>(null);
+	/** What the chooser stands under and the focus goes back to: its line, or what opened it. */
+	const button = $derived(zonderKnop ? elsewhere : own);
 	let dialog = $state<HTMLElement | null>(null);
 	let track = $state<HTMLElement | null>(null);
 	let typed = $state({ van: '', tot: '' });
@@ -105,6 +111,11 @@
 	const place = (y: number) =>
 		span && span.max > span.min ? (y - span.min) / (span.max - span.min) : 0;
 
+	/** Open the chooser under `at` (with `zonderKnop`). */
+	export function toon(at: HTMLElement) {
+		elsewhere = at;
+		show();
+	}
 	function show() {
 		typed = { van: fieldText(van, 'from'), tot: fieldText(tot, 'to') };
 		checked = { van: false, tot: false };
@@ -310,17 +321,19 @@
 {/snippet}
 
 <div class="periode">
-	<button
-		type="button"
-		class="btn trigger"
-		bind:this={button}
-		aria-haspopup="dialog"
-		aria-expanded={open}
-		aria-label="{words} Wijzig"
-		onclick={() => (open ? close(true) : show())}
-	>
-		<span class="wat">{words}</span><span class="wijzig" aria-hidden="true">Wijzig</span>
-	</button>
+	{#if !zonderKnop}
+		<button
+			type="button"
+			class="btn trigger"
+			bind:this={own}
+			aria-haspopup="dialog"
+			aria-expanded={open}
+			aria-label="{words} Wijzig"
+			onclick={() => (open ? close(true) : show())}
+		>
+			<span class="wat">{words}</span><span class="wijzig" aria-hidden="true">Wijzig</span>
+		</button>
+	{/if}
 	{#if open && button && !sheet}
 		<div
 			class="tekstmenu__lijst pop"

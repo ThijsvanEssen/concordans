@@ -17,13 +17,13 @@
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
-	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ViewSheet from './ViewSheet.svelte';
 	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
 	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
+	import { kindOf, type Stip } from '$lib/bron/strook';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { LineKind } from '$lib/graph/line-kind';
@@ -80,7 +80,6 @@
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
-	import Periode from '$lib/components/ui/Periode.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notesOfBundels } from '$lib/map/notities';
@@ -196,7 +195,7 @@
 		view?: 'omgeving' | 'verband' | 'keten';
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
-		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
+		externStippen?: readonly Stip[] | null;
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
@@ -1187,36 +1186,42 @@
 	// ── The tijdstrook ──────────────────────────────────────────────────────────
 	// Every bron on the canvas with a date, whatever the period: the strip shows what lies
 	// outside it too, so the period can widen again.
-	let stippen = $state<{ jaar: number; collection: Collection }[]>([]);
+	let stippen = $state<Stip[]>([]);
+	let zonderJaar = $state(0);
 	let stippenSleutel = '';
+	/** A publication of the Staatsblad or the Trb. with a date: a wetswijziging, named by its key. */
+	const wijzigingNaam = (id: string) => {
+		const m = /^instruments\/(stb|trb)_(\d{4})_(\d+)/.exec(id);
+		return m ? `${m[1] === 'stb' ? 'Stb.' : 'Trb.'} ${m[2]}, ${m[3]}` : undefined;
+	};
 	function telJaren() {
-		const nieuw: { jaar: number; collection: Collection }[] = [];
-		const add = (date: unknown, collection: Collection) => {
-			if (typeof date !== 'string') return;
+		const nieuw: Stip[] = [];
+		let zonder = 0;
+		const add = (date: unknown, collection: Collection, id: string) => {
+			if (typeof date !== 'string') {
+				if (kindOf(collection)) zonder++;
+				return;
+			}
 			const jaar = yearFraction(date);
-			if (jaar > 1000) nieuw.push({ jaar, collection });
+			if (jaar > 1000) nieuw.push({ jaar, collection, wijziging: wijzigingNaam(id) });
 		};
 		g.forEachNode((id, a) => {
 			// A group counts its members by their years: 143 uitspraken are 143 dots (R3-N B8).
 			if (isClusterId(id))
 				for (const m of clusterById.get(id)?.members ?? [])
-					add(store.getNodeById(m)?.raw?.props?.date, a.collection as Collection);
-			else add(a.date, a.collection as Collection);
+					add(store.getNodeById(m)?.raw?.props?.date, a.collection as Collection, m);
+			else add(a.date, a.collection as Collection, id);
 		});
-		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}`).join();
+		const sleutel =
+			nieuw.map((s) => `${s.jaar}${s.collection}${s.wijziging ?? ''}`).join() + zonder;
 		if (sleutel !== stippenSleutel) {
 			stippenSleutel = sleutel;
 			stippen = nieuw;
+			zonderJaar = zonder;
 		}
 	}
 	/** The dots of the strip: the canvas's, or those of a weergave of its own (Keten, Verband). */
 	const strookStippen = $derived(externStippen ?? stippen);
-	const eersteJaar = $derived(
-		strookStippen.length ? String(Math.floor(Math.min(...strookStippen.map((s) => s.jaar)))) : ''
-	);
-	const laatsteJaar = $derived(
-		strookStippen.length ? String(Math.floor(Math.max(...strookStippen.map((s) => s.jaar)))) : ''
-	);
 	const jaarVan = (dag: string | null) => (dag ? Number(dag.slice(0, 4)) : null);
 	/** A period chosen by its years: the bronfilter holds it as days (?van, ?tot). */
 	function kiesPeriode(van: number | null, tot: number | null) {
@@ -1278,16 +1283,6 @@
 		</div>{/if}
 {/snippet}
 
-{#snippet periode()}
-	<Sectie title="Periode" niveau={3} inklapbaar={false}>
-		<Periode
-			from={filter.van ?? ''}
-			to={filter.tot ?? ''}
-			onChange={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
-		/>
-	</Sectie>
-{/snippet}
-
 <!-- A phone: at the foot of the canvas, left; the zoom is in the bar above it. -->
 {#snippet sheetButton()}
 	<button
@@ -1304,7 +1299,6 @@
 
 {#snippet sidebar()}
 	<GraphSidebar
-		periode={filter.van || filter.tot || eersteJaar !== laatsteJaar ? periode : undefined}
 		{meer}
 		{...legend}
 		{verbonden}
@@ -1603,9 +1597,13 @@
 		>
 			<Tijdstrook
 				stippen={legend.counting ? [] : strookStippen}
+				zonderJaar={externStippen ? 0 : zonderJaar}
 				van={jaarVan(filter.van)}
 				tot={jaarVan(filter.tot)}
+				vanDag={filter.van}
+				totDag={filter.tot}
 				onPeriode={kiesPeriode}
+				onDagen={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
 			/>
 		</div>
 	</div>
