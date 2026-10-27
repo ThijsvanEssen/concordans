@@ -56,4 +56,33 @@ describe('the head of a reader', () => {
 		expect(kader).toMatch(/bandAlways\(/);
 		expect(kader).toMatch(/hidden=\{!rowShown\}/);
 	});
+	it('floats the actions at the right of the title, before it in the code, in the app and in the first paint (Lezerkop, A281)', () => {
+		const hoofd = bron('lib/components/explore/readers/ReaderHead.svelte');
+		// Before the h1 in the code, so the h1 stays the first heading and a long title gives way
+		// on its first line only.
+		expect(hoofd.indexOf('class="reader-status__acties"')).toBeGreaterThan(0);
+		expect(hoofd.indexOf('class="reader-status__acties"')).toBeLessThan(
+			hoofd.indexOf('<h1 class="reader-title"')
+		);
+		expect(hoofd).toMatch(/\.reader-status__acties \{[^}]*float: right/);
+		expect(hoofd).toMatch(/\.reader-status__acties \{[^}]*var\(--s-4\)/);
+		const paint = bron('lib/first-paint/markup.ts');
+		expect(paint.indexOf('reader-status__acties')).toBeLessThan(
+			paint.indexOf('<h1 class="reader-title')
+		);
+		const artikel = bron('lib/first-paint/article.ts');
+		expect(artikel.indexOf('reader-status__acties')).toBeLessThan(
+			artikel.indexOf('<h1 class="reader-title')
+		);
+	});
+
+	it('draws the stand and the facts as one block under one rule, and one step of s-5 to the text', () => {
+		const hoofd = bron('lib/components/explore/readers/ReaderHead.svelte');
+		expect(hoofd).toMatch(/\.reader-status \{[^}]*border-top: 1px solid var\(--rule\)/);
+		// No second rule between the status and the strip of facts.
+		expect(hoofd).not.toMatch(/\.reader-facts \{[^}]*border-top/);
+		expect(hoofd).toMatch(/\.reader-head \{[^}]*var\(--s-5\) - var\(--lezer-stap/);
+		// An empty row under the title or under the status takes no room.
+		expect(hoofd).toMatch(/\.reader-onder:empty,\s*\.reader-rijen:empty \{\s*display: none/);
+	});
 });

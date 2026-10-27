@@ -207,7 +207,7 @@
 			(versions.length > 0 || (versionList.state.status === 'loading' && !!lawDetail))
 	);
 	const hasStatus = $derived(
-		!!statusOf(validity) ||
+		!!statusOf(validity, 'wet') ||
 			textNotRead ||
 			isEu ||
 			!!coverageLine(lawDetail?.completeness) ||
@@ -333,7 +333,7 @@
 <!-- What the head says besides its facts: whether the law holds, what of it is read, a
      failure, its grondslag, a treaty. Only where it says something: no empty line (A190). -->
 {#snippet lawStatus()}
-	<Validity {validity} />
+	<Validity {validity} soort="wet" />
 	{#if lawDetail?.ministry}
 		<span
 			>Ministerie: <MinistryLink
