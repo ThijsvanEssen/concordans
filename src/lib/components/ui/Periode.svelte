@@ -4,7 +4,6 @@
 	// it the distribution per year with two handles (Design System, Periode). A popover under
 	// the line on a wide screen, a sheet from below on a phone. The same in every filter pane
 	// and first in it. Days as the URL and the API hold them; the rule is in docs/README.md.
-	import { scrollLock } from '$lib/actions/scroll-lock';
 	import { clickOutside, topLayer } from '$lib/actions/top-layer';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
@@ -17,7 +16,7 @@
 		readBound
 	} from '$lib/text/periode';
 	import { afterTick } from '$lib/util/after-tick';
-	import IconButton from './IconButton.svelte';
+	import Blad from './Blad.svelte';
 	import {
 		DRAW_HEIGHT,
 		DRAW_WIDTH,
@@ -120,7 +119,7 @@
 		if (back) afterTick(() => button?.focus({ preventScroll: true }));
 	}
 	$effect(() => {
-		if (!open) return;
+		if (!open || sheet) return;
 		return clickOutside(
 			() => [dialog, button],
 			() => close(false)
@@ -183,21 +182,6 @@
 		el.addEventListener('pointercancel', stop);
 	}
 
-	const FOCUSABLE = 'button:not([disabled]), input:not([disabled])';
-	/** The Tab of a sheet goes round inside it. */
-	function trap(e: KeyboardEvent) {
-		if (!sheet || !dialog) return;
-		const els = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)];
-		const [first, last] = [els[0], els.at(-1)];
-		const at = document.activeElement;
-		if (e.shiftKey && at === first) {
-			e.preventDefault();
-			last?.focus();
-		} else if (!e.shiftKey && at === last) {
-			e.preventDefault();
-			first?.focus();
-		}
-	}
 	function radioKey(e: KeyboardEvent, i: number) {
 		const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
 		if (!step) return;
@@ -209,13 +193,14 @@
 	}
 	/** The keys stay in the chooser: the menu or sheet round it must not take them. */
 	function keys(e: KeyboardEvent) {
+		// In the Blad of a phone Tab goes round inside it, by the Blad.
+		if (sheet && e.key === 'Tab') return;
 		e.stopPropagation();
 		const at = e.target as HTMLElement;
 		if (e.key === 'Escape') {
 			e.preventDefault();
 			close(true);
-		} else if (e.key === 'Tab') trap(e);
-		else if (at.matches('[role="slider"]')) handleKey(e, at.dataset.side as Side);
+		} else if (at.matches('[role="slider"]')) handleKey(e, at.dataset.side as Side);
 		else if (at.matches('[role="radio"]')) radioKey(e, Number(at.dataset.i));
 		else if (at.matches('input') && e.key === 'Enter') {
 			e.preventDefault();
@@ -350,24 +335,11 @@
 		</div>
 	{/if}
 	{#if open && sheet}
-		<div class="scherm" use:scrollLock>
-			<div
-				class="sheet"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="{uid}-kop"
-				tabindex="-1"
-				bind:this={dialog}
-				use:keepKeys
-			>
-				<div class="greepje" aria-hidden="true"></div>
-				<div class="sheetkop">
-					<h3 class="veld-kop" id="{uid}-kop">{label}</h3>
-					<IconButton label="Sluiten" onclick={() => close(true)}>×</IconButton>
-				</div>
+		<Blad title={label} opener={() => button} onClose={() => close(true)}>
+			<div class="sheet" bind:this={dialog} use:keepKeys>
 				{@render content()}
 			</div>
-		</div>
+		</Blad>
 	{/if}
 </div>
 
@@ -552,45 +524,9 @@
 		border-top: 1px solid var(--rule);
 	}
 
-	/* Open on a phone: a sheet from below behind the screen, every control a finger high. */
-	.scherm {
-		position: fixed;
-		inset: 0;
-		z-index: var(--z-modal);
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-end;
-		overscroll-behavior: contain;
-		background: var(--scherm);
-	}
+	/* Open on a phone: a Blad from below, every control a finger high. */
 	.sheet {
-		box-sizing: border-box;
-		max-height: 100%;
-		overflow-y: auto;
-		overscroll-behavior: contain;
-		padding: var(--s-2) var(--s-4) var(--s-4);
-		background: var(--paper);
-		border-radius: var(--r-2) var(--r-2) 0 0;
-		color: var(--ink);
-	}
-	.greepje {
-		flex: none;
-		width: 36px;
-		height: 4px;
-		margin: 0 auto;
-		border-radius: var(--r-rond);
-		background: var(--rule);
-	}
-	.sheetkop {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	.sheetkop .veld-kop {
-		margin: 0;
-		font-size: var(--t-ui-raak);
-		font-weight: 600;
-		color: var(--ink);
+		padding: 0 var(--s-4) var(--s-4);
 	}
 	.sheet .snel .btn[aria-checked='true'] {
 		box-shadow: inset 0 -3px 0 var(--ink);
