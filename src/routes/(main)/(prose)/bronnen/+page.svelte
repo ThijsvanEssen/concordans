@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import CoverageLine from '$lib/components/ui/Coverage.svelte';
@@ -47,8 +48,7 @@
 		<header class="blad__kop"><h1 class="blad__titel">Bronnen en hergebruik</h1></header>
 		<p class="stub-lede">Concordans gebruikt alleen officiële bronnen.</p>
 
-		<div class="section" id="herkomst">
-			<h2 class="section-title">Herkomst</h2>
+		<Sectie title="Herkomst" niveau={2} inklapbaar={false} id="herkomst">
 			<KeyList>
 				{#each PUBLISHERS as p (p.name)}
 					<KeyRow key={p.name}
@@ -59,10 +59,9 @@
 					>
 				{/each}
 			</KeyList>
-		</div>
+		</Sectie>
 
-		<div class="section" id="dekking">
-			<h2 class="section-title">Dekking en stand</h2>
+		<Sectie title="Dekking en stand" niveau={2} inklapbaar={false} id="dekking">
 			<p>
 				Het netwerk bevat een selectie uit deze bronnen; wat erbuiten valt, staat bij de
 				<a href="/docs/methode#grenzen" class="cite">grenzen</a>.
@@ -107,10 +106,9 @@
 					{/if}
 				{/snippet}
 			</LoadState>
-		</div>
+		</Sectie>
 
-		<div class="section" id="hergebruik">
-			<h2 class="section-title">Hergebruik en aanhalen</h2>
+		<Sectie title="Hergebruik en aanhalen" niveau={2} inklapbaar={false} id="hergebruik">
 			<p>
 				De wetgeving, de publicaties in Staatsblad, Staatscourant en Tractatenblad, de open data van
 				de Tweede Kamer en de gegevens van rijksoverheid.nl vallen onder CC0 1.0: vrij te
@@ -133,7 +131,7 @@
 				Concordans, verbindingen van art. 273f Sr,
 				https://concordans.nl/wetten/BWBR0001854/artikel/273f (geraadpleegd 7 oktober 2026).
 			</p>
-		</div>
+		</Sectie>
 
 		<div class="meta-row">
 			<a href="/over" class="meta-link">Over Concordans</a>
