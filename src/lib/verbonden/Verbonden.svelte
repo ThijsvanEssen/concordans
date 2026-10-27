@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
 	// groups.ts, under the bronfilter.
-	import { capitalize, joinAnd, plural } from '$lib/text/words';
+	import { capitalize, joinAnd, plural, textOf } from '$lib/text/words';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -10,7 +10,8 @@
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import type { GraphNode } from '$lib/graph/types';
+	import { lawIdOf, type GraphNode } from '$lib/graph/types';
+	import { bwCode } from '$lib/text/bw';
 	import {
 		filterGroupCount,
 		emptyLine,
@@ -387,6 +388,13 @@
 			: []
 	);
 	const centerName = $derived(networkName ?? selection.label ?? '');
+	/** An article is drawn in the omhulling of its law, with the law's short name in the pil. */
+	const homeLaw = $derived(
+		selection.drawClass === 'article'
+			? (textOf(selection.raw?.props?.['instrument_abbreviation']) ??
+					bwCode(lawIdOf(selection.raw?.props)))
+			: null
+	);
 	// On a phone fewer bronnen stand on their own: past a dozen a soort is one circle with its
 	// count, so no names lie over each other in the narrow drawing (A208e).
 	let phone = $state(typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches);
@@ -525,6 +533,7 @@
 			<NetworkSketch
 				sketch={sketched}
 				name={centerName}
+				home={homeLaw}
 				open={schetsOpen?.id ?? null}
 				onSingle={(id) => (schetsId = schetsId === id ? null : id)}
 				onGroup={openKind}

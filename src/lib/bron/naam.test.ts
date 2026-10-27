@@ -97,7 +97,7 @@ describe('bronNaam', () => {
 				props: { court: 'Raad van State', date: '2023-01-11', ecli: 'ECLI:NL:RVS:2023:93' }
 			} as unknown as GraphNode['raw']
 		});
-		expect(bronNaam(j, meta)).toBe('Raad van State, 11\u00a0januari\u00a02023');
+		expect(bronNaam(j, meta)).toBe('Raad van State, 11\u00a0jan.\u00a02023');
 	});
 });
 

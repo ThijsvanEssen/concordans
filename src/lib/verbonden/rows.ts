@@ -19,7 +19,7 @@ import {
 	kamerstukNummer,
 	type DossierNaamBron
 } from '$lib/bron/dossier-naam';
-import { describeBron, UNNAMED } from '$lib/bron/describe';
+import { describeBronShort, UNNAMED } from '$lib/bron/describe';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { MODERATE_CONFIDENCE, filterGroupOf, confidenceWord, type FilterGroup } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
@@ -177,7 +177,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 	const edge = readEdge(meta, { direction: inbound ? 'inbound' : 'outbound', citingEcli: ecli });
 	return {
 		ref: refOf(n.collection, n.key, props),
-		...describeBron(n.collection, n.key, n.display_name, props, n.cite),
+		...describeBronShort(n.collection, n.key, n.display_name, props, n.cite),
 		...(edge.position ? { position: edge.position } : {}),
 		...(edge.passageAt ? { passageAt: edge.passageAt } : {}),
 		...(edge.noot ? { noot: edge.noot } : {}),

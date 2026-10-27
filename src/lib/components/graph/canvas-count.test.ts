@@ -49,3 +49,23 @@ describe('sameIds', () => {
 		expect(sameIds(['a'], ['a', 'b'])).toBe(false);
 	});
 });
+
+describe('countCanvas, the period', () => {
+	it('counts per kind what stands inside the years, and every bron without a date', () => {
+		const graph = new Graph();
+		graph.addNode('a', { filterGroup: 'uitspraken', date: '2012-05-01' });
+		graph.addNode('b', { filterGroup: 'uitspraken', date: '2020-05-01' });
+		graph.addNode('c', { filterGroup: 'artikelen' });
+		const { counts } = countCanvas({
+			graph,
+			drawn: new Set(['a', 'b', 'c']),
+			selectionId: null,
+			hiddenKinds: new Set(),
+			rechter: null,
+			period: { from: '2011-01-01', to: '2016-12-31' },
+			verborgen: new Map(),
+			hiddenLines: new Set()
+		});
+		expect(counts.kinds).toEqual({ uitspraken: 1, artikelen: 1 });
+	});
+});

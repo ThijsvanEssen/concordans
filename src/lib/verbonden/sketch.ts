@@ -19,7 +19,7 @@ export const SKETCH_LIMIT = 40;
 /** On a phone, a dozen: the drawing is narrow. */
 export const PHONE_SKETCH_LIMIT = 12;
 /** The longest line of a name: a longer name wraps at its words. */
-export const LABEL_MAX = 24;
+export const LABEL_MAX = 22;
 /** The longest line of a circle's name, under the circle. */
 const CIRCLE_LINE = 14;
 /** The height of a line of a name. */
@@ -30,7 +30,7 @@ const R_SINGLE = 118;
 const R_CLUSTER = 128;
 const MARGIN = 16;
 /** The width of a character of a name at 12 px, to keep a name inside the drawing. */
-const CHAR_WIDTH = 7;
+export const CHAR_WIDTH = 7;
 
 export type SketchGroup = {
 	id: string;

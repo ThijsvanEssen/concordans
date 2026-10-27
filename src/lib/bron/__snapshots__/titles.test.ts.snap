@@ -2,7 +2,7 @@
 
 exports[`the names of a bron > 'activities/3e394d68_06e1_4a3c_868a_61…' 1`] = `
 {
-  "canvas": "Regeling van werkzaamheden, 15 april 2025",
+  "canvas": "Regeling van werkzaamheden, 15 apr. 2025",
   "card": "Regeling van werkzaamheden",
   "label": "2025-04, Regeling",
   "row": "Regeling van werkzaamheden, 15 april 2025",
@@ -310,7 +310,7 @@ exports[`the names of a bron > 'factions/vvd' 1`] = `
 
 exports[`the names of a bron > 'instrument_versions/bwbr0005537_2002_…' 1`] = `
 {
-  "canvas": "Algemene wet bestuursrecht, versie van 29 mei 2002 tot 1 december 2002",
+  "canvas": "Algemene wet bestuursrecht, versie van 29 mei 2002 tot 1 dec. 2002",
   "card": "Versie",
   "label": "Algemene wet bestuursrecht, versie van 29 mei 2002 tot 1 december 2002",
   "row": "Naam niet in de gegevens",
@@ -321,7 +321,7 @@ exports[`the names of a bron > 'instrument_versions/bwbr0005537_2002_…' 1`] = 
 
 exports[`the names of a bron > 'instrument_versions/bwbr0005537_2008_…' 1`] = `
 {
-  "canvas": "Algemene wet bestuursrecht, versie van 1 januari 2008 tot 1 februari 2008",
+  "canvas": "Algemene wet bestuursrecht, versie van 1 jan. 2008 tot 1 feb. 2008",
   "card": "Versie",
   "label": "Algemene wet bestuursrecht, versie van 1 januari 2008 tot 1 februari 2008",
   "row": "Naam niet in de gegevens",
@@ -332,7 +332,7 @@ exports[`the names of a bron > 'instrument_versions/bwbr0005537_2008_…' 1`] = 
 
 exports[`the names of a bron > 'instrument_versions/bwbr0005537_2022_…' 1`] = `
 {
-  "canvas": "Algemene wet bestuursrecht, versie van 1 mei 2022 tot 1 augustus 2022",
+  "canvas": "Algemene wet bestuursrecht, versie van 1 mei 2022 tot 1 aug. 2022",
   "card": "Versie",
   "label": "Algemene wet bestuursrecht, versie van 1 mei 2022 tot 1 augustus 2022",
   "row": "Naam niet in de gegevens",
@@ -376,7 +376,7 @@ exports[`the names of a bron > 'instruments/stb_2026_187' 1`] = `
 
 exports[`the names of a bron > 'judgments/ecli_nl_ghdha_2018_2591' 1`] = `
 {
-  "canvas": "Hof Den Haag 9 oktober 2018 (Urgenda)",
+  "canvas": "Hof Den Haag 9 okt. 2018 (Urgenda)",
   "card": "Hof Den Haag 9 oktober 2018 (Urgenda)",
   "label": "Hof Den Haag 9 oktober 2018",
   "row": "Hof Den Haag 9 oktober 2018 (Urgenda)",
@@ -387,7 +387,7 @@ exports[`the names of a bron > 'judgments/ecli_nl_ghdha_2018_2591' 1`] = `
 
 exports[`the names of a bron > 'judgments/ecli_nl_hr_1965_ab7079' 1`] = `
 {
-  "canvas": "HR 5 november 1965 (Kelderluik)",
+  "canvas": "HR 5 nov. 1965 (Kelderluik)",
   "card": "HR 5 november 1965 (Kelderluik)",
   "label": "HR 5 november 1965",
   "row": "HR 5 november 1965 (Kelderluik)",
@@ -398,7 +398,7 @@ exports[`the names of a bron > 'judgments/ecli_nl_hr_1965_ab7079' 1`] = `
 
 exports[`the names of a bron > 'judgments/ecli_nl_hr_2019_2006' 1`] = `
 {
-  "canvas": "HR 20 december 2019 (Urgenda)",
+  "canvas": "HR 20 dec. 2019 (Urgenda)",
   "card": "HR 20 december 2019 (Urgenda)",
   "label": "HR 20 december 2019",
   "row": "HR 20 december 2019 (Urgenda)",

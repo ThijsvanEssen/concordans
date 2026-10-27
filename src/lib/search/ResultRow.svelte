@@ -105,7 +105,7 @@
 		text-decoration: none;
 	}
 	.vervallen {
-		color: var(--uitkomst-nee);
+		color: var(--ink-3);
 	}
 
 	@media (max-width: 640px) {

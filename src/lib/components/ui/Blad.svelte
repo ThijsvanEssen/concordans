@@ -27,6 +27,7 @@
 		upTo = 'telefoon',
 		aboveTabbar = false,
 		tall = false,
+		vol = false,
 		showTitle = true
 	}: {
 		/** The name of the dialog: its head, and for a screen reader. */
@@ -47,6 +48,8 @@
 		aboveTabbar?: boolean;
 		/** A phone: always the 88 % of the screen, so the sheet does not move as its content does. */
 		tall?: boolean;
+		/** A phone: the whole screen, as a search of its own (Netwerkkeuze, Bron toevoegen). */
+		vol?: boolean;
 		/** The head names it; false where the content's own first heading does. */
 		showTitle?: boolean;
 	} = $props();
@@ -116,6 +119,7 @@
 		class="sheet"
 		class:is-bottom={bottom}
 		class:is-tall={tall}
+		class:is-vol={vol}
 		data-place={place}
 		role="dialog"
 		aria-modal="true"
@@ -126,7 +130,7 @@
 		onkeydown={onKey}
 	>
 		{#if bottom}<span class="greep" aria-hidden="true"></span>{/if}
-		<div class="kop">
+		<div class="kop" class:kaal={!showTitle}>
 			{#if showTitle}<h2 class="title" id="{uid}-title">{title}</h2>{:else}<span></span>{/if}
 			<IconButton class="sluit" label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
@@ -193,6 +197,12 @@
 	.sheet.is-bottom.is-tall {
 		height: calc(88dvh - var(--blad-below));
 	}
+	.sheet.is-bottom.is-vol {
+		height: calc(100dvh - var(--balk-h) - var(--blad-below));
+		max-height: none;
+		border-top: 0;
+		border-radius: 0;
+	}
 	@media (min-width: 769px) {
 		.sheet.is-bottom {
 			max-width: 480px;
@@ -217,6 +227,17 @@
 		justify-content: space-between;
 		gap: var(--s-3);
 		padding: var(--s-4) var(--s-4) var(--s-3);
+	}
+	/* No title of its own: the × stands in the corner, so the content begins under the grip. */
+	.kop.kaal {
+		position: absolute;
+		top: var(--s-2);
+		right: var(--s-2);
+		z-index: 1;
+		padding: 0;
+	}
+	.sheet:has(.kop.kaal) .inhoud {
+		padding-top: var(--s-5);
 	}
 	.title {
 		margin: 0;
