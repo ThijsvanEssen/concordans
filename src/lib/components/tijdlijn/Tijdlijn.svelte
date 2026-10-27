@@ -90,7 +90,7 @@
 
 <!-- The day of a line: day and month, the year under it where the group does not name it. -->
 {#snippet dayOn(year: string | null | undefined, datum: string)}
-	<DateTime iso={datum} form="dagMaand"
+	<DateTime iso={datum} form="dayMonth"
 		>{dagMaand(datum)}{#if datum.slice(0, 4) !== year}<span class="j">{datum.slice(0, 4)}</span
 			>{/if}</DateTime
 	>

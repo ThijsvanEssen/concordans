@@ -263,7 +263,7 @@
 		overflow-wrap: anywhere;
 	}
 	/* Lezerkop (DS): on a phone the title is t-h2. */
-	@media (max-width: 767px) {
+	@media (max-width: 768px) {
 		.reader-title {
 			font-size: var(--t-h2);
 		}

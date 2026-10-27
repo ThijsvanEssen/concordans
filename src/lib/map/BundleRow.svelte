@@ -49,7 +49,7 @@
 	{#snippet aside()}
 		<span class="aantal">{formatCount(bundle.items.length)}</span>
 		{#if bundle.gewijzigd}<span class="dag"
-				><DateTime iso={vandaag(new Date(bundle.gewijzigd))} form="dagMaand" /></span
+				><DateTime iso={vandaag(new Date(bundle.gewijzigd))} form="dayMonth" /></span
 			>{/if}
 		{@render choices?.()}
 	{/snippet}

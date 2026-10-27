@@ -9,12 +9,12 @@
 
 	let {
 		iso,
-		form = 'kort',
+		form = 'short',
 		children
 	}: {
 		/** An ISO day or moment; only its day counts. */
 		iso: string | null | undefined;
-		form?: 'kort' | 'dagMaand' | 'lang' | 'weekdag';
+		form?: 'short' | 'dayMonth' | 'long' | 'weekday';
 		children?: Snippet;
 	} = $props();
 
@@ -22,7 +22,9 @@
 	const stamp = $derived(
 		day ? `${day.j}-${String(day.m).padStart(2, '0')}-${String(day.d).padStart(2, '0')}` : null
 	);
-	const words = $derived({ kort: korteDatum, dagMaand, lang: langeDatum, weekdag }[form](iso));
+	const words = $derived(
+		{ short: korteDatum, dayMonth: dagMaand, long: langeDatum, weekday: weekdag }[form](iso)
+	);
 </script>
 
 {#if stamp}<time datetime={stamp}
