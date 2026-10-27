@@ -7,7 +7,6 @@ import {
 	wholeDays,
 	normalizeItem,
 	doorzochtVanaf,
-	countLine,
 	dayLabel,
 	daysOf,
 	publicationCite,
@@ -84,7 +83,10 @@ describe('daysOf', () => {
 			'Motie'
 		]);
 		expect('fold' in first.entries[0] && first.entries[0].fold.items).toHaveLength(3);
-		expect(countLine(first.counts)).toBe('4 moties, 1 brief regering');
+		expect(first.counts.map((c) => `${c.count} ${c.kind}`)).toEqual([
+			'4 Motie',
+			'1 Brief regering'
+		]);
 		// One of a kind on another day does not fold.
 		expect(days[1].entries).toHaveLength(1);
 	});

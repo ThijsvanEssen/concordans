@@ -1,10 +1,10 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import TermText from '../../readers/TermText.svelte';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import { officialNumber } from '$lib/bron/dossier-naam';
-	import { korteDatum } from '$lib/text/datum';
 	import {
 		chapterTitle,
 		groupByNumber,
@@ -103,7 +103,7 @@
 			{@const dag = laatst ?? d.opened_on}
 			<span class="row-sub"
 				>{who}{who && dag ? ', ' : ''}{#if dag}{laatst ? 'laatste activiteit' : 'geopend'}
-					{korteDatum(dag)}{/if}</span
+					<DateTime iso={dag} />{/if}</span
 			>
 		{/snippet}
 		{#snippet aside()}

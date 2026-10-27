@@ -7,7 +7,8 @@
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { dagMaand, vandaag } from '$lib/text/datum';
+	import DateTime from '$lib/components/ui/DateTime.svelte';
+	import { vandaag } from '$lib/text/datum';
 	import { groepen, placeRows, rowTitle, type Map, type MapItem } from './map';
 	import { bundlePageHref } from './page';
 
@@ -47,7 +48,8 @@
 	{/snippet}
 	{#snippet aside()}
 		<span class="aantal">{formatCount(bundle.items.length)}</span>
-		{#if bundle.gewijzigd}<span class="dag">{dagMaand(vandaag(new Date(bundle.gewijzigd)))}</span
+		{#if bundle.gewijzigd}<span class="dag"
+				><DateTime iso={vandaag(new Date(bundle.gewijzigd))} form="dayMonth" /></span
 			>{/if}
 		{@render choices?.()}
 	{/snippet}
