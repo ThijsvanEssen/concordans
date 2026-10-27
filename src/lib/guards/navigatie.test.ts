@@ -20,16 +20,7 @@ describe('the navigation', () => {
 		expect(
 			overtreders((t) => /<NetworkButton\b/.test(t), [plek('lib/components/layout/TopBar.svelte')])
 		).toEqual([]);
-		expect(
-			overtreders(
-				(t) => /\bnetworkHref\(/.test(t),
-				[
-					plek('lib/nav/network.ts'),
-					plek('lib/components/layout/NetworkButton.svelte'),
-					plek('lib/components/layout/TabBar.svelte', 'the Netwerk tab of a phone')
-				]
-			)
-		).toEqual([]);
+		expect(overtreders((t) => /\bnetworkHref\(/.test(t), [plek('lib/nav/network.ts')])).toEqual([]);
 		expect(bron('lib/components/layout/NetworkButton.svelte')).toContain("'Netwerk'");
 	});
 

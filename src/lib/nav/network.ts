@@ -5,6 +5,7 @@
 import { exploreUrl } from '$lib/bron/address';
 import { hasFocus, modeOf, NETWORK_MODE } from '$lib/bron/href';
 import { parseNetwerk } from '$lib/selection/netwerk';
+import { bewaardAantal, keptNetwerk } from '$lib/selection/bewaard.svelte';
 
 /** The params of the werkplek alone: the text of the bron leaves them (the netwerk is kept). */
 const WERKPLEK_PARAMS = ['mode', 'netwerk', 'uit', 'tussen', 'omgeving', 'weergave', 'kies'];
@@ -51,3 +52,10 @@ export const onNetwork = (url: URL): boolean => modeOf(url) === 'graph';
  */
 export const networkCount = (url: URL, kept: number): number =>
 	onNetwork(url) ? parseNetwerk(exploreUrl(url).searchParams).ids.length : kept;
+
+/** What the button and the tab of a phone show at `url`: where it leads, pressed, the count. */
+export const networkState = (url: URL) => ({
+	href: networkHref(url, keptNetwerk()),
+	pressed: onNetwork(url),
+	count: networkCount(url, bewaardAantal())
+});

@@ -12,8 +12,7 @@
 	import { MINE, mineAt } from '$lib/nav/mine';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
-	import { networkCount, networkHref, onNetwork } from '$lib/nav/network';
-	import { bewaardAantal, keptNetwerk } from '$lib/selection/bewaard.svelte';
+	import { networkState } from '$lib/nav/network';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
@@ -26,8 +25,7 @@
 	const source = $derived(sourceOf(page.url));
 	const mine = $derived(mineAt(path));
 	const onActueel = $derived(path.startsWith('/actueel'));
-	const onNetwerk = $derived(onNetwork(page.url));
-	const aantal = $derived(networkCount(page.url, bewaardAantal()));
+	const network = $derived(networkState(page.url));
 	const fresh = $derived(sign.has('bundels') || sign.has('gevolgd'));
 
 	// A page of another place closes the sheet.
@@ -129,12 +127,13 @@
 	</button>
 	<a
 		class="tab"
-		class:is-active={!sheet && onNetwerk}
-		href={networkHref(page.url, keptNetwerk())}
+		class:is-active={!sheet && network.pressed}
+		href={network.href}
 		role="button"
-		aria-pressed={onNetwerk}
-		aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : undefined}
-		><Picto naam="netwerk-o" size={20} />Netwerk{#if aantal}<span class="tab__aantal">{aantal}</span
+		aria-pressed={network.pressed}
+		aria-label={network.count ? `Netwerk, ${count(network.count, 'bron', 'bronnen')}` : undefined}
+		><Picto naam="netwerk-o" size={20} />Netwerk{#if network.count}<span class="tab__aantal"
+				>{network.count}</span
 			>{/if}</a
 	>
 	<a
