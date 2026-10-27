@@ -119,7 +119,7 @@ test('Verband says it is looking, then that nothing joins the bronnen (N9)', asy
 	// Nothing to filter by yet: the legend holds no Tonen.
 	await expect((await legend(page)).getByRole('heading', { name: 'Tonen' })).toHaveCount(0);
 	answer();
-	await expect(page.getByText('Geen verband gevonden binnen 2 stappen')).toBeVisible();
+	await expect(page.getByText('Geen keten binnen 1 stap')).toBeVisible();
 	await expect(page.getByText('Verband zoeken', { exact: true })).toHaveCount(0);
 	await expect((await legend(page)).getByRole('heading', { name: 'Tonen' })).toHaveCount(0);
 });

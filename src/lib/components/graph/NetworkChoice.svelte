@@ -22,6 +22,7 @@
 		hasSelection = false,
 		reach = null,
 		empty = false,
+		stepsOff = null,
 		children
 	}: {
 		view: View;
@@ -36,6 +37,8 @@
 		reach?: NeighborhoodReach | null;
 		/** No bron chosen yet. */
 		empty?: boolean;
+		/** Why the steps are off whatever the weergave (Verband with one bron): said in a line. */
+		stepsOff?: string | null;
 		/** What belongs to the weergave: Tonen, Relatie, Periode, Meer. */
 		children?: Snippet;
 	} = $props();
@@ -53,17 +56,21 @@
 		view === 'verband' ? 'Het aantal stappen geldt voor het paar.' : 'Klik een bron op het canvas.'
 	);
 	const reason = (d: number) =>
-		networkOn && !hasSelection
-			? NO_SELECTION
-			: beyondCap(d)
-				? `Maximaal ${cap} bronnen getoond`
-				: null;
+		stepsOff
+			? stepsOff
+			: networkOn && !hasSelection
+				? NO_SELECTION
+				: beyondCap(d)
+					? `Maximaal ${cap} bronnen getoond`
+					: null;
 	/**
 	 * Why the steps are off where it is the reader's to fix, said where a finger and the keyboard
 	 * read it (C15b). A cut-off neighbourhood greys the steps out and says its cap in their title
 	 * only: no sentence in the panel (R7).
 	 */
-	const stepReason = $derived(STEPS.some((d) => reason(d) === NO_SELECTION) ? NO_SELECTION : null);
+	const stepReason = $derived(
+		stepsOff ?? (STEPS.some((d) => reason(d) === NO_SELECTION) ? NO_SELECTION : null)
+	);
 </script>
 
 <CanvasKaart title="Weergave" class="netwerkkeuze">

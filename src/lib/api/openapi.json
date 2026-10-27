@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the PostgreSQL knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.80.11",
+		"version": "0.80.13",
 		"x-request-timeout-ms": 30000,
 		"x-rate-limit": { "calls": 200, "period_seconds": 60 }
 	},
@@ -5997,6 +5997,71 @@
 				}
 			}
 		},
+		"/api/chains": {
+			"get": {
+				"tags": ["chains", "chains"],
+				"summary": "The chains of steps between two chosen nodes",
+				"description": "The chains of 1 to `max_steps` steps from one node of `ids` (two node ids, `collection/key`, comma-separated) to the other. A step joins two sources (laws and articles, `instruments`, `articles`): by an edge between them (`via` null: one refers to the other), or by a node with an edge to both and to at most 50 sources (`via`: what they share, as `/api/nodes/shared` finds it: a paper that names both, a judgment that cites both). An end may be any node. So two steps are an end, what it shares with a law, that law, what the law shares with the other end, the other end. Each node is once in a chain. A step's `weight` is the sum over the nodes its sources share of 1 / ln k, k the sources of the node, plus 1 / ln 2 for an edge between them; a chain is as strong as its weakest step (`weight`). One block per length (1 to `max_steps`), each there when empty: its `total` and its first `limit` chains, the strongest first (the weakest step, then the steps together, then the ids), each source between the ends in one of them only. Each step names its way (the edge, else the node they share with the fewest sources, then the lowest id) and counts its `ways`. The shortest chains first: a source the ends share or a shorter chain passes starts no longer chain. A chain does not pass through a law by its articles (the `PART_OF` of an article and its law counts only where the law is an end). No edge is derived. Up to 3 steps every chain is counted (of at most 5,000 sources of an end); longer chains are searched best first, 200 sources a level with their 50 strongest steps each, and their `total` is then at least that many. A search that left a way out is `capped`, one past 10 s `partial`; a block is `complete` when neither touched it. Searched on the steps `semantic graph-steps` builds: 503 until it has. 404 when a node is not there.",
+				"operationId": "get_chains_route_api_chains_get",
+				"parameters": [
+					{
+						"name": "ids",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Two node ids, comma-separated: `instruments/x,instruments/y`",
+							"title": "Ids"
+						},
+						"description": "Two node ids, comma-separated: `instruments/x,instruments/y`"
+					},
+					{
+						"name": "max_steps",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 6,
+							"minimum": 1,
+							"description": "The longest chain, in steps.",
+							"default": 2,
+							"title": "Max Steps"
+						},
+						"description": "The longest chain, in steps."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 50,
+							"minimum": 1,
+							"description": "The chains of a block, at most.",
+							"default": 12,
+							"title": "Limit"
+						},
+						"description": "The chains of a block, at most."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ChainsResponse" } }
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/lookup": {
 			"get": {
 				"tags": ["lookup", "lookup"],
@@ -9530,6 +9595,146 @@
 				],
 				"title": "CabinetSummaryDTO",
 				"description": "A cabinet in the list, with its counts."
+			},
+			"ChainBlockDTO": {
+				"properties": {
+					"steps": {
+						"type": "integer",
+						"title": "Steps",
+						"description": "The steps of each chain of the block."
+					},
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Its chains; 0 when none joins the ends. At least that many when the block is not `complete`."
+					},
+					"chains": {
+						"items": { "$ref": "#/components/schemas/ChainDTO" },
+						"type": "array",
+						"title": "Chains",
+						"description": "The first `limit`, the strongest first (the weakest step, then the steps together, then the ids of their sources), each source between the ends in one of them only."
+					},
+					"complete": {
+						"type": "boolean",
+						"title": "Complete",
+						"description": "The search read all this length needs: false when it ran out of time or left a way out, and then `total` is a lower bound."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["steps", "total", "chains", "complete"],
+				"title": "ChainBlockDTO",
+				"description": "The chains of one length."
+			},
+			"ChainDTO": {
+				"properties": {
+					"node_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Node Ids",
+						"description": "Its sources in order: the two ends and the sources between them."
+					},
+					"steps": {
+						"items": { "$ref": "#/components/schemas/ChainStepDTO" },
+						"type": "array",
+						"title": "Steps"
+					},
+					"weight": {
+						"type": "number",
+						"title": "Weight",
+						"description": "The `weight` of its weakest step."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["node_ids", "steps", "weight"],
+				"title": "ChainDTO",
+				"description": "A row of steps from one node asked for to the other."
+			},
+			"ChainStepDTO": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"title": "Source",
+						"description": "The id of the source it starts at."
+					},
+					"target": {
+						"type": "string",
+						"title": "Target",
+						"description": "The id of the source it ends at."
+					},
+					"via": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Via",
+						"description": "The node both sources share (a paper that names both); null when an edge joins them."
+					},
+					"edge_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Edge Ids",
+						"description": "Its edges from `source`: the one to `target`, or the one to `via` and the one from `via` to `target`."
+					},
+					"ways": {
+						"type": "integer",
+						"title": "Ways",
+						"description": "The ways this step has: the edge between its sources, if any, and each node they share; it names one."
+					},
+					"weight": {
+						"type": "number",
+						"title": "Weight",
+						"description": "How strong the step is: over the nodes its sources share the sum of 1 / ln k, k the sources of the node, plus 1 / ln 2 for the edge between them."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["source", "target", "via", "edge_ids", "ways", "weight"],
+				"title": "ChainStepDTO",
+				"description": "One step of a chain: two sources, joined by an edge or by a node both touch."
+			},
+			"ChainsResponse": {
+				"properties": {
+					"ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Ids",
+						"description": "The two nodes asked for, in their order."
+					},
+					"max_steps": { "type": "integer", "title": "Max Steps" },
+					"limit": { "type": "integer", "title": "Limit" },
+					"blocks": {
+						"items": { "$ref": "#/components/schemas/ChainBlockDTO" },
+						"type": "array",
+						"title": "Blocks",
+						"description": "One block per length from 1 to `max_steps`, each there when empty."
+					},
+					"nodes": {
+						"items": { "$ref": "#/components/schemas/BaseNodeDTO" },
+						"type": "array",
+						"title": "Nodes",
+						"description": "Every node on the chains of the blocks, each once."
+					},
+					"edges": {
+						"items": { "$ref": "#/components/schemas/NodeNeighborhoodEdge" },
+						"type": "array",
+						"title": "Edges",
+						"description": "Every edge on the chains of the blocks, each once."
+					},
+					"capped": {
+						"type": "boolean",
+						"title": "Capped",
+						"description": "The search left a way out: more than 5,000 sources of an end (of an end that is no source more than 1,000 neighbours), more than 200 of a level of a longer search, more than 50 steps of one, or one of two ways to a source: a chain may have been missed."
+					},
+					"partial": {
+						"type": "boolean",
+						"title": "Partial",
+						"description": "The search ran past its time: the chains found by then."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["ids", "max_steps", "limit", "blocks", "nodes", "edges", "capped", "partial"],
+				"title": "ChainsResponse",
+				"description": "Response for GET /api/chains."
 			},
 			"ChamberColorsDTO": {
 				"properties": {

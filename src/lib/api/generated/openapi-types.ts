@@ -1617,6 +1617,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The chains of steps between two chosen nodes
+         * @description The chains of 1 to `max_steps` steps from one node of `ids` (two node ids, `collection/key`, comma-separated) to the other. A step joins two sources (laws and articles, `instruments`, `articles`): by an edge between them (`via` null: one refers to the other), or by a node with an edge to both and to at most 50 sources (`via`: what they share, as `/api/nodes/shared` finds it: a paper that names both, a judgment that cites both). An end may be any node. So two steps are an end, what it shares with a law, that law, what the law shares with the other end, the other end. Each node is once in a chain. A step's `weight` is the sum over the nodes its sources share of 1 / ln k, k the sources of the node, plus 1 / ln 2 for an edge between them; a chain is as strong as its weakest step (`weight`). One block per length (1 to `max_steps`), each there when empty: its `total` and its first `limit` chains, the strongest first (the weakest step, then the steps together, then the ids), each source between the ends in one of them only. Each step names its way (the edge, else the node they share with the fewest sources, then the lowest id) and counts its `ways`. The shortest chains first: a source the ends share or a shorter chain passes starts no longer chain. A chain does not pass through a law by its articles (the `PART_OF` of an article and its law counts only where the law is an end). No edge is derived. Up to 3 steps every chain is counted (of at most 5,000 sources of an end); longer chains are searched best first, 200 sources a level with their 50 strongest steps each, and their `total` is then at least that many. A search that left a way out is `capped`, one past 10 s `partial`; a block is `complete` when neither touched it. Searched on the steps `semantic graph-steps` builds: 503 until it has. 404 when a node is not there.
+         */
+        get: operations["get_chains_route_api_chains_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lookup": {
         parameters: {
             query?: never;
@@ -4108,6 +4128,126 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * ChainBlockDTO
+         * @description The chains of one length.
+         */
+        ChainBlockDTO: {
+            /**
+             * Steps
+             * @description The steps of each chain of the block.
+             */
+            steps: number;
+            /**
+             * Total
+             * @description Its chains; 0 when none joins the ends. At least that many when the block is not `complete`.
+             */
+            total: number;
+            /**
+             * Chains
+             * @description The first `limit`, the strongest first (the weakest step, then the steps together, then the ids of their sources), each source between the ends in one of them only.
+             */
+            chains: components["schemas"]["ChainDTO"][];
+            /**
+             * Complete
+             * @description The search read all this length needs: false when it ran out of time or left a way out, and then `total` is a lower bound.
+             */
+            complete: boolean;
+        };
+        /**
+         * ChainDTO
+         * @description A row of steps from one node asked for to the other.
+         */
+        ChainDTO: {
+            /**
+             * Node Ids
+             * @description Its sources in order: the two ends and the sources between them.
+             */
+            node_ids: string[];
+            /** Steps */
+            steps: components["schemas"]["ChainStepDTO"][];
+            /**
+             * Weight
+             * @description The `weight` of its weakest step.
+             */
+            weight: number;
+        };
+        /**
+         * ChainStepDTO
+         * @description One step of a chain: two sources, joined by an edge or by a node both touch.
+         */
+        ChainStepDTO: {
+            /**
+             * Source
+             * @description The id of the source it starts at.
+             */
+            source: string;
+            /**
+             * Target
+             * @description The id of the source it ends at.
+             */
+            target: string;
+            /**
+             * Via
+             * @description The node both sources share (a paper that names both); null when an edge joins them.
+             */
+            via: string | null;
+            /**
+             * Edge Ids
+             * @description Its edges from `source`: the one to `target`, or the one to `via` and the one from `via` to `target`.
+             */
+            edge_ids: string[];
+            /**
+             * Ways
+             * @description The ways this step has: the edge between its sources, if any, and each node they share; it names one.
+             */
+            ways: number;
+            /**
+             * Weight
+             * @description How strong the step is: over the nodes its sources share the sum of 1 / ln k, k the sources of the node, plus 1 / ln 2 for the edge between them.
+             */
+            weight: number;
+        };
+        /**
+         * ChainsResponse
+         * @description Response for GET /api/chains.
+         */
+        ChainsResponse: {
+            /**
+             * Ids
+             * @description The two nodes asked for, in their order.
+             */
+            ids: string[];
+            /** Max Steps */
+            max_steps: number;
+            /** Limit */
+            limit: number;
+            /**
+             * Blocks
+             * @description One block per length from 1 to `max_steps`, each there when empty.
+             */
+            blocks: components["schemas"]["ChainBlockDTO"][];
+            /**
+             * Nodes
+             * @description Every node on the chains of the blocks, each once.
+             */
+            nodes: components["schemas"]["BaseNodeDTO"][];
+            /**
+             * Edges
+             * @description Every edge on the chains of the blocks, each once.
+             */
+            edges: components["schemas"]["NodeNeighborhoodEdge"][];
+            /**
+             * Capped
+             * @description The search left a way out: more than 5,000 sources of an end (of an end that is no source more than 1,000 neighbours), more than 200 of a level of a longer search, more than 50 steps of one, or one of two ways to a source: a chain may have been missed.
+             */
+            capped: boolean;
+            /**
+             * Partial
+             * @description The search ran past its time: the chains found by then.
+             */
+            partial: boolean;
         };
         /**
          * ChamberColorsDTO
@@ -17596,6 +17736,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PathsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_chains_route_api_chains_get: {
+        parameters: {
+            query: {
+                /** @description Two node ids, comma-separated: `instruments/x,instruments/y` */
+                ids: string;
+                /** @description The longest chain, in steps. */
+                max_steps?: number;
+                /** @description The chains of a block, at most. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChainsResponse"];
                 };
             };
             /** @description Validation Error */
