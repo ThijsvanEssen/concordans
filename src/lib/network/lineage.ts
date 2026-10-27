@@ -12,6 +12,7 @@ import { shortDatesIn } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
 import type { ChainLayer, ChainNode } from './chain';
+import { PERSOON_LAGEN } from './persoon-lagen';
 
 type NodeResponse = Schema<'NodeGraphResponse'>;
 type Neighbour = NodeResponse['neighbors']['buckets'][number]['items'][number];
@@ -99,7 +100,7 @@ export async function lineage(
 	});
 	if (start.node.collection === 'members') {
 		// A Kamerlid: what it sat in, per kind, in the order of its seats.
-		const order = ['factions', 'ministries', 'cabinets', 'committees'];
+		const order: readonly string[] = PERSOON_LAGEN;
 		for (const b of start.neighbors?.buckets ?? []) {
 			if (!relations.includes(b.relation as Relation) || b.direction !== 'outbound') continue;
 			for (const item of b.items)
