@@ -37,7 +37,7 @@ export const COMPONENTS: Record<Component, string> = {
 	outcome: 'src/lib/components/parliamentary/Uitkomst.svelte',
 	section: 'src/lib/components/ui/Sectie.svelte',
 	fold: 'src/lib/components/ui/FoldButton.svelte',
-	keuze: 'src/lib/components/ui/Keuze.svelte'
+	choice: 'src/lib/components/ui/Keuze.svelte'
 };
 
 /** A component the paint sets elements of. */
@@ -76,7 +76,7 @@ type Component =
 	| 'outcome'
 	| 'section'
 	| 'fold'
-	| 'keuze';
+	| 'choice';
 
 /** The scoping class of each component. */
 export type Classes = Record<Component, string>;

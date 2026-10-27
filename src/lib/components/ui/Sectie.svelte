@@ -15,7 +15,7 @@
 		aantal,
 		id,
 		naast,
-		merk,
+		mark,
 		niveau = 2,
 		inklapbaar = true,
 		sleutel,
@@ -28,7 +28,7 @@
 		/** Beside the title, at the right: a link or a control. Only while it stands open. */
 		naast?: Snippet;
 		/** After the title, in the heading: a mark such as NewMark, or the button it opens. */
-		merk?: Snippet;
+		mark?: Snippet;
 		/** The level of the heading. 2: a section of a reader or a page, under a hairline.
 		 *  3: a group in a section (a year), 4: a group in that (a law), both without a line. */
 		niveau?: 2 | 3 | 4;
@@ -66,7 +66,7 @@
 			>
 		{:else}
 			{@render kop()}
-		{/if}{#if merk}{@render merk()}{/if}{#if naast && isOpen}<span class="naast"
+		{/if}{#if mark}{@render mark()}{/if}{#if naast && isOpen}<span class="naast"
 				>{@render naast()}</span
 			>{/if}
 	</svelte:element>

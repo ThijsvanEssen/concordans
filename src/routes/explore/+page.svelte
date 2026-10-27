@@ -1640,7 +1640,7 @@
 
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
 	let readTab = $state<Panel>('tekst');
-	const LEES_KEUZE: Option<Panel>[] = [
+	const READ_CHOICE: Option<Panel>[] = [
 		{ waarde: 'tekst', label: 'Tekst' },
 		{ waarde: 'verbonden', label: 'Verbonden' }
 	];
@@ -2256,7 +2256,7 @@
 						<Keuze
 							vol
 							label="Tekst of Verbonden"
-							opties={LEES_KEUZE}
+							opties={READ_CHOICE}
 							waarde={readTab}
 							onSelect={(w) => (readTab = w)}
 						/>
@@ -2264,7 +2264,7 @@
 					{#if withContents}
 						<button
 							type="button"
-							class="mobile-tab--toc"
+							class="btn mobile-tab--toc"
 							aria-haspopup="dialog"
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
@@ -2686,26 +2686,10 @@
 			padding: var(--s-2) var(--s-3);
 		}
 	}
-	/* Inhoud beside it wears the frame of a segment of the Keuze. */
+	/* Inhoud beside it is a Knop. */
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;
-		box-sizing: border-box;
-		height: var(--veld-h);
-		padding: 0 var(--s-4);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.mobile-tab--toc {
-			height: var(--veld-h-raak);
-		}
 	}
 
 	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above

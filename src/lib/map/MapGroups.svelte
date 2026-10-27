@@ -167,7 +167,7 @@
 	</IndexRow>
 {/snippet}
 
-{#snippet rijen(items: MapItem[])}
+{#snippet itemRows(items: MapItem[])}
 	<ul class="rijen">
 		{#each placeRows(items) as r (itemKey(r.head))}
 			{@render row(r.head, false, r.kept)}
@@ -183,81 +183,85 @@
 		{@const lawOpen = !!law && open.has(`law:${g.sleutel}`)}
 		{@const groupLines = fresh?.group(g.sleutel) ?? []}
 		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
-		<Sectie title={g.groep} niveau={3} inklapbaar={false} id={groupAnchor(g.sleutel)}>
-			{#snippet merk()}
-				{#if groupLines.length}<button
-						type="button"
-						class="nieuw-knop raakvlak"
-						aria-expanded={linesOpen}
-						aria-label="Nieuw in {g.groep}"
-						onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
-					>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
-			{/snippet}
-			{#snippet naast()}
-				{#if law || (map && !note)}
-					<RijActies naam={g.groep}>
-						{#snippet menu(close)}
-							{#if law}
-								<button
-									type="button"
-									role="menuitemcheckbox"
-									class="tekstmenu__item"
-									aria-checked={lawOpen}
-									onclick={() => {
-										close();
-										toggle(`law:${g.sleutel}`);
-									}}>Regelingen gebaseerd op</button
-								>
-							{/if}
-							{#if map && !note}
-								<button
-									type="button"
-									role="menuitem"
-									class="tekstmenu__item"
-									onclick={() => {
-										close();
-										groupNoteOpen = g.sleutel;
-									}}>Aantekening</button
-								>
-							{/if}
-						{/snippet}
-					</RijActies>
+		<div class="groep">
+			<Sectie title={g.groep} niveau={3} inklapbaar={false} id={groupAnchor(g.sleutel)}>
+				{#snippet mark()}
+					{#if groupLines.length}<button
+							type="button"
+							class="nieuw-knop raakvlak"
+							aria-expanded={linesOpen}
+							aria-label="Nieuw in {g.groep}"
+							onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
+						>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
+				{/snippet}
+				{#snippet naast()}
+					{#if law || (map && !note)}
+						<RijActies naam={g.groep}>
+							{#snippet menu(close)}
+								{#if law}
+									<button
+										type="button"
+										role="menuitemcheckbox"
+										class="tekstmenu__item"
+										aria-checked={lawOpen}
+										onclick={() => {
+											close();
+											toggle(`law:${g.sleutel}`);
+										}}>Regelingen gebaseerd op</button
+									>
+								{/if}
+								{#if map && !note}
+									<button
+										type="button"
+										role="menuitem"
+										class="tekstmenu__item"
+										onclick={() => {
+											close();
+											groupNoteOpen = g.sleutel;
+										}}>Aantekening</button
+									>
+								{/if}
+							{/snippet}
+						</RijActies>
+					{/if}
+				{/snippet}
+				{#if linesOpen && fresh}
+					<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
 				{/if}
-			{/snippet}
-			{#if linesOpen && fresh}
-				<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
-			{/if}
-			{#if law && lawOpen}
-				<div class="wet-open">
-					<MapRegelingen laad={() => onderWet(law)} />
-					<p class="verder">
-						<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(law)}`)}
-							>Wet in de lezer</TekstLink
-						>
-					</p>
-				</div>
-			{/if}
-			<Aantekening
-				tekst={note}
-				bij={g.groep}
-				bind:open={() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)}
-				onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
-			/>
-			{@render rijen(g.items)}
-		</Sectie>
+				{#if law && lawOpen}
+					<div class="wet-open">
+						<MapRegelingen laad={() => onderWet(law)} />
+						<p class="verder">
+							<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(law)}`)}
+								>Wet in de lezer</TekstLink
+							>
+						</p>
+					</div>
+				{/if}
+				<Aantekening
+					tekst={note}
+					bij={g.groep}
+					bind:open={
+						() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)
+					}
+					onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
+				/>
+				{@render itemRows(g.items)}
+			</Sectie>
+		</div>
 	{:else}
-		{@render rijen(g.items)}
+		{@render itemRows(g.items)}
 	{/if}
 {/each}
 
 <style>
 	/* One group follows another at the step of a section's groups. */
-	:global(.sectie.niveau-3[id^='groep-']) {
+	.groep {
 		margin-top: var(--s-3);
 	}
 	/* The ⋯ of a group's head shows on its hover and focus, as a row's on the row's. */
-	:global(.sectie .kop:hover .rij-knop),
-	:global(.sectie .kop:focus-within .rij-knop) {
+	.groep :global(.kop:hover .rij-knop),
+	.groep :global(.kop:focus-within .rij-knop) {
 		opacity: 1;
 	}
 	/* The mark of a group with something new opens what came in, in place. */
@@ -326,10 +330,10 @@
 	   with what follows; the ⋯ and the hover's grey left out; the address of a source
 	   outside it. */
 	@media print {
-		:global(.sectie .kop) {
+		.groep :global(.kop) {
 			break-after: avoid;
 		}
-		:global(.sectie .kop .rij-acties) {
+		.groep :global(.kop .rij-acties) {
 			display: none;
 		}
 		.rijen :global(.row-wrap) {

@@ -12,20 +12,20 @@
 	let { laad }: { laad: () => Promise<Regelingen> } = $props();
 
 	let titel = $state('');
-	let lijst = $state<Regeling[]>([]);
+	let list = $state<Regeling[]>([]);
 
 	$effect(() => {
 		let stale = false;
-		lijst = [];
+		list = [];
 		laad()
-			.then(({ titel: kop, regelingen: rs }) => {
+			.then(({ titel: heading, regelingen: rs }) => {
 				if (stale) return;
-				titel = kop;
-				lijst = rs;
+				titel = heading;
+				list = rs;
 				rs.forEach((r, k) =>
 					aangevuld(r)
 						.then((v) => {
-							if (!stale && lijst[k]?.id === v.id) lijst[k] = v;
+							if (!stale && list[k]?.id === v.id) list[k] = v;
 						})
 						.catch(() => {})
 				);
@@ -34,17 +34,17 @@
 		return () => (stale = true);
 	});
 
-	const bij = (r: Regeling) =>
+	const suffix = (r: Regeling) =>
 		[r.soort, r.datum ? korteDatum(r.datum) : null].filter(Boolean).join(', ');
 </script>
 
-{#if lijst.length}
+{#if list.length}
 	<Sectie title={titel} niveau={4} inklapbaar={false}>
 		<ul>
-			{#each lijst as r (r.id)}
+			{#each list as r (r.id)}
 				<li>
 					<a href={buildBronHref(null, r.id)} data-sveltekit-noscroll>{r.naam}</a>
-					{#if bij(r)}<span class="bij">{bij(r)}</span>{/if}
+					{#if suffix(r)}<span class="suffix">{suffix(r)}</span>{/if}
 					{#if r.artikelen}<span class="op">{r.artikelen}</span>{/if}
 				</li>
 			{/each}
@@ -78,7 +78,7 @@
 	a:hover {
 		text-decoration-color: currentColor;
 	}
-	.bij,
+	.suffix,
 	.op {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
