@@ -15,11 +15,11 @@ const props = (selectionCollection: 'documents' | null) => ({
 		options: DEFAULT_LOADER_OPTIONS
 	},
 	filter: EMPTY_FILTER,
-	selectionCollection,
+
 	onFilter: () => {},
 	onOpenFilter: () => {},
-	hiddenRelations: new Set<never>(),
-	onToggleRelation: () => {},
+	hiddenLijnen: new Set<never>(),
+	onToggleLijn: () => {},
 	canvasCounts: { kinds: { stemmingen: 49, wetsvoorstellen: 30 } },
 	hasNodes: true
 });

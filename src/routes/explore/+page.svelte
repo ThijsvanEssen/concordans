@@ -9,11 +9,11 @@
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import type { Collection, Relation } from '$lib/vocabulary';
+	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
@@ -89,6 +89,7 @@
 	import { allRows, filterGroups, lidCounts, memberCountsUnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
+	import { lijnsoortOf, type Lijnsoort } from '$lib/graph/lijnsoort';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
 	import {
 		parseOverlay,
@@ -424,9 +425,9 @@
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
 	const chainHidden = $derived(
-		new Set<Relation>([
-			...(chainMentions ? [] : (['REFERS_TO'] as const)),
-			...(chainBasedOff ? (['BASED_ON'] as const) : [])
+		new Set<Lijnsoort>([
+			...(chainMentions ? [] : (['aanhaling'] as const)),
+			...(chainBasedOff ? (['structureel'] as const) : [])
 		])
 	);
 	let chainData = $state.raw<{
@@ -780,14 +781,14 @@
 				: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
-	let hiddenRelations = $state.raw<ReadonlySet<Relation>>(new Set());
-	store.filters.subscribe((f) => (hiddenRelations = f.hiddenRelations));
+	let hiddenLijnen = $state.raw<ReadonlySet<Lijnsoort>>(new Set());
+	store.filters.subscribe((f) => (hiddenLijnen = f.hiddenLijnen));
 	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
 		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
 	);
 	const chainCounts = $derived.by(() => {
 		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
-		if (!chainModel || !chainAll) return { kinds: {}, relations: {} };
+		if (!chainModel || !chainAll) return { kinds: {}, lijnen: {} };
 		const nodes = chainModel.layers.flatMap((l) => l.nodes);
 		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -799,19 +800,15 @@
 		}
 		return {
 			kinds,
-			relations: {
-				BASED_ON: lines.filter((l) => l.way === 'delegates').length,
-				REFERS_TO: lines.filter((l) => l.way === 'mentioned').length
-			},
-			// A regulation names the law: Noemt.
-			refersFrom: ['instruments' as const]
-		} satisfies Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'>;
+			// A regulation given by the law is a grondslag (Structureel), one that names it an Aanhaling.
+			lijnen: {
+				structureel: lines.filter((l) => l.way === 'delegates').length,
+				aanhaling: lines.filter((l) => l.way === 'mentioned').length
+			}
+		} satisfies Pick<CanvasCounts, 'kinds' | 'lijnen'>;
 	});
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
-	const NO_COUNTS = { kinds: {}, relations: {} } satisfies Pick<
-		CanvasCounts,
-		'kinds' | 'relations'
-	>;
+	const NO_COUNTS = { kinds: {}, lijnen: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lijnen'>;
 	const sharedCounts = $derived.by(() => {
 		if (!sharedState) return null;
 		const kinds: Partial<Record<FilterGroup, number>> = {};
@@ -821,10 +818,11 @@
 		}
 		const judgments = sharedState.judgments.reduce((n, j) => n + j.total, 0);
 		if (judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + judgments;
-		const relations: Partial<Record<Relation, number>> = {};
+		const lijnen: Partial<Record<Lijnsoort, number>> = {};
 		for (const r of sharedState.rows)
-			for (const rel of r.relations) relations[rel] = (relations[rel] ?? 0) + 1;
-		return { kinds, relations } satisfies Pick<CanvasCounts, 'kinds' | 'relations'>;
+			for (const rel of new Set(r.relations.map((x) => lijnsoortOf(x, drawClassOf(r.collection)))))
+				lijnen[rel] = (lijnen[rel] ?? 0) + 1;
+		return { kinds, lijnen } satisfies Pick<CanvasCounts, 'kinds' | 'lijnen'>;
 	});
 	/** The tijdstrook of Verband: the shared bronnen with a date. */
 	const sharedDots = $derived(
@@ -1399,11 +1397,20 @@
 	const OFF = 'uit';
 	const filtersOff = $derived(offOf(params.get(OFF)));
 	$effect(() => {
-		const { relations, groups } = filtersOff;
+		const { lijnen, bijlagen, groups } = filtersOff;
 		untrack(() => {
 			const now = get(store.filters);
-			if (sameSet(relations, now.hiddenRelations) && sameSet(groups, now.hiddenGroups)) return;
-			store.setFilters({ hiddenRelations: new Set(relations), hiddenGroups: new Set(groups) });
+			if (
+				sameSet(lijnen, now.hiddenLijnen) &&
+				bijlagen === now.hiddenBijlagen &&
+				sameSet(groups, now.hiddenGroups)
+			)
+				return;
+			store.setFilters({
+				hiddenLijnen: new Set(lijnen),
+				hiddenBijlagen: bijlagen,
+				hiddenGroups: new Set(groups)
+			});
 		});
 	});
 	let filtersStart = true;
@@ -1414,10 +1421,20 @@
 			return;
 		}
 		const off = untrack(() => filtersOff);
-		if (sameSet(off.relations, f.hiddenRelations) && sameSet(off.groups, f.hiddenGroups)) return;
+		if (
+			sameSet(off.lijnen, f.hiddenLijnen) &&
+			off.bijlagen === f.hiddenBijlagen &&
+			sameSet(off.groups, f.hiddenGroups)
+		)
+			return;
 		untrack(() =>
 			setUrl({
-				[OFF]: offValue({ ...off, relations: [...f.hiddenRelations], groups: [...f.hiddenGroups] })
+				[OFF]: offValue({
+					...off,
+					lijnen: [...f.hiddenLijnen],
+					bijlagen: f.hiddenBijlagen,
+					groups: [...f.hiddenGroups]
+				})
 			})
 		);
 	});
@@ -1993,7 +2010,7 @@
 			chosen={marked ?? chainArticleId}
 			gap={chainGap}
 			{hiddenKinds}
-			hiddenRelations={chainHidden}
+			hiddenLijnen={chainHidden}
 			amending={chainModel?.amending.length ?? 0}
 			expired={chainData?.delegated?.expired_total
 				? {
@@ -2023,7 +2040,7 @@
 			chosen={marked}
 			gap={sharedGap}
 			{hiddenKinds}
-			{hiddenRelations}
+			{hiddenLijnen}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
 			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
@@ -2115,12 +2132,12 @@
 										? (sharedCounts ?? NO_COUNTS)
 										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
-								externRelations={view === 'keten'
+								externLijnen={view === 'keten'
 									? {
 											hidden: chainHidden,
-											toggle: (r) => {
-												if (r === 'REFERS_TO') chainMentions = !chainMentions;
-												if (r === 'BASED_ON') chainBasedOff = !chainBasedOff;
+											toggle: (l) => {
+												if (l === 'aanhaling') chainMentions = !chainMentions;
+												if (l === 'structureel') chainBasedOff = !chainBasedOff;
 											}
 										}
 									: null}
@@ -2246,10 +2263,7 @@
 			</div>
 		{:else if selectedNode}
 			{@const withContents = hasContents}
-			<div
-				class="explore-read"
-				class:explore-read--with-nav={withContents}
-			>
+			<div class="explore-read" class:explore-read--with-nav={withContents}>
 				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">

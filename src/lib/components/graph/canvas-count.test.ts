@@ -23,7 +23,7 @@ const count = (drawn: string[]) =>
 		hiddenKinds: new Set(),
 		rechter: null,
 		verborgen: new Map([['dossier', 'dossier' as const]]),
-		hiddenRelations: new Set()
+		hiddenLijnen: new Set()
 	});
 
 describe('countCanvas', () => {

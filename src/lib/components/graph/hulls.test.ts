@@ -133,7 +133,7 @@ describe('the hulls of a small canvas', () => {
 			  },
 			  {
 			    "arrow": "M 389 248 L 382 246 L 387 241 Z",
-			    "color": "#4b5563",
+			    "color": "#456247",
 			    "d": "M 255 106 L 384 243",
 			    "dashed": false,
 			    "dim": false,

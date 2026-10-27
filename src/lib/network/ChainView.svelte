@@ -1,7 +1,7 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { FilterGroup } from '$lib/verbonden/filter';
-	import type { Relation } from '$lib/vocabulary';
+	import type { Lijnsoort } from '$lib/graph/lijnsoort';
 	// The weergave Keten (besluit 39, mockup A197-c): the law at the top, the articles it gives
 	// powers in, the regulations under them per layer; a line from each to what it hangs under,
 	// dashed where it only names it. On a wide screen a drawing in layers, on a phone a list per
@@ -24,7 +24,7 @@
 		gap = null,
 		scale = 1,
 		hiddenKinds = new Set(),
-		hiddenRelations = new Set(),
+		hiddenLijnen = new Set(),
 		more = {},
 		amending = 0,
 		failure = null,
@@ -66,7 +66,7 @@
 		scale?: number;
 		/** The kinds and relations the filter of the strip switched off. */
 		hiddenKinds?: ReadonlySet<FilterGroup>;
-		hiddenRelations?: ReadonlySet<Relation>;
+		hiddenLijnen?: ReadonlySet<Lijnsoort>;
 		/** The decrees that only change other regulations: left out of the layers, counted. */
 		amending?: number;
 		/** What could not be loaded, said with Opnieuw (LoadState). */
@@ -93,7 +93,7 @@
 	);
 	/** A line given (delegates) is a grondslag, one named a mention: the filter Relatie. */
 	const lineShown = (way: 'delegates' | 'mentioned') =>
-		!hiddenRelations.has(way === 'delegates' ? 'BASED_ON' : 'REFERS_TO');
+		!hiddenLijnen.has(way === 'delegates' ? 'structureel' : 'aanhaling');
 
 	let width = $state(760);
 	const ROW = 120;

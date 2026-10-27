@@ -33,6 +33,7 @@
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
+	import { lijnsoortOf } from '$lib/graph/lijnsoort';
 	import {
 		hoverPlaats,
 		lijnLabelPlaats,
@@ -676,6 +677,7 @@
 		rechter !== null && attrs.collection === 'judgments' && attrs.rechter !== rechter;
 
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
+		(!!latestFilters?.hiddenBijlagen && attrs.drawClass === 'other') ||
 		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
 		outsideYears(attrs.date) ||
 		otherCourt(attrs);
@@ -1050,7 +1052,8 @@
 					return { ...data, hidden: true };
 
 				const relation = data.relation as Relation;
-				if (latestFilters?.hiddenRelations.has(relation)) return { ...data, hidden: true };
+				if (latestFilters?.hiddenLijnen.has(lijnsoortOf(relation, srcAttrs.drawClass as DrawClass)))
+					return { ...data, hidden: true };
 				const h = hullGroups();
 				if (hullLinkOf(src, tgt, h) || anchorWithHull(src, h) || anchorWithHull(tgt, h))
 					return { ...data, hidden: true };

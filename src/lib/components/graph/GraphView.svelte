@@ -27,6 +27,7 @@
 	import Tijdstrook from './Tijdstrook.svelte';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
+	import type { Lijnsoort } from '$lib/graph/lijnsoort';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
@@ -137,7 +138,7 @@
 		extern = null,
 		externStippen = null,
 		middenZoom = true,
-		externRelations = null,
+		externLijnen = null,
 		...legend
 	}: {
 		store: GraphStore;
@@ -176,7 +177,7 @@
 		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
 		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
-		externCounts?: Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'> | null;
+		externCounts?: Pick<CanvasCounts, 'kinds' | 'lijnen'> | null;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
@@ -189,9 +190,9 @@
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
-		externRelations?: {
-			hidden: ReadonlySet<Relation>;
-			toggle: (r: Relation) => void;
+		externLijnen?: {
+			hidden: ReadonlySet<Lijnsoort>;
+			toggle: (l: Lijnsoort) => void;
 		} | null;
 		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
 		depth: number;
@@ -255,7 +256,8 @@
 		);
 		const out: DrawnBron[] = [];
 		const take = (n: GraphNode | undefined, direct: boolean) => {
-			if (!n || n.anchor || n.id.toLowerCase() === focal) return;
+			if (!n || n.anchor || n.id.toLowerCase() === focal || drawClassOf(n.collection) === 'other')
+				return;
 			const props = n.raw?.props ?? undefined;
 			const filterGroup = filterGroupOf(n.collection, n.key, props ?? null);
 			out.push({ id: n.id, collection: n.collection, key: n.key, props, filterGroup, direct });
@@ -321,7 +323,7 @@
 			hiddenKinds,
 			rechter: filter.rechter,
 			verborgen,
-			hiddenRelations: filters.hiddenRelations
+			hiddenLijnen: filters.hiddenLijnen
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
@@ -1135,10 +1137,14 @@
 		store.setFilters({ hiddenGroups: next });
 	}
 
-	function toggleRelation(r: Relation) {
-		const next = new Set(filters.hiddenRelations);
-		if (!next.delete(r)) next.add(r);
-		store.setFilters({ hiddenRelations: next });
+	function toggleBijlagen() {
+		store.setFilters({ hiddenBijlagen: !filters.hiddenBijlagen });
+	}
+
+	function toggleLijn(l: Lijnsoort) {
+		const next = new Set(filters.hiddenLijnen);
+		if (!next.delete(l)) next.add(l);
+		store.setFilters({ hiddenLijnen: next });
 	}
 
 	/** The scale of a weergave of its own, by its zoom. */
@@ -1281,10 +1287,12 @@
 		{...legend}
 		{verbonden}
 		{filter}
-		selectionCollection={selection?.collection ?? null}
 		reach={externCounts ? null : reach}
-		hiddenRelations={externRelations?.hidden ?? filters.hiddenRelations}
-		onToggleRelation={externRelations?.toggle ?? toggleRelation}
+		omtrekken={containerGroups.size}
+		hiddenBijlagen={filters.hiddenBijlagen}
+		onToggleBijlagen={toggleBijlagen}
+		hiddenLijnen={externLijnen?.hidden ?? filters.hiddenLijnen}
+		onToggleLijn={externLijnen?.toggle ?? toggleLijn}
 		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}

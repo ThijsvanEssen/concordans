@@ -10,6 +10,7 @@
 import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { DrawClass } from '$lib/graph/types';
+import { lijnsoortOf } from '$lib/graph/lijnsoort';
 import { isAmendingRelation, type Relation } from '$lib/vocabulary';
 
 type Tokens = {
@@ -101,39 +102,24 @@ export function tokens(): Tokens {
 }
 
 /**
- * Edge colours by relation: references between articles and the structure of the
- * law in moss, appeals and gedaan-in in slate, toelichting and ingediend-door
- * in plum, changes to a wet in the wet's hue, the rest (gaat over, geleid door) in grey.
+ * The colour of a line by its soort (Netwerkcanvas, Lijnen): Structureel and Deel van in moss,
+ * Wijziging in the wet's hue, Aanhaling in slate, Toelichting and Ingediend door in plum,
+ * Lid van in grey.
  */
 export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string {
 	const t = tokens();
-	switch (relation) {
-		case 'REFERS_TO':
-			return sourceClass === 'article' ? t.moss : t.slate;
-		case 'PART_OF':
-		case 'BASED_ON':
-		case 'IMPLEMENTS':
-		case 'LEGISLATED_IN':
-		case 'VERSION_OF':
-		case 'SCOPED_BY':
+	switch (lijnsoortOf(relation, sourceClass)) {
+		case 'structureel':
+		case 'deel':
 			return t.moss;
-		case 'EXPLAINS':
-		case 'AUTHORED':
-			return t.plum;
-		case 'ESTABLISHES':
-		case 'AMENDS':
-		case 'INTRODUCES':
-		case 'REPEALS':
+		case 'wijziging':
 			return t.soortWet;
-		case 'APPEAL_OF':
-		case 'ADVISES_ON':
-		case 'ANSWERS':
-		case 'CONTINUES':
-		case 'REFERRED_BY':
-		case 'SAME_AS':
-		case 'MADE_IN':
+		case 'aanhaling':
 			return t.slate;
-		default:
+		case 'toelichting':
+		case 'indiener':
+			return t.plum;
+		case 'lid':
 			return t.ink3;
 	}
 }
@@ -218,38 +204,30 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
  */
 type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid';
 
-/** The relations a line of a lid draws: a person of a fractie, a commissie, a kabinet. */
-const MEMBERSHIP = new Set<Relation>(['MEMBER_OF', 'LED_BY', 'SERVED_IN']);
-/** The relations that belong to a whole (Deel van). */
-const PART_OF_WHOLE = new Set<Relation>(['PART_OF', 'VERSION_OF']);
-/** The relations a bron makes by naming another (Aanhaling), besides a citation by REFERS_TO. */
-const CITATIONS = new Set<Relation>([
-	'APPEAL_OF',
-	'ADVISES_ON',
-	'ANSWERS',
-	'CONTINUES',
-	'REFERRED_BY',
-	'SAME_AS',
-	'MADE_IN'
-]);
-
 /**
- * The style of a line by its relation. A citation (REFERS_TO from anything but an article), an
- * appeal and an advice are dashed; a part is dotted; an explanation dash-dot; a membership dotted
- * without an arrow; a vote, and a change that is only proposed, dashed. The rest is solid.
+ * The style of a line by its soort: a citation (Aanhaling) is dashed, a part dotted, a
+ * toelichting dash-dot, a membership dotted without an arrow; a change that is only proposed
+ * is dashed. The rest is solid.
  */
 export function edgeStyleFor(
 	relation: Relation,
 	status: string | null | undefined,
 	sourceClass: DrawClass = 'article'
 ): EdgeStyle {
-	if (MEMBERSHIP.has(relation)) return 'lid';
-	if (PART_OF_WHOLE.has(relation)) return 'dotted';
-	if (relation === 'EXPLAINS') return 'dashdot';
-	if (relation === 'VOTED' || CITATIONS.has(relation)) return 'dashed';
-	if (relation === 'REFERS_TO' && sourceClass !== 'article') return 'dashed';
-	if (isAmendingRelation(relation) && status === 'voorgesteld') return 'dashed';
-	return 'solid';
+	switch (lijnsoortOf(relation, sourceClass)) {
+		case 'lid':
+			return 'lid';
+		case 'deel':
+			return 'dotted';
+		case 'toelichting':
+			return 'dashdot';
+		case 'aanhaling':
+			return 'dashed';
+		case 'wijziging':
+			return isAmendingRelation(relation) && status === 'voorgesteld' ? 'dashed' : 'solid';
+		default:
+			return 'solid';
+	}
 }
 
 /** The line of a style as an SVG dash array: the legend's sample and the key's. */
