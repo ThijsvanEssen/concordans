@@ -2188,6 +2188,7 @@
 										}
 									: reach}
 								counting={netwerkActive && composer.loading}
+								expecting={netwerkActive ? shownNetwork.ids.length : 0}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
 								inFluxMap={overlayCounts.inFlux}
@@ -2284,6 +2285,7 @@
 												)
 											: []}
 										loading={composer.loading}
+										expected={netwerkActive ? shownNetwork.ids.length : 0}
 										{telefoon}
 										onSelect={addIdToNetwerk}
 										selection={selectedNode &&

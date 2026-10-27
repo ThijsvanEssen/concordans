@@ -112,6 +112,7 @@
 		filter,
 		verbonden,
 		reach = null,
+		expecting = 0,
 		selectedEdgeId = null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
@@ -149,6 +150,8 @@
 		verbonden: VerbondenState;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
+		/** The bronnen of the netwerk asked and not yet in: Weergave keeps its place meanwhile. */
+		expecting?: number;
 		selectedEdgeId?: string | null;
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
 		lineLids?: ReadonlyMap<string, string>;
@@ -331,6 +334,7 @@
 			selectionId: selection?.id ?? null,
 			hiddenKinds,
 			rechter: filter.rechter,
+			period: yearPeriod,
 			verborgen,
 			hiddenLines: filters.hiddenLines
 		});
@@ -1174,6 +1178,7 @@
 	let sheetOpener = $state<HTMLButtonElement | null>(null);
 	/** The card of a bron marked is a sheet at the foot on a phone: the button stands above it. */
 	let cardHeight = $state(0);
+	let stripHeight = $state(0);
 	function closeSheet() {
 		sheetOpen = false;
 		sheetOpener?.focus();
@@ -1289,6 +1294,7 @@
 		type="button"
 		class="btn sheet-button"
 		style:--kaart-h="{cardHeight}px"
+		style:--strook-h="{stripHeight}px"
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
@@ -1303,7 +1309,7 @@
 		{...legend}
 		{verbonden}
 		{filter}
-		reach={externCounts ? null : reach}
+		reach={externCounts || yearPeriod ? null : reach}
 		outlines={externCounts ? 0 : containerGroups.size}
 		hiddenAnnexes={filters.hiddenAnnexes}
 		onToggleAnnexes={toggleAnnexes}
@@ -1337,10 +1343,10 @@
 				{stepsOff}
 				hasSelection={!!selection}
 				reach={externCounts ? null : reach}
-				empty={!hasNodes && !midden && !selection}
+				empty={!hasNodes && !midden && !selection && expecting === 0}
 			>
 				<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
-				{#if hasNodes || midden}
+				{#if (hasNodes || midden) && !legend.counting}
 					<section class="legenda-inhoud" aria-label="Filters">
 						{@render sidebar()}
 					</section>
@@ -1569,7 +1575,12 @@
 						/>
 					</div>
 				{:else if $netwerkMelding}
-					<p class="netwerk-melding" role="status" style:--kaart-h="{cardHeight}px">
+					<p
+						class="netwerk-melding"
+						role="status"
+						style:--kaart-h="{cardHeight}px"
+						style:--strook-h="{stripHeight}px"
+					>
 						{$netwerkMelding.tekst}
 						{#if $netwerkMelding.terug}
 							<button
@@ -1585,12 +1596,18 @@
 				{/if}
 			</div>
 		</div>
-		<Tijdstrook
-			stippen={strookStippen}
-			van={jaarVan(filter.van)}
-			tot={jaarVan(filter.tot)}
-			onPeriode={kiesPeriode}
-		/>
+		<div
+			class="strook-hoogte"
+			data-wacht={legend.counting || undefined}
+			bind:clientHeight={stripHeight}
+		>
+			<Tijdstrook
+				stippen={legend.counting ? [] : strookStippen}
+				van={jaarVan(filter.van)}
+				tot={jaarVan(filter.tot)}
+				onPeriode={kiesPeriode}
+			/>
+		</div>
 	</div>
 	{@render sheetButton()}
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
@@ -1751,7 +1768,8 @@
 		.sheet-button {
 			position: absolute;
 			left: var(--s-3);
-			bottom: calc(var(--s-3) + var(--kaart-h, 0px));
+			/* Above the Tijdstrook, or the card where it stands higher: over neither. */
+			bottom: calc(var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)));
 			z-index: var(--z-float);
 			display: inline-flex;
 			align-items: center;
@@ -1832,6 +1850,20 @@
 	}
 	.control-bar {
 		display: none;
+	}
+	.strook-hoogte {
+		flex: none;
+		display: flex;
+		flex-direction: column;
+	}
+	/* The Tijdstrook is on its way: its place is held, so the canvas above it does not shrink. */
+	.strook-hoogte[data-wacht] {
+		min-height: 92px;
+	}
+	@media (max-width: 768px) {
+		.strook-hoogte[data-wacht] {
+			min-height: 116px;
+		}
 	}
 	.middle-stage {
 		position: relative;
@@ -1981,7 +2013,9 @@
 		left: var(--s-3);
 		right: calc(var(--s-3) + 40px + var(--s-2));
 		/* Above the Weergave button, which stands above the card (--kaart-h): covering neither. */
-		bottom: calc(var(--s-3) + var(--kaart-h, 0px) + var(--veld-h-raak) + var(--s-2));
+		bottom: calc(
+			var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)) + var(--veld-h-raak) + var(--s-2)
+		);
 		z-index: var(--z-float);
 		display: none;
 		flex-wrap: wrap;

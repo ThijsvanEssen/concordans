@@ -20,6 +20,7 @@
 	let {
 		entries,
 		loading = false,
+		expected = 0,
 		selection = null,
 		onSelect,
 		onToggle,
@@ -33,6 +34,8 @@
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
+		/** The bronnen of the netwerk asked and not yet in: their rows hold their place. */
+		expected?: number;
 		/** The selected bron when it is not chosen yet. */
 		selection?: { label: string } | null;
 		/** Adds a bron found by the search, by the name a link uses. */
@@ -57,6 +60,10 @@
 	let showAll = $state(false);
 	const folded = $derived(!showAll && entries.length > FOLD_AT + 1);
 	const shown = $derived(folded ? entries.slice(0, FOLD_AT) : entries);
+	/** Rows of bronnen still on their way, so Weergave under them does not drop when they arrive. */
+	const pending = $derived(
+		entries.length < expected ? Math.min(expected, FOLD_AT) - Math.min(entries.length, FOLD_AT) : 0
+	);
 
 	/** What a group's members are called: a wet's artikelen, a fractie's leden. */
 	const membersOf = (c: NetwerkEntry['collection']) =>
@@ -85,7 +92,7 @@
 				>Wis alles</TekstLink
 			>
 			<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
-			<TekstMenu rechts label="Meer" tekst="Meer">
+			<TekstMenu rechts label="Meer" tekst="Meer" buttonClass="meer-knop raakvlak" caret={false}>
 				{#snippet onder(sluit)}
 					<button
 						type="button"
@@ -100,7 +107,7 @@
 			</TekstMenu>
 		{/if}
 	{/snippet}
-	{#if entries.length > 0}
+	{#if entries.length > 0 || pending > 0}
 		<Sectie title="Gekozen" niveau={3} inklapbaar={false}>
 			<ul class="rijen">
 				{#each shown as e (e.id)}
@@ -150,6 +157,9 @@
 						>
 					</li>
 				{/each}
+				{#each { length: pending } as _, i (i)}
+					<li class="rij rij--wacht" aria-hidden="true"></li>
+				{/each}
 			</ul>
 			{#if folded}
 				<p class="verder">
@@ -195,6 +205,23 @@
 {/if}
 
 <style>
+	/* Meer is a word beside Wis alles, as the Design System has it: a link that opens a menu. */
+	:global(.meer-knop) {
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: inherit;
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	:global(.meer-knop:hover),
+	:global(.meer-knop:focus-visible) {
+		text-decoration-color: currentColor;
+	}
 	.netwerk-acties {
 		display: flex;
 		flex-wrap: wrap;
@@ -250,6 +277,9 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
+	}
+	.rij--wacht {
+		min-height: calc(var(--s-5) + var(--s-4) + 2 * var(--s-1));
 	}
 	.rij + .rij {
 		border-top: 1px solid var(--paper-2);

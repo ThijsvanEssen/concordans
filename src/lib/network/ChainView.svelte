@@ -20,7 +20,7 @@
 		lineThickness,
 		arrowLength
 	} from '$lib/components/graph/nodeSprites';
-	import { curvedLine, AIR, DOT_RADIUS } from '$lib/graph/line-shape';
+	import { curvedLine, AIR, BEND, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
@@ -114,10 +114,35 @@
 	const INK_EDGE = 2;
 	const TOP = 48;
 	const LEFT = 120;
-	const height = $derived(TOP + shown.length * ROW);
-	/** The room of a node in its layer, for the length of its name's lines. */
+	/**
+	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
+	 * ever lies over the rail under its layer.
+	 */
+	const rowHeights = $derived(
+		shown.map((l) => {
+			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 28);
+		})
+	);
+	/** Where each layer begins. */
+	const tops = $derived(
+		rowHeights.map((_, i) => TOP + rowHeights.slice(0, i).reduce((a, b) => a + b, 0))
+	);
+	const height = $derived(TOP + rowHeights.reduce((a, b) => a + b, 0));
+	/** The room of a node in its layer, for the length of its name's lines: at most 22 characters (Keten). */
 	const charsFor = (n: number) =>
-		Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7));
+		Math.min(22, Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7)));
+	/** About what a character of a name takes, in px. */
+	const CHAR = 6;
+	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
+	const halfOf = (k: ChainNode, n: number) =>
+		Math.ceil(
+			(Math.max(
+				...linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(n)).map((r) => r.length)
+			) *
+				CHAR) /
+				2
+		) + 8;
 	/**
 	 * Where each node stands: its layer's row; across, under what it hangs from (the mean of its
 	 * parents' places), kept apart by a node's room and within the width, so the lines run down
@@ -155,17 +180,31 @@
 			for (let j = xs.length - 1; j >= 0; j--)
 				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - gap);
 			// Half its name and some air, to the side that has room.
-			const room = Math.ceil((layer.nodes[0]?.name.length ?? 0) * 3.6) + 48;
+			const room = (layer.nodes[0] ? halfOf(layer.nodes[0], n) : 0) + 48;
 			const aside =
 				n === 1 && layer.id !== 'article' && bypassed(i)
 					? xs[0] + room <= right - 40
 						? room
 						: -room
 					: 0;
-			wish.forEach((w, j) => m.set(w.k.id, { x: xs[j] + aside, y: TOP + i * ROW + DROP }));
+			// A name stays within the drawing, whichever side its node stands on.
+			wish.forEach((w, j) => {
+				const half = halfOf(w.k, n);
+				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, width - half));
+				m.set(w.k.id, { x, y: tops[i] + DROP });
+			});
 		});
 		return m;
 	});
+	/** An omhulling is 72 px high, and as high as its longest name asks. */
+	const hullHeight = (nodes: readonly ChainNode[]) =>
+		Math.max(
+			72,
+			26 +
+				24 +
+				LINE * (Math.max(1, ...nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1)) - 1) +
+				12
+		);
 	/**
 	 * The omhullingen (Netwerkcanvas, Omhulling): the articles of each wet when the layer holds
 	 * those of more than one (solid, soort-wet), and, in the keten of a Kamerlid, the fracties
@@ -178,6 +217,7 @@
 			x: number;
 			y: number;
 			w: number;
+			h: number;
 			colour: string;
 			dash: string | undefined;
 		}[] = [];
@@ -191,8 +231,9 @@
 					id: `layer:${layer.id}`,
 					label: layer.label,
 					x,
-					y: TOP + i * ROW + DROP - 26,
+					y: tops[i] + DROP - 26,
 					w: Math.max(...xs) + 30 - x,
+					h: hullHeight(layer.nodes),
 					colour: c === 'factions' ? 'var(--soort-personen)' : 'var(--soort-parlement)',
 					dash: hullDashFor(c === 'factions' ? 'faction' : 'committee')
 				});
@@ -210,8 +251,9 @@
 				id: h ?? '',
 				label: wet.instrument?.abbreviation ?? wet.short,
 				x,
-				y: TOP + row * ROW + DROP - 26,
+				y: tops[row] + DROP - 26,
 				w: Math.max(...xs) + 30 - x,
+				h: hullHeight(nodes.filter((k) => k.home === h)),
 				colour: 'var(--soort-wet)',
 				dash: undefined
 			});
@@ -244,6 +286,60 @@
 				: relation === 'CONTINUES'
 					? 'zet voort'
 					: null;
+	/** The box of each name with its sign: where a line must not run (Keten: no line through a name). */
+	const boxes = $derived.by(() => {
+		const out: { id: string; x0: number; x1: number; y0: number; y1: number }[] = [];
+		for (const l of shown)
+			for (const k of l.nodes) {
+				const p = place.get(k.id);
+				if (!p) continue;
+				const half = halfOf(k, l.nodes.length);
+				const article = k.collection === 'articles';
+				const at = article ? p.x - 6 : p.x - half;
+				out.push({
+					id: k.id,
+					x0: at - 2,
+					x1: at + 2 * half + 2,
+					y0: p.y - 14,
+					y1: p.y + 24 + LINE * ((infoOf.get(k.id)?.lines.length ?? 1) - 1) + 4
+				});
+			}
+		return out;
+	});
+	/**
+	 * The bend of a line that keeps clear of the names between its ends: the usual side first,
+	 * then the other, then straight and wider, the one with the fewest names crossed.
+	 */
+	const clearBend = (
+		a: { x: number; y: number },
+		b: { x: number; y: number },
+		ends: Set<string>
+	) => {
+		const others = boxes.filter((x) => !ends.has(x.id));
+		const nx = -(b.y - a.y);
+		const ny = b.x - a.x;
+		const len = Math.hypot(nx, ny) || 1;
+		let best = 1;
+		let fewest = Infinity;
+		for (const bend of [1, -1, 0, 2, -2, 3, -3, 4, -4]) {
+			const c = {
+				x: (a.x + b.x) / 2 + (nx / len) * bend * BEND * len,
+				y: (a.y + b.y) / 2 + (ny / len) * bend * BEND * len
+			};
+			let hits = 0;
+			for (let t = 0.08; t <= 0.92; t += 0.04) {
+				const x = (1 - t) ** 2 * a.x + 2 * (1 - t) * t * c.x + t * t * b.x;
+				const y = (1 - t) ** 2 * a.y + 2 * (1 - t) * t * c.y + t * t * b.y;
+				if (others.some((q) => x >= q.x0 && x <= q.x1 && y >= q.y0 && y <= q.y1)) hits++;
+			}
+			if (hits === 0) return bend;
+			if (hits < fewest) {
+				fewest = hits;
+				best = bend;
+			}
+		}
+		return best;
+	};
 	/**
 	 * The lines (Netwerkcanvas, Lijnen): each from under the name of what it hangs under (the
 	 * arrowhead there) to above the sign of the node, slightly curved, in the style of its kind.
@@ -262,18 +358,17 @@
 					const style = edgeStyleFor(relation, null, from);
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
-					const shape = curvedLine(
-						{ x: b.x, y: b.y - 12 },
-						{ x: a.x, y: a.y + under(o.id) },
-						{
-							ra: -AIR,
-							rb: -AIR,
-							width,
-							arrow: arrowLength(),
-							head: style === 'lid' ? null : 'b',
-							dot: style === 'submitter' ? 'a' : null
-						}
-					);
+					const from0 = { x: b.x, y: b.y - 12 };
+					const to0 = { x: a.x, y: a.y + under(o.id) };
+					const shape = curvedLine(from0, to0, {
+						ra: -AIR,
+						rb: -AIR,
+						width,
+						arrow: arrowLength(),
+						head: style === 'lid' ? null : 'b',
+						dot: style === 'submitter' ? 'a' : null,
+						bend: clearBend(from0, to0, new Set([o.id, k.id]))
+					});
 					const word = wordOf(relation, l.label);
 					return [
 						{
@@ -295,16 +390,15 @@
 	const colour = (k: ChainNode) => kindColour(k.collection);
 	const vormOf = (k: ChainNode) =>
 		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
-	/** A name over at most two lines of `max` characters; a longer one ends in "…", its title
-	 *  and the card name it whole. */
-	const linesOf = (s: string, max = 24) => {
+	/** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
+	const linesOf = (s: string, max = 22) => {
 		const out: string[] = [];
 		for (const w of s.split(/\s+/)) {
 			const last = out[out.length - 1];
 			if (last && (last + ' ' + w).length <= max) out[out.length - 1] = `${last} ${w}`;
 			else out.push(w);
 		}
-		return out.length > 2 ? [out[0], `${out[1]}…`] : out;
+		return out;
 	};
 	const press = (e: KeyboardEvent, act: () => void) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -408,13 +502,13 @@
 		aria-label="Keten"
 	>
 		{#each shown as layer, i (layer.id)}
-			<text class="layer-label" x="24" y={TOP + i * ROW + 4}>{layer.label.toUpperCase()}</text>
+			<text class="layer-label" x="24" y={tops[i] + 4}>{layer.label.toUpperCase()}</text>
 			<line
 				class="rail"
 				x1="20"
 				x2={width - 20}
-				y1={TOP + i * ROW + 89.5}
-				y2={TOP + i * ROW + 89.5}
+				y1={tops[i] + rowHeights[i] - 14.5}
+				y2={tops[i] + rowHeights[i] - 14.5}
 			/>
 			{#if rest[layer.id]}
 				<g
@@ -425,8 +519,8 @@
 					onclick={() => toggle(layer.id)}
 					onkeydown={(e) => press(e, () => toggle(layer.id))}
 				>
-					<rect class="hit" x={width - 124} y={TOP + i * ROW - 18} width="104" height="32" />
-					<text x={width - 24} y={TOP + i * ROW + 4} text-anchor="end"
+					<rect class="hit" x={width - 124} y={tops[i] - 18} width="104" height="32" />
+					<text x={width - 24} y={tops[i] + 4} text-anchor="end"
 						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
 					>
 				</g>
@@ -440,7 +534,7 @@
 				x={h.x}
 				y={h.y}
 				width={h.w}
-				height="72"
+				height={h.h}
 				rx="22"
 			/>
 		{/each}

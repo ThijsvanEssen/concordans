@@ -5,7 +5,7 @@ import { lacks, NOT_IN_DATA } from '$lib/text/coverage';
 import { carriesBillTitle, shortKind } from '$lib/text/document-kind';
 import { textOf } from '$lib/text/words';
 import { isRauw, menselijkeNaam } from '$lib/bron/menselijk';
-import { langeDatum } from '$lib/text/datum';
+import { langeDatum, shortDatesIn } from '$lib/text/datum';
 import type { Cite } from '$lib/text/judgment-heading';
 import { courtName } from '$lib/text/court';
 import { isGeneriek } from '$lib/bron/generiek';
@@ -116,6 +116,12 @@ function activityName(
 
 /** A bron the data gives no name: said so, never shown by its database key. */
 export const UNNAMED = lacks('naam');
+
+/** `describeBron` for a row, a name on the canvas or in the keten: its title with the short date. */
+export const describeBronShort = (...args: Parameters<typeof describeBron>): BronDescription => {
+	const d = describeBron(...args);
+	return { ...d, title: shortDatesIn(d.title) };
+};
 
 /**
  * Title, context, identifier, date and court of a bron, from what a list or node

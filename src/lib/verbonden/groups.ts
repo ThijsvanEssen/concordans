@@ -5,7 +5,7 @@
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { capitalize, joinAnd } from '$lib/text/words';
-import { langeDatum } from '$lib/text/datum';
+import { korteDatum } from '$lib/text/datum';
 import { lawKind } from '$lib/text/law-head';
 import { kindName } from '$lib/text/law-kind';
 import { bucketKey, type Bucket } from '$lib/api/nodes';
@@ -1061,7 +1061,7 @@ export function withUnresolvedAppeals(groups: Group[], props: Record<string, unk
 		const number = typeof t.case_number === 'string' ? t.case_number : '';
 		return {
 			ref: { collection: 'judgments', key: `unresolved:${court}:${day}:${number}` },
-			title: [capitalize(court), day && (langeDatum(day) || day), number]
+			title: [capitalize(court), day && (korteDatum(day) || day), number]
 				.filter(Boolean)
 				.join(', '),
 			context: null,

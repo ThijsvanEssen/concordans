@@ -503,6 +503,12 @@
 		border-radius: var(--r-1);
 		flex-shrink: 0;
 	}
+	/* No keyboard to name on a touch screen or a phone. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.kbd {
+			display: none;
+		}
+	}
 
 	.spinner {
 		width: 16px;
@@ -652,7 +658,7 @@
 	}
 
 	.row-expired {
-		color: var(--uitkomst-nee);
+		color: var(--ink-3);
 	}
 	/* A picker marks the words found with the wash, as the text of a bron does. */
 	.search--picker .row-snippet mark {

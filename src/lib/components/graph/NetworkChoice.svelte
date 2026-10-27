@@ -50,7 +50,11 @@
 	// Steps that add nothing, as the API cut the neighbourhood off at its cap.
 	const cap = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
 	const beyondCap = (d: number) => !networkOn && !!reach?.capped && d > reach.depth;
-	const NO_SELECTION = 'Kies eerst een bron in het netwerk.';
+	// Without a bron clicked on the canvas the steps are off. In Verband no bron is to be clicked:
+	// the steps there belong to the pair of bronnen, so that is what the line says.
+	const NO_SELECTION = $derived(
+		view === 'verband' ? 'Het aantal stappen geldt voor het paar.' : 'Klik een bron op het canvas.'
+	);
 	const reason = (d: number) =>
 		stepsOff
 			? stepsOff
