@@ -17,7 +17,7 @@
 	import type { BronRef } from '$lib/bron/ref';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import { searchedLine } from '$lib/text/coverage';
+	import { notHeld, searchedLine } from '$lib/text/coverage';
 	import { conceptOf, resultsHref } from './results';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
@@ -212,7 +212,7 @@
 		{/if}
 		{#if search.outsideLaw}
 			<p class="state stil" role="status">
-				"{search.q}" staat niet in de gegevens.
+				{notHeld(`"${search.q}"`)}.
 				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="external noopener"
 					>wetten.overheid.nl</a
 				>
