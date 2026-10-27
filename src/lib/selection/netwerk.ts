@@ -1,8 +1,7 @@
 // A network put together from bronnen chosen one by one, instead of everything
 // within a number of steps of one focus. The URL holds it: ?netwerk lists the
 // chosen bronnen by the name a link uses (`members/<key>`, `dossiers/37020-XV`),
-// ?uit the ones switched off, and ?tussen=0 hides the bronnen that join them. They show by
-// default, on a phone too (Thijs, 9 Oct), faint and clustered there as everywhere.
+// ?uit the ones switched off.
 import type { GraphNode } from '$lib/graph/types';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Neighbor } from '$lib/api/nodes';
@@ -13,8 +12,6 @@ export type Netwerk = {
 	ids: string[];
 	/** Chosen bronnen that are switched off: listed, not drawn. */
 	uit: ReadonlySet<string>;
-	/** Whether the bronnen that join two chosen ones are drawn. */
-	tussen: boolean;
 };
 
 /** A chosen bron as the panel Netwerk lists it. */
@@ -50,21 +47,18 @@ const list = (value: string | null) =>
 		.map((s) => s.trim())
 		.filter((s) => parseNodeId(s) !== null);
 
-/** `tussenStandaard`: whether the bronnen between are drawn when the URL does not say. */
-export function parseNetwerk(params: URLSearchParams, tussenStandaard = true): Netwerk {
+export function parseNetwerk(params: URLSearchParams): Netwerk {
 	const ids = [...new Set(list(params.get('netwerk')))];
 	const uit = new Set(list(params.get('uit')).filter((id) => ids.includes(id)));
-	const t = params.get('tussen');
-	return { ids, uit, tussen: t === '0' ? false : t === '1' ? true : tussenStandaard };
+	return { ids, uit };
 }
 
-/** The URL of a netwerk; ?tussen only where it differs from `tussenStandaard`. */
-export function netwerkParams(n: Netwerk, tussenStandaard = true): Record<string, string | null> {
+/** The URL of a netwerk. */
+export function netwerkParams(n: Netwerk): Record<string, string | null> {
 	const uit = n.ids.filter((id) => n.uit.has(id));
 	return {
 		netwerk: n.ids.length > 0 ? n.ids.join(',') : null,
-		uit: uit.length > 0 ? uit.join(',') : null,
-		tussen: n.ids.length > 0 && n.tussen !== tussenStandaard ? (n.tussen ? '1' : '0') : null
+		uit: uit.length > 0 ? uit.join(',') : null
 	};
 }
 

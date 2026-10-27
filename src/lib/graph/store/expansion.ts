@@ -22,10 +22,10 @@ import {
 	type Collection
 } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
-import { nodeToGraphNode, relationOf } from '../types';
+import { lawIdOf, nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
 import type { GraphContext } from './context';
-import { periodOf, placeConnection, type End } from './placement';
+import { isPublication, periodOf, placeConnection, type End } from './placement';
 import {
 	NEIGHBORHOOD_CAP,
 	NEIGHBORHOOD_DEPTH,
@@ -148,6 +148,7 @@ export function createExpansion(
 				? focusKindOf(node.collection)
 				: containerKindOf(node.collection);
 		const endOf = (id: string, node: SubNode | undefined): End => ({
+			publication: isPublication(node),
 			hull: node ? kindOf(id, node) : null,
 			drawn: drawn.has(id),
 			drawClass: nodes.get(id)?.drawClass ?? 'other',
@@ -183,6 +184,13 @@ export function createExpansion(
 				);
 			} else if (placement.place === 'line') {
 				addEdge(id.source, id.target, relation, { confidence: e.confidence, status: e.status });
+			} else if (placement.anchor === 'source' && isPublication(ends.source)) {
+				// A publication states what it enacts or changes: a line to the wet of that article,
+				// where the wet is on the canvas (Netwerkcanvas, Staatsblad-publicatie).
+				const law = lawIdOf(ends.target?.props);
+				const wet = law ? nodes.get(nodeId('instruments', law.toLowerCase())) : undefined;
+				if (wet?.anchor)
+					addEdge(id.source, wet.id, relation, { confidence: e.confidence, status: e.status });
 			}
 		}
 		return { byId, drawn };

@@ -1,11 +1,6 @@
 <script lang="ts">
-	import { stbCitation } from '$lib/text/enacted-law';
-	/** A law whose meta is not loaded, by its id: Stb. 2026, 314; Richtlijn 2004/38 (CELEX). */
-	const fallbackLawName = (id: string): string => {
-		const eu = /^3(\d{4})([LR])0*(\d+)$/.exec(id);
-		if (eu) return `${eu[2] === 'L' ? 'Richtlijn' : 'Verordening'} ${eu[1]}/${eu[3]}`;
-		return stbCitation(id) ?? '';
-	};
+	import { fallbackLawName } from '$lib/graph/law-name';
+	import { lineStrength } from '$lib/graph/line-strength';
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
 	import { forEachRealNeighbor, realDegree } from '$lib/graph/layout';
 	import {
@@ -100,10 +95,6 @@
 		selectedEdgeId = null as string | null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
-		heatMap = new Map() as NodeCounts,
-		heatActive = false,
-		heatPeriodMonths = 12,
-		mutatieActive = false,
 		onNodeClick,
 		onNodeDoubleClick,
 		onNodeHover,
@@ -146,10 +137,6 @@
 		/** The bronnen drawn, after every change of what is hidden: what the Legenda counts. */
 		onDrawn?: (drawn: ReadonlySet<string>) => void;
 		inFluxMap?: NodeCounts;
-		heatMap?: NodeCounts;
-		heatActive?: boolean;
-		heatPeriodMonths?: number;
-		mutatieActive?: boolean;
 		onNodeClick?: (id: string) => void;
 		onNodeDoubleClick?: (id: string) => void;
 		onNodeHover?: (id: string, vx: number, vy: number) => void;
@@ -263,10 +250,6 @@
 	let latestSelectedEdge: string | null = null;
 	let latestLineLids: ReadonlyMap<string, string> = new Map();
 	let latestInFluxMap: NodeCounts = new Map();
-	let latestHeatMap: NodeCounts = new Map();
-	let latestHeatActive = false;
-	let latestHeatPeriodMonths = 12;
-	let latestMutatieActive = false;
 	let latestContainerGroups: Map<string, ContainerGroup> = new Map();
 	/**
 	 * Members of the focused hull whose seat in it has ended, with its last day: drawn in the
@@ -307,10 +290,6 @@
 
 	$effect(() => {
 		latestInFluxMap = inFluxMap ?? new Map();
-		latestHeatMap = heatMap ?? new Map();
-		latestHeatActive = heatActive ?? false;
-		latestHeatPeriodMonths = heatPeriodMonths ?? 12;
-		latestMutatieActive = mutatieActive ?? false;
 		updateViewportLabels();
 		redrawInFrame();
 	});
@@ -351,20 +330,6 @@
 		id !== focusedId &&
 		!graph.getNodeAttribute(id, 'cluster');
 
-	/**
-	 * A bron between the chosen bronnen of a netwerk ("bronnen ertussen"): faint and without a
-	 * label until a hover, so the chosen bronnen and what ties them directly carry the view
-	 * (UX evaluation of 8 Oct, point 1: 204 bronnen read as a tangle). A cluster of them keeps
-	 * its name.
-	 */
-	const isTussen = (id: string) =>
-		latestCoreIds !== null &&
-		latestPinnedIds.size > 0 &&
-		latestCoreIds.has(id) &&
-		!latestPinnedIds.has(id) &&
-		id !== focusedId &&
-		!graph.getNodeAttribute(id, 'cluster');
-
 	/** Per bron and hull: how many lines it draws into that hull, and the one that stands
 	 *  for them (see edge-bundles). */
 	let bundels: Bundels = { linesIntoGroup: new Map(), bundles: new Map() };
@@ -399,24 +364,9 @@
 		redrawInFrame();
 	});
 
-	// Activity halos: HTML rings above the canvas, from rule-strong at low activity
-	// to ink at saturation.
-	type ActivityHalo = { id: string; vx: number; vy: number; ringPx: number; color: string };
-	let activityHalos = $state<ActivityHalo[]>([]);
-
-	function heatColor(t: number): string {
-		const hex = (s: string) => parseInt(s, 16);
-		const from = tokens().ruleStrong.replace('#', '');
-		const to = tokens().ink.replace('#', '');
-		const mix = (i: number) =>
-			Math.round(
-				hex(from.slice(i, i + 2)) + t * (hex(to.slice(i, i + 2)) - hex(from.slice(i, i + 2)))
-			);
-		return `rgb(${mix(0)},${mix(2)},${mix(4)})`;
-	}
-
-	type MutatieBadge = { id: string; vx: number; vy: number; count: number };
-	let mutatieBadges = $state<MutatieBadge[]>([]);
+	/** A bron a lopend wetsvoorstel wil wijzigen (Netwerkcanvas, Openstaand): a dot at its top right. */
+	type OpenstaandStip = { id: string; vx: number; vy: number };
+	let openstaand = $state<OpenstaandStip[]>([]);
 	/** A bron with a note of the reader's: its mark, in ink while it is open or in focus. */
 	type NotitieMerk = { id: string; vx: number; vy: number; open: boolean; dim: boolean };
 	let notitieMerken = $state<NotitieMerk[]>([]);
@@ -434,7 +384,8 @@
 		groups: latestContainerGroups,
 		groupsOf: nodeGroupIds,
 		drawn: drawnGroup,
-		hiddenKinds: hiddenGroupKinds
+		hiddenKinds: hiddenGroupKinds,
+		alone: aloneAnchors
 	});
 
 	const lawAnchor = (id: string) =>
@@ -496,6 +447,9 @@
 		return labelMeasure.measureText(text).width + 18;
 	}
 
+	/** The anchors that stand as an ordinary bron: nothing of their group drawn. */
+	let aloneAnchors: ReadonlyMap<string, string> = new Map();
+
 	function computeHulls() {
 		if (!renderer) {
 			if (hulls.length) hulls = [];
@@ -509,8 +463,8 @@
 			radiusOf: (id) => view.getNodeDisplayData(id)?.size ?? 4,
 			namesOf: (group) => {
 				const meta = group.kind === 'instrument' ? getInstrumentMeta(group.id) : null;
-				// A law of the Staatsblad whose meta is not loaded: by its publication (Stb. 2026, 314),
-				// so its articles still stand in a named hull (prototype A301; the rework loads the meta).
+				// A law whose meta is not loaded: by its publication or CELEX number, so its articles
+				// still stand in a named hull.
 				return {
 					short:
 						(meta ? (meta.shortTitle ?? meta.citationTitle) : group.label) ||
@@ -532,51 +486,37 @@
 			focusName: focusedId ? labelsAt.get(focusedId) : undefined,
 			glyphs: glyphRects
 		});
+		const was = [...aloneAnchors].join();
+		aloneAnchors = layout.alone;
+		// An anchor without a hull is a bron now (or no longer): its name and its lines follow.
+		if ([...aloneAnchors].join() !== was) renderer?.refresh({ schedule: true });
 		hulls = layout.hulls;
 		hullLinks = layout.links;
 		hullHitAreas = layout.hitAreas;
 	}
-
-	const HEAT_SATURATION_RATE = 5;
 
 	function updateViewportLabels() {
 		const sizeDivisor = renderer
 			? Math.min(Math.sqrt(renderer.getCamera().getState().ratio), 1.5)
 			: 1;
 
-		if (renderer && latestHeatActive && latestHeatMap.size > 0) {
-			const halos: ActivityHalo[] = [];
-			const months = Math.max(1, latestHeatPeriodMonths);
+		if (renderer && latestInFluxMap.size > 0) {
+			const stippen: OpenstaandStip[] = [];
 			graph.forEachNode((id, attrs) => {
 				if (attrs.hidden || isHiddenNode(id, attrs)) return;
-				const activity = latestHeatMap.get(id) ?? 0;
-				if (activity <= 0) return;
-				const rate = activity / months;
-				const t = Math.min(rate / HEAT_SATURATION_RATE, 1);
-				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
-				const ringPx = baseR + 4 + t * 16;
+				if ((latestInFluxMap.get(id) ?? 0) <= 0) return;
+				// A hull's anchor is a point, not a sign: only an anchor standing as a bron has one.
+				if (attrs.anchor && !aloneAnchors.has(id)) return;
+				const size = (attrs.anchor ? attrs.ownSize : attrs.size) as number | undefined;
+				const baseR = (size ?? 5) / sizeDivisor;
 				const vp = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
-				halos.push({ id, vx: vp.x, vy: vp.y, ringPx, color: heatColor(t) });
+				// Beside the sign, on its edge at the top right, not over it.
+				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm) + 3;
+				stippen.push({ id, vx: vp.x + offset, vy: vp.y - offset });
 			});
-			activityHalos = halos;
-		} else if (activityHalos.length) {
-			activityHalos = [];
-		}
-
-		if (renderer && latestMutatieActive && latestInFluxMap.size > 0) {
-			const badges: MutatieBadge[] = [];
-			graph.forEachNode((id, attrs) => {
-				if (attrs.hidden || isHiddenNode(id, attrs)) return;
-				const count = latestInFluxMap.get(id) ?? 0;
-				if (count <= 0) return;
-				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
-				const vp = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
-				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm);
-				badges.push({ id, vx: vp.x + offset, vy: vp.y - offset, count });
-			});
-			mutatieBadges = badges;
-		} else if (mutatieBadges.length) {
-			mutatieBadges = [];
+			openstaand = stippen;
+		} else if (openstaand.length) {
+			openstaand = [];
 		}
 
 		const merken: NotitieMerk[] = [];
@@ -925,7 +865,12 @@
 				dashed: metLijnLabel(stippel.dashed as never),
 				dotted: metLijnLabel(stippel.dotted as never),
 				dashdot: metLijnLabel(stippel.dashdot as never),
-				lid: metLijnLabel(stippel.lid as never)
+				lid: metLijnLabel(stippel.lid as never),
+				arrowDraad: metLijnLabel(stippel.arrowDraad as never),
+				submitterDraad: metLijnLabel(stippel.submitterDraad as never),
+				dashedDraad: metLijnLabel(stippel.dashedDraad as never),
+				dottedDraad: metLijnLabel(stippel.dottedDraad as never),
+				dashdotDraad: metLijnLabel(stippel.dashdotDraad as never)
 			},
 			defaultDrawEdgeLabel: tekenLijnLabel as never,
 			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 5.5 px long
@@ -1017,7 +962,13 @@
 				context.fillText(data.label, plek.x + 2, plek.y + 2 + size / 2 + size / 3);
 			},
 
-			nodeReducer: (id, data) => {
+			nodeReducer: (id, own) => {
+				// An anchor with nothing of its hull drawn stands as an ordinary bron.
+				const alone = aloneAnchors.get(id);
+				const data =
+					own.anchor && alone
+						? { ...own, anchor: false, image: own.ownImage, size: own.ownSize, label: alone }
+						: own;
 				if (isHiddenNode(id, data)) return { ...data, hidden: true };
 				if (data.anchor) return { ...data, label: '', forceLabel: false };
 				if (isDimmedNode(id, data))
@@ -1135,6 +1086,8 @@
 				const style = edgeStyleFor(relation, data.status as string | null, sourceClass);
 				const renderColor = edgeColorFor(relation, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
+				/** A thread has no arrow. */
+				const draadType = edgeType === 'lid' ? edgeType : `${edgeType}Draad`;
 				// A cluster's one line weighs 1 (Netwerkcanvas, Cluster).
 				const restSize = lineThickness(
 					srcAttrs.cluster || tgtAttrs.cluster
@@ -1206,18 +1159,12 @@
 
 				// A line to context, or through a bron between the chosen ones, steps back behind the
 				// chosen bronnen and what ties them directly.
-				if (
-					(isContext(src) || isContext(tgt) || isTussen(src) || isTussen(tgt)) &&
-					src !== focusedId &&
-					tgt !== focusedId
-				) {
+				if ((isContext(src) || isContext(tgt)) && !touchesChosen(src, tgt)) {
 					return {
 						...data,
 						hidden: false,
-						type: edgeType,
-						// Through a bron between the chosen ones: fainter still, two hundred of them
-						// are a haze otherwise.
-						color: dimColor(isTussen(src) || isTussen(tgt) ? 0.12 : 0.2),
+						type: draadType,
+						color: dimColor(0.2),
 						size: restSize * 0.7,
 						label: ''
 					};
@@ -1227,12 +1174,12 @@
 					// The focus's own verbindingen carry the view: in full when they are few,
 					// as a fan in their own colour when there are hundreds, so the fan reads as
 					// one shape and a single line still shows on hover.
-					if (src === focusedId || tgt === focusedId) {
+					if (touchesChosen(src, tgt)) {
 						return {
 							...data,
 							hidden: false,
 							type: edgeType,
-							color: towardPaper(renderColor, fanStrength(focusLevel1.size)),
+							color: towardPaper(renderColor, fanStrength(renderColor, focusLevel1.size)),
 							size: restSize,
 							label: ''
 						};
@@ -1245,7 +1192,7 @@
 					return {
 						...data,
 						hidden: false,
-						type: edgeType,
+						type: draadType,
 						color: towardPaper(renderColor, 0.25),
 						// A thread: 0,6 of the thickness (Netwerkcanvas, Maten).
 						size: restSize * 0.6,
@@ -1259,7 +1206,7 @@
 					return {
 						...data,
 						hidden: false,
-						type: edgeType,
+						type: draadType,
 						color: dimColor(0.3),
 						size: restSize * 0.6,
 						label: ''
@@ -1285,7 +1232,7 @@
 					...data,
 					hidden: false,
 					type: edgeType,
-					color: towardPaper(renderColor, fanStrength(degree)),
+					color: towardPaper(renderColor, fanStrength(renderColor, degree)),
 					size: restSize,
 					label: ''
 				};
@@ -1345,8 +1292,11 @@
 		onReady?.({ refresh, fit, restoreCamera, zoom });
 	});
 
-	/** How strong a line of a fan of `n` lines is drawn: in full up to nine, paler beyond. */
-	const fanStrength = (n: number) => Math.min(1, Math.max(0.35, 3 / Math.sqrt(n || 1)));
+	/** How strong a line of a fan of `n` lines is drawn: in full up to nine, paler beyond, readable. */
+	const fanStrength = (color: string, n: number) => lineStrength(color, tokens().paper, n);
+	/** A line of a chosen bron or of the focus: not context, not a thread. */
+	const touchesChosen = (src: string, tgt: string) =>
+		src === focusedId || tgt === focusedId || latestPinnedIds.has(src) || latestPinnedIds.has(tgt);
 
 	let focusLevel1 = new Set<string>();
 	function recomputeFocusLevel1() {
@@ -1392,7 +1342,7 @@
 					class="hull"
 					class:is-dim={h.dim}
 					d={h.path}
-					fill={h.alone ? h.color : withAlpha(h.color, 0.05)}
+					fill={withAlpha(h.color, 0.05)}
 					stroke={h.color}
 					stroke-dasharray={h.dash}
 				/>
@@ -1429,17 +1379,6 @@
 			{/each}
 		</div>
 	{/if}
-	{#if activityHalos.length > 0}
-		<div class="activity-overlay" aria-hidden="true">
-			{#each activityHalos as h (h.id)}
-				<span
-					class="activity-ring"
-					style="left:{h.vx}px; top:{h.vy}px; width:{h.ringPx * 2}px; height:{h.ringPx *
-						2}px; border-color:{h.color}"
-				></span>
-			{/each}
-		</div>
-	{/if}
 	{#if notitieMerken.length > 0}
 		<div class="notitie-overlay" aria-hidden="true">
 			{#each notitieMerken as m (m.id)}
@@ -1452,12 +1391,15 @@
 			{/each}
 		</div>
 	{/if}
-	{#if mutatieBadges.length > 0}
-		<div class="mutatie-overlay" aria-hidden="true">
-			{#each mutatieBadges as b (b.id)}
-				<span class="mutatie-badge" style="left:{b.vx}px; top:{b.vy}px"
-					>{b.count > 1 ? b.count : ''}</span
-				>
+	{#if openstaand.length > 0}
+		<div class="openstaand-overlay" aria-hidden="true">
+			{#each openstaand as b (b.id)}
+				<span
+					class="openstaand-stip"
+					data-openstaand={b.id}
+					title="Lopend wetsvoorstel"
+					style="left:{b.vx}px; top:{b.vy}px"
+				></span>
 			{/each}
 		</div>
 	{/if}
@@ -1557,23 +1499,8 @@
 		line-height: var(--lh-snug);
 	}
 
-	.activity-overlay {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		overflow: hidden;
-		z-index: 5;
-	}
-	.activity-ring {
-		position: absolute;
-		transform: translate(-50%, -50%);
-		border-radius: 50%;
-		border: 2px solid;
-		background: transparent;
-	}
-
 	/* A badge on a bron with an open dossier: the count when more than one. */
-	.mutatie-overlay {
+	.openstaand-overlay {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;
@@ -1604,24 +1531,14 @@
 	.notitie-merk.is-dim {
 		opacity: 0.4;
 	}
-	.mutatie-badge {
+	.openstaand-stip {
 		position: absolute;
 		transform: translate(-50%, -50%);
-		min-width: 14px;
-		height: 14px;
-		padding: 0 3px;
+		width: 6px;
+		height: 6px;
 		border-radius: var(--r-rond);
-		background: var(--ink);
-		color: var(--paper);
+		background: var(--soort-parlement);
 		border: 1.5px solid var(--paper);
-		box-shadow: 0 0 0 1px var(--ink);
-		font-family: var(--font-serif);
-		font-size: var(--t-glyph);
-		font-weight: 600;
-		line-height: 11px;
-		text-align: center;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		box-sizing: content-box;
 	}
 </style>

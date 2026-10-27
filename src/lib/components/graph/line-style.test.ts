@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 // The style of a line by its relation (Netwerkcanvas, Lijnen): colour and stroke carry the kind of
 // line together, also in grey.
 import { describe, expect, it } from 'vitest';
@@ -33,5 +34,13 @@ describe('edgeStyleFor', () => {
 		expect(new Set(strepen).size).toBe(3);
 		expect(edgeDashFor('solid')).toBeUndefined();
 		expect(edgeDashFor('lid')).toBe(edgeDashFor('dotted'));
+	});
+});
+
+describe('a thread (Netwerkcanvas, Maten)', () => {
+	it('has a program without an arrow for every style (WebGL: read, not run)', () => {
+		const source = readFileSync(new URL('./DashedEdgeProgram.ts', import.meta.url), 'utf8');
+		for (const style of ['arrow', 'submitter', 'dashed', 'dotted', 'dashdot'])
+			expect(source, style).toMatch(new RegExp(`${style}Draad:`));
 	});
 });

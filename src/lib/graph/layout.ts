@@ -11,16 +11,19 @@ function moveTo(g: Graph, id: string, x: number, y: number) {
 }
 
 /** Between two chosen bronnen side by side, and from the middle to the first ring. */
-const CENTRE_GAP = 160;
+const CENTRE_GAP = 220;
+/** Chosen bronnen beyond this many stand in two rows, so their discs and names keep apart. */
+const ONE_ROW = 3;
+const ROW_OFFSET = 70;
 const RING = 220;
 const RING_STEP = 90;
 /** The room of one bron along a ring, so names have space. */
 const ARC = 70;
 
 /** Between the members of one hull, centre to centre. */
-const MEMBER_GAP = 48;
+const MEMBER_GAP = 60;
 /** A member of a chosen bron's hull stands this far from that bron. */
-const SATELLITE = 64;
+const SATELLITE = 76;
 
 /**
  * The radial order of the canvas. `centre`: the chosen bronnen, or the one bron the canvas is
@@ -51,13 +54,23 @@ export function radialLayout(
 		if (own) anchorOn.set(id, own);
 	}
 	const mids = present.filter((id) => !anchorOn.has(id));
-	mids.forEach((id, i) => moveTo(g, id, (i - (mids.length - 1) / 2) * CENTRE_GAP, 0));
+	// Side by side; beyond three, in two rows, so no name stands on another's disc.
+	const rows = mids.length > ONE_ROW;
+	const gap = rows ? CENTRE_GAP * 0.6 : CENTRE_GAP;
+	mids.forEach((id, i) =>
+		moveTo(
+			g,
+			id,
+			(i - (mids.length - 1) / 2) * gap,
+			rows ? (i % 2 === 0 ? -ROW_OFFSET : ROW_OFFSET) : 0
+		)
+	);
 	const standOn = (id: string): string => (anchorOn.has(id) ? standOn(anchorOn.get(id)!) : id);
 	for (const anchor of anchorOn.keys()) {
 		const on = standOn(anchor);
 		moveTo(g, anchor, g.getNodeAttribute(on, 'x'), g.getNodeAttribute(on, 'y'));
 	}
-	const inner = RING + ((mids.length - 1) * CENTRE_GAP) / 2;
+	const inner = RING + ((mids.length - 1) * gap) / 2 + (rows ? ROW_OFFSET : 0);
 	// The hulls with a chosen member: their other members circle that member.
 	const chosenIn = new Map<string, string>();
 	for (const id of mids) {

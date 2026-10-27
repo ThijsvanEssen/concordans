@@ -101,10 +101,11 @@ describe('the hulls of a small canvas', () => {
 			    "dim": false,
 			    "id": "D",
 			    "label": "Kamerstuk 36000",
-			    "labelX": 100,
-			    "labelY": 278,
+			    "labelX": 120,
+			    "labelY": 258,
 			    "long": false,
-			    "path": "M 100 316 A 16 16 0 0 1 100 284 L 140 284 A 16 16 0 0 1 140 316 Z",
+			    "path": "M 84 300 A 36 36 0 1 0 156 300 A 36 36 0 1 0 84 300 Z",
+			    "top": 264,
 			  },
 			  {
 			    "color": "#00487c",
@@ -115,6 +116,7 @@ describe('the hulls of a small canvas', () => {
 			    "labelY": 238,
 			    "long": false,
 			    "path": "M 384 260 A 16 16 0 1 0 416 260 A 16 16 0 1 0 384 260 Z",
+			    "top": 244,
 			  },
 			]
 		`);
@@ -123,13 +125,13 @@ describe('the hulls of a small canvas', () => {
 			  {
 			    "arrow": "M384,262L377,269L374,262Z",
 			    "color": "#00487c",
-			    "d": "M140 297Q266 309 375 266",
+			    "d": "M155 295Q274 306 375 266",
 			    "dash": "4 3",
 			    "dim": false,
 			    "id": "D->W",
 			    "label": null,
-			    "labelX": 262,
-			    "labelY": 280,
+			    "labelX": 270,
+			    "labelY": 279,
 			    "width": 3,
 			  },
 			  {
@@ -203,15 +205,39 @@ describe('the lines to an anchor', () => {
 });
 
 describe('the names of the hulls (UX review N4, N8)', () => {
-	it('names a wet whose anchor stands alone, in a netwerk zoomed out (Gemw, tussen=0)', () => {
-		// Only the anchor of W drawn; a chosen bron elsewhere and zoomed out: still named.
+	it('draws no hull of a wet whose anchor stands alone: an ordinary bron with its name (Gemw)', () => {
+		// Only the anchor of W drawn: no empty circle, the anchor is a bron and carries the name.
 		const s = scene({
 			pinnedIds: new Set(['s1']),
 			zoomedOut: true,
 			isHidden: (id) => id === 'art'
 		});
-		const w = layoutHulls(s).hulls.find((h) => h.id === 'W');
-		expect(w?.label).toBe('Awb');
+		const layout = layoutHulls(s);
+		expect(layout.hulls.find((h) => h.id === 'W')).toBeUndefined();
+		expect(layout.alone.get('wet')).toBe('Awb');
+		// Its lines are sigma's, not the hulls' layer.
+		expect(anchorWithHull('wet', { ...s, alone: layout.alone })).toBe(false);
+		expect(hullLinkOf('s1', 'wet', { ...s, alone: layout.alone })).toBeNull();
+	});
+
+	it('draws a hull as a disc of the members plus 16 and goes round the hull it holds', () => {
+		const s = scene();
+		const { hulls } = layoutHulls(s);
+		const disc = (id: string) => hulls.find((h) => h.id === id)!;
+		// Every member inside: the path is a circle (two arcs), not a polygon.
+		expect(disc('W').path).toMatch(/^M [\d.-]+ [\d.-]+ A (\S+) \1 0 1 0 [\d.-]+ [\d.-]+ A/);
+		const inner = layoutHulls(
+			scene({
+				groups: new Map([
+					['W', group('W', 'instrument', '', ['wet', 'art'])],
+					['D', group('D', 'dossier', 'Kamerstuk 36000', ['s1', 's2', 'wet'])]
+				])
+			})
+		);
+		const outerTop = inner.hulls.find((h) => h.id === 'D')!;
+		const innerTop = inner.hulls.find((h) => h.id === 'W')!;
+		// The outer name stands above the inner pill, which stays inside the outer disc.
+		expect(outerTop.labelY).toBeLessThan(innerTop.labelY);
 	});
 
 	it('keeps a hull’s name off the signs of the bronnen', () => {

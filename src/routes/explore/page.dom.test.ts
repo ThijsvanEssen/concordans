@@ -237,9 +237,8 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.GraphView.depth).toBe(1);
 	});
 
-	it('hands the overlay and the bronfilter of the address to the network', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&overlay=open&lid=2`);
-		expect(seen.GraphView.overlay).toEqual({ kind: 'open' });
+	it('hands the bronfilter of the address to the network', async () => {
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&lid=2`);
 		expect((seen.GraphView.filter as { lid: string | null }).lid).toBe('2');
 	});
 
@@ -279,27 +278,15 @@ describe('the Verkenner writes its state to the address', () => {
 		expect(history().entries).toHaveLength(1);
 	});
 
-	it('writes the depth, the overlay and the filter in place: no step', async () => {
+	it('writes the depth and the filter in place: no step', async () => {
 		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const props = seen.GraphView as {
 			onDepth: (d: number) => void;
-			onToggleMutatie: () => void;
-			onToggleHeat: () => void;
-			onHeatPeriodChange: (m: number) => void;
 		};
 		props.onDepth(3);
 		await settle();
 		expect(param('diepte')).toBe('3');
 		expect(seen.GraphView.depth).toBe(3);
-		props.onToggleMutatie();
-		await settle();
-		expect(param('overlay')).toBe('open');
-		(seen.GraphView as typeof props).onToggleHeat();
-		await settle();
-		expect(param('overlay')).toMatch(/^heat/);
-		(seen.GraphView as typeof props).onToggleHeat();
-		await settle();
-		expect(param('overlay')).toBeNull();
 		expect(history().entries).toHaveLength(1);
 		expect(steps.every((s) => !s.step)).toBe(true);
 	});

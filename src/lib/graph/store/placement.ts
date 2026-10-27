@@ -29,6 +29,8 @@ export type End = {
 	 * Verbonden put on the canvas).
 	 */
 	ties?: boolean;
+	/** A publication of the Staatsblad: an act that states what it enacts or changes, with a line to each wet. */
+	publication?: boolean;
 };
 
 type Connection = {
@@ -52,6 +54,13 @@ export type Placement =
 	| { place: 'member'; hull: Side; seat: boolean; anchor?: Side }
 	| { place: 'line'; meta: boolean; anchor?: Side }
 	| { place: 'none'; anchor?: Side };
+
+/** A publication of the Staatsblad (Stb. 2026, 314): an instrument of the kind publicatie, with no articles of its own. */
+export const isPublication = (
+	node: { collection?: string; props?: unknown } | undefined
+): boolean =>
+	node?.collection === 'instruments' &&
+	(node.props as Record<string, unknown> | null | undefined)?.kind === 'publicatie';
 
 const other = (side: Side): Side => (side === 'source' ? 'target' : 'source');
 const SIDES: Side[] = ['target', 'source'];
@@ -90,7 +99,8 @@ export function placeConnection(c: Connection): Placement {
 		(side) => !end(side).drawn && end(side).hull === 'instrument' && isAmendingRelation(relation)
 	);
 	if (changed === 'target') return line(false, 'target');
-	if (changed === 'source') return { place: 'none', anchor: 'source' };
+	if (changed === 'source')
+		return source.publication ? line(false, 'source') : { place: 'none', anchor: 'source' };
 
 	if (!source.drawn || !target.drawn) return { place: 'none' };
 	const semantic = edgeCategory(relation, source.drawClass) === 'semantic';

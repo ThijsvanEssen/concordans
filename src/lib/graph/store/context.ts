@@ -24,7 +24,7 @@ import {
 	type GraphNode
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
-import { periodOf, placeConnection, type End } from './placement';
+import { isPublication, periodOf, placeConnection, type End } from './placement';
 
 /**
  * The names of a container's hull: short on the hull, in full on hover. A dossier by its number
@@ -235,7 +235,12 @@ export function createGraphContext() {
 	};
 
 	/** The end of a verbinding as `placeConnection` reads it. */
-	const endOf = (collection: string, node: GraphNode | null | undefined): End => ({
+	const endOf = (
+		collection: string,
+		node: GraphNode | null | undefined,
+		props?: Record<string, unknown> | null
+	): End => ({
+		publication: isPublication({ collection, props }),
 		hull: containerKindOf(collection),
 		drawn: !!node,
 		drawClass: node?.drawClass ?? 'other'
@@ -293,7 +298,7 @@ export function createGraphContext() {
 		touchNode(center.id, center);
 
 		const near = {
-			...endOf(response.node.collection, center),
+			...endOf(response.node.collection, center, response.node.props),
 			hull: centerContainerKind,
 			drawn: true
 		};
@@ -303,7 +308,7 @@ export function createGraphContext() {
 			const relation = relationOf(neighbor.relation);
 			if (!relation) continue;
 			const other = drawable(neighbor);
-			const far = { ...endOf(neighbor.collection, other), ties: !!joins?.(id) };
+			const far = { ...endOf(neighbor.collection, other, neighbor.props), ties: !!joins?.(id) };
 			const outbound = neighbor.direction === 'outbound';
 			const placement = placeConnection({
 				relation,

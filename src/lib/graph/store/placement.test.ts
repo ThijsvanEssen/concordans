@@ -96,3 +96,20 @@ describe('where a verbinding lands', () => {
 		]
 	])('%s', (_, placement, expected) => expect(placement).toEqual(expected));
 });
+
+describe('a publication of the Staatsblad (Netwerkcanvas, Staatsblad-publicatie)', () => {
+	const publicatie: End = { ...hull('instrument'), publication: true };
+
+	it('draws a line to the wet it changes, where an amending act is drawn without one', () => {
+		expect(at(publicatie, 'AMENDS', bron('article'))).toEqual({
+			place: 'line',
+			meta: false,
+			anchor: 'source'
+		});
+		expect(at(publicatie, 'REPEALS', bron('article'))).toMatchObject({ place: 'line' });
+		expect(at(hull('instrument'), 'AMENDS', bron('article'))).toEqual({
+			place: 'none',
+			anchor: 'source'
+		});
+	});
+});

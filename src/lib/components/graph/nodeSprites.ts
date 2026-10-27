@@ -325,6 +325,7 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	regel: 6,
 	'regel-int': 6,
 	'regel-o': 5.7,
+	publicatie: 6,
 	uitspraak: 4.6,
 	stuk: 4.5,
 	voorstel: 4.5,

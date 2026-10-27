@@ -24,7 +24,7 @@ test('a ministerie in focus stands on its canvas, its name on its hull (N5)', as
 });
 
 test('every wet drawn as its anchor alone carries its name (N8)', async ({ page }) => {
-	await page.goto('/wetten/BWBR0005416?mode=netwerk&netwerk=instruments/bwbr0005289&tussen=0');
+	await page.goto('/wetten/BWBR0005416?mode=netwerk&netwerk=instruments/bwbr0005289');
 	await expect(lijst(page).filter({ hasText: /, Wet$/ })).toHaveCount(2);
 	for (const naam of ['Gemw', 'Boek 6 BW'])
 		await expect(hullNames(page).filter({ hasText: new RegExp(`^${naam}$`) })).toHaveCount(1);

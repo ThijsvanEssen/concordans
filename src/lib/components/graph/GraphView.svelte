@@ -66,8 +66,6 @@
 	import { kolomPlekken } from '$lib/selection/kolommen';
 	import { radialLayout } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import type { Overlay } from '$lib/selection/overlay';
-	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
@@ -98,14 +96,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		| 'onFilter'
-		| 'onOpenFilter'
-		| 'onLaadSoort'
-		| 'laadtSoort'
-		| 'onToggleHeat'
-		| 'onHeatPeriodChange'
-		| 'onToggleMutatie'
-		| 'counting'
+		'onFilter' | 'onLaadSoort' | 'laadtSoort' | 'counting'
 	>;
 
 	let {
@@ -117,8 +108,6 @@
 		selectedEdgeId = null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
-		heatMap = new Map() as NodeCounts,
-		overlay = { kind: 'none' } as Overlay,
 		marked = null,
 		onMark,
 		onNodeClick,
@@ -157,8 +146,6 @@
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
 		lineLids?: ReadonlyMap<string, string>;
 		inFluxMap?: NodeCounts;
-		heatMap?: NodeCounts;
-		overlay?: Overlay;
 		/** The bron marked, as the address holds it (?marked): its card open. */
 		marked?: string | null;
 		/** A bron was marked, or none is any more: the page writes it in the address. */
@@ -1058,6 +1045,9 @@
 			if (n.anchor)
 				Object.assign(attrs, {
 					anchor: true,
+					// What it is drawn as when nothing of its hull is: an ordinary bron.
+					ownImage: attrs.image,
+					ownSize: attrs.size,
 					image: undefined,
 					size: 2,
 					label: '',
@@ -1364,19 +1354,14 @@
 		periode={filter.van || filter.tot || eersteJaar !== laatsteJaar ? periode : undefined}
 		{meer}
 		{...legend}
-		{verbonden}
 		{filter}
 		reach={externCounts || yearPeriod ? null : reach}
-		outlines={externCounts ? 0 : containerGroups.size}
 		hiddenAnnexes={filters.hiddenAnnexes}
 		onToggleAnnexes={toggleAnnexes}
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
-		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
-		{overlay}
-		inFluxCount={inFluxMap.size}
 		{hasNodes}
 		{kindRowsShown}
 		{kindsSettled}
@@ -1511,10 +1496,6 @@
 					{selectedEdgeId}
 					{lineLids}
 					{inFluxMap}
-					{heatMap}
-					heatActive={overlay.kind === 'heat'}
-					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
-					mutatieActive={overlay.kind === 'open'}
 					externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
 					{notitieIds}
 					onNodeClick={(id) => {
