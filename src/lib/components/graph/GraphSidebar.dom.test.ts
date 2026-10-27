@@ -6,7 +6,7 @@ import GraphSidebar from './GraphSidebar.svelte';
 import { EMPTY_FILTER } from '$lib/verbonden/filter';
 import { DEFAULT_LOADER_OPTIONS } from '$lib/verbonden/loaders';
 
-const props = (selectionCollection: 'documents' | null) => ({
+const props = (_selectionCollection: 'documents' | null) => ({
 	verbonden: {
 		id: 'documents/x',
 		groups: [],

@@ -657,15 +657,30 @@
 	let drawn: ReadonlySet<string> | null = null;
 	/** Tells `onDrawn` what is drawn now, when that changed. */
 	function reportDrawn() {
-		if (!onDrawn) return;
 		const now = new Set<string>();
+		let stepBack = 0;
+		let standing = 0;
 		graph.forEachNode((id, attrs) => {
-			if (!isHiddenNode(id, attrs)) now.add(id);
+			if (isHiddenNode(id, attrs)) return;
+			standing++;
+			if (isDimmedNode(id, attrs)) stepBack++;
+			else now.add(id);
 		});
+		knopen = standing;
+		gedimd = stepBack;
+		if (!onDrawn) return;
 		if (drawn && drawn.size === now.size && [...now].every((id) => drawn!.has(id))) return;
 		drawn = now;
 		onDrawn(now);
 	}
+
+	/** The bronnen standing on the canvas, and how many of them are dimmed (outside the period). */
+	let knopen = $state(0);
+	let gedimd = $state(0);
+
+	/** A dated bron outside the chosen period stays, dimmed with its lines (Tijdstrook, 28 %). */
+	const isDimmedNode = (id: string, attrs: Record<string, unknown>) =>
+		id !== focusedId && !latestPinnedIds.has(id) && outsideYears(attrs.date);
 
 	const outsideYears = (date: unknown) =>
 		typeof date === 'string' &&
@@ -679,7 +694,6 @@
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
 		(!!latestFilters?.hiddenBijlagen && attrs.drawClass === 'other') ||
 		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
-		outsideYears(attrs.date) ||
 		otherCourt(attrs);
 
 	// The focus and the chosen bronnen stay drawn under every filter: Soort off for their own
@@ -965,6 +979,14 @@
 			nodeReducer: (id, data) => {
 				if (isHiddenNode(id, data)) return { ...data, hidden: true };
 				if (data.anchor) return { ...data, label: '', forceLabel: false };
+				if (isDimmedNode(id, data))
+					return {
+						...data,
+						hidden: false,
+						label: '',
+						color: t.paper2,
+						image: spriteForVorm(data.vorm as Vorm, true, false)
+					};
 
 				const f0 = latestFilters;
 				// No single node to focus around when the selection is a container (a wet,
@@ -1094,6 +1116,17 @@
 						zIndex: 3
 					};
 				}
+
+				// A line of a bron outside the period steps back with it.
+				if (isDimmedNode(src, srcAttrs) || isDimmedNode(tgt, tgtAttrs))
+					return {
+						...data,
+						hidden: false,
+						type: edgeType,
+						color: dimColor(0.28),
+						size: restSize * 0.7,
+						label: ''
+					};
 
 				if (hoveredId !== null) {
 					const incident = src === hoveredId || tgt === hoveredId;
@@ -1281,6 +1314,8 @@
 <div
 	bind:this={wrap}
 	class="canvas-wrap"
+	data-knopen={knopen}
+	data-gedimd={gedimd}
 	onpointermove={onHullPointer}
 	onpointerleave={() => {
 		if (hoveredHullId !== null) {
