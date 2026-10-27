@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	HOVER_STRENGTH,
-	LINE_CONTRAST,
-	contrast,
-	floorStrength,
-	lineStrength,
-	mixed
-} from './line-strength';
+import { LINE_CONTRAST, contrast, floorStrength, lineStrength, mixed } from './line-strength';
 import { FALLBACK } from '$lib/components/graph/nodeSprites';
 
 const paper = FALLBACK.paper;
@@ -33,7 +26,6 @@ describe('the strength of a line at rest', () => {
 	});
 
 	it('draws a hovered bron’s own lines in full', () => {
-		expect(HOVER_STRENGTH).toBe(1);
-		expect(mixed(FALLBACK.moss, paper, HOVER_STRENGTH)).toBe(FALLBACK.moss);
+		expect(mixed(FALLBACK.moss, paper, 1)).toBe(FALLBACK.moss);
 	});
 });

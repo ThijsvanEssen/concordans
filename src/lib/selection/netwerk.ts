@@ -33,13 +33,7 @@ export type NetwerkEntry = {
 	verborgenMet?: ContainerKind;
 	/** All its verbindingen, as its node counts them: under it in the weergave Verband. */
 	connections?: number;
-	/** A group the paths ran through some of its members of: how many of how many. */
-	via?: { used: number; total: number };
 };
-
-/** Only where the API took part of a group's members: then the chip says so. */
-export const deelVan = (e: { used: number; total: number } | undefined) =>
-	e && e.used < e.total ? e : undefined;
 
 const list = (value: string | null) =>
 	(value ?? '')

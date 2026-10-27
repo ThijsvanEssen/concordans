@@ -57,6 +57,3 @@ export function floorStrength(color: string, paper: string): number {
 /** The strength of a line of a fan of `n` lines: in full up to nine, paler beyond, never below the floor. */
 export const lineStrength = (color: string, paper: string, n: number): number =>
 	Math.max(Math.min(1, 3 / Math.sqrt(n || 1)), floorStrength(color, paper));
-
-/** A hovered bron's own lines: in full. */
-export const HOVER_STRENGTH = 1;

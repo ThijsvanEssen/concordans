@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fallbackLawName } from '$lib/graph/law-name';
+	import { fallbackLawName } from '$lib/text/enacted-law';
 	import { lineStrength } from '$lib/graph/line-strength';
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
 	import { forEachRealNeighbor, realDegree } from '$lib/graph/layout';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fallbackLawName } from './law-name';
+import { fallbackLawName } from './enacted-law';
 
 describe('the name of a law without meta', () => {
 	it('names a directive by its CELEX number, so its articles stand in a named hull', () => {
