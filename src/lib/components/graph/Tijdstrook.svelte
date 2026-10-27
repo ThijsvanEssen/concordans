@@ -34,7 +34,7 @@
 	);
 
 	let band = $state<HTMLElement | null>(null);
-	let sleep = $state<{ van: number; tot: number } | null>(null);
+	let drag = $state<{ van: number; tot: number } | null>(null);
 	const jaarOp = (e: PointerEvent) => {
 		const r = band?.getBoundingClientRect();
 		if (!r || r.width === 0) return eerste;
@@ -44,20 +44,20 @@
 	function neer(e: PointerEvent) {
 		band?.setPointerCapture(e.pointerId);
 		const j = jaarOp(e);
-		const greep = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-greep]')?.dataset
+		const handle = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-greep]')?.dataset
 			.greep;
 		// A grip moves its own end of the period; the other end stays.
-		if (greep && keuze)
-			sleep =
-				greep === 'van' ? { van: keuze.tot, tot: keuze.van } : { van: keuze.van, tot: keuze.tot };
-		else sleep = { van: j, tot: j };
+		if (handle && keuze)
+			drag =
+				handle === 'van' ? { van: keuze.tot, tot: keuze.van } : { van: keuze.van, tot: keuze.tot };
+		else drag = { van: j, tot: j };
 	}
 	function beweeg(e: PointerEvent) {
-		if (sleep) sleep = { ...sleep, tot: jaarOp(e) };
+		if (drag) drag = { ...drag, tot: jaarOp(e) };
 	}
 	function op() {
-		const s = sleep;
-		sleep = null;
+		const s = drag;
+		drag = null;
 		if (!s) return;
 		const a = Math.min(s.van, s.tot);
 		const b = Math.max(s.van, s.tot);
@@ -66,21 +66,21 @@
 	}
 	/** What stands chosen: the drag under way, else the period of the address. */
 	const keuze = $derived(
-		sleep
-			? { van: Math.min(sleep.van, sleep.tot), tot: Math.max(sleep.van, sleep.tot) }
+		drag
+			? { van: Math.min(drag.van, drag.tot), tot: Math.max(drag.van, drag.tot) }
 			: van !== null || tot !== null
 				? { van: van ?? eerste, tot: tot ?? laatste }
 				: null
 	);
 	/** The end the pointer holds in a drag: the grip that is filled. */
-	const greepSleep = $derived(sleep ? (sleep.tot < sleep.van ? 'van' : 'tot') : null);
+	const dragHandle = $derived(drag ? (drag.tot < drag.van ? 'van' : 'tot') : null);
 	/** The bronnen per year, from the first, to stack. */
-	const kolommen = $derived.by(() => {
+	const columns = $derived.by(() => {
 		const k = Array.from({ length: span }, () => 0);
 		for (const s of stippen) k[Math.floor(s.jaar) - eerste]++;
 		return k;
 	});
-	const periodeTekst = $derived.by(() => {
+	const periodText = $derived.by(() => {
 		const a = keuze?.van ?? eerste;
 		const b = keuze?.tot ?? laatste;
 		return a === b ? `${a}` : `${a} tot ${b}`;
@@ -88,15 +88,15 @@
 </script>
 
 {#if stippen.length > 1 && span > 1}
-	<div class="tijdstrook" class:is-resizing={!!sleep} aria-hidden="true">
-		<p class="kop">{periodeTekst}</p>
+	<div class="tijdstrook" class:is-resizing={!!drag} aria-hidden="true">
+		<p class="kop">{periodText}</p>
 		<div
 			class="band"
 			bind:this={band}
 			onpointerdown={neer}
 			onpointermove={beweeg}
 			onpointerup={op}
-			onpointercancel={() => (sleep = null)}
+			onpointercancel={() => (drag = null)}
 		>
 			{#if keuze}
 				<span
@@ -106,7 +106,7 @@
 				></span>
 			{/if}
 			<div class="kolommen">
-				{#each kolommen as n, k (k)}
+				{#each columns as n, k (k)}
 					{@const jaar = eerste + k}
 					<div class="kolom">
 						{#each { length: n } as _, i (i)}<i
@@ -119,13 +119,13 @@
 			{#if keuze}
 				<span
 					class="greep"
-					class:is-resizing={sleep && greepSleep === 'van'}
+					class:is-resizing={drag && dragHandle === 'van'}
 					data-greep="van"
 					style:left="{plek(Math.max(eerste, keuze.van))}%"
 				></span>
 				<span
 					class="greep"
-					class:is-resizing={sleep && greepSleep === 'tot'}
+					class:is-resizing={drag && dragHandle === 'tot'}
 					data-greep="tot"
 					style:left="{plek(Math.min(laatste, keuze.tot) + 1)}%"
 				></span>
