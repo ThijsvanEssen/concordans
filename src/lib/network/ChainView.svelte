@@ -21,7 +21,6 @@
 		arrowLength
 	} from '$lib/components/graph/nodeSprites';
 	import { curvedLine, AIR, DOT_RADIUS } from '$lib/graph/line-shape';
-	import { korteDatum } from '$lib/text/datum';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
@@ -219,27 +218,20 @@
 		}
 		return out;
 	});
-	/** What a node says under its sign: its name over lines, and the date of a judgment. */
+	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
 	const infoOf = $derived.by(() => {
-		const m = new Map<string, { lines: string[]; date: string | null }>();
+		const m = new Map<string, { lines: string[] }>();
 		for (const l of shown)
-			for (const k of l.nodes) {
-				const name = linesOf(
-					k.collection === 'articles' ? k.short : k.name,
-					charsFor(l.nodes.length)
-				);
-				const date = k.collection === 'judgments' && k.since ? korteDatum(k.since) : null;
-				// One date once: a name that already carries it does not repeat it.
-				// One date once: a name that already carries the year does not repeat it.
-				const named = date && k.name.includes(k.since!.slice(0, 4));
-				m.set(k.id, { lines: name, date: date && !named ? date : null });
-			}
+			for (const k of l.nodes)
+				m.set(k.id, {
+					lines: linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(l.nodes.length))
+				});
 		return m;
 	});
-	/** Where a line leaves a node below its name (and date), 7 px under the last line. */
+	/** Where a line leaves a node below its name, 7 px under the last line. */
 	const under = (id: string) => {
 		const i = infoOf.get(id);
-		return 24 + LINE * ((i?.lines.length ?? 1) - 1) + (i?.date ? LINE : 0) + 7;
+		return 24 + LINE * ((i?.lines.length ?? 1) - 1) + 7;
 	};
 	/** The words on a line of the keten: a judgment's appeal, its cassatie and its conclusie. */
 	const wordOf = (relation: Relation, layer: string) =>
@@ -578,12 +570,6 @@
 								dy={j ? LINE : 0}>{r}</tspan
 							>{/each}</text
 					>
-					{#if info?.date}<text
-							class="date"
-							x={isArticle ? p.x - 6 : p.x}
-							y={p.y + 24 + LINE * (info.lines.length - 1) + LINE}
-							text-anchor={isArticle ? 'start' : 'middle'}>{info.date}</text
-						>{/if}
 				</g>
 			{/each}
 		{/each}
@@ -736,15 +722,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
 		font-style: italic;
-		fill: var(--ink-3);
-		paint-order: stroke;
-		stroke: var(--paper);
-		stroke-width: 4px;
-		stroke-linejoin: round;
-	}
-	.date {
-		font-family: var(--font-serif);
-		font-size: var(--t-note);
 		fill: var(--ink-3);
 		paint-order: stroke;
 		stroke: var(--paper);
