@@ -470,7 +470,7 @@ describe('the Verkenner on a phone', () => {
 	it('reads the text and Verbonden as two tabs, the text first (A197-a, R3-L F4)', async () => {
 		const { container } = await openAt(`/explore?focus=${MEMBER}`);
 		expect(view(container)).toBe('read');
-		const tabs = [...container.querySelectorAll('.lees-tabs [role="tab"]')];
+		const tabs = [...container.querySelectorAll('.lees-tabs button')];
 		expect(tabs.map((t) => t.textContent)).toEqual(['Tekst', 'Verbonden']);
 		expect(container.querySelector('.col--reader.mobile-hidden')).toBeNull();
 		expect(container.querySelector('.col--panel.mobile-hidden')).not.toBeNull();

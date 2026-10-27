@@ -55,7 +55,7 @@ export const FILTER_GROUP_LABEL: Record<FilterGroup, string> = {
 	dossiers: 'Dossiers',
 	stemmingen: 'Stemmingen',
 	leden: 'Leden en fracties',
-	organen: 'Commissies en kabinetten',
+	organen: 'Organen',
 	internationaal: 'Europees en internationaal'
 };
 
@@ -69,7 +69,7 @@ export const FILTER_GROUP_NOUN: Record<FilterGroup, string> = {
 	dossiers: 'dossiers',
 	stemmingen: 'stemmingen',
 	leden: 'leden en fracties',
-	organen: 'commissies en kabinetten',
+	organen: 'organen',
 	internationaal: 'Europese en internationale bronnen'
 };
 
@@ -83,7 +83,7 @@ const FILTER_GROUP_ONE: Record<FilterGroup, string> = {
 	dossiers: 'dossier',
 	stemmingen: 'stemming',
 	leden: 'lid of fractie',
-	organen: 'commissie of kabinet',
+	organen: 'orgaan',
 	internationaal: 'Europese of internationale bron'
 };
 

@@ -115,18 +115,16 @@
 	}
 	/* On a touch screen the segments are a finger's 44 px themselves, no hidden target. */
 	@media (pointer: coarse), (max-width: 768px) {
+		/* The frame is drawn inside as an outline, so it takes no room: the segments are 44 px
+		   themselves, not 42 inside a border. */
 		.keuze {
 			height: var(--veld-h-raak);
+			border: 0;
+			outline: 1px solid var(--rule-strong);
+			outline-offset: -1px;
 		}
 		button {
-			position: relative;
 			font-size: var(--t-ui-raak);
-		}
-		/* The frame counts in the 44 px: the segment's target reaches over its two lines. */
-		button::after {
-			content: '';
-			position: absolute;
-			inset: -1px 0;
 		}
 		button[aria-pressed='true'] {
 			box-shadow: inset 0 -3px 0 var(--ink);

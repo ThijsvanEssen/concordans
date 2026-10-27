@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -18,8 +19,7 @@
 			<a href="/bronnen" class="cite">Bronnen en hergebruik</a>.
 		</p>
 
-		<div class="section">
-			<h2 class="section-title">Verwijzingen in de tekst</h2>
+		<Sectie title="Verwijzingen in de tekst" niveau={2} inklapbaar={false}>
 			<p>
 				Concordans herkent verwijzingen aan vaste patronen: een artikelverwijzing, een citeertitel,
 				een ECLI. Er is geen taalmodel. Passen meerdere patronen, dan geldt het specifiekste. Een
@@ -30,10 +30,9 @@
 				procedure, beperking van de reikwijdte of delegatie. Een wijziging in het Staatsblad hangt
 				aan het artikel dat ze wijzigt, invoegt of intrekt.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section" id="betrouwbaarheid">
-			<h2 class="section-title">Betrouwbaarheid</h2>
+		<Sectie title="Betrouwbaarheid" niveau={2} inklapbaar={false} id="betrouwbaarheid">
 			<p>De kaart van een verbinding noemt haar herkomst:</p>
 			<KeyList>
 				<KeyRow key="uit de bron"
@@ -57,10 +56,9 @@
 				De status is vastgesteld of voorgesteld. Een wijziging uit een wetsvoorstel dat nog niet in
 				het Staatsblad staat, is voorgesteld.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section">
-			<h2 class="section-title">Wat Concordans zelf afleidt</h2>
+		<Sectie title="Wat Concordans zelf afleidt" niveau={2} inklapbaar={false}>
 			<p>
 				Het lid dat een verwijzing noemt, volgt uit de tekst van de verwijzing. De leden en
 				onderdelen van een artikel volgen uit de indeling van de tekst. Bij een memorie van
@@ -72,10 +70,9 @@
 				artikel toelicht, wijzigt of invoegt. Een toelichting bij het dossier als geheel staat niet
 				bij het artikel.
 			</p>
-		</div>
+		</Sectie>
 
-		<div class="section" id="grenzen">
-			<h2 class="section-title">Grenzen</h2>
+		<Sectie title="Grenzen" niveau={2} inklapbaar={false} id="grenzen">
 			<p>
 				De patronen begrijpen de tekst niet. Een ongebruikelijke formulering wordt gemist of aan de
 				verkeerde bron gekoppeld.
@@ -109,7 +106,7 @@
 				Concordans is in ontwikkeling. Functies en weergave kunnen wijzigen. Een adres op ECLI,
 				BWB-id of officieel nummer blijft werken.
 			</p>
-		</div>
+		</Sectie>
 
 		<div class="meta-row">
 			<a href="/docs" class="meta-link">Documentatie</a>

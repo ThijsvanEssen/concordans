@@ -86,7 +86,7 @@ test('Verband counts the bron of the page as the first end (R3-I F2)', async ({ 
 	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Verband', pressed: true })).toBeVisible();
 	await expect(page.getByText('Art. 7:658 BW').first()).toBeVisible();
-	await expect(page.getByText('Voeg een tweede bron toe')).toHaveCount(0);
+	await expect(page.getByText('Kies een tweede bron')).toHaveCount(0);
 });
 
 test('no "?" for judgments both cite where one end cites none (R3-N B7)', async ({ page }) => {

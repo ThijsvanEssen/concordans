@@ -41,7 +41,12 @@ async function load(page: Page, path: string, phone = false) {
 	await page.goto(path);
 	await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 	// On a phone Verbonden is a tab of its own (A197-a), drawn when it is chosen.
-	if (phone) await expect(page.getByRole('tab', { name: 'Verbonden' })).toBeVisible();
+	if (phone)
+		await expect(
+			page
+				.getByRole('group', { name: 'Tekst of Verbonden' })
+				.getByRole('button', { name: 'Verbonden' })
+		).toBeVisible();
 	else await expect(page.getByRole('heading', { level: 2, name: 'Verbonden' })).toBeAttached();
 	await page.waitForLoadState('networkidle');
 	await page.waitForTimeout(1000);
