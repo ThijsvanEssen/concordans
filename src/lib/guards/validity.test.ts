@@ -14,6 +14,7 @@ describe('the stand of a law and of an article', () => {
 	});
 	it('is said of no other place: Vervallen per stands in the one component', () => {
 		expect(bron('lib/components/ui/Validity.svelte')).toMatch(/statusOf/);
-		expect(bron('lib/text/validity.ts')).toMatch(/Vervallen per/);
+		expect(bron('lib/text/validity.ts')).toMatch(/Vervallen/);
+		expect(bron('lib/text/validity.ts')).toMatch(/Ingetrokken/);
 	});
 });

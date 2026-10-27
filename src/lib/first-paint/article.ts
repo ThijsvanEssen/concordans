@@ -37,7 +37,7 @@ import { wordingsOf } from '$lib/text/version-diff';
 import { joinParts, textOf } from '$lib/text/words';
 import { uniqueBy } from '$lib/util/unique';
 import type { Classes } from './classes';
-import { running } from './markup';
+import { findButton, readerStatus, running } from './markup';
 import type { PaintedColumn } from './paint';
 
 type Dossier = {
@@ -226,8 +226,8 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 			? `<div class="field"><dt>Tekstversies</dt><dd class="versies ${k.reader}"><span class="menu ${k.reader}"><button type="button" class="btn ${k.reader}" tabindex="-1" aria-label="${formatCount(wordings.length)} tekstversies">${formatCount(wordings.length)}${caret}</button></span></dd></div>`
 			: '');
 	const facts = cells
-		? `<div class="reader-facts ${k.head}" data-later><div class="strip-edge ${k.facts}"><dl class="feiten strip ${k.facts}" aria-label="Kenmerken">${cells}</dl></div></div>`
-		: '';
+		? `<div class="strip-edge ${k.facts}"><dl class="feiten strip ${k.facts}" aria-label="Kenmerken">${cells}</dl></div>`
+		: undefined;
 
 	const dossiers = uniqueBy(onScreen?.first.amended_by?.dossiers ?? [], (d) => d.key);
 	const origin = dossiers.length
@@ -255,13 +255,11 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 	const head =
 		`<div class="reader-head ${k.head}">` +
 		`<div class="reader-line reader-line--plaats ${k.head}">${placeLine}${nav}</div>` +
+		`<div class="reader-titelrij ${k.head}">` +
+		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span>${findButton('rij', k)}</span>` +
 		`<h1 class="reader-title ${k.head}">${titleParts(headTitle(a, recorded)).map(esc).join('<wbr>')}</h1>` +
-		`<span class="reader-status__acties ${k.head}" data-later>${compare}<span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span><button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg><span class="${k.head}">Zoek<span class="find-rest ${k.head}"> in dit stuk</span></span></button>${tools}</span>` +
-		`<div class="reader-status ${k.head}">` +
-		(status ? `<div class="reader-status__woorden ${k.head}" data-later>${status}</div>` : '') +
-		facts +
-		`<div class="reader-status__later ${k.head}"></div>` +
 		'</div>' +
+		readerStatus({ status: status || undefined, facts, later: '', tools }, k) +
 		`<div class="reader-rijen ${k.head}" data-later>${origin}</div>` +
 		'</div>';
 

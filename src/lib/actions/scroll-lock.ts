@@ -2,7 +2,6 @@
 // the scroll position it had, and put back there when the last one closes. With
 // `overscroll-behavior: contain` on the sheet itself, a scroll that reaches its end does not
 // carry on to the page. One lock may stand under another (a filter pane with its Periode).
-import type { Action } from 'svelte/action';
 
 let holders = 0;
 let kept = { y: 0, position: '', top: '', width: '' };
@@ -38,9 +37,3 @@ export function lockScroll(): () => void {
 		});
 	};
 }
-
-/** The action form: the page is locked as long as the node stands. */
-export const scrollLock: Action<HTMLElement> = () => {
-	const release = lockScroll();
-	return { destroy: release };
-};

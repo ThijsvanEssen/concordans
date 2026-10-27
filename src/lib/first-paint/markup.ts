@@ -98,9 +98,46 @@ export const headRow = (bandHtml: string, k: Classes, held = true) =>
 		? `<div class="kop-rij ${k.frame}"><div class="kop-rij__band${held ? ' kop-rij__band--held' : ''} ${k.frame}" data-later>${bandHtml}</div></div>`
 		: `<div class="kop-rij ${k.frame}" hidden><div class="kop-rij__band ${k.frame}" hidden></div></div>`;
 
-/** The head of a reader (ReaderHead): the line of its kind, the title, what stands under it,
- *  the row of its actions with Zoek in dit stuk, its status and facts, the rows under them.
- *  What the app shows only once it has come stands unseen in its room (`data-later`). */
+/** Zoek in dit stuk (ReaderHead `zoek`): in the row of the actions (`rij`, a phone) or in the
+ *  block under the title (`band`). */
+export const findButton = (where: 'rij' | 'band', k: Classes) =>
+	`<button type="button" class="find-btn raakvlak find-btn--${where} ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg><span class="${k.head}">Zoek<span class="find-rest ${k.head}"> in dit stuk</span></span></button>`;
+
+/** The tools at the right of a line (ReaderHead `toolbox`): Zoek, what only the kind has
+ *  (`more`); nothing where the line has neither. */
+export const toolbox = (k: Classes, find: boolean, more = '') =>
+	find || more
+		? `<span class="reader-toolbox ${k.head}">${find ? findButton('band', k) : ''}${more}</span>`
+		: '';
+
+/** The stand and the facts under one rule, with Zoek at the right of the last line of facts
+ *  and what only the kind has at the right of the phrase that comes late (ReaderHead). */
+export function readerStatus(
+	o: { status?: string; facts?: string; later?: string; tools?: string },
+	k: Classes
+): string {
+	const atLater = o.later !== undefined;
+	const find = o.facts ? 'facts' : o.status !== undefined ? 'words' : atLater ? 'later' : 'alone';
+	const at = (here: string) =>
+		toolbox(k, find === here, (atLater ? 'later' : find) === here ? o.tools : '');
+	return (
+		`<div class="reader-status ${o.status === undefined && !o.facts && !atLater ? 'reader-status--zoek ' : ''}${k.head}">` +
+		(o.status === undefined
+			? ''
+			: `<div class="reader-status__woorden ${k.head}" data-later>${o.status}${at('words')}</div>`) +
+		(o.facts
+			? `<div class="reader-facts ${k.head}" data-later><div class="reader-facts__strook ${k.head}">${o.facts}</div>${at('facts')}</div>`
+			: '') +
+		at('alone') +
+		(atLater ? `<div class="reader-status__later ${k.head}">${o.later}${at('later')}</div>` : '') +
+		'</div>'
+	);
+}
+
+/** The head of a reader (ReaderHead): the line of its kind, the title with the row of its
+ *  actions floating at its right (a phone: under it), what stands under it, the stand and the
+ *  facts under one rule with Zoek in dit stuk, the rows under them. What the app shows only
+ *  once it has come stands unseen in its room (`data-later`). */
 export function readerHead(
 	o: {
 		/** The words of the line of its kind (unseen). */
@@ -117,19 +154,15 @@ export function readerHead(
 	},
 	k: Classes
 ): string {
-	const find = `<button type="button" class="find-btn raakvlak ${k.head}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6 14 14"/></svg><span class="${k.head}">Zoek<span class="find-rest ${k.head}"> in dit stuk</span></span></button>`;
 	return (
 		`<div class="reader-head ${k.head}">` +
 		`<div class="reader-line ${k.head}"><div class="reader-kind ${k.head}" data-later>${o.kind}</div></div>` +
+		`<div class="reader-titelrij ${k.head}">` +
+		`<span class="reader-status__acties ${k.head}" data-later><span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span>${findButton('rij', k)}</span>` +
 		`<h1 class="reader-title ${k.head}">${titleParts(o.title).map(esc).join('<wbr>')}</h1>` +
-		(o.under === undefined ? '' : `<div class="reader-onder ${k.head}">${o.under}</div>`) +
-		`<span class="reader-status__acties ${k.head}" data-later><span class="kop-acties ${k.actions}"><span class="ev-actions"></span></span>${find}</span>` +
-		`<div class="reader-status ${k.head}">` +
-		(o.status === undefined
-			? ''
-			: `<div class="reader-status__woorden ${k.head}" data-later>${o.status}</div>`) +
-		(o.facts ? `<div class="reader-facts ${k.head}" data-later>${o.facts}</div>` : '') +
 		'</div>' +
+		(o.under === undefined ? '' : `<div class="reader-onder ${k.head}">${o.under}</div>`) +
+		readerStatus({ status: o.status, facts: o.facts }, k) +
 		(o.rows === undefined ? '' : `<div class="reader-rijen ${k.head}" data-later>${o.rows}</div>`) +
 		'</div>'
 	);
