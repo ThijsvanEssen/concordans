@@ -30,7 +30,7 @@ export const caret = (k: Classes) =>
 export function coverage(c: Completeness | null | undefined, k: Classes, source?: string): string {
 	const line = coverageLine(c);
 	return line
-		? `<span class="dekking ${k.coverage}">${esc(line)}${source ? `, <a class="${k.coverage}">${esc(source)} ↗</a>` : ''}</span>`
+		? `<span class="dekking ${k.coverage}">${esc(line)}${source ? `, <a class="${k.coverage}" rel="external">${esc(source)}</a>` : ''}</span>`
 		: '';
 }
 

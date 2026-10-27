@@ -193,7 +193,7 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 	const coverage = (c: Completeness | null | undefined, source?: string) => {
 		const line = coverageLine(c);
 		return line
-			? `<span class="dekking ${k.coverage}">${esc(line)}${source ? `, <a class="${k.coverage}">${esc(source)} ↗</a>` : ''}</span>`
+			? `<span class="dekking ${k.coverage}">${esc(line)}${source ? `, <a class="${k.coverage}" rel="external">${esc(source)}</a>` : ''}</span>`
 			: '';
 	};
 	let status = '';

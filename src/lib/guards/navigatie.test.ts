@@ -12,7 +12,7 @@ describe('the navigation', () => {
 		expect(bron('lib/components/layout/MineMenu.svelte')).toContain('{#each MINE as');
 		// A kind of source is named in lib/nav/sources.ts only.
 		expect(
-			overtreders((t) => />(Wetten|Uitspraken|Kamerstukken|Parlement|Regering)<\/a/.test(t))
+			overtreders((t) => />(Wetten|Rechtspraak|Kamerstukken|Parlement|Regering)<\/a/.test(t))
 		).toEqual([]);
 	});
 
@@ -23,7 +23,11 @@ describe('the navigation', () => {
 		expect(
 			overtreders(
 				(t) => /\bnetworkHref\(/.test(t),
-				[plek('lib/nav/network.ts'), plek('lib/components/layout/NetworkButton.svelte')]
+				[
+					plek('lib/nav/network.ts'),
+					plek('lib/components/layout/NetworkButton.svelte'),
+					plek('lib/components/layout/TabBar.svelte', 'the Netwerk tab of a phone')
+				]
 			)
 		).toEqual([]);
 		expect(bron('lib/components/layout/NetworkButton.svelte')).toContain("'Netwerk'");

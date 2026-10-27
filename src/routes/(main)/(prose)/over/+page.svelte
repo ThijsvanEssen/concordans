@@ -17,7 +17,7 @@
 				waar ze voorkomen (<a
 					href="https://www.ensie.nl/oosthoek/concordantie-konkordantie"
 					target="_blank"
-					rel="noopener"
+					rel="external noopener"
 					class="cite">Oosthoek Encyclopedie</a
 				>).
 			</p>

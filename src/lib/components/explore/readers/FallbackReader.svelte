@@ -72,7 +72,9 @@
 			<p class="text">{textOf(p.text)}</p>
 		{/if}
 		{#if source}
-			<a class="source" href={source} target="_blank" rel="noopener noreferrer">tweedekamer.nl ↗</a>
+			<a class="source" href={source} target="_blank" rel="external noopener noreferrer"
+				>tweedekamer.nl</a
+			>
 		{/if}
 	</article>
 </ReaderFrame>

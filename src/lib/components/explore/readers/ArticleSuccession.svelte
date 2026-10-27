@@ -152,8 +152,8 @@
 				>
 			{/if}
 			{#each line.sources as url (url)}
-				<a class="succession__source" href={url} target="_blank" rel="noopener noreferrer"
-					>Transponeringstabel ↗</a
+				<a class="succession__source" href={url} target="_blank" rel="external noopener noreferrer"
+					>Transponeringstabel</a
 				>
 			{/each}
 		</p>

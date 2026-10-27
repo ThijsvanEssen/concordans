@@ -212,8 +212,8 @@
 		{/if}
 		{#if search.outsideLaw}
 			<p class="state stil" role="status">
-				"{search.q}" staat niet in Concordans.
-				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
+				"{search.q}" staat niet in de gegevens.
+				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="external noopener"
 					>wetten.overheid.nl</a
 				>
 			</p>

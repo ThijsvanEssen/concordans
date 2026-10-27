@@ -40,6 +40,12 @@ a {
 	text-decoration: none;
 	transition: color var(--dur-1) var(--ease);
 }
+/* A link out of Concordans says so: the one arrow, for every a[rel~='external']. */
+a[rel~='external']::after {
+	content: '\00a0\2197';
+	text-decoration: none;
+	display: inline-block;
+}
 a:hover {
 	color: var(--ink);
 	text-decoration-line: underline;

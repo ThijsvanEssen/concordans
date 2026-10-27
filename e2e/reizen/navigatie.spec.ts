@@ -1,7 +1,7 @@
-// The navigation by kind of source (besluit 36): Wetten, Uitspraken, Kamerstukken, Parlement,
+// The navigation by kind of source (besluit 36): Wetten, Rechtspraak, Kamerstukken, Parlement,
 // Regering and Actueel in the bar, Mijn at the right, and the Netwerk button beside the search
 // field; on a phone an icon button and the tab bar with four tabs.
-import { goToMine, goToSource, isPhone } from '../support/navigation';
+import { goToMine, goToSource, isPhone, netwerkKnop } from '../support/navigation';
 import { expect, test } from '../support/test';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
@@ -9,23 +9,21 @@ const bar = (page: import('@playwright/test').Page) =>
 	page.getByRole('navigation', { name: 'Hoofdnavigatie' });
 const tabs = (page: import('@playwright/test').Page) =>
 	page.getByRole('navigation', { name: 'Hoofdmenu' });
-const netwerk = (page: import('@playwright/test').Page) =>
-	page.getByRole('banner').getByRole('button', { name: 'Netwerk' });
 
 test('every kind of source is an item of the navigation, and the one the page stands under is marked', async ({
 	page
 }) => {
 	await page.goto('/explore?mode=index&kind=instruments');
 	if (isPhone(page)) {
-		await expect(tabs(page).getByRole('button', { name: 'Bladeren' })).toHaveClass(/is-active/);
+		await expect(tabs(page).getByRole('button', { name: 'Bronnen' })).toHaveClass(/is-active/);
 		await expect(bar(page)).toBeHidden();
-		await goToSource(page, 'Uitspraken');
+		await goToSource(page, 'Rechtspraak');
 		await expect(page).toHaveURL(/kind=judgments/);
 		return;
 	}
 	await expect(bar(page).getByRole('link')).toHaveText([
 		'Wetten',
-		'Uitspraken',
+		'Rechtspraak',
 		'Kamerstukken',
 		'Parlement',
 		'Regering',
@@ -35,9 +33,9 @@ test('every kind of source is an item of the navigation, and the one the page st
 		'aria-current',
 		'page'
 	);
-	await goToSource(page, 'Uitspraken');
+	await goToSource(page, 'Rechtspraak');
 	await expect(page).toHaveURL(/kind=judgments/);
-	await expect(bar(page).getByRole('link', { name: 'Uitspraken' })).toHaveAttribute(
+	await expect(bar(page).getByRole('link', { name: 'Rechtspraak' })).toHaveAttribute(
 		'aria-current',
 		'page'
 	);
@@ -50,7 +48,7 @@ test('each item leads to the list of its kind, Actueel to the day', async ({ pag
 	const links = bar(page).getByRole('link');
 	for (const [label, href] of [
 		['Wetten', 'kind=instruments'],
-		['Uitspraken', 'kind=judgments'],
+		['Rechtspraak', 'kind=judgments'],
 		['Kamerstukken', 'kind=dossiers'],
 		['Parlement', 'kind=members'],
 		['Regering', 'kind=cabinets'],
@@ -88,7 +86,7 @@ test('the kinds of one source are its lists, the sources themselves are the navi
 		'page'
 	);
 	await page.goto('/explore?mode=index&kind=judgments');
-	await expect(page.getByRole('navigation', { name: 'Uitspraken', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('navigation', { name: 'Rechtspraak', exact: true })).toHaveCount(0);
 });
 
 test('Mijn holds Bundels and Gevolgd', async ({ page }) => {
@@ -104,33 +102,42 @@ test('Netwerk opens the bron of the page big, and elsewhere begins with choosing
 }) => {
 	await page.goto(ARTICLE);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
-	await expect(netwerk(page)).toHaveAttribute('href', /mode=netwerk/);
-	await netwerk(page).click();
+	await expect(netwerkKnop(page)).toHaveAttribute('href', /mode=netwerk/);
+	await netwerkKnop(page).click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162\?.*mode=netwerk/);
-	await expect(netwerk(page)).toHaveAttribute('aria-pressed', 'true');
+	await expect(netwerkKnop(page)).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('canvas').first()).toBeVisible();
 
 	await page.goto('/actueel');
-	await expect(netwerk(page)).toHaveAttribute('href', '/explore');
-	await netwerk(page).click();
+	await expect(netwerkKnop(page)).toHaveAttribute('href', '/explore');
+	await netwerkKnop(page).click();
 	await expect(page).toHaveURL(/\/explore$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Netwerk');
 });
 
-test('on a phone Netwerk is an icon of 44 px and the tab bar has four tabs', async ({ page }) => {
+test('on a phone Netwerk is a tab of 44 px, not in the top bar, and the tab bar has five tabs', async ({
+	page
+}) => {
 	test.skip(!isPhone(page), 'the tab bar is a phone’s');
 	await page.goto('/actueel');
-	const knop = netwerk(page);
+	await expect(page.getByRole('banner').getByRole('button', { name: 'Netwerk' })).toHaveCount(0);
+	const knop = tabs(page).getByRole('button', { name: 'Netwerk' });
 	const box = await knop.boundingBox();
 	expect(box!.width).toBeGreaterThanOrEqual(44);
 	expect(box!.height).toBeGreaterThanOrEqual(44);
-	await expect(tabs(page).locator('.tab')).toHaveText(['Zoeken', 'Bladeren', 'Actueel', 'Mijn']);
+	await expect(tabs(page).locator('.tab')).toHaveText([
+		'Zoeken',
+		'Bronnen',
+		'Netwerk',
+		'Actueel',
+		'Mijn'
+	]);
 	await expect(tabs(page).getByRole('link', { name: 'Actueel' })).toHaveClass(/is-active/);
-	await tabs(page).getByRole('button', { name: 'Bladeren' }).click();
-	const sheet = page.getByRole('dialog', { name: 'Bladeren op soort bron' });
+	await tabs(page).getByRole('button', { name: 'Bronnen' }).click();
+	const sheet = page.getByRole('dialog', { name: 'Bronnen' });
 	await expect(sheet.getByRole('link')).toHaveText([
 		/^Wetten/,
-		/^Uitspraken/,
+		/^Rechtspraak/,
 		/^Kamerstukken/,
 		/^Parlement/,
 		/^Regering/

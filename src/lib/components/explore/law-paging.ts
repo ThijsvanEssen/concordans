@@ -4,10 +4,6 @@
 
 export type Richting = 'vorige' | 'volgende';
 
-/** The control's label: Vorige artikelen, nog 12. */
-export const verderLabel = (richting: Richting, nog: string) =>
-	`${richting === 'vorige' ? 'Vorige' : 'Volgende'} artikelen, nog ${nog}`;
-
 /** How many articles lie before the first shown, and after the last. */
 export function nog(richting: Richting, start: number, shown: number, total: number): number {
 	return Math.max(richting === 'vorige' ? start : total - start - shown, 0);

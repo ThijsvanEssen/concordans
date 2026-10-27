@@ -35,7 +35,7 @@ describe('the source a page stands under', () => {
 		expect(sourceOfCollection('cabinets').id).toBe('regering');
 		expect(SOURCES.map((s) => s.label)).toEqual([
 			'Wetten',
-			'Uitspraken',
+			'Rechtspraak',
 			'Kamerstukken',
 			'Parlement',
 			'Regering'
