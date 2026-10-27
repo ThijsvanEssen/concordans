@@ -1617,6 +1617,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The chains of steps between two chosen nodes
+         * @description The chains of 1 to `max_steps` steps from one node of `ids` (two node ids, `collection/key`, comma-separated) to the other. A step joins two sources: by an edge between them (`via` null: one refers to the other), or by a node with an edge to both (`via`: what they share, as `/api/nodes/shared` finds it: a paper that names both, a judgment that cites both). The sources between the ends are laws and articles (`instruments`, `articles`); what two sources share can be any node; each node is once in a chain. So two steps are an end, what it shares with a law, that law, what the law shares with the other end, the other end. One block per length (1, 2, 3), each there when empty: its `total` and its first `limit` chains, the heaviest first (the `inbound_citation_count` of the sources between the ends together), then by their ids. A chain is one row of sources: its steps name their strongest way (the edge, else the shared node cited most, then the lowest id) and count their `ways`. The shortest chains first: a source the ends share or a shorter chain passes starts no longer chain. A chain does not pass through a law by its articles (the `PART_OF` of an article and its law counts only where the law is an end), as on `/api/paths`. No edge is derived. The search reads levels of at most 20,000 nodes (`capped`) for at most 10 s (`partial`); a block is `complete` when neither touched it. 404 when a node is not there.
+         */
+        get: operations["get_chains_route_api_chains_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lookup": {
         parameters: {
             query?: never;
@@ -4108,6 +4128,121 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * ChainBlockDTO
+         * @description The chains of one length.
+         */
+        ChainBlockDTO: {
+            /**
+             * Steps
+             * @description The steps of each chain of the block.
+             */
+            steps: number;
+            /**
+             * Total
+             * @description Its chains; 0 when none joins the ends.
+             */
+            total: number;
+            /**
+             * Chains
+             * @description The first `limit`, the heaviest first, then by the ids of their sources.
+             */
+            chains: components["schemas"]["ChainDTO"][];
+            /**
+             * Complete
+             * @description The search read all this length needs: false when it ran out of time or a level reached its cap, and then 0 does not mean none.
+             */
+            complete: boolean;
+        };
+        /**
+         * ChainDTO
+         * @description A row of steps from one node asked for to the other.
+         */
+        ChainDTO: {
+            /**
+             * Node Ids
+             * @description Its sources in order: the two ends and the sources between them.
+             */
+            node_ids: string[];
+            /** Steps */
+            steps: components["schemas"]["ChainStepDTO"][];
+            /**
+             * Weight
+             * @description How often the sources between the ends are cited together (`inbound_citation_count`); 0 for one step.
+             */
+            weight: number;
+        };
+        /**
+         * ChainStepDTO
+         * @description One step of a chain: two sources, joined by an edge or by a node both touch.
+         */
+        ChainStepDTO: {
+            /**
+             * Source
+             * @description The id of the source it starts at.
+             */
+            source: string;
+            /**
+             * Target
+             * @description The id of the source it ends at.
+             */
+            target: string;
+            /**
+             * Via
+             * @description The node both sources share (a paper that names both); null when an edge joins them.
+             */
+            via: string | null;
+            /**
+             * Edge Ids
+             * @description Its edges from `source`: the one to `target`, or the one to `via` and the one from `via` to `target`.
+             */
+            edge_ids: string[];
+            /**
+             * Ways
+             * @description The ways this step has: the edge between its sources, if any, and each node they share; it names the strongest.
+             */
+            ways: number;
+        };
+        /**
+         * ChainsResponse
+         * @description Response for GET /api/chains.
+         */
+        ChainsResponse: {
+            /**
+             * Ids
+             * @description The two nodes asked for, in their order.
+             */
+            ids: string[];
+            /** Max Steps */
+            max_steps: number;
+            /** Limit */
+            limit: number;
+            /**
+             * Blocks
+             * @description One block per length from 1 to `max_steps`, each there when empty.
+             */
+            blocks: components["schemas"]["ChainBlockDTO"][];
+            /**
+             * Nodes
+             * @description Every node on the chains of the blocks, each once.
+             */
+            nodes: components["schemas"]["BaseNodeDTO"][];
+            /**
+             * Edges
+             * @description Every edge on the chains of the blocks, each once.
+             */
+            edges: components["schemas"]["NodeNeighborhoodEdge"][];
+            /**
+             * Capped
+             * @description A level of the search reached its cap (20,000 nodes, or the edges of a hub its share of the level) or the chains of three steps theirs (50,000): a chain around a hub may have been missed.
+             */
+            capped: boolean;
+            /**
+             * Partial
+             * @description The search ran past its time: the chains found by then.
+             */
+            partial: boolean;
         };
         /**
          * ChamberColorsDTO
@@ -17596,6 +17731,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PathsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_chains_route_api_chains_get: {
+        parameters: {
+            query: {
+                /** @description Two node ids, comma-separated: `instruments/x,instruments/y` */
+                ids: string;
+                /** @description The longest chain, in steps. */
+                max_steps?: number;
+                /** @description The chains of a block, at most. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChainsResponse"];
                 };
             };
             /** @description Validation Error */
