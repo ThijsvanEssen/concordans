@@ -55,10 +55,11 @@ vi.mock('sigma', () => ({
 		kill() {}
 	}
 }));
-vi.mock('sigma/rendering', () => ({ createEdgeArrowProgram: () => class {} }));
 vi.mock('@sigma/node-image', () => ({ createNodeImageProgram: () => class {} }));
 vi.mock('./DashedEdgeProgram', () => ({
 	stippelProgrammas: () => ({
+		arrow: class {},
+		submitter: class {},
 		dashed: class {},
 		dotted: class {},
 		dashdot: class {},

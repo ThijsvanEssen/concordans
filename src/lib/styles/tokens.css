@@ -88,6 +88,7 @@
 	--t-ui-raak: 15px; /* the same on a touch screen, where a control is 44 px */
 	--t-teken: 15px; /* the sign of an icon button; 17px on a touch screen (--t-teken-raak) */
 	--t-teken-raak: 17px;
+	--t-note: 12px; /* the date under a name and the words on a line of a drawing, in --ink-3 */
 	--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 	--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 	--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */

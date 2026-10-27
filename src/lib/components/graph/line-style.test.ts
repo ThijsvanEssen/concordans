@@ -24,8 +24,9 @@ describe('edgeStyleFor', () => {
 		expect(edgeStyleFor('AMENDS', 'vastgesteld')).toBe('solid');
 		expect(edgeStyleFor('AMENDS', 'voorgesteld')).toBe('dashed');
 	});
-	it('draws Ingediend door solid', () => {
-		expect(edgeStyleFor('AUTHORED', null)).toBe('solid');
+	it('draws Ingediend door solid with a dot at the submitter', () => {
+		expect(edgeStyleFor('AUTHORED', null)).toBe('submitter');
+		expect(edgeDashFor('submitter')).toBeUndefined();
 	});
 	it('gives every broken style its own stroke', () => {
 		const strepen = (['dashed', 'dotted', 'dashdot'] as const).map(edgeDashFor);

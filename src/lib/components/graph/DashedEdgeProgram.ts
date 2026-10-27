@@ -1,76 +1,95 @@
-// Custom sigma programs for dashed, dotted and dash-dot edges (Netwerkcanvas, Lijnen: Aanhaling,
-// Deel van and Lid van, Toelichting; a proposed change; a vote).
-// Extends sigma's EdgeClampedProgram body with a dash pattern in the fragment
-// shader, then compounds it with EdgeArrowHeadProgram for the arrowhead.
-// The `v_positionCoef` varying (0 = source, 1 = target) drives the dash logic.
+// Custom sigma programs for the lines of the Netwerkcanvas (Lijnen): slightly curved, solid, dashed,
+// dotted or dash-dot, each with an arrowhead of `netwerk-pijl` times its thickness (except Lid van,
+// which has no direction). The body is a quadratic bezier whose control point stands 0,12 of the
+// line's length beside its middle (BEND, as the Design System draws it); the distance to the
+// curve is found per pixel in the fragment shader, after @sigma/edge-curve (MIT), which this file
+// extends with a dash pattern along the curve and an arrowhead of our own proportions.
+// The arrowhead is a taper of the thickness near the target: it starts at the edge of the target
+// node and is `pijl` diktes long (a `pijl` of 0 draws none).
 
-import {
-	EdgeProgram,
-	createEdgeArrowHeadProgram,
-	createEdgeCompoundProgram
-} from 'sigma/rendering';
+import { EdgeProgram } from 'sigma/rendering';
 import { floatColor } from 'sigma/utils';
-import { ARROW_WIDTH } from './nodeSprites';
+import { AIR, ARROW_WIDTH, BEND, DOT_RADIUS } from '$lib/graph/line-shape';
 import type { RenderParams } from 'sigma/types';
 import type { NodeDisplayData, EdgeDisplayData } from 'sigma/types';
 
 // ── Shaders ───────────────────────────────────────────────────────────────────
-// Identical to sigma's EdgeClampedProgram vertex shader but adds the
-// `v_positionCoef` varying so the fragment shader can implement dashing.
 const VERTEX = /* glsl */ `
 attribute vec4 a_id;
 attribute vec4 a_color;
-attribute vec2 a_normal;
-attribute float a_normalCoef;
-attribute vec2 a_positionStart;
-attribute vec2 a_positionEnd;
-attribute float a_positionCoef;
-attribute float a_radius;
-attribute float a_radiusCoef;
+attribute float a_direction;
+attribute float a_thickness;
+attribute vec2 a_source;
+attribute vec2 a_target;
+attribute float a_current;
+attribute float a_targetSize;
+attribute float a_sourceSize;
 
 uniform mat3 u_matrix;
-uniform float u_zoomRatio;
 uniform float u_sizeRatio;
 uniform float u_pixelRatio;
-uniform float u_correctionRatio;
+uniform vec2 u_dimensions;
 uniform float u_minEdgeThickness;
-uniform float u_lengthToThicknessRatio;
 uniform float u_feather;
+uniform float u_curvature;
+uniform float u_widenessToThicknessRatio;
+uniform float u_dot;
 
 varying vec4 v_color;
-varying vec2 v_normal;
 varying float v_thickness;
 varying float v_feather;
-varying float v_positionCoef;
+varying vec2 v_cpA;
+varying vec2 v_cpB;
+varying vec2 v_cpC;
+varying float v_targetSize;
+varying vec2 v_dot;
+varying float v_dotR;
 
 const float bias = 255.0 / 254.0;
+const float epsilon = 0.7;
+
+vec2 clipspaceToViewport(vec2 pos, vec2 dimensions) {
+  return vec2((pos.x + 1.0) * dimensions.x / 2.0, (pos.y + 1.0) * dimensions.y / 2.0);
+}
+vec2 viewportToClipspace(vec2 pos, vec2 dimensions) {
+  return vec2(pos.x / dimensions.x * 2.0 - 1.0, pos.y / dimensions.y * 2.0 - 1.0);
+}
 
 void main() {
-  float radius = a_radius * a_radiusCoef;
-  vec2 normal = a_normal * a_normalCoef;
-  vec2 position = a_positionStart * (1.0 - a_positionCoef) + a_positionEnd * a_positionCoef;
+  vec2 position = a_source * max(0.0, a_current) + a_target * max(0.0, 1.0 - a_current);
+  position = (u_matrix * vec3(position, 1)).xy;
+  vec2 source = (u_matrix * vec3(a_source, 1)).xy;
+  vec2 target = (u_matrix * vec3(a_target, 1)).xy;
 
-  float normalLength = length(normal);
-  vec2 unitNormal = normal / normalLength;
+  vec2 viewportPosition = clipspaceToViewport(position, u_dimensions);
+  vec2 viewportSource = clipspaceToViewport(source, u_dimensions);
+  vec2 viewportTarget = clipspaceToViewport(target, u_dimensions);
 
-  float pixelsThickness = max(normalLength, u_minEdgeThickness * u_sizeRatio);
-  float webGLThickness = pixelsThickness * u_correctionRatio / u_sizeRatio;
+  vec2 delta = viewportTarget.xy - viewportSource.xy;
+  float len = length(delta);
+  vec2 normal = vec2(-delta.y, delta.x) * a_direction;
+  vec2 unitNormal = normal / len;
+  float boundingBoxThickness = len * u_curvature;
 
-  float direction = sign(radius);
-  float webGLNodeRadius = direction * radius * 2.0 * u_correctionRatio / u_sizeRatio;
-  float webGLArrowHeadLength = webGLThickness * u_lengthToThicknessRatio * 2.0;
-  vec2 compensation = vec2(-direction * unitNormal.y, direction * unitNormal.x)
-                    * (webGLNodeRadius + webGLArrowHeadLength);
+  float curveThickness = max(u_minEdgeThickness, a_thickness / u_sizeRatio);
+  v_thickness = curveThickness * u_pixelRatio;
+  v_feather = u_feather;
 
-  gl_Position = vec4(
-    (u_matrix * vec3(position + unitNormal * webGLThickness + compensation, 1)).xy,
-    0, 1
+  v_cpA = viewportSource;
+  v_cpB = 0.5 * (viewportSource + viewportTarget) + unitNormal * a_direction * boundingBoxThickness;
+  v_cpC = viewportTarget;
+
+  vec2 viewportOffsetPosition = (
+    viewportPosition +
+    unitNormal * (boundingBoxThickness / 2.0 + sign(boundingBoxThickness) * (curveThickness * max(1.0, u_widenessToThicknessRatio) + epsilon)) *
+    max(0.0, a_direction)
   );
 
-  v_thickness    = webGLThickness / u_zoomRatio;
-  v_normal       = unitNormal;
-  v_feather      = u_feather * u_correctionRatio / u_zoomRatio / u_pixelRatio * 2.0;
-  v_positionCoef = a_positionCoef;
+  gl_Position = vec4(viewportToClipspace(viewportOffsetPosition, u_dimensions), 0, 1);
+  v_targetSize = a_targetSize * u_pixelRatio / u_sizeRatio;
+  // The dot of Ingediend door: on the curve's start, LUCHT beyond the edge of the one who submits.
+  v_dot = v_cpA + normalize(v_cpB - v_cpA) * (a_sourceSize * u_pixelRatio / u_sizeRatio + ${AIR.toFixed(1)} * u_pixelRatio);
+  v_dotR = u_dot * u_pixelRatio;
 
   #ifdef PICKING_MODE
   v_color = a_id;
@@ -81,78 +100,122 @@ void main() {
 }
 `;
 
-// Fragment shader with a dash pattern: `repeats` repeats per edge, and `lit` the stretches of
-// one repeat (0 to 1) that are lit. A 75/25 split keeps thin edges readable; 1-pixel-stair edges
-// are the price of hard-edge rendering, which keeps the colour on screen exactly the colour passed.
-const fragment = (repeats: number, lit: readonly (readonly [number, number])[]) => /* glsl */ `
-precision mediump float;
+// The fragment shader finds the point of the curve nearest to the pixel (and its parameter t),
+// tapers the thickness into an arrowhead near the target, and for a broken line discards the
+// unlit stretches of each repeat (`lit`, fractions of one repeat) along t, but not in the
+// arrowhead. A 75/25 split keeps thin edges readable; hard edges keep the colour on screen
+// exactly the colour passed.
+const fragment = (dash: Dash | null) => /* glsl */ `
+precision highp float;
 
 varying vec4 v_color;
-varying vec2 v_normal;
 varying float v_thickness;
-varying float v_positionCoef;
+varying float v_feather;
+varying vec2 v_cpA;
+varying vec2 v_cpB;
+varying vec2 v_cpC;
+varying float v_targetSize;
+varying vec2 v_dot;
+varying float v_dotR;
+uniform float u_lengthToThicknessRatio;
+uniform float u_widenessToThicknessRatio;
+
+float det(vec2 a, vec2 b) {
+  return a.x * b.y - b.x * a.y;
+}
+
+// The nearest point of the bezier to the origin, in .xy, and its parameter in .z.
+vec3 getDistanceVector(vec2 b0, vec2 b1, vec2 b2) {
+  float a = det(b0, b2), b = 2.0 * det(b1, b0), d = 2.0 * det(b2, b1);
+  float f = b * d - a * a;
+  vec2 d21 = b2 - b1, d10 = b1 - b0, d20 = b2 - b0;
+  vec2 gf = 2.0 * (b * d21 + d * d10 + a * d20);
+  gf = vec2(gf.y, -gf.x);
+  vec2 pp = -f * gf / dot(gf, gf);
+  vec2 d0p = b0 - pp;
+  float ap = det(d0p, d20), bp = 2.0 * det(d10, d0p);
+  float t = clamp((ap + bp) / (2.0 * a + b + d), 0.0, 1.0);
+  return vec3(mix(mix(b0, b1, t), mix(b1, b2, t), t), t);
+}
 
 void main(void) {
+  vec2 p = gl_FragCoord.xy;
+  vec3 nearest = getDistanceVector(v_cpA - p, v_cpB - p, v_cpC - p);
+  float dist = length(nearest.xy);
+  float thickness = v_thickness;
+  bool inHead = false;
+  float distToTarget = length(p - v_cpC);
+  float arrowLength = v_targetSize + thickness * u_lengthToThicknessRatio;
+  if (u_lengthToThicknessRatio > 0.0 && distToTarget < arrowLength) {
+    thickness = (distToTarget - v_targetSize) / (arrowLength - v_targetSize) * u_widenessToThicknessRatio * thickness;
+    inHead = true;
+  }
+  float halfThickness = thickness / 2.0;
+  bool onDot = v_dotR > 0.0 && length(p - v_dot) < v_dotR;
+  if (dist >= halfThickness && !onDot) discard;
   #ifdef PICKING_MODE
   gl_FragColor = v_color;
   #else
-  float pos = fract(v_positionCoef * ${repeats.toFixed(1)});
-  if (!(${lit.map(([a, b]) => `(pos >= ${a.toFixed(3)} && pos < ${b.toFixed(3)})`).join(' || ')})) discard;
-
-  float dist = length(v_normal) * v_thickness;
-  if (dist > v_thickness) discard;
-  gl_FragColor = v_color;
+  ${
+		dash
+			? `
+  float pos = fract(nearest.z * ${dash.repeats.toFixed(1)});
+  if (!inHead && !onDot && !(${dash.lit.map(([a, b]) => `(pos >= ${a.toFixed(3)} && pos < ${b.toFixed(3)})`).join(' || ')})) discard;`
+			: ''
+	}
+  float t = onDot ? 0.0 : smoothstep(halfThickness - v_feather, halfThickness, dist);
+  gl_FragColor = mix(v_color, vec4(0.0), t);
   #endif
 }
 `;
 
+type Dash = { repeats: number; lit: readonly (readonly [number, number])[] };
+
 const UNIFORMS = [
 	'u_matrix',
-	'u_zoomRatio',
 	'u_sizeRatio',
-	'u_correctionRatio',
+	'u_dimensions',
 	'u_pixelRatio',
 	'u_feather',
 	'u_minEdgeThickness',
-	'u_lengthToThicknessRatio'
+	'u_curvature',
+	'u_lengthToThicknessRatio',
+	'u_widenessToThicknessRatio',
+	'u_dot'
 ] as const;
 
 type Uniform = (typeof UNIFORMS)[number];
 
 // ── Program class ─────────────────────────────────────────────────────────────
-function createBodyProgram(
-	repeats: number,
-	lit: readonly (readonly [number, number])[],
-	pijl: number
-) {
-	return class DashedEdgeBodyProgram extends EdgeProgram<Uniform> {
+function createCurveProgram(pijl: number, dash: Dash | null, dot = false) {
+	return class CurvedEdgeProgram extends EdgeProgram<Uniform> {
 		getDefinition() {
 			return {
 				VERTICES: 6,
 				VERTEX_SHADER_SOURCE: VERTEX,
-				FRAGMENT_SHADER_SOURCE: fragment(repeats, lit),
+				FRAGMENT_SHADER_SOURCE: fragment(dash),
 				METHOD: WebGLRenderingContext.TRIANGLES,
 				UNIFORMS,
 				ATTRIBUTES: [
-					{ name: 'a_positionStart', size: 2, type: WebGLRenderingContext.FLOAT },
-					{ name: 'a_positionEnd', size: 2, type: WebGLRenderingContext.FLOAT },
-					{ name: 'a_normal', size: 2, type: WebGLRenderingContext.FLOAT },
+					{ name: 'a_source', size: 2, type: WebGLRenderingContext.FLOAT },
+					{ name: 'a_target', size: 2, type: WebGLRenderingContext.FLOAT },
+					{ name: 'a_targetSize', size: 1, type: WebGLRenderingContext.FLOAT },
+					{ name: 'a_sourceSize', size: 1, type: WebGLRenderingContext.FLOAT },
+					{ name: 'a_thickness', size: 1, type: WebGLRenderingContext.FLOAT },
 					{ name: 'a_color', size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true },
-					{ name: 'a_id', size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true },
-					{ name: 'a_radius', size: 1, type: WebGLRenderingContext.FLOAT }
+					{ name: 'a_id', size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true }
 				],
 				CONSTANT_ATTRIBUTES: [
-					{ name: 'a_positionCoef', size: 1, type: WebGLRenderingContext.FLOAT },
-					{ name: 'a_normalCoef', size: 1, type: WebGLRenderingContext.FLOAT },
-					{ name: 'a_radiusCoef', size: 1, type: WebGLRenderingContext.FLOAT }
+					{ name: 'a_current', size: 1, type: WebGLRenderingContext.FLOAT },
+					{ name: 'a_direction', size: 1, type: WebGLRenderingContext.FLOAT }
 				],
 				CONSTANT_DATA: [
-					[0, 1, 0],
-					[0, -1, 0],
-					[1, 1, 1],
-					[1, 1, 1],
-					[0, -1, 0],
-					[1, -1, -1]
+					[0, 1],
+					[0, -1],
+					[1, 1],
+					[0, -1],
+					[1, 1],
+					[1, -1]
 				]
 			};
 		}
@@ -164,35 +227,16 @@ function createBodyProgram(
 			targetData: NodeDisplayData,
 			data: EdgeDisplayData
 		): void {
-			const thickness = (data.size as number) || 1;
-			const x1 = sourceData.x,
-				y1 = sourceData.y;
-			const x2 = targetData.x,
-				y2 = targetData.y;
-			const color = floatColor((data.color as string) || '#000000');
-
-			const dx = x2 - x1,
-				dy = y2 - y1;
-			const radius = (targetData.size as number) || 1;
-			let len = dx * dx + dy * dy;
-			let n1 = 0,
-				n2 = 0;
-			if (len) {
-				len = 1 / Math.sqrt(len);
-				n1 = -dy * len * thickness;
-				n2 = dx * len * thickness;
-			}
-
 			const arr = this.array;
-			arr[startIndex++] = x1;
-			arr[startIndex++] = y1;
-			arr[startIndex++] = x2;
-			arr[startIndex++] = y2;
-			arr[startIndex++] = n1;
-			arr[startIndex++] = n2;
-			arr[startIndex++] = color;
+			arr[startIndex++] = sourceData.x;
+			arr[startIndex++] = sourceData.y;
+			arr[startIndex++] = targetData.x;
+			arr[startIndex++] = targetData.y;
+			arr[startIndex++] = (targetData.size as number) || 1;
+			arr[startIndex++] = (sourceData.size as number) || 1;
+			arr[startIndex++] = (data.size as number) || 1;
+			arr[startIndex++] = floatColor((data.color as string) || '#000000');
 			arr[startIndex++] = edgeIndex;
-			arr[startIndex++] = radius;
 		}
 
 		setUniforms(
@@ -202,43 +246,43 @@ function createBodyProgram(
 				uniformLocations
 			}: { gl: WebGLRenderingContext; uniformLocations: Record<string, WebGLUniformLocation> }
 		): void {
-			gl.uniformMatrix3fv(uniformLocations['u_matrix'], false, params.matrix);
-			gl.uniform1f(uniformLocations['u_zoomRatio'], params.zoomRatio);
-			gl.uniform1f(uniformLocations['u_sizeRatio'], params.sizeRatio);
-			gl.uniform1f(uniformLocations['u_correctionRatio'], params.correctionRatio);
-			gl.uniform1f(uniformLocations['u_pixelRatio'], params.pixelRatio);
-			gl.uniform1f(uniformLocations['u_feather'], params.antiAliasingFeather);
-			gl.uniform1f(uniformLocations['u_minEdgeThickness'], params.minEdgeThickness);
-			gl.uniform1f(uniformLocations['u_lengthToThicknessRatio'], pijl);
+			const u = uniformLocations;
+			gl.uniformMatrix3fv(u['u_matrix'], false, params.matrix);
+			gl.uniform1f(u['u_pixelRatio'], params.pixelRatio);
+			gl.uniform1f(u['u_sizeRatio'], params.sizeRatio);
+			gl.uniform1f(u['u_feather'], params.antiAliasingFeather);
+			gl.uniform2f(
+				u['u_dimensions'],
+				params.width * params.pixelRatio,
+				params.height * params.pixelRatio
+			);
+			gl.uniform1f(u['u_minEdgeThickness'], params.minEdgeThickness);
+			gl.uniform1f(u['u_curvature'], BEND);
+			gl.uniform1f(u['u_dot'], dot ? DOT_RADIUS : 0);
+			gl.uniform1f(u['u_lengthToThicknessRatio'], pijl);
+			gl.uniform1f(u['u_widenessToThicknessRatio'], pijl * ARROW_WIDTH);
 		}
 	};
 }
 
 /**
- * The programs of the broken lines, each with an arrowhead of `pijl` times the line's thickness
- * long (--netwerk-pijl) as the solid one (GraphCanvas), except `lid`, which has none (Lid van has
- * no direction). The patterns are those of Netwerkcanvas, Lijnen, as fractions of one repeat:
- * `dashed` a stroke of 4 and a gap of 3, `dotted` 1.5 and 3.5, `dashdot` 9, 3, 1.5, 3.
+ * The programs of the lines, each curved by BEND and with an arrowhead of `pijl` times the line's
+ * thickness long (--netwerk-pijl), except `lid`, which has none (Lid van has no direction). The
+ * patterns are those of Netwerkcanvas, Lijnen, as fractions of one repeat: `dashed` a stroke of 4
+ * and a gap of 3, `dotted` 1.5 and 3.5, `dashdot` 9, 3, 1.5, 3.
  */
 export function stippelProgrammas(pijl: number) {
-	const kop = createEdgeArrowHeadProgram({
-		lengthToThicknessRatio: pijl,
-		widenessToThicknessRatio: pijl * ARROW_WIDTH
-	});
-	const dashes = createBodyProgram(6, [[0, 4 / 7]], pijl);
-	const dots = createBodyProgram(16, [[0, 0.3]], pijl);
-	const dashDot = createBodyProgram(
-		6,
-		[
+	const dash = (repeats: number, lit: Dash['lit'], kop = pijl) =>
+		createCurveProgram(kop, { repeats, lit });
+	return {
+		arrow: createCurveProgram(pijl, null),
+		submitter: createCurveProgram(pijl, null, true),
+		dashed: dash(6, [[0, 4 / 7]]),
+		dotted: dash(16, [[0, 0.3]]),
+		dashdot: dash(6, [
 			[0, 9 / 16.5],
 			[12 / 16.5, 13.5 / 16.5]
-		],
-		pijl
-	);
-	return {
-		dashed: createEdgeCompoundProgram([dashes as never, kop]),
-		dotted: createEdgeCompoundProgram([dots as never, kop]),
-		dashdot: createEdgeCompoundProgram([dashDot as never, kop]),
-		lid: createEdgeCompoundProgram([dots as never])
+		]),
+		lid: dash(16, [[0, 0.3]], 0)
 	};
 }

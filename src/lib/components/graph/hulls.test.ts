@@ -102,7 +102,7 @@ describe('the hulls of a small canvas', () => {
 			    "id": "D",
 			    "label": "Kamerstuk 36000",
 			    "labelX": 100,
-			    "labelY": 276,
+			    "labelY": 278,
 			    "long": false,
 			    "path": "M 100 316 A 16 16 0 0 1 100 284 L 140 284 A 16 16 0 0 1 140 316 Z",
 			  },
@@ -112,7 +112,7 @@ describe('the hulls of a small canvas', () => {
 			    "id": "W",
 			    "label": "Awb",
 			    "labelX": 400,
-			    "labelY": 236,
+			    "labelY": 238,
 			    "long": false,
 			    "path": "M 384 260 A 16 16 0 1 0 416 260 A 16 16 0 1 0 384 260 Z",
 			  },
@@ -121,9 +121,9 @@ describe('the hulls of a small canvas', () => {
 		expect(round(links)).toMatchInlineSnapshot(`
 			[
 			  {
-			    "arrow": "M 384 262 L 378 267 L 377 260 Z",
+			    "arrow": "M384,262L380,266L378,262Z",
 			    "color": "#00487c",
-			    "d": "M 140 297 L 377 263",
+			    "d": "M140 297Q266 309 379 264",
 			    "dashed": true,
 			    "dim": false,
 			    "id": "D->W",
@@ -132,9 +132,9 @@ describe('the hulls of a small canvas', () => {
 			    "labelY": 280,
 			  },
 			  {
-			    "arrow": "M 389 248 L 382 246 L 387 241 Z",
+			    "arrow": "M389,248L383,247L386,244Z",
 			    "color": "#456247",
-			    "d": "M 255 106 L 384 243",
+			    "d": "M256 106Q305 193 385 245",
 			    "dashed": false,
 			    "dim": false,
 			    "id": "anker:j->W",

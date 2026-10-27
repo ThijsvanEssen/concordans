@@ -9,19 +9,19 @@ import type { ContainerGroup } from '$lib/graph/container-membership';
 import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 import type { DrawClass } from '$lib/graph/types';
 import { overlaps, type Rect } from './label-place';
-import { edgeColorFor, hullColorFor, hullDashFor } from './nodeSprites';
+import { arrowLength, edgeColorFor, hullColorFor, hullDashFor } from './nodeSprites';
+import { curvedLine, AIR } from '$lib/graph/line-shape';
 
 /** Between a hull and its members. */
 export const HULL_MARGIN = 16;
 /** Between a hull's top and its name. */
-export const LABEL_GAP = 8;
+export const LABEL_GAP = 6;
 /** The height of a hull's name, one line. */
 export const LABEL_HEIGHT = 22;
 /** Between a hull's name and the edge of the canvas or a panel over it. */
 export const EDGE_GAP = 10;
-/** The length of an arrowhead on a line of a hull, and half its width. */
-const ARROW_LENGTH = 7;
-const ARROW_HALF = 3.5;
+/** The thickness of a line between hulls, and so the length of its arrowhead (line-shape). */
+const LINE_WIDTH = 1.2;
 /** The places a hull's name tries: its own, and three steps down into its hull. */
 const LABEL_STEPS = 4;
 
@@ -159,14 +159,15 @@ function clearOfPanel(x: number, y: number, half: number, avoid: HullScene['avoi
 
 /** The path of a line from `start` to the foot of its arrowhead at `end`, and the arrowhead. */
 function arrowLine(start: Point, end: Point): { d: string; arrow: string } {
-	const len = Math.hypot(end.x - start.x, end.y - start.y) || 1;
-	const ux = (end.x - start.x) / len;
-	const uy = (end.y - start.y) / len;
-	const back = { x: end.x - ux * ARROW_LENGTH, y: end.y - uy * ARROW_LENGTH };
-	return {
-		d: `M ${start.x} ${start.y} L ${back.x} ${back.y}`,
-		arrow: `M ${end.x} ${end.y} L ${back.x - uy * ARROW_HALF} ${back.y + ux * ARROW_HALF} L ${back.x + uy * ARROW_HALF} ${back.y - ux * ARROW_HALF} Z`
-	};
+	// The ends are already at the edges of their hulls: no air to add.
+	const line = curvedLine(start, end, {
+		ra: -AIR,
+		rb: -AIR,
+		width: LINE_WIDTH,
+		arrow: arrowLength(),
+		head: 'b'
+	});
+	return { d: line.d, arrow: `M${line.head!.replaceAll(' ', 'L')}Z` };
 }
 
 /** What a line says: its words, and `voorgesteld` for a change still proposed. */
