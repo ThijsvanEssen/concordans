@@ -194,10 +194,24 @@ export function divide(
 	return { singles, clusters };
 }
 
-/** A name over lines of at most `max` characters, broken at its words; a word longer stays whole. */
+const breek = (word: string, max: number): string[] => {
+	if (word.length <= max) return [word];
+	const parts: string[] = [];
+	let rest = word;
+	while (rest.length > max) {
+		parts.push(`${rest.slice(0, max - 1)}-`);
+		rest = rest.slice(max - 1);
+	}
+	return [...parts, rest];
+};
+
+/** A name over lines of at most `max` characters, broken at its words; a word longer than a line breaks with a hyphen. */
 export function wrap(name: string, max: number): string[] {
 	const lines: string[] = [];
-	for (const word of name.split(/\s+/).filter(Boolean)) {
+	for (const word of name
+		.split(/\s+/)
+		.filter(Boolean)
+		.flatMap((w) => breek(w, max))) {
 		const last = lines.at(-1);
 		if (last != null && last.length + 1 + word.length <= max)
 			lines[lines.length - 1] = `${last} ${word}`;

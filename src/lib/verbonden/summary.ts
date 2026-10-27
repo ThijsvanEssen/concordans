@@ -15,6 +15,7 @@ import type { Bucket } from '$lib/api/nodes';
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
 import { bucketsRead, groupCount, type Group } from './groups';
 import { byImportance } from './importance';
+import { referenceLine } from './hoe';
 import type { Row } from './rows';
 
 type KindId =
@@ -409,6 +410,9 @@ export const kindsTotal = (kinds: readonly Kind[]): number =>
  * itself and its day. The passage, the ECLI and the source come when the row is opened.
  */
 export function shortLine(row: Row): string {
+	// An article of this law that refers to another: the target, as the open row says it.
+	const refers = referenceLine(row);
+	if (refers) return refers;
 	const props = (row.props ?? {}) as Record<string, unknown>;
 	const cited = typeof props.inbound_citation_count === 'number' ? props.inbound_citation_count : 0;
 	const day = row.date ? korteDatum(row.date) : null;
@@ -438,4 +442,38 @@ const titleSays = (title: string, kind: unknown): boolean =>
 function lawOf(title: string, props: Record<string, unknown>): string | null {
 	const law = props.instrument_citation_title;
 	return typeof law === 'string' && law && !title.includes(law) ? law : null;
+}
+
+type Preview = {
+	id: string;
+	label: string;
+	count: number | null;
+	noun?: string;
+	section?: string;
+	ordered?: boolean;
+	kind?: string;
+	kindLabel?: string;
+};
+
+/**
+ * The groups to come as the overview will show them: one head per soort, in the soort's own
+ * name, so the head that stands while loading is the head that stays (UX-toets N14a).
+ */
+export function previewPerKind<T extends Preview>(preview: readonly T[]): T[] {
+	const out: T[] = [];
+	for (const p of preview) {
+		const had = p.kind ? out.find((o) => o.kind === p.kind) : undefined;
+		if (!had) {
+			out.push({
+				...p,
+				id: p.kind ? p.kind : p.id,
+				label: p.kindLabel ?? p.label,
+				section: undefined
+			});
+			continue;
+		}
+		had.count = had.count != null && p.count != null ? had.count + p.count : null;
+		had.ordered = had.ordered || p.ordered;
+	}
+	return out;
 }

@@ -5,11 +5,10 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { openSheet, closeSheet } from '../support/sheet';
+import { netwerkKnop } from '../support/navigation';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:163';
 
-const netwerkKnop = (page: Page) =>
-	page.getByRole('banner').getByRole('button', { name: /^Netwerk/ });
 const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
 /** The chips of the netwerk, the panel unfolded where a phone folds it. */
 async function chips(page: Page) {

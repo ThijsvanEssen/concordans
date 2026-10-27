@@ -550,3 +550,27 @@ describe('historyRow', () => {
 		expect(historyRow({})).toBeNull();
 	});
 });
+
+describe('an article of another law names its law', () => {
+	it('puts the abbreviation behind the number, in full: Artikel 3 HPW', async () => {
+		const { rowOfNeighbor } = await import('./rows');
+		const { recordInstrument } = await import('$lib/api/instrument-cache');
+		recordInstrument({
+			bwb_id: 'BWBR0099999',
+			title: 'Huisvestingswet van de Proef',
+			citation_title: 'Huisvestingswet van de Proef',
+			abbreviation: 'HPW'
+		} as never);
+		const n = {
+			collection: 'articles',
+			key: 'BWBR0099999_3',
+			display_name: 'Artikel 3',
+			direction: 'outbound',
+			relation: 'REFERS_TO',
+			props: { bwb_id: 'BWBR0099999', article_number: '3' }
+		};
+		const row = rowOfNeighbor(n as never)!;
+		expect(row.title).toBe('Artikel 3 HPW');
+		expect(row.props?.instrument_citation_title).toBe('Huisvestingswet van de Proef');
+	});
+});

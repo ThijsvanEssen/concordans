@@ -8,19 +8,19 @@
 	import { hasFocus } from '$lib/bron/href';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
-	import { networkCount, networkHref, onNetwork } from '$lib/nav/network';
-	import { bewaardAantal, keptNetwerk } from '$lib/selection/bewaard.svelte';
+	import { networkState } from '$lib/nav/network';
 
 	const url = $derived(page.url);
 	const onBron = $derived(hasFocus(url));
-	const pressed = $derived(onNetwork(url));
-	const aantal = $derived(networkCount(url, bewaardAantal()));
+	const state = $derived(networkState(url));
+	const pressed = $derived(state.pressed);
+	const aantal = $derived(state.count);
 </script>
 
 <a
 	class="btn netwerk-knop raakvlak-knop"
 	class:is-active={pressed}
-	href={networkHref(url, keptNetwerk())}
+	href={state.href}
 	aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : 'Netwerk'}
 	aria-pressed={pressed}
 	role="button"

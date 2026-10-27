@@ -33,13 +33,10 @@ describe('the tokens', () => {
 				(t) =>
 					regels(t).some((r) =>
 						[...r.body.matchAll(/font-family:\s*([^;]+);/g)].some(
-							(m) => !/^var\(--font-(serif|ui)\)$/.test(m[1].trim())
+							(m) => !/^var\(--font-(serif|ui|merk)\)$/.test(m[1].trim())
 						)
 					),
-				[
-					plek('lib/styles/fonts.css', 'the faces themselves'),
-					plek('lib/components/layout/Wordmark.svelte', 'a logo in its own face')
-				]
+				[plek('lib/styles/fonts.css', 'the faces themselves')]
 			)
 		).toEqual([]);
 	});

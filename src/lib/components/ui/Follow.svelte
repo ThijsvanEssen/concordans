@@ -3,12 +3,10 @@
 	// copies the Atom link of exactly this view, to follow it in a feed reader (no account,
 	// nothing kept by Concordans) and says Gekopieerd; where the view can be kept under Gevolgd in
 	// this browser (`onFollow`) it does that at once. Followed (`followed`): the Knop says Gevolgd
-	// with a tick, and its menu leads to Gevolgd, takes the follow back and keeps the Atom link.
+	// with a tick, and its menu (TekstMenu) leads to Gevolgd, takes the follow back and keeps the Atom link.
 	import type { Snippet } from 'svelte';
 	import { report } from '$lib/api/errors';
-	import { menu } from '$lib/actions/menu';
-	import Caret from './Caret.svelte';
-	import MenuList from './MenuList.svelte';
+	import TekstMenu from './TekstMenu.svelte';
 	import Tick from './Vinkje.svelte';
 	import { createCopier } from './copy.svelte';
 
@@ -31,7 +29,6 @@
 	} = $props();
 
 	let open = $state(false);
-	let button = $state<HTMLElement | null>(null);
 	const copier = createCopier();
 
 	function copy() {
@@ -41,24 +38,21 @@
 </script>
 
 {#if followed}
-	<span class="volg" use:menu={{ open, close: () => (open = false) }}>
-		<button
-			type="button"
-			class={buttonClass}
-			bind:this={button}
-			aria-haspopup="menu"
-			aria-expanded={open}
-			onclick={() => (open = !open)}
-			><Tick aan />{copier.label('atom', 'Gevolgd')}<Caret {open} /></button
+	<span class="volg">
+		<TekstMenu
+			label={copier.label('atom', 'Gevolgd')}
+			rechts
+			buttonClass="{buttonClass} tekstmenu__knop"
+			bind:open
 		>
-		{#if open && button}
-			<MenuList anchor={button} label="Gevolgd" close={() => (open = false)} align="right">
-				{@render local?.(() => (open = false))}
+			{#snippet knop()}<Tick aan />{copier.label('atom', 'Gevolgd')}{/snippet}
+			{#snippet inhoud(close)}
+				{@render local?.(close)}
 				<button type="button" role="menuitem" class="tekstmenu__item" onclick={copy}
 					>Kopieer Atom-link</button
 				>
-			</MenuList>
-		{/if}
+			{/snippet}
+		</TekstMenu>
 	</span>
 {:else if onFollow}
 	<button type="button" class={buttonClass} onclick={onFollow}>Volg</button>

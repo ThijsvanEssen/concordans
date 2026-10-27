@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { lacks } from '$lib/text/coverage';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { shortKind } from '$lib/text/document-kind';
 	import { motionKindLabel } from '$lib/text/motion-kind';
@@ -77,6 +78,8 @@
 		loaded && (loaded.chamber ?? 'TK') !== 'EK' ? (loaded.coalition ?? null) : null
 	);
 	/** The hall of the day of the vote: which fractie is of the coalition, by its key. */
+	/** The dossiers past the first two, shown whole. */
+	let allDossiers = $state(false);
 	let zaal = $state<Map<string, boolean | null> | null>(null);
 	$effect(() => {
 		const c = coalitie;
@@ -130,8 +133,9 @@
 		)}
 
 		{@const uitkomst = decisionOutcome(d)}
-		{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
-		{@const verder = eigen.slice(1)}
+		{@const eigen = uniqueBy(dossiers, (x) => x.number)}
+		<!-- Two more by name; the rest behind "Alle N dossiers". -->
+		{@const verder = allDossiers ? eigen.slice(1) : eigen.slice(1, 3)}
 		{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
 		<div class="r-decision">
 			<ReaderHead
@@ -161,6 +165,14 @@
 								><DossierNaam {dossier} /></BronLink
 							>{/each}
 					</p>
+					{#if eigen.length > 3}
+						<AlleN
+							aantal={eigen.length}
+							noun="dossiers"
+							open={allDossiers}
+							onclick={() => (allDossiers = !allDossiers)}
+						/>
+					{/if}
 				{/snippet}
 			</ReaderHead>
 

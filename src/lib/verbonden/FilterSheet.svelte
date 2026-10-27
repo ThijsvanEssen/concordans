@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { plural } from '$lib/text/words';
+	import { capitalize } from '$lib/text/words';
+	import { panel } from './panel-groups.svelte';
 	import { NL } from '$lib/text/collator';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
-	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
+	// The filter sheet: soort, relatie, lid, rechter, periode, zekerheid and
 	// status, applied with one button. The same sheet opens from the panel and from
 	// the legend of the network. A modal dialog: the focus goes to the search field on
 	// open, stays inside while it is open, and returns to where it was on close.
@@ -18,6 +20,8 @@
 		FILTER_GROUPS,
 		FILTER_GROUP_LABEL,
 		EMPTY_FILTER,
+		hasChoice,
+		toggleRelation,
 		PRESETS,
 		RECHTERS,
 		activePreset,
@@ -29,20 +33,13 @@
 	} from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import type { Group } from './groups';
-	import {
-		allRows,
-		groupTotals,
-		lidCounts,
-		courtCounts,
-		relationCounts,
-		shownCount,
-		totalCount
-	} from './view';
+	import { allRows, groupTotals, lidCounts, courtCounts, relationCounts, shownCount } from './view';
 
 	let {
 		open,
 		filter,
-		groups,
+		groups: rawGroups,
+
 		lidTellingen = null,
 		selection,
 		onApply,
@@ -59,6 +56,8 @@
 	} = $props();
 
 	const uid = $props.id();
+	// The groups as the head of Verbonden counts them, so button and head name one number.
+	const groups = $derived(panel.groups ?? rawGroups);
 
 	// The sheet edits a draft; the button applies it.
 	let draft = $state<VerbondenFilter>(filter);
@@ -130,7 +129,11 @@
 		[...perLid.entries()].filter(([k]) => k !== '').sort(([a], [b]) => NL.compare(a, b))
 	);
 	const noLid = $derived(perLid.get('') ?? 0);
-	const total = $derived(totalCount(groups));
+	const perStatus = $derived.by(() => {
+		const rows = allRows(groups);
+		const proposed = rows.filter((r) => r.proposed).length;
+		return { proposed, enacted: rows.length - proposed };
+	});
 	const count = $derived(shownCount(groups, draft));
 
 	// The main areas of law of the judgments, where the API counts them (a wet's or an article's);
@@ -198,20 +201,18 @@
 	>
 		<div class="sheet__head">
 			<h2 class="sheet__title" id="{uid}-title">Filter</h2>
-			<span class="sheet__count">{formatCount(count)} van {formatCount(total)}</span>
 			<span class="sheet__space"></span>
-			<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wissen</TekstLink>
 			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
 		</div>
 
 		<div class="sheet__body">
 			<div class="block">
-				<input
+				<Tekstveld
 					class="search"
 					type="search"
+					label="Zoek in deze verbindingen"
 					placeholder="Zoek in deze verbindingen"
-					value={draft.zoek}
-					oninput={(e) => (draft = { ...draft, zoek: (e.target as HTMLInputElement).value })}
+					bind:value={() => draft.zoek, (zoek) => (draft = { ...draft, zoek })}
 				/>
 			</div>
 
@@ -251,17 +252,20 @@
 
 			<div class="block">
 				<div class="block__label">Snel</div>
-				{#each presetsToChoose as p (p.id)}
-					<FilterOptie
-						label={p.label}
-						on={activePreset(draft)?.id === p.id}
-						onToggle={() => (draft = withPreset(draft, p))}
-					/>
-				{/each}
+				<Keuze
+					vol
+					label="Snel"
+					opties={presetsToChoose.map((p) => ({ waarde: p.id, label: p.label }))}
+					waarde={activePreset(draft)?.id ?? null}
+					onSelect={(w) => {
+						const p = PRESETS.find((x) => x.id === w);
+						if (p) draft = withPreset(draft, p);
+					}}
+				/>
 			</div>
 
 			<div class="block">
-				<div class="block__label">Bronnen</div>
+				<div class="block__label">Soort</div>
 				{#each sourcesToChoose as k (k)}
 					{@const n = totals[k] ?? 0}
 					<FilterOptie
@@ -277,15 +281,20 @@
 
 			{#if relations.length > 0}
 				<div class="block">
-					<div class="block__label">Verbindingen</div>
-					<ul class="list">
-						{#each relations as r (r.relation)}
-							<li class="list__row">
-								<span class="check__name">{r.label}</span>
-								<span class="check__count">{formatCount(r.count)}</span>
-							</li>
-						{/each}
-					</ul>
+					<div class="block__label">Relatie</div>
+					{#each relations as r (r.relation)}
+						<FilterOptie
+							label={capitalize(r.label)}
+							count={r.count}
+							on={draft.relations === null || draft.relations.has(r.relation)}
+							onToggle={() =>
+								(draft = toggleRelation(
+									draft,
+									r.relation,
+									relations.map((x) => x.relation)
+								))}
+						/>
+					{/each}
 				</div>
 			{/if}
 
@@ -345,10 +354,10 @@
 			{/if}
 
 			<div class="block">
-				<div class="block__label">Betrouwbaarheid</div>
+				<div class="block__label">Zekerheid</div>
 				<Keuze
 					vol
-					label="Betrouwbaarheid"
+					label="Zekerheid"
 					opties={[
 						{ waarde: 'alles', label: 'Alles' },
 						{ waarde: 'bron', label: 'Alleen hoog' },
@@ -363,11 +372,13 @@
 				<div class="block__label">Status</div>
 				<FilterOptie
 					label="Vastgesteld"
+					count={perStatus.enacted}
 					on={statusAan('vastgesteld')}
 					onToggle={() => toggleStatus('vastgesteld')}
 				/>
 				<FilterOptie
 					label="Voorgesteld"
+					count={perStatus.proposed}
 					on={statusAan('voorgesteld')}
 					onToggle={() => toggleStatus('voorgesteld')}
 				/>
@@ -375,13 +386,17 @@
 		</div>
 
 		<div class="sheet__foot">
+			{#if hasChoice(draft)}
+				<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
+			{/if}
+			<span class="sheet__space"></span>
 			<button
 				type="button"
 				class="btn is-primary"
 				onclick={() => {
 					onApply(draft);
 					onClose();
-				}}>Toon {formatCount(count)} {plural(count, 'verbinding', 'verbindingen')}</button
+				}}>Toon {formatCount(count)}</button
 			>
 		</div>
 	</div>
@@ -413,7 +428,7 @@
 	}
 	.sheet__head {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
 		gap: var(--s-2);
 		padding: var(--s-4) var(--s-4) var(--s-3);
 	}
@@ -422,10 +437,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		font-weight: 600;
-	}
-	.sheet__count {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	.sheet__space {
 		flex: 1;
@@ -447,36 +458,6 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
-	}
-	.search {
-		width: 100%;
-		height: 32px;
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font: inherit;
-		color: var(--ink);
-	}
-	.search::placeholder {
-		color: var(--ink-3);
-	}
-	.check__name {
-		flex: 1;
-	}
-	.check__count {
-		color: var(--ink-3);
-	}
-	.list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.list__row {
-		display: flex;
-		gap: var(--s-3);
-		padding: var(--s-1) 0;
-		color: var(--ink-2);
 	}
 	.period {
 		display: flex;

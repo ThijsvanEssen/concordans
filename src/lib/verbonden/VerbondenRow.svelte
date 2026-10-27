@@ -144,6 +144,13 @@
 	// come, which then stands in its place: the passage is never shown twice (RowGlance).
 	const glimpInGlance = $derived(open && !wetVerband && row.ref.collection !== 'documents');
 	const delen = $derived(metaParts(uitslag?.datum ? { ...row, date: null } : row, !!hoe));
+
+	/** An article by the abbreviation of its law ("Artikel 3.34 Ar"): the law's full title at hover. */
+	const fullTitle = $derived(
+		row.ref.collection === 'articles' && typeof row.props?.instrument_citation_title === 'string'
+			? row.props.instrument_citation_title
+			: undefined
+	);
 </script>
 
 {#snippet glimp(opened: boolean)}
@@ -178,6 +185,7 @@
 				<a
 					class="row__title"
 					{href}
+					title={fullTitle}
 					data-sveltekit-noscroll
 					aria-expanded={open}
 					onclick={(e) => terPlekke(e, onToggle)}

@@ -2,6 +2,7 @@
 // rechtsoverweging, and an article it cites.
 import { expect, test } from '../support/test';
 import { smallTargets, withoutSize } from '../support/rules';
+import { catchClipboard } from '../support/bundels';
 
 const URGENDA = '/uitspraken/ECLI:NL:HR:2019:2006';
 
@@ -28,7 +29,11 @@ test('a judgment shows its court, its course and its parts', async ({ page, touc
 	await expect(page.getByRole('heading', { level: 3, name: '9. Beslissing' })).toBeInViewport();
 });
 
-test('a rechtsoverweging cites short, in full and as a link to its place', async ({ page }) => {
+test('a rechtsoverweging cites short, in full and as a link to its place', async ({
+	page,
+	context
+}) => {
+	const copied = await catchClipboard(context);
 	await page.goto(URGENDA);
 	await page.getByRole('button', { name: 'Overweging 5.3.2: citeren, bewaren' }).click();
 	const menu = page.getByRole('menu', { name: 'HR 20 december 2019, r.o. 5.3.2' });
@@ -36,7 +41,9 @@ test('a rechtsoverweging cites short, in full and as a link to its place', async
 	await expect(menu.getByRole('menuitem', { name: /voluit$/ })).toContainText(
 		'ECLI:NL:HR:2019:2006'
 	);
-	await expect(menu.getByRole('menuitem', { name: /link$/ })).toContainText('#rov-5.3.2');
+	await expect(menu.getByRole('menuitem').first()).toHaveText('Link naar dit lid');
+	await menu.getByRole('menuitem', { name: 'Link naar dit lid' }).click();
+	expect(await copied(page)).toContain('#rov-5.3.2');
 	await expect(menu.getByRole('menuitem', { name: 'Bewaar in Losse markeringen' })).toBeVisible();
 });
 

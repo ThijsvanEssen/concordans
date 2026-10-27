@@ -90,7 +90,7 @@
 	.modal {
 		width: 640px;
 		max-width: calc(100% - 48px);
-		max-height: calc(100vh - 160px);
+		max-height: calc(100dvh - 160px);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
@@ -106,7 +106,7 @@
 		}
 		.modal {
 			max-width: calc(100% - 24px);
-			max-height: calc(100vh - 32px);
+			max-height: calc(100dvh - 32px);
 		}
 	}
 </style>

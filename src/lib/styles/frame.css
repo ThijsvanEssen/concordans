@@ -50,7 +50,7 @@
 	grid-column: 2;
 	min-width: 0;
 }
-/* The list beside the filters, brought into view by Toon (Verfijnen): just under the top bar. */
+/* The list beside the filters, brought into view by Toon: just under the top bar. */
 .blad__indeling > :not(.blad__facetten) {
 	scroll-margin-top: calc(var(--balk-h) + var(--s-4));
 }

@@ -125,6 +125,8 @@ test('the overview of a topic sorts its decisions by kind and outcome', async ({
 	await page.getByRole('link', { name: 'Overzicht' }).click();
 	await expect(page).toHaveURL(/\/onderwerpen\/overzicht/);
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('huur');
+	// The fractie is a filter of the bar, as on every list page: one button, no column.
+	await expect(page.getByRole('button', { name: /^(Fractie|Filter)/ }).first()).toBeVisible();
 });
 
 test('Actueel: the days without a sitting and the open motions of no confidence come first', async ({

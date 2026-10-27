@@ -8,7 +8,7 @@ import type { Schema } from '$lib/api/types';
 import { decisionOutcome, decisionResult, isHammer } from '$lib/votes/decision-kind';
 import { ekFactionGroups } from '$lib/votes/voters';
 import { methodPhrase } from '$lib/votes/stages';
-import { choiceRank, hasVotes } from '$lib/votes/stemming';
+import { CHOICE, choiceRank, hasVotes } from '$lib/votes/stemming';
 
 type Decision = Schema<'DecisionDTO'>;
 
@@ -27,6 +27,8 @@ type VoteLineParts = {
 	tone: 'ja' | 'nee' | 'open';
 	/** `120 voor, 30 tegen`, `bij zitten en opstaan`; null for neither. */
 	how: string | null;
+	/** `how` without the tally: where the Stembalk beside it counts the votes, they are not said twice. */
+	method: string | null;
 	/** The day of the vote (ISO); null without one. */
 	date: string | null;
 	/** The stemming's key, for the link to it. */
@@ -36,11 +38,15 @@ type VoteLineParts = {
 
 const TONE = { aangenomen: 'ja', verworpen: 'nee', ingetrokken: 'open' } as const;
 
-/** `120 voor, 30 tegen, 1 niet deelgenomen`: every choice the tally counts, voor first. */
-function tallyWords(tally: Record<string, number> | null | undefined): string | null {
+/** `120 voor, 30 tegen, 1 niet deelgenomen`: every choice the tally counts, voor first;
+ *  `skip` leaves out the choices it names. */
+function tallyWords(
+	tally: Record<string, number> | null | undefined,
+	skip: readonly string[] = []
+): string | null {
 	if (!hasVotes(tally)) return null;
 	return Object.entries(tally ?? {})
-		.filter(([, seats]) => seats > 0)
+		.filter(([choice, seats]) => seats > 0 && !skip.includes(choice))
 		.sort(([a], [b]) => choiceRank(a) - choiceRank(b))
 		.map(([choice, seats]) => `${seats} ${choice.toLowerCase()}`)
 		.join(', ');
@@ -88,15 +94,21 @@ export function outcomeTone(d: Decision): VoteLineParts['tone'] {
 /** The line of a decision; without an outcome or a kind, the plain word `Stemming`. */
 export function voteLineOf(d: Decision): VoteLineParts {
 	const tally = tallyWords(d.tally);
-	const how =
-		tally && d.vote_kind === 'member'
-			? `${tally}, bij hoofdelijke stemming`
-			: (tally ?? (isHammer(d) ? null : methodPhrase(d.method, d.decision_kind)));
+	const member = d.vote_kind === 'member';
+	// Voor and tegen are the Stembalk's to count; a choice it does not count stays in words.
+	const rest = tallyWords(d.tally, [CHOICE.for, CHOICE.against]);
+	const method = tally
+		? [rest, member ? 'bij hoofdelijke stemming' : null].filter(Boolean).join(', ') || null
+		: isHammer(d)
+			? null
+			: methodPhrase(d.method, d.decision_kind);
+	const how = tally && member ? `${tally}, bij hoofdelijke stemming` : (tally ?? method);
 	return {
 		word: decisionOutcome(d) ?? 'Stemming',
 		// A vote is aangenomen or verworpen; ingetrokken ends a bill by letter, never a vote.
 		tone: outcomeTone(d),
 		how,
+		method,
 		date: d.date ?? null,
 		decision: d.key,
 		sides: sidesOf(d)

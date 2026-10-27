@@ -549,10 +549,10 @@
 						<a
 							href={doc.file_url}
 							target="_blank"
-							rel="noopener noreferrer"
+							rel="external noopener noreferrer"
 							class="full-link raakvlak"
 						>
-							Origineel bestand ↗
+							Origineel bestand
 						</a>
 					{/if}
 				</footer>

@@ -38,6 +38,7 @@ import {
 	type LoaderOptions
 } from './loaders';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
+import { kindLabelOn, kindOfGroup } from './summary';
 import type { LoadState } from '$lib/util/load.svelte';
 
 /**
@@ -73,6 +74,9 @@ export type VerbondenState = {
 		section?: string;
 		/** Its order can be chosen: the line of that choice holds its place. */
 		ordered?: boolean;
+		/** Its soort and that soort's name on this page: the head Verbonden's overview shows. */
+		kind?: string;
+		kindLabel?: string;
 	}[];
 	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
@@ -262,6 +266,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						noun: g.noun,
 						section: g.section,
 						ordered: !!g.orders,
+						kind: kindOfGroup(g) ?? undefined,
+						kindLabel: kindOfGroup(g) ? kindLabelOn(kindOfGroup(g)!, collection) : undefined,
 						onvoorspelbaar: !!g.load && !g.bakken && !g.section,
 						count: g.load
 							? g.bakken

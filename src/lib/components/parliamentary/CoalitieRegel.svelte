@@ -20,25 +20,34 @@
 </script>
 
 {#if line}
-	<p class="coal" class:coal--eensgezind={!!line.together}>
+	<dl class="coal" class:coal--eensgezind={!!line.together}>
 		{#if line.together}
 			{@const kant = line.together.choice.toLowerCase()}
-			<Uitkomst tone={line.together.outcome} title={kant} /><span class="kop">Coalitie {kant}</span>
+			<div class="regel">
+				<dt class="kop"><Uitkomst tone={line.together.outcome} title="" />Coalitie</dt>
+				<dd>{kant}</dd>
+				{#each line.labels as l (l)}<dd class="label">{l}</dd>{/each}
+			</div>
 		{:else}
-			<span class="kop">Coalitie verdeeld</span>
+			<div class="regel">
+				<dt class="kop">Coalitie</dt>
+				<dd class="kop">verdeeld</dd>
+				{#each line.labels as l (l)}<dd class="label">{l}</dd>{/each}
+			</div>
 			{#each line.sides as z (z.choice)}
-				<span class="zijde"
-					><Uitkomst tone={z.outcome} title={z.choice.toLowerCase()} />{z.names.length
-						? z.names.join(', ')
-						: `${z.seats} zetels`}</span
-				>
+				<div class="zijde">
+					<dt><Uitkomst tone={z.outcome} title={z.choice.toLowerCase()} /></dt>
+					<dd>{z.names.length ? z.names.join(', ') : `${z.seats} zetels`}</dd>
+				</div>
 			{/each}
-			{#if line.splitFactions.length}<span class="zijde"
-					>{line.splitFactions.join(', ')} verdeeld</span
-				>{/if}
+			{#if line.splitFactions.length}
+				<div class="zijde">
+					<dt>{line.splitFactions.join(', ')}</dt>
+					<dd>verdeeld</dd>
+				</div>
+			{/if}
 		{/if}
-		{#each line.labels as l (l)}<span class="label">{l}</span>{/each}
-	</p>
+	</dl>
 {/if}
 
 <style>
@@ -62,14 +71,27 @@
 		color: var(--ink-2);
 	}
 	.coal--eensgezind :global(.uk) {
-		margin-right: calc(-1 * var(--s-1));
+		margin-right: var(--s-2);
+	}
+	.coal dt,
+	.coal dd {
+		display: inline;
+		margin: 0;
+	}
+	.regel {
+		display: inline;
 	}
 	.zijde {
 		display: inline-flex;
 		align-items: baseline;
 		gap: var(--s-1);
 	}
-	.label {
+	.zijde dt,
+	.zijde dd {
+		display: block;
+	}
+	.coal .label {
+		margin-left: var(--s-3);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

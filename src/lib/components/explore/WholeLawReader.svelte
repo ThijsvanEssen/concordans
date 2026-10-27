@@ -27,7 +27,7 @@
 	import { permalink } from '$lib/bron/landing';
 	import { peildatumVersions, versionOn } from './peildatum';
 	import { isDay } from '$lib/text/datum';
-	import { nog, verderLabel, type Richting } from './law-paging';
+	import { nog, type Richting } from './law-paging';
 	import { EMPTY_LIST, createLawList, isDivisionAnchor, type LawList } from './law-list';
 	import { lawNodeKey } from '$lib/text/enacted-law';
 	import { setOwnLaw } from '$lib/text/own-article.svelte';
@@ -43,6 +43,7 @@
 	import { navigate, withParams } from '$lib/util/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import WholeLawReaderArticle from './WholeLawReaderArticle.svelte';
 	import WholeLawReaderPeildatum from './WholeLawReaderPeildatum.svelte';
 	import MinistryLink from '$lib/bron/MinistryLink.svelte';
@@ -317,14 +318,15 @@
 				state={{ status: 'error', error: pageFailure.error }}
 				what={richting === 'vorige' ? 'Wat eraan voorafgaat' : 'Het vervolg van de wet'}
 				retry={lawList.retry}
-			/>{:else if status === (richting === 'vorige' ? 'loading-before' : 'loading-more')}Laden…{:else}<TekstLink
-				onclick={() => (richting === 'vorige' ? previous() : lawList.loadMore())}
-				disabled={status !== 'ready'}
-				>{verderLabel(
-					richting,
-					formatCount(nog(richting, start, articles.length, total))
-				)}</TekstLink
-			>{/if}
+			/>{:else}<AlleN
+				volgende
+				woord={richting === 'vorige' ? 'Vorige' : 'Volgende'}
+				noun="artikelen"
+				rest={nog(richting, start, articles.length, total)}
+				laden={status === (richting === 'vorige' ? 'loading-before' : 'loading-more')}
+				onclick={() =>
+					status === 'ready' && (richting === 'vorige' ? previous() : lawList.loadMore())}
+			/>{/if}
 	</div>
 {/snippet}
 

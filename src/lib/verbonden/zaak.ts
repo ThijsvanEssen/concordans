@@ -52,7 +52,8 @@ export function naastHetStuk(kind: unknown, zaak: DezelfdeZaak): DezelfdeZaak {
 	const rows = zaak.rows.filter((r) => !kern.has(r));
 	return {
 		rows,
-		order: new Set(rows.map(zaakRang)).size > 1 ? zaak.order : undefined
+		order: new Set(rows.map(zaakRang)).size > 1 ? zaak.order : undefined,
+		capped: zaak.capped
 	};
 }
 
@@ -61,6 +62,8 @@ type DezelfdeZaak = {
 	rows: Row[];
 	/** Said only where the list holds both the substance and a letter. */
 	order?: string;
+	/** The stuk has more zaken than are read (`ZAKEN_MAX`): the list is a floor, shown as "N+". */
+	capped?: boolean;
 };
 
 /**
@@ -74,17 +77,16 @@ export async function stukkenInDezelfdeZaak(
 ): Promise<DezelfdeZaak> {
 	// Asked once per stuk and per zaak: Verbonden, the line Bij wetsvoorstel and the group In
 	// dezelfde zaak all want them on one page.
-	const cases = (
+	const all = (
 		zaken ??
 		(await abortable(
 			once(`zaken-van/${stuk.key}`, () => getBuckets('documents', stuk.key, [NAAR_ZAAK])),
 			signal
 		))
-	)
-		.filter(
-			(n) => n.relation === 'PART_OF' && n.direction === 'outbound' && n.collection === 'cases'
-		)
-		.slice(0, ZAKEN_MAX);
+	).filter(
+		(n) => n.relation === 'PART_OF' && n.direction === 'outbound' && n.collection === 'cases'
+	);
+	const cases = all.slice(0, ZAKEN_MAX);
 	const rows = new Map<string, Row>();
 	for (const c of cases) {
 		const docs = await abortable(
@@ -110,6 +112,7 @@ export async function stukkenInDezelfdeZaak(
 		order:
 			new Set(lijst.map(zaakRang)).size > 1
 				? 'Het stuk zelf eerst, de begeleidende brief als laatste'
-				: undefined
+				: undefined,
+		capped: all.length > ZAKEN_MAX
 	};
 }

@@ -75,7 +75,7 @@
 
 <svelte:window onkeydown={onKey} />
 
-<section class="card" class:is-docked={docked} aria-label="Verbinding">
+<div class="card" class:is-docked={docked} role="dialog" aria-label="Verbinding">
 	<div class="card__head">
 		<h2 class="card__title">Verbinding</h2>
 		<span class="card__kind">{v.kind}</span>
@@ -142,7 +142,7 @@
 			name="deze verbinding"
 		/>
 	</div>
-</section>
+</div>
 
 <style>
 	.card {

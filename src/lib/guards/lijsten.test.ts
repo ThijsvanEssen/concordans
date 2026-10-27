@@ -37,18 +37,19 @@ describe('list pages and the feed', () => {
 		}
 		const view = bron('lib/map/MapView.svelte');
 		const voor = /\{#snippet voor\(\)\}([\s\S]*?)\{\/snippet\}/.exec(view)?.[1] ?? '';
-		expect(voor).toMatch(/<Aantekening[^>]*placeholder="Onderzoeksvraag of aantekening"/);
+		expect(voor).toMatch(/<Aantekening[^>]*\bfield\b/);
 		expect(view).toMatch(/class="voor blad__lijst">\{@render voor\(\)\}/);
 		expect(regels(view).filter((r) => /grid-column/.test(r.body))).toEqual([]);
 	});
 
 	it('shows the filters of a list page in FilterBar alone, over the list (besluit 40)', () => {
 		// Bladeren, Actueel and Zoeken: one bar of filters, no column beside the list and no
-		// Verfijnen of their own. What a button holds (FacetMenu) is FilterBar's alone.
+		// Verfijnen of their own, the overview of a topic the same. What a button holds (FacetMenu) is FilterBar's alone.
 		for (const path of [
 			'lib/components/explore/IndexView.svelte',
 			'routes/(main)/actueel/+page.svelte',
-			'routes/(main)/zoeken/+page.svelte'
+			'routes/(main)/zoeken/+page.svelte',
+			'lib/onderwerpen/OverviewFacets.svelte'
 		]) {
 			const text = bron(path);
 			expect(text, path).toContain('<FilterBar');
@@ -116,5 +117,20 @@ describe('list pages and the feed', () => {
 			)
 		).toEqual([]);
 		expect(overtreders((t) => /<FeedDay\b[^>]*\b(colorOf|ministryName)=?/.test(t))).toEqual([]);
+	});
+
+	it('puts a dossier in a row by number in the lead and by name under the title, never clamped (Lijstrij)', () => {
+		const rijen = [
+			'lib/components/explore/index/rows/DecisionRows.svelte',
+			'lib/components/explore/index/rows/DocumentRows.svelte'
+		];
+		expect(rijen.filter((p) => !bron(p).includes('<RowDossier'))).toEqual([]);
+		expect(overtreders((t) => t.includes('row-id-naam'))).toEqual([]);
+	});
+
+	it('draws the bar of a stemming once while its row is open (DecisionRows, RijInhoud)', () => {
+		expect(bron('lib/components/explore/index/rows/DecisionRows.svelte')).toMatch(
+			/\{#if bar && ctx\.p\.open !== bron\}/
+		);
 	});
 });

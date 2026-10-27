@@ -38,7 +38,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 			'Exporteer bestand',
 			'>PDF<',
 			'>Hernoem<',
-			'>Bundel verwijderen<',
+			'>Bundel wissen<',
 			'>Wissen<'
 		])
 			expect(v, label).toContain(label);
@@ -58,8 +58,8 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 			expect(v, gone).not.toContain(gone);
 	});
 
-	it('asks the research question in a field with a placeholder, not from a menu', () => {
-		expect(view()).toMatch(/<Aantekening[^>]*placeholder="Onderzoeksvraag of aantekening"/);
+	it('asks the research question as an empty field under its label, not from a menu', () => {
+		expect(view()).toMatch(/<Aantekening[^>]*\bfield\b/);
 	});
 
 	it('keeps one working line: the place for the view, the order and Alles uitklappen', () => {

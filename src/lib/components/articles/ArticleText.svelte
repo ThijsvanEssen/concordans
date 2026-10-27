@@ -44,6 +44,7 @@
 	import { lawDivisions } from '$lib/bron/law-articles';
 	import { report } from '$lib/api/errors';
 	import { anchorLabel } from '$lib/text/anchor';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import type { Fragment } from '$lib/map/map';
 	import {
 		WHOLE_ARTICLE,
@@ -494,10 +495,6 @@
 		}
 		return out;
 	});
-	/** The notes come from more than one bundel: each label names its own. */
-	const manyMaps = $derived(
-		new Set(resolved.filter((a) => a.annotation.tekst).map((a) => a.map.id)).size > 1
-	);
 	/** A note clicked opens the menu of its arcering, at the note; again closes it. */
 	function openNote(a: Shading, anker: HTMLElement) {
 		if (menu?.shading?.annotation.id === a.annotation.id && menu.anker === anker) {
@@ -572,7 +569,7 @@
 		<Aantekening
 			tekst={a.annotation.tekst}
 			bij={`"${a.annotation.fragment.exact}"`}
-			bundel={manyMaps ? a.map.naam : null}
+			bundel={a.map.naam}
 			onOpen={(button) => openNote(a, button)}
 		/>
 	</div>
@@ -655,12 +652,7 @@
 							<span class="proposed">voorgesteld</span>
 							<span class="lid__proposed-source">{proposed.source}</span>
 							{#if onCloseProposed}
-								<button
-									type="button"
-									class="lid__proposed-close"
-									aria-label="Sluiten"
-									onclick={onCloseProposed}>×</button
-								>
+								<IconButton label="Sluiten" onclick={onCloseProposed}>×</IconButton>
 							{/if}
 						</div>
 						<p>{proposed.text}</p>
@@ -724,12 +716,7 @@
 									>{proposed.source}{proposed.lid ? `, lid ${proposed.lid}` : ''}</span
 								>
 								{#if onCloseProposed}
-									<button
-										type="button"
-										class="lid__proposed-close"
-										aria-label="Sluiten"
-										onclick={onCloseProposed}>×</button
-									>
+									<IconButton label="Sluiten" onclick={onCloseProposed}>×</IconButton>
 								{/if}
 							</div>
 							<p>{proposed.text}</p>
@@ -905,15 +892,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-	.lid__proposed-close {
-		padding: 0 var(--s-1);
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-body-2);
-		color: var(--ink-3);
-		cursor: pointer;
 	}
 	/* Onderdelen inside a lid keep their number in the text. */
 	.part {

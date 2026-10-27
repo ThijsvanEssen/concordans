@@ -21,6 +21,7 @@ const STATES = [
 	'is-open',
 	'is-proposed',
 	'is-quiet',
+	'is-resizing',
 	'is-side',
 	'is-whole'
 ];

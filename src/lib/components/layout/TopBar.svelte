@@ -88,7 +88,7 @@
 				<span class="kbd">{modKey}K</span>
 			</button>
 		{/if}
-		<NetworkButton />
+		<div class="netwerk-slot"><NetworkButton /></div>
 		<div class="mine-slot"><MineMenu /></div>
 	</div>
 </header>
@@ -216,7 +216,7 @@
 		}
 	}
 
-	/* A phone: the logo and the Netwerk button; Zoeken, Bladeren, Actueel and Mijn are the tab
+	/* A phone: the logo alone; Zoeken, Bronnen, Netwerk, Actueel and Mijn are the tab
 	   bar (TabBalk). */
 	@media (max-width: 768px) {
 		.topbar {
@@ -226,6 +226,7 @@
 		}
 		.topbar-nav,
 		.search-trigger,
+		.netwerk-slot,
 		.mine-slot {
 			display: none;
 		}

@@ -1,5 +1,5 @@
 /* The base of every page: the faces of text and controls, links, the Knop, a place's words,
-   Verfijnen, a finger's target, text for a screen reader, the focus. */
+   a finger's target, text for a screen reader, the focus. */
 /* A control reads in the sans, unless its own style says otherwise (a link-like button). */
 button,
 input,
@@ -39,6 +39,12 @@ a {
 	color: inherit;
 	text-decoration: none;
 	transition: color var(--dur-1) var(--ease);
+}
+/* A link out of Concordans says so: the one arrow, for every a[rel~='external']. */
+a[rel~='external']::after {
+	content: '\00a0\2197';
+	text-decoration: none;
+	display: inline-block;
 }
 a:hover {
 	color: var(--ink);
@@ -118,33 +124,8 @@ a:hover {
 	opacity: 0.45;
 	cursor: default;
 }
-/* Verfijnen (N): on a phone the facets of a list page wait behind this one line, opened in
-   place (docs/bediening.md, layer 3); on a wider screen they stand beside the list. */
-.verfijnen-knop {
-	display: none;
-	padding: 0;
-	border: 0;
-	background: none;
-	font-family: var(--font-ui);
-	font-size: var(--t-ui);
-	font-weight: 500;
-	color: var(--ink);
-	text-decoration: underline;
-	text-decoration-color: var(--rule-strong);
-	text-underline-offset: 4px;
-	cursor: pointer;
-}
-/* Below 768 its line is a finger's 44 px high: a box of its own, not a target over the
-   controls above it. */
-@media (max-width: 768px) {
-	.verfijnen-knop {
-		display: inline-flex;
-		align-items: center;
-		min-height: var(--veld-h-raak);
-	}
-}
 /* A finger's target around a small control or a link in a line of text (UX-toets 10 Oct:
-   "Verfijnen" 55 × 16, the band's "…" 13 × 19, names in a row 13 high): an invisible
+   "Filter" 55 × 16, the band's "…" 13 × 19, names in a row 13 high): an invisible
    border of the target, 44 px high, that moves nothing. On a touch screen and below 768
    (a phone, a window zoomed to 200%); a desktop keeps its density.
    A place's number (.plaats-marker, 9 px wide in a conclusion, UX-toets 14 Oct #60) shows

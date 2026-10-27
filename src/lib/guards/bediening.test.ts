@@ -88,27 +88,11 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		).toEqual([]);
 	});
 
-	it('styles Verfijnen once, in lib/styles/basis.css', () => {
-		expect(
-			overtreders(
-				(t) =>
-					regels(t).some(
-						(r) =>
-							/\.verfijnen-knop\b/.test(r.selector) && /font-family|text-decoration/.test(r.body)
-					),
-				[plek('lib/styles/basis.css')]
-			)
-		).toEqual([]);
-	});
-
-	it('puts the filters of a phone behind one Verfijnen, with Toon (besluit 30, X4)', () => {
-		expect(
-			overtreders(
-				(t) => /class="verfijnen-knop/.test(t),
-				[plek('lib/components/ui/Verfijnen.svelte', 'the one Verfijnen')]
-			)
-		).toEqual([]);
-		expect(bron('lib/components/ui/Verfijnen.svelte')).toMatch(/onclick=\{showList\}/);
+	it('has no Verfijnen: the filters of a phone are FilterBar alone, with Toon (besluit 30, X4)', () => {
+		expect(overtreders((t) => /verfijnen-knop|<Verfijnen|ui\/Verfijnen/.test(t))).toEqual([]);
+		expect(bron('lib/components/explore/index/FilterBar.svelte')).toMatch(
+			/onclick=\{\(\) => close\(true\)\}>\{show\}/
+		);
 	});
 
 	it("sizes a control at one height, or a finger's", () => {
@@ -209,7 +193,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(verbonden).not.toMatch(/\bPRESETS\b/);
 		expect(verbonden).toMatch(/onclick=\{onOpenFilter\}>Filter</);
 		const sheet = bron('lib/verbonden/FilterSheet.svelte');
-		expect(sheet).toMatch(/#each presetsToChoose as p/);
+		expect(sheet).toMatch(/presetsToChoose\.map/);
 		expect(sheet).toMatch(/#each sourcesToChoose as k/);
 	});
 });

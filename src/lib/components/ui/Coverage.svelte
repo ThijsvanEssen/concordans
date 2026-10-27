@@ -54,7 +54,7 @@
 </script>
 
 {#if line}<span class="dekking"
-		>{line}{#if bron}, <a href={bron.href} target="_blank" rel="noopener">{bron.label} ↗</a
+		>{line}{#if bron}, <a href={bron.href} target="_blank" rel="external noopener">{bron.label}</a
 			>{/if}</span
 	>{/if}
 

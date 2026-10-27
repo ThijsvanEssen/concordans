@@ -12,7 +12,7 @@ describe('the navigation', () => {
 		expect(bron('lib/components/layout/MineMenu.svelte')).toContain('{#each MINE as');
 		// A kind of source is named in lib/nav/sources.ts only.
 		expect(
-			overtreders((t) => />(Wetten|Uitspraken|Kamerstukken|Parlement|Regering)<\/a/.test(t))
+			overtreders((t) => />(Wetten|Rechtspraak|Kamerstukken|Parlement|Regering)<\/a/.test(t))
 		).toEqual([]);
 	});
 
@@ -20,12 +20,7 @@ describe('the navigation', () => {
 		expect(
 			overtreders((t) => /<NetworkButton\b/.test(t), [plek('lib/components/layout/TopBar.svelte')])
 		).toEqual([]);
-		expect(
-			overtreders(
-				(t) => /\bnetworkHref\(/.test(t),
-				[plek('lib/nav/network.ts'), plek('lib/components/layout/NetworkButton.svelte')]
-			)
-		).toEqual([]);
+		expect(overtreders((t) => /\bnetworkHref\(/.test(t), [plek('lib/nav/network.ts')])).toEqual([]);
 		expect(bron('lib/components/layout/NetworkButton.svelte')).toContain("'Netwerk'");
 	});
 
@@ -34,6 +29,6 @@ describe('the navigation', () => {
 			overtreders((t) => /<TabBar\b/.test(t), [plek('lib/components/layout/AppShell.svelte')])
 		).toEqual([]);
 		for (const pad of ['TopBar', 'TabBar', 'MineMenu', 'NetworkButton'])
-			expect(bron(`lib/components/layout/${pad}.svelte`)).not.toMatch(/Samenhang|Bronnen</);
+			expect(bron(`lib/components/layout/${pad}.svelte`)).not.toMatch(/Samenhang/);
 	});
 });
