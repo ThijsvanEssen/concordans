@@ -1,20 +1,26 @@
-// The card Weergave and legend: the choice in words when folded, the steps, the key.
+// The block Weergave: the steps, and whatever belongs to the weergave chosen.
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/svelte';
+import { createRawSnippet } from 'svelte';
 import NetworkChoice from './NetworkChoice.svelte';
 
-const base = { depth: 2, onDepth: () => {}, relations: { AMENDS: 2, EXPLAINS: 1 } };
+const base = { depth: 2, onDepth: () => {} };
 
 describe('NetworkChoice', () => {
-	it('names the weergave and its steps, and the soorten and lines drawn', () => {
+	it('is the block Weergave, never folded, with the steps and what belongs to the weergave', () => {
+		render(NetworkChoice, {
+			...base,
+			view: 'verband',
+			children: createRawSnippet(() => ({ render: () => '<p>Tonen hier</p>' }))
+		});
+		expect(screen.getByRole('region', { name: 'Weergave' })).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /Weergave/ })).toBeNull();
+		expect(screen.getByRole('button', { name: '2 stappen' })).toBeTruthy();
+		expect(screen.getByText('Tonen hier')).toBeTruthy();
+	});
+	it('has no key of its own: no Soort and no Lijnen', () => {
 		render(NetworkChoice, { ...base, view: 'verband' });
-		expect(screen.getByRole('region', { name: 'Weergave en legenda' })).toBeTruthy();
-		expect(screen.getByText('Verband, 2 stappen')).toBeTruthy();
-		for (const w of ['Wet', 'Parlement', 'Personen', 'Rechtspraak'])
-			expect(screen.getByText(w)).toBeTruthy();
-		expect(screen.getByText('Wijziging')).toBeTruthy();
-		expect(screen.getByText('Toelichting')).toBeTruthy();
-		expect(screen.queryByText('Aanhaling')).toBeNull();
+		for (const w of ['Soort', 'Lijnen']) expect(screen.queryByText(w)).toBeNull();
 	});
 	it('chooses the steps, one is a stap', async () => {
 		const onDepth = vi.fn();
