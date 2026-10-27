@@ -110,7 +110,9 @@
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
 	}
+	/* Its finger's target (.raakvlak) reaches over the bar under it. */
 	.outcome :global(a) {
+		z-index: 1;
 		color: inherit;
 		text-decoration: none;
 		border-bottom: 1px solid var(--rule-strong);
