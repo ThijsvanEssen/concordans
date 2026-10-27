@@ -11,7 +11,6 @@
 	import { voteBarOf } from '$lib/votes/stembalk';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { weekdag } from '$lib/text/datum';
-	import { plural } from '$lib/text/words';
 	import RowDossier from './RowDossier.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import { motionKindLabel } from '$lib/text/motion-kind';
@@ -22,44 +21,25 @@
 	type Row = Schema<'DecisionSummaryDTO'>;
 	let { ctx }: ViewProps<Row, DecisionsState> = $props();
 
-	/** Per sitting day, all its decisions under the filters, also those not yet loaded. */
-	const dayCounts = $derived(
-		new Map((ctx.state.facets?.days ?? []).map((d) => [d.date, d] as const))
-	);
 	// Sorted by date, the decisions of one sitting day are one group: the Kamer votes in blocks.
 	const days = $derived.by(() => {
 		const rows = ctx.rows ?? [];
-		if (ctx.sort.id !== 'date') return [{ date: null, rows, count: rows.length, passed: 0 }];
-		const days: { date: string | null; rows: Row[]; passed: number }[] = [];
+		if (ctx.sort.id !== 'date') return [{ date: null, rows }];
+		const days: { date: string | null; rows: Row[] }[] = [];
 		for (const s of rows) {
 			const last = days.at(-1);
 			const day = last && last.date === (s.date ?? null) ? last : null;
 			if (day) day.rows.push(s);
-			else days.push({ date: s.date ?? null, rows: [s], passed: 0 });
+			else days.push({ date: s.date ?? null, rows: [s] });
 		}
-		// The day's own numbers, from the facet; the rows loaded may be fewer.
-		return days.map((d) => {
-			const facet = d.date ? dayCounts.get(d.date) : undefined;
-			return {
-				...d,
-				count: facet?.count ?? d.rows.length,
-				passed: facet?.passed ?? d.rows.filter((r) => r.passed).length
-			};
-		});
+		return days;
 	});
 </script>
 
 {#each days as day (day.date)}
 	{#if day.date}
-		{@const failed = day.count - day.passed}
 		<div class="day-head">
 			<h3 class="day-title">{weekdag(day.date)}</h3>
-			<span class="day-meta"
-				>{day.count}
-				{plural(day.count, 'stemming', 'stemmingen')}: {day.passed} aangenomen,
-				{failed}
-				verworpen</span
-			>
 		</div>
 	{/if}
 	<ul class="list">
@@ -151,11 +131,6 @@
 	}
 	.day-title::first-letter {
 		text-transform: uppercase;
-	}
-	.day-meta {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	/* The vote's bar, under the name of the stemming. */
 	.stem-mini {
