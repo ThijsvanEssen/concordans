@@ -211,7 +211,12 @@
 			{:else if timeline.state.status === 'error'}
 				<LoadState state={timeline.state} what="De procedure" retry={timeline.retry} />
 			{:else if timeline.state.data}
-				{@const p = procedure(d, timeline.state.data.entries, withOther)}
+				{@const p = procedure(
+					d,
+					timeline.state.data.entries,
+					withOther,
+					timeline.state.data.entries.length >= TIMELINE_LIMIT
+				)}
 				<!-- A paper opens its text in place, the vote on the bill its bar, a day's papers of
 				     the bill their list; the bron is one step further (Thijs, 11 Oct). -->
 				{#snippet inhoud(id: string)}
