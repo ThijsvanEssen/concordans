@@ -25,9 +25,9 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	await option(/^Motie/).click();
 	if (touch) await page.keyboard.press('Escape');
 	await expect(chip(page, 'Motie')).toBeVisible();
-	// Each day then counts moties only.
+	// Each day then names its date alone: no count beside it.
 	const days = page.getByRole('heading', { level: 2, name: /\d{4}/ });
-	await expect(days.first()).toHaveText(/\d+ moties?$/);
+	await expect(days.first()).toHaveText(/^[A-Za-z]+\s\d+\s[a-z]+\s\d{4}$/);
 });
 
 test('Actueel: Back finds the earlier days loaded and the place read', async ({ page }) => {

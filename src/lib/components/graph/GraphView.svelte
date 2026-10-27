@@ -18,6 +18,7 @@
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ViewSheet from './ViewSheet.svelte';
 	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
@@ -1146,7 +1147,6 @@
 	let buhne = $state<HTMLDivElement | null>(null);
 
 	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
-	let filtersOpen = $state(false);
 	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
 	let sheetOpen = $state(false);
 	let sheetOpener = $state<HTMLButtonElement | null>(null);
@@ -1252,14 +1252,13 @@
 {/snippet}
 
 {#snippet periode()}
-	<section class="block" aria-labelledby="werkplek-periode">
-		<h3 class="strook__kop" id="werkplek-periode">Periode</h3>
+	<Sectie title="Periode" niveau={3} inklapbaar={false}>
 		<Periode
 			from={filter.van ?? ''}
 			to={filter.tot ?? ''}
 			onChange={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
 		/>
-	</section>
+	</Sectie>
 {/snippet}
 
 <!-- A phone: at the foot of the canvas, left; the zoom is in the bar above it. -->
@@ -1271,7 +1270,7 @@
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
-		onclick={() => (sheetOpen = !sheetOpen)}>Weergave en legenda</button
+		onclick={() => (sheetOpen = !sheetOpen)}>Weergave</button
 	>
 {/snippet}
 
@@ -1314,24 +1313,14 @@
 				hasSelection={!!selection}
 				reach={externCounts ? null : reach}
 				empty={!hasNodes && !midden}
-				relations={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).relations}
-				refersFrom={(externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts).refersFrom}
-			/>
-			<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
-			{#if hasNodes || midden}
-				<button
-					type="button"
-					class="btn filterknop raakvlak-knop"
-					aria-expanded={filtersOpen}
-					aria-controls="werkplek-filters"
-					onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
-				>
-				<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
+			>
+				<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
+				{#if hasNodes || midden}
 					<section class="legenda-inhoud" aria-label="Filters">
 						{@render sidebar()}
 					</section>
-				</div>
-			{/if}
+				{/if}
+			</NetworkChoice>
 		</aside>
 	</ViewSheet>
 	<div class="graph-main">
@@ -1631,13 +1620,6 @@
 		padding: var(--s-4);
 		border-left: 1px solid var(--rule);
 	}
-	.strook__kop {
-		margin: 0 0 var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	/* Deel at the top right of the canvas, as the mockup's Deel and Exporteer. */
 	.doek-balk {
 		position: absolute;
@@ -1660,17 +1642,27 @@
 		box-shadow: none;
 		background: none;
 	}
-	/* Bronnen titled as the blocks under it: Soort, Relatie, Periode. */
+	/* The two blocks of the strip, Bronnen and Weergave, are headed as a section of a page
+	   (Sectie, niveau 2); what is in them, Gekozen, Tonen, Relatie, a level lower (niveau 3). */
 	.strook--links :global(.canvas-kaart__titel) {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font: var(--niveau-1-sectie);
+		color: var(--ink);
 	}
 	.strook--links :global(.canvas-kaart__kop),
 	.strook--links :global(.canvas-kaart__inhoud) {
 		padding-left: 0;
 		padding-right: 0;
 	}
-	.filterknop,
+	.strook--links :global(.canvas-kaart.netwerkkeuze) {
+		padding-top: var(--s-4);
+		border-top: 1px solid var(--rule);
+	}
+	/* The blocks in them a step apart. */
+	.strook--links :global(.canvas-kaart__inhoud) {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-4);
+	}
 	.sheet-button {
 		display: none;
 	}
@@ -1694,8 +1686,8 @@
 			display: none;
 		}
 	}
-	/* A phone: the canvas takes the width; the strip at the left heads it, its filters under the
-	   button Filter, and the card is a sheet at the foot of the canvas. */
+	/* A phone: the canvas takes the width; the strip at the left heads it, with the filters in its
+	   Weergave, and the card is a sheet at the foot of the canvas. */
 	@media (max-width: 768px) {
 		.graph-view {
 			display: flex;
@@ -1717,20 +1709,7 @@
 			min-width: 0;
 			margin: 0;
 		}
-		.strook--links > .filterknop {
-			flex: none;
-			margin: 0 0 var(--s-2) var(--s-2);
-		}
-		/* The Weergave and Filter on one row, as the mockup's 390. */
-		.strook--links > :global(.view-choice) {
-			flex: 1 1 0;
-			min-width: 0;
-		}
-
-		.filterknop {
-			display: inline-flex;
-		}
-		/* Weergave en legenda: at the foot of the canvas, left, a finger high; the sheet is its own. */
+		/* Weergave: at the foot of the canvas, left, a finger high; the sheet is its own. */
 		.sheet-button {
 			position: absolute;
 			left: var(--s-3);
@@ -1740,9 +1719,6 @@
 			align-items: center;
 			min-height: var(--veld-h-raak);
 			box-shadow: var(--shadow-pop);
-		}
-		.strook__filters:not(.is-open) {
-			display: none;
 		}
 		.graph-main {
 			flex: 1;
@@ -1792,13 +1768,6 @@
 		.doek-balk :global(.btn) {
 			min-width: var(--veld-h-raak);
 		}
-		.strook--links :global(.canvas-kaart__kop) {
-			display: none;
-		}
-		/* The filters of the netwerk itself come with Filter, as the legend does. */
-		.strook--links:not(:has(.strook__filters.is-open)) :global(.netwerk-acties) {
-			display: none;
-		}
 		.strook--kaart {
 			max-height: 45%;
 			padding-top: var(--s-2);
@@ -1813,11 +1782,6 @@
 			margin: 0 auto var(--s-3);
 			border-radius: var(--r-rond);
 			background: var(--rule);
-		}
-	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.filterknop {
-			height: var(--veld-h-raak);
 		}
 	}
 

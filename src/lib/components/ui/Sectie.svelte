@@ -7,11 +7,13 @@
 	// The DS: Sectie en Tijdlijn. docs/typografie.md.
 	import { formatCount } from '$lib/text/getal';
 	import type { Snippet } from 'svelte';
+	import DateTime from './DateTime.svelte';
 	import FoldButton from './FoldButton.svelte';
 	import { isOpen as staatOpen } from './dicht.svelte';
 
 	let {
 		title,
+		datum,
 		aantal,
 		id,
 		naast,
@@ -22,6 +24,8 @@
 		children
 	}: {
 		title: string;
+		/** The day the title names: it is drawn as a time element (DateTime). */
+		datum?: string | null;
 		/** The count beside the heading; a string as given (`25+`, `2019–2022`). */
 		aantal?: number | string | null;
 		id?: string;
@@ -48,8 +52,8 @@
 </script>
 
 {#snippet kop()}
-	{title}{#if aantal != null}<span class="aantal"
-			>{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
+	{#if datum}<DateTime iso={datum}>{title}</DateTime>{:else}{title}{/if}{#if aantal != null}<span
+			class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 		>{/if}
 {/snippet}
 

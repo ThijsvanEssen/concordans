@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import { voteCitation } from '$lib/bron/naam';
@@ -9,7 +10,7 @@
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
 	import { voteBarOf } from '$lib/votes/stembalk';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { korteDatum, weekdag } from '$lib/text/datum';
+	import { weekdag } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
 	import RowDossier from './RowDossier.svelte';
 	import IndexRow from '../IndexRow.svelte';
@@ -81,7 +82,7 @@
 				{#snippet lead()}
 					{#if !day.date || kindLabel}
 						<span class="row-id-main"
-							><Waarde value={day.date ? kindLabel : korteDatum(s.date)} /></span
+							>{#if day.date}<Waarde value={kindLabel} />{:else}<DateTime iso={s.date} />{/if}</span
 						>
 						{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 							{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}

@@ -18,6 +18,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
+	import { setDateColumn } from '$lib/components/tijdlijn/date-column';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
@@ -53,6 +54,8 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let { node }: { node: GraphNode } = $props();
+	// One date column down the page: Loopbaan, Commissies and Toezeggingen share a left edge.
+	setDateColumn('term');
 
 	const today = vandaag();
 

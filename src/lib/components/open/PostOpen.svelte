@@ -12,6 +12,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { postRecord } from './requests';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import OpenRij from './OpenRij.svelte';
 	import RijInhoud from './RijInhoud.svelte';
 	import ToezeggingInhoud from './ToezeggingInhoud.svelte';
@@ -56,6 +57,8 @@
 			open: record.commitments.facets?.status?.find((s) => s.value === OPEN_STATUS)?.count ?? 0
 		}
 	);
+	/** How many lines Recent shows; the rest is behind Alle. */
+	const RECENT = 5;
 	/** The newest of the toezeggingen and the stukken signed, five at most. */
 	const regels = $derived.by<TijdRegel[]>(() => {
 		if (!record) return [];
@@ -85,8 +88,11 @@
 				// A paper opens its text in place; another bron (a besluit) is its title.
 				inhoud: x.id.startsWith('documents/') ? inhoud : null
 			});
-		return out.sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? '')).slice(0, 5);
+		return out.sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? '')).slice(0, RECENT);
 	});
+
+	/** Every toezegging and stuk signed: what Recent is the newest of. */
+	const total = $derived(record ? record.commitments.total + record.signed : 0);
 
 	const bron = $derived(`members/${memberKey}`);
 	const zin = $derived(
@@ -114,11 +120,27 @@
 	{/if}
 {/snippet}
 
+{#snippet more()}
+	{#if total > regels.length}<AlleN
+			aantal={total}
+			noun="toezeggingen en stukken"
+			href={bronHref(bron, { keepMode: false, mode: 'read' })}
+		/>{/if}
+{/snippet}
+
 <OpenRij
 	{zin}
 	loading={post.state.status === 'loading'}
 	boven={failure}
-	groepen={[{ id: 'recent', titel: 'Recent', regels }]}
+	groepen={[
+		{
+			id: 'recent',
+			titel: 'Recent',
+			sub: total > regels.length ? `${formatCount(regels.length)} van ${formatCount(total)}` : null,
+			regels
+		}
+	]}
+	{more}
 	links={[
 		{
 			label: tz

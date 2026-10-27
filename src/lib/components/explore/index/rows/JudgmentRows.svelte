@@ -1,8 +1,8 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { korteDatum } from '$lib/text/datum';
 	import { plural } from '$lib/text/words';
 	import IndexRow from '../IndexRow.svelte';
 	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from '../judgment-row';
@@ -16,7 +16,7 @@
 		{@const bron = `judgments/${j.key}`}
 		<IndexRow {bron} title={judgmentRowTitle(j)} href={openHref(bron)} acties>
 			{#snippet lead()}
-				<span class="row-id-main"><Waarde value={korteDatum(j.date)} /></span>
+				<span class="row-id-main"><DateTime iso={j.date} /></span>
 				<span class="row-id-sub"><Waarde value={judgmentCourt(j.display_name, j.court)} /></span>
 			{/snippet}
 			{#snippet body()}

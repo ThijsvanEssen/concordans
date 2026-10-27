@@ -209,11 +209,6 @@ export function summaryAsk(want: SummarySpan, had: SummarySpan | null): SummaryS
 	return { until: addDays(want.until, -had.days), days: want.days - had.days };
 }
 
-/** A day's kinds from the summary, most first, as `Day.counts` holds them. */
-export const summaryCounts = (s: DaySummary): Day['counts'] =>
-	(s.kinds ?? [])
-		.flatMap((k) => (k.value && isFeedKind(k.value) ? [{ kind: k.value, count: k.count }] : []))
-		.sort((a, b) => b.count - a.count || FEED_KINDS.indexOf(a.kind) - FEED_KINDS.indexOf(b.kind));
 export type Entry = { item: FeedItem } | { fold: Fold };
 
 export type Day = {
@@ -291,15 +286,6 @@ export function daysOf(items: readonly FeedItem[]): Day[] {
 	}
 	return days;
 }
-
-/** `3 stemmingen, 1 motie`: a day's kinds as a line. */
-export const countLine = (counts: Day['counts']) =>
-	counts
-		.map(
-			({ kind, count }) =>
-				`${count} ${count === 1 ? KIND_LABEL[kind].one.toLowerCase() : KIND_LABEL[kind].many}`
-		)
-		.join(', ');
 
 /** `Vandaag`, `Gisteren`, else `Dinsdag 22 september 2026`. */
 export function dayLabel(iso: string, today: string): string {
