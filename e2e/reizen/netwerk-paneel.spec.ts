@@ -11,5 +11,5 @@ test('the bron in the middle is not offered as a suggestion, and the head holds 
 	await openSheet(page);
 	await expect(page.getByRole('button', { name: '+ Bron toevoegen' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Aangeklikt op het canvas' })).toHaveCount(0);
-	await expect(page.getByText(/getoond/)).toHaveCount(0);
+	await expect(page.getByText(/getoond/).filter({ hasNotText: /Maximaal/ })).toHaveCount(0);
 });

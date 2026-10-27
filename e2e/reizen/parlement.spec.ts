@@ -203,7 +203,7 @@ test('a memorie van toelichting opens beside its article and closes again', asyn
 	await expect(mvt).toBeFocused();
 	await mvt.click();
 	await expect(page).toHaveURL(/naast=documents\//);
-	await page.getByRole('link', { name: 'Sluiten' }).click();
+	await page.getByRole('button', { name: 'Sluiten' }).click();
 	await expect(page).not.toHaveURL(/naast=/);
 	await expect(page.getByText('Kamerstukken II 2016/17, 34702, nr. 3.')).toHaveCount(0);
 });

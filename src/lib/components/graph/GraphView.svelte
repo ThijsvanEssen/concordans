@@ -1298,7 +1298,7 @@
 		{verbonden}
 		{filter}
 		reach={externCounts ? null : reach}
-		outlines={containerGroups.size}
+		outlines={externCounts ? 0 : containerGroups.size}
 		hiddenAnnexes={filters.hiddenAnnexes}
 		onToggleAnnexes={toggleAnnexes}
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}

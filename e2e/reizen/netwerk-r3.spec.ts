@@ -94,7 +94,7 @@ test('no "?" for judgments both cite where one end cites none (R3-N B7)', async 
 		'/leden/rob-jetten?mode=netwerk&weergave=verband&netwerk=instruments/bwbr0005537'
 	);
 	await openSheet(page);
-	await expect(page.getByText('Rob Jetten').first()).toBeVisible();
+	await expect(page.getByText('Rob Jetten').locator('visible=true').first()).toBeVisible();
 	// Absence counts only once Verband has answered: its drawing, its list or its empty line.
 	const shared = page.locator('.shared');
 	await expect(
@@ -132,7 +132,7 @@ test('the keten names a publication by its citation, its layer by its kind (R3-K
 	await page.goto('/stb/2018/101?mode=netwerk&weergave=keten');
 	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
-	await expect(page.getByText('Stb. 2018, 101').first()).toBeVisible();
+	await expect(page.getByText('Stb. 2018, 101').locator('visible=true').first()).toBeVisible();
 	await expect(page.getByText(/STB_2018_101/)).toHaveCount(0);
 });
 
