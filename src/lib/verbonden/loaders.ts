@@ -284,6 +284,32 @@ const RELATED_MAX = 500;
 /** The laws of a dossier whose own verbindingen are read for the international group. */
 const MAX_LAWS = 3;
 
+/**
+ * The European and international instruments of the first `upto` laws of a dossier, and the
+ * next `MAX_LAWS` laws by "Volgende" where there are more: no law is left unread silently.
+ * Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
+ */
+async function internationalOfLaws(
+	laws: readonly { ref: { key: string } }[],
+	signal: AbortSignal,
+	upto: number
+): Promise<Loaded> {
+	const found = await Promise.all(
+		laws
+			.slice(0, upto)
+			.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], signal))
+	);
+	const rows = new Map<string, Row>();
+	for (const neighbors of found) {
+		const group = buildGroups('instruments', neighbors).find((g) => g.id === 'international');
+		for (const row of group?.rows ?? []) rows.set(row.ref.key, { ...row, relation: undefined });
+	}
+	return {
+		rows: [...rows.values()],
+		page: laws.length > upto ? () => internationalOfLaws(laws, signal, upto + MAX_LAWS) : undefined
+	};
+}
+
 /** The laws a member or a fractie has worked on, with the number of their documents. */
 async function touched(
 	who: 'members' | 'factions',
@@ -625,20 +651,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// those of its laws, read from the node of each law.
 	'dossier-international': async (ctx) => {
 		const { laws } = await hubOf(ctx);
-		// Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
 		// A law the dataset lacks (`missing`: named in the title, not loaded) has no node to ask.
-		const found = await Promise.all(
-			laws
-				.filter((law) => !law.missing)
-				.slice(0, MAX_LAWS)
-				.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal))
+		return internationalOfLaws(
+			laws.filter((law) => !law.missing),
+			ctx.signal,
+			MAX_LAWS
 		);
-		const rows = new Map<string, Row>();
-		for (const neighbors of found) {
-			const group = buildGroups('instruments', neighbors).find((g) => g.id === 'international');
-			for (const row of group?.rows ?? []) rows.set(row.ref.key, { ...row, relation: undefined });
-		}
-		return { rows: [...rows.values()] };
 	},
 
 	'article-explanatory': async ({ node }) => {

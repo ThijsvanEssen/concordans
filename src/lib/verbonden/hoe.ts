@@ -477,3 +477,10 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	}
 	return null;
 }
+
+/** An article that refers to another law's article, as the closed row says it: `verwijst naar art. 1 HPW, als definitie`. */
+export function referenceLine(row: Row): string | null {
+	if (row.ref.collection !== 'articles' || !textOf((row.edge ?? {}).doel)) return null;
+	const how = hoeVan(row, 'instruments');
+	return how?.werkwoord && how.rest ? lowerFirst(`${how.werkwoord} ${how.rest}`) : null;
+}
