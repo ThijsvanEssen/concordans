@@ -200,3 +200,45 @@ describe('a loader of a route of the API (code-eenvoud F97)', () => {
 		}
 	);
 });
+
+describe('the group Artikelen of a law with an aard (instrument-aard)', () => {
+	it('names the citing article of this law, and the target with its law in the edge', async () => {
+		// `law` of the search is the bwb_id of the source article: the rows are this law's own
+		// articles, so the law is not repeated behind them; the other law stands in the verb.
+		fakeApi({
+			'/api/relationships/search': {
+				total: 1,
+				relationships: [
+					{
+						edge_id: 'e1',
+						source_article: {
+							key: 'bwbr0099_3',
+							bwb_id: 'BWBR0099',
+							article_number: '3',
+							display_name: 'Artikel 3'
+						},
+						target_article: {
+							key: 'bwbr0098_1',
+							bwb_id: 'BWBR0098',
+							article_number: '1',
+							display_name: 'Artikel 1 HPW'
+						},
+						semantic_type: 'definition',
+						semantic_confidence: 0.9,
+						confidence: 1
+					}
+				]
+			}
+		});
+		const { rows } = await LOADERS['instrument-aard']({
+			node: { id: 'instruments/bwbr0099', key: 'bwbr0099', props: { bwb_id: 'BWBR0099' } } as never,
+			neighbors: [],
+			totals: new Map(),
+			buren: async () => [],
+			signal: new AbortController().signal,
+			options: DEFAULT_LOADER_OPTIONS
+		});
+		expect(rows[0].title).toBe('Artikel 3');
+		expect(rows[0].edge).toEqual({ doel: 'art. 1 HPW' });
+	});
+});
