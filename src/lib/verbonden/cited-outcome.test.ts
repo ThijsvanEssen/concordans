@@ -55,11 +55,19 @@ describe('citedOutcome', () => {
 		expect(rb.text).toMatch(/zegt niets over veroordeling/);
 	});
 
+	it('says the same of a vernietiging by the Hoge Raad in a strafzaak', () => {
+		for (const outcome of ['vernietigd', 'vernietigd en verwezen', 'gedeeltelijk vernietigd']) {
+			const hr = citedOutcome({ outcome, tier: 'hoge_raad' }, true);
+			expect(hr.text).toMatch(/^Uitspraak .*vernietigd.*, zegt niets over veroordeling$/);
+		}
+		expect(citedOutcome({ outcome: 'verworpen', tier: 'hoge_raad' }, true).text).toBe('Verworpen');
+	});
+
 	it('leaves the same words bare outside a strafzaak and for other courts', () => {
 		expect(citedOutcome({ outcome: 'vernietigd', tier: 'gerechtshof' }, false).text).toBe(
 			'Vernietigd'
 		);
-		expect(citedOutcome({ outcome: 'vernietigd', tier: 'hoge_raad' }, true).text).toBe(
+		expect(citedOutcome({ outcome: 'vernietigd', tier: 'hoge_raad' }, false).text).toBe(
 			'Vernietigd'
 		);
 		expect(citedOutcome({ outcome: 'bekrachtigd', tier: 'gerechtshof' }, true).text).toBe(

@@ -1,7 +1,7 @@
 // How a judgment that cites an article ended, in the words of its row (`cited-by`: `outcome`,
 // `outcome_text`, `conclusion_outcome`). Source values only; where the data says none, the row
 // says so (`Uitkomst niet vastgesteld`), never nothing. In a strafzaak the first clause of the
-// dictum of a hof (`vernietigd`) or a rechtbank (`niet-ontvankelijk`) is no verdict: it is
+// dictum of a hof or the Hoge Raad (`vernietigd`) or a rechtbank (`niet-ontvankelijk`) is no verdict: it is
 // shown as what it is, with the words that say it says nothing of a conviction.
 import { strekking } from '$lib/text/judgment-outcome';
 import { capitalize } from '$lib/text/words';
@@ -21,6 +21,11 @@ type Bron = {
 /** In a strafzaak, per tier, the outcome that is no verdict and the words that say what it is. */
 const STRAF_NEUTRAAL: Record<string, Record<string, string>> = {
 	gerechtshof: { vernietigd: 'Vonnis vernietigd, zegt niets over veroordeling' },
+	hoge_raad: {
+		vernietigd: 'Uitspraak vernietigd, zegt niets over veroordeling',
+		'vernietigd en verwezen': 'Uitspraak vernietigd en verwezen, zegt niets over veroordeling',
+		'gedeeltelijk vernietigd': 'Uitspraak gedeeltelijk vernietigd, zegt niets over veroordeling'
+	},
 	rechtbank: { 'niet-ontvankelijk': 'Begint met niet-ontvankelijk, zegt niets over veroordeling' }
 };
 
