@@ -1,6 +1,6 @@
 // The werkplek in three strips (besluit 39): the panel Netwerk and the legend at the left, the
-// card of a bron at the right; over the canvas only the zoom and a cluster's card, in the
-// controls and the colours of the rest of the site.
+// card of a bron or a cluster at the right; over the canvas only the zoom, in the controls and
+// the colours of the rest of the site.
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron, overtreders, regels } from '$lib/test/bronnen';
 

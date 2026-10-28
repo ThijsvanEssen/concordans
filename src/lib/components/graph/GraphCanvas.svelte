@@ -22,6 +22,7 @@
 		type Hull,
 		type HullGroups,
 		type HullHitArea,
+		distanceToRim,
 		type HullLink
 	} from './hulls';
 	import Picto from '$lib/components/ui/Picto.svelte';
@@ -98,9 +99,10 @@
 		inFluxMap = new Map() as NodeCounts,
 		onNodeClick,
 		onNodeDoubleClick,
-		onNodeHover,
 		onEdgeClick,
 		onStageClick,
+		onHullClick,
+		markedId = null as string | null,
 		onReady,
 		onCameraChange,
 		onDrawn,
@@ -140,9 +142,12 @@
 		inFluxMap?: NodeCounts;
 		onNodeClick?: (id: string) => void;
 		onNodeDoubleClick?: (id: string) => void;
-		onNodeHover?: (id: string, vx: number, vy: number) => void;
 		onEdgeClick?: (id: string) => void;
 		onStageClick?: () => void;
+		/** A click on the name or the rim of a hull: the bron that stands for it (a wet), chosen. */
+		onHullClick?: (anchor: string) => void;
+		/** The bron marked (its card open): the hull it stands for is chosen, ink on a halo. */
+		markedId?: string | null;
 		onReady?: (api: GraphCanvasApi) => void;
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
@@ -228,7 +233,8 @@
 		const room = { width: context.canvas.width / dpr, height: context.canvas.height / dpr };
 		// Netwerkcanvas: hooguit 12 namen in rust; on a phone fewer, the chosen bronnen first.
 		const max = hoveredId !== null ? undefined : narrow?.matches ? 6 : 12;
-		return planLabels(candidates, room, hullNames, glyphs, max);
+		const rims = hullHitAreas.map((a) => a.polygon);
+		return planLabels(candidates, room, hullNames, glyphs, max, rims);
 	}
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
@@ -394,6 +400,22 @@
 		!!graph.getNodeAttribute(id, 'anchor') &&
 		graph.getNodeAttribute(id, 'collection') === 'instruments';
 
+	/** How near the rim a click chooses its hull; a finger needs more. */
+	const RIM_HIT = 6;
+	const RIM_HIT_TOUCH = 14;
+	/** The anchor of the hull whose name or rim stands at `p` (the one drawn last on top), if any. */
+	function hullClickAt(p: { x: number; y: number }): string | null {
+		const reach = window.matchMedia('(pointer: coarse)').matches ? RIM_HIT_TOUCH : RIM_HIT;
+		let hit: string | null = null;
+		for (const area of hullHitAreas) {
+			if (!area.anchor) continue;
+			const r = area.label;
+			const onName = area.named && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+			if (onName || distanceToRim(p, area.polygon) <= reach) hit = area.anchor;
+		}
+		return hit;
+	}
+
 	function onHullPointer(event: PointerEvent) {
 		const box = wrap.getBoundingClientRect();
 		const p = { x: event.clientX - box.left, y: event.clientY - box.top };
@@ -404,6 +426,9 @@
 			const onLabel = p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
 			if (onLabel || pointInPolygon(p, area.polygon)) hit = area.id;
 		}
+		// Its name and its rim choose it: a hand there.
+		if (hoveredEdgeId === null && sigmaHoveredId === null)
+			wrap.style.cursor = hullClickAt(p) ? 'pointer' : '';
 		if (hit === hoveredHullId) return;
 		hoveredHullId = hit;
 		computeHulls();
@@ -485,7 +510,8 @@
 			focusedId,
 			pinnedIds: latestPinnedIds,
 			focusName: focusedId ? labelsAt.get(focusedId) : undefined,
-			glyphs: glyphRects
+			glyphs: glyphRects,
+			markedIds: new Set([markedId, focusContainerId].filter((id): id is string => !!id))
 		});
 		const was = [...aloneAnchors].join();
 		aloneAnchors = layout.alone;
@@ -887,7 +913,9 @@
 			labelColor: { color: t.ink2 },
 			edgeLabelColor: { color: t.ink },
 			edgeLabelFont: t.fontLabel,
-			edgeLabelSize: 11.5,
+			// The words on a line: 12 px in italics (t-note, Netwerkcanvas).
+			edgeLabelSize: 12,
+			edgeLabelWeight: 'italic 400',
 			// Every name is asked for: which stand is the plan's to say (planLabels).
 			labelDensity: 1000,
 			labelGridCellSize: 60,
@@ -1266,13 +1294,15 @@
 		renderer.on('clickStage', ({ event }) => {
 			// A finger is no pixel: a tap within 22 px of a bron (a 44 px target) chooses it.
 			const hit = tapTarget(event.x, event.y);
-			if (hit) onNodeClick?.(hit);
+			if (hit) return onNodeClick?.(hit);
+			// The name or the rim of a hull chooses the bron it stands for (a wet).
+			const anchor = hullClickAt({ x: event.x, y: event.y });
+			if (anchor) onHullClick?.(anchor);
 			else onStageClick?.();
 		});
-		renderer.on('enterNode', ({ node, event }) => {
+		renderer.on('enterNode', ({ node }) => {
 			sigmaHoveredId = node;
 			setHoveredId(node);
-			onNodeHover?.(node, event.x, event.y);
 		});
 		renderer.on('leaveNode', () => {
 			sigmaHoveredId = null;
@@ -1339,12 +1369,15 @@
 	{#if hulls.length > 0}
 		<svg class="hull-overlay" aria-hidden="true">
 			{#each hulls as h (h.id)}
+				<!-- Chosen: the rim in ink on a halo of paper (Netwerkcanvas, Gekozen). -->
+				{#if h.chosen}<path class="hull-halo" class:is-dim={h.dim} d={h.path} />{/if}
 				<path
 					class="hull"
+					class:is-chosen={h.chosen}
 					class:is-dim={h.dim}
 					d={h.path}
 					fill={withAlpha(h.color, 0.05)}
-					stroke={h.color}
+					stroke={h.chosen ? 'var(--ink)' : h.color}
 					stroke-dasharray={h.dash}
 				/>
 			{/each}
@@ -1367,6 +1400,7 @@
 				<span
 					class="hull-label"
 					class:is-dim={h.dim}
+					class:is-chosen={h.chosen}
 					class:is-long={h.long}
 					style="--x:{h.labelX}px; --y:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
 				>
@@ -1435,6 +1469,18 @@
 		stroke-width: 1.6;
 		transition: opacity var(--dur-1) var(--ease);
 	}
+	.hull-overlay .hull.is-chosen {
+		stroke-width: 2.4;
+	}
+	.hull-overlay .hull-halo {
+		fill: none;
+		stroke: var(--paper);
+		stroke-width: 6.4;
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	.hull-halo.is-dim {
+		opacity: 0.3;
+	}
 	/* A line between hulls, in the stroke and thickness of its kind. */
 	.hull-link {
 		opacity: 0.8;
@@ -1454,7 +1500,8 @@
 		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
-		font-size: var(--t-label);
+		font-size: var(--t-note);
+		font-style: italic;
 		color: var(--link-color);
 		white-space: nowrap;
 	}
@@ -1491,6 +1538,9 @@
 		max-width: calc(100% - 20px);
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+	.hull-label.is-chosen {
+		border-color: var(--ink);
 	}
 	.hull-label.is-long {
 		width: max-content;

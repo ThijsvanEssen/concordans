@@ -49,6 +49,10 @@ export type Hull = {
 	long: boolean;
 	/** Out of the hover: the hovered bron is not in it and not tied to it. */
 	dim: boolean;
+	/** The bron that stands for it (a wet's anchor): what a click on its name or rim chooses. */
+	anchor: string | null;
+	/** Chosen: its anchor is the bron marked or in focus; ink ring on a halo of paper. */
+	chosen: boolean;
 };
 
 export type HullLink = {
@@ -68,7 +72,30 @@ export type HullLink = {
 };
 
 /** Where the pointer finds a hull: its shape, or its name. */
-export type HullHitArea = { id: string; polygon: Point[]; label: Rect };
+export type HullHitArea = {
+	id: string;
+	polygon: Point[];
+	label: Rect;
+	/** Its name stands (a name that waits for a hover is nothing to click). */
+	named: boolean;
+	anchor: string | null;
+};
+
+/** How far `p` stands from the rim of a hull (a closed polygon), in px. */
+export function distanceToRim(p: Point, polygon: readonly Point[]): number {
+	let best = Infinity;
+	for (let i = 0; i < polygon.length; i++) {
+		const a = polygon[i];
+		const b = polygon[(i + 1) % polygon.length];
+		const dx = b.x - a.x;
+		const dy = b.y - a.y;
+		const len2 = dx * dx + dy * dy;
+		const t =
+			len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+		best = Math.min(best, Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)));
+	}
+	return best;
+}
 
 /** The groups of the canvas, as the hulls and the lines read them. */
 export type HullGroups = {
@@ -146,6 +173,8 @@ export type HullScene = HullGroups & {
 	focusName: Rect | undefined;
 	/** The signs of the bronnen drawn: a hull's name does not cover them (UX review N4). */
 	glyphs?: readonly Rect[];
+	/** The bronnen marked (their card open) or chosen on the keyboard: their hull is chosen. */
+	markedIds?: ReadonlySet<string>;
 };
 
 /** `alone`: the anchors with nothing of their group drawn, by id and name: they stand as an ordinary bron. */
@@ -258,8 +287,10 @@ function drawHulls(s: HullScene): {
 			} else if (attrs.anchor) anchorPoint = p;
 			else points.push(p);
 		}
+		let loose = false;
 		graph.forEachNode((id, attrs) => {
 			if (attrs.inHull !== group.id || s.isHidden(id, attrs)) return;
+			if (!attrs.cluster) loose = true;
 			const c = s.toViewport({ x: attrs.x as number, y: attrs.y as number });
 			const r = s.radiusOf(id);
 			for (const [dx, dy] of [
@@ -269,9 +300,10 @@ function drawHulls(s: HullScene): {
 				[0, -r]
 			])
 				points.push({ x: c.x + dx, y: c.y + dy });
-			// A chosen wet's own point (where its lines end) stands in its disc too.
-			if (anchorPoint) points.push(anchorPoint);
 		});
+		// A chosen wet's own point (where its lines end) stands in its disc too, unless only
+		// clusters stand in it: the disc is the cluster plus 16, not a field out to the anchor.
+		if (anchorPoint && loose) points.push(anchorPoint);
 		// The anchor is no bron: the hull goes round what it holds, not to where the anchor is
 		// pulled. With nothing of it drawn there is no hull: the anchor is an ordinary bron, its
 		// sign and its name (Netwerkcanvas, Omhulling zonder leden; Thijs, 27 Oct).
@@ -340,6 +372,8 @@ function drawHulls(s: HullScene): {
 			labelX: (place ?? at).x,
 			labelY: (place ?? at).y,
 			dim: false,
+			anchor: anchor ?? null,
+			chosen: !!anchor && (s.markedIds?.has(anchor) ?? false),
 			polygon,
 			center: centroid(points),
 			members: group.members,
@@ -444,6 +478,8 @@ export function layoutHulls(s: HullScene): HullLayout {
 			const w = s.labelWidth(h.label);
 			return {
 				id: h.id,
+				anchor: h.anchor,
+				named: !!h.label,
 				polygon: h.polygon,
 				label: { x: h.labelX - w / 2, y: h.labelY - LABEL_HEIGHT, w, h: LABEL_HEIGHT }
 			};

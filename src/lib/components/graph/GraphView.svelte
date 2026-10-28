@@ -76,7 +76,6 @@
 	} from '$lib/verbonden/filter';
 	import { stuksoortOf } from '$lib/bron/rubrieken';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
-	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
@@ -718,8 +717,8 @@
 	/** Kinds shown in full that would fold: their count, for the button that folds them. */
 	let foldable = $state<Cluster[]>([]);
 	let clusteredFor: string | null = null;
-	let clusterCard = $state<{ cluster: Cluster; x: number; y: number } | null>(null);
-	let lastPointer: { x: number; y: number } | null = null;
+	/** The cluster whose card stands in the strip at the right (Canvaskaart). */
+	let clusterCard = $state<{ cluster: Cluster } | null>(null);
 
 	let rawChanged = false;
 	let drawnClusters = '';
@@ -883,8 +882,9 @@
 	}
 
 	/**
-	 * One click on a cluster: its card beside it, as a row opens in place. Opened from the
-	 * list of the network (Enter), the focus goes into the card and comes back on Escape.
+	 * One click on a cluster: its card in the strip at the right, as the card of a bron stands
+	 * (Canvaskaart). Opened from the list of the network (Enter), the focus goes into the card
+	 * and comes back on Escape.
 	 */
 	let clusterOpener: HTMLElement | null = null;
 	function openCluster(id: string, opener: HTMLElement | null = null) {
@@ -895,31 +895,7 @@
 			afterTick(() =>
 				canvasWrap?.parentElement?.querySelector<HTMLElement>('.cluster-kaart button')?.focus()
 			);
-		const at = lastPointer ?? { x: CLUSTER_CARD.gap, y: CLUSTER_CARD.gap };
-		clusterCard = {
-			cluster: c,
-			...clusterCardAt(at, canvasWrap?.clientWidth ?? CLUSTER_CARD.w)
-		};
-		// Measured once drawn, before it is painted: the card moves off the panels it covers.
-		afterTick(() => {
-			const card = canvasWrap?.querySelector<HTMLElement>('.cluster-kaart');
-			if (!canvasWrap || !card || !clusterCard) return;
-			const origin = canvasWrap.getBoundingClientRect();
-			const boxOf = (el: Element) => {
-				const r = el.getBoundingClientRect();
-				return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
-			};
-			const obstacles = [...(buhne ?? canvasWrap).querySelectorAll(FLOATING)]
-				.map(boxOf)
-				.filter((b) => b.w > 0 && b.h > 0);
-			const place = placeCard(
-				at,
-				{ w: card.offsetWidth, h: card.offsetHeight },
-				{ width: canvasWrap.clientWidth, height: canvasWrap.clientHeight },
-				obstacles
-			);
-			clusterCard = { ...clusterCard, ...place };
-		});
+		clusterCard = { cluster: c };
 	}
 	/** The group in Verbonden that lists the cluster's kind, as "Bekijk in Verbonden" opens it. */
 	const groupOf = (c: Cluster) => {
@@ -940,9 +916,6 @@
 		const buckets = reach?.buckets ?? lightBuckets(verbonden.buckets);
 		return buckets.find((b) => b.collection === c.collection)?.total ?? null;
 	};
-	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
-	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .vouw';
-
 	function closeClusterCard(e: PointerEvent) {
 		if (clusterCard && !(e.target as HTMLElement | null)?.closest?.('.cluster-kaart'))
 			clusterCard = null;
@@ -1123,12 +1096,6 @@
 			}
 		}
 		if (changed) scheduleFit();
-	}
-
-	// A bron under the pointer lights up with its lines (GraphCanvas); its card waits for a
-	// click: no card covers the canvas (besluit 39).
-	function handleNodeHover(_nodeId: string, vx?: number, vy?: number) {
-		if (vx !== undefined && vy !== undefined) lastPointer = { x: vx, y: vy };
 	}
 
 	onMount(() => {
@@ -1504,11 +1471,16 @@
 						const n = lookup.get(id);
 						if (n) open(n);
 					}}
+					markedId={gemarkeerd?.id ?? null}
+					onHullClick={(id) => {
+						// The name or the rim of a hull chooses the wet it stands for, its card in the strip.
+						const n = lookup.get(id);
+						if (n) markeer(n);
+					}}
 					onEdgeClick={(id) => {
 						const e = store.getEdgeById(id);
 						if (e) onEdgeClick?.(e);
 					}}
-					onNodeHover={handleNodeHover}
 					onStageClick={() => {
 						ontmarkeer();
 						onClear?.();
@@ -1533,57 +1505,6 @@
 					}}
 				/>
 
-				{#if clusterCard}
-					{@const c = clusterCard.cluster}
-					<CanvasKaart
-						class="cluster-kaart"
-						title={clusterHeading(c, clusterTotal(c))}
-						role="dialog"
-						tabindex="-1"
-						style="left:{clusterCard.x}px; top:{clusterCard.y}px"
-						onkeydown={(e: KeyboardEvent) => {
-							if (!isEscape(e)) return;
-							e.preventDefault();
-							clusterCard = null;
-							if (clusterOpener?.isConnected) clusterOpener.focus();
-						}}
-					>
-						{#snippet kop()}
-							<p class="cluster-naam">
-								<KindGlyph collection={c.collection} size={14} />{clusterHeading(
-									c,
-									clusterTotal(c)
-								)}
-							</p>
-						{/snippet}
-						{@const tied = clusterBinding(
-							c,
-							(c.ends ?? []).flatMap((e) => {
-								const n = lookup.get(e.id);
-								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
-							})
-						)}
-						{#if tied}<p class="cluster-zin">{tied}</p>{/if}
-						<div class="cluster-knoppen">
-							<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
-							<AlleN
-								aantal={c.members.length}
-								noun={bronPlural(c.collection).toLowerCase()}
-								onclick={() => showCluster(c)}
-							/>
-							{#if !c.ends && groupOf(c)}
-								<button
-									type="button"
-									class="btn is-text"
-									onclick={() => {
-										openGroup(c.collection);
-										clusterCard = null;
-									}}>Bekijk in Verbonden</button
-								>
-							{/if}
-						</div>
-					</CanvasKaart>
-				{/if}
 				{#if foldable.length > 0}
 					<div class="vouw">
 						{#each foldable as c (c.id)}
@@ -1649,11 +1570,57 @@
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
-		class:is-open={!!(midden ? extern : hoverNode)}
+		class:is-open={!!clusterCard || !!(midden ? extern : hoverNode)}
 		aria-label="Kaart"
 		bind:clientHeight={cardHeight}
 	>
-		{#if midden ? extern : hoverNode}
+		{#if clusterCard}
+			{@const c = clusterCard.cluster}
+			<CanvasKaart
+				class="cluster-kaart"
+				title={clusterHeading(c, clusterTotal(c))}
+				role="dialog"
+				tabindex="-1"
+				onkeydown={(e: KeyboardEvent) => {
+					if (!isEscape(e)) return;
+					e.preventDefault();
+					clusterCard = null;
+					if (clusterOpener?.isConnected) clusterOpener.focus();
+				}}
+			>
+				{#snippet kop()}
+					<p class="cluster-naam">
+						<KindGlyph collection={c.collection} size={14} />{clusterHeading(c, clusterTotal(c))}
+					</p>
+				{/snippet}
+				{@const tied = clusterBinding(
+					c,
+					(c.ends ?? []).flatMap((e) => {
+						const n = lookup.get(e.id);
+						return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
+					})
+				)}
+				{#if tied}<p class="cluster-zin">{tied}</p>{/if}
+				<div class="cluster-knoppen">
+					<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
+					<AlleN
+						aantal={c.members.length}
+						noun={bronPlural(c.collection).toLowerCase()}
+						onclick={() => showCluster(c)}
+					/>
+					{#if !c.ends && groupOf(c)}
+						<button
+							type="button"
+							class="btn is-text"
+							onclick={() => {
+								openGroup(c.collection);
+								clusterCard = null;
+							}}>Bekijk in Verbonden</button
+						>
+					{/if}
+				</div>
+			</CanvasKaart>
+		{:else if midden ? extern : hoverNode}
 			{@const kaartNode = midden ? extern!.node : hoverNode!}
 			<CanvasHoverCard
 				node={kaartNode}
@@ -1710,6 +1677,20 @@
 	.strook--kaart {
 		padding: var(--s-4);
 		border-left: 1px solid var(--rule);
+	}
+	/* The card of a cluster stands in the strip on its paper, as the card of a bron does. */
+	.strook--kaart :global(.canvas-kaart) {
+		position: static;
+		width: auto;
+		max-width: none;
+		border: 0;
+		box-shadow: none;
+		background: none;
+	}
+	.strook--kaart :global(.canvas-kaart__kop),
+	.strook--kaart :global(.canvas-kaart__inhoud) {
+		padding-left: 0;
+		padding-right: 0;
 	}
 	/* Deel at the top right of the canvas, as the mockup's Deel and Exporteer. */
 	.doek-balk {

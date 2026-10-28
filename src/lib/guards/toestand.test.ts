@@ -10,6 +10,7 @@ const STATES = [
 	'is-afgeleid',
 	'is-b',
 	'is-bottom',
+	'is-chosen',
 	'is-dicht',
 	'is-dim',
 	'is-docked',
