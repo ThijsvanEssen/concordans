@@ -141,6 +141,7 @@
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		onlyAround,
+		stepsOffReason,
 		netwerkParams,
 		parseNetwerk,
 		withAdded,
@@ -774,7 +775,7 @@
 	const pairChoice = $derived(resolveChoice(params.get(PAIR_PARAM), sharedDrawn, sharedState));
 	const vcPair = $derived(sharedDrawn.length === 2 || sharedState ? pairOf(pairChoice) : null);
 	const vcKey = $derived(vcPair && pairSteps >= 2 ? `${vcPair.join(',')}:${pairSteps}` : '');
-	const stepsOff = $derived(sharedEnds.length < 2 ? 'Kies eerst een tweede bron.' : null);
+	const stepsOff = $derived(stepsOffReason(view, sharedEnds.length));
 	let vcData = $state.raw<
 		{ key: string; response: ChainsResponse } | { key: string; error: unknown } | null
 	>(null);
@@ -2269,7 +2270,6 @@
 											setNetwerk(withRemoved(netwerk, id));
 										}}
 										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-										onClearContext={() => store.clearContext()}
 										onClear={wisAlles}
 									/>
 								{/snippet}

@@ -139,8 +139,6 @@ export type GraphStore = {
 	mergePaths: (response: Schema<'PathsResponse'>) => Promise<{ onPath: string[]; tied: string[] }>;
 	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
 	core: Readable<ReadonlySet<string> | null>;
-	/** Leaves only the chosen bronnen, what ties them and the selection. */
-	clearContext: () => void;
 	/** Ends the netwerk: nothing is chosen any more, the canvas stays as it is. */
 	releaseNetwerk: () => void;
 	setSelection: (nodeId: string | null) => void;

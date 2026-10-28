@@ -16,7 +16,7 @@ import { nodeId } from '$lib/vocabulary';
  */
 export function createCompose(
 	ctx: GraphContext
-): Pick<GraphStore, 'compose' | 'clearContext' | 'releaseNetwerk' | 'core'> {
+): Pick<GraphStore, 'compose' | 'releaseNetwerk' | 'core'> {
 	const {
 		nodes,
 		edges,
@@ -118,15 +118,6 @@ export function createCompose(
 	return {
 		compose,
 		core: { subscribe: coreStore.subscribe },
-		clearContext: () => {
-			const core = get(coreStore);
-			if (!core) return;
-			const keep = new Set(core);
-			const selectedId = get(selectionStore)?.id;
-			if (selectedId) keep.add(selectedId);
-			pruneToIds(keep);
-			emit();
-		},
 		releaseNetwerk: () => {
 			pinned.clear();
 			pinnedStore.set(new Set());

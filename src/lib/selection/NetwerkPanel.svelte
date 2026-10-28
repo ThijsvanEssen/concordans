@@ -1,5 +1,4 @@
 <script lang="ts">
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
@@ -35,7 +34,6 @@
 		onRemove,
 		onGroepAan,
 		onAdd,
-		onClearContext,
 		onClear,
 		telefoon = false,
 		searching = $bindable(false)
@@ -53,9 +51,8 @@
 		/** A chip greyed with its grouping: switch that grouping on again. */
 		onGroepAan?: (kind: NonNullable<NetwerkEntry['verborgenMet']>) => void;
 		onAdd: () => void;
-		onClearContext: () => void;
 		onClear: () => void;
-		/** A phone: Gekozen folds after two, Wissen and Meer stand under the list. */
+		/** A phone: Gekozen folds after two, Wis alles stands under the list. */
 		telefoon?: boolean;
 		/** The search for a bron to add is open; the page opens it too, from the empty canvas. */
 		searching?: boolean;
@@ -89,20 +86,6 @@
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 				>Wis alles</TekstLink
 			>
-			<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
-			<TekstMenu rechts label="Meer" tekst="Meer" buttonClass="meer-knop raakvlak" caret={false}>
-				{#snippet onder(sluit)}
-					<button
-						type="button"
-						role="menuitem"
-						class="tekstmenu__item"
-						onclick={() => {
-							sluit();
-							onClearContext();
-						}}>Alleen de gekozen bronnen tonen</button
-					>
-				{/snippet}
-			</TekstMenu>
 		{/if}
 	{/snippet}
 	{#if entries.length > 0 || pending > 0}
@@ -178,12 +161,11 @@
 		>
 	</section>
 	{#if telefoon && entries.length > 0}
-		<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
+		<!-- On a phone under the list, as the Design System has it (NetwerkPaneel, Telefoon). -->
 		<p class="netwerk-acties">
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 				>Wis alles</TekstLink
 			>
-			<TekstLink onclick={onClearContext}>Alleen de gekozen bronnen tonen</TekstLink>
 		</p>
 	{/if}
 </CanvasKaart>
@@ -192,23 +174,6 @@
 {/if}
 
 <style>
-	/* Meer is a word beside Wis alles, as the Design System has it: a link that opens a menu. */
-	:global(.meer-knop) {
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: inherit;
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	:global(.meer-knop:hover),
-	:global(.meer-knop:focus-visible) {
-		text-decoration-color: currentColor;
-	}
 	.netwerk-acties {
 		display: flex;
 		flex-wrap: wrap;
