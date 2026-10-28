@@ -54,10 +54,7 @@ const ids = (store: Store) => get(store.nodes).map((n) => n.id);
 const composed = () => {
 	const store = createGraphStore();
 	store.compose({
-		participants: [
-			{ response: referring('a', ['x', 'y']) },
-			{ response: referring('b', ['z']) }
-		],
+		participants: [{ response: referring('a', ['x', 'y']) }, { response: referring('b', ['z']) }],
 		surroundings: true,
 		fresh: true
 	});
