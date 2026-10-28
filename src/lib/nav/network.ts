@@ -39,7 +39,7 @@ export function networkHref(url: URL, kept: string | null = null): string {
 	// to a bron alone draws the bron alone.
 	if (!parseNetwerk(to.searchParams).ids.length)
 		for (const [name, value] of new URLSearchParams(kept ?? '')) to.searchParams.set(name, value);
-	for (const name of ['tabel', 'toon', 'naast', 'paneel']) to.searchParams.delete(name);
+	for (const name of ['tabel', 'soort', 'toon', 'naast', 'paneel']) to.searchParams.delete(name);
 	return `${to.pathname}${to.search}${to.hash}`;
 }
 

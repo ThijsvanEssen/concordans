@@ -195,6 +195,7 @@
 								count={alle != null && lijstHref
 									? `${formatCount(r.drawn)} van`
 									: kindRowCount(r, on)}
+								naam={alle != null && lijstHref ? `${r.label} ${kindRowCount(r, on)}` : undefined}
 								loading={counting || !kindsSettled}
 								empty={r.drawn === 0}
 								gedimd={!!off}
@@ -258,6 +259,9 @@
 								: cut
 									? `${formatCount(n)} van ${formatCount(cut.total)}`
 									: n}
+							naam={alle
+								? `${FILTER_GROUP_LABEL[k]} ${formatCount(n)} van ${formatCount(alle.total)}`
+								: undefined}
 							loading={counting}
 							empty={n === 0}
 							gedimd={!!groepen}

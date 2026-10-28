@@ -42,7 +42,7 @@
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { inPool } from '$lib/api/pool';
 	import { kopNode } from '$lib/bron/first-node';
-	import { bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
+	import { NETWORK_MODE, bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
 	import { refOf, type BronRef } from '$lib/bron/ref';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
@@ -1657,17 +1657,22 @@
 
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
 	// "Alle 10.406" of a kind the canvas cut off: those bronnen as a list, the table under that
-	// kind, not as many nodes (Thijs, 28 Oct); the canvas keeps its cap.
+	// kind (?soort), not as many nodes (Thijs, 28 Oct); the canvas keeps its cap. The werkplek
+	// stays in the address, bronfilter and all: Terug leads back to it as it was.
 	const lijstHref = (bronnen: readonly FilterGroup[]) =>
-		withParams(page.url, {
-			...filterParams({ ...filter, bronnen: bronnen.length ? new Set(bronnen) : null }),
-			tabel: '1',
-			mode: null,
-			naast: null,
-			[MARK_PARAM]: null,
-			[VIEW_PARAM]: null
-		});
-	const readHref = $derived(withParams(page.url, { tabel: null }));
+		withParams(page.url, { tabel: '1', soort: bronnen.join(',') || null, naast: null });
+	const tabelSoort = $derived(
+		(params.get('soort') ?? '')
+			.split(',')
+			.filter((k): k is FilterGroup => (FILTER_GROUPS as readonly string[]).includes(k))
+	);
+	/** The table's bronfilter: of the kinds of ?soort only, where the list came from Tonen. */
+	const tableFilter = $derived<VerbondenFilter>(
+		tabelSoort.length
+			? { ...filter, bronnen: new Set(tabelSoort.filter((k) => filter.bronnen?.has(k) ?? true)) }
+			: filter
+	);
+	const readHref = $derived(withParams(page.url, { tabel: null, soort: null }));
 
 	const inFlux = new InFlux(() => mode === 'graph');
 
@@ -2296,10 +2301,13 @@
 						onRetry={() => source.reload()}
 						{verbonden}
 						selection={selectedNode}
-						{filter}
+						filter={tableFilter}
 						onOpenFilter={() => (filterOpen = true)}
 						onRow={openRowCard}
 						backHref={readHref}
+						backLabel={params.get('mode') === NETWORK_MODE
+							? 'Terug naar het netwerk'
+							: 'Terug naar de tekst'}
 					/>
 				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<div
 						class="explore-empty"

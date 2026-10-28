@@ -39,6 +39,7 @@
 		onOpenFilter,
 		onRow,
 		backHref,
+		backLabel = 'Terug naar de tekst',
 		onRetry
 	}: {
 		verbonden: VerbondenState;
@@ -48,6 +49,8 @@
 		/** A row opens the card Verbinding. */
 		onRow: (row: Row) => void;
 		backHref: string;
+		/** Where the table was opened from: the text, or the netwerk (its Tonen). */
+		backLabel?: string;
 		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
 		onRetry?: () => void;
 	} = $props();
@@ -148,7 +151,7 @@
 			>{countLine(verbonden.groups, filter)}{#if mentions}; {mentions}{/if}</span
 		>
 		<span class="toolbar__space"></span>
-		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← Terug naar de tekst</a>
+		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← {backLabel}</a>
 		<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
 		<!-- The order: one TekstMenu, the columns as its options and the direction under the
 		     rule (Thijs, 10 Oct); choosing the same column again changes nothing. -->
