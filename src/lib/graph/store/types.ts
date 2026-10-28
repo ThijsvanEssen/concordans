@@ -1,5 +1,6 @@
 import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
+import type { getNodeNeighborhood } from '$lib/api/nodes';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { BaseNode, GraphNode, GraphEdge } from '../types';
 import type { LineKind } from '../line-kind';
@@ -14,6 +15,18 @@ export const NEIGHBORHOOD_DEPTH = 3;
  * The same on every width (besluit 49).
  */
 export const NEIGHBORHOOD_CAP = 150;
+
+/** What a neighbourhood request asks. */
+export type NeighborhoodRequest = {
+	depth?: number;
+	cap?: number;
+	relations?: Relation[];
+	nodeTypes?: string[];
+	/** Adds to the canvas instead of replacing its context. */
+	additive?: boolean;
+};
+/** A neighbourhood on its way. */
+export type NeighborhoodAnswer = ReturnType<typeof getNodeNeighborhood>;
 
 /** A neighbourhood as drawn: around `focal`, `depth` steps, `capped` at the cap. */
 export type NeighborhoodReach = {
@@ -103,19 +116,24 @@ export type GraphStore = {
 	/** How far the last neighbourhood reached, and whether the API cut it off at its cap. */
 	neighborhood: Readable<NeighborhoodReach | null>;
 	/**
+	 * Asks a neighbourhood without drawing it, so it travels beside other requests; hand it
+	 * to `expandNeighborhood` as `asked` (the same options) to draw it.
+	 */
+	askNeighborhood: (
+		collection: Collection,
+		key: string,
+		opts?: NeighborhoodRequest
+	) => NeighborhoodAnswer;
+	/**
 	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
 	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
 	 */
 	expandNeighborhood: (
 		collection: Collection,
 		key: string,
-		opts?: {
-			depth?: number;
-			cap?: number;
-			relations?: Relation[];
-			nodeTypes?: string[];
-			/** Adds to the canvas instead of replacing its context. */
-			additive?: boolean;
+		opts?: NeighborhoodRequest & {
+			/** The request of `askNeighborhood` for these same options, asked ahead of this merge. */
+			asked?: NeighborhoodAnswer;
 			/** Says whether the API cut this neighbourhood off at its cap, once it is in. */
 			onCut?: (capped: boolean) => void;
 		}
