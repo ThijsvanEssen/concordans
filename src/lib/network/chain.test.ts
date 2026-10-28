@@ -268,7 +268,9 @@ describe('what Soort and Relatie count in a keten', () => {
 			roles
 		});
 		const tally = (roles: Record<string, unknown>) => {
-			const k = { layers: [{ id: '0|Persoon' as const, label: 'Persoon', nodes: [person(roles)] }] };
+			const k = {
+				layers: [{ id: '0|Persoon' as const, label: 'Persoon', nodes: [person(roles)] }]
+			};
 			return chainTally(k, k).kinds;
 		};
 		expect(tally({ government_functions: [{ from_date: '2020-01-01', to_date: null }] })).toEqual({
