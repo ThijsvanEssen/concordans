@@ -20,14 +20,19 @@ import { filterParams, parseFilter } from '$lib/verbonden/filter';
 import { parseNodeId } from '$lib/vocabulary';
 import { offOf } from '$lib/selection/off';
 
-/** The steps from the focus the canvas can show, and what an unreadable ?diepte means. */
-export const DEPTH = { min: 1, max: 3, fallback: 2 } as const;
+/**
+ * The steps from the chosen bronnen the canvas can show, and what an unreadable ?diepte means.
+ * 0 is Alleen gekozen: only the netwerk's own bronnen and what ties them; a bron alone has no 0.
+ */
+export const DEPTH = { min: 0, max: 3, fallback: 2 } as const;
 
 /** ?diepte within its bounds; null where the address does not say. */
 export function explicitDepth(params: URLSearchParams): number | null {
 	const value = params.get('diepte');
 	if (!value) return null;
-	return Math.min(DEPTH.max, Math.max(DEPTH.min, Number(value) || DEPTH.fallback));
+	const steps = Number(value);
+	if (!Number.isFinite(steps)) return DEPTH.fallback;
+	return Math.min(DEPTH.max, Math.max(DEPTH.min, Math.trunc(steps)));
 }
 
 /**
@@ -49,7 +54,7 @@ export function depthFor(
  */
 export function netwerkQuery(params: URLSearchParams): string {
 	const own = new URLSearchParams();
-	for (const name of ['netwerk', 'uit', 'omgeving']) {
+	for (const name of ['netwerk', 'uit']) {
 		const value = name === 'uit' ? offOf(params.get(name)).chosen.join(',') : params.get(name);
 		if (value !== null && (value || name !== 'uit')) own.set(name, value);
 	}

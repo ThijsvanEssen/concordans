@@ -1,5 +1,6 @@
-// The filter Alleen verbonden bronnen draws only the surroundings of the bron marked (its effect,
-// not only ?omgeving in the address), and a bundel opens in the werkplek with its bronnen.
+// Aantal stappen is the one measure of a netwerk's reach (Alleen gekozen draws the chosen bronnen
+// and what ties them, its effect and not only ?diepte in the address), and a bundel opens in the
+// werkplek with its bronnen.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { openSheet } from '../support/sheet';
@@ -10,31 +11,33 @@ const CHOSEN = ['instruments/bwbr0005537', 'instruments/bwbr0010346'];
 /** The names on the canvas for the keyboard: what is drawn. */
 const drawn = (page: Page) => page.locator('.canvas-node-list li');
 
-test('Alleen verbonden bronnen draws only the bron of the page with its surroundings, and off brings the rest back', async ({
+test('Alleen gekozen draws the chosen bronnen and what ties them, 1 stap their surroundings again', async ({
 	page
 }) => {
 	await page.goto(`/wetten/BWBR0010346?mode=netwerk&netwerk=${CHOSEN.join(',')}`);
 	await openSheet(page);
 	const strip = page.getByRole('complementary', { name: 'Bronnen en filters' });
-	// The filters of the strip, behind Filter on a narrow screen, and the option under Tonen.
-	const toggle = strip.getByRole('button', { name: 'Filter', exact: true });
-	await expect(strip.getByRole('region', { name: 'Weergave' }).or(toggle).first()).toBeVisible();
-	if (await toggle.isVisible()) await toggle.click();
-	const filter = strip.getByRole('button', { name: 'Alleen verbonden bronnen' });
-	await expect(filter).toHaveAttribute('aria-pressed', 'false');
+	const dialog = page.getByRole('dialog', { name: 'Weergave' });
+	const steps = strip.or(dialog).getByRole('group', { name: 'Aantal stappen' });
+	// The filter Alleen verbonden bronnen is gone; the one measure is Aantal stappen.
+	await expect(page.getByRole('button', { name: 'Alleen verbonden bronnen' })).toHaveCount(0);
+	await expect(steps.getByRole('button', { name: '1 stap' })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
 	await expect(drawn(page).nth(1)).toBeAttached();
 	const all = (await drawn(page).allInnerTexts()).length;
 
-	await filter.click();
-	await expect(page).toHaveURL(/omgeving=/);
-	await expect(filter).toHaveAttribute('aria-pressed', 'true');
-	// The effect: the canvas draws fewer bronnen; the chosen ones stay in the address.
-	await expect.poll(async () => (await drawn(page).allInnerTexts()).length).toBeLessThan(all);
-	const only = (await drawn(page).allInnerTexts()).length;
-	await expect(page).toHaveURL(/netwerk=instruments\/bwbr0005537,instruments\/bwbr0010346/);
-
-	await filter.click();
+	await steps.getByRole('button', { name: 'Alleen gekozen' }).click();
+	await expect(page).toHaveURL(/diepte=0/);
 	await expect(page).not.toHaveURL(/omgeving=/);
+	await expect.poll(async () => (await drawn(page).allInnerTexts()).length).toBeLessThan(all);
+	// The chosen bronnen stay in the address.
+	await expect(page).toHaveURL(/netwerk=instruments\/bwbr0005537,instruments\/bwbr0010346/);
+	const only = (await drawn(page).allInnerTexts()).length;
+
+	await steps.getByRole('button', { name: '1 stap' }).click();
+	await expect(page).toHaveURL(/diepte=1/);
 	await expect.poll(async () => (await drawn(page).allInnerTexts()).length).toBeGreaterThan(only);
 });
 

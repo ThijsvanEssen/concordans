@@ -8,7 +8,7 @@ import { parseNetwerk } from '$lib/selection/netwerk';
 import { bewaardAantal, keptNetwerk } from '$lib/selection/bewaard.svelte';
 
 /** The params of the werkplek alone: the text of the bron leaves them (the netwerk is kept). */
-const WERKPLEK_PARAMS = ['mode', 'netwerk', 'uit', 'tussen', 'omgeving', 'weergave', 'kies'];
+const WERKPLEK_PARAMS = ['mode', 'netwerk', 'uit', 'tussen', 'weergave', 'kies'];
 
 /**
  * The text of the bron the werkplek shows: its own address, or on /explore the bron marked,

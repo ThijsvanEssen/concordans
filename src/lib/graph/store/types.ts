@@ -11,10 +11,9 @@ export const NEIGHBORHOOD_DEPTH = 3;
  * The most bronnen one neighbourhood brings (Thijs, 9 Oct: "diepte houden, max omlaag"). At 150
  * the ten busiest bronnen of a cap of 200 all stay (126ffa Sv, 3:4 Awb, HR Urgenda, a Kamerlid,
  * dossier 36547 on prod), at 45 to 55 % of the bytes for a dossier, 75 to 80 % for the rest.
- * A phone draws fewer: 100, where a Kamerlid keeps six of the ten.
+ * The same on every width (besluit 49).
  */
 export const NEIGHBORHOOD_CAP = 150;
-export const NEIGHBORHOOD_CAP_PHONE = 100;
 
 /** A neighbourhood as drawn: around `focal`, `depth` steps, `capped` at the cap. */
 export type NeighborhoodReach = {
@@ -117,6 +116,8 @@ export type GraphStore = {
 			nodeTypes?: string[];
 			/** Adds to the canvas instead of replacing its context. */
 			additive?: boolean;
+			/** Says whether the API cut this neighbourhood off at its cap, once it is in. */
+			onCut?: (capped: boolean) => void;
 		}
 	) => Promise<GraphNode | null>;
 	/**

@@ -36,22 +36,37 @@ describe('NetworkChoice', () => {
 		render(NetworkChoice, { ...base, view: 'omgeving', empty: true });
 		expect(screen.getByText('Nog geen bron gekozen')).toBeTruthy();
 	});
-	it('says why a step is off in a line, not in a title alone (C15b)', () => {
-		render(NetworkChoice, { ...base, view: 'omgeving', networkOn: true, hasSelection: false });
-		expect(screen.getByRole('note').textContent).toBe('Klik een bron op het canvas.');
+	it('offers Alleen gekozen with a netwerk only, before the steps', () => {
+		const { unmount } = render(NetworkChoice, { ...base, view: 'omgeving' });
+		expect(screen.queryByRole('button', { name: 'Alleen gekozen' })).toBeNull();
+		unmount();
+		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true });
+		const buttons = screen.getAllByRole('button').map((b) => b.textContent);
+		expect(buttons).toEqual(['Alleen gekozen', '1 stap', '2 stappen', '3 stappen']);
 	});
-	it('says in Verband that the steps are for the pair', () => {
-		render(NetworkChoice, { ...base, view: 'verband', networkOn: true, hasSelection: false });
-		expect(screen.getByRole('note').textContent).toBe('Het aantal stappen geldt voor het paar.');
+	it('marks the step shown, with a netwerk too', () => {
+		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true, depth: 0 });
+		expect(
+			screen.getByRole('button', { name: 'Alleen gekozen' }).getAttribute('aria-pressed')
+		).toBe('true');
 	});
-	it('greys out the steps beyond the cap and says the cap in their title only (R7)', () => {
+	it('greys out the steps beyond the cap and says why in a line under the buttons', () => {
 		const { container } = render(NetworkChoice, {
 			...base,
 			view: 'omgeving',
-			reach: { depth: 1, capped: true, cap: 150 } as never
+			reach: { depth: 2, capped: true, cap: 150 } as never
 		});
+		expect(screen.getByRole('note').textContent).toBe('Maximaal 150 bronnen getoond.');
+		expect(container.querySelector('[title="Maximaal 150 bronnen getoond."]')).toBeTruthy();
+		expect((screen.getByRole('button', { name: '3 stappen' }) as HTMLButtonElement).disabled).toBe(
+			true
+		);
+		expect((screen.getByRole('button', { name: '2 stappen' }) as HTMLButtonElement).disabled).toBe(
+			false
+		);
+	});
+	it('says nothing when the steps are free', () => {
+		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true });
 		expect(screen.queryByRole('note')).toBeNull();
-		expect(container.textContent).not.toMatch(/Maximaal|voegt niets toe/);
-		expect(container.querySelector('[title="Maximaal 150 bronnen getoond"]')).toBeTruthy();
 	});
 });

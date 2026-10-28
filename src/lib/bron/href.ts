@@ -68,11 +68,10 @@ const KEPT_PARAMS = [
 	'diepte',
 	'netwerk',
 	'uit',
-	'tussen',
-	'omgeving'
+	'tussen'
 ];
 
-const NETWERK_PARAMS = new Set(['netwerk', 'uit', 'tussen', 'omgeving']);
+const NETWERK_PARAMS = new Set(['netwerk', 'uit', 'tussen']);
 
 /** The kept params that Bronnen names a filter of its own by (its period): left there. */
 const BRONNEN_PARAMS = new Set(['van', 'tot', 'status']);
@@ -111,7 +110,7 @@ export function buildBronHref(
 	const params = new URLSearchParams();
 	params.set('focus', focus);
 	if (!reading) params.set('mode', NETWORK_MODE);
-	// A link to the network (In het netwerk, Alleen de omgeving): on a phone the Verkenner
+	// A link to the network (In het netwerk): on a phone the Verkenner
 	// opens its Netwerk tab, not the text (Thijs, 9 Oct). Read once and dropped.
 	if (!within && mode === 'graph') params.set('paneel', 'netwerk');
 	if (onExplorePath && current) {

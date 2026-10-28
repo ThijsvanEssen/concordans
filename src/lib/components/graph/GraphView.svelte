@@ -115,7 +115,6 @@
 		onToggleChosen,
 		netwerkActive = false,
 		pairSteps = 1,
-		stepsOff = null,
 		onEdgeClick,
 		onClear,
 		canvasOverlay,
@@ -123,7 +122,6 @@
 		viewChoice,
 		depth,
 		onDepth,
-		meer,
 		view = 'omgeving',
 		midden,
 		surroundings = false,
@@ -159,8 +157,6 @@
 		netwerkActive?: boolean;
 		/** Aantal stappen of Verband (1 to 3): what Aantal stappen shows there, not the canvas's depth. */
 		pairSteps?: number;
-		/** Why Aantal stappen is off in Verband, said in a line. */
-		stepsOff?: string | null;
 		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
@@ -171,7 +167,6 @@
 		/** After the chosen bronnen: the Weergave (Omgeving, Verband, Keten). */
 		viewChoice?: Snippet;
 		/** First under Meer of the legend: the netwerk's own filters. */
-		meer?: Snippet;
 		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
 		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
@@ -1328,7 +1323,6 @@
 
 {#snippet sidebar()}
 	<GraphSidebar
-		{meer}
 		{...legend}
 		{filter}
 		reach={externCounts || yearPeriod ? null : reach}
@@ -1357,9 +1351,7 @@
 				viewSlot={viewChoice}
 				depth={view === 'verband' ? pairSteps : depth}
 				{onDepth}
-				networkOn={netwerkActive && view !== 'verband'}
-				{stepsOff}
-				hasSelection={!!selection}
+				withNetwerk={netwerkActive && view === 'omgeving'}
 				reach={externCounts ? null : reach}
 				empty={!hasNodes && !midden && !selection && expecting === 0}
 			>

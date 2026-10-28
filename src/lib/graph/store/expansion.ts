@@ -51,6 +51,7 @@ export function createExpansion(
 		threshold,
 		mergeResponse,
 		pruneToIds,
+		trimToCap,
 		signal
 	} = ctx;
 
@@ -273,8 +274,9 @@ export function createExpansion(
 			// 10 Oct). The amendments timetable asks the same route with every prop. A full
 			// neighbourhood stops at a lid, fractie, commissie or kabinet: its cap goes to what
 			// the focus itself touches (#871).
+			const { onCut, ...request } = opts;
 			const response = await getNodeNeighborhood(collection, key, {
-				...opts,
+				...request,
 				nodeTypes: opts.nodeTypes ?? drawnTypes(collection),
 				props: 'canvas',
 				stopAt: opts.relations ? undefined : ACTORS,
@@ -283,11 +285,14 @@ export function createExpansion(
 			const additive = !!opts.relations || !!opts.additive;
 			// The API gives one more than the cap when it cut the neighbourhood off: a step
 			// further then gives the same bronnen (art. 3:7 Awb is full at two steps).
-			if (!opts.relations)
+			const capped = response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP);
+			onCut?.(capped);
+			// An additive request (a netwerk's steps) leaves the reach of the focus alone.
+			if (!opts.relations && !opts.additive)
 				neighborhoodStore.set({
 					focal: response.focal_id,
 					depth: opts.depth ?? NEIGHBORHOOD_DEPTH,
-					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP),
+					capped,
 					cap: opts.cap ?? NEIGHBORHOOD_CAP,
 					buckets: response.buckets ?? []
 				});
@@ -310,6 +315,7 @@ export function createExpansion(
 			// bronnen and the selection are the only things that survive a refocus.
 			// A request narrowed to some relations, or asked to add, replaces nothing.
 			if (additive) {
+				if (opts.additive) trimToCap(response.focal_id);
 				emit();
 				return nodes.get(response.focal_id) ?? null;
 			}

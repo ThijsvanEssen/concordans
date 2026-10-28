@@ -35,15 +35,6 @@ export type NetwerkEntry = {
 	connections?: number;
 };
 
-/**
- * Why Aantal stappen is off whatever the weergave, in a line; null when it is not. Only Verband
- * needs a second bron: in Omgeving the steps follow the bron clicked on the canvas, and the
- * block Weergave says when none is.
- */
-export function stepsOffReason(view: string, ends: number): string | null {
-	return view === 'verband' && ends < 2 ? 'Kies eerst een tweede bron.' : null;
-}
-
 const list = (value: string | null) =>
 	(value ?? '')
 		.split(',')
@@ -77,15 +68,6 @@ export function withRemoved(n: Netwerk, id: string): Netwerk {
 	const uit = new Set(n.uit);
 	uit.delete(id);
 	return { ...n, ids: n.ids.filter((x) => x !== id), uit };
-}
-
-/**
- * The netwerk as the filter Alleen verbonden bronnen shows it: only `id` (added when it is
- * not chosen yet) is on, the others stay listed, switched off. The address keeps the full netwerk.
- */
-export function onlyAround(n: Netwerk, id: string): Netwerk {
-	const ids = n.ids.includes(id) ? n.ids : [...n.ids, id];
-	return { ...n, ids, uit: new Set(ids.filter((x) => x !== id)) };
 }
 
 /** The entries as `n` shows them: their on/off follows the address at once, before a redraw. */
