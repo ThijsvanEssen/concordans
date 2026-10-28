@@ -71,14 +71,20 @@ export function countCanvas(o: {
 		const other = attrs.drawClass === 'other' && !attrs.anchor;
 		if (other) annexes++;
 		const dated = typeof attrs.date === 'string' ? attrs.date : null;
-		const outside =
+		const outsidePeriod = (day: string | null) =>
 			!!o.period &&
-			id !== selectionId &&
-			dated !== null &&
-			((o.period.from !== null && dated < o.period.from) ||
-				(o.period.to !== null && dated > o.period.to));
-		if (kind && !other && !outside)
-			kinds[kind] = (kinds[kind] ?? 0) + ((attrs.members as number | undefined) ?? 1);
+			day !== null &&
+			((o.period.from !== null && day < o.period.from) ||
+				(o.period.to !== null && day > o.period.to));
+		const outside = id !== selectionId && outsidePeriod(dated);
+		// A group counts the members inside the period, as the strip does (not its whole size).
+		const memberDates = Array.isArray(attrs.memberDates)
+			? (attrs.memberDates as (string | null)[])
+			: null;
+		const inside = memberDates
+			? memberDates.filter((day) => !outsidePeriod(day)).length
+			: ((attrs.members as number | undefined) ?? 1);
+		if (kind && !other && !outside) kinds[kind] = (kinds[kind] ?? 0) + inside;
 		if (attrs.stuksoort && !other) {
 			const s = attrs.stuksoort as Stuksoort;
 			stuksoorten[s] = (stuksoorten[s] ?? 0) + ((attrs.members as number | undefined) ?? 1);

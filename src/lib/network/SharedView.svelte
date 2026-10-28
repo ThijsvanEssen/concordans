@@ -19,10 +19,11 @@
 	import { plural } from '$lib/text/words';
 	import type { ChainsState } from './linkchains';
 	import type { SharedRow, SharedModel } from './shared';
-	import { drawing as drawingOf, isMenu, options, type PairEnd } from './pairs';
+	import { useWeergaveBlad } from './weergave-blad';
+	import { drawing as drawingOf, isMenu, withDossierNumbers, options, type PairEnd } from './pairs';
 
 	let {
-		ends,
+		ends: given,
 		model,
 		choice,
 		gap = null,
@@ -66,6 +67,7 @@
 		onSteps?: (steps: number) => void;
 	} = $props();
 
+	const ends = $derived(withDossierNumbers(given));
 	const narrowed = $derived(hiddenKinds.size > 0 || hiddenLines.size > 0);
 	const keep = (r: SharedRow) => {
 		const k = filterGroupOf(r.collection, r.node.key, r.node.props);
@@ -102,6 +104,7 @@
 			pending.length === 0 &&
 			(steps === 1 || chains?.status === 'ready' || choice === 'alle')
 	);
+	const openBlad = useWeergaveBlad();
 	const BLOCK = ['', 'Eén stap', 'Twee stappen', 'Drie stappen'];
 	const openSearch = useSearchOpener();
 	const keydown = (e: KeyboardEvent) => {
@@ -130,6 +133,12 @@
 	{:else if loading || !drawn}
 		<p class="empty stil" role="status">Verband zoeken</p>
 	{:else}
+		{#if openBlad}
+			<!-- A phone: the Netwerkkeuze as a Blad, from the top (DS Verband, Telefoon). -->
+			<button type="button" class="blad-knop" aria-haspopup="dialog" onclick={openBlad}
+				>Verband, {steps} {plural(steps, 'stap', 'stappen')}</button
+			>
+		{/if}
 		{#if choices.length}
 			<div class="keuze">
 				{#if asMenu}
@@ -203,6 +212,27 @@
 		font-size: var(--t-micro);
 		line-height: 20px;
 		color: var(--ink-3);
+	}
+	.blad-knop {
+		display: none;
+	}
+	@media (max-width: 768px) {
+		.blad-knop {
+			display: flex;
+			align-items: center;
+			width: 100%;
+			min-height: var(--veld-h-raak);
+			padding: 0 var(--s-4);
+			border: 0;
+			border-bottom: 1px solid var(--rule);
+			background: none;
+			font-family: var(--font-serif);
+			font-size: var(--t-ui-raak);
+			font-weight: 600;
+			color: var(--ink);
+			text-align: left;
+			cursor: pointer;
+		}
 	}
 	.keuze {
 		padding: var(--s-4) var(--s-4) 0;

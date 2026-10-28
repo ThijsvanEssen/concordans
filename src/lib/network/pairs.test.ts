@@ -5,6 +5,7 @@ import {
 	drawing,
 	drawingLabel,
 	isMenu,
+	withDossierNumbers,
 	oneStepBlock,
 	options,
 	pairOf,
@@ -90,6 +91,38 @@ describe('the Keuze of three to six bronnen', () => {
 	it('names the pair of a choice, none for Alle', () => {
 		expect(pairOf(ALL)).toBeNull();
 		expect(pairOf(AG)).toEqual([A.id, G.id]);
+	});
+});
+
+describe('the names of the ends', () => {
+	const wet = end('instruments/w', 'Wet betaalbare huur', 'Wet betaalbare huur');
+	const dossier: PairEnd = {
+		id: 'dossiers/36496',
+		name: 'Wet betaalbare huur',
+		short: 'Wet betaalbare huur',
+		collection: 'dossiers',
+		props: { number: '36496' }
+	};
+	it('names a dossier by its number, so that it differs from the wet of the same name', () => {
+		const [w, d] = withDossierNumbers([wet, dossier]);
+		expect(w.name).toBe('Wet betaalbare huur');
+		expect(d.name).toBe('36496 Wet betaalbare huur');
+		expect(d.short).toBe('36496 Wet betaalbare huur');
+		expect(d.name).not.toBe(w.name);
+	});
+	it('leaves a bare number and a withDossierNumbers name as they are', () => {
+		const bare = { ...dossier, name: 'Dossier 36496', short: 'Dossier 36496' };
+		expect(withDossierNumbers([bare])[0].name).toBe('36496');
+		expect(withDossierNumbers([withDossierNumbers([dossier])[0]])[0].name).toBe(
+			'36496 Wet betaalbare huur'
+		);
+	});
+	it('puts the number in the Keuze and the head alike', () => {
+		const ends = withDossierNumbers([G, wet, dossier]);
+		const m = verbandModel([], [], () => ({ name: '', collection: null }));
+		expect(options(ends, m).map((o) => o.label)).toContain(
+			'Wet betaalbare huur en 36496 Wet betaalbare huur'
+		);
 	});
 });
 

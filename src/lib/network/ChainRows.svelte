@@ -4,7 +4,7 @@
 	// two chosen bronnen are the heads of the columns at the left and right; a block for each
 	// length (Eén stap, Twee stappen, Drie stappen). A tap on a pill or a tussenbron marks its
 	// row: a ring, its lines in ink and thicker, the other rows at 35 %. On a phone the same
-	// rows as a numbered list for each block.
+	// rows as a withDossierNumbers list for each block.
 	import { kindColour } from '$lib/bron/kleur';
 	import { markOf } from '$lib/bron/vormen';
 	import { drawnLine } from '$lib/components/graph/drawn-line';
@@ -364,13 +364,13 @@
 		{/each}
 	</svg>
 
-	<!-- On a phone: the same rows as a numbered list for each block. -->
+	<!-- On a phone: the same rows as a withDossierNumbers list for each block. -->
 	<div class="ladder">
 		<ul class="ladder__ends">
 			{#each ends as e (e.id)}
 				{@const v = endMark(e)}
 				<li>
-					<svg class="mark--end" viewBox="-3 -3 22 22" width="18" height="18" aria-hidden="true">
+					<svg class="mark--end" viewBox="-5 -5 26 26" width="28" height="28" aria-hidden="true">
 						<circle class="end__ring" cx="8" cy="8" r="10" />
 						<path d={v.d} fill={v.fill} fill-rule="evenodd" stroke={v.stroke} stroke-width="1.5" />
 					</svg>{e.name}
@@ -548,6 +548,7 @@
 	}
 	.ladder__ends li {
 		display: flex;
+		min-height: var(--veld-h-raak);
 		align-items: center;
 		gap: var(--s-2);
 		font-size: var(--t-ui-raak);
@@ -584,10 +585,10 @@
 	}
 	.ladder__list li {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		gap: var(--s-3);
 		min-height: var(--veld-h-raak);
-		padding: var(--s-2) 0;
+		padding: 0;
 		border-bottom: 1px solid var(--rule);
 	}
 	.ladder__list li.is-dim {
@@ -625,8 +626,8 @@
 		display: inline-flex;
 		align-items: flex-start;
 		gap: var(--s-2);
-		min-height: 24px;
-		padding: 0;
+		min-height: var(--veld-h-raak);
+		padding: calc((var(--veld-h-raak) - 24px) / 2) 0;
 		border: 0;
 		background: none;
 		font-family: var(--font-serif);
@@ -636,7 +637,7 @@
 	}
 	.ladder__pill svg {
 		flex: none;
-		margin-top: 5px;
+		margin-top: calc((var(--veld-h-raak) - 24px) / 2 + 5px);
 	}
 	.ladder__pill {
 		font-size: var(--t-ui-raak);

@@ -5,7 +5,7 @@
 // drawn one by one: a much cited pair shares hundreds.
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
-import { officialNumber } from '$lib/bron/dossier-naam';
+import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossier-naam';
 import { relationWords } from '$lib/verbonden/relation-words';
 import { capitalize, joinAnd, textOf } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -90,6 +90,15 @@ export function rowNotation(n: Pick<Neighbor, 'id' | 'collection' | 'display_nam
 } {
 	const p = (n.props ?? {}) as Record<string, unknown>;
 	const name = naamVanId(n.id, n.display_name);
+	if (n.collection === 'dossiers') {
+		// By its number first, as a Kamerstuk is cited: never the bare name of the wet it made.
+		const d = dossierUitProps({ display_name: n.display_name, ...p }, n.id.split('/')[1]);
+		const own = dossierOwnName(d);
+		return {
+			title: own ? `${officialNumber(d.number)} ${own}` : officialNumber(d.number),
+			detail: null
+		};
+	}
 	if (n.collection !== 'documents') return { title: name, detail: null };
 	const dossier = textOf(p.dossier_number);
 	const nr = typeof p.sequence === 'number' ? p.sequence : null;

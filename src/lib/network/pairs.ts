@@ -2,9 +2,10 @@
 // also at one step, where its kenmerk (what both name) stands between them. This module reads
 // what /api/nodes/shared (one step) and /api/chains (two and three) give, and makes the blocks
 // of rows, the Keuze of a pair for three to six bronnen and the words of a step. Pure, so the
-// drawing on a wide screen and the numbered list on a phone read one model.
+// drawing on a wide screen and the withDossierNumbers list on a phone read one model.
 import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
+import { dossierNummer, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
 import { bothPhrase, joinsAll } from './both-words';
 import type { Collection } from '$lib/vocabulary';
 import {
@@ -28,6 +29,26 @@ export type PairEnd = {
 	/** The props of the bron, where its sign depends on them (a European regel). */
 	props?: Record<string, unknown> | null;
 };
+
+/**
+ * A dossier is named by its number ("36496 Wet betaalbare huur", DS Netwerkcanvas, Tekst), so
+ * that it never reads as the wet of the same name: in the Keuze, the head of its column and the
+ * list alike. Other bronnen keep their name.
+ */
+export function withDossierNumbers(ends: readonly PairEnd[]): PairEnd[] {
+	const withNumber = (e: PairEnd, name: string) => {
+		const nummer = officialNumber(
+			dossierNummer(e.props, e.id.split('/')[1]) ?? e.id.split('/')[1] ?? ''
+		);
+		if (!nummer || name.startsWith(nummer)) return name;
+		return name === kamerstukNummer(nummer) ? nummer : `${nummer} ${name}`;
+	};
+	return ends.map((e) =>
+		e.collection === 'dossiers'
+			? { ...e, name: withNumber(e, e.name), short: withNumber(e, e.short) }
+			: e
+	);
+}
 
 /** The value of the Keuze that takes every chosen bron. */
 export const ALL = 'alle';

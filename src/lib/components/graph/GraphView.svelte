@@ -18,12 +18,13 @@
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
 	import ViewSheet from './ViewSheet.svelte';
+	import { provideWeergaveBlad } from '$lib/network/weergave-blad';
 	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
 	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
-	import { kindOf, type Stip } from '$lib/bron/strook';
+	import { kindOf, stripDate, type Stip } from '$lib/bron/strook';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { LineKind } from '$lib/graph/line-kind';
@@ -1005,7 +1006,13 @@
 							})
 						: null,
 				stub: !!n.stub || repealed,
-				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
+				date: stripDate(n.raw?.props, n.collection as Collection, n.id)?.slice(0, 10) ?? null,
+				// A group's members by their days, so Tonen counts those inside the period only.
+				memberDates: isClusterId(n.id)
+					? (clusterById.get(n.id)?.members ?? []).map(
+							(m) => memberDate(m, n.collection as Collection)?.slice(0, 10) ?? null
+						)
+					: undefined,
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
 				kleur: colour,
@@ -1189,6 +1196,7 @@
 	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
 	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
 	let sheetOpen = $state(false);
+	provideWeergaveBlad(() => (sheetOpen = true));
 	let sheetOpener = $state<HTMLButtonElement | null>(null);
 	/** The card of a bron marked is a sheet at the foot on a phone: the button stands above it. */
 	let cardHeight = $state(0);
@@ -1202,19 +1210,25 @@
 	// Every bron on the canvas with a date, whatever the period: the strip shows what lies
 	// outside it too, so the period can widen again.
 	let stippen = $state<Stip[]>([]);
-	let undated = $state(0);
+	let undated = $state.raw<Collection[]>([]);
 	let stippenSleutel = '';
 	/** A publication of the Staatsblad or the Trb. with a date: a wetswijziging, named by its key. */
 	const changeName = (id: string) => {
 		const m = /^instruments\/(stb|trb)_(\d{4})_(\d+)/.exec(id);
 		return m ? `${m[1] === 'stb' ? 'Stb.' : 'Trb.'} ${m[2]}, ${m[3]}` : undefined;
 	};
+	/** The day of a member of a group: its own, or a publication's day of publication. */
+	const memberDate = (id: string, collection: Collection) => {
+		const n = store.getNodeById(id);
+		return stripDate(n?.raw?.props, collection, id);
+	};
 	function telJaren() {
 		const nieuw: Stip[] = [];
-		let zonder = 0;
-		const add = (date: unknown, collection: Collection, id: string) => {
-			if (typeof date !== 'string') {
-				if (kindOf(collection)) zonder++;
+		const zonder: Collection[] = [];
+		const add = (date: string | null, collection: Collection, id: string) => {
+			if (date === null) {
+				if (kindOf(collection) || collection === 'articles' || collection === 'annexes')
+					zonder.push(collection);
 				return;
 			}
 			const jaar = yearFraction(date);
@@ -1224,10 +1238,11 @@
 			// A group counts its members by their years: 143 uitspraken are 143 dots (R3-N B8).
 			if (isClusterId(id))
 				for (const m of clusterById.get(id)?.members ?? [])
-					add(store.getNodeById(m)?.raw?.props?.date, a.collection as Collection, m);
-			else add(a.date, a.collection as Collection, id);
+					add(memberDate(m, a.collection as Collection), a.collection as Collection, m);
+			else add(typeof a.date === 'string' ? a.date : null, a.collection as Collection, id);
 		});
-		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}${s.change ?? ''}`).join() + zonder;
+		const sleutel =
+			nieuw.map((s) => `${s.jaar}${s.collection}${s.change ?? ''}`).join() + zonder.join();
 		if (sleutel !== stippenSleutel) {
 			stippenSleutel = sleutel;
 			stippen = nieuw;
@@ -1556,7 +1571,7 @@
 		>
 			<Tijdstrook
 				stippen={legend.counting ? [] : strookStippen}
-				undated={externStippen ? 0 : undated}
+				undated={externStippen ? [] : undated}
 				van={jaarVan(filter.van)}
 				tot={jaarVan(filter.tot)}
 				fromDay={filter.van}

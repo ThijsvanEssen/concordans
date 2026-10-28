@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { axisYears, busiest, countParts, sumPeriod, kindOf, perYear } from './strook';
+import {
+	axisYears,
+	busiest,
+	countParts,
+	sumPeriod,
+	kindOf,
+	perYear,
+	stripDate,
+	undatedText
+} from './strook';
 
 describe('the strip numbers', () => {
 	it('counts per year and kind, changes apart', () => {
@@ -20,8 +29,26 @@ describe('the strip numbers', () => {
 		expect(countParts(per, changes).map((p) => p.text)).toEqual([
 			'2 uitspraken',
 			'1 stuk',
-			'1 wijziging'
+			'1 publicatie'
 		]);
+	});
+	it('dates a publication by the day it was published, a law by none', () => {
+		const stb = { kind: 'publicatie', date_published: '2024-07-01' };
+		expect(stripDate(stb, 'instruments', 'instruments/stb_2024_200')).toBe('2024-07-01');
+		expect(
+			stripDate({ date_published: '2024-07-01' }, 'instruments', 'instruments/stb_2024_200')
+		).toBe('2024-07-01');
+		expect(
+			stripDate({ kind: 'wet', date_published: '1991-12-18' }, 'instruments', 'instruments/bwbr1')
+		).toBeNull();
+		expect(stripDate({ date: '2020-02-02' }, 'judgments', 'judgments/x')).toBe('2020-02-02');
+	});
+	it('says what has no day by what it is', () => {
+		expect(undatedText([])).toBeNull();
+		expect(
+			undatedText(['documents', ...Array<'articles'>(200).fill('articles'), 'instruments'])
+		).toBe('1 wet, 200 artikelen en 1 stuk zonder datum');
+		expect(undatedText(['articles'])).toBe('1 artikel zonder datum');
 	});
 	it('puts every collection of the canvas in one kind or none', () => {
 		expect(kindOf('articles')).toBe('wetten');
