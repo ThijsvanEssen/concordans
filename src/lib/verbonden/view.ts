@@ -61,7 +61,15 @@ export function filterGroups(
 	const cut = cutsRows(f);
 	return groups
 		.map((g) => {
-			const rows = g.rows.filter((r) => rowPasses(r, f));
+			// A group asked again keeps the rows of its former cut, as they stand, until the
+			// new ones are in: what the API cuts is not cut again by the new choice.
+			const cutBy = wachtend.has(g.id) ? (g.cutBy ?? []) : [];
+			const rowFilter = {
+				...f,
+				jaar: cutBy.includes('jaar') ? null : f.jaar,
+				rechter: cutBy.includes('rechter') ? null : f.rechter
+			};
+			const rows = g.rows.filter((r) => rowPasses(r, rowFilter));
 			// A name that follows its rows follows the rows the filter leaves.
 			const label = g.labelOf ? g.labelOf(rows) : g.label;
 			// What the loader asked of the API itself (the year of a wet's judgments, BE-51; the

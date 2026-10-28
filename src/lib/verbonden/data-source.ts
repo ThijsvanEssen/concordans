@@ -465,14 +465,15 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						});
 				};
 				for (const def of groups) if (def.load) run(def.id, def.load);
-				// Another order or year: the group waits in its place for its new rows.
+				// Another order or year: the group keeps its rows, dimmed (`wachtend`), until its new
+				// rows replace them.
 				rerun = (id) => {
 					const load = groups.find((g) => g.id === id)?.load;
 					if (!load) return;
 					vervolg.delete(id);
 					setNextPage(id, undefined);
 					pending.add(id);
-					groups = groups.map((g) => (g.id === id ? { ...g, rows: [], failed: false } : g));
+					groups = groups.map((g) => (g.id === id ? { ...g, failed: false } : g));
 					zet();
 					run(id, load);
 				};
