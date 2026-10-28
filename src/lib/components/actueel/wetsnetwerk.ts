@@ -307,7 +307,7 @@ export function kaartVan(s: Schets): SketchGroup[] {
 	const uitspraken = (s.kolommen[3]?.bronnen ?? []).filter((b) => !b.groep && b.ref);
 	const rij = (b: SchetsBron, filterGroup: Row['filterGroup'], extra: Partial<Row> = {}): Row => ({
 		ref: b.ref!,
-		title: b.sub ? `${b.label}, ${b.sub.replace(/^Dossier /, '').replace(/,.*$/, '')}` : b.label,
+		title: b.sub ? `${b.label}, ${b.sub.replace(/^nr\. /, 'nr.\u00a0')}` : b.label,
 		context: null,
 		filterGroup,
 		...extra

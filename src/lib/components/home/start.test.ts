@@ -35,16 +35,6 @@ describe('the start page of the server and of the app', () => {
 		expect(SERVER).toMatch(/<form action="\/" method="get"[^>]*><input type="search" name="q"/);
 	});
 
-	it('offers the trial searches as links to /?q=, with the hint around them', () => {
-		const hint = all(SERVER, 'p', 'hint')[0];
-		expect(links(hint)).toEqual(
-			START.hint.examples.map((e) => ({ href: `/?q=${encodeURIComponent(e)}`, label: e }))
-		);
-		expect(text(hint)).toBe(
-			`${START.hint.intro} ${START.hint.examples.join(', ')}. ${START.hint.outro}`
-		);
-	});
-
 	it('has the steps, in the same order and under the same names', () => {
 		const steps = all(SERVER, 'li');
 		expect(steps.map((li) => text(all(li, 'b')[0]))).toEqual(START.steps.map((x) => x.title));

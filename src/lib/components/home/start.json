@@ -1,12 +1,7 @@
 {
 	"heading": "Zie hoe wetten, rechtspraak en parlement samenhangen.",
-	"lede": "Zoek een wet, uitspraak, Kamerstuk of dossier en lees de officiële tekst. Zie wie een artikel aanhaalt, hoe de Kamer stemde en wat er in een dossier gebeurde. Volg de verbindingen in het netwerk en bewaar wat je vindt in een bundel.",
+	"lede": "Zoek een wet, uitspraak, Kamerstuk of dossier en zie wat ermee verbonden is.",
 	"placeholder": "Wet, uitspraak, Kamerstuk, dossier of motie",
-	"hint": {
-		"intro": "Probeer",
-		"examples": ["art. 6:162 BW", "ECLI:NL:HR:2019:1278", "Awb"],
-		"outro": "Enter opent de bron direct."
-	},
 	"steps": [
 		{
 			"title": "Zoek",

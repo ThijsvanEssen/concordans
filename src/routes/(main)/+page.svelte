@@ -24,7 +24,6 @@
 	import { afterNavigate } from '$app/navigation';
 	import Stappen from '$lib/components/home/Stappen.svelte';
 	import Vragen from '$lib/components/home/Vragen.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { START } from '$lib/components/home/start';
 	import { takeServerField } from '$lib/seo/server-text';
 	import { SEARCH_FRAGMENT } from '$lib/seo/moved';
@@ -102,16 +101,6 @@
 
 	const today = vandaag();
 
-	/** A trial search of the hint fills the field, as if typed; the results come in place. */
-	function probeer(e: MouseEvent, example: string) {
-		e.preventDefault();
-		query = example;
-		typing = true;
-		document.querySelector<HTMLInputElement>('main [data-search-field]')?.focus();
-	}
-
-	/** Something stands in the search field: the results are the page, not the steps and the questions. */
-	let typing = $state(first.length > 0);
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
 	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
@@ -250,37 +239,25 @@
 					scope={chosen?.kinds ?? null}
 					onWiden={() => (scope = null)}
 					initial={query}
-					onQuery={(q) => (typing = q.length > 0)}
+					dropdown
 					placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
 				/>
 			</div>
-			<!-- Under typing the results are the page: no hint, no steps, no questions. -->
-			{#if !typing}
-				<p class="hint">
-					{START.hint.intro}
-					{#each START.hint.examples as example, i (example)}{i > 0 ? ', ' : ''}<TekstLink
-							href="/?q={encodeURIComponent(example)}"
-							onclick={(e) => probeer(e, example)}>{example}</TekstLink
-						>{/each}. {START.hint.outro}
-				</p>
-			{/if}
 		</div>
-		{#if !typing}
-			<Stappen />
-			<Vragen>
-				{#snippet voorbeeld()}
-					{#if lawNetwork || networkLoading}
-						<div class="voorbeeld">
-							<h3>Een wetsvoorstel als netwerk</h3>
-							{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else}<div
-									class="wetsnetwerk-plek"
-									aria-hidden="true"
-								></div>{/if}
-						</div>
-					{/if}
-				{/snippet}
-			</Vragen>
-		{/if}
+		<Stappen />
+		<Vragen>
+			{#snippet voorbeeld()}
+				{#if lawNetwork || networkLoading}
+					<div class="voorbeeld">
+						<h3>Een wetsvoorstel als netwerk</h3>
+						{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else}<div
+								class="wetsnetwerk-plek"
+								aria-hidden="true"
+							></div>{/if}
+					</div>
+				{/if}
+			{/snippet}
+		</Vragen>
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a class="raakvlak" href="/actueel">Actueel</a></h2>
@@ -394,15 +371,6 @@
 		font-size: var(--t-body-2);
 		line-height: var(--lh-body);
 		color: var(--ink-2);
-	}
-	.hint {
-		margin: calc(-1 * var(--s-1)) 0 0;
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-3);
-	}
-	.hint :global(.tekstlink) {
-		color: var(--ink);
 	}
 	.voorbeeld h3 {
 		margin: 0 0 var(--s-3);

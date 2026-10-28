@@ -190,7 +190,7 @@ describe('kaartVan', () => {
 	it('draws the article with its proposal, its dossier and its judgments', () => {
 		const groepen = kaartVan(schetsVan(k, changes, citedBy)!);
 		expect(groepen.map((g) => g.id)).toEqual(['stukken', 'dossiers', 'uitspraken']);
-		expect(groepen[0].rows[0].title).toMatch(/^.+, nr\. \d+$/);
+		expect(groepen[0].rows[0].title).toMatch(/^.+, nr\.\s\d+$/);
 		expect(groepen[1].rows[0].title).toBe('Dossier 36547');
 		expect(groepen[2].count).toBe(39);
 		expect(groepen[2].capped).toBe(true);

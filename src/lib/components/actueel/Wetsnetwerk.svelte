@@ -7,19 +7,30 @@
 	import { goto } from '$app/navigation';
 	import { onMount, type Component } from 'svelte';
 	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { exploreHref } from '$lib/bron/address';
 	import { langeDatum } from '$lib/text/datum';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import type { Sketch } from '$lib/verbonden/sketch';
 	import { kaartVan, type Schets } from './wetsnetwerk';
 
+	type TekeningProps = {
+		sketch: Sketch;
+		name: string;
+		onSingle: (id: string) => void;
+		onGroup: (id: string) => void;
+	};
 	let { schets }: { schets: Schets } = $props();
 
 	const k = $derived(schets.kandidaat);
-	let kaart = $state.raw<{ Tekening: Component<any>; sketch: Sketch } | 'fout' | null>(null);
+	let kaart = $state.raw<{ Tekening: Component<TekeningProps>; sketch: Sketch } | 'fout' | null>(
+		null
+	);
 
-	onMount(() => {
-		let weg = false;
+	let weg = false;
+	let fout = $state.raw<unknown>(null);
+	function laad() {
+		kaart = null;
 		Promise.all([import('$lib/verbonden/NetworkSketch.svelte'), import('$lib/verbonden/sketch')])
 			.then(([ns, sk]) => {
 				if (weg) return;
@@ -30,8 +41,13 @@
 			})
 			.catch((e) => {
 				report('Wetsnetwerk', e);
-				if (!weg) kaart = 'fout';
+				if (weg) return;
+				fout = e;
+				kaart = 'fout';
 			});
+	}
+	onMount(() => {
+		laad();
 		return () => (weg = true);
 	});
 
@@ -48,7 +64,7 @@
 			{@const Tekening = kaart.Tekening}
 			<Tekening sketch={kaart.sketch} name={schets.centrum.naam} onSingle={open} onGroup={alles} />
 		{:else if kaart === 'fout'}
-			<p class="stil">Het netwerk kon niet worden getekend.</p>
+			<LoadState state={{ status: 'error', error: fout }} what="Het netwerk" retry={laad} />
 		{/if}
 	</div>
 	<figcaption>
@@ -74,10 +90,9 @@
 	.kaart :global(.sketch) {
 		margin: 0;
 	}
-	.stil {
-		margin: 0;
-		text-align: center;
-		color: var(--ink-3);
+	/* The count of the legend is for Verbonden; here the drawing speaks for itself. */
+	.kaart :global(.caption) {
+		display: none;
 	}
 	figcaption {
 		display: flex;

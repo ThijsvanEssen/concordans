@@ -54,9 +54,7 @@ test('a scope narrows the search to its kind', async ({ page }) => {
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
-test('the start page promises, tries a search for you and answers three questions', async ({
-	page
-}) => {
+test('the start page promises, shows its steps and answers three questions', async ({ page }) => {
 	await page.goto('/');
 	const main = page.getByRole('main');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
@@ -64,12 +62,11 @@ test('the start page promises, tries a search for you and answers three question
 	);
 	// The steps stand forward, in three parts.
 	await expect(main.locator('ol.stappen li')).toHaveCount(3);
-	// A trial search of the hint fills the field in place; the steps and questions give way.
-	await main.getByRole('link', { name: 'Awb', exact: true }).click();
-	await expect(page.getByRole('combobox', { name: 'Zoeken' })).toHaveValue('Awb');
-	await expect(page).toHaveURL(/\/$/);
-	await expect(main.locator('ol.stappen')).toHaveCount(0);
-	await expect(main.getByRole('heading', { level: 2, name: 'Begin met een vraag' })).toHaveCount(0);
+	// Typing lays the results over the page as a menu: the steps and questions stay where they are.
+	await page.getByRole('combobox', { name: 'Zoeken' }).fill('Awb');
+	await expect(page.getByRole('listbox', { name: 'Resultaten' })).toBeVisible();
+	await expect(main.locator('ol.stappen')).toHaveCount(1);
+	await expect(main.getByRole('heading', { level: 2, name: 'Begin met een vraag' })).toBeVisible();
 });
 
 test('the first question of the start page opens an article with what refers to it', async ({

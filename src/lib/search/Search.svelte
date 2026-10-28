@@ -28,13 +28,13 @@
 
 	let {
 		overlay = false,
+		dropdown = false,
 		picker = false,
 		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
 		onOpen,
 		onSelect,
 		onWiden,
-		onQuery,
 		scope = null,
 		chosen = [],
 		belowField
@@ -45,6 +45,8 @@
 		initial?: string;
 		/** Inside the overlay the field takes focus and the list scrolls within the dialog. */
 		overlay?: boolean;
+		/** The list lies over the page under the field, as a menu, and moves nothing (the start page). */
+		dropdown?: boolean;
 		/** A field that picks one bron (Bron toevoegen): no period and no line of what is searched. */
 		picker?: boolean;
 		placeholder?: string;
@@ -58,8 +60,6 @@
 		chosen?: readonly string[];
 		/** Between the field and the list (the kind filters of Bron toevoegen). */
 		belowField?: Snippet;
-		/** Told what stands in the field, as it changes: the start page makes room for the results. */
-		onQuery?: (query: string) => void;
 	} = $props();
 
 	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
@@ -92,7 +92,6 @@
 		if (initial) search.query = initial;
 	});
 	search.connect();
-	$effect(() => onQuery?.(search.query.trim()));
 
 	const uid = $props.id();
 	const rowId = (row: number) => `${uid}-row-${row}`;
@@ -140,7 +139,12 @@
 
 <svelte:window onpointermove={(e) => (pointerAt = placeOf(e))} />
 
-<div class="search" class:search--overlay={overlay} class:search--picker={picker}>
+<div
+	class="search"
+	class:search--overlay={overlay}
+	class:search--picker={picker}
+	class:search--dropdown={dropdown}
+>
 	<div class="field">
 		{#if search.spinning}
 			<span class="spinner" aria-hidden="true"></span>
@@ -537,6 +541,24 @@
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
+	}
+
+	/* A menu under the field: over what stands below it, which keeps its place. */
+	.search--dropdown {
+		position: relative;
+	}
+	.search--dropdown .list--filled {
+		position: absolute;
+		top: calc(100% + var(--s-1));
+		left: 0;
+		right: 0;
+		z-index: var(--z-float);
+		max-height: min(70vh, 560px);
+		overflow-y: auto;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		background: var(--paper);
+		box-shadow: var(--shadow-pop);
 	}
 
 	.group + .group,
