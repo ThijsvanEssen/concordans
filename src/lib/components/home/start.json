@@ -4,11 +4,7 @@
 	"placeholder": "Wet, uitspraak, Kamerstuk, dossier of motie",
 	"hint": {
 		"intro": "Probeer",
-		"examples": [
-			"art. 6:162 BW",
-			"ECLI:NL:HR:2019:1278",
-			"Awb"
-		],
+		"examples": ["art. 6:162 BW", "ECLI:NL:HR:2019:1278", "Awb"],
 		"outro": "Enter opent de bron direct."
 	},
 	"steps": [
