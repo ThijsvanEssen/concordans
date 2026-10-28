@@ -172,7 +172,7 @@ test.describe('on a phone', () => {
 		await expect(
 			page
 				.getByRole('dialog', { name: 'Weergave' })
-				.getByText(/^Alle \d/)
+				.getByRole('link', { name: /^Alle \d/ })
 				.first()
 		).toBeVisible();
 		const sheet = await kleine(page);
