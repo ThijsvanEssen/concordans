@@ -1,7 +1,6 @@
-import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
+import { getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
 import { report } from '$lib/api/errors';
-import { volledig } from '$lib/api/limits';
 import {
 	abortable,
 	CANVAS_BUCKET,
@@ -14,13 +13,7 @@ import type { Schema } from '$lib/api/types';
 import { containerIdFor, containerKindOf, focusKindOf } from '../container-membership';
 import { foldVersions } from '../paths';
 import { ACTORS, withoutDetours } from '../neighborhood';
-import {
-	isTranspositionOutcome,
-	NODE_TYPES,
-	nodeId,
-	parseNodeId,
-	type Collection
-} from '$lib/vocabulary';
+import { NODE_TYPES, nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import { lawIdOf, nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
@@ -32,11 +25,6 @@ import {
 	type GraphStore,
 	type NeighborhoodReach
 } from './types';
-import { behoudenBuckets, behoudenIds, meldSoort, type SoortenGeladen } from './soorten';
-
-/** "Alles laden" of one kind: at most this many bronnen, asked a page of this many at a time. */
-const LOAD_ALL_CAP = 5000;
-const LOAD_ALL_PAGE = volledig('/api/nodes/{collection}/{key}');
 
 /** The dossiers of the stukken on a path: four at a time, for at most twelve stukken. */
 const PATH_DOSSIERS = { parallel: 4, max: 12 };
@@ -45,13 +33,7 @@ export function createExpansion(
 	ctx: GraphContext
 ): Pick<
 	GraphStore,
-	| 'peekNode'
-	| 'expandNode'
-	| 'expandNeighborhood'
-	| 'nodeResponse'
-	| 'mergePaths'
-	| 'neighborhood'
-	| 'laadSoort'
+	'peekNode' | 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths' | 'neighborhood'
 > {
 	const {
 		nodes,
@@ -73,9 +55,6 @@ export function createExpansion(
 	} = ctx;
 
 	const neighborhoodStore = writable<NeighborhoodReach | null>(null);
-	// The kinds of the focus loaded in full ("Alle laden"): a neighbourhood around the same
-	// focus keeps them (soorten.ts).
-	let soortenGeladen: SoortenGeladen | null = null;
 
 	// One request per bron serves the canvas, the panel Verbonden and a reader (`getNode`:
 	// 200 per bucket, the most API 0.5 allows; every bucket comes with its total).
@@ -289,47 +268,6 @@ export function createExpansion(
 
 		neighborhood: { subscribe: neighborhoodStore.subscribe },
 
-		laadSoort: async (collection, key, kind, opts = {}) => {
-			const grens = opts.grens ?? LOAD_ALL_CAP;
-			const focus = nodeId(collection, key.toLowerCase());
-			const ids = new Set<string>();
-			let offset = 0;
-			for (;;) {
-				const response = await getNodeGraph(collection, key, {
-					limit: LOAD_ALL_PAGE,
-					offset,
-					nodeTypes: NODE_TYPES[kind],
-					props: 'canvas',
-					signal: opts.signal ?? signal()
-				});
-				for (const n of neighborsOf(response)) {
-					// An old article to a new law is no bron of it (`isTranspositionOutcome`).
-					const target = n.direction === 'inbound' ? collection : n.collection;
-					if (isTranspositionOutcome(n.relation, target)) continue;
-					ids.add(nodeId(n.collection, n.key));
-				}
-				soortenGeladen = meldSoort(soortenGeladen, focus, kind, ids);
-				// The same bronnen as the neighbourhood's on their id: drawn once.
-				mergeResponse(response);
-				neighborhoodStore.update((r) =>
-					r && r.focal === focus
-						? {
-								...r,
-								buckets: r.buckets.map((b) =>
-									b.collection === kind ? { ...b, kept: Math.max(b.kept, ids.size) } : b
-								)
-							}
-						: r
-				);
-				const nextOffsets = (response.neighbors.buckets ?? [])
-					.map((b) => b.next_offset)
-					.filter((n): n is number => typeof n === 'number');
-				if (!nextOffsets.length || ids.size >= grens) break;
-				offset = Math.min(...nextOffsets);
-			}
-			return ids.size;
-		},
-
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			// The canvas draws only its nodes' names and kinds: the light props (CANVAS_PROPS, audited
 			// 10 Oct). The amendments timetable asks the same route with every prop. A full
@@ -351,7 +289,7 @@ export function createExpansion(
 					depth: opts.depth ?? NEIGHBORHOOD_DEPTH,
 					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP),
 					cap: opts.cap ?? NEIGHBORHOOD_CAP,
-					buckets: behoudenBuckets(response.buckets ?? [], soortenGeladen, response.focal_id)
+					buckets: response.buckets ?? []
 				});
 
 			// A full neighbourhood without detours through a law (`withoutDetours`); one
@@ -378,8 +316,6 @@ export function createExpansion(
 			const keep = new Set(drawn);
 			keep.add(response.focal_id);
 			for (const id of pinned) keep.add(id);
-			for (const id of behoudenIds(soortenGeladen, response.focal_id))
-				if (nodes.has(id)) keep.add(id);
 			const selectedId = get(selectionStore)?.id;
 			if (selectedId) keep.add(selectedId);
 			// This request's own edges share one cap across every relation, so a focal

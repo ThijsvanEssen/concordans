@@ -96,7 +96,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		'onFilter' | 'onLaadSoort' | 'laadtSoort' | 'counting'
+		'onFilter' | 'lijstHref' | 'counting'
 	>;
 
 	let {

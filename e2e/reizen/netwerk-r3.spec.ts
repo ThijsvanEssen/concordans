@@ -124,7 +124,9 @@ test('a cut neighbourhood says how much of it is shown (R3-N B6)', async ({ page
 	await openSheet(page);
 	const legend = await filters(page);
 	// In Soort's own column of counts, no block of its own.
-	await expect(legend.getByRole('button', { name: /^Artikelen [\d.]+ van [\d.]+$/ })).toBeVisible();
+	await expect(
+		legend.getByRole('button', { name: /^Artikelen [\d.]+ van( [\d.]+)?$/ })
+	).toBeVisible();
 	await expect(legend.getByRole('heading', { name: 'Getoond' })).toHaveCount(0);
 });
 

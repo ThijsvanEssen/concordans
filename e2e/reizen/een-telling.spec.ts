@@ -41,12 +41,14 @@ async function soort(page: Page): Promise<[string, string][]> {
 	// The soorten of the bron itself: those one step further stand under a heading of their own.
 	return block.locator('button.optie, h4').evaluateAll((els) => {
 		const verder = els.findIndex((e) => e.tagName === 'H4');
-		return els
-			.slice(0, verder < 0 ? undefined : verder)
-			.map((b) => [
-				b.querySelector('.label')?.textContent?.trim() ?? '',
-				b.querySelector('.aantal')?.textContent?.trim() ?? ''
-			]);
+		return els.slice(0, verder < 0 ? undefined : verder).map((b) => [
+			b.querySelector('.label')?.textContent?.trim() ?? '',
+			// "67 van" in the option, the whole beside it a link to the list (A314).
+			[b.querySelector('.aantal'), b.parentElement?.querySelector(':scope > .rij__alle')]
+				.map((e) => e?.textContent?.trim())
+				.filter(Boolean)
+				.join(' ')
+		]);
 	});
 }
 
@@ -102,6 +104,26 @@ test('a soort cut off says of how many, in the legend and on its cluster (N2)', 
 		.focus();
 	await page.keyboard.press('Enter');
 	await expect(page.getByRole('dialog', { name: /^[\d.]+ van [\d.]+ stemmingen$/ })).toBeVisible();
+});
+
+// Thijs, 28 Oct: "net als in keten de Alle 10000 uitspraken niet als nodes tonen, maar als lijst".
+test('the whole of a soort cut off is its list, in the row of its count (A314)', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	const rijen = new Map(await soort(page));
+	expect(rijen.get('Uitspraken')).toMatch(/^[\d.]+ van [\d.]+$/);
+	const legend = strip(page).getByRole('region', { name: 'Filters' });
+	const alle = legend.getByRole('link', { name: /^Alle [\d.]+ uitspraken$/ });
+	await expect(alle).toHaveText(/^[\d.]+$/);
+	// No step under the row: the canvas keeps its cap.
+	await expect(legend.getByRole('button', { name: /^Alle [\d.]+/ })).toHaveCount(0);
+	await alle.click();
+	await expect(page).toHaveURL(/tabel=1/);
+	await expect(page).toHaveURL(/bronnen=uitspraken/);
+	await expect(page).not.toHaveURL(/mode=/);
+	await expect(page.getByRole('heading', { name: 'Verbindingen van Art. 6:162 BW' })).toBeVisible();
+	await expect(page.getByRole('table').getByRole('row').nth(1)).toBeVisible();
 });
 
 test('the head of Verbonden counts once, when every group is in (F5)', async ({ page }) => {

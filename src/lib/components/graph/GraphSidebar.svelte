@@ -1,12 +1,12 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	// The filter of the werkplek, which is also its key (besluit 39): Tonen (the kinds drawn,
-	// of how many where the API cut them off, and the step that loads them all), Relatie (the
+	// of how many where the API cut them off, that whole a link to their list), Relatie (the
 	// lijnsoorten drawn, a line sample each). Bijlagen and the netwerk's own filter are rows of
 	// Tonen.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import type { Snippet } from 'svelte';
-	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import type { Collection } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
@@ -39,8 +39,7 @@
 	let {
 		filter,
 		onFilter,
-		onLaadSoort,
-		laadtSoort = new Set<string>(),
+		lijstHref,
 		hiddenLines,
 		onToggleLine,
 		hiddenAnnexes = false,
@@ -57,10 +56,8 @@
 	}: {
 		filter: VerbondenFilter;
 		onFilter: (f: VerbondenFilter) => void;
-		/** All the focus's direct neighbours of one kind (the per-kind step). */
-		onLaadSoort?: (collection: Collection) => void;
-		/** The kinds being loaded so. */
-		laadtSoort?: ReadonlySet<string>;
+		/** All the focus's direct neighbours of these kinds as a list, not as nodes (Thijs, 28 Oct). */
+		lijstHref?: (bronnen: readonly FilterGroup[]) => string;
 		hiddenLines: ReadonlySet<LineKind>;
 		onToggleLine: (l: LineKind) => void;
 		/** Bijlagen (a bron of no kind of its own) switched off. */
@@ -141,6 +138,17 @@
 	};
 </script>
 
+<!-- The whole of a kind the canvas cut off, in its count: "67 van 10.406", the 10.406 the way
+     to them as a list (the table of Verbonden under that kind), not as so many nodes. -->
+{#snippet alleLijst(total: number, bronnen: readonly FilterGroup[], noun: string)}
+	{#if lijstHref}
+		{@const woorden = `Alle ${formatCount(total)} ${noun.toLowerCase()}`}
+		<TekstLink class="rij__alle" href={lijstHref(bronnen)} aria-label={woorden} title={woorden}
+			>{formatCount(total)}</TekstLink
+		>
+	{/if}
+{/snippet}
+
 {#snippet tonenRest()}
 	{#if annexes > 0 || hiddenAnnexes}
 		<FilterOptie
@@ -175,38 +183,35 @@
 							<h4 class="block__sub">Een stap verder</h4>
 						{/if}
 						{@const off = rowGroupsOff(r)}
-						<FilterOptie
-							label={r.label}
-							title={off ? `Aan met ${off.map((g) => GROUP_LABEL[g]).join(' en ')}` : undefined}
-							wrap
-							{on}
-							onToggle={() => (off ? off.forEach((g) => onToggleGroup?.(g)) : toggleRow(r))}
-							count={kindRowCount(r, on)}
-							loading={counting || !kindsSettled}
-							empty={r.drawn === 0}
-							gedimd={!!off}
-						>
-							{#snippet voor()}<KindGlyph
-									vorm={r.filterGroups[0] ? SORT_SHAPE[r.filterGroups[0]] : undefined}
-									collection={r.filterGroups[0] ? undefined : (r.collection ?? undefined)}
-									size={11}
-									colour={r.filterGroups[0]
-										? sortColour(r.filterGroups[0])
-										: r.collection
-											? kindColour(r.collection)
-											: undefined}
-								/>{/snippet}
-						</FilterOptie>
-						{#if r.load && onLaadSoort && kindsSettled}
-							{@const c = r.load}
-							<p class="laad">
-								{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<AlleN
-										aantal={r.total ?? 0}
-										noun={r.label.toLowerCase()}
-										onclick={() => onLaadSoort(c)}
-									/>{/if}
-							</p>
-						{/if}
+						{@const alle =
+							r.load && r.total != null && on && kindsSettled && !counting ? r.total : null}
+						<div class="rij">
+							<FilterOptie
+								label={r.label}
+								title={off ? `Aan met ${off.map((g) => GROUP_LABEL[g]).join(' en ')}` : undefined}
+								wrap
+								{on}
+								onToggle={() => (off ? off.forEach((g) => onToggleGroup?.(g)) : toggleRow(r))}
+								count={alle != null && lijstHref
+									? `${formatCount(r.drawn)} van`
+									: kindRowCount(r, on)}
+								loading={counting || !kindsSettled}
+								empty={r.drawn === 0}
+								gedimd={!!off}
+							>
+								{#snippet voor()}<KindGlyph
+										vorm={r.filterGroups[0] ? SORT_SHAPE[r.filterGroups[0]] : undefined}
+										collection={r.filterGroups[0] ? undefined : (r.collection ?? undefined)}
+										size={11}
+										colour={r.filterGroups[0]
+											? sortColour(r.filterGroups[0])
+											: r.collection
+												? kindColour(r.collection)
+												: undefined}
+									/>{/snippet}
+							</FilterOptie>
+							{#if alle != null}{@render alleLijst(alle, r.filterGroups, r.label)}{/if}
+						</div>
 						{#if withCurrentMember && r.collection === 'members'}
 							<!-- The one marking of a current lid, as the canvas draws it (N13). -->
 							<p class="sleutel">
@@ -235,39 +240,40 @@
 					{@const n = totals[k] ?? 0}
 					{@const groepen = metGroepUit(k)}
 					{@const cut = cuts[k]}
-					<FilterOptie
-						label={FILTER_GROUP_LABEL[k]}
-						title={groepen
-							? `Aan met ${groepen.map((g) => GROUP_LABEL[g]).join(' en ')}`
-							: undefined}
-						wrap
-						on={isOn(k)}
-						onToggle={() =>
-							groepen
-								? groepen.forEach((g) => onToggleGroup?.(g))
-								: onFilter(toggleFilterGroup(filter, k))}
-						count={cut ? `${formatCount(n)} van ${formatCount(cut.total)}` : n}
-						loading={counting}
-						empty={n === 0}
-						gedimd={!!groepen}
-					>
-						{#snippet voor()}<KindGlyph
-								vorm={SORT_SHAPE[k]}
-								size={11}
-								colour={sortColour(k)}
-							/>{/snippet}
-					</FilterOptie>
-					<!-- The one step where the kind is cut off: all of it, under its count. -->
-					{#if cut && onLaadSoort}
-						{@const c = cut.collection as Collection}
-						<p class="laad">
-							{#if laadtSoort.has(c)}<span class="stil">Laden…</span>{:else}<AlleN
-									aantal={cut.total}
-									noun={BRON_LABEL[c][1].toLowerCase()}
-									onclick={() => onLaadSoort(c)}
-								/>{/if}
-						</p>
-					{/if}
+					{@const alle = cut && lijstHref && !counting ? cut : null}
+					<div class="rij">
+						<FilterOptie
+							label={FILTER_GROUP_LABEL[k]}
+							title={groepen
+								? `Aan met ${groepen.map((g) => GROUP_LABEL[g]).join(' en ')}`
+								: undefined}
+							wrap
+							on={isOn(k)}
+							onToggle={() =>
+								groepen
+									? groepen.forEach((g) => onToggleGroup?.(g))
+									: onFilter(toggleFilterGroup(filter, k))}
+							count={alle
+								? `${formatCount(n)} van`
+								: cut
+									? `${formatCount(n)} van ${formatCount(cut.total)}`
+									: n}
+							loading={counting}
+							empty={n === 0}
+							gedimd={!!groepen}
+						>
+							{#snippet voor()}<KindGlyph
+									vorm={SORT_SHAPE[k]}
+									size={11}
+									colour={sortColour(k)}
+								/>{/snippet}
+						</FilterOptie>
+						{#if alle}{@render alleLijst(
+								alle.total,
+								[k],
+								BRON_LABEL[alle.collection as Collection][1]
+							)}{/if}
+					</div>
 				{/each}
 				{@render tonenRest()}
 			</Sectie>
@@ -354,11 +360,19 @@
 		align-items: center;
 		gap: var(--s-2);
 	}
-	/* Under the count, in its column: the one step of a kind cut off. */
-	.laad {
-		display: flex;
-		justify-content: flex-end;
-		margin: 0;
+	/* A row of Tonen, and beside its count the whole of a kind cut off: one line, the link the
+	   last word of "67 van 10.406" (a link cannot stand inside the option's button). */
+	.rij {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		column-gap: var(--s-1);
+	}
+	/* Without that link the option takes the whole row: every count ends on the one edge. */
+	.rij > :global(:only-child) {
+		grid-column: 1 / -1;
+	}
+	.rij > :global(.rij__alle) {
 		font-size: var(--t-micro);
 	}
 	.empty {

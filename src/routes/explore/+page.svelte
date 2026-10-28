@@ -295,23 +295,6 @@
 	const alles = $derived(params.get('alles') === '1');
 	// The API's most at one step (2.000 from 0.79.45, #545).
 	const ALLES_GRENS = 2000;
-	// The per-kind step: all of one kind of the focus's direct neighbours, page by page (500,
-	// /api/nodes props=canvas), up to SOORT_GRENS; the Legenda's row says how many came.
-	const SOORT_GRENS = 5000;
-	let laadtSoort = $state(new Set<string>());
-	async function laadSoort(soort: Collection) {
-		const target = parseNodeId(reach?.focal ?? '');
-		if (!target || laadtSoort.has(soort)) return;
-		laadtSoort = new Set([...laadtSoort, soort]);
-		try {
-			await store.laadSoort(target.collection, target.key, soort, { grens: SOORT_GRENS });
-		} catch (e) {
-			// The row keeps its count; Alle laden stays.
-			report('Verkenner soort', e);
-		} finally {
-			laadtSoort = new Set([...laadtSoort].filter((c) => c !== soort));
-		}
-	}
 	const depthFor = (drawClass: DrawClass) =>
 		depthOfClass(drawClass, { explicit: explicitDepth, all: alles });
 	// The bron the canvas is drawn around; a click selects another without moving it.
@@ -1673,6 +1656,17 @@
 	}
 
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
+	// "Alle 10.406" of a kind the canvas cut off: those bronnen as a list, the table under that
+	// kind, not as many nodes (Thijs, 28 Oct); the canvas keeps its cap.
+	const lijstHref = (bronnen: readonly FilterGroup[]) =>
+		withParams(page.url, {
+			...filterParams({ ...filter, bronnen: bronnen.length ? new Set(bronnen) : null }),
+			tabel: '1',
+			mode: null,
+			naast: null,
+			[MARK_PARAM]: null,
+			[VIEW_PARAM]: null
+		});
 	const readHref = $derived(withParams(page.url, { tabel: null }));
 
 	const inFlux = new InFlux(() => mode === 'graph');
@@ -2180,8 +2174,7 @@
 								onClear={() => (card = null)}
 								onFilter={applyFilter}
 								onDepth={setDepth}
-								onLaadSoort={netwerkActive ? undefined : laadSoort}
-								{laadtSoort}
+								lijstHref={netwerkActive ? undefined : lijstHref}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
 								midden={view === 'omgeving' ? undefined : viewMiddle}

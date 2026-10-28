@@ -35,7 +35,7 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 	await page.waitForLoadState('networkidle');
 	await openFilters(page);
 	const legend = page.getByRole('region', { name: 'Filters' });
-	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+( van [\d.]+)?$/ });
+	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+( van( [\d.]+)?)?$/ });
 	await expect(judgments).toHaveAttribute('aria-pressed', 'true');
 	const before = await drawn(page).getAttribute('aria-label');
 	await judgments.click();
@@ -80,7 +80,7 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 	await openFilters(page);
 	const legend = page.getByRole('region', { name: 'Filters' });
 	const rows = legend.getByRole('button', {
-		name: /^(Overige s|S)temmingen [\d.]+( van [\d.]+)?$/
+		name: /^(Overige s|S)temmingen [\d.]+( van( [\d.]+)?)?$/
 	});
 	await expect(rows.first()).toBeVisible();
 	await expect(legend.locator('[aria-label="wordt geteld"]')).toHaveCount(0);

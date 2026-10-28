@@ -240,7 +240,6 @@ describe('nothing left over', () => {
 		// name renamed to what it is comes off the list.
 		const NOG = [
 			'Box',
-			'Bucket',
 			'Deel',
 			'End',
 			'PAGE_SIZE',

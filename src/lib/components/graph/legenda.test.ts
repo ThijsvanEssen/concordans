@@ -1,7 +1,8 @@
 // The strip of the werkplek is one list per block (Thijs, 23 Oct: "versimpel dit en trek het
 // recht"): Tonen holds per kind its glyph, its name and "N van M" in the one column of counts,
-// "Alle laden" under that count only where the kind is cut off; no block Getoond beside it, no
-// load link for the whole; Relatie counts nothing (a group drawn is one line).
+// M the link to the list where the kind is cut off, on the row itself (Thijs, 28 Oct); no block
+// Getoond beside it, no load link for the whole; Relatie counts nothing (a group drawn is one
+// line).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -19,8 +20,10 @@ describe('the strip of the werkplek', () => {
 	it('has no block Getoond and no load link for the whole', () => {
 		expect(source).not.toMatch(/Getoond|onAllesLaden/);
 	});
-	it('puts "Alle laden" under the count, in its column', () => {
-		expect(rule('.laad')).toMatch(/justify-content:\s*flex-end;/);
+	it('links the whole of a kind cut off on its own row, to a list, never loading it as nodes', () => {
+		expect(rule('.rij')).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
+		expect(source).toMatch(/href=\{lijstHref\(bronnen\)\}/);
+		expect(source).not.toMatch(/onLaadSoort|class="laad"/);
 	});
 	it('counts the lines of each soort in Relatie, as Tonen counts its kinds', () => {
 		expect(relatie).toMatch(/count=\{canvasCounts\.lines/);

@@ -104,17 +104,6 @@ export type GraphStore = {
 	/** How far the last neighbourhood reached, and whether the API cut it off at its cap. */
 	neighborhood: Readable<NeighborhoodReach | null>;
 	/**
-	 * All the direct neighbours of one collection of a bron on the canvas, page by page, up to
-	 * `grens` (the per-kind step of "Alles laden"). The reach's count of that collection
-	 * follows. Returns how many there are now.
-	 */
-	laadSoort: (
-		collection: Collection,
-		key: string,
-		soort: Collection,
-		opts?: { grens?: number; signal?: AbortSignal }
-	) => Promise<number>;
-	/**
 	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
 	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
 	 */
