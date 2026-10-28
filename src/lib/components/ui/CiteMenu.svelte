@@ -64,8 +64,8 @@
 						role="menuitem"
 						class="tekstmenu__item tekstmenu__item--paar"
 						onclick={() => copy(item)}
-						><span class:pop__link={item.kind === 'link'}>{item.shown ?? item.text}</span><span class="pop__k"
-							>{item.kind}</span
+						><span class:pop__link={item.kind === 'link'}>{item.shown ?? item.text}</span><span
+							class="pop__k">{item.kind}</span
 						></button
 					>
 				{/each}
