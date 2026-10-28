@@ -50,7 +50,7 @@ Each module is a factory that receives the context and returns part of the `Grap
 
 The panel Netwerk (`src/lib/selection/NetwerkPanel.svelte`) holds chosen bronnen across focuses. They are in the URL (`?netwerk=`, switched off in `?uit=`, `?tussen=0` without the bronnen between them; `netwerk.ts`) and the last one in `localStorage`. `store.compose` draws the chosen bronnen, their verbindingen with each other, and the bronnen on the paths between them (`/api/paths`, up to four steps). A container two of them share is drawn as an anchor with a line to each; an anchor whose lines all go to members of its own hull is left out (`$lib/graph/anchor.ts`).
 
-**Clusters.** More than `CLUSTER_MAX_LOOSE` (40) bronnen of one kind tied only to the focus and its other neighbours are drawn as one cluster bron ("250 uitspraken", `src/lib/selection/cluster.ts`); its card draws them all or opens their group in Verbonden. Where the cards over the canvas stand (a bron's, a cluster's, the Legenda under the panel Netwerk and which of the two folds) is `src/lib/selection/card-place.ts`.
+**Clusters.** More than `CLUSTER_MAX_LOOSE` (40) bronnen of one kind tied only to the focus and its other neighbours are drawn as one cluster bron ("250 uitspraken", `src/lib/selection/cluster.ts`); its card draws them all or opens their group in Verbonden. The card of a bron and the card of a cluster stand in the strip at the right of the canvas (Canvaskaart); nothing but the zoom floats over the canvas. The name or the rim of a hull chooses its wet (the card opens, the hull in ink on a halo of paper); a name that a hull's rim would cut waits for a hover (`label-place.ts`).
 
 ## Layers
 

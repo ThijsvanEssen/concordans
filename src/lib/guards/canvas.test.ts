@@ -22,7 +22,7 @@ describe('the canvas', () => {
 	});
 
 	it('leaves the geometry of hulls, layout and cards to their modules', () => {
-		// hulls.ts, $lib/graph/layout.ts and $lib/selection/card-place.ts, each with its tests.
+		// hulls.ts and $lib/graph/layout.ts, each with its tests.
 		const geometry =
 			/hullOutline\(|exitPoint\(|GOLDEN_ANGLE|passenSamen\(|\.addUndirectedEdgeWithKey\(/;
 		expect(COMPONENTS.filter((s) => geometry.test(s.text)).map((s) => s.path)).toEqual([]);

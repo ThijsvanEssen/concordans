@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ContainerGroup } from '$lib/graph/container-membership';
 import {
 	anchorWithHull,
+	distanceToRim,
 	hullLinkOf,
 	layoutHulls,
 	unstacked,
@@ -97,6 +98,8 @@ describe('the hulls of a small canvas', () => {
 		expect(round(hulls)).toMatchInlineSnapshot(`
 			[
 			  {
+			    "anchor": null,
+			    "chosen": false,
 			    "color": "#cd7127",
 			    "dash": "6 4",
 			    "dim": false,
@@ -109,6 +112,8 @@ describe('the hulls of a small canvas', () => {
 			    "top": 264,
 			  },
 			  {
+			    "anchor": "wet",
+			    "chosen": false,
 			    "color": "#00487c",
 			    "dim": false,
 			    "id": "W",
@@ -326,5 +331,60 @@ describe('the hulls of the five soorten', () => {
 				expect(inside(s.toViewport({ x, y }), area.polygon), member).toBe(true);
 			}
 		}
+	});
+});
+
+describe('the hull of one cluster and the chosen hull (A317, C1, B6)', () => {
+	/** A wet whose anchor stands far off and whose articles stand as one cluster. */
+	const clusterScene = (over: Partial<HullScene> = {}) => {
+		const s = scene();
+		s.graph.addNode('cluster:articles@W', {
+			x: 300,
+			y: 400,
+			collection: 'articles',
+			kind: 'article',
+			cluster: true,
+			inHull: 'W'
+		});
+		const groups = new Map(s.groups);
+		groups.set('W', group('W', 'instrument', '', ['wet', 'cluster:articles@W']));
+		const groupsOf = new Map(s.groupsOf);
+		groupsOf.set('cluster:articles@W', new Set(['W']));
+		return { ...s, groups, groupsOf, isHidden: (id: string) => id === 'art', ...over };
+	};
+
+	it('goes round the cluster alone: its disc is the cluster plus 16, not a field out to the anchor', () => {
+		const { hulls, hitAreas } = layoutHulls(clusterScene());
+		const w = hulls.find((h) => h.id === 'W')!;
+		const poly = hitAreas.find((a) => a.id === 'W')!.polygon;
+		const ys = poly.map((p) => p.y);
+		// A radius of 6 and the margin of 16, whatever the distance of the anchor (400 px off).
+		expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(2 * (6 + 16) + 1);
+		expect(w.anchor).toBe('wet');
+	});
+
+	it('marks the hull whose anchor is marked, and finds it by its name only while named', () => {
+		const plain = layoutHulls(scene());
+		expect(plain.hulls.find((h) => h.id === 'W')!.chosen).toBe(false);
+		const marked = layoutHulls(scene({ markedIds: new Set(['wet']) }));
+		expect(marked.hulls.find((h) => h.id === 'W')!.chosen).toBe(true);
+		expect(marked.hulls.find((h) => h.id === 'D')!.chosen).toBe(false);
+		const area = marked.hitAreas.find((a) => a.id === 'W')!;
+		expect(area.anchor).toBe('wet');
+		expect(area.named).toBe(true);
+	});
+});
+
+describe('the rim of a hull as a target (A317, B6)', () => {
+	it('measures the distance from a point to the nearest side', () => {
+		const square = [
+			{ x: 0, y: 0 },
+			{ x: 100, y: 0 },
+			{ x: 100, y: 100 },
+			{ x: 0, y: 100 }
+		];
+		expect(distanceToRim({ x: 50, y: 4 }, square)).toBeCloseTo(4);
+		expect(distanceToRim({ x: 50, y: 50 }, square)).toBeCloseTo(50);
+		expect(distanceToRim({ x: 110, y: 110 }, square)).toBeCloseTo(Math.hypot(10, 10));
 	});
 });

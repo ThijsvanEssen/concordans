@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	crossesRim,
 	hoverPlaats,
 	NAMES_PER_FRAME,
 	labelX,
@@ -153,5 +154,44 @@ describe('lijnLabelPlaats', () => {
 	it('centres the name on the middle of the line, level, inside the canvas', () => {
 		expect(lijnLabelPlaats(0, 0, 200, 100, 60, 14, 400)).toEqual({ x: 70, y: 43 });
 		expect(lijnLabelPlaats(380, 0, 400, 0, 60, 14, 400).x).toBe(338);
+	});
+});
+
+describe('the rim of a hull (A317, B4)', () => {
+	// A square rim from (100, 0) to (200, 100).
+	const rim = [
+		{ x: 100, y: 0 },
+		{ x: 200, y: 0 },
+		{ x: 200, y: 100 },
+		{ x: 100, y: 100 }
+	];
+
+	it('knows a name that a rim cuts, and one that stands whole inside or outside', () => {
+		expect(crossesRim({ x: 180, y: 40, w: 60, h: 16 }, [rim])).toBe(true);
+		expect(crossesRim({ x: 120, y: 40, w: 60, h: 16 }, [rim])).toBe(false);
+		expect(crossesRim({ x: 210, y: 40, w: 60, h: 16 }, [rim])).toBe(false);
+	});
+
+	it('moves a name to the side that keeps it clear of the rim', () => {
+		// The bron stands just inside the right edge: its right place is cut, its left is whole.
+		expect(plaatsLabel(190, 50, 6, 50, 16, 400, [], false, Infinity, [rim])).toEqual({
+			x: 131,
+			y: 42
+		});
+	});
+
+	it('leaves a name with no place clear of the rims for a hover, but not the focus', () => {
+		const on = [80, 90, 120].map((x) => [
+			{ x, y: 0 },
+			{ x, y: 100 }
+		]);
+		expect(plaatsLabel(100, 50, 6, 30, 16, 400, [], false, Infinity, on)).toBeNull();
+		expect(plaatsLabel(100, 50, 6, 30, 16, 400, [], true, Infinity, on)).not.toBeNull();
+	});
+
+	it('plans no name across the rim of a hull', () => {
+		const c: LabelCandidate = { id: 'a', x: 190, y: 50, size: 6, w: 200, h: 16, rank: 0 };
+		const plan = planLabels([c], { width: 400, height: 300 }, [], [], 12, [rim]);
+		expect(plan.has('a')).toBe(false);
 	});
 });

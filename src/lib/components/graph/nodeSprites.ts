@@ -264,6 +264,24 @@ function kleurUit(waarde: string | undefined, fallback: string): string {
 }
 
 /**
+ * The edge of an open sign: a vorm drawn as a line 2 px, in its kind's colour; an open sign
+ * standing for a bron that is gone or outside the period (a repealed article), 1.3 px in ink-3
+ * (Netwerkcanvas, Open teken).
+ */
+export const openStroke = (stub: boolean, wijze: string): number =>
+	stub ? 1.3 : wijze === 'lijn' ? 2 : 1.3;
+
+/**
+ * The focus's ring in the 16-box of vormen.ts: the ink, centred on the edge of the vorm, and the
+ * paper halo under it. An open sign (a vorm drawn as a line) keeps 2 px of its own edge inside
+ * the ring, so its ring is that much wider.
+ */
+export const focusRing = (wijze: string): { ink: number; halo: number } => {
+	const ink = (wijze === 'lijn' ? 2 : 0) + 3;
+	return { ink, halo: ink + 3.2 };
+};
+
+/**
  * The sprite of a vorm in ink, or in the colour of its kind (`colour`, kindColour): the werkplek
  * draws the kinds as the mockups do (A197).
  */
@@ -288,19 +306,22 @@ export function spriteForVorm(
 	const path = new Path2D(v.d);
 	const inkt = kleurUit(colour, t.ink);
 	if (focused) {
+		// The ring of ink on a halo of paper, outside the vorm: the sign is drawn over its inner
+		// half, so an open sign's own edge (2 px) does not hide it.
+		const ring = focusRing(v.wijze);
 		ctx.lineJoin = 'round';
 		ctx.strokeStyle = t.paper;
-		ctx.lineWidth = 4;
+		ctx.lineWidth = ring.halo;
 		ctx.stroke(path);
 		ctx.strokeStyle = t.ink;
-		ctx.lineWidth = 1.6;
+		ctx.lineWidth = ring.ink;
 		ctx.stroke(path);
 	}
 	if (stub || v.wijze === 'lijn') {
 		ctx.fillStyle = t.paper;
 		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
 		ctx.strokeStyle = stub ? t.ink3 : inkt;
-		ctx.lineWidth = v.wijze === 'lijn' ? 2 : 1.3;
+		ctx.lineWidth = openStroke(stub, v.wijze);
 		ctx.stroke(path);
 	} else {
 		ctx.fillStyle = inkt;
