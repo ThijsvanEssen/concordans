@@ -1,23 +1,92 @@
-// The keten as the Design System draws it: a Kamerlid's fracties and commissies each in an
-// omhulling with its name in a pill, and the lines of a judgment's keten counted as Aanhaling.
+// The keten (besluit 39, A306): no omhulling, the layer is the group; the lines a stamboom of
+// beziers that cross neither a name nor each other; a judgment's lines counted as Aanhaling.
+import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
 // The drawing is for a wide screen; on a phone the keten is a list.
 test.skip(({ isMobile }) => isMobile, 'a list on a phone');
 
-test('the keten of a Kamerlid holds its fracties and commissies in an omhulling', async ({
+test('the keten has no omhulling and no pill: the layer is the group', async ({ page }) => {
+	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	await expect(page.locator('.chain .hull')).toHaveCount(0);
+	await expect(page.locator('.chain .pil')).toHaveCount(0);
+});
+
+/** Each line of the drawing as points along it, with its parent, in the drawing's own units. */
+const drawn = (page: Page) =>
+	page.locator('svg.drawing').evaluate((svg) => ({
+		lines: [...svg.querySelectorAll<SVGPathElement>('path.line')].map((p) => {
+			const n = Math.ceil(p.getTotalLength() / 3);
+			return {
+				parent: p.dataset.parent ?? '',
+				d: p.getAttribute('d') ?? '',
+				pts: Array.from({ length: n + 1 }, (_, i) => {
+					const q = p.getPointAtLength((p.getTotalLength() * i) / n);
+					return { x: q.x, y: q.y };
+				})
+			};
+		}),
+		names: [...svg.querySelectorAll<SVGTextElement>('.name, .subhead')].map((t) => {
+			const b = t.getBBox();
+			return { x0: b.x + 1, x1: b.x + b.width - 1, y0: b.y + 1, y1: b.y + b.height - 1 };
+		})
+	}));
+
+const KETENS = [
+	'/leden/rob-jetten?mode=netwerk&weergave=keten',
+	'/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk&weergave=keten'
+];
+
+for (const url of KETENS) {
+	test(`the lines of ${url.split('?')[0]} are beziers that cross neither a name nor each other`, async ({
+		page
+	}) => {
+		await page.goto(url);
+		await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+		const { lines, names } = await drawn(page);
+		expect(lines.length).toBeGreaterThan(0);
+		// No corner: every line is eased by curves.
+		for (const l of lines) expect(l.d).toMatch(/^M[\d. -]+(?:[LQC][\d. -]+)+$/);
+		// No line through a name.
+		for (const l of lines)
+			for (const q of l.pts)
+				for (const n of names)
+					expect(q.x > n.x0 && q.x < n.x1 && q.y > n.y0 && q.y < n.y1).toBe(false);
+		// No crossing between lines of different parents.
+		const ccw = (p: { x: number; y: number }, q: typeof p, r: typeof p) =>
+			(q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+		for (let i = 0; i < lines.length; i++)
+			for (let j = i + 1; j < lines.length; j++) {
+				if (lines[i].parent === lines[j].parent) continue;
+				const [a, b] = [lines[i].pts, lines[j].pts];
+				for (let x = 1; x < a.length; x++)
+					for (let y = 1; y < b.length; y++)
+						expect(
+							ccw(a[x - 1], a[x], b[y - 1]) * ccw(a[x - 1], a[x], b[y]) < -1e-6 &&
+								ccw(b[y - 1], b[y], a[x - 1]) * ccw(b[y - 1], b[y], a[x]) < -1e-6
+						).toBe(false);
+			}
+	});
+}
+
+test('the layers of a Kamerlid stand in the order of their rubriek: Parlement, then Regering', async ({
 	page
 }) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
-	await expect(page.locator('.hull').first()).toBeVisible();
-	await expect(page.locator('.pil').first()).toBeVisible();
+	const labels = (await page.locator('.chain .layer-label').allTextContents()).map((t) =>
+		t.trim().toLowerCase()
+	);
+	const order = ['kamerlid', 'fractie', 'commissie', 'kabinet', 'ministerie'];
+	expect(labels).toEqual(order.filter((l) => labels.includes(l)));
 });
 
 test('the keten of a judgment counts the lines it draws as Aanhaling', async ({ page }) => {
 	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
-	await expect(page.locator('.line')).toHaveCount(3);
+	await expect(page.locator('path.line')).toHaveCount(3);
 	await expect(page.getByText('Aanhaling').first()).toBeVisible();
 });
 

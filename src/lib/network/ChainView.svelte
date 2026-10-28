@@ -17,12 +17,13 @@
 		edgeColorFor,
 		edgeDashFor,
 		edgeStyleFor,
-		hullDashFor,
 		lineThickness,
 		arrowLength
 	} from '$lib/components/graph/nodeSprites';
-	import { curvedLine, AIR, BEND, DOT_RADIUS } from '$lib/graph/line-shape';
-	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
+	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
+	import { sectionColour } from '$lib/network/person-layers';
+	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
@@ -107,6 +108,8 @@
 	const HALO = 4.5;
 	const INK_EDGE = 2;
 	const TOP = 48;
+	/** The room a subhead takes before the first article of a wet. */
+	const HEAD = 36;
 	const LEFT = 120;
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
@@ -115,7 +118,7 @@
 	const rowHeights = $derived(
 		shown.map((l) => {
 			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 28);
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 36);
 		})
 	);
 	/** Where each layer begins. */
@@ -165,14 +168,19 @@
 					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
 				};
 			});
-			// The articles of one wet stay together (their omhulling); within it, by place.
+			// The articles of one wet stay together, under a subhead of its own; within it, by place.
 			const rank = (k: ChainNode) => layer.nodes.findIndex((q) => q.home === k.home);
 			wish.sort((a, b) => rank(a.k) - rank(b.k) || a.x - b.x);
 			// Apart by a gap from the left, then back within the right edge.
+			// A wet's articles start after room for its subhead, left of its first sign.
+			const many = new Set(wish.map((w) => w.k.home)).size > 1 && layer.id === 'article';
+			const sep = (j: number) => gap + (many && wish[j].k.home !== wish[j - 1]?.k.home ? HEAD : 0);
 			const xs: number[] = [];
-			wish.forEach((w, j) => xs.push(Math.max(w.x, j ? xs[j - 1] + gap : left + gap / 2)));
+			wish.forEach((w, j) =>
+				xs.push(Math.max(w.x, j ? xs[j - 1] + sep(j) : left + sep(0) / 2 + (many ? HEAD : 0)))
+			);
 			for (let j = xs.length - 1; j >= 0; j--)
-				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - gap);
+				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - sep(j + 1));
 			// Half its name and some air, to the side that has room.
 			const room = (layer.nodes[0] ? halfOf(layer.nodes[0], n) : 0) + 48;
 			const aside =
@@ -190,66 +198,28 @@
 		});
 		return m;
 	});
-	/** An omhulling is 72 px high, and as high as its longest name asks. */
-	const hullHeight = (nodes: readonly ChainNode[]) =>
-		Math.max(
-			72,
-			26 +
-				24 +
-				LINE * (Math.max(1, ...nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1)) - 1) +
-				12
-		);
 	/**
-	 * The omhullingen (Netwerkcanvas, Omhulling): the articles of each wet when the layer holds
-	 * those of more than one (solid, rubriek-wetten), and, in the keten of a Kamerlid, the fracties
-	 * of one layer (dotted) and its commissies (dash-dot).
+	 * Where a layer holds the articles of more than one wet, each wet's abbreviation as a small
+	 * subhead left of its first article (BW 7, UHW).
 	 */
-	const hulls = $derived.by(() => {
-		const out: {
-			id: string;
-			label: string;
-			x: number;
-			y: number;
-			w: number;
-			h: number;
-			colour: string;
-			dash: string | undefined;
-		}[] = [];
-		if (start?.startsWith('members/'))
-			shown.forEach((layer, i) => {
-				const c = layer.nodes[0]?.collection;
-				if (c !== 'factions' && c !== 'committees') return;
-				const xs = layer.nodes.flatMap((k) => place.get(k.id)?.x ?? []);
-				const x = Math.min(...xs) - 30;
-				out.push({
-					id: `layer:${layer.id}`,
-					label: layer.label,
-					x,
-					y: tops[i] + DROP - 26,
-					w: Math.max(...xs) + 30 - x,
-					h: hullHeight(layer.nodes),
-					colour: kindColour(c),
-					dash: hullDashFor(c === 'factions' ? 'faction' : 'committee')
-				});
-			});
+	const subheads = $derived.by(() => {
+		const out: { id: string; label: string; x: number; y: number }[] = [];
 		const row = shown.findIndex((l) => l.id === 'article');
 		const nodes = row < 0 ? [] : shown[row].nodes;
 		const homes = [...new Set(nodes.map((k) => k.home))];
 		if (homes.length < 2) return out;
 		for (const h of homes) {
-			const xs = nodes.filter((k) => k.home === h).flatMap((k) => place.get(k.id)?.x ?? []);
+			const first = nodes
+				.filter((k) => k.home === h)
+				.flatMap((k) => place.get(k.id) ?? [])
+				.sort((a, b) => a.x - b.x)[0];
 			const wet = shown.flatMap((l) => l.nodes).find((k) => k.id === h);
-			if (!xs.length || !wet) continue;
-			const x = Math.min(...xs) - 30;
+			if (!first || !wet) continue;
 			out.push({
 				id: h ?? '',
 				label: wet.instrument?.abbreviation ?? wet.short,
-				x,
-				y: tops[row] + DROP - 26,
-				w: Math.max(...xs) + 30 - x,
-				h: hullHeight(nodes.filter((k) => k.home === h)),
-				colour: kindColour('instruments'),
-				dash: undefined
+				x: first.x - 14,
+				y: first.y + 4
 			});
 		}
 		return out;
@@ -298,90 +268,95 @@
 					y1: p.y + 24 + LINE * ((infoOf.get(k.id)?.lines.length ?? 1) - 1) + 4
 				});
 			}
+		for (const t of subheads)
+			out.push({
+				id: `kop:${t.id}`,
+				x0: t.x - t.label.length * 7,
+				x1: t.x,
+				y0: t.y - 12,
+				y1: t.y + 4
+			});
 		return out;
 	});
 	/**
-	 * The bend of a line that keeps clear of the names between its ends: the usual side first,
-	 * then the other, then straight and wider, the one with the fewest names crossed.
+	 * The lines (Netwerkcanvas, Lijnen) as a stamboom (tree-lines.ts): from under the name of what a
+	 * node hangs under, one stem down, a tak per layer, a short line to each node; in the style of
+	 * its kind. The arrowhead stands where the Design System gives one, at the parent's end; the
+	 * style of the line is this one place.
 	 */
-	const clearBend = (
-		a: { x: number; y: number },
-		b: { x: number; y: number },
-		ends: Set<string>
-	) => {
-		const others = boxes.filter((x) => !ends.has(x.id));
-		const nx = -(b.y - a.y);
-		const ny = b.x - a.x;
-		const len = Math.hypot(nx, ny) || 1;
-		let best = 1;
-		let fewest = Infinity;
-		for (const bend of [1, -1, 0, 2, -2, 3, -3, 4, -4]) {
-			const c = {
-				x: (a.x + b.x) / 2 + (nx / len) * bend * BEND * len,
-				y: (a.y + b.y) / 2 + (ny / len) * bend * BEND * len
-			};
-			let hits = 0;
-			for (let t = 0.08; t <= 0.92; t += 0.04) {
-				const x = (1 - t) ** 2 * a.x + 2 * (1 - t) * t * c.x + t * t * b.x;
-				const y = (1 - t) ** 2 * a.y + 2 * (1 - t) * t * c.y + t * t * b.y;
-				if (others.some((q) => x >= q.x0 && x <= q.x1 && y >= q.y0 && y <= q.y1)) hits++;
-			}
-			if (hits === 0) return bend;
-			if (hits < fewest) {
-				fewest = hits;
-				best = bend;
-			}
-		}
-		return best;
-	};
-	/**
-	 * The lines (Netwerkcanvas, Lijnen): each from under the name of what it hangs under (the
-	 * arrowhead there) to above the sign of the node, slightly curved, in the style of its kind.
-	 */
-	const lines = $derived(
-		shown.flatMap((l) =>
+	const lines = $derived.by(() => {
+		const rails = tops.map((t) => t - 14.5);
+		const nodes = new Map<string, TreeNode>();
+		const rows = new Map<string, number>();
+		shown.forEach((l, i) =>
+			l.nodes.forEach((k) => {
+				const p = place.get(k.id);
+				if (!p) return;
+				rows.set(k.id, i);
+				nodes.set(k.id, { x: p.x, row: i, top: p.y - 12, bottom: p.y + under(k.id) });
+			})
+		);
+		const edges = shown.flatMap((l) =>
 			l.nodes.flatMap((k) =>
 				k.parents.flatMap((o) => {
-					if (hiddenLines.has(parentKind(o))) return [];
-					const a = place.get(o.id);
-					const b = place.get(k.id);
-					if (!a || !b) return [];
+					if (hiddenLines.has(parentKind(o)) || !nodes.has(o.id) || !nodes.has(k.id)) return [];
 					const relation = parentRelation(o);
 					// A mention is an Aanhaling, the text of the law itself a grondslag.
-					const from = relation === 'REFERS_TO' || o.way === 'mentioned' ? 'judgment' : 'article';
+					const from: DrawClass =
+						relation === 'REFERS_TO' || o.way === 'mentioned' ? 'judgment' : 'article';
 					const style = edgeStyleFor(relation, null, from);
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
-					const from0 = { x: b.x, y: b.y - 12 };
-					const to0 = { x: a.x, y: a.y + under(o.id) };
-					const shape = curvedLine(from0, to0, {
-						ra: -AIR,
-						rb: -AIR,
-						width,
-						arrow: arrowLength(),
-						head: style === 'lid' ? null : 'b',
-						dot: style === 'submitter' ? 'a' : null,
-						bend: clearBend(from0, to0, new Set([o.id, k.id]))
-					});
-					const word = wordOf(relation, l.label);
-					return [
-						{
-							id: `${o.id}~${k.id}`,
-							shape,
-							word,
-							colour: edgeColorFor(relation, from),
-							dash: edgeDashFor(style),
-							width,
-							lit
-						}
-					];
+					const head = style === 'lid' ? 0 : headLength(width, arrowLength());
+					return [{ relation, from, style, lit, width, head, o, k, label: l.label }];
 				})
 			)
-		)
-	);
+		);
+		const routed = treeLines(
+			nodes,
+			edges.map((e) => ({
+				id: `${e.o.id}~${e.k.id}`,
+				parent: e.o.id,
+				child: e.k.id,
+				kind: `${e.style}|${e.relation}`,
+				lead: e.head
+			})),
+			{ rails, boxes }
+		);
+		const byId = new Map(routed.map((r) => [r.id, r]));
+		return edges.flatMap((e) => {
+			const r = byId.get(`${e.o.id}~${e.k.id}`);
+			if (!r) return [];
+			// The arrowhead at the parent's end, pointing up into its name.
+			const w = (e.head * ARROW_WIDTH) / 2;
+			const head = e.head
+				? `${r.tip.x},${r.tip.y} ${r.tip.x - w},${r.tip.y + e.head} ${r.tip.x + w},${r.tip.y + e.head}`
+				: null;
+			const word = wordOf(e.relation, e.label);
+			return [
+				{
+					id: r.id,
+					parent: r.parent,
+					child: r.child,
+					d: r.d,
+					head,
+					dot: e.style === 'submitter' ? r.end : null,
+					word,
+					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
+					colour: edgeColorFor(e.relation, e.from),
+					dash: edgeDashFor(e.style),
+					width: e.width,
+					lit: e.lit
+				}
+			];
+		});
+	});
 	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
 	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
-	const colour = (k: ChainNode) => kindColour(k.collection);
+	// In the keten of a person each layer wears the colour of its rubriek (person-layers.ts).
+	const colour = (k: ChainNode) =>
+		(start?.startsWith('members/') ? sectionColour(k.collection) : null) ??
+		kindColour(k.collection);
 	const vormOf = (k: ChainNode) =>
 		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
 	/** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
@@ -446,6 +421,23 @@
 				>{/if}
 		</button>
 	</li>
+{/snippet}
+
+{#snippet stroke(l: (typeof lines)[number])}
+	<path
+		class="line"
+		data-parent={l.parent}
+		data-child={l.child}
+		d={l.d}
+		fill="none"
+		stroke={l.colour}
+		stroke-width={l.width}
+		stroke-dasharray={l.dash}
+		stroke-linecap="round"
+	/>
+	{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
+	{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}
+	{#if l.word}<text class="line-word" x={l.wordAt.x} y={l.wordAt.y}>{l.word}</text>{/if}
 {/snippet}
 
 {#snippet allButton(layer: ChainLayer)}
@@ -520,48 +512,18 @@
 				</g>
 			{/if}
 		{/each}
-		{#each hulls as h (h.id)}
-			<rect
-				class="hull"
-				style:--hull={h.colour}
-				stroke-dasharray={h.dash}
-				x={h.x}
-				y={h.y}
-				width={h.w}
-				height={h.h}
-				rx="22"
-			/>
+		<!-- The lines as one layer, so where they share a stem they do not darken; the marked
+		     ones over it, whole. -->
+		<g class="lines">
+			{#each lines.filter((l) => !l.lit) as l (l.id)}
+				{@render stroke(l)}
+			{/each}
+		</g>
+		{#each lines.filter((l) => l.lit) as l (l.id)}
+			<g>{@render stroke(l)}</g>
 		{/each}
-		{#each lines as l (l.id)}
-			<g class="line" class:is-active={l.lit}>
-				<path
-					d={l.shape.d}
-					fill="none"
-					stroke={l.colour}
-					stroke-width={l.width}
-					stroke-dasharray={l.dash}
-					stroke-linecap="round"
-				/>
-				{#if l.shape.head}<polygon points={l.shape.head} fill={l.colour} />{/if}
-				{#if l.shape.dot}<circle
-						cx={l.shape.dot.x}
-						cy={l.shape.dot.y}
-						r={DOT_RADIUS}
-						fill={l.colour}
-					/>{/if}
-				{#if l.word}<text class="line-word" x={l.shape.middle.x + 8} y={l.shape.middle.y + 4}
-						>{l.word}</text
-					>{/if}
-			</g>
-		{/each}
-		<!-- The names of the omhullingen over the lines, as the canvas puts them: paper, an edge of 1 px
-		     in the colour of the kind, on the edge of the omhulling at its top left. -->
-		{#each hulls as h (h.id)}
-			{@const w = Math.round(h.label.length * 7.6 + 18)}
-			<g class="pil" style:--hull={h.colour}>
-				<rect x={h.x + 14} y={h.y - 10} width={w} height="20" rx="3" />
-				<text x={h.x + 14 + w / 2} y={h.y + 4} text-anchor="middle">{h.label}</text>
-			</g>
+		{#each subheads as t (t.id)}
+			<text class="subhead" x={t.x} y={t.y} text-anchor="end">{t.label}</text>
 		{/each}
 		{#each shown as layer (layer.id)}
 			{#each layer.nodes as k (k.id)}
@@ -704,24 +666,12 @@
 </div>
 
 <style>
-	/* An omhulling as the canvas draws it: a stadion in the colour of its kind (the articles of a
-	   wet: rubriek-wetten, solid), 5 % of it as ground, an edge of 1,6 px. */
-	.hull {
-		fill: color-mix(in srgb, var(--hull) 5%, transparent);
-		stroke: var(--hull);
-		stroke-linecap: round;
-		stroke-width: 1.6;
-	}
-	.pil rect {
-		fill: var(--paper);
-		stroke: var(--hull);
-		stroke-width: 1;
-	}
-	.pil text {
+	/* The wet of a group of articles, small, left of the first (BW 7, UHW). */
+	.subhead {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
-		fill: var(--ink);
+		fill: var(--ink-3);
 	}
 	.chain {
 		position: relative;
@@ -799,11 +749,8 @@
 	.rail {
 		stroke: var(--rule);
 	}
-	.line {
+	.lines {
 		opacity: 0.7;
-	}
-	.line.is-active {
-		opacity: 1;
 	}
 	/* The words on a line, italic, on an edge of paper like a name. */
 	.line-word {
