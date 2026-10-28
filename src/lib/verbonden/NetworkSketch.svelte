@@ -7,7 +7,6 @@
 	import { VORMEN } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
-	import type { Collection } from '$lib/vocabulary';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import {
 		edgeCapFor,
@@ -19,25 +18,19 @@
 		tokens,
 		towardPaper,
 		arrowLength,
-		hullDashFor
+		hullColorFor,
+		hullDashFor,
+		withAlpha
 	} from '$lib/components/graph/nodeSprites';
 	import { AIR, DOT_RADIUS, curvedLine } from '$lib/graph/line-shape';
+	import { CLUSTER_FILL, FOCUS as FOCUS_SPEC, HULL, NODE as NODE_SPEC } from '$lib/graph/draw-spec';
 	import { hasArrow } from '$lib/graph/line-kind';
 	import { lineStrength } from '$lib/graph/line-strength';
-	import {
-		CHAR_WIDTH as CHAR,
-		LINE_H,
-		SKETCH_LINE,
-		WIDTH,
-		drawnCount,
-		type Sketch,
-		type SketchLine
-	} from './sketch';
+	import { LINE_H, SKETCH_LINE, WIDTH, drawnCount, type Sketch, type SketchLine } from './sketch';
 
 	let {
 		sketch,
 		name,
-		home = null,
 		open = null,
 		onSingle,
 		onGroup
@@ -45,8 +38,6 @@
 		sketch: Sketch;
 		/** The bron in the middle, short (LABEL_MAX). */
 		name: string;
-		/** The law an article stands in, short (`BW`): the bron is drawn in its omhulling with this pil. */
-		home?: string | null;
 		/** The bron on its own opened under the drawing, by its id. */
 		open?: string | null;
 		/** A bron on its own was clicked: its row opens under the drawing, or closes. */
@@ -62,25 +53,15 @@
 	};
 
 	const colour = kindColour;
-	/** A group's edge as its hull on the canvas: a dossier dashed, a fractie dotted, a commissie dash-dot, a kabinet dash-dot-dot. */
-	const hullDash = (c: Collection | null) =>
-		c === 'documents' || c === 'dossiers'
-			? hullDashFor('dossier')
-			: c === 'factions'
-				? hullDashFor('faction')
-				: c === 'committees'
-					? hullDashFor('committee')
-					: c === 'cabinets'
-						? hullDashFor('cabinet')
-						: undefined;
-
 	const m = $derived(sketch.center);
 	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
-	const FOCUS = 18;
-	const HALO = 4.5;
+	const FOCUS = FOCUS_SPEC.size;
+	const HALO = FOCUS_SPEC.halo;
 	/** The radius of a bron the line stops at, and of the ring round the chosen one. */
-	const NODE = 6.5;
-	const RING = 11;
+	const NODE = NODE_SPEC.radius;
+	const RING = NODE_SPEC.ring;
+	/** The bron in the middle that is a hull itself (a wet, a fractie with members): its lines begin at the rim. */
+	const centreHull = $derived(sketch.hulls.find((h) => h.centre) ?? null);
 
 	// A line rests in the colour of its kind, mixed toward the paper as there are more of them
 	// (within the window of its tone, line-strength); the chosen one in ink, 1.3 times as thick,
@@ -127,7 +108,7 @@
 			{ x: m.x, y: m.y },
 			{ x, y },
 			{
-				ra: FOCUS / 2 + HALO - AIR,
+				ra: (centreHull ? centreHull.r : FOCUS / 2 + HALO) - AIR,
 				rb: radiusStop - AIR,
 				width,
 				arrow: arrowLength(),
@@ -149,29 +130,22 @@
 		};
 	}
 	const lines = $derived(
-		sketch.singles.map((l) => ({ id: l.id, ...lineTo(l, l.x, l.y, NODE, 0.7, open === l.id) }))
+		sketch.singles
+			.filter((l) => !l.joined)
+			.map((l) => ({ id: l.id, ...lineTo(l, l.x, l.y, NODE, 0.7, open === l.id) }))
 	);
 	const groupLines = $derived(
-		sketch.clusters.map((b) => ({ id: b.id, ...lineTo(b, b.x, b.y, Math.max(b.r, 14), 1, false) }))
+		sketch.clusters
+			.filter((b) => !b.joined)
+			.map((b) => ({ id: b.id, ...lineTo(b, b.x, b.y, Math.max(b.r, 14), 1, false) }))
+	);
+	/** One line into a dossier's hull, whatever the number of stukken in it (the canvas draws it hull to hull). */
+	const hullLines = $derived(
+		sketch.hulls
+			.filter((h) => h.line)
+			.map((h) => ({ id: h.id, ...lineTo(h.line!, h.x, h.y, h.r, 1, false) }))
 	);
 	const caption = $derived(drawnCount(sketch));
-	/** The omhulling of the law round the bron and its name, with the pil at its top left. */
-	const hull = $derived.by(() => {
-		if (!home) return null;
-		const half = Math.max(
-			44,
-			(Math.max(...sketch.centerLines.map((l) => l.length), 0) * CHAR) / 2 + 14
-		);
-		const y = m.y - 26;
-		const pill = Math.round(home.length * 7.6 + 18);
-		return {
-			x: m.x - half,
-			y,
-			w: 2 * half,
-			h: 26 + 34 + Math.max(0, sketch.centerLines.length - 1) * LINE_H + 12,
-			pill
-		};
-	});
 </script>
 
 <figure class="sketch" data-testid="network-sketch">
@@ -180,7 +154,7 @@
 		role="group"
 		aria-label="Netwerk rond {name}: {caption}"
 	>
-		{#each [...lines, ...groupLines] as t (t.id)}
+		{#each [...lines, ...groupLines, ...hullLines] as t (t.id)}
 			<g class="line" class:is-dim={t.dimmed}>
 				<path
 					d={t.d}
@@ -195,45 +169,57 @@
 			</g>
 		{/each}
 
-		{#if hull && home}
-			<rect
-				class="hull"
-				x={hull.x}
-				y={hull.y}
-				width={hull.w}
-				height={hull.h}
-				rx="22"
-				aria-hidden="true"
-			/>
-		{/if}
-		<g class="focus">
-			<title>{name}</title>
-			<rect
-				x={m.x - FOCUS / 2 - HALO}
-				y={m.y - FOCUS / 2 - HALO}
-				width={FOCUS + 2 * HALO}
-				height={FOCUS + 2 * HALO}
-				fill="var(--paper)"
-			/>
-			<rect
-				x={m.x - FOCUS / 2}
-				y={m.y - FOCUS / 2}
-				width={FOCUS}
-				height={FOCUS}
-				fill="var(--ink)"
-			/>
-			<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
-				>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
-					>{/each}</text
-			>
-		</g>
-
-		{#if hull && home}
-			<g class="pil" aria-hidden="true">
-				<rect x={hull.x + 14} y={hull.y - 10} width={hull.pill} height="20" rx="3" />
-				<text x={hull.x + 14 + hull.pill / 2} y={hull.y + 4} text-anchor="middle">{home}</text>
+		{#each sketch.hulls as h (h.id)}
+			<g class="hull" aria-hidden="true">
+				<circle
+					cx={h.x}
+					cy={h.y}
+					r={h.r}
+					fill={withAlpha(hullColorFor(h.kind), HULL.fill)}
+					stroke={hullColorFor(h.kind)}
+					stroke-width={HULL.line}
+					stroke-dasharray={hullDashFor(h.kind)}
+					stroke-linecap="round"
+				/>
+			</g>
+		{/each}
+		{#if !centreHull}
+			<g class="focus">
+				<title>{name}</title>
+				<rect
+					x={m.x - FOCUS / 2 - HALO}
+					y={m.y - FOCUS / 2 - HALO}
+					width={FOCUS + 2 * HALO}
+					height={FOCUS + 2 * HALO}
+					fill="var(--paper)"
+				/>
+				<rect
+					x={m.x - FOCUS / 2}
+					y={m.y - FOCUS / 2}
+					width={FOCUS}
+					height={FOCUS}
+					fill="var(--ink)"
+				/>
+				<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
+					>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
+						>{/each}</text
+				>
 			</g>
 		{/if}
+
+		{#each sketch.hulls as h (h.id)}
+			<g class="pil" aria-hidden="true">
+				<rect
+					x={h.pill.x - h.pill.w / 2}
+					y={h.pill.y - 20}
+					width={h.pill.w}
+					height="20"
+					rx="3"
+					stroke={hullColorFor(h.kind)}
+				/>
+				<text x={h.pill.x} y={h.pill.y - 5.5} text-anchor="middle">{h.label}</text>
+			</g>
+		{/each}
 
 		{#each sketch.singles as l (l.id)}
 			{@const v = VORMEN[l.shape]}
@@ -278,16 +264,9 @@
 				onkeydown={(e) => press(e, () => onGroup(b.group))}
 			>
 				<circle cx={b.x} cy={b.y} r={Math.max(b.r, 22)} class="hit" />
-				<circle
-					cx={b.x}
-					cy={b.y}
-					r={b.r}
-					fill="var(--paper)"
-					stroke={colour(b.collection, b.hue)}
-					stroke-width="2.5"
-					stroke-dasharray={hullDash(b.collection)}
-					stroke-linecap="round"
-				/>
+				<!-- The canvas's cluster: a disc in the colour of its kind on a rim of paper, its count in paper. -->
+				<circle cx={b.x} cy={b.y} r={b.r} fill="var(--paper)" />
+				<circle cx={b.x} cy={b.y} r={b.r * CLUSTER_FILL} fill={colour(b.collection, b.hue)} />
 				<text x={b.x} y={b.y + 4.5} text-anchor="middle" class="count">{formatCount(b.count)}</text>
 				<text x={b.lx} y={b.ly} text-anchor="middle" class="name"
 					>{#each b.lines as line, i (i)}<tspan x={b.lx} dy={i ? LINE_H : 0}>{line}</tspan
@@ -318,15 +297,8 @@
 	.line.is-dim {
 		opacity: 0.5;
 	}
-	.hull {
-		fill: color-mix(in srgb, var(--rubriek-wetten) 5%, transparent);
-		stroke: var(--rubriek-wetten);
-		stroke-linecap: round;
-		stroke-width: 1.6;
-	}
 	.pil rect {
 		fill: var(--paper);
-		stroke: var(--rubriek-wetten);
 		stroke-width: 1;
 	}
 	.pil text {
@@ -358,11 +330,12 @@
 		font-weight: 600;
 		fill: var(--ink);
 	}
+	/* In paper on the disc, as the canvas's cluster. */
 	.count {
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
-		fill: var(--ink);
+		fill: var(--paper);
 	}
 	.single,
 	.cluster {

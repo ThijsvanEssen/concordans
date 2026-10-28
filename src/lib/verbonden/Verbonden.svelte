@@ -38,6 +38,7 @@
 	import { groupFor, groupRequest } from './open-group';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import NetworkSketch from './NetworkSketch.svelte';
+	import { focusKindOf } from '$lib/graph/container-membership';
 	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
 	import { panel } from './panel-groups.svelte';
@@ -412,7 +413,8 @@
 					sketchGroups,
 					centerName,
 					phone ? PHONE_SKETCH_LIMIT : undefined,
-					selection.drawClass
+					selection.drawClass,
+					{ centreKind: focusKindOf(selection.collection), home: homeLaw }
 				)
 			: null
 	);
@@ -534,7 +536,6 @@
 			<NetworkSketch
 				sketch={sketched}
 				name={centerName}
-				home={homeLaw}
 				open={schetsOpen?.id ?? null}
 				onSingle={(id) => (schetsId = schetsId === id ? null : id)}
 				onGroup={openKind}

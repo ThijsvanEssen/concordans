@@ -18,6 +18,7 @@ import {
 	type Tone
 } from '$lib/graph/line-kind';
 import { lineStrength } from '$lib/graph/line-strength';
+import { CLUSTER_FILL } from '$lib/graph/draw-spec';
 import type { Relation } from '$lib/vocabulary';
 
 type Tokens = {
@@ -383,7 +384,7 @@ export function clusterSprite(count: string, colour: string | undefined): string
 	ctx.fill();
 	ctx.fillStyle = kleurUit(colour, t.ink);
 	ctx.beginPath();
-	ctx.arc(c, c, c * (19 / 21.5), 0, Math.PI * 2);
+	ctx.arc(c, c, c * CLUSTER_FILL, 0, Math.PI * 2);
 	ctx.fill();
 	ctx.fillStyle = t.paper;
 	ctx.textAlign = 'center';
