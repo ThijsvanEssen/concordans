@@ -28,20 +28,18 @@ test('two steps add the block Twee stappen, with what was cut off said as N of M
 		shared(page).getByText('12 van 281 ketens').locator('visible=true').first()
 	).toBeVisible();
 	if (touch) {
-		const list = shared(page).getByRole('list', { name: 'Verbindingsketen, 2 stappen' }).first();
-		await expect(list.getByRole('listitem')).toHaveCount(2);
-		// The tussenbron is a button, as on a wide screen.
+		const list = shared(page).getByRole('list', { name: /^Twee stappen/ });
+		await expect(list.getByRole('listitem').first()).toBeVisible();
+		// A tussenbron is a button, as on a wide screen.
 		await expect(list.getByRole('button').first()).toBeVisible();
 	} else {
-		const drawing = shared(page).getByRole('group', { name: /^Verbindingsketens tussen/ });
+		const drawing = shared(page).getByRole('group', { name: /^Ketens tussen/ });
 		await expect(drawing).toBeVisible();
-		// A tussenbron is a button with its name, standing once.
-		const bron = drawing.getByRole('button').first();
-		await expect(bron).toHaveAccessibleName(/\S/);
-		const names = await drawing
-			.getByRole('button')
-			.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
-		expect(new Set(names).size).toBe(names.length);
+		// A pill and a tussenbron are buttons with their name and what they do.
+		await expect(drawing.getByRole('button', { name: /tussenbron$/ }).first()).toHaveAccessibleName(
+			/\S/
+		);
+		await expect(drawing.getByRole('button', { name: /noemt beide$/ }).first()).toBeVisible();
 	}
 });
 
@@ -157,28 +155,31 @@ test('a table not built yet (503) says the ketens are not available yet, with Op
 
 const GEMEENTEWET = 'instruments/bwbr0005416';
 
-test('Verband writes the bronnen out, a Kamerstuk by its notation with title and year, and draws lines with arrows', async ({
+test('Verband writes a Kamerstuk by its notation in a pill, with lines and arrows, one step a chain too', async ({
 	page,
 	touch
 }) => {
 	await page.goto(`/explore?netwerk=${GEMEENTEWET},${BOEK6}&weergave=verband`);
 	const view = shared(page);
+	await expect(
+		view.getByRole('heading', { name: 'Eén stap' }).locator('visible=true').first()
+	).toBeVisible({
+		timeout: 30_000
+	});
 	if (touch) {
-		const first = view.locator('.ladder__items .ladder__row').first();
-		await expect(first).toBeVisible({ timeout: 30_000 });
 		await expect(view.locator('.ladder__ends')).toContainText('Gemeentewet');
 		await expect(view.locator('.ladder__ends')).not.toContainText('Gemw');
-	} else {
-		const drawing = view.getByRole('group', { name: 'Verband' });
-		await expect(drawing).toBeVisible({ timeout: 30_000 });
-		await expect(drawing.getByText('Gemeentewet', { exact: true })).toBeVisible();
-		await expect(drawing.getByText(/stukken noemen ook de ander/).first()).toBeVisible();
-		// A Kamerstuk row: its notation, never cut off in its name.
-		const rows = drawing.getByRole('button');
-		const names = await rows.evaluateAll((els) =>
-			els.map((e) => e.getAttribute('aria-label') ?? '')
+		await expect(view.locator('.ladder__pill').first()).toContainText(
+			/^\d+( ?-?[IVX]+)?, nr\. \d+ /
 		);
-		expect(names.some((n) => /^\d+(-[IVX]+)?, nr\. \d+ /.test(n))).toBe(true);
+	} else {
+		const drawing = view.getByRole('group', { name: /^Ketens tussen/ });
+		await expect(drawing).toBeVisible();
+		await expect(drawing.getByText('Gemeentewet', { exact: true })).toBeVisible();
+		const names = await drawing
+			.getByRole('button')
+			.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label') ?? ''));
+		expect(names.some((n) => /^\d+(-[IVX]+)?, nr\. \d+ .*noemt beide$/.test(n))).toBe(true);
 		expect(names.every((n) => !n.includes('…'))).toBe(true);
 		// The lines have their kind's style: a dashed Aanhaling with an arrow.
 		await expect(drawing.locator('path.line[stroke-dasharray]').first()).toBeAttached();
@@ -186,14 +187,19 @@ test('Verband writes the bronnen out, a Kamerstuk by its notation with title and
 	}
 });
 
-test('three bronnen: the blocks are headed Delen alle drie and Delen er twee', async ({ page }) => {
-	await page.goto(
-		`/explore?netwerk=${GEMEENTEWET},${BOEK6},instruments/bwbr0005290&weergave=verband`
-	);
-	await expect(
-		shared(page).getByText('Delen alle drie').locator('visible=true').first()
-	).toBeVisible({ timeout: 30_000 });
-	await expect(
-		shared(page).getByText('Delen er twee').locator('visible=true').first()
-	).toBeVisible();
+test('a tap on a pill marks its row: its ring, the other rows at 35 %, Escape wipes it', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'the ring is of the drawing');
+	await page.goto(`/explore?netwerk=${GEMEENTEWET},${BOEK6}&weergave=verband`);
+	const drawing = shared(page).getByRole('group', { name: /^Ketens tussen/ });
+	const pills = drawing.getByRole('button', { name: /noemt beide$/ });
+	await expect(pills.first()).toBeVisible({ timeout: 30_000 });
+	await pills.first().click();
+	await expect(pills.first()).toHaveAttribute('aria-pressed', 'true');
+	await expect(drawing.locator('.ring')).toHaveCount(1);
+	await expect(drawing.locator('.row.is-dim')).not.toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await expect(drawing.locator('.ring')).toHaveCount(0);
 });

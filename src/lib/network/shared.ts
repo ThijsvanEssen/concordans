@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { officialNumber } from '$lib/bron/dossier-naam';
 import { relationWords } from '$lib/verbonden/relation-words';
-import { capitalize, joinAnd, plural, textOf } from '$lib/text/words';
+import { capitalize, joinAnd, textOf } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 type Shared = Schema<'SharedNeighborsResponse'>;
@@ -107,20 +107,27 @@ export function rowNotation(n: Pick<Neighbor, 'id' | 'collection' | 'display_nam
 /** The name of a shared bron: as a Kamerstuk is cited, else as the API gives it. */
 const nameOf = (n: Neighbor) => rowNotation(n).title;
 
+const STRUCTURAL = new Set<Collection>(['cabinets', 'factions', 'committees', 'ministries']);
+
 /** A verbinding between two chosen bronnen themselves: `Dilan Yeşilgöz lid van VVD`. */
 export type DirectLink = { from: string; to: string; relation: Relation };
 
-export type VerbandModel = {
+export type SharedModel = {
 	/** What chosen bronnen share, each once with every chosen bron it hangs at. */
 	rows: SharedRow[];
 	/** Per pair, the judgments that cite both: counted, drawn as one group each. */
 	judgments: { at: [string, string]; total: number }[];
 	/** The verbindingen between the chosen bronnen themselves, said in words. */
-	direct: { at: [string, string]; text: string; relation: Relation }[];
-	/** The chosen bronnen with no verbinding to any other: said, not left floating. */
-	alone: string[];
-	/** The shared bronnen beyond the rows drawn. */
-	rest: number;
+	direct: {
+		at: [string, string];
+		from: string;
+		to: string;
+		verb: string;
+		text: string;
+		relation: Relation;
+	}[];
+	/** Per pair, everything it shares (the API's total): the number a Keuze and a block count. */
+	pairs: { at: [string, string]; total: number }[];
 };
 
 /**
@@ -131,21 +138,19 @@ export type VerbandModel = {
  * same bronnen in another order give the same Verband.
  */
 export function verbandModel(
-	ends: readonly string[],
 	answers: readonly Shared[],
 	direct: readonly DirectLink[],
-	names: (id: string) => { name: string; collection: Collection | null },
-	max = 12
-): VerbandModel {
+	names: (id: string) => { name: string; collection: Collection | null }
+): SharedModel {
 	const merged = new Map<string, { node: Neighbor; links: Neighbor['links']; rank: number }>();
-	const judgments: VerbandModel['judgments'] = [];
+	const judgments: SharedModel['judgments'] = [];
+	const pairs: SharedModel['pairs'] = [];
 	for (const shared of answers) {
 		const [a, b] = [...shared.ids].sort();
+		pairs.push({ at: [a, b], total: shared.total });
 		for (const bucket of shared.buckets) {
-			if (bucket.collection === 'judgments') {
-				if (bucket.total) judgments.push({ at: [a, b], total: bucket.total });
-				continue;
-			}
+			if (bucket.collection === 'judgments' && bucket.total)
+				judgments.push({ at: [a, b], total: bucket.total });
 			bucket.items.forEach((n, rank) => {
 				const known = merged.get(n.id);
 				if (!known) {
@@ -158,12 +163,14 @@ export function verbandModel(
 			});
 		}
 	}
+	// What ties a bron to its place first (a kabinet, a fractie, a commissie, a ministerie: they
+	// have no citation count to rank by), then the API's order within a pair (the most cited
+	// first), then by id: the same bronnen in another order give the same Verband.
 	const rows = [...merged.values()]
 		.map(({ node, links, rank }) => ({ row: rowOf({ ...node, links }, names), rank }))
 		.sort(
 			(x, y) =>
-				y.row.at.length - x.row.at.length ||
-				x.row.at.join().localeCompare(y.row.at.join()) ||
+				Number(STRUCTURAL.has(y.row.collection)) - Number(STRUCTURAL.has(x.row.collection)) ||
 				x.rank - y.rank ||
 				x.row.id.localeCompare(y.row.id)
 		)
@@ -174,24 +181,17 @@ export function verbandModel(
 		const w = relationWords(d.relation, from.collection, to.collection);
 		return {
 			at: [d.from, d.to].sort() as [string, string],
+			from: d.from,
+			to: d.to,
 			relation: d.relation,
+			verb: w.actief,
 			text: `${from.name} ${w.actief} ${to.name}`
 		};
 	});
-	const tied = new Set([
-		...rows.flatMap((r) => r.at),
-		...judgments.flatMap((j) => j.at),
-		...said.flatMap((d) => d.at)
-	]);
 	judgments.sort((x, y) => y.total - x.total || x.at.join().localeCompare(y.at.join()));
 	said.sort((x, y) => x.at.join().localeCompare(y.at.join()) || x.text.localeCompare(y.text));
-	return {
-		rows: rows.slice(0, max),
-		judgments,
-		direct: said,
-		alone: ends.filter((e) => !tied.has(e)),
-		rest: Math.max(0, rows.length - max)
-	};
+	pairs.sort((x, y) => x.at.join().localeCompare(y.at.join()));
+	return { rows, judgments, direct: said, pairs };
 }
 
 /** One shared bron as a row: its lines to the chosen bronnen, said and joined. */
@@ -236,33 +236,4 @@ function rowOf(
 		at: [...new Set(n.links.map((l) => l.source))].sort(),
 		relations: [...new Set(n.links.map((l) => (l.relation ?? 'RELATED_TO') as Relation))]
 	};
-}
-
-const COUNT_WORD = ['', '', 'twee', 'drie', 'vier', 'vijf', 'zes'];
-
-/** The head of a block of shared bronnen of three to six chosen: `Delen alle drie`, `Delen er twee`. */
-export function groupHead(sharing: number, ends: number): string | null {
-	if (ends < 3 || sharing < 2 || sharing > ends) return null;
-	return sharing === ends ? `Delen alle ${COUNT_WORD[sharing]}` : `Delen er ${COUNT_WORD[sharing]}`;
-}
-
-/**
- * Under a chosen bron, what it has with the others: `6 stukken noemen ook de ander` (the most
- * Kamerstukken of its pairs that name both).
- */
-export function endNotes(answers: readonly Shared[], ends: number): Map<string, string> {
-	const most = new Map<string, number>();
-	for (const a of answers) {
-		const papers = a.buckets.find((b) => b.collection === 'documents')?.total ?? 0;
-		for (const id of a.ids) most.set(id, Math.max(most.get(id) ?? 0, papers));
-	}
-	const other = ends === 2 ? 'de ander' : 'een andere gekozen bron';
-	return new Map(
-		[...most]
-			.filter(([, n]) => n > 0)
-			.map(([id, n]) => [
-				id,
-				`${n} ${plural(n, 'stuk', 'stukken')} ${plural(n, 'noemt', 'noemen')} ook ${other}`
-			])
-	);
 }
