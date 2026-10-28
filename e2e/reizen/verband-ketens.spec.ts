@@ -70,6 +70,26 @@ test('Aantal stappen is off with one bron, and a line says why', async ({ page }
 	await expect(steps(page).getByRole('button', { name: '2 stappen' })).toBeDisabled();
 });
 
+test('Omgeving with two bronnen never asks for a second bron: the steps wait for a bron on the canvas', async ({
+	page
+}) => {
+	await page.goto(`/explore?netwerk=${BOEK6},${BOEK7}`);
+	await openSheet(page);
+	await expect(steps(page).getByRole('button', { name: '2 stappen' })).toBeVisible();
+	await expect(page.getByText('Klik een bron op het canvas.').first()).toBeVisible();
+	await expect(page.getByText('Kies eerst een tweede bron.')).toHaveCount(0);
+	// No menu Meer, no link "Alleen de gekozen bronnen tonen": the filter is a Vinkje under Tonen.
+	await expect(page.getByText('Alleen de gekozen bronnen tonen')).toHaveCount(0);
+});
+
+test('one bron brings 150 neighbours, as Tonen counts them (besluit 29)', async ({ page }) => {
+	await page.goto(`/explore?netwerk=${BOEK7}`);
+	await openSheet(page);
+	const strip = page.getByRole('complementary', { name: 'Bronnen en filters' }).or(steps(page));
+	await expect(strip.getByText(/^150 van [\d.]+$/).first()).toBeVisible({ timeout: 30_000 });
+	await expect(strip.getByText(/^200 van /)).toHaveCount(0);
+});
+
 test('the ketens stand still while they load and say after 3 s that it takes longer', async ({
 	page
 }) => {

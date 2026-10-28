@@ -6,7 +6,7 @@ import { getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
-import type { GraphStore } from '$lib/graph/store/types';
+import { NEIGHBORHOOD_CAP, type GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
@@ -42,6 +42,24 @@ export function cutOf(
 			per.set(b.collection, c);
 		}
 	return [...per.values()].filter((c) => c.kept < c.total);
+}
+
+/**
+ * A bron alone brings at most `cap` neighbours per bucket (besluit 29: 150); a composed netwerk
+ * keeps the node's 200 per bron. The bucket's `total` stays, so the cut says "150 van 905".
+ */
+export function withinCap(response: NodeResponse, cap: number): NodeResponse {
+	const buckets = response.neighbors?.buckets;
+	if (!buckets || buckets.every((b) => b.items.length <= cap)) return response;
+	return {
+		...response,
+		neighbors: {
+			...response.neighbors!,
+			buckets: buckets.map((b) =>
+				b.items.length > cap ? { ...b, items: b.items.slice(0, cap) } : b
+			)
+		}
+	};
 }
 
 export class NetwerkComposer {
@@ -183,6 +201,8 @@ export class NetwerkComposer {
 			found.push({ id: n.ids[i], response: r.value });
 			if (isOn(n, n.ids[i])) participants.push({ response: r.value });
 		});
+		if (participants.length === 1)
+			participants[0] = { response: withinCap(participants[0].response, NEIGHBORHOOD_CAP) };
 		const fresh = !this.composed && !this.#keepCanvas;
 		this.#keepCanvas = false;
 		this.#view()?.suppressFit();
@@ -206,7 +226,12 @@ export class NetwerkComposer {
 					node: node ?? undefined,
 					collection: response.node.collection as NetwerkEntry['collection'],
 					on: isOn(n, id),
-					alone: participants.length > 1 && alone.has(canvasId),
+					// A Staatsblad-publicatie is drawn with the wetten it changes, so it is not "without
+					// connection" however little it shares with the other bronnen.
+					alone:
+						participants.length > 1 &&
+						alone.has(canvasId) &&
+						node?.raw?.props?.kind !== 'publicatie',
 					connections: response.neighbors?.total
 				};
 			}),

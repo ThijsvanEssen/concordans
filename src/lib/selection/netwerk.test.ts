@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
 	syncOn,
+	stepsOffReason,
 	onlyAround,
 	between,
 	isOn,
@@ -121,5 +122,15 @@ describe('syncOn', () => {
 			false,
 			true
 		]);
+	});
+});
+
+describe('why Aantal stappen is off', () => {
+	it('asks a second bron in Verband only', () => {
+		expect(stepsOffReason('verband', 1)).toBe('Kies eerst een tweede bron.');
+		expect(stepsOffReason('verband', 2)).toBeNull();
+	});
+	it('says nothing in Omgeving, whatever the number of bronnen (A1)', () => {
+		for (const ends of [0, 1, 2, 3]) expect(stepsOffReason('omgeving', ends)).toBeNull();
 	});
 });

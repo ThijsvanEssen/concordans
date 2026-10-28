@@ -35,6 +35,15 @@ export type NetwerkEntry = {
 	connections?: number;
 };
 
+/**
+ * Why Aantal stappen is off whatever the weergave, in a line; null when it is not. Only Verband
+ * needs a second bron: in Omgeving the steps follow the bron clicked on the canvas, and the
+ * block Weergave says when none is.
+ */
+export function stepsOffReason(view: string, ends: number): string | null {
+	return view === 'verband' && ends < 2 ? 'Kies eerst een tweede bron.' : null;
+}
+
 const list = (value: string | null) =>
 	(value ?? '')
 		.split(',')
