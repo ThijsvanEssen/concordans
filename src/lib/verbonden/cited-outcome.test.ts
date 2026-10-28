@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { rowsOfCitedBy } from './cited-by';
 import { metaParts } from './rows';
-import { isStrafGroep, NIET_VASTGESTELD, uitkomstVan } from './uitkomst';
+import { isStrafGroep, NIET_VASTGESTELD, citedOutcome } from './cited-outcome';
 
 const item = (judgment: Record<string, unknown>) =>
 	({
@@ -23,10 +23,10 @@ const item = (judgment: Record<string, unknown>) =>
 const meta = (judgment: Record<string, unknown>, straf = false) =>
 	metaParts(rowsOfCitedBy([item(judgment)], false, straf)[0], true);
 
-describe('uitkomstVan', () => {
+describe('citedOutcome', () => {
 	it('says an outcome in a word, with the clause at hover', () => {
 		expect(
-			uitkomstVan({ outcome: 'ongegrond', outcome_text: 'verklaart het beroep ongegrond' }, false)
+			citedOutcome({ outcome: 'ongegrond', outcome_text: 'verklaart het beroep ongegrond' }, false)
 		).toEqual({
 			text: 'Ongegrond',
 			title: 'verklaart het beroep ongegrond',
@@ -35,32 +35,34 @@ describe('uitkomstVan', () => {
 	});
 
 	it('says null as not established, never nothing', () => {
-		expect(uitkomstVan({ outcome: null }, true)).toMatchObject({
+		expect(citedOutcome({ outcome: null }, true)).toMatchObject({
 			text: NIET_VASTGESTELD,
 			vastgesteld: false
 		});
-		expect(uitkomstVan({}, false).text).toBe('Uitkomst niet vastgesteld');
+		expect(citedOutcome({}, false).text).toBe('Uitkomst niet vastgesteld');
 	});
 
 	it('says what a conclusion proposes', () => {
-		expect(uitkomstVan({ outcome: null, conclusion_outcome: 'verwerping' }, true).text).toBe(
+		expect(citedOutcome({ outcome: null, conclusion_outcome: 'verwerping' }, true).text).toBe(
 			'Strekt tot verwerping'
 		);
 	});
 
 	it('does not show vernietigd of a hof or niet-ontvankelijk of a rechtbank in a strafzaak as a verdict', () => {
-		const hof = uitkomstVan({ outcome: 'vernietigd', tier: 'gerechtshof' }, true);
+		const hof = citedOutcome({ outcome: 'vernietigd', tier: 'gerechtshof' }, true);
 		expect(hof.text).toMatch(/^Vonnis vernietigd, zegt niets over veroordeling$/);
-		const rb = uitkomstVan({ outcome: 'niet-ontvankelijk', tier: 'rechtbank' }, true);
+		const rb = citedOutcome({ outcome: 'niet-ontvankelijk', tier: 'rechtbank' }, true);
 		expect(rb.text).toMatch(/zegt niets over veroordeling/);
 	});
 
 	it('leaves the same words bare outside a strafzaak and for other courts', () => {
-		expect(uitkomstVan({ outcome: 'vernietigd', tier: 'gerechtshof' }, false).text).toBe(
+		expect(citedOutcome({ outcome: 'vernietigd', tier: 'gerechtshof' }, false).text).toBe(
 			'Vernietigd'
 		);
-		expect(uitkomstVan({ outcome: 'vernietigd', tier: 'hoge_raad' }, true).text).toBe('Vernietigd');
-		expect(uitkomstVan({ outcome: 'bekrachtigd', tier: 'gerechtshof' }, true).text).toBe(
+		expect(citedOutcome({ outcome: 'vernietigd', tier: 'hoge_raad' }, true).text).toBe(
+			'Vernietigd'
+		);
+		expect(citedOutcome({ outcome: 'bekrachtigd', tier: 'gerechtshof' }, true).text).toBe(
 			'Bekrachtigd'
 		);
 	});

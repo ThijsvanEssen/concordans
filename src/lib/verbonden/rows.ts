@@ -28,7 +28,7 @@ import { relationWords } from './relation-words';
 import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
 import type { Cite } from '$lib/text/judgment-heading';
-import type { Uitkomst } from './uitkomst';
+import type { CitedOutcome } from './cited-outcome';
 
 import type { Neighbor } from '$lib/api/nodes';
 
@@ -85,7 +85,7 @@ export type Row = {
 	/** A judgment as the API cites it. */
 	cite?: Cite | null;
 	/** How a judgment that cites the selected article ended: the meta line says it, or says it is not known. */
-	uitkomst?: Uitkomst | null;
+	uitkomst?: CitedOutcome | null;
 	/** How often the judgment itself is cited (`inbound_citation_count`), where the order asks for it. */
 	cited?: number | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
@@ -283,7 +283,7 @@ export function uniqueRows(rows: Row[]): Row[] {
 	});
 }
 
-export type MetaPart = {
+type MetaPart = {
 	text: string;
 	kind: 'lid' | 'proposed' | 'derived' | 'plain' | 'uitkomst' | 'onbekend';
 	/** At hover: the clause of the decision that says the outcome. */

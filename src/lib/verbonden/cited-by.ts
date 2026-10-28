@@ -8,7 +8,7 @@ import { isDerived, lidOfMatch } from './edge-meta';
 import { isInternational } from '$lib/vocabulary';
 import { bundleMentions, type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
-import { uitkomstVan } from './uitkomst';
+import { citedOutcome } from './cited-outcome';
 
 /**
  * One row per judgment. With `withCount` (the order Meest aangehaald) a row says how often the
@@ -34,7 +34,7 @@ export function rowsOfCitedBy(
 			ref: { collection: 'judgments', key: j.key },
 			...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
 			filterGroup: 'uitspraken',
-			uitkomst: uitkomstVan(j, straf),
+			uitkomst: citedOutcome(j, straf),
 			cited: withCount ? (j.inbound_citation_count ?? null) : null,
 			at,
 			lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),

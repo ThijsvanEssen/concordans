@@ -189,8 +189,9 @@
 							<!-- How the judgment ended, or that the data does not say: never left out. -->
 							<span class="kind__line kind__line--vlak"
 								><span
-									class="kind__uitkomst"
-									class:is-known={row.uitkomst.vastgesteld}
+									class="kind__uitkomst kind__uitkomst--{row.uitkomst.vastgesteld
+										? 'bekend'
+										: 'onbekend'}"
 									title={row.uitkomst.title ?? undefined}>{row.uitkomst.text}</span
 								>{#if line}, {line}{/if}</span
 							>
@@ -319,7 +320,7 @@
 		line-height: 20px;
 		color: var(--ink-3);
 	}
-	.kind__uitkomst.is-known {
+	.kind__uitkomst--bekend {
 		color: var(--ink-2);
 	}
 	.kind__all {

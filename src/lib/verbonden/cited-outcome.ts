@@ -9,7 +9,7 @@ import { capitalize } from '$lib/text/words';
 export const NIET_VASTGESTELD = 'Uitkomst niet vastgesteld';
 
 /** The outcome of a row: its words, the clause that says it (hover), and whether the data says one. */
-export type Uitkomst = { text: string; title: string | null; vastgesteld: boolean };
+export type CitedOutcome = { text: string; title: string | null; vastgesteld: boolean };
 
 type Bron = {
 	outcome?: string | null;
@@ -35,7 +35,7 @@ export function isStrafGroep(
 	return total > 0 && straf * 2 > total;
 }
 
-export function uitkomstVan(j: Bron, straf: boolean): Uitkomst {
+export function citedOutcome(j: Bron, straf: boolean): CitedOutcome {
 	const title = j.outcome_text?.trim() || null;
 	if (j.outcome) {
 		const neutraal = straf ? STRAF_NEUTRAAL[j.tier ?? '']?.[j.outcome] : undefined;
