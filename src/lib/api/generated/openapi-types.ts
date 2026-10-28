@@ -197,7 +197,7 @@ export interface paths {
          * One judgment with the articles it cites
          * @description Looks a judgment up by ECLI, follows its REFERS_TO edges to articles and adds each article with its parent instrument.
          *
-         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; EUR-Lex by CELEX number, `external_id`, for one of a court of the EU; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), its `tables` (each a span of its `text`, a row a line and its cells separated by a tab), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
+         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; EUR-Lex by CELEX number, `external_id`, for one of a court of the EU; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), its `tables` (each a span of its `text`, a row a line and its cells separated by a tab), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
          */
         get: operations["get_judgment_detail_api_judgments__ecli__get"];
         put?: never;
@@ -703,7 +703,7 @@ export interface paths {
         };
         /**
          * Dossier timeline
-         * @description Documents, activities, decisions and commitments in date order, newest first by default. Filter with ``?kind=motie,amendement``.
+         * @description Documents, activities, decisions and commitments in date order, newest first by default. Filter with ``?kind=motie,amendement``. ``limit`` and ``offset`` page them; ``total`` is the absolute count under the filters.
          */
         get: operations["get_timeline_api_dossiers__number__timeline_get"];
         put?: never;
@@ -4427,9 +4427,9 @@ export interface components {
             cite: components["schemas"]["JudgmentCiteDTO"] | null;
             /**
              * Outcome
-             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak` (an order to repair a defect, the case is not decided); of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction).
              */
-            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "tussenuitspraak" | "schending" | "geen schending") | null;
             /**
              * Outcome Text
              * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
@@ -4483,6 +4483,11 @@ export interface components {
              * @description The judgments that cite it, or another publication of the same decision, each once (as in `/api/judgments`): a standard judgment has many.
              */
             inbound_citation_count: number | null;
+            /**
+             * Subject Areas
+             * @description The main areas of law of the judgment (`Strafrecht`, `Civiel recht`, `Bestuursrecht`), each once, as `subject_areas` of `/api/judgments/{ecli}`; empty when the source gives none.
+             */
+            subject_areas: string[];
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -6009,7 +6014,7 @@ export interface components {
         DocumentListResponse: {
             /**
              * Total
-             * @description Every match, whatever the page; null with ``facets=false``.
+             * @description Every match, whatever the page; null with ``facets=false`` and while ``partial``.
              */
             total: number | null;
             /**
@@ -6018,6 +6023,17 @@ export interface components {
              */
             items: components["schemas"]["DocumentListItemDTO"][];
             facets: components["schemas"]["DocumentFacetsDTO"] | null;
+            /**
+             * Partial
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): ``total`` null and empty facets now, ask again for them; they are counted on. The next page does not depend on them.
+             * @default false
+             */
+            partial: boolean;
+            /**
+             * Next Cursor
+             * @description Pass as ``after`` for the next page; null on the last page.
+             */
+            next_cursor: string | null;
         };
         /**
          * DocumentParagraphDTO
@@ -8122,7 +8138,7 @@ export interface components {
             surname: string | null;
             /**
              * Subject
-             * @description What the title says it is about: the part after the first `` over ``; null when it has none.
+             * @description What the title says it is about: the part after the first `` over ``; null when it has none. Of a commitment from its whole text (``summary``), not from its title, which is only the first words.
              */
             subject: string | null;
             /**
@@ -8276,9 +8292,9 @@ export interface components {
             cite: components["schemas"]["JudgmentCiteDTO"] | null;
             /**
              * Outcome
-             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak` (an order to repair a defect, the case is not decided); of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction).
              */
-            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "tussenuitspraak" | "schending" | "geen schending") | null;
             /**
              * Outcome Text
              * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
@@ -9570,6 +9586,26 @@ export interface components {
          * @description One instrument: its identifiers, names, classification and dates.
          */
         InstrumentDetailDTO: {
+            /**
+             * Series Id
+             * @description The same for every regulation of the series; null for one with no sibling. A heuristic, not a relation of the BWB (it names no predecessor): regulations of one kind whose citation titles are equal once their years are taken out (`series_basis`).
+             */
+            series_id: string | null;
+            /**
+             * Series Position
+             * @description Its place in the series, from 1, by the day it came into force.
+             */
+            series_position: number | null;
+            /**
+             * Series Size
+             * @description How many regulations the series holds.
+             */
+            series_size: number | null;
+            /**
+             * Series Basis
+             * @description How the series was found: `title_year`.
+             */
+            series_basis: string | null;
             /** Id */
             id: string;
             /** Key */
@@ -9962,9 +9998,9 @@ export interface components {
             cite: components["schemas"]["JudgmentCiteDTO"] | null;
             /**
              * Outcome
-             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak` (an order to repair a defect, the case is not decided); of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction).
              */
-            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "tussenuitspraak" | "schending" | "geen schending") | null;
             /**
              * Outcome Text
              * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
@@ -10161,9 +10197,23 @@ export interface components {
         InstrumentListResponse: {
             /** Items */
             items: components["schemas"]["InstrumentListItemDTO"][];
-            /** Total */
-            total: number;
+            /**
+             * Total
+             * @description Matching instruments; null while ``partial``.
+             */
+            total: number | null;
             facets: components["schemas"]["InstrumentFacets"] | null;
+            /**
+             * Partial
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): ``total`` null and empty facets now, ask again for them; they are counted on. The next page does not depend on them.
+             * @default false
+             */
+            partial: boolean;
+            /**
+             * Next Cursor
+             * @description Pass as ``after`` for the next page; null on the last page.
+             */
+            next_cursor: string | null;
         };
         /**
          * InstrumentReferenceArticleDTO
@@ -10373,6 +10423,26 @@ export interface components {
          * @description Short representation of an instrument.
          */
         InstrumentSummaryDTO: {
+            /**
+             * Series Id
+             * @description The same for every regulation of the series; null for one with no sibling. A heuristic, not a relation of the BWB (it names no predecessor): regulations of one kind whose citation titles are equal once their years are taken out (`series_basis`).
+             */
+            series_id: string | null;
+            /**
+             * Series Position
+             * @description Its place in the series, from 1, by the day it came into force.
+             */
+            series_position: number | null;
+            /**
+             * Series Size
+             * @description How many regulations the series holds.
+             */
+            series_size: number | null;
+            /**
+             * Series Basis
+             * @description How the series was found: `title_year`.
+             */
+            series_basis: string | null;
             /** Id */
             id: string;
             /** Key */
@@ -10761,6 +10831,13 @@ export interface components {
              * @description Per court, most first.
              */
             courts: components["schemas"]["CoverageCourtDTO"][];
+            /**
+             * Chambers
+             * @description How current the papers of the Kamers are: `tk` and `eerstekamer`, as `data_as_of` of `/api/stats` gives them (`newest`: the date of the newest paper, `retrieved_at`: when it was fetched); a source with no row is left out.
+             */
+            chambers: {
+                [key: string]: components["schemas"]["DataAsOfDTO"];
+            };
         };
         /**
          * JudgmentDTO
@@ -10803,9 +10880,9 @@ export interface components {
             title?: string | null;
             /**
              * Outcome
-             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak` (an order to repair a defect, the case is not decided); of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction).
              */
-            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            outcome: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "tussenuitspraak" | "schending" | "geen schending") | null;
             /**
              * Outcome Text
              * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
@@ -11173,9 +11250,18 @@ export interface components {
         JudgmentListResponse: {
             /** Items */
             items: components["schemas"]["JudgmentListItemDTO"][];
-            /** Total */
-            total: number;
+            /**
+             * Total
+             * @description Matching judgments; null while ``partial``.
+             */
+            total: number | null;
             facets: components["schemas"]["JudgmentFacets"] | null;
+            /**
+             * Partial
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): ``total`` null and empty facets now, ask again for them; they are counted on. The next page does not depend on them.
+             * @default false
+             */
+            partial: boolean;
         };
         /**
          * JudgmentParagraph
@@ -15321,6 +15407,8 @@ export interface operations {
                 validity?: ("in_force" | "expired" | "all") | null;
                 /** @description The ministry first responsible (``GET /api/ministries``). */
                 ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description The ``next_cursor`` of the page before: this page follows it. Instead of ``offset``, not with it. */
+                after?: string | null;
             };
             header?: never;
             path?: never;
@@ -16223,6 +16311,7 @@ export interface operations {
                 /** @description False leaves out the activities with status ``Gepland``. */
                 include_planned?: boolean;
                 limit?: number;
+                offset?: number;
             };
             header?: never;
             path: {
@@ -17280,6 +17369,8 @@ export interface operations {
                 limit?: number;
                 /** @description Papers to skip, at most 10,000: further back, `to` the date of the last paper of a page (and `offset` the papers of that date it showed). */
                 offset?: number;
+                /** @description The ``next_cursor`` of the page before: this page follows it. Instead of ``offset``, not with it. */
+                after?: string | null;
             };
             header?: never;
             path?: never;
