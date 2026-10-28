@@ -2227,7 +2227,8 @@
 			<h1 class="blad__titel sr-only">Netwerk</h1>
 			<div class="werkplek" data-testid="werkplek">
 				<div class="col col--graph">
-					{#if graphChunk.component}
+					<!-- The canvas stands with its panel: Weergave, Gekozen and Tonen do not come in after it. -->
+					{#if graphChunk.component && panelChunk.component}
 						{@const GraphViewC = graphChunk.component}
 						<PanelBoundary what="Het netwerk" resetOn={focus}>
 							<GraphViewC
@@ -2353,8 +2354,8 @@
 								{/snippet}
 							</GraphViewC>
 						</PanelBoundary>
-					{:else if graphChunk.error}
-						{@render chunkMissing(graphChunk, 'Het netwerk')}
+					{:else if graphChunk.error || panelChunk.error}
+						{@render chunkMissing(graphChunk.error ? graphChunk : panelChunk, 'Het netwerk')}
 					{/if}
 					{#if card}
 						<VerbindingCard
