@@ -24,6 +24,7 @@ import { dossierName, dossierVolledigeTitel } from '$lib/bron/dossier-naam';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { AMENDING_BILL_KINDS } from '$lib/votes/stages';
+import type { Collection, Relation } from '$lib/vocabulary';
 
 type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;
@@ -278,6 +279,68 @@ const lawKey = (l: ChangedLaw) =>
 const lawNodeId = (l: ChangedLaw) => `instruments/${lawKey(l)}`;
 const lawHref = (l: ChangedLaw) =>
 	buildBronHref(null, { collection: 'instruments', key: lawKey(l) });
+
+/** A knoop of the small sketch: one bron on the chain, with the collection that gives its colour. */
+export type SchetsKnoop = SchetsBron & {
+	collection: Collection;
+	/** The ring it stands in, as the canvas draws a dossier and the articles of a law. */
+	ring: 'dossier' | 'wet' | null;
+};
+/** A line between two knopen, as the canvas draws its relation. */
+export type SchetsLijn = {
+	van: string;
+	naar: string;
+	relation: Relation;
+	/** The collection the relation starts at, which gives the line its class. */
+	from: Collection;
+	arrow: 'a' | 'b' | null;
+};
+
+/**
+ * The few knopen of the home page: dossier, one stuk, one changed article (with its law), one
+ * judgment. The stuk is the proposal that changes that article; a missing link is left out.
+ */
+export function kleineSchets(s: Schets): { knopen: SchetsKnoop[]; lijnen: SchetsLijn[] } {
+	const eerste = (kol?: SchetsKolom) => kol?.bronnen.find((b) => !b.groep) ?? kol?.bronnen[0];
+	const [dossier] = s.kolommen[0].bronnen;
+	const artikel = eerste(s.kolommen[2]);
+	const wet = s.kolommen[2].kader?.label;
+	const stukken = s.kolommen[1].bronnen;
+	const naarArtikel = new Set(s.lijnen.filter(([, b]) => b === artikel?.id).map(([a]) => a));
+	const stuk =
+		stukken.find((b) => naarArtikel.has(b.id) && b.vorm === 'voorstel') ??
+		stukken.find((b) => naarArtikel.has(b.id) && !b.groep) ??
+		stukken.find((b) => naarArtikel.has(b.id)) ??
+		eerste(s.kolommen[1]);
+	const uitspraak = s.kolommen[3] ? eerste(s.kolommen[3]) : undefined;
+
+	const knopen: SchetsKnoop[] = [
+		{
+			...dossier,
+			label: dossier.sub ?? dossier.label,
+			sub: null,
+			collection: 'dossiers',
+			ring: 'dossier'
+		}
+	];
+	const lijnen: SchetsLijn[] = [];
+	const voeg = (
+		b: SchetsBron | undefined,
+		collection: Collection,
+		ring: SchetsKnoop['ring'],
+		lijn: Omit<SchetsLijn, 'van' | 'naar'> | null,
+		sub?: string | null
+	) => {
+		if (!b) return;
+		const vorige = knopen[knopen.length - 1];
+		knopen.push({ ...b, sub: sub ?? b.sub, collection, ring });
+		if (lijn) lijnen.push({ ...lijn, van: vorige.id, naar: b.id });
+	};
+	voeg(stuk, 'documents', null, { relation: 'PART_OF', from: 'documents', arrow: null });
+	voeg(artikel, 'articles', 'wet', { relation: 'AMENDS', from: 'documents', arrow: 'b' }, wet);
+	voeg(uitspraak, 'judgments', null, { relation: 'REFERS_TO', from: 'judgments', arrow: 'a' });
+	return { knopen, lijnen };
+}
 
 /** The bills the Eerste Kamer passed before the summary's days: its votes are on bills only. */
 async function oudere(today: string, signal?: AbortSignal): Promise<Kandidaat[]> {

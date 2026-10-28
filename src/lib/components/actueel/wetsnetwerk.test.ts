@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kandidaten, schetsVan, type CitedBy } from './wetsnetwerk';
+import { kandidaten, schetsVan, kleineSchets, type CitedBy } from './wetsnetwerk';
 import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 
 const vote = (number: string, date: string, chamber: 'TK' | 'EK', subkind: string, passed = true) =>
@@ -183,5 +183,20 @@ describe('schetsVan', () => {
 	it('leaves the judgments out when none cites the article', () => {
 		const zonder = schetsVan(k, changes, { ...citedBy, judgment_total: 0, items: [] })!;
 		expect(zonder.kolommen).toHaveLength(3);
+	});
+});
+
+describe('kleineSchets', () => {
+	it('draws dossier, the proposal that changes the article, the article and a judgment', () => {
+		const { knopen, lijnen } = kleineSchets(schetsVan(k, changes, citedBy)!);
+		expect(knopen.map((n) => n.collection)).toEqual([
+			'dossiers',
+			'documents',
+			'articles',
+			'judgments'
+		]);
+		expect(knopen[0].label).toBe('Dossier 36547');
+		expect(knopen[2].sub).toBe('Wetboek van Strafrecht');
+		expect(lijnen).toHaveLength(3);
 	});
 });

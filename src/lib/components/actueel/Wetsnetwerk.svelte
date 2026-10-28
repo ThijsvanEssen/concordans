@@ -1,70 +1,51 @@
 <script lang="ts">
-	// The network of the last passed bill, in fixed columns: no force layout, no movement.
-	// Lines are drawn between the measured places. A click on a bron chooses it here (its
-	// verbindingen dark, the rest faint); the line under the sketch opens it. On a phone the
-	// chain stands one step a line, and the sketch is the Verkenner's.
-	import { formatCount } from '$lib/text/getal';
+	// The network of the last passed bill as a small sketch of the real one (the canvas of
+	// Netwerk): the marks, colours and lines of its kinds, four bronnen on one chain. Each
+	// bron opens itself; Open in netwerk opens the whole of it. A row on a wide screen, a
+	// column on a phone; the lines are drawn between the marks as they stand.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { kindColour } from '$lib/bron/kleur';
+	import { drawnLine } from '$lib/components/graph/drawn-line';
+	import { DOT_RADIUS } from '$lib/graph/line-shape';
 	import { langeDatum } from '$lib/text/datum';
 	import { onMount } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import type { Schets, SchetsBron } from './wetsnetwerk';
+	import { kleineSchets, type Schets } from './wetsnetwerk';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 
-	let { schets, kop = 'h2' }: { schets: Schets; kop?: 'h2' | 'h3' | 'h4' } = $props();
+	let { schets }: { schets: Schets } = $props();
 
 	const k = $derived(schets.kandidaat);
-	const keten = $derived(schets.keten);
-	const telwoord = (n: number, een: string, meer: string) =>
-		`${formatCount(n)} ${n === 1 ? een : meer}`;
-
-	/** The chain in counts, one step a line: what a phone shows before the sketch. */
-	const stappen = $derived(
-		[
-			{ vorm: 'stuk' as const, tekst: telwoord(keten.stukken, 'stuk', 'stukken') },
-			{
-				vorm: 'regel-o' as const,
-				tekst: `${telwoord(keten.artikelen, 'artikel', 'artikelen')} in ${keten.wet}`
-			},
-			keten.uitspraken
-				? {
-						vorm: 'uitspraak' as const,
-						tekst: `${telwoord(keten.uitspraken, 'uitspraak', 'uitspraken')} over ${keten.artikel.toLowerCase()}`
-					}
-				: null
-		].filter((x) => x !== null)
-	);
+	const kaart = $derived(kleineSchets(schets));
+	/** The radius of a mark's ring, where its lines stop. */
+	const RING = 18;
 
 	let root = $state<HTMLElement>();
-	let paden = $state<{ id: string; d: string; aan: boolean }[]>([]);
-	let gekozen = $state<SchetsBron | null>(null);
-
-	const buren = $derived.by(() => {
-		const id = gekozen?.id;
-		if (!id) return null;
-		return new Set(schets.lijnen.flatMap(([a, b]) => (a === id ? [b] : b === id ? [a] : [])));
-	});
+	let lijnen = $state<ReturnType<typeof drawnLine>[]>([]);
 
 	function meet() {
 		if (!root) return;
 		const o = root.getBoundingClientRect();
-		const rect = (id: string, sel: string) =>
-			root!
-				.querySelector<HTMLElement>(`[data-bron="${CSS.escape(id)}"] ${sel}`)
+		const midden = (id: string) => {
+			const r = root!
+				.querySelector<HTMLElement>(`[data-bron="${CSS.escape(id)}"] .ring`)
 				?.getBoundingClientRect();
-		paden = schets.lijnen.flatMap(([a, b]) => {
-			// From the end of the name to the sign of the next bron.
-			const p = rect(a, 'button');
-			const t = rect(a, '.teken');
-			const q = rect(b, '.teken');
-			if (!p || !t || !q) return [];
-			const x1 = p.right - o.left + 4;
-			const y1 = t.top + t.height / 2 - o.top;
-			const x2 = q.left - o.left - 4;
-			const y2 = q.top + q.height / 2 - o.top;
-			const mx = (x1 + x2) / 2;
-			const aan = !!gekozen && (gekozen.id === a || gekozen.id === b);
-			return [{ id: `${a}>${b}`, d: `M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`, aan }];
+			return r && { x: r.left + r.width / 2 - o.left, y: r.top + r.height / 2 - o.top };
+		};
+		lijnen = kaart.lijnen.flatMap((l) => {
+			const a = midden(l.van);
+			const b = midden(l.naar);
+			return a && b
+				? [
+						drawnLine(a, b, {
+							relation: l.relation,
+							from: l.from,
+							arrow: l.arrow,
+							ra: RING,
+							rb: RING
+						})
+					]
+				: [];
 		});
 	}
 
@@ -74,106 +55,59 @@
 		return () => ro.disconnect();
 	});
 	$effect(() => {
-		void gekozen;
-		void schets;
+		void kaart;
 		afterTick(meet);
 	});
 </script>
 
-<section class="wetsnetwerk" aria-labelledby="wetsnetwerk-heading">
-	<p class="waarom">
-		<KindGlyph vorm="voorstel" size={12} />Laatst aangenomen wetsvoorstel: {CHAMBER_NAME[k.kamer]},
-		{langeDatum(k.datum)}
-	</p>
-	<svelte:element this={kop} id="wetsnetwerk-heading" class="naamkop">{k.titel}</svelte:element>
-
-	<ol class="keten">
-		{#each stappen as st (st.vorm)}
-			<li><span class="kteken"><KindGlyph vorm={st.vorm} size={12} /></span>{st.tekst}</li>
-		{/each}
-	</ol>
-	<a class="toon" href={schets.exploreHref}>Open in netwerk</a>
-
-	<figure class="schets">
-		<div class="veld" bind:this={root} style:--kolommen={schets.kolommen.length}>
-			<svg class="lijnen" aria-hidden="true">
-				{#each paden as p (p.id)}<path d={p.d} class:is-active={p.aan} />{/each}
-			</svg>
-			{#each schets.kolommen as kol (kol.titel)}
-				<div class="kolom">
-					<div class="kop">{kol.titel}</div>
-					<div class:kader={!!kol.kader}>
-						{#if kol.kader}<a class="wet" href={kol.kader.href}
-								><KindGlyph vorm="regel" size={10} /> {kol.kader.label}</a
-							>{/if}
-						<ul>
-							{#each kol.bronnen as b (b.id)}
-								<li
-									data-bron={b.id}
-									class:is-dim={!!buren && gekozen?.id !== b.id && !buren.has(b.id)}
-								>
-									<button
-										type="button"
-										aria-pressed={gekozen?.id === b.id}
-										onclick={() => (gekozen = gekozen?.id === b.id ? null : b)}
-									>
-										<span class="teken"><KindGlyph vorm={b.vorm} size={14} /></span>
-										<span class="naam" class:groep={b.groep}>{b.label}</span>
-										{#if b.sub}<span class="sub">{b.sub}</span>{/if}
-									</button>
-								</li>
-							{/each}
-						</ul>
-					</div>
-					{#if kol.na}<a class="na" href={kol.na.href}>{kol.na.label}</a>{/if}
-				</div>
+<figure class="wetsnetwerk">
+	<div class="veld" bind:this={root}>
+		<svg class="lijnen" aria-hidden="true">
+			{#each lijnen as l, i (i)}
+				<path
+					d={l.d}
+					fill="none"
+					stroke={l.colour}
+					stroke-width={l.width}
+					stroke-dasharray={l.dash}
+					stroke-linecap={l.cap}
+				/>
+				{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
+				{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}
 			{/each}
-		</div>
-		<figcaption>
-			{#if gekozen}
-				<span class="keuze"
-					><KindGlyph vorm={gekozen.vorm} size={12} />
-					{gekozen.label}{gekozen.sub ? `, ${gekozen.sub}` : ''}</span
-				>
-				<a href={gekozen.href}>{gekozen.groep ? 'Open de lijst' : 'Open de bron'} →</a>
-			{/if}
-			<a class="verkenner" href={schets.exploreHref}>Open in netwerk</a>
-		</figcaption>
-	</figure>
-</section>
+		</svg>
+		<ol>
+			{#each kaart.knopen as b (b.id)}
+				<li data-bron={b.id}>
+					<a class="knoop" href={b.href}>
+						<span class="ring ring--{b.ring ?? 'geen'}" style:--kleur={kindColour(b.collection)}>
+							<KindGlyph vorm={b.vorm} size={16} colour={kindColour(b.collection)} />
+						</span>
+						<span class="tekst">
+							<span class="naam">{b.label}</span>
+							{#if b.sub}<span class="sub">{b.sub}</span>{/if}
+						</span>
+					</a>
+				</li>
+			{/each}
+		</ol>
+	</div>
+	<figcaption>
+		<span>Aangenomen door de {CHAMBER_NAME[k.kamer]}, {langeDatum(k.datum)}</span>
+		<a class="verkenner" href={schets.exploreHref}>Open in netwerk</a>
+	</figcaption>
+</figure>
 
 <style>
-	.waarom {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		margin: 0 0 var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.naamkop {
-		margin: 0 0 var(--s-3);
-		font-size: var(--t-h3);
-		font-weight: 600;
-		line-height: var(--lh-snug);
-	}
-	.keten,
-	.toon {
-		display: none;
-	}
-	.schets {
+	.wetsnetwerk {
 		margin: 0;
+		padding: var(--s-4);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);
 		background: var(--paper);
-		padding: var(--s-4);
 	}
 	.veld {
 		position: relative;
-		display: grid;
-		grid-template-columns: repeat(var(--kolommen), minmax(0, 1fr));
-		column-gap: var(--s-8);
 	}
 	.lijnen {
 		position: absolute;
@@ -183,180 +117,94 @@
 		pointer-events: none;
 		overflow: visible;
 	}
-	.lijnen path {
-		fill: none;
-		stroke: var(--rule-strong);
-		stroke-width: 1;
-	}
-	.lijnen path.is-active {
-		stroke: var(--ink);
-	}
-	.kolom {
-		position: relative;
-		min-width: 0;
-	}
-	.kop {
-		margin-bottom: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.kader {
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		padding: var(--s-2);
-		background: var(--paper);
-	}
-	.wet,
-	.na {
-		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.wet {
-		margin-bottom: var(--s-1);
-		font-weight: 600;
-	}
-	.na {
-		margin-top: var(--s-2);
-		color: var(--ink-2);
-	}
-	ul {
-		list-style: none;
+	ol {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		column-gap: var(--s-6);
 		margin: 0;
 		padding: 0;
+		list-style: none;
+	}
+	.knoop {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-1);
-	}
-	li.is-dim {
-		opacity: 0.35;
-	}
-	li button {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		column-gap: var(--s-2);
-		align-items: baseline;
-		width: fit-content;
-		max-width: 100%;
-		padding: var(--s-1) 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		text-align: left;
+		align-items: center;
+		gap: var(--s-2);
 		color: var(--ink);
-		cursor: pointer;
+		text-align: center;
+		text-decoration: none;
 	}
-	.teken {
-		position: relative;
-		top: 2px;
-		display: inline-flex;
+	.ring {
+		display: grid;
+		place-items: center;
+		width: calc(2 * 18px);
+		height: calc(2 * 18px);
+		border-radius: var(--r-rond);
+	}
+	/* The rings of the canvas: a dossier in a dashed ring of its colour, the articles of a
+	   law in a ring of its colour on the second paper. */
+	.ring--dossier {
+		border: 1px dashed var(--kleur);
+	}
+	.ring--wet {
+		border: 1px solid var(--kleur);
+		background: var(--paper-2);
+	}
+	.tekst {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
 	}
 	.naam {
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
+		font-weight: 600;
 		line-height: var(--lh-snug);
 		overflow-wrap: anywhere;
 	}
-	.naam.groep {
-		color: var(--ink-2);
-	}
-	li button[aria-pressed='true'] .naam {
-		box-shadow: inset 0 -2px 0 var(--ink);
-	}
 	.sub {
-		grid-column: 2;
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
+		line-height: var(--lh-snug);
 		color: var(--ink-3);
+		overflow-wrap: anywhere;
+	}
+	.knoop:hover .naam {
+		text-decoration: underline;
 	}
 	figcaption {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
+		justify-content: space-between;
 		gap: var(--s-2) var(--s-4);
 		margin-top: var(--s-4);
 		padding-top: var(--s-3);
 		border-top: 1px solid var(--rule);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-	}
-	figcaption a {
-		color: var(--ink);
+		color: var(--ink-3);
 	}
 	.verkenner {
-		margin-left: auto;
 		font-weight: 600;
+		color: var(--ink);
 	}
 
-	/* A phone: the chain one step a line, and a link to the same network in the Verkenner. */
+	/* A phone: one bron a row, the marks in a column with the lines between them. */
 	@media (max-width: 640px) {
-		/* On a phone the band stands apart from the list under it: on the second paper, in a
-		   block of its own, its title a step larger (Thijs, 9 Oct). */
-		.wetsnetwerk {
-			padding: var(--s-4);
-			border-radius: var(--r-1);
-			background: var(--paper-2);
+		ol {
+			grid-template-columns: minmax(0, 1fr);
+			row-gap: var(--s-4);
 		}
-		.waarom {
-			color: var(--ink-2);
-		}
-		.naamkop {
-			margin-bottom: var(--s-3);
-			font-size: var(--t-h2);
-		}
-		/* One step a line, the signs joined by a rule, as on the timeline. */
-		.keten {
-			display: flex;
-			flex-direction: column;
-			gap: var(--s-1);
-			margin: 0 0 var(--s-3);
-			padding: 0;
-			list-style: none;
-			font-family: var(--font-serif);
-			font-size: var(--t-meta);
-			color: var(--ink-2);
-		}
-		/* A line of 20px with the sign centred in it: 4px above and below the sign, 4px
-		   between the lines, so the rule between two signs is 8px with 2px clear. */
-		.keten li {
-			position: relative;
-			display: grid;
-			grid-template-columns: 12px minmax(0, 1fr);
-			column-gap: var(--s-2);
-			align-items: start;
-			line-height: 20px;
-		}
-		.kteken {
-			display: flex;
-			align-items: center;
-			height: 20px;
-		}
-		.keten li + li::before {
-			content: '';
-			position: absolute;
-			/* Under the middle of a 12px sign. */
-			left: 5.5px;
-			top: -6px;
-			height: var(--s-2);
-			width: 1px;
-			background: var(--rule-strong);
-		}
-		.toon {
-			display: inline-flex;
-			align-items: center;
+		.knoop {
 			min-height: var(--veld-h-raak);
-			padding: 0 var(--s-3);
-			border: 1px solid var(--rule-strong);
-			border-radius: var(--r-1);
-			background: var(--paper);
-			font-family: var(--font-serif);
-			font-size: var(--t-meta);
-			color: var(--ink);
-			text-decoration: none;
+			flex-direction: row;
+			align-items: center;
+			gap: var(--s-3);
+			text-align: left;
 		}
-		.schets {
-			display: none;
+		.ring {
+			flex: none;
 		}
 	}
 </style>

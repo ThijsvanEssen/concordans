@@ -258,7 +258,7 @@
 			{#if !typing}
 				<p class="hint">
 					{START.hint.intro}
-					{#each START.hint.examples as example, i (example)}{#if i > 0}{', '}{/if}<TekstLink
+					{#each START.hint.examples as example, i (example)}{i > 0 ? ', ' : ''}<TekstLink
 							href="/?q={encodeURIComponent(example)}"
 							onclick={(e) => probeer(e, example)}>{example}</TekstLink
 						>{/each}. {START.hint.outro}
@@ -272,11 +272,7 @@
 					{#if lawNetwork || networkLoading}
 						<div class="voorbeeld">
 							<h3>Een wetsvoorstel als netwerk</h3>
-							<p>
-								Zo hangt het laatst aangenomen wetsvoorstel samen met de wet die het wijzigt en de
-								rechtspraak daarover. Kies een bron om haar verbindingen te zien.
-							</p>
-							{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} kop="h4" />{:else}<div
+							{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else}<div
 									class="wetsnetwerk-plek"
 									aria-hidden="true"
 								></div>{/if}
@@ -317,12 +313,12 @@
 </div>
 
 <style>
-	/* The room of the example while its network is asked (1440: 356 px; a phone: 440 px), the
+	/* The room of the example while its network is asked (1440: 224 px; a phone: 380 px), the
 	   place of the network quiet; the example stands as high when it is in. */
 	.voorbeeld {
 		display: flex;
 		flex-direction: column;
-		min-height: 356px;
+		min-height: 224px;
 		margin-bottom: var(--s-4);
 	}
 	.wetsnetwerk-plek {
@@ -333,7 +329,7 @@
 	}
 	@media (max-width: 640px) {
 		.voorbeeld {
-			min-height: 440px;
+			min-height: 380px;
 		}
 	}
 	/* The frame of Bladeren (lib/styles/frame.css), one column the full width. */
@@ -403,17 +399,10 @@
 		color: var(--ink);
 	}
 	.voorbeeld h3 {
-		margin: 0 0 var(--s-1);
+		margin: 0 0 var(--s-3);
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		line-height: var(--lh-snug);
-	}
-	.voorbeeld p {
-		max-width: var(--blad-tekst);
-		margin: 0 0 var(--s-3);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-2);
 	}
 	.main {
 		display: flex;
