@@ -79,7 +79,7 @@ test('the layers of a Kamerlid stand in the order of their rubriek: Parlement, t
 	const labels = (await page.locator('.chain .layer-label').allTextContents()).map((t) =>
 		t.trim().toLowerCase()
 	);
-	const order = ['kamerlid', 'fractie', 'commissie', 'kabinet', 'ministerie'];
+	const order = ['kamerlid', 'bewindspersoon', 'fractie', 'commissie', 'kabinet', 'ministerie'];
 	expect(labels).toEqual(order.filter((l) => labels.includes(l)));
 });
 
