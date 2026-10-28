@@ -291,14 +291,13 @@ function createCurveProgram(pijl: number, dash: Dash | null, dot = false) {
 export function stippelProgrammas(pijl: number) {
 	const streep = (period: number, lit: number, arrow = pijl) =>
 		createCurveProgram(arrow, { period, lit: [[0, lit / period]] });
-	const punten = (period: number, dot = false, arrow = 0) =>
-		createCurveProgram(arrow, { period, dots: true }, dot);
+	const punten = (period: number, dot = false) =>
+		createCurveProgram(0, { period, dots: true }, dot);
 	return {
 		arrow: createCurveProgram(pijl, null),
 		kort: streep(6.5, 4),
 		lang: streep(11, 8),
 		punten: punten(4),
-		puntenPijl: punten(4, false, pijl),
 		puntenIndiener: punten(4.5, true),
 		arrowDraad: createCurveProgram(0, null),
 		kortDraad: streep(6.5, 4, 0),

@@ -866,7 +866,6 @@
 				kort: metLijnLabel(stippel.kort as never),
 				lang: metLijnLabel(stippel.lang as never),
 				punten: metLijnLabel(stippel.punten as never),
-				puntenPijl: metLijnLabel(stippel.puntenPijl as never),
 				puntenIndiener: metLijnLabel(stippel.puntenIndiener as never),
 				arrowDraad: metLijnLabel(stippel.arrowDraad as never),
 				kortDraad: metLijnLabel(stippel.kortDraad as never),
@@ -1088,8 +1087,7 @@
 				const tone = edgeToneFor(relation, data.status as string | null, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
 				/** A thread has no arrow; a line without one is a thread already. */
-				const draadType =
-					style === 'puntenPijl' ? 'punten' : hasArrow(style) ? `${edgeType}Draad` : edgeType;
+				const draadType = hasArrow(style) ? `${edgeType}Draad` : edgeType;
 				// A cluster's one line weighs 1 (Netwerkcanvas, Cluster).
 				const restSize = lineThickness(
 					srcAttrs.cluster || tgtAttrs.cluster

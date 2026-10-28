@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	LIGHT_CONTRAST,
 	LINE_CONTRAST,
 	TONE_WINDOW,
 	contrast,
@@ -26,8 +27,9 @@ describe('the strength of a line at rest', () => {
 			for (const tone of Object.keys(TONE_WINDOW) as Tone[])
 				for (const n of [1, 9, 50, 200, 5000]) {
 					const drawn = mixed(colour, paper, lineStrength(colour, paper, tone, n));
+					const least = tone === 'licht' ? LIGHT_CONTRAST : LINE_CONTRAST;
 					expect(contrast(drawn, paper), `${colour} ${tone} of ${n}`).toBeGreaterThanOrEqual(
-						LINE_CONTRAST - 0.05
+						least - 0.05
 					);
 				}
 	});
@@ -36,7 +38,7 @@ describe('the strength of a line at rest', () => {
 		expect(lineStrength(FALLBACK.rubriekWetten, paper, 'donker', 9)).toBe(1);
 		expect(lineStrength(FALLBACK.rubriekWetten, paper, 'donker', 100)).toBeLessThan(1);
 		expect(lineStrength(FALLBACK.rubriekWetten, paper, 'licht', 1e6)).toBeCloseTo(
-			floorStrength(FALLBACK.rubriekWetten, paper),
+			floorStrength(FALLBACK.rubriekWetten, paper, LIGHT_CONTRAST),
 			5
 		);
 	});
@@ -84,10 +86,36 @@ describe('the tones (Netwerkcanvas, Lijnen)', () => {
 			}
 	});
 
-	it('lets the 3:1 floor win over a window below it (besluit 36)', () => {
+	it('lets the floor win over a window below it (besluit 36): 3:1, for light 2,5:1', () => {
 		const slate = FALLBACK.slate;
-		expect(toneStrength('licht', 1)).toBeLessThan(floorStrength(slate, paper));
-		expect(lineStrength(slate, paper, 'licht', 1)).toBeCloseTo(floorStrength(slate, paper), 5);
-		expect(LINE_KINDS.length).toBe(7);
+		expect(toneStrength('licht', 1e6)).toBeLessThan(floorStrength(slate, paper, LIGHT_CONTRAST));
+		expect(lineStrength(slate, paper, 'licht', 1e6)).toBeCloseTo(
+			floorStrength(slate, paper, LIGHT_CONTRAST),
+			5
+		);
+		expect(lineStrength(slate, paper, 'middel', 1e6)).toBeCloseTo(floorStrength(slate, paper), 5);
+		expect(LIGHT_CONTRAST).toBeLessThan(LINE_CONTRAST);
+	});
+
+	// As drawn, floors included, in a busy fan (75) and a small one. The least that holds: the
+	// kinds of Noemt and of Ingediend door against Lid van are 21 apart; Wijziging against
+	// Structureel and Ingediend door against Deel van sit on the 3:1 floor of middle, 19 apart;
+	// Deel van and Lid van (both dots) differ by tone and colour only, 5 apart.
+	it('keeps the kinds of a family apart as drawn, floors included', () => {
+		const drawn = (k: (typeof LINE_KINDS)[number], n: number) => {
+			const s = LINE_KIND_STYLE[k];
+			const c = colourOf[s.colour];
+			return lstar(mixed(c, paper, lineStrength(c, paper, s.tone, n)));
+		};
+		const least: [(typeof LINE_KINDS)[number], (typeof LINE_KINDS)[number], number][] = [
+			['explanation', 'citation', 21],
+			['submitter', 'member', 21],
+			['change', 'structural', 19],
+			['submitter', 'part', 19],
+			['part', 'member', 5]
+		];
+		for (const n of [1, 75])
+			for (const [x, y, min] of least)
+				expect(Math.abs(drawn(x, n) - drawn(y, n)), `${x} ${y} ${n}`).toBeGreaterThanOrEqual(min);
 	});
 });

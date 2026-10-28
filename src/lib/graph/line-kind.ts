@@ -87,7 +87,7 @@ export const isLineKind = (s: string): s is LineKind =>
 export type Tone = 'donker' | 'middel' | 'licht';
 
 /** The stroke of a line: a program of the canvas and a dash array in SVG (nodeSprites). */
-export type Stroke = 'solid' | 'kort' | 'lang' | 'punten' | 'puntenPijl' | 'puntenIndiener';
+export type Stroke = 'solid' | 'kort' | 'lang' | 'punten' | 'puntenIndiener';
 
 /** A colour token of the canvas (nodeSprites, Tokens). */
 type LineColour = 'moss' | 'rubriekWetten' | 'slate' | 'plum' | 'ink3';
@@ -110,7 +110,7 @@ export const hasArrow = (stroke: Stroke): boolean =>
 	stroke !== 'punten' && stroke !== 'puntenIndiener';
 
 /**
- * The style of a line: that of its kind, but a version keeps an arrow and a change that is only proposed is drawn light, in
+ * The style of a line: that of its kind, but a change that is only proposed is drawn light, in
  * the stroke of its family.
  */
 export function lineStyleOf(
@@ -120,8 +120,6 @@ export function lineStyleOf(
 ): KindStyle {
 	const kind = lineKindOf(relation, from);
 	const style = LINE_KIND_STYLE[kind];
-	// Outside an omhulling a version has no whole to say which is which: it keeps its arrow, to the newer.
-	if (relation === 'VERSION_OF') return { ...style, stroke: 'puntenPijl' };
 	return kind === 'change' && isAmendingRelation(relation) && status === 'voorgesteld'
 		? { ...style, tone: 'licht' }
 		: style;

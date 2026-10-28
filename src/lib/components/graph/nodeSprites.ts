@@ -208,7 +208,7 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 
 /**
  * How a line is stroked (Netwerkcanvas, Lijnen): `solid` the law itself; `kort` and `lang` a bron
- * names the other (an Aanhaling, a Toelichting); `punten` belongs to, without an arrow (`puntenPijl` with one: a version);
+ * names the other (an Aanhaling, a Toelichting); `punten` belongs to, without an arrow;
  * `puntenIndiener` the same with a dot at the one who submits.
  */
 type EdgeStyle = Stroke;
@@ -230,7 +230,6 @@ export function edgeDashFor(style: EdgeStyle): string | undefined {
 		case 'lang':
 			return '8 3';
 		case 'punten':
-		case 'puntenPijl':
 			return '0 4';
 		case 'puntenIndiener':
 			return '0 4.5';

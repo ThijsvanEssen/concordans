@@ -62,7 +62,6 @@ vi.mock('./DashedEdgeProgram', () => ({
 		kort: class {},
 		lang: class {},
 		punten: class {},
-		puntenPijl: class {},
 		puntenIndiener: class {},
 		arrowDraad: class {},
 		kortDraad: class {},

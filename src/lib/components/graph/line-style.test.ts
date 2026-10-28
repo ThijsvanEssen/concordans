@@ -24,10 +24,6 @@ describe('edgeStyleFor', () => {
 		expect(edgeStyleFor('MEMBER_OF', null)).toBe('punten');
 		expect(edgeStyleFor('AUTHORED', null)).toBe('puntenIndiener');
 	});
-	it('keeps an arrow on a version, which no omhulling says the direction of', () => {
-		expect(edgeStyleFor('VERSION_OF', null)).toBe('puntenPijl');
-		expect(hasArrow('puntenPijl')).toBe(true);
-	});
 	it('draws no arrow in the family hoort bij', () => {
 		for (const s of ['punten', 'puntenIndiener'] as const) expect(hasArrow(s), s).toBe(false);
 		for (const s of ['solid', 'kort', 'lang'] as const) expect(hasArrow(s), s).toBe(true);
@@ -66,7 +62,6 @@ describe('the strokes', () => {
 		const strepen = (['kort', 'lang', 'punten', 'puntenIndiener'] as const).map(edgeDashFor);
 		expect(new Set(strepen).size).toBe(4);
 		expect(edgeDashFor('solid')).toBeUndefined();
-		expect(edgeDashFor('puntenPijl')).toBe(edgeDashFor('punten'));
 		expect(edgeCapFor('punten')).toBe('round');
 		expect(edgeCapFor('kort')).toBe('butt');
 		expect(edgeCapFor('lang')).toBe('butt');
