@@ -27,10 +27,11 @@ type Tokens = {
 	moss: string;
 	plum: string;
 	slate: string;
-	soortWet: string;
-	soortParlement: string;
-	soortPersonen: string;
-	soortRechtspraak: string;
+	rubriekWetten: string;
+	rubriekRechtspraak: string;
+	rubriekKamerstukken: string;
+	rubriekParlement: string;
+	rubriekRegering: string;
 	fontSerif: string;
 	fontLabel: string;
 };
@@ -50,10 +51,11 @@ export const FALLBACK: Tokens = {
 	moss: '#456247',
 	plum: '#5e3a55',
 	slate: '#4b5563',
-	soortWet: '#00487c',
-	soortParlement: '#d3762d',
-	soortPersonen: '#944078',
-	soortRechtspraak: '#438365',
+	rubriekWetten: '#00487c',
+	rubriekRechtspraak: '#438365',
+	rubriekKamerstukken: '#cd7127',
+	rubriekParlement: '#ab618e',
+	rubriekRegering: '#523c0b',
 	fontSerif:
 		"'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia, serif",
 	fontLabel:
@@ -74,10 +76,11 @@ export const TOKEN_NAMES: Record<keyof Tokens, string> = {
 	moss: '--moss',
 	plum: '--plum',
 	slate: '--slate',
-	soortWet: '--soort-wet',
-	soortParlement: '--soort-parlement',
-	soortPersonen: '--soort-personen',
-	soortRechtspraak: '--soort-rechtspraak',
+	rubriekWetten: '--rubriek-wetten',
+	rubriekRechtspraak: '--rubriek-rechtspraak',
+	rubriekKamerstukken: '--rubriek-kamerstukken',
+	rubriekParlement: '--rubriek-parlement',
+	rubriekRegering: '--rubriek-regering',
 	fontSerif: '--font-serif',
 	// The labels on the canvas are text: the serif, since the sans is for controls only
 	// (docs/typografie.md).
@@ -113,7 +116,7 @@ export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string
 		case 'part':
 			return t.moss;
 		case 'change':
-			return t.soortWet;
+			return t.rubriekWetten;
 		case 'citation':
 			return t.slate;
 		case 'explanation':
@@ -163,24 +166,26 @@ export function dimColor(strength = 0.4): string {
 	return towardPaper(tokens().ink3, strength);
 }
 
-/** The colour of a group's hull (`--soort-*`): Wet, Fractie, Commissie, Dossier. */
+/** The colour of a group's hull (`--rubriek-*`): Wet, Dossier, Fractie, Commissie, Kabinet. */
 export function hullColorFor(kind: ContainerKind): string {
 	const t = tokens();
 	switch (kind) {
 		case 'instrument':
-			return t.soortWet;
-		case 'faction':
-			return t.soortPersonen;
-		case 'committee':
-			return t.soortParlement;
+			return t.rubriekWetten;
 		case 'dossier':
-			return t.soortParlement;
+			return t.rubriekKamerstukken;
+		case 'faction':
+		case 'committee':
+			return t.rubriekParlement;
+		case 'cabinet':
+			return t.rubriekRegering;
 	}
 }
 
 /**
  * The line of a group's hull, as an SVG dash array: a Wet solid, a Dossier dashed, a
- * Fractie dotted, a Commissie dash and dot. The kind reads without its colour.
+ * Fractie dotted, a Commissie dash and dot, a Kabinet dash, dot and dot. The kind reads
+ * without its colour.
  */
 export function hullDashFor(kind: ContainerKind): string | undefined {
 	switch (kind) {
@@ -192,6 +197,8 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 			return '1.5 3';
 		case 'committee':
 			return '8 3 1.5 3';
+		case 'cabinet':
+			return '8 3 1.5 3 1.5 3';
 	}
 }
 
@@ -258,7 +265,7 @@ const VORM_SCALE = 1.5;
 // Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
 // omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
 const vormCache: Map<string, string> = new Map();
-/** A colour token (`var(--soort-wet)`) as the canvas paints it. */
+/** A colour token (`var(--rubriek-wetten)`) as the canvas paints it. */
 function kleurUit(waarde: string | undefined, fallback: string): string {
 	const naam = waarde?.match(/^var\((--[\w-]+)\)$/)?.[1];
 	if (!naam) return waarde || fallback;
@@ -336,6 +343,8 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	orgaan: 4.4,
 	'orgaan-o': 4.3,
 	kabinet: 4.4,
+	ministerie: 4.4,
+	bewindspersoon: 3.2,
 	overig: 3.5
 };
 

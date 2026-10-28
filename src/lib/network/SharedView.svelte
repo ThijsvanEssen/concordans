@@ -498,7 +498,7 @@
 	}
 	.group {
 		fill: var(--paper);
-		stroke: var(--soort-rechtspraak);
+		stroke: var(--rubriek-rechtspraak);
 		stroke-width: 2;
 		stroke-dasharray: 3 2;
 	}
@@ -591,7 +591,7 @@
 	}
 	.mark--round {
 		border-radius: var(--r-rond);
-		border: 2px dashed var(--soort-rechtspraak);
+		border: 2px dashed var(--rubriek-rechtspraak);
 	}
 	.ladder__how {
 		font-family: var(--font-serif);

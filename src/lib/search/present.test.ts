@@ -252,9 +252,9 @@ describe('the Kamer of a hit', () => {
 		expect(chamberOfHit(given)).toBe('EK');
 	});
 
-	it('marks nothing but stukken, and heads the members as Leden', () => {
+	it('marks nothing but stukken, and heads the members as Kamerleden and bewindspersonen', () => {
 		expect(chamberOfHit(hit({ collection: 'members', key: 'ek_a_kanis_d66' }))).toBeUndefined();
-		expect(groupLabel('members')).toBe('Leden');
+		expect(groupLabel('members')).toBe('Kamerleden en bewindspersonen');
 		expect(groupLabel('dossiers')).toBe('Dossiers');
 	});
 });

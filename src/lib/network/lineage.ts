@@ -7,6 +7,7 @@
 // screen and the list on a phone read one model.
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
+import { isMinister } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
 import { shortDatesIn } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
@@ -53,7 +54,9 @@ const layerName = (n: { collection: string; props?: Record<string, unknown> | nu
 				? 'Kabinet'
 				: n.collection === 'committees'
 					? 'Commissie'
-					: 'Kamerlid';
+					: isMinister(n.props)
+						? 'Bewindspersoon'
+						: 'Kamerlid';
 };
 
 /** A judgment as its reader cites it, its day short ("HR 20 dec. 2019"), as the canvas names it. */

@@ -168,7 +168,8 @@ describe('Verbonden at a glance', () => {
 			'dossiers',
 			null
 		);
-		expect(dossier.map((k) => k.label)).toEqual(['Wetten', 'Stukken']);
+		// The rubriek of the bron itself first, then the others in the order of the Topbalk.
+		expect(dossier.map((k) => k.label)).toEqual(['Stukken', 'Wetten']);
 	});
 
 	it('says a judgment by where and how often it is cited, a Kamerstuk by its kind and day', () => {

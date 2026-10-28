@@ -31,10 +31,10 @@ const C = {
 	ink2: token('ink-2'),
 	ink3: token('ink-3'),
 	merk: token('merk'),
-	wet: token('soort-wet'),
-	parl: token('soort-parlement'),
-	pers: token('soort-personen'),
-	recht: token('soort-rechtspraak')
+	wet: token('rubriek-wetten'),
+	kst: token('rubriek-kamerstukken'),
+	parl: token('rubriek-parlement'),
+	recht: token('rubriek-rechtspraak')
 };
 
 // De code van het canvas, gebundeld voor Node. nodeSprites leest de tokens met
@@ -264,7 +264,7 @@ const SCHETS = {
 			bronnen: [
 				teken('regel', LOS_RIJ[0], C.wet),
 				teken('uitspraak', LOS_RIJ[1], C.recht),
-				teken('stuk', LOS_RIJ[2], C.parl),
+				teken('stuk', LOS_RIJ[2], C.kst),
 				focus('regel-o', LOS)
 			]
 		}),
@@ -302,7 +302,7 @@ const SCHETS = {
 			lijnen: [lijn(ONDER[0], F, 'explanation', { rb: RAND_FOCUS, buig: -1 })],
 			bronnen: [
 				...BUREN.map((p) => teken('regel-o', p, C.wet, MAAT.artikel)),
-				...ONDER.map((p) => teken('stuk', p, C.parl)),
+				...ONDER.map((p) => teken('stuk', p, C.kst)),
 				focus('regel-o', F)
 			]
 		});
@@ -319,7 +319,7 @@ const SCHETS = {
 			hullen: [boven, onder],
 			lijnen: [tussen(boven, onder, 'change', { buig: -1 })],
 			bronnen: [
-				...BUREN.map((p) => teken('stuk', p, C.parl)),
+				...BUREN.map((p) => teken('stuk', p, C.kst)),
 				...ONDER.map((p) => teken('regel-o', p, C.wet, MAAT.artikel)),
 				focus('voorstel', F)
 			]
@@ -337,8 +337,8 @@ const SCHETS = {
 			hullen: [boven, onder],
 			lijnen: [lijn(ONDER[0], F, 'submitter', { rb: RAND_FOCUS, buig: -1 })],
 			bronnen: [
-				...BUREN.map((p) => teken('stuk', p, C.parl)),
-				...ONDER.map((p) => teken('persoon', p, C.pers)),
+				...BUREN.map((p) => teken('stuk', p, C.kst)),
+				...ONDER.map((p) => teken('persoon', p, C.parl)),
 				focus('stuk', F)
 			]
 		});

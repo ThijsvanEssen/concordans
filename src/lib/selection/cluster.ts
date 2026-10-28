@@ -4,7 +4,8 @@
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
 import { joinAnd } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
-import { bronPlural, type Collection } from '$lib/vocabulary';
+import type { Collection } from '$lib/vocabulary';
+import { sortLabel, sortOf } from '$lib/bron/rubrieken';
 import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
 
 /** More than this many bronnen of one kind make a cluster. */
@@ -38,7 +39,7 @@ type Edge = { source: string; target: string; relation: string };
 
 /** "250 uitspraken": the count and the kind, as the cluster is named. */
 export const clusterLabel = (c: Pick<Cluster, 'collection' | 'members'>) =>
-	`${formatCount(c.members.length)} ${bronPlural(c.collection).toLowerCase()}`;
+	`${formatCount(c.members.length)} ${sortLabel(sortOf(c.collection, '', null)).toLowerCase()}`;
 
 /**
  * The heading of a cluster's card: of how many it holds where there are more (N2): "200 van
@@ -49,7 +50,7 @@ export const clusterHeading = (
 	totaal: number | null
 ) =>
 	totaal != null && totaal > c.members.length
-		? `${formatCount(c.members.length)} van ${formatCount(totaal)} ${bronPlural(c.collection).toLowerCase()}`
+		? `${formatCount(c.members.length)} van ${formatCount(totaal)} ${sortLabel(sortOf(c.collection, '', null)).toLowerCase()}`
 		: clusterLabel(c);
 
 /**

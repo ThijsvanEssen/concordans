@@ -19,7 +19,9 @@
 		FILTER_GROUP_LABEL,
 		PRESETS,
 		activePreset,
+		stuksoortOn,
 		toggleFilterGroup,
+		toggleStuksoort,
 		withPreset,
 		type FilterGroup,
 		type VerbondenFilter
@@ -33,13 +35,14 @@
 		type LineKind
 	} from '$lib/graph/line-kind';
 	import { kindColour } from '$lib/bron/kleur';
+	import { STUKSOORTEN, STUKSOORT_LABEL, sortColour, type Stuksoort } from '$lib/bron/rubrieken';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import LineSample from './LineSample.svelte';
 	import { BRON_LABEL } from '$lib/vocabulary';
 	import { kindCuts } from './kind-cut';
 	import { formatCount } from '$lib/text/getal';
-	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
+	import { SORT_SHAPE } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 	import { type NeighborhoodReach } from '$lib/graph/store/types';
 	import { kindRowCount, type KindRow } from './kind-rows';
@@ -93,6 +96,7 @@
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
+			stuksoorten?: Partial<Record<Stuksoort, number>>;
 			lines?: Partial<Record<LineKind, number>>;
 			annexes?: number;
 			metGroep?: Partial<
@@ -133,19 +137,15 @@
 	const cuts = $derived(kindCuts(reach?.buckets ?? [], totals));
 	// Relatie: the lines drawn, one row per relation, in the words of the mockup (A197-b) where
 	// one relation is read two ways (a judgment haalt aan, a Kamerstuk noemt).
-	/** The kind of bron a filter group draws, for its colour (kleur.ts). */
-	const GROUP_COLLECTION: Record<FilterGroup, Collection> = {
-		artikelen: 'articles',
-		wetten: 'instruments',
-		uitspraken: 'judgments',
-		toelichtingen: 'documents',
-		wetsvoorstellen: 'documents',
-		dossiers: 'dossiers',
-		stemmingen: 'decisions',
-		leden: 'members',
-		organen: 'committees',
-		internationaal: 'instruments'
-	};
+	// Stuksoort: what the stukken drawn are, a block of its own under Tonen (Filter Soort names the
+	// soorten, the stuksoort is a facet of the soort Stukken).
+	const stuksoorten = $derived(
+		(totals.stukken ?? 0) > 0 || filter.bronnen?.has('stukken') === false
+			? STUKSOORTEN.filter(
+					(s) => (canvasCounts.stuksoorten?.[s] ?? 0) > 0 || !stuksoortOn(filter, s)
+				)
+			: []
+	);
 	const kinds = $derived(FILTER_GROUPS.filter((k) => (totals[k] ?? 0) > 0 || !isOn(k)));
 	// Relatie: one row per lijnsoort (Netwerkcanvas, Lijnen) that is drawn or switched off.
 	const lines = $derived(
@@ -159,19 +159,8 @@
 		for (const kind of kinds) if (outlinesOn === !hiddenGroups.has(kind)) onToggleGroup?.(kind);
 	}
 
-	// On the canvas a wet, dossier, fractie or commissie is a hull, never a bron: the kinds
-	// are named by what does stand there (Thijs). Verbonden lists the wetten, dossiers and
-	// fracties themselves, and keeps their names; the switch is the same.
-	const OP_HET_NETWERK: Partial<Record<FilterGroup, { label: string; elders: string }>> = {
-		wetten: { label: 'Wetten en regelingen', elders: 'Wetten' },
-		dossiers: { label: 'Overige stukken', elders: 'Dossiers' },
-		leden: { label: 'Leden', elders: 'Leden en fracties' }
-	};
-	const kindLabel = (k: FilterGroup) => OP_HET_NETWERK[k]?.label ?? FILTER_GROUP_LABEL[k];
-	const kindTitle = (k: FilterGroup) => {
-		const n = OP_HET_NETWERK[k];
-		return n ? `${n.label} (in Verbonden: ${n.elders})` : undefined;
-	};
+	// Tonen names the soorten as Verbonden does, also where the canvas draws a wet, a dossier, a
+	// fractie, a commissie or a kabinet as a hull: the row switches that soort on or off.
 	const lids = $derived(
 		[...(verbonden.lidTellingen ?? lidCounts(allRows(verbonden.groups)))]
 			.map(([k]) => k)
@@ -254,9 +243,14 @@
 							gedimd={!!off}
 						>
 							{#snippet voor()}<KindGlyph
-									collection={r.collection ?? undefined}
+									vorm={r.filterGroups[0] ? SORT_SHAPE[r.filterGroups[0]] : undefined}
+									collection={r.filterGroups[0] ? undefined : (r.collection ?? undefined)}
 									size={11}
-									colour={r.collection ? kindColour(r.collection) : undefined}
+									colour={r.filterGroups[0]
+										? sortColour(r.filterGroups[0])
+										: r.collection
+											? kindColour(r.collection)
+											: undefined}
 								/>{/snippet}
 						</FilterOptie>
 						{#if r.load && onLaadSoort && kindsSettled}
@@ -298,10 +292,10 @@
 					{@const groepen = metGroepUit(k)}
 					{@const cut = cuts[k]}
 					<FilterOptie
-						label={kindLabel(k)}
+						label={FILTER_GROUP_LABEL[k]}
 						title={groepen
 							? `Aan met ${groepen.map((g) => GROUP_LABEL[g]).join(' en ')}`
-							: kindTitle(k)}
+							: undefined}
 						wrap
 						on={isOn(k)}
 						onToggle={() =>
@@ -314,9 +308,9 @@
 						gedimd={!!groepen}
 					>
 						{#snippet voor()}<KindGlyph
-								vorm={FILTER_GROUP_VORM[k]}
+								vorm={SORT_SHAPE[k]}
 								size={11}
-								colour={kindColour(GROUP_COLLECTION[k])}
+								colour={sortColour(k)}
 							/>{/snippet}
 					</FilterOptie>
 					<!-- The one step where the kind is cut off: all of it, under its count. -->
@@ -332,6 +326,29 @@
 					{/if}
 				{/each}
 				{@render tonenRest()}
+			</Sectie>
+		{/if}
+
+		{#if stuksoorten.length > 1 || filter.stuksoort}
+			<Sectie title="Stuksoort" niveau={3} inklapbaar={false}>
+				{#each stuksoorten as s (s)}
+					{@const n = canvasCounts.stuksoorten?.[s] ?? 0}
+					<FilterOptie
+						label={STUKSOORT_LABEL[s]}
+						wrap
+						on={stuksoortOn(filter, s)}
+						onToggle={() => onFilter(toggleStuksoort(filter, s))}
+						count={n}
+						loading={counting}
+						empty={n === 0}
+					>
+						{#snippet voor()}<KindGlyph
+								vorm={s === 'wetsvoorstellen' ? 'voorstel' : 'stuk'}
+								size={11}
+								colour={sortColour('stukken')}
+							/>{/snippet}
+					</FilterOptie>
+				{/each}
 			</Sectie>
 		{/if}
 

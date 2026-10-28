@@ -7,13 +7,14 @@
 	import NetworkButton from './NetworkButton.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { SOURCES, sourceOf } from '$lib/nav/sources';
+	import { bronRol } from '$lib/nav/bron-rol';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
 	const isHome = $derived($page.url.pathname === '/');
 	// The source a page stands under: the list of Bladeren or the bron read; the network, the
 	// start page and Mijn stand under none.
-	const source = $derived(sourceOf($page.url));
+	const source = $derived(sourceOf($page.url, $bronRol));
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 
 	// Something kept or followed shows a sign at Mijn until the reader has been there (the

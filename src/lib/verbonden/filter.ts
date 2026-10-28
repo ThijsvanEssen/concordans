@@ -8,9 +8,16 @@ import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 import { textOf } from '$lib/text/words';
 import { alsDag } from '$lib/text/periode';
-import { isExplanatory } from './document-chamber';
+import {
+	SORTS,
+	STUKSOORTEN,
+	sortLabel,
+	sortOf,
+	sortOne,
+	type Sort,
+	type Stuksoort
+} from '$lib/bron/rubrieken';
 import type { Row } from './rows';
-import { BILL_KIND, isAmendingRelation, isInternational } from '$lib/vocabulary';
 import { PARAM } from '$lib/url/filters';
 
 /** The confidence from which a verbinding's betrouwbaarheid is hoog: a citation read whole has 0.95. */
@@ -31,65 +38,38 @@ export function confidenceWord(
 			: 'laag';
 }
 
-export const FILTER_GROUPS = [
-	'artikelen',
-	'wetten',
-	'uitspraken',
-	'toelichtingen',
-	'wetsvoorstellen',
-	'dossiers',
-	'stemmingen',
-	'leden',
-	'organen',
-	'internationaal'
-] as const;
+export const FILTER_GROUPS = SORTS;
 
-export type FilterGroup = (typeof FILTER_GROUPS)[number];
+/** What the canvas hides by the bronfilter: a soort, or one stuksoort of the stukken. */
+export type HiddenKind = FilterGroup | `stuksoort:${Stuksoort}`;
 
-export const FILTER_GROUP_LABEL: Record<FilterGroup, string> = {
-	artikelen: 'Artikelen',
-	wetten: 'Wetten',
-	uitspraken: 'Uitspraken',
-	toelichtingen: 'Toelichtingen',
-	wetsvoorstellen: 'Wetsvoorstellen',
-	dossiers: 'Dossiers',
-	stemmingen: 'Stemmingen',
-	leden: 'Leden en fracties',
-	organen: 'Organen',
-	internationaal: 'Europees en internationaal'
-};
+/** The soorten and the stuksoorten the bronfilter leaves out, as the canvas reads them. */
+export function hiddenKindsOf(f: VerbondenFilter): ReadonlySet<HiddenKind> {
+	const hidden = new Set<HiddenKind>();
+	if (f.bronnen) for (const k of SORTS) if (!f.bronnen.has(k)) hidden.add(k);
+	if (f.stuksoort)
+		for (const k of STUKSOORTEN) if (!f.stuksoort.has(k)) hidden.add(`stuksoort:${k}`);
+	return hidden;
+}
 
-/** The kinds as the line "Toon ook rechtspraak" names them. */
+export type FilterGroup = Sort;
+
+export const FILTER_GROUP_LABEL: Record<FilterGroup, string> = Object.fromEntries(
+	SORTS.map((s) => [s, sortLabel(s)])
+) as Record<FilterGroup, string>;
+
+/** The kinds as the line "Toon ook de uitspraken" names them. */
 export const FILTER_GROUP_NOUN: Record<FilterGroup, string> = {
-	artikelen: 'artikelen',
-	wetten: 'wetten',
-	uitspraken: 'rechtspraak',
-	toelichtingen: 'toelichting',
-	wetsvoorstellen: 'wetsvoorstellen',
-	dossiers: 'dossiers',
-	stemmingen: 'stemmingen',
-	leden: 'leden en fracties',
-	organen: 'organen',
+	...(Object.fromEntries(SORTS.map((s) => [s, sortLabel(s).toLowerCase()])) as Record<
+		FilterGroup,
+		string
+	>),
 	internationaal: 'Europese en internationale bronnen'
-};
-
-/** One bron of a kind, for counts of one: `1 wet`, `2 wetten`. */
-const FILTER_GROUP_ONE: Record<FilterGroup, string> = {
-	artikelen: 'artikel',
-	wetten: 'wet',
-	uitspraken: 'uitspraak',
-	toelichtingen: 'toelichting',
-	wetsvoorstellen: 'wetsvoorstel',
-	dossiers: 'dossier',
-	stemmingen: 'stemming',
-	leden: 'lid of fractie',
-	organen: 'orgaan',
-	internationaal: 'Europese of internationale bron'
 };
 
 /** `1 wet`, `3 wetten`: a count with the kind's noun in the right number. */
 export const filterGroupCount = (n: number, kind: FilterGroup) =>
-	`${formatCount(n)} ${n === 1 ? FILTER_GROUP_ONE[kind] : FILTER_GROUP_LABEL[kind].toLowerCase()}`;
+	`${formatCount(n)} ${n === 1 ? sortOne(kind) : FILTER_GROUP_LABEL[kind].toLowerCase()}`;
 
 export const RECHTERS = [
 	{ id: 'hr', label: 'Hoge Raad' },
@@ -113,6 +93,8 @@ export type Status = 'vastgesteld' | 'voorgesteld';
 export type VerbondenFilter = {
 	/** The kinds that take part; null is all of them. */
 	bronnen: ReadonlySet<FilterGroup> | null;
+	/** The stuksoorten of the stukken that take part; null is all of them. */
+	stuksoort: ReadonlySet<Stuksoort> | null;
 	/** The relations that take part (`REFERS_TO`); null is all of them. */
 	relations: ReadonlySet<string> | null;
 	/** `2`, or `geen` for verbindingen that name no lid. */
@@ -135,6 +117,7 @@ export type VerbondenFilter = {
 
 export const EMPTY_FILTER: VerbondenFilter = {
 	bronnen: null,
+	stuksoort: null,
 	relations: null,
 	lid: null,
 	rechter: null,
@@ -150,6 +133,7 @@ export const EMPTY_FILTER: VerbondenFilter = {
 
 const isFilterGroup = (v: string): v is FilterGroup =>
 	(FILTER_GROUPS as readonly string[]).includes(v);
+const isStuksoort = (v: string): v is Stuksoort => (STUKSOORTEN as readonly string[]).includes(v);
 const isRechter = (v: string | null): v is Rechter => RECHTERS.some((r) => r.id === v);
 const year = (v: string | null) => (v && /^\d{4}$/.test(v) ? Number(v) : null);
 
@@ -163,12 +147,25 @@ export const emptyLine = (f: VerbondenFilter): string =>
 		? 'Geen verbindingen binnen de gekozen bronnen en filters.'
 		: 'Geen verbindingen.';
 
+/**
+ * The start page's server HTML (lawgraph, `seo/pages/home.py`) still names the stukken as
+ * toelichtingen and wetsvoorstellen; they are one soort, Stukken, until that page says so.
+ */
+const START_PAGE_NAME = [
+	['toelichtingen', 'stukken'],
+	['wetsvoorstellen', 'stukken']
+] as const;
+
 /** The filter the URL holds. */
 export function parseFilter(params: URLSearchParams): VerbondenFilter {
 	const kinds = (params.get('bronnen') ?? '')
 		.split(',')
-		.map((s) => s.trim())
+		.map((s) => START_PAGE_NAME.find(([old]) => old === s.trim())?.[1] ?? s.trim())
 		.filter(isFilterGroup);
+	const stuksoorten = (params.get('stuksoort') ?? '')
+		.split(',')
+		.map((v) => v.trim())
+		.filter(isStuksoort);
 	const relationList = (params.get('relatie') ?? '')
 		.split(',')
 		.map((r) => r.trim())
@@ -179,6 +176,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 	const geldendOp = params.get('geldend');
 	return {
 		bronnen: kinds.length > 0 ? new Set(kinds) : null,
+		stuksoort: stuksoorten.length > 0 ? new Set(stuksoorten) : null,
 		relations: relationList.length > 0 ? new Set(relationList) : null,
 		lid: params.get('lid') || null,
 		rechter: isRechter(rechter) ? rechter : null,
@@ -198,6 +196,7 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 export function filterParams(f: VerbondenFilter): Record<string, string | null> {
 	return {
 		bronnen: f.bronnen ? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',') : null,
+		stuksoort: f.stuksoort ? STUKSOORTEN.filter((k) => f.stuksoort!.has(k)).join(',') : null,
 		['relatie']: f.relations ? [...f.relations].sort().join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
@@ -218,6 +217,7 @@ type Preset = {
 	id: string;
 	label: string;
 	bronnen: readonly FilterGroup[] | null;
+	stuksoort?: readonly Stuksoort[];
 	rechter?: Rechter;
 };
 
@@ -227,25 +227,42 @@ export const PRESETS: readonly Preset[] = [
 	{
 		id: 'wetteksten',
 		label: 'Wetteksten en toelichting',
-		bronnen: ['artikelen', 'wetten', 'toelichtingen', 'wetsvoorstellen']
+		bronnen: ['artikelen', 'wetten', 'stukken'],
+		stuksoort: ['toelichtingen', 'wetsvoorstellen']
 	},
 	{ id: 'rechtspraak', label: 'Alleen rechtspraak', bronnen: ['uitspraken'] },
 	{ id: 'hoge-raad', label: 'Hoge Raad', bronnen: ['uitspraken'], rechter: 'hr' }
 ];
 
-const sameGroups = (a: ReadonlySet<FilterGroup> | null, b: readonly FilterGroup[] | null) =>
+const sameGroups = (a: ReadonlySet<string> | null, b: readonly string[] | null) =>
 	a === null ? b === null : b !== null && a.size === b.length && b.every((k) => a.has(k));
 
 /** The preset whose bronnen and rechter the filter has, or null. */
 export const activePreset = (f: VerbondenFilter): Preset | null =>
-	PRESETS.find((p) => sameGroups(f.bronnen, p.bronnen) && (p.rechter ?? null) === f.rechter) ??
-	null;
+	PRESETS.find(
+		(p) =>
+			sameGroups(f.bronnen, p.bronnen) &&
+			sameGroups(f.stuksoort, p.stuksoort ?? null) &&
+			(p.rechter ?? null) === f.rechter
+	) ?? null;
 
 export const withPreset = (f: VerbondenFilter, p: Preset): VerbondenFilter => ({
 	...f,
 	bronnen: p.bronnen ? new Set(p.bronnen) : null,
+	stuksoort: p.stuksoort ? new Set(p.stuksoort) : null,
 	rechter: p.rechter ?? null
 });
+
+/** Turns a stuksoort on or off; all of them on is no choice. */
+export function toggleStuksoort(f: VerbondenFilter, kind: Stuksoort): VerbondenFilter {
+	const next = new Set(f.stuksoort ?? STUKSOORTEN);
+	if (!next.delete(kind)) next.add(kind);
+	return { ...f, stuksoort: next.size === STUKSOORTEN.length ? null : next };
+}
+
+/** Whether a stuksoort takes part. */
+export const stuksoortOn = (f: VerbondenFilter, kind: Stuksoort): boolean =>
+	f.stuksoort === null || f.stuksoort.has(kind);
 
 export function toggleFilterGroup(f: VerbondenFilter, kind: FilterGroup): VerbondenFilter {
 	const next = new Set(f.bronnen ?? FILTER_GROUPS);
@@ -259,53 +276,15 @@ export const withFilterGroup = (f: VerbondenFilter, kind: FilterGroup): Verbonde
 // ── The kind of a bron ────────────────────────────────────────────────────
 
 /**
- * The kind of a bron for the filter. Documents are split by what they are:
- * toelichtingen (`is_explanatory`, or the kind memorie or nota van toelichting) and
- * wetsvoorstellen (a change of a law that exists, AMENDING_RELATIONS, or the kind of
- * the document). Kamerleden, fracties and commissies are leden: who is involved, not what
- * a dossier holds. Besluiten are stemmingen: what the Kamer decided, not a paper in the
- * dossier (Thijs, 11 Oct: "zijn toch echt anders"); a motie or amendement is a paper and
- * stays with the documents. Activiteiten and toezeggingen stay dossiers: what a dossier's
- * process produced, not a person or a group of them.
+ * The kind of a bron for the filter: its soort (`sortOf`), the one rule of Verbonden, Tonen and
+ * the canvas. What a stuk is (toelichting, wetsvoorstel) is the filter's Stuksoort.
  */
-export function filterGroupOf(
+export const filterGroupOf = (
 	collection: string,
 	key: string,
 	props: Record<string, unknown> | null | undefined,
 	relation?: string | null
-): FilterGroup {
-	if (isInternational({ key, props })) return 'internationaal';
-	switch (collection) {
-		case 'articles':
-		case 'article_versions':
-		case 'annexes':
-			return 'artikelen';
-		case 'instruments':
-		case 'instrument_versions':
-			return 'wetten';
-		case 'judgments':
-			return 'uitspraken';
-		case 'documents': {
-			const kind = typeof props?.kind === 'string' ? props.kind : null;
-			if (isExplanatory({ kind, is_explanatory: props?.is_explanatory as boolean | null }))
-				return 'toelichtingen';
-			if (isAmendingRelation(relation) || (kind && BILL_KIND.test(kind))) return 'wetsvoorstellen';
-			return 'dossiers';
-		}
-		case 'decisions':
-			return 'stemmingen';
-		case 'members':
-		case 'factions':
-			return 'leden';
-		// A commissie, a kabinet, a ministerie: drawn as a body of its own, a kind of its own.
-		case 'committees':
-		case 'cabinets':
-		case 'ministries':
-			return 'organen';
-		default:
-			return 'dossiers';
-	}
-}
+): FilterGroup => sortOf(collection, key, props, relation);
 
 // ── Applying the filter to rows ───────────────────────────────────────────
 
@@ -385,6 +364,8 @@ const day = (d: string | null | undefined) => (d ? d.slice(0, 10) : null);
 /** Whether a row passes the filter. */
 export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	if (f.bronnen && !f.bronnen.has(row.filterGroup)) return false;
+	if (f.stuksoort && row.filterGroup === 'stukken' && !f.stuksoort.has(row.stuksoort ?? 'overige'))
+		return false;
 	if (f.relations && row.relation && !f.relations.has(row.relation)) return false;
 	if (f.lid !== null) {
 		if (f.lid === 'geen' ? row.lid != null : row.lid !== f.lid) return false;

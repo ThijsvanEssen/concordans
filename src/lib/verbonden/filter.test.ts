@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	EMPTY_FILTER,
+	FILTER_GROUPS,
 	PRESETS,
 	activePreset,
 	HIGH_CONFIDENCE,
@@ -14,9 +15,11 @@ import {
 	rechterOf,
 	rowPasses,
 	toggleFilterGroup,
+	toggleStuksoort,
 	withPreset,
 	type VerbondenFilter
 } from './filter';
+import { stuksoortOf } from '$lib/bron/rubrieken';
 import type { Row } from './rows';
 
 const row = (over: Partial<Row>): Row => ({
@@ -31,16 +34,16 @@ describe('parseFilter', () => {
 	it('reads the bronnen and the other filters from the URL, and writes them back', () => {
 		const f = parseFilter(
 			new URLSearchParams(
-				'bronnen=artikelen,wetten,toelichtingen&lid=2&rechter=hof&van=2015-01-01&tot=2026-12-31'
+				'bronnen=wetten,artikelen,stukken&lid=2&rechter=hof&van=2015-01-01&tot=2026-12-31'
 			)
 		);
-		expect([...f.bronnen!]).toEqual(['artikelen', 'wetten', 'toelichtingen']);
+		expect([...f.bronnen!]).toEqual(['wetten', 'artikelen', 'stukken']);
 		expect(f.lid).toBe('2');
 		expect(f.rechter).toBe('hof');
 		expect(f.van).toBe('2015-01-01');
 		expect(f.tot).toBe('2026-12-31');
 		expect(filterParams(f)).toMatchObject({
-			bronnen: 'artikelen,wetten,toelichtingen',
+			bronnen: 'wetten,artikelen,stukken',
 			lid: '2',
 			rechter: 'hof',
 			van: '2015-01-01',
@@ -68,7 +71,7 @@ describe('presets', () => {
 		expect(activePreset(EMPTY_FILTER)?.id).toBe('alles');
 		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[2]))?.id).toBe('wetteksten');
 		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[4]))?.id).toBe('hoge-raad');
-		const f = toggleFilterGroup(toggleFilterGroup(EMPTY_FILTER, 'toelichtingen'), 'internationaal');
+		const f = toggleFilterGroup(toggleFilterGroup(EMPTY_FILTER, 'stukken'), 'internationaal');
 		expect(activePreset(f)).toBeNull();
 		expect(activePreset({ ...EMPTY_FILTER, rechter: 'hr' })).toBeNull();
 	});
@@ -76,21 +79,16 @@ describe('presets', () => {
 	it('toggles one kind and returns to all when every kind is on', () => {
 		const one = toggleFilterGroup(EMPTY_FILTER, 'uitspraken');
 		expect(one.bronnen!.has('uitspraken')).toBe(false);
-		expect(one.bronnen!.size).toBe(9);
+		expect(one.bronnen!.size).toBe(FILTER_GROUPS.length - 1);
 		expect(toggleFilterGroup(one, 'uitspraken').bronnen).toBeNull();
 	});
 });
 
 describe('filterGroupOf', () => {
-	it('splits documents by kind and relation', () => {
-		expect(filterGroupOf('documents', 'd', { kind: 'Memorie van toelichting' })).toBe(
-			'toelichtingen'
-		);
-		expect(filterGroupOf('documents', 'd', { kind: 'Voorstel van wet' })).toBe('wetsvoorstellen');
-		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, 'AMENDS')).toBe(
-			'wetsvoorstellen'
-		);
-		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' })).toBe('dossiers');
+	it('puts a document with the stukken, whatever it is', () => {
+		expect(filterGroupOf('documents', 'd', { kind: 'Memorie van toelichting' })).toBe('stukken');
+		expect(filterGroupOf('documents', 'd', { kind: 'Voorstel van wet' })).toBe('stukken');
+		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, 'AMENDS')).toBe('stukken');
 		expect(filterGroupOf('articles', 'bwbv0001000_6', {})).toBe('internationaal');
 		expect(filterGroupOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
 			'internationaal'
@@ -101,23 +99,58 @@ describe('filterGroupOf', () => {
 		expect(filterGroupOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 
-	it.each([
-		['ESTABLISHES', 'dossiers'],
-		['AMENDS', 'wetsvoorstellen'],
-		['INTRODUCES', 'wetsvoorstellen'],
-		['REPEALS', 'wetsvoorstellen']
-	] as const)('counts a stuk that %s a law as %s', (relation, kind) => {
-		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, relation)).toBe(kind);
+	it('names the soort of every kind of bron as its own', () => {
+		expect(filterGroupOf('activities', 'a1', {})).toBe('activiteiten');
+		expect(filterGroupOf('commitments', 't1', {})).toBe('toezeggingen');
+		expect(filterGroupOf('decisions', 'b1', {})).toBe('stemmingen');
+		expect(filterGroupOf('committees', 'c1', {})).toBe('commissies');
+		expect(filterGroupOf('cabinets', 'k1', {})).toBe('kabinetten');
+		expect(filterGroupOf('ministries', 'm1', {})).toBe('ministeries');
+		expect(filterGroupOf('factions', 'f1', {})).toBe('fracties');
 	});
 
-	it('groups kamerleden and fracties as leden, commissies and kabinetten apart, not dossiers', () => {
-		expect(filterGroupOf('members', 'm1', {})).toBe('leden');
-		expect(filterGroupOf('factions', 'f1', {})).toBe('leden');
-		// Drawn as a body of their own, a kind of their own (Thijs, 23 Oct).
-		expect(filterGroupOf('committees', 'c1', {})).toBe('organen');
-		expect(filterGroupOf('cabinets', 'k1', {})).toBe('organen');
-		expect(filterGroupOf('activities', 'a1', {})).toBe('dossiers');
-		expect(filterGroupOf('decisions', 'b1', {})).toBe('stemmingen');
+	it('tells a Kamerlid from a bewindspersoon by the posts and the way they are met', () => {
+		expect(filterGroupOf('members', 'm1', {})).toBe('kamerleden');
+		const post = [{ function: 'Minister van Justitie' }];
+		expect(filterGroupOf('members', 'm2', { government_functions: post })).toBe('bewindspersonen');
+		// Met as a lid of a fractie, a person is a Kamerlid whatever they held.
+		expect(filterGroupOf('members', 'm3', { government_functions: post }, 'MEMBER_OF')).toBe(
+			'kamerleden'
+		);
+		expect(filterGroupOf('members', 'm4', {}, 'SERVED_IN')).toBe('bewindspersonen');
+	});
+});
+
+describe('the stuksoort', () => {
+	it.each([
+		[{ kind: 'Memorie van toelichting' }, null, 'toelichtingen'],
+		[{ kind: 'Voorstel van wet' }, null, 'wetsvoorstellen'],
+		[{ kind: 'Brief regering' }, 'AMENDS', 'wetsvoorstellen'],
+		[{ kind: 'Brief regering' }, 'INTRODUCES', 'wetsvoorstellen'],
+		[{ kind: 'Brief regering' }, 'ESTABLISHES', 'overige'],
+		[{ kind: 'Motie' }, null, 'overige']
+	] as const)('tells %j (%s) as %s', (props, relation, soort) => {
+		expect(stuksoortOf(props, relation)).toBe(soort);
+	});
+
+	it('narrows the stukken alone, and is in the address', () => {
+		const only = (f: Partial<VerbondenFilter>) => ({ ...EMPTY_FILTER, ...f });
+		const stuk = (stuksoort: Row['stuksoort']) =>
+			row({ ref: { collection: 'documents', key: 'd' }, filterGroup: 'stukken', stuksoort });
+		const f = only({ stuksoort: new Set(['toelichtingen']) });
+		expect(rowPasses(stuk('toelichtingen'), f)).toBe(true);
+		expect(rowPasses(stuk('wetsvoorstellen'), f)).toBe(false);
+		expect(rowPasses(row({ filterGroup: 'uitspraken' }), f)).toBe(true);
+		expect(filterParams(f).stuksoort).toBe('toelichtingen');
+		expect(parseFilter(new URLSearchParams('stuksoort=wetsvoorstellen,x')).stuksoort).toEqual(
+			new Set(['wetsvoorstellen'])
+		);
+		expect(toggleStuksoort(EMPTY_FILTER, 'overige').stuksoort).toEqual(
+			new Set(['wetsvoorstellen', 'toelichtingen'])
+		);
+		expect(
+			toggleStuksoort(toggleStuksoort(EMPTY_FILTER, 'overige'), 'overige').stuksoort
+		).toBeNull();
 	});
 });
 
@@ -157,12 +190,12 @@ describe('rowPasses', () => {
 		const only = (f: Partial<VerbondenFilter>) => ({ ...EMPTY_FILTER, ...f });
 		const lnv = row({
 			ref: { collection: 'committees', key: 'lnv' },
-			filterGroup: 'leden',
+			filterGroup: 'commissies',
 			period: { from: '2017-11-14', to: '2021-04-06', role: null }
 		});
 		const now = row({
 			ref: { collection: 'committees', key: 'iv' },
-			filterGroup: 'leden',
+			filterGroup: 'commissies',
 			period: { from: '2025-11-12', to: null, role: null }
 		});
 		expect(rowPasses(lnv, only({ van: '2019-01-01', tot: '2019-12-31' }))).toBe(true);

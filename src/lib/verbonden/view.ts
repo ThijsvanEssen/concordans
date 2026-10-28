@@ -2,6 +2,7 @@
 // the rows that pass, the counts and the years of the judgments.
 import { plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
+import type { Stuksoort } from '$lib/bron/rubrieken';
 import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
 import {
@@ -28,6 +29,7 @@ export const NEXT_ROWS = 50;
 
 /** Whether the filter has a criterion that cuts inside a group, so its total no longer holds. */
 const cutsRows = (f: VerbondenFilter) =>
+	f.stuksoort !== null ||
 	f.lid !== null ||
 	f.rechter !== null ||
 	f.area !== null ||
@@ -38,6 +40,10 @@ const cutsRows = (f: VerbondenFilter) =>
 	f.status !== null ||
 	f.jaar !== null ||
 	f.zoek !== '';
+
+/** The soort a group's noun names (`leden` of a fractie, `toelichtingen` of a dossier). */
+const sortOfNoun = (noun: string): FilterGroup =>
+	noun === 'leden' ? 'kamerleden' : noun === 'toelichtingen' ? 'stukken' : (noun as FilterGroup);
 
 /** The kind a group counts for: that of its rows. */
 const filterGroupOfRows = (g: Group): FilterGroup | null => g.rows[0]?.filterGroup ?? null;
@@ -80,7 +86,7 @@ export function filterGroups(
 					rows.length === 0 &&
 					!cut &&
 					wachtend.has(g.id) &&
-					(!f.bronnen || f.bronnen.has(g.noun as FilterGroup))
+					(!f.bronnen || f.bronnen.has(sortOfNoun(g.noun ?? '')))
 			};
 		})
 		.filter((g) => g.rows.length > 0 || g.laden || (g.failed && !cut));
@@ -180,6 +186,17 @@ export function groupTotals(groups: Group[]): Partial<Record<FilterGroup, number
 	return totals;
 }
 
+/** Per stuksoort, the number of stukken among the rows: the counts of the block Stuksoort. */
+export function stuksoortTotals(groups: Group[]): Partial<Record<Stuksoort, number>> {
+	const totals: Partial<Record<Stuksoort, number>> = {};
+	for (const r of allRows(groups))
+		if (r.filterGroup === 'stukken') {
+			const s = r.stuksoort ?? 'overige';
+			totals[s] = (totals[s] ?? 0) + 1;
+		}
+	return totals;
+}
+
 /**
  * Per relation, the number of verbindingen and its label: every word its rows say, the most
  * said first (`haalt aan, verwijst naar` on an article cited by judgments and articles alike).
@@ -236,7 +253,7 @@ export function hiddenLine(
 const GROUPS_OF_BUCKET: Record<string, FilterGroup[]> = {
 	judgments: ['uitspraken'],
 	articles: ['artikelen'],
-	documents: ['toelichtingen', 'wetsvoorstellen', 'dossiers']
+	documents: ['stukken']
 };
 
 /**
@@ -246,8 +263,10 @@ const GROUPS_OF_BUCKET: Record<string, FilterGroup[]> = {
  */
 export function memberCountsUnder(
 	per: Map<string, Map<string, number>>,
-	bronnen: ReadonlySet<FilterGroup> | null
+	bronnen: ReadonlySet<FilterGroup> | null,
+	stuksoort: ReadonlySet<string> | null = null
 ): Map<string, number> | null {
+	if (stuksoort && per.has('documents') && (!bronnen || bronnen.has('stukken'))) return null;
 	if (!bronnen) return sumLidCounts(per);
 	for (const collection of per.keys()) {
 		const kinds = GROUPS_OF_BUCKET[collection];

@@ -44,7 +44,7 @@
 	import { fitBox, insetsOf, NAME_BELOW, type Insets } from './fit-box';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
-	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
+	import type { FilterGroup, HiddenKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { lawName } from '$lib/text/instrument-meta';
 	import {
@@ -82,7 +82,7 @@
 		graph,
 		focusedId = null as string | null,
 		filters = null as GraphFilters | null,
-		hiddenKinds = new Set<FilterGroup>() as ReadonlySet<FilterGroup>,
+		hiddenKinds = new Set<HiddenKind>() as ReadonlySet<HiddenKind>,
 		pinnedIds = new Set<string>() as Set<string>,
 		coreIds = null as ReadonlySet<string> | null,
 		containerGroups = new Map<string, ContainerGroup>() as Map<string, ContainerGroup>,
@@ -112,7 +112,7 @@
 		focusedId?: string | null;
 		filters?: GraphFilters | null;
 		/** Kinds of bron the bronfilter hides: not drawn, and their edges not drawn. */
-		hiddenKinds?: ReadonlySet<FilterGroup>;
+		hiddenKinds?: ReadonlySet<HiddenKind>;
 		/** The chosen bronnen of a netwerk: always named, a little larger. */
 		pinnedIds?: Set<string>;
 		/** While a netwerk is drawn, its chosen bronnen and what ties them; the rest is context and steps back. */
@@ -248,7 +248,7 @@
 
 	// Plain mutable refs read inside sigma reducer closures, not reactive state.
 	let latestFilters: GraphFilters | null = null;
-	let latestHiddenKinds: ReadonlySet<FilterGroup> = new Set();
+	let latestHiddenKinds: ReadonlySet<HiddenKind> = new Set();
 	let latestPinnedIds = new Set<string>();
 	let latestCoreIds: ReadonlySet<string> | null = null;
 	let latestSelectedEdge: string | null = null;
@@ -694,6 +694,7 @@
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
 		(!!latestFilters?.hiddenAnnexes && attrs.drawClass === 'other') ||
 		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
+		(!!attrs.stuksoort && latestHiddenKinds.has(`stuksoort:${attrs.stuksoort}` as HiddenKind)) ||
 		otherCourt(attrs);
 
 	// The focus and the chosen bronnen stay drawn under every filter: Soort off for their own

@@ -69,7 +69,7 @@ describe('a row of Verbonden kept in the map', () => {
 			ref: { collection: 'documents', key: 'los' },
 			title: 'Antwoord op vragen',
 			context: null,
-			filterGroup: 'toelichtingen',
+			filterGroup: 'stukken',
 			props: {}
 		} as Row;
 		const lezer = bewaarItem('documents/los', { kort: 'Antwoord' }, { groep: 'Antwoord' });

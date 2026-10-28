@@ -7,7 +7,7 @@ import { kindRows, kindRowCount, lightBuckets, kindFocus, type DrawnBron } from 
 
 const FILTER_OF: Partial<Record<Collection, Row['filterGroup']>> = {
 	judgments: 'uitspraken',
-	members: 'leden',
+	members: 'kamerleden',
 	decisions: 'stemmingen',
 	articles: 'artikelen'
 };
@@ -73,20 +73,16 @@ describe('Soort reads Verbonden (N1)', () => {
 		expect(r.map((x) => kindRowCount(x, true))).toEqual(['2 van 146', '1 van 2', '0 van 10']);
 	});
 
-	it('counts a bron Verbonden does not count apart, past the count of its soort', () => {
-		// Two stemmingen in Verbonden, three drawn: the third is none Verbonden counts.
+	it('keeps what Verbonden does not count of a soort in that soort, no row of leftovers', () => {
+		// Two stemmingen in Verbonden, three drawn: the third stands in Stemmingen too, uncounted.
 		const r = rows([bron('decisions', 's1'), bron('decisions', 's2'), bron('decisions', 'ek1')]);
 		expect(r.find((x) => x.id === 'decisions')).toMatchObject({ drawn: 2, total: null });
-		expect(r.find((x) => x.id === 'overig:decisions')).toMatchObject({
-			label: 'Overige stemmingen',
-			drawn: 1,
-			total: null
-		});
+		expect(r.some((x) => x.id.startsWith('overig:'))).toBe(false);
 	});
 
 	it('names a soort Verbonden has not by its word, of the whole the API counts (N2)', () => {
 		const r = rows([bron('members', 'm1')], [{ collection: 'members', total: 29, kept: 1 }]);
-		expect(r.at(-1)).toMatchObject({ label: 'Personen', drawn: 1, total: 29, load: 'members' });
+		expect(r.at(-1)).toMatchObject({ label: 'Kamerleden', drawn: 1, total: 29, load: 'members' });
 	});
 
 	it('puts what lies one step further under a heading of its own', () => {

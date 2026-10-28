@@ -7,7 +7,6 @@ import { refId } from '$lib/bron/href';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 import { FILTER_GROUP_LABEL, filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 import { formatCount } from '$lib/text/getal';
-import { lowerFirst } from '$lib/text/words';
 import { groupCount, type Group } from '$lib/verbonden/groups';
 import { kindLabelOn, kindOfBron, type Kind } from '$lib/verbonden/summary';
 import type { Collection } from '$lib/vocabulary';
@@ -154,15 +153,8 @@ export function kindRows(o: {
 				b
 			);
 	}
-	// Past its count a soort holds no more: what Verbonden does not count stands on its own,
-	// "Overige stemmingen" (a dossier's votes of the Eerste Kamer, which the API counts apart).
-	for (const k of kinds) {
-		const room = Math.max(0, k.count - (drawnBy.get(k.id)?.length ?? 0));
-		const extra = perKind.get(k.id) ?? [];
-		for (const b of extra.slice(0, room)) add(k.id, b);
-		for (const b of extra.slice(room))
-			toRest(`overig:${k.id}`, `Overige ${lowerFirst(k.label)}`, b);
-	}
+	// What Verbonden does not count of a soort stands in that soort too: no row of leftovers.
+	for (const k of kinds) for (const b of perKind.get(k.id) ?? []) add(k.id, b);
 
 	const filterGroupsOf = (
 		rows: readonly { filterGroup: FilterGroup }[],
@@ -204,7 +196,11 @@ export function kindRows(o: {
 		...(drawnBy.has('eigen:keten')
 			? [makeRow('eigen:keten', CHAIN_LABEL[focus.collection] ?? 'Behoort bij', null, [], null)]
 			: []),
-		...kinds.map((k) => makeRow(k.id, k.label, k.count, k.rows, k.collection)),
+		// Never more drawn than Verbonden counts: the legend and Verbonden say one number.
+		...kinds.map((k) => {
+			const row = makeRow(k.id, k.label, k.count, k.rows, k.collection);
+			return { ...row, drawn: Math.min(row.drawn, k.count) };
+		}),
 		...[...rest]
 			.sort(([a], [b]) => Number(a.startsWith('verder:')) - Number(b.startsWith('verder:')))
 			.map(([id, r]) => {

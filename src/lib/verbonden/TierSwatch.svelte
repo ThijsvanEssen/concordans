@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The vlak of an instantie (Design System, VerbondenGroep): a step of soort-rechtspraak, the
+	// The vlak of an instantie (Design System, VerbondenGroep): a step of rubriek-rechtspraak, the
 	// Europese hoven hatched in the step of their rank, Overige instanties in rule-strong. In the
 	// strook, its legend and in front of the title of a judgment's row: one form.
 	import type { TierShape } from './tiers';

@@ -60,11 +60,8 @@ describe('memberCountsUnder', () => {
 	});
 
 	it('leaves it to the rows where the filter splits the stukken of one bucket', () => {
-		expect(memberCountsUnder(per, new Set(['toelichtingen']))).toBeNull();
-		const stukken = memberCountsUnder(
-			per,
-			new Set(['toelichtingen', 'wetsvoorstellen', 'dossiers'])
-		);
+		expect(memberCountsUnder(per, new Set(['stukken']), new Set(['toelichtingen']))).toBeNull();
+		const stukken = memberCountsUnder(per, new Set(['stukken', 'dossiers']));
 		expect(stukken?.get('2')).toBe(19);
 	});
 });
@@ -168,7 +165,7 @@ describe('the one count of Verbonden (N1)', () => {
 		g({
 			id: 'members',
 			label: 'Leden van deze fractie',
-			rows: [row({ ref: { collection: 'members', key: 'a' }, filterGroup: 'leden' })],
+			rows: [row({ ref: { collection: 'members', key: 'a' }, filterGroup: 'kamerleden' })],
 			total: 175
 		}),
 		g({

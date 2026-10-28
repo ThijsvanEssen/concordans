@@ -20,6 +20,7 @@
 	import TierSwatch from './TierSwatch.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { shapeOfTier } from './tiers';
+	import { vormVanBron } from '$lib/bron/vormen';
 
 	let {
 		kinds,
@@ -163,8 +164,9 @@
 						<div class="kind__kop">
 							<span class="kind__vlak"
 								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
-										collection={row.ref.collection}
-										vorm={row.filterGroup === 'wetsvoorstellen' ? 'voorstel' : undefined}
+										vorm={row.stuksoort === 'wetsvoorstellen'
+											? 'voorstel'
+											: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
 										size={11}
 									/>{/if}</span
 							>

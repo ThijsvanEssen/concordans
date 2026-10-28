@@ -24,8 +24,8 @@ const ROLES: Record<Collection, [string, string | null, boolean, 0 | 1 | 2]> = {
 	members: ['member', null, true, 0],
 	factions: ['faction', 'faction', true, 0],
 	committees: ['committee', 'committee', true, 0],
-	cabinets: ['committee', 'committee', true, 0],
-	ministries: ['committee', null, true, 0]
+	cabinets: ['cabinet', 'cabinet', true, 0],
+	ministries: ['cabinet', null, true, 0]
 };
 
 describe('the role of a collection', () => {
@@ -38,7 +38,7 @@ describe('the role of a collection', () => {
 	});
 
 	it('draws a ministerie in focus as the hull of its bewindspersonen, as a neighbour as none (N5)', () => {
-		expect(focusKindOf('ministries')).toBe('committee');
+		expect(focusKindOf('ministries')).toBe('cabinet');
 		expect(containerKindOf('ministries')).toBeNull();
 		for (const c of Object.keys(NODE_TYPES) as Collection[])
 			if (c !== 'ministries') expect(focusKindOf(c), c).toBe(containerKindOf(c));
@@ -49,6 +49,7 @@ describe('the role of a collection', () => {
 			instrument: 'Wet of regeling',
 			faction: 'Fractie',
 			committee: 'Commissie',
+			cabinet: 'Kabinet',
 			dossier: 'Dossier'
 		});
 	});

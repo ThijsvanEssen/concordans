@@ -4,7 +4,8 @@
 import type Graph from 'graphology';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Vorm } from '$lib/bron/vormen';
-import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
+import type { FilterGroup, HiddenKind, Rechter } from '$lib/verbonden/filter';
+import type { Stuksoort } from '$lib/bron/rubrieken';
 import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 import type { DrawClass } from '$lib/graph/types';
 import type { Relation } from '$lib/vocabulary';
@@ -13,6 +14,8 @@ export type CanvasCounts = {
 	nodes: number;
 	edges: number;
 	kinds: Partial<Record<FilterGroup, number>>;
+	/** The stukken among them, per stuksoort: the block Stuksoort of Tonen. */
+	stuksoorten?: Partial<Record<Stuksoort, number>>;
 	/** The shapes drawn, for the legend: every shape on the canvas has its line there. */
 	vormen: Partial<Record<Vorm, number>>;
 	/** Per kind, the bronnen hidden with a grouping switched off, and which groupings. */
@@ -45,7 +48,7 @@ export function countCanvas(o: {
 	/** The bronnen the canvas draws. */
 	drawn: ReadonlySet<string>;
 	selectionId: string | null;
-	hiddenKinds: ReadonlySet<FilterGroup>;
+	hiddenKinds: ReadonlySet<HiddenKind>;
 	rechter: Rechter | null;
 	/** The years of the bronfilter: a dated bron outside them is not counted per kind. */
 	period?: { from: string | null; to: string | null } | null;
@@ -58,6 +61,7 @@ export function countCanvas(o: {
 	let edges = 0;
 	let annexes = 0;
 	const kinds: CanvasCounts['kinds'] = {};
+	const stuksoorten: NonNullable<CanvasCounts['stuksoorten']> = {};
 	const vormen: CanvasCounts['vormen'] = {};
 	const metGroep: CanvasCounts['metGroep'] = {};
 	const bronnen: Partial<Record<FilterGroup, number>> = {};
@@ -75,6 +79,10 @@ export function countCanvas(o: {
 				(o.period.to !== null && dated > o.period.to));
 		if (kind && !other && !outside)
 			kinds[kind] = (kinds[kind] ?? 0) + ((attrs.members as number | undefined) ?? 1);
+		if (attrs.stuksoort && !other) {
+			const s = attrs.stuksoort as Stuksoort;
+			stuksoorten[s] = (stuksoorten[s] ?? 0) + ((attrs.members as number | undefined) ?? 1);
+		}
 		if (drawn.has(id)) {
 			drawnIds.push(id);
 			nodes++;
@@ -83,7 +91,9 @@ export function countCanvas(o: {
 		}
 		if (!kind || attrs.anchor) return;
 		const otherCourt = rechter && attrs.collection === 'judgments' && attrs.rechter !== rechter;
-		if (id !== selectionId && (hiddenKinds.has(kind) || otherCourt)) return;
+		const hiddenFacet =
+			!!attrs.stuksoort && hiddenKinds.has(`stuksoort:${attrs.stuksoort}` as HiddenKind);
+		if (id !== selectionId && (hiddenKinds.has(kind) || hiddenFacet || otherCourt)) return;
 		bronnen[kind] = (bronnen[kind] ?? 0) + 1;
 		const groep = verborgen.get(id);
 		if (!groep) return;
@@ -102,7 +112,7 @@ export function countCanvas(o: {
 	});
 	for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
 	return {
-		counts: { nodes, edges, kinds, vormen, metGroep, annexes, lines },
+		counts: { nodes, edges, kinds, stuksoorten, vormen, metGroep, annexes, lines },
 		drawnIds
 	};
 }

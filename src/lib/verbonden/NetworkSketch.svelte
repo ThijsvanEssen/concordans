@@ -57,7 +57,7 @@
 	};
 
 	const colour = kindColour;
-	/** A group's edge as its hull on the canvas: a dossier dashed, a fractie dotted, a commissie dash-dot. */
+	/** A group's edge as its hull on the canvas: a dossier dashed, a fractie dotted, a commissie dash-dot, a kabinet dash-dot-dot. */
 	const hullDash = (c: Collection | null) =>
 		c === 'documents' || c === 'dossiers'
 			? hullDashFor('dossier')
@@ -65,7 +65,9 @@
 				? hullDashFor('faction')
 				: c === 'committees'
 					? hullDashFor('committee')
-					: undefined;
+					: c === 'cabinets'
+						? hullDashFor('cabinet')
+						: undefined;
 
 	const m = $derived(sketch.center);
 	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
@@ -306,14 +308,14 @@
 		opacity: 0.5;
 	}
 	.hull {
-		fill: color-mix(in srgb, var(--soort-wet) 5%, transparent);
-		stroke: var(--soort-wet);
+		fill: color-mix(in srgb, var(--rubriek-wetten) 5%, transparent);
+		stroke: var(--rubriek-wetten);
 		stroke-linecap: round;
 		stroke-width: 1.6;
 	}
 	.pil rect {
 		fill: var(--paper);
-		stroke: var(--soort-wet);
+		stroke: var(--rubriek-wetten);
 		stroke-width: 1;
 	}
 	.pil text {

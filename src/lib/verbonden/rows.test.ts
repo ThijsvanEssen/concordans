@@ -319,7 +319,7 @@ describe('metaParts', () => {
 			ref: { collection: 'factions', key: 'd66' },
 			title: 'D66-fractie',
 			context: 'D66',
-			filterGroup: 'leden'
+			filterGroup: 'kamerleden'
 		};
 		expect(metaParts(fractie).map((p) => p.text)).toEqual([]);
 		expect(metaParts(fractie, true).map((p) => p.text)).toEqual([]);

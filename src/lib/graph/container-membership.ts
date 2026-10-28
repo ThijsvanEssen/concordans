@@ -11,12 +11,13 @@ import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
 import { writable, type Readable } from 'svelte/store';
 import { COLLECTION_ROLE } from './collection-role';
 
-export type ContainerKind = 'instrument' | 'faction' | 'committee' | 'dossier';
+export type ContainerKind = 'instrument' | 'faction' | 'committee' | 'cabinet' | 'dossier';
 
 const CONTAINER_KINDS: ReadonlySet<string> = new Set<ContainerKind>([
 	'instrument',
 	'faction',
 	'committee',
+	'cabinet',
 	'dossier'
 ]);
 

@@ -1,6 +1,6 @@
 // The role of each collection on the canvas, in one table: the kind it is drawn as, the hull
 // it is drawn as instead of a bron (a wet, fractie, commissie or dossier; a cabinet holds its
-// bewindspersonen as a commissie its leden), whether it is asked and drawn as a neighbour of
+// bewindspersonen as a commissie its leden, in a hull of its own), whether it is asked and drawn as a neighbour of
 // a focus, and its column in a netwerk's first layout (0 parliament, 1 law, 2 judgments).
 import { bronLabel, REGULATION_LABEL, type Collection, type Relation } from '$lib/vocabulary';
 import type { ContainerKind } from './container-membership';
@@ -41,11 +41,11 @@ export const COLLECTION_ROLE: Record<Collection, Role> = {
 	members: { drawClass: 'member', hull: null, neighbour: true, column: 0 },
 	factions: { drawClass: 'faction', hull: 'faction', neighbour: true, column: 0 },
 	committees: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
-	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
+	cabinets: { drawClass: 'cabinet', hull: 'cabinet', neighbour: true, column: 0 },
 	ministries: {
-		drawClass: 'committee',
+		drawClass: 'cabinet',
 		hull: null,
-		focusHull: 'committee',
+		focusHull: 'cabinet',
 		neighbour: true,
 		column: 0
 	}
@@ -59,6 +59,7 @@ export const GROUP_LABEL: Record<ContainerKind, string> = {
 	instrument: REGULATION_LABEL,
 	faction: bronLabel('factions'),
 	committee: bronLabel('committees'),
+	cabinet: bronLabel('cabinets'),
 	dossier: bronLabel('dossiers')
 };
 

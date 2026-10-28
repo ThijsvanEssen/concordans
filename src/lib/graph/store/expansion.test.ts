@@ -65,7 +65,7 @@ describe('the neighbourhood of a ministerie (UX review N5)', () => {
 		const ctx = createGraphContext();
 		await createExpansion(ctx).expandNeighborhood('ministries', 'bzk');
 		const group = ctx.containers.get(bzk.id);
-		expect(group?.kind).toBe('committee');
+		expect(group?.kind).toBe('cabinet');
 		expect(group?.label).toBe('BZK');
 		expect([...(group?.members ?? [])].sort()).toEqual([
 			'commitments/tz1',

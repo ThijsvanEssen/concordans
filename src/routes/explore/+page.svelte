@@ -6,6 +6,7 @@
 	//
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
+	import { bronRol } from '$lib/nav/bron-rol';
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
@@ -178,6 +179,11 @@
 	const composer = new NetwerkComposer(store, () => graphView);
 
 	let selectedNode = $state<GraphNode | null>(null);
+	// The Topbalk marks a person by their current role, from the node as it is loaded.
+	$effect(() => {
+		bronRol.set(selectedNode?.collection === 'members' ? (selectedNode.raw?.props ?? null) : null);
+		return () => bronRol.set(null);
+	});
 	/**
 	 * A focus on its way while another bron is still selected: the reader shows its loading
 	 * state instead of the old text until the new bron's head is in (UX 8 Oct: a dossier opened
@@ -961,7 +967,7 @@
 			// buckets holds (toelichtingen without wetsvoorstellen) are counted from its rows.
 			(f.bronnen &&
 				selectedNode?.collection === 'articles' &&
-				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen)));
+				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen, f.stuksoort)));
 		// Asked again for each bron Verbonden starts on: a readable address names it later.
 		void verbonden.id;
 		if (tableMode || opRijen) source.volledig().catch((e) => report('Verbonden volledig', e));
@@ -987,7 +993,7 @@
 			!filter.status &&
 			!filter.betrouwbaarheid &&
 			!filter.jaar
-			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen)
+			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen, filter.stuksoort)
 			: null
 	);
 	// Else counted from the rows, once they are all in or where the API counts no lid.
@@ -1001,14 +1007,14 @@
 				: new Map<string, number>())
 	);
 	const billCount = $derived(
-		allRows(verbonden.groups).filter((r) => r.filterGroup === 'wetsvoorstellen').length
+		allRows(verbonden.groups).filter((r) => r.stuksoort === 'wetsvoorstellen').length
 	);
 	// The first lading is the nodes' sample (5 of 21 on UHW 3): while the wijzigingen are on their
 	// way the count says "meer dan", so it does not spring to another number on the same page.
 	const billMore = $derived(
 		!!verbonden.wachtend?.includes('changes') ||
 			verbonden.groups.some(
-				(g) => g.capped && g.rows.some((r) => r.filterGroup === 'wetsvoorstellen')
+				(g) => g.capped && g.rows.some((r) => r.stuksoort === 'wetsvoorstellen')
 			)
 	);
 

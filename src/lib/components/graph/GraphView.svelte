@@ -71,10 +71,11 @@
 	import {
 		FILTER_GROUPS,
 		filterGroupOf,
+		hiddenKindsOf,
 		rechterOf,
-		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
+	import { stuksoortOf } from '$lib/bron/rubrieken';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
 	import { relationWords } from '$lib/verbonden/relation-words';
@@ -248,9 +249,7 @@
 		yearPeriod ?? momentOf(focusNodeId, containerGroups.values(), vandaag())
 	);
 
-	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
-		filter.bronnen ? new Set(FILTER_GROUPS.filter((k) => !filter.bronnen!.has(k))) : new Set()
-	);
+	const hiddenKinds = $derived(hiddenKindsOf(filter));
 
 	// What the canvas draws, as it says it (GraphCanvas `onDrawn`), counted for the Legenda,
 	// the sidebar and the keyboard's list.
@@ -579,6 +578,7 @@
 		judgment: 8,
 		dossier: 10,
 		committee: 10,
+		cabinet: 10,
 		faction: 10,
 		member: 8,
 		document: 8,
@@ -973,7 +973,7 @@
 				? tokens().ink3
 				: pinnedIds.has(n.id)
 					? undefined
-					: kindColour(n.collection);
+					: kindColour(n.collection, null, n.raw?.props);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
@@ -984,6 +984,7 @@
 				vorm,
 				collection: n.collection,
 				filterGroup: filterGroupOf(n.collection, n.key, n.raw?.props ?? null),
+				stuksoort: n.collection === 'documents' ? stuksoortOf(n.raw?.props) : null,
 				// The court of a judgment, as the bronfilter's rechter reads it.
 				rechter:
 					n.collection === 'judgments'

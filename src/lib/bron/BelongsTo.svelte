@@ -141,7 +141,7 @@
 	let uit = $state(false);
 
 	// The band opens with the soort of the top navigation, as a breadcrumb does: Wetten ›.
-	const source = $derived(sourceOfCollection(node.collection));
+	const source = $derived(sourceOfCollection(node.collection, node.raw?.props));
 	const groepen = $derived(band.onder);
 	// What the phone's first line folds away: the lines after it and the groups; with no line
 	// at all (a kabinet), the groups behind the button alone.
