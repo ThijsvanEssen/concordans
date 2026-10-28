@@ -1,5 +1,5 @@
-// One judgment, one citation (code-eenvoud F107): the reader's head, the card, the canvas and
-// Behoort bij cite it as the API does (`cite`), never by a rule of their own; the tab shows the
+// One judgment, one citation (code-eenvoud F107): the reader's head, the card, the canvas,
+// Behoort bij and the pill of Verband cite it as the API does (`cite`), never by a rule of their own; the tab shows the
 // API's title, which starts with it. The court of
 // the Raad van State is the Afdeling (ABRvS, Thijs 14 Oct), a conclusion signed as
 // procureur-generaal is by the P-G.
@@ -8,6 +8,7 @@ import type { Schema } from '$lib/api/types';
 import { buildNodeLabel, type BaseNode } from '$lib/graph/types';
 import { previewFromNode } from './preview';
 import { layerOf } from './behoort-layer';
+import { rowNotation } from '$lib/network/shared';
 import { headingCite } from '$lib/text/judgment-heading';
 
 type Cite = Schema<'JudgmentCiteDTO'>;
@@ -60,10 +61,11 @@ const pg = node(
 describe('a judgment cited one way', () => {
 	for (const n of [abrvs, pg]) {
 		const short = n.cite!.short;
-		it(`cites ${short} alike in the reader, the card, the canvas and Behoort bij`, () => {
+		it(`cites ${short} alike in the reader, the card, the canvas, Behoort bij and Verband`, () => {
 			expect(headingCite(n)).toEqual(n.cite);
 			expect(previewFromNode('judgments', null, n.props!, n.cite).title).toBe(short);
 			expect(buildNodeLabel(n, 'judgment')).toBe(short);
+			expect(rowNotation(neighbor(n) as Parameters<typeof rowNotation>[0]).title).toBe(short);
 			const laag = layerOf(neighbor(n), 'Eerdere aanleg');
 			expect([laag.naam, laag.kort]).toEqual([short, short]);
 		});

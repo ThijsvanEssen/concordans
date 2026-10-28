@@ -4,7 +4,7 @@
 	// two chosen bronnen are the heads of the columns at the left and right; a block for each
 	// length (Eén stap, Twee stappen, Drie stappen). A tap on a pill or a tussenbron marks its
 	// row: a ring, its lines in ink and thicker, the other rows at 35 %. On a phone the same
-	// rows as a withDossierNumbers list for each block.
+	// rows as a list for each block.
 	import { kindColour } from '$lib/bron/kleur';
 	import { markOf } from '$lib/bron/vormen';
 	import { drawnLine } from '$lib/components/graph/drawn-line';
@@ -364,7 +364,7 @@
 		{/each}
 	</svg>
 
-	<!-- On a phone: the same rows as a withDossierNumbers list for each block. -->
+	<!-- On a phone: the same rows as a list for each block. -->
 	<div class="ladder">
 		<ul class="ladder__ends">
 			{#each ends as e (e.id)}

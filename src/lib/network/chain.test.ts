@@ -253,4 +253,29 @@ describe('what Soort and Relatie count in a keten', () => {
 		expect(lines.structural).toBeGreaterThan(0);
 		expect(lines.citation).toBeGreaterThan(0);
 	});
+	it('counts a person by the posts they hold: a bewindspersoon is no Kamerlid', () => {
+		const person = (roles: Record<string, unknown>) => ({
+			id: 'members/x',
+			name: 'X',
+			short: 'X',
+			collection: 'members' as const,
+			kind: null,
+			since: null,
+			grondslag: null,
+			mentions: null,
+			parents: [],
+			further: [],
+			roles
+		});
+		const tally = (roles: Record<string, unknown>) => {
+			const k = {
+				layers: [{ id: '0|Persoon' as const, label: 'Persoon', nodes: [person(roles)] }]
+			};
+			return chainTally(k, k).kinds;
+		};
+		expect(tally({ government_functions: [{ from_date: '2020-01-01', to_date: null }] })).toEqual({
+			bewindspersonen: 1
+		});
+		expect(tally({})).toEqual({ kamerleden: 1 });
+	});
 });

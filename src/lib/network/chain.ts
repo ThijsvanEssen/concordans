@@ -83,6 +83,8 @@ export type ChainNode = {
 	further: string[];
 	/** An article: the law it belongs to, whose articles share one omhulling. */
 	home?: string;
+	/** A person: the posts and seats that tell a bewindspersoon from a Kamerlid (Tonen). */
+	roles?: Record<string, unknown>;
 };
 
 /** A layer of a law's keten (LayerId), or of a lineage (`0|Rechtbank`, lineage.ts). */
@@ -113,7 +115,8 @@ export function chainTally(
 	];
 	for (const n of nodes) {
 		const k = filterGroupOf(n.collection, n.id.split('/')[1], {
-			celex: n.instrument?.celex ?? null
+			celex: n.instrument?.celex ?? null,
+			...n.roles
 		});
 		if (k) kinds[k] = (kinds[k] ?? 0) + 1;
 	}

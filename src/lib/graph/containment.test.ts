@@ -55,22 +55,6 @@ const linesToDossier = (store: ReturnType<typeof createGraphStore>) =>
 	get(store.edges).filter((e) => e.source === dossier.id || e.target === dossier.id);
 
 describe('a stuk onderdeel van a dossier', () => {
-	it('stands in the hull when the dossier ties two chosen stukken, without a line', async () => {
-		const store = createGraphStore();
-		store.compose({
-			participants: [{ response: response('3') }, { response: response('4') }],
-			withJoining: true,
-			fresh: true
-		});
-		expect(linesToDossier(store)).toEqual([]);
-		// The dossier tying them is their anchor, and stands in its own hull.
-		expect([...((await hull(store))?.parts ?? [])]).toEqual([
-			dossier.id,
-			'documents/3',
-			'documents/4'
-		]);
-	});
-
 	it('stands in the hull when the stuk is the focus', () => {
 		const ctx = createGraphContext();
 		ctx.mergeResponse(response('5'));
@@ -80,7 +64,7 @@ describe('a stuk onderdeel van a dossier', () => {
 
 	it('stands in the hull when its dossier is put on the canvas as a row', async () => {
 		const store = createGraphStore();
-		store.compose({ participants: [{ response: response('6') }], withJoining: false, fresh: true });
+		store.compose({ participants: [{ response: response('6') }], fresh: true });
 		store.showRows('documents/6', [
 			{
 				ref: { collection: 'dossiers', key: '36764' },
@@ -92,32 +76,5 @@ describe('a stuk onderdeel van a dossier', () => {
 		expect(linesToDossier(store)).toEqual([]);
 		// The dossier the row names is its anchor, as when it ties two chosen stukken.
 		expect([...((await hull(store))?.parts ?? [])]).toEqual([dossier.id, 'documents/6']);
-	});
-
-	it('stands in the hull on a path through the dossier', async () => {
-		const store = createGraphStore();
-		const node = (n: { collection: string; key: string }) => ({ ...n, labels: [], props: {} });
-		await store.mergePaths({
-			ids: ['documents/7', 'documents/8'],
-			paths: [
-				{
-					source: 'documents/7',
-					target: 'documents/8',
-					node_ids: ['documents/7', dossier.id, 'documents/8'],
-					edge_ids: ['e1', 'e2']
-				}
-			],
-			nodes: [node(stuk('7')), node(dossier), node(stuk('8'))],
-			edges: [
-				{ id: 'e1', source: 'documents/7', target: dossier.id, relation: 'PART_OF' },
-				{ id: 'e2', source: 'documents/8', target: dossier.id, relation: 'PART_OF' }
-			]
-		} as unknown as Schema<'PathsResponse'>);
-		expect(linesToDossier(store)).toEqual([]);
-		expect([...((await hull(store))?.parts ?? [])]).toEqual([
-			dossier.id,
-			'documents/7',
-			'documents/8'
-		]);
 	});
 });

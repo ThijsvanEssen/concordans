@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
-import type { Schema } from '$lib/api/types';
 import { fakeApi, type FakeRequest } from '$lib/test/fakeApi';
 import { createGraphStore } from './graph-store';
 
@@ -177,33 +176,6 @@ describe('rows shown on a cabinet', () => {
 });
 
 describe('the hulls of a canvas', () => {
-	/** A path from stuk 1 to stuk 2: the dossier of each is drawn around it alone. */
-	const path = {
-		ids: ['documents/1', 'documents/2'],
-		paths: [
-			{
-				source: 'documents/1',
-				target: 'documents/2',
-				node_ids: ['documents/1', 'documents/2'],
-				edge_ids: ['e1']
-			}
-		],
-		nodes: [stuk('1').node, stuk('2').node],
-		edges: [{ id: 'e1', source: 'documents/1', target: 'documents/2', relation: 'CITES' }]
-	} as unknown as Schema<'PathsResponse'>;
-
-	it('start afresh after a reset: a dossier on a path no longer stands around one stuk', async () => {
-		const store = createGraphStore();
-		await store.mergePaths(path);
-		await vi.waitFor(async () => expect((await hullOf(store, 'dossiers/36764'))?.lone).toBe(true));
-		store.reset();
-		expect(await hullOf(store, 'dossiers/36764')).toBeUndefined();
-		await store.expandNode('documents', '3');
-		const group = await hullOf(store, 'dossiers/36764');
-		expect([...(group?.parts ?? [])]).toEqual(['documents/3']);
-		expect(group?.lone).toBeUndefined();
-	});
-
 	it('belong to one store: another canvas does not see them', async () => {
 		const one = createGraphStore();
 		const other = createGraphStore();

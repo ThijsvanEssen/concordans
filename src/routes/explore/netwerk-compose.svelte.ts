@@ -320,11 +320,8 @@ export class NetwerkComposer {
 		this.#view()?.suppressFit();
 		const { alone } = this.#store.compose({
 			participants,
-			withJoining: false,
 			surroundings: this.surroundings,
-			fresh,
-			onPaths: [],
-			tiedByPaths: []
+			fresh
 		});
 		this.composed = true;
 		this.cut = cutOf(participants.map((p) => p.response));

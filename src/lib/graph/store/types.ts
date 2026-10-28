@@ -122,22 +122,14 @@ export type GraphStore = {
 	) => Promise<GraphNode | null>;
 	/**
 	 * Draws a netwerk: its chosen bronnen, what ties them, and the context still tied to
-	 * them. `fresh` drops every other bron. Returns the bronnen tied to no other one, and
-	 * the joining bronnen drawn.
+	 * them. `fresh` drops every other bron. Returns the bronnen tied to no other one.
 	 */
 	compose: (input: {
 		participants: NetwerkParticipant[];
-		withJoining: boolean;
 		fresh: boolean;
-		/** Bronnen on the paths between the chosen ones (`mergePaths`), kept as joining. */
-		onPaths?: string[];
-		/** Chosen bronnen a drawn path reaches: tied, not alone. */
-		tiedByPaths?: string[];
 		/** The weergave Omgeving: every neighbour of each chosen bron, not only what they share. */
 		surroundings?: boolean;
-	}) => { alone: ReadonlySet<string>; joining: string[] };
-	/** Draws the paths between chosen bronnen (`/api/paths`, API 0.73); returns what it drew. */
-	mergePaths: (response: Schema<'PathsResponse'>) => Promise<{ onPath: string[]; tied: string[] }>;
+	}) => { alone: ReadonlySet<string> };
 	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
 	core: Readable<ReadonlySet<string> | null>;
 	/** Ends the netwerk: nothing is chosen any more, the canvas stays as it is. */

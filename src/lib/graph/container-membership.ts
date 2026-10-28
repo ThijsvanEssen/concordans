@@ -85,8 +85,6 @@ export type ContainerGroup = {
 	parts: Set<string>;
 	/** When a member belonged to it (a lid's seat on a commissie or in a fractie), where the edge says. */
 	periods: Map<string, Period>;
-	/** Drawn around one member too: the dossier of a stuk on a path between chosen bronnen. */
-	lone?: boolean;
 };
 
 /** A stretch of time as ISO dates, open where null. */
@@ -214,14 +212,6 @@ export function createContainerGroups() {
 			flush();
 		},
 
-		/** Lets a container's hull stand around a single member (a stuk on a path, BE-49). */
-		markLone(id: string | null): void {
-			const group = id ? groups.get(id) : undefined;
-			if (!group || group.lone) return;
-			group.lone = true;
-			flush();
-		},
-
 		/** The current group for a container id, if any bron has been recorded into it. */
 		get(id: string): ContainerGroup | undefined {
 			return groups.get(id);
@@ -250,7 +240,7 @@ export function createContainerGroups() {
 			if (changed) flush();
 		},
 
-		/** Forgets every hull, its names and `lone` included: the canvas starts afresh. */
+		/** Forgets every hull and its names: the canvas starts afresh. */
 		clear(): void {
 			if (groups.size === 0) return;
 			groups.clear();
