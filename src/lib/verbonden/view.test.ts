@@ -199,3 +199,21 @@ describe('the one count of Verbonden (N1)', () => {
 		expect(panelSettled({ ...base, id: null })).toBe(false);
 	});
 });
+
+describe('a group asked again under a new choice', () => {
+	const hof = row({ props: { tier: 'gerechtshof' } });
+	const group: Group = {
+		id: 'judgments',
+		label: 'Uitspraken',
+		rows: [hof],
+		total: 1,
+		capped: false,
+		cutBy: ['jaar', 'rechter']
+	};
+	const f = { ...EMPTY_FILTER, rechter: 'hr' as const };
+
+	it('keeps the rows of its former cut until the new ones are in', () => {
+		expect(filterGroups([group], f, new Set(['judgments']))[0].rows).toHaveLength(1);
+		expect(filterGroups([group], f)[0]?.rows ?? []).toHaveLength(0);
+	});
+});
