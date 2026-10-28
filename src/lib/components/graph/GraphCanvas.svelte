@@ -59,6 +59,7 @@
 	import { untilDate, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { pointInPolygon } from '$lib/graph/hull';
+	import { HULL } from '$lib/graph/draw-spec';
 	import {
 		spriteForVorm,
 		badgeAxisOffset,
@@ -1392,7 +1393,7 @@
 					class:is-chosen={h.chosen}
 					class:is-dim={h.dim}
 					d={h.path}
-					fill={withAlpha(h.color, 0.05)}
+					fill={withAlpha(h.color, HULL.fill)}
 					stroke={h.chosen ? 'var(--ink)' : h.color}
 					stroke-dasharray={h.dash}
 				/>
