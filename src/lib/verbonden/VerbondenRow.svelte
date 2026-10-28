@@ -230,7 +230,8 @@
 					{#if k > 0}<span class="row__sep">,</span>{/if}
 					<span
 						class="row__part row__part--{part.kind}"
-						class:is-proposed={part.kind === 'proposed'}>{part.text}</span
+						class:is-proposed={part.kind === 'proposed'}
+						title={part.title ?? undefined}>{part.text}</span
 					>
 				{/each}{#if uitslag}{#if delen.length}<span class="row__sep">,</span>{/if}<span
 						class="row__part"><StukUitslag {uitslag} /></span
@@ -337,6 +338,11 @@
 	}
 	.row__part--lid {
 		font-weight: 400;
+		color: var(--ink-2);
+	}
+	/* How the judgment ended, where the data says it: in the ink of the lid; where it does not,
+	   in the meta ink, as the rest of the line. */
+	.row__part--uitkomst {
 		color: var(--ink-2);
 	}
 	.row__part--derived {
