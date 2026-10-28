@@ -2,7 +2,7 @@
 // scale relative to the busiest year, the years named on the axis as far as they fit, and the
 // count of a period in words. One place for the assignment of kind to colour.
 import type { Collection } from '$lib/vocabulary';
-import { count } from '$lib/text/words';
+import { count, joinAnd, textOf } from '$lib/text/words';
 import { kindColour } from './kleur';
 
 type StripKind = 'wetten' | 'rechtspraak' | 'kamerstukken' | 'parlement';
@@ -25,7 +25,10 @@ export const STRIP_KINDS: readonly {
 	}
 ];
 
-/** The colour of a wetswijziging: the diamond, in the colour of the wetten. */
+/**
+ * The colour of a publication that changes the law: the diamond, in the colour of the wetten.
+ * The strip calls it a "publicatie" (besluit 33).
+ */
 export const CHANGE_COLOUR = kindColour('instruments');
 
 const KIND_OF: Partial<Record<Collection, StripKind>> = {
@@ -47,6 +50,50 @@ const KIND_OF: Partial<Record<Collection, StripKind>> = {
 };
 
 export const kindOf = (c: Collection): StripKind | null => KIND_OF[c] ?? null;
+
+/**
+ * The day a bron stands on the strip: its own date, and for a publication (Staatsblad, Trb.,
+ * Staatscourant) the day it was published, which the API gives as `date_published` (besluit
+ * 33, 41). A law keeps no day: its publication would stretch every strip back to 1991.
+ */
+export function stripDate(
+	props: Record<string, unknown> | null | undefined,
+	collection: Collection,
+	id = ''
+): string | null {
+	const own = textOf(props?.date);
+	if (own) return own;
+	const publication =
+		collection === 'instruments' &&
+		(props?.kind === 'publicatie' || /^instruments\/(stb|trb|stcrt)_/.test(id));
+	return publication ? textOf(props?.date_published) : null;
+}
+
+/** What a bron without a date is called in the count: kinds of the strip, and the two besides. */
+const UNDATED_NOUNS = [
+	{ id: 'wetten', one: 'wet', many: 'wetten' },
+	{ id: 'artikelen', one: 'artikel', many: 'artikelen' },
+	{ id: 'bijlagen', one: 'bijlage', many: 'bijlagen' },
+	{ id: 'rechtspraak', one: 'uitspraak', many: 'uitspraken' },
+	{ id: 'kamerstukken', one: 'stuk', many: 'stukken' },
+	{ id: 'parlement', one: 'parlementsbron', many: 'parlementsbronnen' }
+] as const;
+
+const undatedNoun = (c: Collection) =>
+	c === 'articles' ? 'artikelen' : c === 'annexes' ? 'bijlagen' : kindOf(c);
+
+/** "1 wet, 200 artikelen en 1 stuk zonder datum": what has no day, by what it is. */
+export function undatedText(collections: readonly Collection[]): string | null {
+	const n = new Map<string, number>();
+	for (const c of collections) {
+		const noun = undatedNoun(c);
+		if (noun) n.set(noun, (n.get(noun) ?? 0) + 1);
+	}
+	const items = UNDATED_NOUNS.filter((d) => n.has(d.id)).map((d) =>
+		count(n.get(d.id)!, d.one, d.many)
+	);
+	return items.length ? `${joinAnd(items)} zonder datum` : null;
+}
 
 /** A bron on the strip: its year as a fraction, its kind; a wetswijziging is named instead. */
 export type Stip = { jaar: number; collection: Collection; change?: string };
@@ -108,7 +155,7 @@ export function countParts(
 		const n = counts.get(k.id) ?? 0;
 		if (n) parts.push({ text: `${count(n, k.one, k.many)}` });
 	}
-	if (changes) parts.push({ text: `${count(changes, 'wijziging', 'wijzigingen')}`, change: true });
+	if (changes) parts.push({ text: `${count(changes, 'publicatie', 'publicaties')}`, change: true });
 	return parts;
 }
 

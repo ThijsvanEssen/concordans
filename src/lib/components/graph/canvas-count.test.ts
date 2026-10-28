@@ -68,4 +68,23 @@ describe('countCanvas, the period', () => {
 		});
 		expect(counts.kinds).toEqual({ uitspraken: 1, artikelen: 1 });
 	});
+	it('counts of a group the members inside the years, as the strip does', () => {
+		const graph = new Graph();
+		graph.addNode('g', {
+			filterGroup: 'stukken',
+			members: 4,
+			memberDates: ['2012-05-01', '2020-05-01', '2013-01-01', null]
+		});
+		const { counts } = countCanvas({
+			graph,
+			drawn: new Set(['g']),
+			selectionId: null,
+			hiddenKinds: new Set(),
+			rechter: null,
+			period: { from: '2011-01-01', to: '2016-12-31' },
+			verborgen: new Map(),
+			hiddenLines: new Set()
+		});
+		expect(counts.kinds).toEqual({ stukken: 3 });
+	});
 });

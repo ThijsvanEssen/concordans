@@ -13,10 +13,12 @@
 		CHANGE_COLOUR,
 		busiest,
 		countParts,
+		undatedText,
 		sumPeriod,
 		perYear,
 		type Stip
 	} from '$lib/bron/strook';
+	import type { Collection } from '$lib/vocabulary';
 	import { vandaag } from '$lib/text/datum';
 	import { periodInWords } from '$lib/text/periode';
 	import Blad from '$lib/components/ui/Blad.svelte';
@@ -25,7 +27,7 @@
 
 	let {
 		stippen,
-		undated = 0,
+		undated = [],
 		van,
 		tot,
 		fromDay = null,
@@ -35,8 +37,8 @@
 	}: {
 		/** Each bron on the canvas with a date: its year as a fraction, its kind. */
 		stippen: readonly Stip[];
-		/** The bronnen on the canvas without a date; counted, never placed. */
-		undated?: number;
+		/** The bronnen on the canvas without a date, by collection; counted, never placed. */
+		undated?: readonly Collection[];
 		/** The period chosen, by its years; null where open. */
 		van: number | null;
 		tot: number | null;
@@ -136,9 +138,10 @@
 
 	// The count of the period, in words; the bronnen without a year stand in it, never placed.
 	const counts = $derived(sumPeriod(years, range.van, range.tot));
+	const undatedWords = $derived(undatedText(undated));
 	const parts = $derived([
 		...countParts(counts.per, counts.changes),
-		...(undated ? [{ text: `${undated} zonder jaar` }] : [])
+		...(undatedWords ? [{ text: undatedWords }] : [])
 	]);
 	const words = $derived(
 		fromDay || toDay ? periodInWords(fromDay ?? '', toDay ?? '', today) : `${first} tot ${last}`

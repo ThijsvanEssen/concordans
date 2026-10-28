@@ -124,7 +124,7 @@ describe('the Tijdstrook', () => {
 	it('names the period in words, with the count per kind and what has no year', () => {
 		const { container } = render(Tijdstrook, {
 			stippen: [...stippen, { jaar: 2021.1, collection: 'instruments', change: 'Stb. 2021, 9' }],
-			undated: 41,
+			undated: [...Array(40).fill('articles'), 'documents'],
 			van: 2021,
 			tot: null,
 			fromDay: '2021-01-01',
@@ -132,7 +132,7 @@ describe('the Tijdstrook', () => {
 		});
 		expect(container.querySelector('.woorden')!.textContent).toBe('Sinds 2021');
 		expect(container.querySelector('.telling')!.textContent!.replace(/\s+/g, ' ').trim()).toBe(
-			'1 wet, 1 uitspraak, 1 wijziging, 41 zonder jaar'
+			'1 wet, 1 uitspraak, 1 publicatie, 40 artikelen en 1 stuk zonder datum'
 		);
 		expect(container.querySelector('[data-wijziging]')).not.toBeNull();
 	});

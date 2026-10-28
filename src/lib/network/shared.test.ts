@@ -106,6 +106,15 @@ describe('Verband as the DS writes it', () => {
 		expect(r.detail).toBe('Wijziging van de Gemeentewet, 2018');
 		expect(r.title).not.toContain('…');
 	});
+	it('names a dossier by its number, so that it is not the wet of the same name', () => {
+		const r = rowNotation({
+			id: 'dossiers/36496',
+			collection: 'dossiers',
+			display_name: 'Wet betaalbare huur',
+			props: { number: '36496', short_title: 'Wet betaalbare huur' }
+		} as unknown as Parameters<typeof rowNotation>[0]);
+		expect(r.title).toBe('36496 Wet betaalbare huur');
+	});
 	it('keeps the name of any other bron', () => {
 		expect(
 			rowNotation({ ...paper({}), collection: 'instruments', id: 'instruments/a' }).detail
