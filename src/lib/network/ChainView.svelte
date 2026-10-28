@@ -10,9 +10,10 @@
 	// layer (AMvB, Ministeriële regeling, Beleidsregel as headings). One click marks a bron: its
 	// card stands in the strip at the right.
 	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
+	import { capitalize, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import {
 		edgeCapFor,
 		edgeColorFor,
@@ -111,7 +112,8 @@
 	const FOCUS = 18;
 	const HALO = 4.5;
 	const INK_EDGE = 2;
-	const TOP = 48;
+	/** Room above the first layer: its label and Alle stand clear of the Deel button at the top right. */
+	const TOP = 64;
 	/** The room a subhead takes before the first article of a wet. */
 	const HEAD = 36;
 	const LEFT = 120;
@@ -365,8 +367,9 @@
 	const colour = (k: ChainNode) =>
 		(start?.startsWith('members/') ? sectionColour(k.collection) : null) ??
 		kindColour(k.collection);
-	const vormOf = (k: ChainNode) =>
-		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
+	const vormKey = (k: ChainNode) =>
+		vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1]);
+	const vormOf = (k: ChainNode) => VORMEN[vormKey(k)];
 	/** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
 	const linesOf = (s: string, max = 22) => {
 		const out: string[] = [];
@@ -377,6 +380,15 @@
 		}
 		return out;
 	};
+	/** How a row of the list hangs: its seat or court, else its grondslag and what it names. */
+	const howOf = (k: ChainNode) =>
+		k.how ||
+		capitalize(
+			[k.grondslag ? `grondslag ${k.grondslag}` : null, k.mentions ? `noemt ${k.mentions}` : null]
+				.filter(Boolean)
+				.join(', ')
+		) ||
+		null;
 	const press = (e: KeyboardEvent, act: () => void) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -410,6 +422,7 @@
 </script>
 
 {#snippet row(k: ChainNode)}
+	{@const how = howOf(k)}
 	<li>
 		<button
 			type="button"
@@ -418,15 +431,11 @@
 			aria-pressed={chosen === k.id}
 			onclick={() => onChoose(k)}
 		>
-			<span class="list__name"><i class="mark" style:background={colour(k)}></i>{k.name}</span>
-			{#if k.grondslag || k.mentions}<span class="list__how"
-					>{[
-						k.grondslag ? `grondslag ${k.grondslag}` : null,
-						k.mentions ? `noemt ${k.mentions}` : null
-					]
-						.filter(Boolean)
-						.join(', ')}</span
-				>{/if}
+			<span class="list__name"
+				><span class="mark"><KindGlyph vorm={vormKey(k)} size={12} colour={colour(k)} /></span
+				>{k.name}</span
+			>
+			{#if how}<span class="list__how">{how}</span>{/if}
 		</button>
 	</li>
 {/snippet}
@@ -451,7 +460,7 @@
 {#snippet allButton(layer: ChainLayer)}
 	<button
 		type="button"
-		class="btn is-text alle raakvlak-knop"
+		class="btn alle"
 		aria-expanded={open.has(layer.id)}
 		onclick={() => toggle(layer.id)}
 		>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</button
@@ -504,21 +513,6 @@
 				y1={tops[i] + rowHeights[i] - 14.5}
 				y2={tops[i] + rowHeights[i] - 14.5}
 			/>
-			{#if rest[layer.id]}
-				<g
-					class="others"
-					role="button"
-					tabindex="0"
-					aria-expanded={open.has(layer.id)}
-					onclick={() => toggle(layer.id)}
-					onkeydown={(e) => press(e, () => toggle(layer.id))}
-				>
-					<rect class="hit" x={width - 124} y={tops[i] - 18} width="104" height="32" />
-					<text x={width - 24} y={tops[i] + 4} text-anchor="end"
-						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
-					>
-				</g>
-			{/if}
 		{/each}
 		<!-- The lines as one layer, so where they share a stem they do not darken; the marked
 		     ones over it, whole. -->
@@ -533,7 +527,7 @@
 		{#each subheads as t (t.id)}
 			<text class="subhead" x={t.x} y={t.y} text-anchor="end">{t.label}</text>
 		{/each}
-		{#each shown as layer (layer.id)}
+		{#each shown as layer, i (layer.id)}
 			{#each layer.nodes as k (k.id)}
 				{@const p = place.get(k.id)!}
 				{@const isArticle = k.collection === 'articles'}
@@ -630,6 +624,22 @@
 					>
 				</g>
 			{/each}
+			<!-- After the bronnen of its layer: the keyboard goes layer by layer, Alle last. -->
+			{#if rest[layer.id]}
+				<g
+					class="others"
+					role="button"
+					tabindex="0"
+					aria-expanded={open.has(layer.id)}
+					onclick={() => toggle(layer.id)}
+					onkeydown={(e) => press(e, () => toggle(layer.id))}
+				>
+					<rect class="hit" x={width - 124} y={tops[i] - 18} width="104" height="32" />
+					<text x={width - 24} y={tops[i] + 4} text-anchor="end"
+						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
+					>
+				</g>
+			{/if}
 		{/each}
 	</svg>
 	<!-- On a wide screen the regulations a layer does not draw, listed under the drawing once
@@ -846,7 +856,8 @@
 		}
 		.list {
 			display: block;
-			padding: var(--s-2) var(--s-4) var(--s-8);
+			/* Room under the last row for the floating Weergave button. */
+			padding: var(--s-2) var(--s-4) calc(var(--s-8) + var(--s-4));
 		}
 	}
 	.list__layer {
@@ -895,8 +906,8 @@
 	}
 	.mark {
 		flex: none;
-		width: 10px;
-		height: 10px;
+		display: inline-flex;
+		align-self: center;
 	}
 	.list__how {
 		font-family: var(--font-serif);

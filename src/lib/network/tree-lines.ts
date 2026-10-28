@@ -112,7 +112,15 @@ type Group = {
 	edges: TreeEdge[];
 };
 
-/** A column beside the parent's own where nothing of the layers between stands, nearest first. */
+/** What a stem costs to cross another parent's tak, in px of detour it is worth. */
+const CROSS = 80;
+
+/**
+ * The column a stem runs down, calm: the parent's own where nothing of the layers between stands
+ * in the way, else beside the names, the nearest one. A stem may cross another parent's tak
+ * once, straight, where the way round would be longer than CROSS: a stem that never crosses
+ * runs out and back across the whole layer.
+ */
 function freeColumn(
 	x: number,
 	from: number,
@@ -121,15 +129,20 @@ function freeColumn(
 	skip: Set<string>,
 	spans: readonly { x0: number; x1: number }[]
 ) {
-	const hits = (c: number) =>
-		spans.some((t) => c > t.x0 - MARGIN && c < t.x1 + MARGIN) ||
+	const blocked = (c: number) =>
 		boxes.some(
 			(b) =>
 				!skip.has(b.id) && b.y1 >= from && b.y0 <= to && c >= b.x0 - MARGIN && c <= b.x1 + MARGIN
 		);
-	for (let k = 0; k <= 80; k++)
-		for (const c of k ? [x + 6 * k, x - 6 * k] : [x]) if (!hits(c)) return c;
-	return x;
+	const crossings = (c: number) =>
+		spans.filter((t) => c > t.x0 - MARGIN && c < t.x1 + MARGIN).length;
+	let best = { c: x, cost: Number.POSITIVE_INFINITY };
+	for (let k = 0; k <= 80 && 6 * k < best.cost; k++)
+		for (const c of k ? [x + 6 * k, x - 6 * k] : [x]) {
+			const cost = 6 * k + CROSS * crossings(c);
+			if (cost < best.cost && !blocked(c)) best = { c, cost };
+		}
+	return best.cost === Number.POSITIVE_INFINITY ? x : best.c;
 }
 
 /** The groups of lines that share a stem and a tak: one parent, one layer, one kind. */

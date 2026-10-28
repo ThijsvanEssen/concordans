@@ -8,7 +8,8 @@
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { isMinister } from '$lib/bron/rubrieken';
-import { textOf } from '$lib/text/words';
+import { capitalize, lowerFirst, textOf } from '$lib/text/words';
+import { seatWord } from '$lib/text/zetel';
 import { shortDatesIn } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
@@ -79,9 +80,91 @@ const chainNode = (
 	since: textOf(n.props?.date) ?? null,
 	grondslag: null,
 	mentions: null,
+	how: null,
 	parents,
 	further: []
 });
+
+type Meta = Record<string, unknown>;
+const year = (d: unknown) => textOf(d)?.slice(0, 4) ?? null;
+/** A span of years as the list says it: `2021 – 2023`, `sinds 2025`, `tot en met 2021`. */
+function span(from: unknown, to: unknown): string | null {
+	const [a, b] = [year(from), year(to)];
+	return a && b ? (a === b ? a : `${a} – ${b}`) : a ? `sinds ${a}` : b ? `tot en met ${b}` : null;
+}
+const joined = (...parts: (string | null)[]) => parts.filter(Boolean).join(', ') || null;
+
+/** The posts of a bewindspersoon in a kabinet (`key`) or at a ministerie, from an edge's meta. */
+const postsOf = (meta: Meta, pick: (post: Meta) => boolean): Meta[] =>
+	(Array.isArray(meta.posts) ? (meta.posts as Meta[]) : []).filter((p) => p && pick(p));
+
+/** The functions and span of some posts: `Minister van Financiën, 2024`. */
+function postsSaid(posts: readonly Meta[]): string | null {
+	const functions = [
+		...new Set(posts.map((p) => textOf(p.function)).filter((f): f is string => !!f))
+	];
+	const froms = posts.map((p) => textOf(p.from_date));
+	const tos = posts.map((p) => textOf(p.to_date));
+	return joined(
+		functions.length ? capitalize(functions.join(' en ')) : null,
+		span(
+			froms.includes(null) ? null : [...froms].sort()[0],
+			tos.includes(null) ? null : [...tos].sort().at(-1)
+		)
+	);
+}
+
+/**
+ * How a seat of a person hangs, in the words of the list on a phone: a commissie "Plaatsvervangend
+ * lid, 2024 – 2025", a fractie its memberships over the years ("Fractievoorzitter, 2018 – 2026" where
+ * one role held throughout), a kabinet the posts held in it, a ministerie the kabinet it sits under.
+ */
+function seatHow(
+	item: Pick<Neighbour, 'id' | 'collection' | 'meta'>,
+	start: NodeResponse
+): string | null {
+	const meta = (item.meta ?? {}) as Meta;
+	if (item.collection === 'cabinets')
+		return postsSaid(postsOf(meta, (p) => `cabinets/${textOf(p.cabinet_key)}` === item.id));
+	if (item.collection === 'ministries') {
+		const byCabinet = new Map<string, Meta[]>();
+		for (const p of postsOf(meta, () => true))
+			byCabinet.set(textOf(p.cabinet) ?? '', [
+				...(byCabinet.get(textOf(p.cabinet) ?? '') ?? []),
+				p
+			]);
+		const said = [...byCabinet].map(([cabinet, posts]) =>
+			joined(cabinet ? `Onder ${cabinet}` : null, lowerFirst(postsSaid(posts) ?? ''))
+		);
+		return said.filter(Boolean).join('; ') || null;
+	}
+	const stints = Array.isArray(start.node.props?.faction_memberships)
+		? (start.node.props.faction_memberships as Meta[]).filter((m) => m.faction_id === item.id)
+		: [];
+	if (item.collection === 'factions' && stints.length) {
+		const roles = new Set(stints.map((m) => textOf(m.role)));
+		const froms = stints.map((m) => textOf(m.from_date));
+		const tos = stints.map((m) => textOf(m.to_date));
+		return joined(
+			roles.size === 1 ? capitalize(seatWord([...roles][0]) ?? '') : null,
+			span(
+				froms.includes(null) ? null : [...froms].sort()[0],
+				tos.includes(null) ? null : [...tos].sort().at(-1)
+			)
+		);
+	}
+	return joined(
+		capitalize(seatWord(textOf(meta.role), meta.substitute === true) ?? ''),
+		span(meta.from_date, meta.to_date)
+	);
+}
+
+/** The words of a line between two judgments or two fracties, said of the one that hangs under. */
+const LINK_WORD: Partial<Record<Relation, string>> = {
+	APPEAL_OF: 'Hoger beroep van',
+	ADVISES_ON: 'Conclusie van',
+	CONTINUES: 'Voortzetting van'
+};
 
 /**
  * The kabinetten of a bewindspersoon in which it held a post at each ministerie, from its
@@ -137,9 +220,12 @@ export async function lineage(
 			for (const item of b.items)
 				if (!nodes.has(item.id))
 					nodes.set(item.id, {
-						node: chainNode(item, [
-							{ id: startId, way: 'delegates', relation: b.relation as Relation }
-						]),
+						node: {
+							...chainNode(item, [
+								{ id: startId, way: 'delegates', relation: b.relation as Relation }
+							]),
+							how: seatHow(item, start)
+						},
 						at: 1 + Math.max(0, order.indexOf(item.collection)),
 						layer: layerName(item)
 					});
@@ -188,6 +274,17 @@ export async function lineage(
 			edge = next;
 		}
 	}
+	// A judgment or fractie says what it hangs under: "Hoger beroep van Rb. Gelderland 7 mrt. 2017".
+	if (start.node.collection !== 'members')
+		for (const { node, layer } of nodes.values()) {
+			const said = node.parents.flatMap((p) => {
+				const word = LINK_WORD[p.relation as Relation];
+				const above = nodes.get(p.id);
+				const lead = p.relation === 'APPEAL_OF' && layer === 'Hoge Raad' ? 'Cassatie van' : word;
+				return lead && above ? [`${lead} ${above.node.name}`] : [];
+			});
+			node.how = said.join('; ') || null;
+		}
 	const byLayer = new Map<string, { at: number; nodes: ChainNode[] }>();
 	for (const { node, at, layer } of nodes.values()) {
 		const key = `${at}|${layer}`;
@@ -195,13 +292,22 @@ export async function lineage(
 		byLayer.set(key, l);
 		l.nodes.push(node);
 	}
+	const byDate = (x: ChainNode, y: ChainNode) =>
+		(x.since ?? '').localeCompare(y.since ?? '') || x.name.localeCompare(y.name);
+	// A ministerie stands under its kabinet: the ministeries in the order of their kabinetten.
+	const cabinets = [...nodes.values()]
+		.filter((n) => n.node.collection === 'cabinets')
+		.sort((x, y) => byDate(x.node, y.node))
+		.map((n) => n.node.id);
+	const cabinetRank = (n: ChainNode) =>
+		n.id.startsWith('ministries/')
+			? Math.min(...n.parents.map((p) => cabinets.indexOf(p.id)).filter((i) => i >= 0), 99)
+			: 0;
 	return [...byLayer.entries()]
 		.sort((a, b) => a[1].at - b[1].at || a[0].localeCompare(b[0]))
 		.map(([key, l]) => ({
 			id: key as ChainLayer['id'],
 			label: key.split('|')[1],
-			nodes: l.nodes.sort(
-				(x, y) => (x.since ?? '').localeCompare(y.since ?? '') || x.name.localeCompare(y.name)
-			)
+			nodes: l.nodes.sort((x, y) => cabinetRank(x) - cabinetRank(y) || byDate(x, y))
 		}));
 }

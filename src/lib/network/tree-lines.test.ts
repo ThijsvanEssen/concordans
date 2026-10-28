@@ -150,6 +150,45 @@ describe('treeLines', () => {
 	});
 });
 
+describe('treeLines, a line that skips a layer', () => {
+	// Layer 1: a, s, b. Layer 2 under a and b: y far right, w under s's own column. s runs to
+	// layer 3, past a's tak, which spans the whole width of layer 2.
+	const tree = new Map<string, TreeNode>([
+		['r', node(500, 0)],
+		['a', node(300, 1)],
+		['s', node(500, 1)],
+		['b', node(700, 1)],
+		['y', node(700, 2)],
+		['w', node(500, 2)],
+		['z', node(560, 3)]
+	]);
+	const all = [
+		edge('r', 'a'),
+		edge('r', 's'),
+		edge('r', 'b'),
+		edge('a', 'y'),
+		edge('b', 'w'),
+		edge('s', 'z')
+	];
+	const tall = [...tree].map(([id, n]) => boxOf(id, n));
+	const drawn = treeLines(tree, all, { rails, boxes: tall });
+	it('crosses the tak of another parent once, rather than run out and back across the layer', () => {
+		const l = drawn.find((x) => x.id === 's~z')!;
+		const xs = sample(l.d).map((q) => q.x);
+		expect(Math.min(...xs)).toBeGreaterThan(400);
+		expect(Math.max(...xs)).toBeLessThan(600);
+	});
+	it('still runs through no name', () => {
+		for (const l of drawn)
+			for (const b of tall.filter((b) => b.id !== l.parent && b.id !== l.child))
+				for (const q of sample(l.d))
+					expect(
+						q.x > b.x0 && q.x < b.x1 && q.y > b.y0 && q.y < b.y1,
+						`${l.id} through ${b.id}`
+					).toBe(false);
+	});
+});
+
 describe('treeLines, a node with two parents', () => {
 	it('takes the line from the left on the left, so they do not cross on arriving', () => {
 		const two = new Map<string, TreeNode>([
