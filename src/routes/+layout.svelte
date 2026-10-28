@@ -6,6 +6,7 @@
 	import '$lib/styles/frame.css';
 	import '$lib/styles/print.css';
 	import Bevestiging from '$lib/components/ui/Bevestiging.svelte';
+	import KeepNotice from '$lib/map/KeepNotice.svelte';
 	import AppShell from '$lib/components/layout/AppShell.svelte';
 	import { report } from '$lib/api/errors';
 	import type { Snippet } from 'svelte';
@@ -148,6 +149,7 @@
 	{@render children()}
 </AppShell>
 <Bevestiging />
+<KeepNotice />
 <!-- Fixed at the top: after the shell it stood below the screen's height and the page scrolled (#35). -->
 <p class="sr-only aankondiging" aria-live="polite" aria-atomic="true">{aankondiging}</p>
 

@@ -243,7 +243,7 @@
 					Een Bundel bewaart bronnen die je nodig hebt: artikelen, uitspraken, Kamerstukken en
 					andere bronnen, met een aantekening bij elke bron, bij een groep en bij de bundel zelf.
 					<strong>Bewaar</strong>, bij een artikel, een overweging of een rij in Verbonden, zet de
-					bron in Losse markeringen. <strong>Nieuwe bundel</strong>, bij Bundels onder Mijn, begint
+					bron in Mijn markeringen. <strong>Nieuwe bundel</strong>, bij Bundels onder Mijn, begint
 					een eigen bundel met een onderzoeksvraag.
 				</p>
 				<p>
