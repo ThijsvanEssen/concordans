@@ -18,4 +18,14 @@ describe('citeItems', () => {
 		]);
 		expect(citeItems(null, null)).toEqual([]);
 	});
+
+	it('shows the link without lezen=1, and copies it with', () => {
+		const link = (u: string) => citeItems(null, u)[0];
+		const a = link('https://concordans.nl/explore?focus=articles/x_1&lezen=1#lid-2');
+		expect(a.text).toContain('&lezen=1');
+		expect(a.shown).toBe('https://concordans.nl/explore?focus=articles/x_1#lid-2');
+		expect(link('https://c.nl/wetten/x?lezen=1').shown).toBe('https://c.nl/wetten/x');
+		expect(link('https://c.nl/wetten/x?lezen=1&b=2').shown).toBe('https://c.nl/wetten/x?b=2');
+		expect(link('https://c.nl/wetten/x?b=2').shown).toBe('https://c.nl/wetten/x?b=2');
+	});
 });
