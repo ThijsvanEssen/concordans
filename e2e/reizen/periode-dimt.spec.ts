@@ -6,11 +6,11 @@ test('a chosen period dims the bronnen outside it and takes none from the canvas
 	page,
 	touch
 }) => {
-	test.skip(touch, 'a phone keeps Periode in the strip: the band is for the pointer');
+	test.skip(touch, 'a phone opens its band in a Blad (tijdstrook-staafstrook.spec.ts)');
 	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk');
 	const canvas = page.locator('.canvas-wrap');
 	const band = page.locator('.tijdstrook .band');
-	await expect(band.locator('.stip').first()).toBeVisible();
+	await expect(band.locator('.deel').first()).toBeVisible();
 	await expect(canvas).not.toHaveAttribute('data-nodes', '0');
 	const voor = await canvas.getAttribute('data-nodes');
 	await expect(canvas).toHaveAttribute('data-dimmed', '0');

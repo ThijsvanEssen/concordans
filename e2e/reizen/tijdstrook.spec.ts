@@ -1,17 +1,17 @@
 // The tijdstrook under the canvas: a drag over its band chooses the period, which the address
-// holds (?van, ?tot); a tap on the one year chosen gives every year back. Periode in the strip
-// is the keyboard's way, so the band itself is for the pointer.
+// holds (?van, ?tot); a tap on the one year chosen gives every year back. The grips are
+// sliders for the keyboard (tijdstrook-staafstrook.spec.ts).
 import { expect, test } from '../support/test';
 
 test('a drag over the band chooses a period; a tap on that one year gives it back', async ({
 	page,
 	touch
 }) => {
-	test.skip(touch, 'a phone keeps Periode in the strip: the band is for the pointer');
+	test.skip(touch, 'a phone opens its band in a Blad (tijdstrook-staafstrook.spec.ts)');
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
 	const band = page.locator('.tijdstrook .band');
 	await expect(band).toBeVisible();
-	await expect(band.locator('.stip').first()).toBeVisible();
+	await expect(band.locator('.deel').first()).toBeVisible();
 	const box = (await band.boundingBox())!;
 	const y = box.y + box.height / 2;
 
@@ -22,7 +22,7 @@ test('a drag over the band chooses a period; a tap on that one year gives it bac
 	await expect(band.locator('.keuze')).toBeVisible();
 	await expect(page).toHaveURL(/[?&]van=/);
 	await expect(page).toHaveURL(/[?&]tot=/);
-	await expect(band.locator('.stip.is-dim').first()).toBeAttached();
+	await expect(band.locator('.kolom.is-dim').first()).toBeAttached();
 
 	// One year, chosen and tapped again: every year is back.
 	const x = box.x + box.width * 0.7;

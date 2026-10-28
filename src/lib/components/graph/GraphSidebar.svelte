@@ -2,8 +2,8 @@
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	// The filter of the werkplek, which is also its key (besluit 39): Tonen (the kinds drawn,
 	// of how many where the API cut them off, and the step that loads them all), Relatie (the
-	// lijnsoorten drawn, a line sample each), the Periode the page gives. Bijlagen and the netwerk's own
-	// filter are rows of Tonen.
+	// lijnsoorten drawn, a line sample each). Bijlagen and the netwerk's own filter are rows of
+	// Tonen.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import type { Snippet } from 'svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -50,7 +50,6 @@
 		hasNodes = false,
 		reach = null,
 		counting = false,
-		periode,
 		meer,
 		kindRowsShown = null,
 		kindsSettled = true,
@@ -82,8 +81,6 @@
 		reach?: NeighborhoodReach | null;
 		/** The netwerk is still coming in: Soort counts once it is there, no number springs (R3-N B5). */
 		counting?: boolean;
-		/** The block Periode, after Relatie. */
-		periode?: Snippet;
 		/** The netwerk's own filters, last rows of Tonen (NetworkOptions). */
 		meer?: Snippet;
 		/** Soort around one bron: the soorten of Verbonden, drawn of their whole (kind-rows.ts, N1). */
@@ -316,13 +313,12 @@
 				{/each}
 			</Sectie>
 		{/if}
-		{@render periode?.()}
 	{/if}
 </aside>
 
 <style>
-	/* In the strip at the left of the werkplek, in Weergave: a block (Sectie) for each of Tonen,
-	   Relatie, Periode. */
+	/* In the strip at the left of the werkplek, in Weergave: a block (Sectie) for each of Tonen
+	   and Relatie. */
 	.legend {
 		/* The marks of Tonen and Relatie in one column, as wide as a line sample. */
 		--optie-voor: 28px;
