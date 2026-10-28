@@ -258,7 +258,7 @@
 			{#if !typing}
 				<p class="hint">
 					{START.hint.intro}
-					{#each START.hint.examples as example, i (example)}{#if i > 0},&#32;{/if}<TekstLink
+					{#each START.hint.examples as example, i (example)}{#if i > 0}{', '}{/if}<TekstLink
 							href="/?q={encodeURIComponent(example)}"
 							onclick={(e) => probeer(e, example)}>{example}</TekstLink
 						>{/each}. {START.hint.outro}
