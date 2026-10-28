@@ -528,7 +528,7 @@ describe('the keten names its layers as the soorten', () => {
 			}
 		}) as never;
 
-	it('stands a Kamerlid on top, its fractie, kabinet and commissie under it', async () => {
+	it('stands a Kamerlid on top, Parlement (fractie, commissie) under it, then Regering', async () => {
 		const layers = await lineage(
 			member([
 				['factions', 'd66'],
@@ -538,7 +538,7 @@ describe('the keten names its layers as the soorten', () => {
 			['MEMBER_OF', 'SERVED_IN'],
 			async () => null
 		);
-		expect(layers.map((l) => l.label)).toEqual(['Kamerlid', 'Fractie', 'Kabinet', 'Commissie']);
+		expect(layers.map((l) => l.label)).toEqual(['Kamerlid', 'Fractie', 'Commissie', 'Kabinet']);
 	});
 
 	it('names a bewindspersoon as one, not a Kamerlid', async () => {
