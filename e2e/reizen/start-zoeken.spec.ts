@@ -69,18 +69,18 @@ test('the start page promises, tries a search for you and answers three question
 	await expect(page.getByRole('combobox', { name: 'Zoeken' })).toHaveValue('Awb');
 	await expect(page).toHaveURL(/\/$/);
 	await expect(main.locator('ol.stappen')).toHaveCount(0);
-	await expect(main.getByRole('heading', { level: 2, name: 'Wat kun je ermee?' })).toHaveCount(0);
+	await expect(main.getByRole('heading', { level: 2, name: 'Begin met een vraag' })).toHaveCount(0);
 });
 
 test('the first question of the start page opens an article with what refers to it', async ({
 	page
 }) => {
 	await page.goto('/');
-	const vragen = page.getByRole('region', { name: 'Wat kun je ermee?' });
+	const vragen = page.getByRole('region', { name: 'Begin met een vraag' });
 	await expect(vragen.locator('.vraag').getByRole('heading', { level: 3 })).toHaveText([
 		'Wie haalt dit artikel aan?',
 		'Hoe stemde de Kamer?',
-		'Wat onderzoek ik?'
+		'Hoe houd ik bij wat ik vind?'
 	]);
 	await vragen.getByRole('link', { name: /art\. 6:162 BW/ }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');

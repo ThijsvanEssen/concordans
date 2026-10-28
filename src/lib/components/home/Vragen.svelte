@@ -1,5 +1,5 @@
 <script lang="ts">
-	// "Wat kun je ermee?": three questions Concordans answers, each a tile with a way in, in a
+	// "Begin met een vraag": three questions Concordans answers, each a tile with a way in, in a
 	// narrow column, and beside them the living example of the day (a snippet, the law network)
 	// as a larger sheet; on a phone the tiles first, then the sheet. The server's HTML of `/`
 	// writes the same section (start.json, home.py); app.html sets it alike.

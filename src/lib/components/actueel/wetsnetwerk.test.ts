@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kandidaten, schetsVan, kleineSchets, type CitedBy } from './wetsnetwerk';
+import { kandidaten, schetsVan, kaartVan, type CitedBy } from './wetsnetwerk';
 import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 
 const vote = (number: string, date: string, chamber: 'TK' | 'EK', subkind: string, passed = true) =>
@@ -186,17 +186,13 @@ describe('schetsVan', () => {
 	});
 });
 
-describe('kleineSchets', () => {
-	it('draws dossier, the proposal that changes the article, the article and a judgment', () => {
-		const { knopen, lijnen } = kleineSchets(schetsVan(k, changes, citedBy)!);
-		expect(knopen.map((n) => n.collection)).toEqual([
-			'dossiers',
-			'documents',
-			'articles',
-			'judgments'
-		]);
-		expect(knopen[0].label).toBe('Dossier 36547');
-		expect(knopen[2].sub).toBe('Wetboek van Strafrecht');
-		expect(lijnen).toHaveLength(3);
+describe('kaartVan', () => {
+	it('draws the article with its proposal, its dossier and its judgments', () => {
+		const groepen = kaartVan(schetsVan(k, changes, citedBy)!);
+		expect(groepen.map((g) => g.id)).toEqual(['stukken', 'dossiers', 'uitspraken']);
+		expect(groepen[0].rows[0].title).toMatch(/^.+, nr\. \d+$/);
+		expect(groepen[1].rows[0].title).toBe('Dossier 36547');
+		expect(groepen[2].count).toBe(39);
+		expect(groepen[2].capped).toBe(true);
 	});
 });

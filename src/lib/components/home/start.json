@@ -25,7 +25,7 @@
 		}
 	],
 	"questions": {
-		"heading": "Wat kun je ermee?",
+		"heading": "Begin met een vraag",
 		"items": [
 			{
 				"title": "Wie haalt dit artikel aan?",
@@ -40,7 +40,7 @@
 				"href": "/stemmingen"
 			},
 			{
-				"title": "Wat onderzoek ik?",
+				"title": "Hoe houd ik bij wat ik vind?",
 				"text": "Bewaar artikelen, uitspraken en stukken met aantekeningen in een bundel en deel de link.",
 				"linkLabel": "Begin een bundel",
 				"href": "/bundels"

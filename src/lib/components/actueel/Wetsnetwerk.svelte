@@ -1,96 +1,55 @@
 <script lang="ts">
-	// The network of the last passed bill as a small sketch of the real one (the canvas of
-	// Netwerk): the marks, colours and lines of its kinds, four bronnen on one chain. Each
-	// bron opens itself; Open in netwerk opens the whole of it. A row on a wide screen, a
-	// column on a phone; the lines are drawn between the marks as they stand.
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { kindColour } from '$lib/bron/kleur';
-	import { drawnLine } from '$lib/components/graph/drawn-line';
-	import { DOT_RADIUS } from '$lib/graph/line-shape';
+	// The network of the last passed bill as the small network of Verbonden draws it (Netwerk
+	// tonen): the changed article in the middle, around it the proposal, the dossier and the
+	// judgments. Read only: a bron opens the real network with it. The drawing is a chunk of
+	// its own, asked after the first paint of the page; if it does not come, the line under it
+	// is still the way in.
+	import { goto } from '$app/navigation';
+	import { onMount, type Component } from 'svelte';
+	import { report } from '$lib/api/errors';
+	import { exploreHref } from '$lib/bron/address';
 	import { langeDatum } from '$lib/text/datum';
-	import { onMount } from 'svelte';
-	import { afterTick } from '$lib/util/after-tick';
-	import { kleineSchets, type Schets } from './wetsnetwerk';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
+	import type { Sketch } from '$lib/verbonden/sketch';
+	import { kaartVan, type Schets } from './wetsnetwerk';
 
 	let { schets }: { schets: Schets } = $props();
 
 	const k = $derived(schets.kandidaat);
-	const kaart = $derived(kleineSchets(schets));
-	/** The radius of a mark's ring, where its lines stop. */
-	const RING = 18;
-
-	let root = $state<HTMLElement>();
-	let lijnen = $state<ReturnType<typeof drawnLine>[]>([]);
-
-	function meet() {
-		if (!root) return;
-		const o = root.getBoundingClientRect();
-		const midden = (id: string) => {
-			const r = root!
-				.querySelector<HTMLElement>(`[data-bron="${CSS.escape(id)}"] .ring`)
-				?.getBoundingClientRect();
-			return r && { x: r.left + r.width / 2 - o.left, y: r.top + r.height / 2 - o.top };
-		};
-		lijnen = kaart.lijnen.flatMap((l) => {
-			const a = midden(l.van);
-			const b = midden(l.naar);
-			return a && b
-				? [
-						drawnLine(a, b, {
-							relation: l.relation,
-							from: l.from,
-							arrow: l.arrow,
-							ra: RING,
-							rb: RING
-						})
-					]
-				: [];
-		});
-	}
+	let kaart = $state.raw<{ Tekening: Component<any>; sketch: Sketch } | 'fout' | null>(null);
 
 	onMount(() => {
-		const ro = new ResizeObserver(() => meet());
-		if (root) ro.observe(root);
-		return () => ro.disconnect();
+		let weg = false;
+		Promise.all([import('$lib/verbonden/NetworkSketch.svelte'), import('$lib/verbonden/sketch')])
+			.then(([ns, sk]) => {
+				if (weg) return;
+				kaart = {
+					Tekening: ns.default,
+					sketch: sk.sketch(kaartVan(schets), schets.centrum.naam, undefined, 'article')
+				};
+			})
+			.catch((e) => {
+				report('Wetsnetwerk', e);
+				if (!weg) kaart = 'fout';
+			});
+		return () => (weg = true);
 	});
-	$effect(() => {
-		void kaart;
-		afterTick(meet);
-	});
+
+	/** A bron of the drawing opens in the real network, with the article it hangs on. */
+	function open(id: string) {
+		goto(exploreHref(new URLSearchParams({ netwerk: `${schets.centrum.id},${id}` })));
+	}
+	const alles = () => goto(schets.exploreHref);
 </script>
 
 <figure class="wetsnetwerk">
-	<div class="veld" bind:this={root}>
-		<svg class="lijnen" aria-hidden="true">
-			{#each lijnen as l, i (i)}
-				<path
-					d={l.d}
-					fill="none"
-					stroke={l.colour}
-					stroke-width={l.width}
-					stroke-dasharray={l.dash}
-					stroke-linecap={l.cap}
-				/>
-				{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
-				{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}
-			{/each}
-		</svg>
-		<ol>
-			{#each kaart.knopen as b (b.id)}
-				<li data-bron={b.id}>
-					<a class="knoop" href={b.href}>
-						<span class="ring ring--{b.ring ?? 'geen'}" style:--kleur={kindColour(b.collection)}>
-							<KindGlyph vorm={b.vorm} size={16} colour={kindColour(b.collection)} />
-						</span>
-						<span class="tekst">
-							<span class="naam">{b.label}</span>
-							{#if b.sub}<span class="sub">{b.sub}</span>{/if}
-						</span>
-					</a>
-				</li>
-			{/each}
-		</ol>
+	<div class="kaart">
+		{#if kaart && kaart !== 'fout'}
+			{@const Tekening = kaart.Tekening}
+			<Tekening sketch={kaart.sketch} name={schets.centrum.naam} onSingle={open} onGroup={alles} />
+		{:else if kaart === 'fout'}
+			<p class="stil">Het netwerk kon niet worden getekend.</p>
+		{/if}
 	</div>
 	<figcaption>
 		<span>Aangenomen door de {CHAMBER_NAME[k.kamer]}, {langeDatum(k.datum)}</span>
@@ -104,73 +63,21 @@
 		flex-direction: column;
 		margin: 0;
 	}
-	/* The sheet: the sketch in the middle of it, the caption at its foot. */
-	.veld {
-		position: relative;
-		margin: auto 0;
+	/* The room of the drawing while its chunk comes, so nothing under it drops. */
+	.kaart {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: center;
+		min-height: 300px;
 	}
-	.lijnen {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		overflow: visible;
-	}
-	ol {
-		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		column-gap: var(--s-6);
+	.kaart :global(.sketch) {
 		margin: 0;
-		padding: 0;
-		list-style: none;
 	}
-	.knoop {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--s-2);
-		color: var(--ink);
+	.stil {
+		margin: 0;
 		text-align: center;
-		text-decoration: none;
-	}
-	.ring {
-		display: grid;
-		place-items: center;
-		width: calc(2 * 18px);
-		height: calc(2 * 18px);
-		border-radius: var(--r-rond);
-	}
-	/* The rings of the canvas: a dossier in a dashed ring of its colour, the articles of a
-	   law in a ring of its colour on the second paper. */
-	.ring--dossier {
-		border: 1px dashed var(--kleur);
-	}
-	.ring--wet {
-		border: 1px solid var(--kleur);
-		background: var(--paper-2);
-	}
-	.tekst {
-		display: flex;
-		flex-direction: column;
-		min-width: 0;
-	}
-	.naam {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		line-height: var(--lh-snug);
-		overflow-wrap: anywhere;
-	}
-	.sub {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		line-height: var(--lh-snug);
 		color: var(--ink-3);
-		overflow-wrap: anywhere;
-	}
-	.knoop:hover .naam {
-		text-decoration: underline;
 	}
 	figcaption {
 		display: flex;
@@ -188,23 +95,5 @@
 	.verkenner {
 		font-weight: 600;
 		color: var(--ink);
-	}
-
-	/* A phone: one bron a row, the marks in a column with the lines between them. */
-	@media (max-width: 640px) {
-		ol {
-			grid-template-columns: minmax(0, 1fr);
-			row-gap: var(--s-4);
-		}
-		.knoop {
-			min-height: var(--veld-h-raak);
-			flex-direction: row;
-			align-items: center;
-			gap: var(--s-3);
-			text-align: left;
-		}
-		.ring {
-			flex: none;
-		}
 	}
 </style>

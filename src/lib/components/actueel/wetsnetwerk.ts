@@ -24,7 +24,9 @@ import { dossierName, dossierVolledigeTitel } from '$lib/bron/dossier-naam';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { AMENDING_BILL_KINDS } from '$lib/votes/stages';
-import type { Collection, Relation } from '$lib/vocabulary';
+import { refOf, type BronRef } from '$lib/bron/ref';
+import type { Row } from '$lib/verbonden/rows';
+import type { SketchGroup } from '$lib/verbonden/sketch';
 
 type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;
@@ -70,6 +72,8 @@ type SchetsBron = {
 	href: string;
 	/** A group stands for more bronnen than are drawn. */
 	groep?: boolean;
+	/** The bron for the small network (kaartVan). */
+	ref?: BronRef;
 };
 type SchetsKolom = {
 	titel: string;
@@ -84,6 +88,8 @@ export type Schets = {
 	kolommen: SchetsKolom[];
 	lijnen: [string, string][];
 	exploreHref: string;
+	/** The changed article the small network draws in the middle. */
+	centrum: { id: string; naam: string };
 	/** The chain in counts, for a narrow screen: stukken, articles, the law, judgments. */
 	keten: {
 		stukken: number;
@@ -116,7 +122,8 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		vorm: 'dossier',
 		label: k.naam,
 		sub: kamerstukNummer(k.number),
-		href: buildBronHref(null, { collection: 'dossiers', key: k.number, number: k.number })
+		href: buildBronHref(null, { collection: 'dossiers', key: k.number, number: k.number }),
+		ref: refOf('dossiers', k.number, { number: k.number })
 	};
 	const changes = laws.flatMap((l) => l.changes);
 
@@ -140,7 +147,8 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 				vorm: isBill(soort) ? 'voorstel' : 'stuk',
 				label: soort || naamVanId(c.source.id, c.source.display_name),
 				sub: nr ? `nr. ${nr}` : null,
-				href: buildBronHref(null, { collection: 'documents', key: c.source.key ?? c.source.id })
+				href: buildBronHref(null, { collection: 'documents', key: c.source.key ?? c.source.id }),
+				ref: refOf('documents', c.source.key ?? c.source.id)
 			});
 	}
 	const stukLijst: SchetsBron[] = [...stukken.values()]
@@ -240,7 +248,8 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 			]
 				.filter(Boolean)
 				.join(', '),
-			href: buildBronHref(null, { collection: 'judgments', key: j.key ?? j.id })
+			href: buildBronHref(null, { collection: 'judgments', key: j.key ?? j.id }),
+			ref: refOf('judgments', j.key ?? j.id)
 		}));
 		if (cb.judgment_total > uniek.length)
 			us.push({
@@ -262,6 +271,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		kolommen,
 		lijnen,
 		exploreHref: exploreHref(params),
+		centrum: { id: art.id, naam: artLabel },
 		keten: {
 			stukken: stukken.size + amendementen.size,
 			artikelen: tel.size,
@@ -280,68 +290,61 @@ const lawNodeId = (l: ChangedLaw) => `instruments/${lawKey(l)}`;
 const lawHref = (l: ChangedLaw) =>
 	buildBronHref(null, { collection: 'instruments', key: lawKey(l) });
 
-/** A knoop of the small sketch: one bron on the chain, with the collection that gives its colour. */
-type SchetsKnoop = SchetsBron & {
-	collection: Collection;
-	/** The ring it stands in, as the canvas draws a dossier and the articles of a law. */
-	ring: 'dossier' | 'wet' | null;
-};
-/** A line between two knopen, as the canvas draws its relation. */
-type SchetsLijn = {
-	van: string;
-	naar: string;
-	relation: Relation;
-	/** The collection the relation starts at, which gives the line its class. */
-	from: Collection;
-	arrow: 'a' | 'b' | null;
-};
-
 /**
- * The few knopen of the home page: dossier, one stuk, one changed article (with its law), one
- * judgment. The stuk is the proposal that changes that article; a missing link is left out.
+ * The small network of the home page, as Verbonden draws the network of a bron: the changed
+ * article in the middle, around it the proposal that changes it, the dossier and the
+ * judgments about it (one by one, or as one circle with their count). The data is the band's
+ * own; `sketch` (verbonden/sketch) lays it out.
  */
-export function kleineSchets(s: Schets): { knopen: SchetsKnoop[]; lijnen: SchetsLijn[] } {
-	const eerste = (kol?: SchetsKolom) => kol?.bronnen.find((b) => !b.groep) ?? kol?.bronnen[0];
+export function kaartVan(s: Schets): SketchGroup[] {
 	const [dossier] = s.kolommen[0].bronnen;
-	const artikel = eerste(s.kolommen[2]);
-	const wet = s.kolommen[2].kader?.label;
+	const artikel = s.kolommen[2].bronnen.find((b) => !b.groep);
 	const stukken = s.kolommen[1].bronnen;
 	const naarArtikel = new Set(s.lijnen.filter(([, b]) => b === artikel?.id).map(([a]) => a));
 	const stuk =
-		stukken.find((b) => naarArtikel.has(b.id) && b.vorm === 'voorstel') ??
-		stukken.find((b) => naarArtikel.has(b.id) && !b.groep) ??
-		stukken.find((b) => naarArtikel.has(b.id)) ??
-		eerste(s.kolommen[1]);
-	const uitspraak = s.kolommen[3] ? eerste(s.kolommen[3]) : undefined;
-
-	const knopen: SchetsKnoop[] = [
-		{
-			...dossier,
-			label: dossier.sub ?? dossier.label,
-			sub: null,
+		stukken.find((b) => naarArtikel.has(b.id) && b.vorm === 'voorstel' && b.ref) ??
+		stukken.find((b) => naarArtikel.has(b.id) && !b.groep && b.ref);
+	const uitspraken = (s.kolommen[3]?.bronnen ?? []).filter((b) => !b.groep && b.ref);
+	const rij = (b: SchetsBron, filterGroup: Row['filterGroup'], extra: Partial<Row> = {}): Row => ({
+		ref: b.ref!,
+		title: b.sub ? `${b.label}, ${b.sub.replace(/^Dossier /, '').replace(/,.*$/, '')}` : b.label,
+		context: null,
+		filterGroup,
+		...extra
+	});
+	const groepen: SketchGroup[] = [];
+	if (stuk)
+		groepen.push({
+			id: 'stukken',
+			name: 'Stukken',
+			collection: 'documents',
+			count: 1,
+			rows: [rij(stuk, 'stukken', { relation: 'AMENDS', direction: 'inbound' })]
+		});
+	if (dossier?.ref)
+		groepen.push({
+			id: 'dossiers',
+			name: 'Dossiers',
 			collection: 'dossiers',
-			ring: 'dossier'
-		}
-	];
-	const lijnen: SchetsLijn[] = [];
-	const voeg = (
-		b: SchetsBron | undefined,
-		collection: Collection,
-		ring: SchetsKnoop['ring'],
-		lijn: Omit<SchetsLijn, 'van' | 'naar'> | null,
-		sub?: string | null
-	) => {
-		if (!b) return;
-		const vorige = knopen[knopen.length - 1];
-		knopen.push({ ...b, sub: sub ?? b.sub, collection, ring });
-		if (lijn) lijnen.push({ ...lijn, van: vorige.id, naar: b.id });
-	};
-	voeg(stuk, 'documents', null, { relation: 'PART_OF', from: 'documents', arrow: null });
-	voeg(artikel, 'articles', 'wet', { relation: 'AMENDS', from: 'documents', arrow: 'b' }, wet);
-	voeg(uitspraak, 'judgments', null, { relation: 'REFERS_TO', from: 'judgments', arrow: 'a' });
-	return { knopen, lijnen };
+			count: 1,
+			rows: [{ ...rij(dossier, 'dossiers'), title: dossier.sub ?? dossier.label }]
+		});
+	if (uitspraken.length) {
+		const totaal = Math.max(s.keten.uitspraken ?? 0, uitspraken.length);
+		groepen.push({
+			id: 'uitspraken',
+			name: 'Uitspraken',
+			collection: 'judgments',
+			count: totaal,
+			rows: uitspraken.map((u) => ({
+				...rij(u, 'uitspraken', { relation: 'REFERS_TO', direction: 'inbound' }),
+				title: u.label
+			})),
+			capped: totaal > uitspraken.length
+		});
+	}
+	return groepen;
 }
-
 /** The bills the Eerste Kamer passed before the summary's days: its votes are on bills only. */
 async function oudere(today: string, signal?: AbortSignal): Promise<Kandidaat[]> {
 	const { items } = await getFeed(
