@@ -1,4 +1,5 @@
 import { getNodeNeighborhood } from '$lib/api/nodes';
+import { ignore } from '$lib/api/errors';
 import {
 	abortable,
 	CANVAS_BUCKET,
@@ -174,7 +175,7 @@ export function createExpansion(
 			signal: signal()
 		});
 		// Asked ahead of its merge: a failure is the merge's to report, not an unhandled one.
-		asked.catch(() => {});
+		asked.catch(ignore('Verkenner omgeving vooraf'));
 		return asked;
 	};
 

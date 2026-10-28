@@ -17,7 +17,7 @@ export const NEIGHBORHOOD_DEPTH = 3;
 export const NEIGHBORHOOD_CAP = 150;
 
 /** What a neighbourhood request asks. */
-export type NeighborhoodRequest = {
+type NeighborhoodRequest = {
 	depth?: number;
 	cap?: number;
 	relations?: Relation[];

@@ -1730,7 +1730,7 @@
 		'Verkenner onderdeel'
 	);
 	// The werkplek's own parts, and its weergaven: chunks of their own, asked with the canvas.
-	const netwerkPanel = new Lazy(
+	const panelChunk = new Lazy(
 		() => import('$lib/selection/NetwerkPanel.svelte'),
 		'Verkenner onderdeel'
 	);
@@ -1748,14 +1748,14 @@
 	$effect(() => {
 		if (mode === 'graph') {
 			graphChunk.load();
-			netwerkPanel.load();
+			panelChunk.load();
 			if (view === 'keten') chainView.load();
 			else if (view === 'verband') sharedView.load();
 			return;
 		}
 		const ask = () => {
 			graphChunk.load();
-			netwerkPanel.load();
+			panelChunk.load();
 		};
 		if (typeof requestIdleCallback !== 'function') return void setTimeout(ask, 3000);
 		const idle = requestIdleCallback(ask, { timeout: 5000 });
@@ -2193,8 +2193,7 @@
 			{#if params.get('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
 				<div class="index-rol">
-					{#if indexOverview.component}{@const IndexOverzichtC =
-							indexOverview.component}<IndexOverzichtC
+					{#if indexOverview.component}{@const OverviewC = indexOverview.component}<OverviewC
 						/>{:else if indexOverview.error}{@render chunkMissing(
 							indexOverview,
 							'Het overzicht'
@@ -2317,8 +2316,7 @@
 									>
 								{/snippet}
 								{#snippet canvasOverlay()}
-									{#if netwerkPanel.component}{@const NetwerkPanelC =
-											netwerkPanel.component}<NetwerkPanelC
+									{#if panelChunk.component}{@const PanelC = panelChunk.component}<PanelC
 											bind:searching={toevoegenOpen}
 											entries={netwerkActive
 												? composer.entries.map((e) =>

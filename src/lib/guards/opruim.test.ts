@@ -107,6 +107,18 @@ const AS_VALUE: Uitzondering[] = [
 		reden: 'loaded lazily by the explore page, rendered as <IndexViewC>'
 	},
 	{
+		pad: 'lib/network/ChainView.svelte',
+		reden: 'loaded lazily by the explore page, rendered as <ChainViewC>'
+	},
+	{
+		pad: 'lib/network/SharedView.svelte',
+		reden: 'loaded lazily by the explore page, rendered as <SharedViewC>'
+	},
+	{
+		pad: 'lib/selection/NetwerkPanel.svelte',
+		reden: 'loaded lazily by the explore page, rendered as <PanelC>'
+	},
+	{
 		pad: 'lib/components/ui/Periode.svelte',
 		regel: /^(distribution|counts)$/,
 		reden:

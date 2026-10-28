@@ -107,7 +107,7 @@ describe('/explore and the werkplek of a bron', () => {
 	const page = bron('routes/explore/+page.svelte');
 	const markup = page.slice(page.indexOf('</script>'));
 	it('render one werkplek: one canvas, one panel Netwerk, one Keten, one Verband', () => {
-		for (const tag of ['<GraphViewC', '<NetwerkPanel', '<ChainView', '<SharedView'])
+		for (const tag of ['<GraphViewC', '<PanelC', '<ChainView', '<SharedView'])
 			expect(markup.split(tag).length - 1, tag).toBe(1);
 	});
 	it('have no variant of a werkplek component for an empty canvas or for /explore', () => {
