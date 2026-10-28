@@ -245,3 +245,62 @@ describe('the group Artikelen of a law with an aard (instrument-aard)', () => {
 		expect(shortLine(rows[0])).toBe('verwijst naar art. 1 HPW, als definitie');
 	});
 });
+
+describe('the laws related to a law (B3)', () => {
+	const related = (key: string, basis: unknown = null) => ({
+		id: `instruments/${key}`,
+		key,
+		bwb_id: key.toUpperCase(),
+		citation_title: key,
+		kind: 'wet',
+		direction: 'inbound',
+		outbound_count: 0,
+		outbound_cited_count: 0,
+		inbound_count: 1,
+		inbound_cited_count: 1,
+		based_on: basis != null,
+		basis
+	});
+	const page = [
+		related('bwbr0000002'),
+		related('bwbr0000003', { direction: 'inbound', articles: [] })
+	];
+	const load = () =>
+		LOADERS['instrument-related']({
+			node: {
+				id: 'instruments/bwbr0005289',
+				key: 'bwbr0005289',
+				props: { bwb_id: 'BWBR0005289' }
+			} as unknown as LoaderContext['node'],
+			neighbors: [],
+			totals: new Map(),
+			buren: async () => [],
+			signal: new AbortController().signal,
+			options: DEFAULT_LOADER_OPTIONS
+		});
+
+	it('counts without those issued under the other on every page, not this one alone', async () => {
+		fakeApi({
+			'/api/instruments/{bwb_id}/related-instruments': {
+				bwb_id: 'BWBR0005289',
+				total: 6,
+				based_on_total: 3,
+				items: page
+			}
+		});
+		const { rows, total } = await load();
+		expect(rows.map((r) => r.ref.key)).toEqual(['bwbr0000002']);
+		expect(total).toBe(3);
+	});
+
+	it('leaves out those of the page where the API does not count them yet', async () => {
+		fakeApi({
+			'/api/instruments/{bwb_id}/related-instruments': {
+				bwb_id: 'BWBR0005289',
+				total: 6,
+				items: page
+			}
+		});
+		expect((await load()).total).toBe(5);
+	});
+});

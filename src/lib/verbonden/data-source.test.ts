@@ -131,3 +131,47 @@ describe('the whole node, asked for before the first rows are in', () => {
 		source.destroy();
 	});
 });
+
+describe('the laws of a ministry while they load (B3)', () => {
+	it('say no count of the buckets: they count every law, the list those in force', async () => {
+		const ministry = {
+			node: { id: 'ministries/jenv', key: 'jenv', props: {} },
+			neighbors: {
+				total: 5551,
+				buckets: [
+					{
+						relation: 'LED_BY',
+						collection: 'instruments',
+						direction: 'inbound',
+						total: 5551,
+						items: [
+							{
+								id: 'instruments/bwbr0001854',
+								collection: 'instruments',
+								key: 'bwbr0001854',
+								relation: 'LED_BY',
+								direction: 'inbound',
+								props: {}
+							}
+						]
+					}
+				]
+			}
+		};
+		fakeApi({
+			'/api/nodes/{collection}/{key}': ministry,
+			'/api/instruments': () => new Promise(() => {}),
+			'/api/dossiers': () => new Promise(() => {}),
+			'/api/commitments': () => new Promise(() => {})
+		});
+		const source = createVerbondenSource({
+			nodeResponse: () => Promise.resolve(ministry)
+		} as unknown as GraphStore);
+		source.load({ id: 'ministries/jenv', collection: 'ministries', key: 'jenv' } as GraphNode);
+		await vi.waitFor(() => expect(get(source).groups.length).toBeGreaterThan(0));
+		const st = get(source);
+		expect(st.verwacht?.laws).toBeUndefined();
+		expect(st.preview?.find((p) => p.id === 'laws')?.count ?? null).toBeNull();
+		source.destroy();
+	});
+});
