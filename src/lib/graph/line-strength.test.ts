@@ -3,7 +3,13 @@ import { LINE_CONTRAST, contrast, floorStrength, lineStrength, mixed } from './l
 import { FALLBACK } from '$lib/components/graph/nodeSprites';
 
 const paper = FALLBACK.paper;
-const colours = [FALLBACK.moss, FALLBACK.rubriekWetten, FALLBACK.slate, FALLBACK.plum, FALLBACK.ink3];
+const colours = [
+	FALLBACK.moss,
+	FALLBACK.rubriekWetten,
+	FALLBACK.slate,
+	FALLBACK.plum,
+	FALLBACK.ink3
+];
 
 describe('the strength of a line at rest', () => {
 	it('keeps every line of a chosen bron at 3:1 against the paper, however many there are', () => {
