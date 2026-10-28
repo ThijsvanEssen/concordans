@@ -9,6 +9,7 @@ import { FILTER_GROUP_LABEL, type VerbondenFilter } from './filter';
 import type { Group } from './groups';
 import { mentionRows, type Row } from './rows';
 import { betrouwbaarheid } from './verbinding';
+import { safeFileName } from '$lib/util/save-file';
 
 /** What a cell needs besides its row: the kind of the selected bron, and the site for links. */
 type ColumnContext = { selection: Collection; origin: string };
@@ -118,28 +119,8 @@ export function rowsToCsv(rows: Row[], selection: Collection, origin: string): s
 	);
 }
 
-/** `text` in characters every file system accepts, `max` at most; '' where nothing is left. */
-export const safeFileName = (text: string, max = 120): string =>
-	text
-		// eslint-disable-next-line no-control-regex
-		.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
-		.replace(/\s+/g, ' ')
-		.replace(/^[.\s]+|[.\s]+$/g, '')
-		.slice(0, max)
-		.trim();
-
 /** The name of the file: the verbindingen of the bron by its title; the key when the title
  *  leaves nothing. */
 export function csvName(title: string | null | undefined, key: string): string {
 	return `Verbindingen van ${safeFileName(title ?? '') || safeFileName(key) || 'bron'}.csv`;
-}
-
-/** Hands the browser a file to save. */
-export function download(name: string, text: string, type = 'text/csv') {
-	const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = name;
-	a.click();
-	setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

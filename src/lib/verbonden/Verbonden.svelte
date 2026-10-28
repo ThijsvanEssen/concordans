@@ -24,7 +24,8 @@
 	} from './filter';
 	import { formatCount, isAtLeast } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
-	import { csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
+	import { csvName, exportLabel, exportRows, rowsToCsv } from './export';
+	import { download } from '$lib/util/save-file';
 	import { caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
 	import { LOAD_FAILED, type VerbondenState } from './data-source';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';

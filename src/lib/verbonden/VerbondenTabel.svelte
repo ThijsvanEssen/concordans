@@ -15,11 +15,11 @@
 		TABLE_COLUMNS,
 		columnLabel,
 		csvName,
-		download,
 		exportLabel,
 		exportRows,
 		rowsToCsv
 	} from './export';
+	import { download } from '$lib/util/save-file';
 	import { emptyLine, type VerbondenFilter } from './filter';
 	import { formatCount } from '$lib/text/getal';
 	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
