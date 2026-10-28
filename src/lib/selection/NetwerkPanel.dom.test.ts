@@ -1,5 +1,5 @@
 // The panel Bronnen: one place for one function. "Alleen de gekozen bronnen tonen" has no link
-// and no menu Meer of its own; the filter is the Vinkje "Alleen verbonden bronnen" under Tonen.
+// and no menu Meer of its own; the reach is Aantal stappen in the block Weergave.
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import NetwerkPanel from './NetwerkPanel.svelte';

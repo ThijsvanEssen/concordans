@@ -215,13 +215,13 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.IndexView?.category).toBe('judgments');
 	});
 
-	it('draws two steps around an ordinary bron, ?diepte between 1 and 3, ?alles=1 one step', async () => {
+	it('draws two steps around an ordinary bron, ?diepte between 1 and 3 (0 is for a netwerk), ?alles=1 one step', async () => {
 		const cases: [string, number][] = [
 			['', 2],
 			['&diepte=1', 1],
 			['&diepte=3', 3],
 			['&diepte=9', 3],
-			['&diepte=0', 2],
+			['&diepte=0', 1],
 			['&diepte=x', 2],
 			['&alles=1&diepte=3', 1]
 		];

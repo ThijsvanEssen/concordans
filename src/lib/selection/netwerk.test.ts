@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
 	syncOn,
-	stepsOffReason,
-	onlyAround,
 	between,
 	isOn,
 	netwerkParams,
@@ -71,23 +69,15 @@ describe('what joins the chosen bronnen', () => {
 	};
 	const sr: Participant = { id: SR, lawId: 'BWBR0001854', neighbors: [] };
 
-	it('keeps a shared bron, a chosen bron and an article of a chosen wet', () => {
-		const b = between([jetten, buma, sr], lawOf, true);
-		expect([...b.keep.get(JETTEN)!]).toEqual(['documents/samen', 'articles/bwbr0001854_138ab']);
-		expect([...b.keep.get(BUMA)!]).toEqual(['documents/samen', JETTEN]);
-		expect([...b.joining]).toEqual(['documents/samen']);
-		expect(b.alone.size).toBe(0);
-	});
-
-	it('leaves the shared bronnen out when joining is off, and still knows they are tied', () => {
-		const b = between([jetten, buma], lawOf, false);
-		expect([...b.keep.get(JETTEN)!]).toEqual([]);
-		expect(b.joining.size).toBe(0);
+	it('keeps a chosen bron and an article of a chosen wet, not a bron two share', () => {
+		const b = between([jetten, buma, sr], lawOf);
+		expect([...b.keep.get(JETTEN)!]).toEqual(['articles/bwbr0001854_138ab']);
+		expect([...b.keep.get(BUMA)!]).toEqual([JETTEN]);
 		expect(b.alone.size).toBe(0);
 	});
 
 	it('names a bron that nothing ties to the rest', () => {
-		const b = between([buma, sr], lawOf, true);
+		const b = between([buma, sr], lawOf);
 		expect([...b.alone]).toEqual([BUMA, SR]);
 	});
 });
@@ -100,37 +90,16 @@ describe('an old address with ?tussen', () => {
 	});
 });
 
-describe('onlyAround', () => {
-	it('switches the others off and keeps them listed; adds the bron when it is not chosen', () => {
-		const n = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}`));
-		const f = onlyAround(n, BUMA);
-		expect(f.ids).toEqual([JETTEN, BUMA]);
-		expect([...f.uit]).toEqual([JETTEN]);
-		expect(n.uit.size).toBe(0);
-		expect(onlyAround(n, SR).ids).toEqual([JETTEN, BUMA, SR]);
-	});
-});
-
 describe('syncOn', () => {
 	it('turns the entries on again when the address no longer switches them off', () => {
-		const around = onlyAround(parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}`)), BUMA);
+		const off = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}&uit=${JETTEN}`));
 		const entry = (id: string, on: boolean) => ({ id, on }) as never;
 		const drawn = [entry(JETTEN, false), entry(BUMA, true)];
 		const plain = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}`));
 		expect(syncOn(drawn, plain).map((e) => e.on)).toEqual([true, true]);
-		expect(syncOn([entry(JETTEN, true), entry(BUMA, true)], around).map((e) => e.on)).toEqual([
+		expect(syncOn([entry(JETTEN, true), entry(BUMA, true)], off).map((e) => e.on)).toEqual([
 			false,
 			true
 		]);
-	});
-});
-
-describe('why Aantal stappen is off', () => {
-	it('asks a second bron in Verband only', () => {
-		expect(stepsOffReason('verband', 1)).toBe('Kies eerst een tweede bron.');
-		expect(stepsOffReason('verband', 2)).toBeNull();
-	});
-	it('says nothing in Omgeving, whatever the number of bronnen (A1)', () => {
-		for (const ends of [0, 1, 2, 3]) expect(stepsOffReason('omgeving', ends)).toBeNull();
 	});
 });

@@ -104,7 +104,7 @@
 			pending.length === 0 &&
 			(steps === 1 || chains?.status === 'ready' || choice === 'alle')
 	);
-	const openBlad = useWeergaveBlad();
+	const blad = useWeergaveBlad();
 	const BLOCK = ['', 'Eén stap', 'Twee stappen', 'Drie stappen'];
 	const openSearch = useSearchOpener();
 	const keydown = (e: KeyboardEvent) => {
@@ -133,10 +133,14 @@
 	{:else if loading || !drawn}
 		<p class="empty stil" role="status">Verband zoeken</p>
 	{:else}
-		{#if openBlad}
+		{#if blad}
 			<!-- A phone: the Netwerkkeuze as a Blad, from the top (DS Verband, Telefoon). -->
-			<button type="button" class="blad-knop" aria-haspopup="dialog" onclick={openBlad}
-				>Verband, {steps} {plural(steps, 'stap', 'stappen')}</button
+			<button
+				type="button"
+				class="blad-knop"
+				aria-haspopup="dialog"
+				aria-expanded={blad.isOpen}
+				onclick={blad.open}>Verband, {steps} {plural(steps, 'stap', 'stappen')}</button
 			>
 		{/if}
 		{#if choices.length}

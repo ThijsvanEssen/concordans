@@ -195,6 +195,17 @@
 					: hoveredNeighbours.has(id)
 						? 1
 						: 0;
+	/** The name of the focus stands in 600 (besluit 36): it is wider than the others. */
+	const FOCUS_WEIGHT = '600';
+	const widthIn600 = (context: CanvasRenderingContext2D, label: string) => {
+		const was = context.font;
+		context.font = was.replace(/^\S+/, FOCUS_WEIGHT);
+		const w = context.measureText(label).width + 4;
+		context.font = was;
+		return w;
+	};
+	const weightOf = (key: string | undefined, normal: string) =>
+		key !== undefined && key === focusedId ? FOCUS_WEIGHT : normal;
 	/**
 	 * The names of this frame and where they stand (UX review N4): every bron drawn, its sign;
 	 * every bron with a name, a candidate for `planLabels`, in the order of its rank.
@@ -214,7 +225,7 @@
 			const size = view.scaleSize(d.size);
 			glyphs.push({ x: x - size, y: y - size, w: 2 * size, h: 2 * size });
 			if (!d.label || (!d.forceLabel && size < settings.labelRenderedSizeThreshold)) return;
-			let w = labelWidths.get(d.label);
+			let w = id === focusedId ? widthIn600(context, d.label) : labelWidths.get(d.label);
 			if (w === undefined) labelWidths.set(d.label, (w = context.measureText(d.label).width + 4));
 			const cluster = !!(d as { cluster?: boolean }).cluster;
 			candidates.push({
@@ -933,7 +944,8 @@
 			defaultDrawNodeLabel: (context, data, settings) => {
 				if (!data.label) return;
 				const size = settings.labelSize;
-				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				const normal = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				context.font = normal;
 				// Where the plan of this frame puts it: right of the bron, left, above or below it,
 				// where no other name or bron stands; the focus always ($lib label-place). A name
 				// with no free place, or past the frame's sixty, waits for a hover.
@@ -951,6 +963,9 @@
 				context.fillStyle = t.paper;
 				context.fillRect(at.x, at.y, at.w, at.h);
 				context.restore();
+				const weight = weightOf(key, settings.labelWeight);
+				if (weight !== settings.labelWeight)
+					context.font = `${weight} ${size}px ${settings.labelFont}`;
 				context.fillStyle = settings.labelColor.attribute
 					? (((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
 						settings.labelColor.color ??
@@ -964,7 +979,8 @@
 			defaultDrawNodeHover: (context, data, settings) => {
 				if (data.anchor || !data.label) return;
 				const size = settings.labelSize;
-				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				const weight = weightOf((data as { key?: string }).key, settings.labelWeight);
+				context.font = `${weight} ${size}px ${settings.labelFont}`;
 				const w = context.measureText(data.label).width + 4;
 				const h = size + 4;
 				const room = context.canvas.width / (window.devicePixelRatio || 1);

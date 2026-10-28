@@ -23,7 +23,6 @@
 	import {
 		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
-		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
@@ -114,7 +113,6 @@
 	import { lawName } from '$lib/text/instrument-meta';
 	import { keyEcli } from '$lib/text/ecli';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
-	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import type { Option } from '$lib/components/ui/option';
@@ -140,8 +138,6 @@
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
-		onlyAround,
-		stepsOffReason,
 		netwerkParams,
 		parseNetwerk,
 		withAdded,
@@ -167,7 +163,6 @@
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { InFlux } from './in-flux.svelte';
 	import { Proposals } from './proposals.svelte';
-	import ProposalsOption from '$lib/proposals/ProposalsOption.svelte';
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
@@ -298,12 +293,11 @@
 	const alles = $derived(params.get('alles') === '1');
 	// The API's most at one step (2.000 from 0.79.45, #545).
 	const ALLES_GRENS = 2000;
+	// A bron alone has no 0 steps: Alleen gekozen is a netwerk's.
 	const depthFor = (drawClass: DrawClass) =>
-		depthOfClass(drawClass, { explicit: explicitDepth, all: alles });
+		Math.max(1, depthOfClass(drawClass, { explicit: explicitDepth, all: alles }));
 	// The bron the canvas is drawn around; a click selects another without moving it.
 	let anchorClass = $state<DrawClass>('other');
-	const depth = $derived(depthFor(anchorClass));
-
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
 	//
@@ -316,13 +310,38 @@
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
-	// "Alleen verbonden bronnen" is a filter on the netwerk, not a replacement: ?omgeving names
-	// the bron whose surroundings alone are drawn; the chosen bronnen stay in the address, greyed,
-	// and come back when the filter goes off.
-	const AROUND = 'omgeving';
-	const aroundId = $derived(parseNodeId(params.get(AROUND) ?? '') ? params.get(AROUND) : null);
-	const shownNetwork = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
-	const netwerkActive = $derived(shownNetwork.ids.length > 0);
+	const netwerkActive = $derived(netwerk.ids.length > 0);
+
+	// What Aantal stappen shows: with a netwerk the steps of its bronnen (the most any asks), else
+	// the bron the canvas is drawn around.
+	const depth = $derived(
+		netwerkActive && explicitDepth !== null
+			? explicitDepth
+			: netwerkActive
+				? Math.max(
+						1,
+						...composer.entries
+							.filter((e) => e.on && e.node)
+							.map((e) => depthOfClass(e.node!.drawClass, { explicit: null, all: false }))
+					)
+				: depthFor(anchorClass)
+	);
+	/**
+	 * How far the netwerk reached, for Aantal stappen: the steps beyond the first and whether the
+	 * API cut one of them off; at one step, whether a bron's own neighbours came in part (not
+	 * known at Alleen gekozen: no step is greyed out before one is asked).
+	 */
+	const netwerkReach = $derived<NeighborhoodReach>(
+		composer.reach
+			? { focal: '', ...composer.reach, buckets: composer.cut }
+			: {
+					focal: '',
+					depth: 1,
+					capped: composer.cut.length > 0 && !composer.extending && explicitDepth !== 0,
+					cap: NEIGHBORHOOD_CAP,
+					buckets: composer.cut
+				}
+	);
 	/** Outside the werkplek, the netwerk kept in this browser: a bron read is added to it. */
 	const bewaard = $derived(parseNetwerk(new URLSearchParams(keptNetwerk() ?? '')));
 	/** The netwerk a bron is added to: the werkplek's, or the kept one while reading. */
@@ -343,6 +362,16 @@
 	type ViewId = (typeof VIEWS)[number]['waarde'];
 	const view = $derived<ViewId>(
 		VIEWS.find((w) => w.waarde === params.get(VIEW_PARAM))?.waarde ?? 'omgeving'
+	);
+	/** Verband compares bronnen: it is offered from two chosen ones, the page's bron counting. */
+	const verbandPossible = $derived(
+		composer.entries.filter((e) => e.on).length +
+			(selectedNode &&
+			!selectedNode.id.startsWith('synth:') &&
+			!composer.entries.some((e) => e.on && e.node?.id === selectedNode?.id)
+				? 1
+				: 0) >=
+			2
 	);
 	const chooseView = (w: ViewId) =>
 		setUrl({ [VIEW_PARAM]: w === 'omgeving' ? null : w, [MARK_PARAM]: null });
@@ -772,12 +801,11 @@
 	 * is 1. With three or more bronnen the Keuze (?paar) names the pair whose ketens are
 	 * sought; Alle has none.
 	 */
-	const pairSteps = $derived(Math.min(MAX_STEPS, explicitDepth ?? 1));
+	const pairSteps = $derived(Math.max(1, Math.min(MAX_STEPS, explicitDepth ?? 1)));
 	const PAIR_PARAM = 'paar';
 	const pairChoice = $derived(resolveChoice(params.get(PAIR_PARAM), sharedDrawn, sharedState));
 	const vcPair = $derived(sharedDrawn.length === 2 || sharedState ? pairOf(pairChoice) : null);
 	const vcKey = $derived(vcPair && pairSteps >= 2 ? `${vcPair.join(',')}:${pairSteps}` : '');
-	const stepsOff = $derived(stepsOffReason(view, sharedEnds.length));
 	let vcData = $state.raw<
 		{ key: string; response: ChainsResponse } | { key: string; error: unknown } | null
 	>(null);
@@ -1099,7 +1127,7 @@
 	// is drawn.
 	let focusEpoch = 0;
 	// The most bronnen a neighbourhood brings: fewer on a phone.
-	const omgevingGrens = telefoon ? NEIGHBORHOOD_CAP_PHONE : NEIGHBORHOOD_CAP;
+	const omgevingGrens = NEIGHBORHOOD_CAP;
 
 	async function expandAround(node: GraphNode, epoch: number) {
 		if (node.id.startsWith('synth:')) return;
@@ -1379,11 +1407,15 @@
 	let metGroep = $state<ReadonlyMap<string, ContainerKind>>(new Map());
 
 	$effect(() => {
-		const n = shownNetwork;
+		const n = netwerk;
 		const omgeving = view === 'omgeving';
+		// Aantal stappen 0 is Alleen gekozen: no surroundings. Read here, so a change of ?diepte
+		// composes again.
+		const steps = explicitDepth;
 		if (mode !== 'graph') return;
 		untrack(() => {
-			composer.surroundings = omgeving;
+			composer.surroundings = omgeving && steps !== 0;
+			composer.steps = steps;
 			if (n.ids.length > 0) composer.compose(n);
 			else if (composer.composed) {
 				composer.release();
@@ -1499,15 +1531,6 @@
 			wachtOp = null;
 	});
 
-	function toggleAround() {
-		if (aroundId) return setUrl({ [AROUND]: null });
-		const id = selectedLinkId;
-		if (!id) return;
-		// The first bron of an empty canvas grows out of it, as a bron added does.
-		if (!netwerkActive) composer.keepCanvas();
-		setUrl({ [AROUND]: id });
-	}
-
 	function addToNetwerk(node: GraphNode) {
 		const id = linkIdOf(node);
 		if (id) addIdToNetwerk(id, kort(bronNaam(node, $instrumentMetaStore)));
@@ -1556,7 +1579,6 @@
 				netwerk: null,
 				uit: null,
 				tussen: null,
-				[AROUND]: null,
 				focus: null,
 				[SHOW]: null,
 				[MARK_PARAM]: null,
@@ -1620,29 +1642,9 @@
 	// Netwerk tonen and Netwerk verbergen in Verbonden: one step each, so Back undoes it.
 	const setShowNetwork = (on: boolean) => setUrl({ [SHOW]: on ? 'netwerk' : null }, { push: true });
 	// Always explicit: an unset diepte means 1 for a container and 2 for every other bron,
-	// so a plain "2" click does not remove the param.
-	// With a netwerk a depth adds context around the selection; the netwerk stays.
-	function setDepth(d: number) {
-		if (view === 'verband') {
-			setUrl({ diepte: String(d) });
-			return;
-		}
-		if (!netwerkActive) {
-			setUrl({ diepte: String(d) });
-			return;
-		}
-		const node = selectedNode;
-		if (!node || node.id.startsWith('synth:')) return;
-		graphView?.suppressFit();
-		store
-			.expandNeighborhood(node.collection, node.key, {
-				depth: d,
-				cap: omgevingGrens,
-				additive: true
-			})
-			.then(() => graphView?.fitWhenSettled())
-			.catch((e) => showFocusError(e, node.key));
-	}
+	// so a plain "2" click does not remove the param. In Omgeving it reaches the chosen bronnen
+	// (the page's bron when none is chosen); in Verband it is the pair's.
+	const setDepth = (d: number) => setUrl({ diepte: String(d) });
 
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
 	// "Alle 10.406" of a kind the canvas cut off: those bronnen as a list, the table under that
@@ -1829,12 +1831,6 @@
 				requestAnimationFrame(() =>
 					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
 				);
-			return;
-		}
-		// O: the filter Alleen verbonden bronnen on or off for the selected bron.
-		if (e.key.toLowerCase() === 'o' && mode === 'graph' && (aroundId || selectedNode)) {
-			e.preventDefault();
-			toggleAround();
 			return;
 		}
 		if (e.key.toLowerCase() !== 'l' || !readAction) return;
@@ -2154,18 +2150,9 @@
 								{verbonden}
 								{depth}
 								{pairSteps}
-								{stepsOff}
-								reach={netwerkActive
-									? {
-											focal: '',
-											depth: 1,
-											capped: composer.cut.length > 0,
-											cap: NEIGHBORHOOD_CAP,
-											buckets: composer.cut
-										}
-									: reach}
-								counting={netwerkActive && composer.loading}
-								expecting={netwerkActive ? shownNetwork.ids.length : 0}
+								reach={netwerkActive ? netwerkReach : reach}
+								counting={netwerkActive && (composer.loading || composer.extending)}
+								expecting={netwerkActive ? netwerk.ids.length : 0}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
 								inFluxMap={inFlux.counts}
@@ -2205,6 +2192,13 @@
 											}
 										}
 									: null}
+								proposals={view === 'omgeving'
+									? {
+											on: proposalsOn,
+											count: proposals.available,
+											onToggle: () => setUrl({ [PROPOSALS]: proposalsOn ? null : 'ja' })
+										}
+									: undefined}
 								externStippen={view === 'keten'
 									? chainDots
 									: view === 'verband'
@@ -2219,7 +2213,10 @@
 											vol
 											waarde={view}
 											opties={VIEWS.filter(
-												(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
+												(w) =>
+													w.waarde === 'omgeving' ||
+													w.waarde === view ||
+													(w.waarde === 'keten' ? chainPossible : verbandPossible)
 											).map((w) => ({ waarde: w.waarde, label: w.label }))}
 											onSelect={chooseView}
 										/>
@@ -2230,20 +2227,6 @@
 									<button type="button" class="btn raakvlak-knop" onclick={handleShareView}
 										>{shareCopier.label('share', 'Deel')}</button
 									>
-								{/snippet}
-								{#snippet meer()}
-									<ProposalsOption
-										on={proposalsOn}
-										count={proposals.available}
-										onToggle={() => setUrl({ [PROPOSALS]: proposalsOn ? null : 'ja' })}
-									/>
-									<NetworkOptions
-										around={selectedNode && !selectedNode.stub
-											? bronNaam(selectedNode, $instrumentMetaStore)
-											: null}
-										aroundOn={!!aroundId}
-										onAround={toggleAround}
-									/>
 								{/snippet}
 								{#snippet canvasOverlay()}
 									<NetwerkPanel
@@ -2256,7 +2239,7 @@
 												)
 											: []}
 										loading={composer.loading}
-										expected={netwerkActive ? shownNetwork.ids.length : 0}
+										expected={netwerkActive ? netwerk.ids.length : 0}
 										{telefoon}
 										onSelect={addIdToNetwerk}
 										selection={selectedNode &&
@@ -2272,11 +2255,9 @@
 											store.setFilters({ hiddenGroups: uit });
 										}}
 										onToggle={(id) => {
-											if (aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withToggled(netwerk, id));
 										}}
 										onRemove={(id) => {
-											if (id === aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withRemoved(netwerk, id));
 										}}
 										onAdd={() => selectedNode && addToNetwerk(selectedNode)}

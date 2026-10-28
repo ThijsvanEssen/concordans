@@ -35,15 +35,6 @@ export type NetwerkEntry = {
 	connections?: number;
 };
 
-/**
- * Why Aantal stappen is off whatever the weergave, in a line; null when it is not. Only Verband
- * needs a second bron: in Omgeving the steps follow the bron clicked on the canvas, and the
- * block Weergave says when none is.
- */
-export function stepsOffReason(view: string, ends: number): string | null {
-	return view === 'verband' && ends < 2 ? 'Kies eerst een tweede bron.' : null;
-}
-
 const list = (value: string | null) =>
 	(value ?? '')
 		.split(',')
@@ -79,15 +70,6 @@ export function withRemoved(n: Netwerk, id: string): Netwerk {
 	return { ...n, ids: n.ids.filter((x) => x !== id), uit };
 }
 
-/**
- * The netwerk as the filter Alleen verbonden bronnen shows it: only `id` (added when it is
- * not chosen yet) is on, the others stay listed, switched off. The address keeps the full netwerk.
- */
-export function onlyAround(n: Netwerk, id: string): Netwerk {
-	const ids = n.ids.includes(id) ? n.ids : [...n.ids, id];
-	return { ...n, ids, uit: new Set(ids.filter((x) => x !== id)) };
-}
-
 /** The entries as `n` shows them: their on/off follows the address at once, before a redraw. */
 export function syncOn(entries: NetwerkEntry[], n: Netwerk): NetwerkEntry[] {
 	return entries.map((e) =>
@@ -115,8 +97,6 @@ export type Between = {
 	/** Per participant, the neighbours to draw: another participant, an article of a
 	 *  chosen wet, or a bron it shares with another participant. */
 	keep: Map<string, Set<string>>;
-	/** Bronnen that are no participant but join two or more of them. */
-	joining: Set<string>;
 	/** Participants that are tied to no other participant. */
 	alone: Set<string>;
 };
@@ -131,7 +111,6 @@ const idOf = (n: Pick<Neighbor, 'collection' | 'key'>) => nodeId(n.collection, n
 export function between(
 	participants: Participant[],
 	lawOf: (n: Neighbor) => string | null,
-	withJoining: boolean,
 	/** Keep every neighbour of each participant (the weergave Omgeving), shared or not. */
 	surroundings = false
 ): Between {
@@ -152,7 +131,6 @@ export function between(
 	}
 
 	const keep = new Map<string, Set<string>>();
-	const joining = new Set<string>();
 	const tied = new Set<string>();
 	const tie = (a: string, b: string) => {
 		if (a === b) return;
@@ -182,13 +160,10 @@ export function between(
 				continue;
 			}
 			for (const other of by) tie(p.id, other);
-			if (!withJoining) continue;
-			kept.add(id);
-			joining.add(id);
 		}
 		keep.set(p.id, kept);
 	}
 
 	const alone = new Set(participants.map((p) => p.id).filter((id) => !tied.has(id)));
-	return { keep, joining, alone };
+	return { keep, alone };
 }

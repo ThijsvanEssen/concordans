@@ -4,8 +4,9 @@
 	// of how many where the API cut them off, that whole a link to their list), Relatie (the
 	// lijnsoorten drawn, a line sample each). Bijlagen and the netwerk's own filter are rows of
 	// Tonen.
+	import ProposalsOption from '$lib/proposals/ProposalsOption.svelte';
+	import type { ComponentProps } from 'svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import type { Snippet } from 'svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import type { Collection } from '$lib/vocabulary';
 	import {
@@ -49,7 +50,6 @@
 		hasNodes = false,
 		reach = null,
 		counting = false,
-		meer,
 		kindRowsShown = null,
 		kindsSettled = true,
 		withCurrentMember = false
@@ -78,8 +78,8 @@
 		reach?: NeighborhoodReach | null;
 		/** The netwerk is still coming in: Soort counts once it is there, no number springs (R3-N B5). */
 		counting?: boolean;
-		/** The netwerk's own filters, last rows of Tonen (NetworkOptions). */
-		meer?: Snippet;
+		/** The vinkje Voorstellen, last row of Tonen (besluit 37). */
+		proposals?: ComponentProps<typeof ProposalsOption>;
 		/** Soort around one bron: the soorten of Verbonden, drawn of their whole (kind-rows.ts, N1). */
 		kindRowsShown?: KindRow[] | null;
 		/** Verbonden's counts are in: before that Soort holds their place (F5). */
@@ -166,7 +166,7 @@
 				/>{/snippet}
 		</FilterOptie>
 	{/if}
-	{@render meer?.()}
+	{#if proposals}<ProposalsOption {...proposals} />{/if}
 {/snippet}
 
 <aside class="legend">

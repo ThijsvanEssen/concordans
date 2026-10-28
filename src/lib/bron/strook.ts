@@ -4,8 +4,9 @@
 import type { Collection } from '$lib/vocabulary';
 import { count, joinAnd, textOf } from '$lib/text/words';
 import { kindColour } from './kleur';
+import { rubriekOf } from './rubrieken';
 
-type StripKind = 'wetten' | 'rechtspraak' | 'kamerstukken' | 'parlement';
+type StripKind = 'wetten' | 'rechtspraak' | 'kamerstukken' | 'parlement' | 'regering';
 
 /** The order a bar is stacked in, from the base; the words as the hover and the count say them. */
 export const STRIP_KINDS: readonly {
@@ -22,6 +23,12 @@ export const STRIP_KINDS: readonly {
 		one: 'parlementsbron',
 		many: 'parlementsbronnen',
 		colour: kindColour('members')
+	},
+	{
+		id: 'regering',
+		one: 'regeringsbron',
+		many: 'regeringsbronnen',
+		colour: kindColour('ministries')
 	}
 ];
 
@@ -45,11 +52,23 @@ const KIND_OF: Partial<Record<Collection, StripKind>> = {
 	members: 'parlement',
 	factions: 'parlement',
 	committees: 'parlement',
-	cabinets: 'parlement',
-	ministries: 'parlement'
+	cabinets: 'regering',
+	ministries: 'regering'
 };
 
 export const kindOf = (c: Collection): StripKind | null => KIND_OF[c] ?? null;
+
+/**
+ * The collection a bron is counted under on the strip: a bewindspersoon is a member in the API,
+ * but Regering, not Parlement (`props` tell them apart, as `kindColour` does).
+ */
+export const countedAs = (
+	collection: Collection,
+	props?: Record<string, unknown> | null
+): Collection =>
+	collection === 'members' && rubriekOf(collection, '', props) === 'regering'
+		? 'ministries'
+		: collection;
 
 /**
  * The day a bron stands on the strip: its own date, and for a publication (Staatsblad, Trb.,
@@ -76,7 +95,8 @@ const UNDATED_NOUNS = [
 	{ id: 'bijlagen', one: 'bijlage', many: 'bijlagen' },
 	{ id: 'rechtspraak', one: 'uitspraak', many: 'uitspraken' },
 	{ id: 'kamerstukken', one: 'stuk', many: 'stukken' },
-	{ id: 'parlement', one: 'parlementsbron', many: 'parlementsbronnen' }
+	{ id: 'parlement', one: 'parlementsbron', many: 'parlementsbronnen' },
+	{ id: 'regering', one: 'regeringsbron', many: 'regeringsbronnen' }
 ] as const;
 
 const undatedNoun = (c: Collection) =>

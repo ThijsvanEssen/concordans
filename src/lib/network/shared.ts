@@ -7,6 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossier-naam';
 import { relationWords } from '$lib/verbonden/relation-words';
+import { citationRecord } from '$lib/text/citation-record';
 import { capitalize, joinAnd, textOf } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
 
@@ -84,7 +85,9 @@ function joinLines(
  * its title and year under it; the API's own name is cut off with "…" and is not used for it.
  * Any other bron keeps its name.
  */
-export function rowNotation(n: Pick<Neighbor, 'id' | 'collection' | 'display_name' | 'props'>): {
+export function rowNotation(
+	n: Pick<Neighbor, 'id' | 'collection' | 'display_name' | 'props' | 'cite'>
+): {
 	title: string;
 	detail: string | null;
 } {
@@ -99,6 +102,12 @@ export function rowNotation(n: Pick<Neighbor, 'id' | 'collection' | 'display_nam
 			detail: null
 		};
 	}
+	// An uitspraak is cited as its heading cites it (HR 19 juli 2019), as everywhere else.
+	if (n.collection === 'judgments')
+		return {
+			title: citationRecord({ kind: 'judgment', cite: n.cite, props: p })?.short ?? name,
+			detail: null
+		};
 	if (n.collection !== 'documents') return { title: name, detail: null };
 	const dossier = textOf(p.dossier_number);
 	const nr = typeof p.sequence === 'number' ? p.sequence : null;

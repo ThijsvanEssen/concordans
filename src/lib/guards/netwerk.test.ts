@@ -8,7 +8,7 @@ describe('the network and its cards', () => {
 	it('draws the panel Netwerk and a cluster with CanvasKaart: one frame, one width', () => {
 		// Thijs, 10 Oct: "Deze mogen even breed zijn en hetzelfde soort component zijn". The
 		// folded Netwerk took its content's width (`width: auto`). Width and right edge are
-		// --zijkolom and --s-3, CanvasKaart's.
+		// the strip's.
 		const kaart = /^\.(netwerk|legenda|cluster-kaart)$/;
 		expect(
 			overtreders((t) =>

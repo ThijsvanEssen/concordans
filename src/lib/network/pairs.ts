@@ -2,7 +2,7 @@
 // also at one step, where its kenmerk (what both name) stands between them. This module reads
 // what /api/nodes/shared (one step) and /api/chains (two and three) give, and makes the blocks
 // of rows, the Keuze of a pair for three to six bronnen and the words of a step. Pure, so the
-// drawing on a wide screen and the withDossierNumbers list on a phone read one model.
+// drawing on a wide screen and the list on a phone read one model.
 import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
 import { dossierNummer, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';

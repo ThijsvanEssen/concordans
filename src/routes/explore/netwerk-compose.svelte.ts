@@ -6,11 +6,13 @@ import { getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
-import { NEIGHBORHOOD_CAP, type GraphStore } from '$lib/graph/store/types';
+import { inPool } from '$lib/api/pool';
+import { NEIGHBORHOOD_CAP, SOFT_NODE_CAP, type GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
 import { parseNodeId, type Relation } from '$lib/vocabulary';
+import { depthFor } from './explore-url';
 import type { DirectLink } from '$lib/network/shared';
 
 type NodeResponse = Schema<'NodeGraphResponse'>;
@@ -62,6 +64,17 @@ export function withinCap(response: NodeResponse, cap: number): NodeResponse {
 	};
 }
 
+/**
+ * The most chosen bronnen that ask for steps beyond the first (Aantal stappen 2 and 3): one
+ * request each, two at a time (measured 28 Oct: 0.2 to 1.5 s warm, 22 s cold at 3 steps). The
+ * others stay at one step.
+ */
+export const REACH_MAX = 6;
+
+/** Per request, the share of the canvas's room one chosen bron takes (at least 50). */
+export const reachCap = (bronnen: number) =>
+	Math.min(NEIGHBORHOOD_CAP, Math.max(50, Math.floor(SOFT_NODE_CAP / Math.max(1, bronnen))));
+
 export class NetwerkComposer {
 	/** The chosen bronnen as the panel Netwerk lists them. */
 	entries = $state<NetwerkEntry[]>([]);
@@ -73,6 +86,15 @@ export class NetwerkComposer {
 	cut = $state.raw<{ collection: string; total: number; kept: number }[]>([]);
 	/** The weergave Omgeving: each chosen bron with all its neighbours, not only what they share. */
 	surroundings = false;
+	/** Aantal stappen as the address says it (?diepte); null: the default of each bron. */
+	steps: number | null = null;
+	/**
+	 * How far the steps beyond the first reached, once they are in: the most steps asked, and
+	 * whether the API cut one of the neighbourhoods off at its cap. Null while none is asked.
+	 */
+	reach = $state.raw<{ depth: number; capped: boolean; cap: number } | null>(null);
+	/** The steps beyond the first are on their way. */
+	extending = $state(false);
 	/** Whether the canvas is a composed netwerk now. */
 	composed = false;
 
@@ -84,6 +106,10 @@ export class NetwerkComposer {
 	#full = new Map<string, Promise<NodeResponse>>();
 	/** The chosen bronnen whose full node is in. */
 	#fullIn = new Set<string>();
+	/** Per chosen bron and steps asked (`id:2`), whether the API cut that neighbourhood off. */
+	#reached = new Map<string, boolean>();
+	/** How far the last composition went: 0 only the chosen, 1 their surroundings, n steps. */
+	#level = 0;
 
 	constructor(store: GraphStore, view: () => CanvasView | null) {
 		this.#store = store;
@@ -100,12 +126,18 @@ export class NetwerkComposer {
 		this.#store.releaseNetwerk();
 		this.composed = false;
 		this.entries = [];
+		this.#reached.clear();
+		this.#level = 0;
+		this.reach = null;
 	}
 
 	/** Forget every node asked, for a canvas cleared with the store. */
 	forget() {
 		this.#full.clear();
 		this.#fullIn.clear();
+		this.#reached.clear();
+		this.#level = 0;
+		this.reach = null;
 		this.composed = false;
 		this.entries = [];
 	}
@@ -180,6 +212,78 @@ export class NetwerkComposer {
 		this.#draw(n, results);
 		this.loading = false;
 		this.#view()?.fitWhenSettled();
+		await this.#extend(n, results, epoch);
+	}
+
+	/**
+	 * Steps beyond the first: the neighbourhood of each chosen bron that is on, `steps` deep, added
+	 * to the canvas. The union of them is the netwerk; a bron that two reach is drawn once.
+	 */
+	async #extend(n: Netwerk, results: Settled[], epoch: number) {
+		const ends = n.ids.flatMap((id, i) => {
+			const r = results[i];
+			if (!this.surroundings || r.status !== 'fulfilled' || !isOn(n, id)) return [];
+			const node = nodeToGraphNode(r.value.node);
+			const steps = node ? depthFor(node.drawClass, { explicit: this.steps, all: false }) : 1;
+			return steps >= 2
+				? [{ id, collection: r.value.node.collection, key: r.value.node.key, steps }]
+				: [];
+		});
+		const asked = new Set(ends.map((e) => `${e.id}:${e.steps}`));
+		for (const k of this.#reached.keys()) if (!asked.has(k)) this.#reached.delete(k);
+		const cap = reachCap(Math.min(ends.length, REACH_MAX));
+		const todo = ends.slice(0, REACH_MAX).filter((e) => !this.#reached.has(`${e.id}:${e.steps}`));
+		const sum = () => {
+			const done = ends.filter((e) => this.#reached.has(`${e.id}:${e.steps}`));
+			this.reach = done.length
+				? {
+						depth: Math.max(...done.map((e) => e.steps)),
+						capped: done.some((e) => this.#reached.get(`${e.id}:${e.steps}`)),
+						cap
+					}
+				: null;
+		};
+		sum();
+		if (todo.length === 0) return;
+		this.extending = true;
+		this.#view()?.suppressFit();
+		try {
+			await inPool(
+				todo,
+				async (e) => {
+					if (epoch !== this.#epoch) return;
+					await this.#store
+						.expandNeighborhood(e.collection as NetwerkEntry['collection'], e.key, {
+							depth: e.steps,
+							cap,
+							additive: true,
+							onCut: (capped) => this.#reached.set(`${e.id}:${e.steps}`, capped)
+						})
+						.catch((error) => {
+							if (!isAborted(error)) report('Netwerk, stappen', error);
+						});
+					if (epoch === this.#epoch) sum();
+				},
+				{ parallel: 2 }
+			);
+		} finally {
+			if (epoch === this.#epoch) {
+				this.extending = false;
+				this.#view()?.fitWhenSettled();
+			}
+		}
+	}
+
+	/** 0: the chosen bronnen alone; 1: with their surroundings; more: the steps asked. */
+	#levelOf(n: Netwerk, found: { id: string; response: NodeResponse }[]) {
+		if (!this.surroundings) return 0;
+		let level = 1;
+		for (const { id, response } of found) {
+			const node = isOn(n, id) ? nodeToGraphNode(response.node) : null;
+			if (node)
+				level = Math.max(level, depthFor(node.drawClass, { explicit: this.steps, all: false }));
+		}
+		return level;
 	}
 
 	#draw(n: Netwerk, results: Settled[], final = true) {
@@ -203,16 +307,21 @@ export class NetwerkComposer {
 		});
 		if (participants.length === 1)
 			participants[0] = { response: withinCap(participants[0].response, NEIGHBORHOOD_CAP) };
-		const fresh = !this.composed && !this.#keepCanvas;
+		// A shorter reach than the last one lets the farther bronnen go: the canvas starts anew.
+		const level = this.#levelOf(n, found);
+		const shorter = level < this.#level;
+		this.#level = level;
+		if (shorter) {
+			this.#reached.clear();
+			this.reach = null;
+		}
+		const fresh = (!this.composed && !this.#keepCanvas) || shorter;
 		this.#keepCanvas = false;
 		this.#view()?.suppressFit();
 		const { alone } = this.#store.compose({
 			participants,
-			withJoining: false,
 			surroundings: this.surroundings,
-			fresh,
-			onPaths: [],
-			tiedByPaths: []
+			fresh
 		});
 		this.composed = true;
 		this.cut = cutOf(participants.map((p) => p.response));

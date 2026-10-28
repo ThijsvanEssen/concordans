@@ -17,8 +17,8 @@ describe('the depth', () => {
 		['diepte=1', 1],
 		['diepte=3', 3],
 		['diepte=9', 3],
-		['diepte=-2', 1],
-		['diepte=0', 2],
+		['diepte=-2', 0],
+		['diepte=0', 0],
 		['diepte=x', 2]
 	])('?%s gives %s', (query, depth) => {
 		expect(explicitDepth(q(query))).toBe(depth);

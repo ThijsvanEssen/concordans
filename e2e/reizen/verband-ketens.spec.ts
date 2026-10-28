@@ -63,22 +63,24 @@ test('Aantal stappen sets ?diepte and a clean link shows the same', async ({ pag
 	});
 });
 
-test('Aantal stappen is off with one bron, and a line says why', async ({ page }) => {
-	await page.goto(`/explore?netwerk=${BOEK6}&weergave=verband`);
+test('Verband is offered from two chosen bronnen, not with one', async ({ page }) => {
+	await page.goto(`/explore?netwerk=${BOEK6}`);
 	await openSheet(page);
-	await expect(page.getByText('Kies eerst een tweede bron.')).toBeVisible();
-	await expect(steps(page).getByRole('button', { name: '2 stappen' })).toBeDisabled();
+	const weergave = steps(page).getByRole('group', { name: 'Weergave' });
+	await expect(weergave.getByRole('button', { name: 'Omgeving' })).toBeVisible();
+	await expect(weergave.getByRole('button', { name: 'Verband' })).toHaveCount(0);
+	await expect(page.getByText('Kies eerst een tweede bron.')).toHaveCount(0);
 });
 
-test('Omgeving with two bronnen never asks for a second bron: the steps wait for a bron on the canvas', async ({
+test('Omgeving with two bronnen has all the steps, Alleen gekozen first, and no line', async ({
 	page
 }) => {
 	await page.goto(`/explore?netwerk=${BOEK6},${BOEK7}`);
 	await openSheet(page);
-	await expect(steps(page).getByRole('button', { name: '2 stappen' })).toBeVisible();
-	await expect(page.getByText('Klik een bron op het canvas.').first()).toBeVisible();
-	await expect(page.getByText('Kies eerst een tweede bron.')).toHaveCount(0);
-	// No menu Meer, no link "Alleen de gekozen bronnen tonen": the filter is a Vinkje under Tonen.
+	const group = steps(page).getByRole('group', { name: 'Aantal stappen' });
+	await expect(group.getByRole('button').first()).toHaveText('Alleen gekozen');
+	await expect(group.getByRole('button', { name: '2 stappen' })).toBeVisible();
+	await expect(page.getByText('Klik een bron op het canvas.')).toHaveCount(0);
 	await expect(page.getByText('Alleen de gekozen bronnen tonen')).toHaveCount(0);
 });
 
