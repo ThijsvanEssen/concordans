@@ -66,6 +66,9 @@ fails on a label of a button that is not in this table.
 | `Bewaar aantekening`                 | gebiedend |
 | `Bewaar vanuit de lezer`             | gebiedend |
 | `Wis alles`                          | gebiedend |
+| `Exporteer`                          | gebiedend |
+| `Bewaar als kopie`                   | gebiedend |
+| `Mijn markeringen`                   | naam      |
 | `Volg`                               | gebiedend |
 | `Ongedaan maken`                     | onbepaald |
 | `Volg deze onderwerpen`              | gebiedend |

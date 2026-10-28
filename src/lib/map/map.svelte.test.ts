@@ -76,10 +76,10 @@ describe('the bundels of this browser', () => {
 	});
 });
 
-describe('Losse markeringen, the bundel every browser has (decision 19)', () => {
+describe('Mijn markeringen, the bundel every browser has (decision 19)', () => {
 	it('is the first bundel, under its own name, where Bewaar keeps at first', async () => {
 		const { kaart } = await store();
-		expect(kaart.mappen.map((m) => m.naam)).toEqual(['Losse markeringen']);
+		expect(kaart.mappen.map((m) => m.naam)).toEqual(['Mijn markeringen']);
 		expect(kaart.isDefault(kaart.mappen[0])).toBe(true);
 		expect(kaart.loose.id).toBe(kaart.mappen[0].id);
 	});
@@ -93,7 +93,7 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		kaart.empty(first.id);
 		expect(kaart.mappen[0].items).toEqual([]);
 		kaart.hernoem(first.id, 'Los');
-		expect(kaart.mappen[0].naam).toBe('Losse markeringen');
+		expect(kaart.mappen[0].naam).toBe('Mijn markeringen');
 		expect(kaart.isDefault(kaart.mappen[0])).toBe(true);
 	});
 
@@ -115,11 +115,11 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		expect(kaart.loose.id).toBe(first.id);
 	});
 
-	it('keeps with Bewaar in Losse markeringen, and takes out only per bundel', async () => {
+	it('keeps with Bewaar in Mijn markeringen, and takes out only per bundel', async () => {
 		const { kaart } = await store();
 		const other = kaart.nieuw('Thuiswerk');
 		kaart.keep(lid);
-		expect(kaart.holding(lid).map((m) => m.naam)).toEqual(['Losse markeringen']);
+		expect(kaart.holding(lid).map((m) => m.naam)).toEqual(['Mijn markeringen']);
 		// Bewaar again takes nothing out (UX-toets A14: nothing destructive in one click).
 		kaart.keep(lid);
 		expect(kaart.holding(lid)).toHaveLength(1);
@@ -150,15 +150,15 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		expect(kept.size).toBe(0);
 	});
 
-	it('receives a shared Losse markeringen under a name of its own', async () => {
+	it('receives a shared Mijn markeringen under a name of its own', async () => {
 		const { kaart } = await store();
-		const shared = { ...fromFile, naam: 'Losse markeringen' };
+		const shared = { ...fromFile, naam: 'Mijn markeringen' };
 		expect(kaart.bewaarAlsMap(shared).naam).toBe('Gedeelde markeringen');
 		expect(kaart.bewaarAlsMap({ ...shared, naam: null }).naam).toBe('Gedeelde markeringen 2');
 		expect(kaart.bewaarAlsMap(fromFile).naam).toBe('Werkgever');
 	});
 
-	it('lists Losse markeringen first, then the bundels last changed first', async () => {
+	it('lists Mijn markeringen first, then the bundels last changed first', async () => {
 		const { kaart } = await store();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-10-18T10:00:00Z'));
@@ -168,7 +168,7 @@ describe('Losse markeringen, the bundel every browser has (decision 19)', () => 
 		vi.setSystemTime(new Date('2026-10-20T10:00:00Z'));
 		kaart.mapNotitie('nieuw', a.id);
 		vi.useRealTimers();
-		expect(kaart.listed.map((m) => m.naam)).toEqual(['Losse markeringen', 'A', 'B']);
+		expect(kaart.listed.map((m) => m.naam)).toEqual(['Mijn markeringen', 'A', 'B']);
 		expect(b.naam).toBe('B');
 	});
 });
@@ -211,7 +211,7 @@ describe('an arcering (O4, decision 24-1)', () => {
 		const { kaart } = await store();
 		const ander = kaart.nieuw('Werkgever', [lid]);
 		kaart.shade(lid, fragment);
-		// The bundel that holds the lid, not Losse markeringen.
+		// The bundel that holds the lid, not Mijn markeringen.
 		expect(kaart.loose.items).toEqual([]);
 		const m = kaart.mappen.find((x) => x.id === ander.id)!;
 		expect(m.aantekeningen).toEqual([

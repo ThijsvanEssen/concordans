@@ -64,6 +64,8 @@
 	import { dossierName } from '$lib/bron/dossier-naam';
 	import { addDays, korteDatum, sinceDate, vandaag } from '$lib/text/datum';
 
+	/** Words that give lines in Actueel; an example fills the field, it does not follow. */
+	const VOORBEELDEN = ['Stikstof', 'Jeugdwet', 'Woningbouw'];
 	/** Lines per topic, as the feed gives at most in one page. */
 	const PER_ONDERWERP = 100;
 	/** Lines shown of a topic before `Alle … tonen`. */
@@ -410,7 +412,25 @@
 
 	<div class="inhoud blad__lijst">
 		{#if geladen && !lijst.length}
-			<p class="status stil">Nog geen onderwerpen.</p>
+			<section class="uitleg" aria-label="Wat Gevolgd is">
+				<p class="wat">
+					De woorden van een gevolgd onderwerp gaan als zoekterm naar de server, om nieuwe stukken
+					te vinden. Zonder account of e-mail; de dag van je vorige bezoek blijft in deze browser.
+				</p>
+				<div class="voorbeelden">
+					<span class="stil">Voorbeelden, vullen het veld</span>
+					<span class="voorbeeld-rij">
+						{#each VOORBEELDEN as term (term)}
+							<button
+								type="button"
+								class="btn"
+								aria-pressed={invoer === term}
+								onclick={() => (invoer = term)}>{term}</button
+							>
+						{/each}
+					</span>
+				</div>
+			</section>
 		{/if}
 
 		{#each lijst as o, n (topicKey(o))}
@@ -536,6 +556,26 @@
 	   would shrink to the field and stand off-centre. */
 	/* The frame and grid of Bladeren (lib/styles/frame.css): the heading and the choose-line over both
 	   columns. */
+	.uitleg {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-4);
+		max-width: 40rem;
+	}
+	.uitleg p {
+		margin: 0;
+	}
+	.voorbeelden {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+		font-size: var(--t-meta);
+	}
+	.voorbeeld-rij {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-2);
+	}
 	.regel {
 		grid-column: 1 / -1;
 		margin-bottom: var(--s-5);
