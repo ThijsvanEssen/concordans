@@ -99,7 +99,7 @@ test('Gevolgd: a topic followed shows its days, keeps after a reload and can be 
 	// Typed before the page has its first answer: kept.
 	await page.getByRole('textbox', { name: 'Onderwerp volgen' }).fill('huur');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Gevolgde onderwerpen');
-	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
+	await expect(page.getByText('gaan als zoekterm naar de server')).toBeVisible();
 	await expect(page.getByRole('textbox', { name: 'Onderwerp volgen' })).toHaveValue('huur');
 	await page.getByRole('button', { name: 'Volg' }).click();
 	const topic = page.getByRole('heading', { level: 2, name: /^huur/ });
@@ -114,12 +114,12 @@ test('Gevolgd: a topic followed shows its days, keeps after a reload and can be 
 	);
 	await topic.getByRole('button', { name: 'Niet meer volgen' }).click();
 	await expect(topic).toHaveCount(0);
-	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
+	await expect(page.getByText('gaan als zoekterm naar de server')).toBeVisible();
 });
 
 test('the overview of a topic sorts its decisions by kind and outcome', async ({ page }) => {
 	await page.goto('/onderwerpen');
-	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
+	await expect(page.getByText('gaan als zoekterm naar de server')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Onderwerp volgen' }).fill('huur');
 	await page.getByRole('button', { name: 'Volg' }).click();
 	await page.getByRole('link', { name: 'Overzicht' }).click();
