@@ -18,6 +18,7 @@
 		type Seats
 	} from '$lib/components/parliamentary/committee';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 
 	type Member = Schema<'MemberDTO'>;
@@ -167,23 +168,17 @@
 					{/if}
 				</p>
 				{#if oudLeden}
-					{#if vroeger.state.status === 'ready'}
-						{@const oud = vroeger.state.data}
-						{#if oud?.length}
+					<LoadState state={vroeger.state} what="De oud-leden" plural retry={vroeger.retry}>
+						{#snippet empty()}
+							<p class="stil">De bron geeft ook geen oud-leden.</p>
+						{/snippet}
+						{#snippet children(oud)}
 							<section class="oud" aria-label="Oud-leden">
 								<h3 class="groep-kop">Oud-leden</h3>
-								{@render zetels(seatsOf(oud))}
+								{@render zetels(seatsOf(oud ?? []))}
 							</section>
-						{:else}
-							<p class="stil">De bron geeft ook geen oud-leden.</p>
-						{/if}
-					{:else if vroeger.state.status === 'error'}
-						<p class="stil">
-							De oud-leden laden niet. <TekstLink onclick={vroeger.retry}>Opnieuw</TekstLink>
-						</p>
-					{:else}
-						<p class="stil">Oud-leden laden…</p>
-					{/if}
+						{/snippet}
+					</LoadState>
 				{/if}
 			{/if}
 
