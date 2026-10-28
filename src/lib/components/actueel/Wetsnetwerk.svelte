@@ -112,7 +112,7 @@
 		color: var(--ink);
 	}
 	/* A finger: the link as high as a Knop. */
-	@media (pointer: coarse), (max-width: 640px) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.verkenner {
 			display: inline-flex;
 			align-items: center;
