@@ -1737,6 +1737,8 @@
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
 	// instead of taking a permanent column.
 	let tocOpen = $state(false);
+	/** The button Inhoud: where the focus goes back to when its sheet closes (a click does not always focus it). */
+	let inhoudKnop = $state<HTMLButtonElement | null>(null);
 	$effect(() => {
 		void selectedNode?.id;
 		tocOpen = false;
@@ -2327,6 +2329,7 @@
 						<button
 							type="button"
 							class="btn mobile-tab--toc"
+							bind:this={inhoudKnop}
 							aria-haspopup="dialog"
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
@@ -2361,7 +2364,9 @@
 				</div>
 			</div>
 			{#if withContents && tocOpen}
-				<TocSheet onClose={() => (tocOpen = false)}>{@render toc()}</TocSheet>
+				<TocSheet onClose={() => (tocOpen = false)} opener={() => inhoudKnop}
+					>{@render toc()}</TocSheet
+				>
 			{/if}
 		{:else if loadFailure}
 			{@render bronFout(loadFailure)}

@@ -145,7 +145,7 @@
 				class="tekstmenu__item tekstmenu__item--paar"
 				role="menuitem"
 				onclick={() => kopieer(withWords(c), c.kind, citedWhat(cite, c, title))}
-				><span class="vorm" class:link={c.kind === 'link'}>{copier.label(c.kind, c.text)}</span
+				><span class="vorm" class:link={c.kind === 'link'}>{copier.label(c.kind, c.shown ?? c.text)}</span
 				><span class="soort">{c.kind}</span></button
 			>
 		{/each}

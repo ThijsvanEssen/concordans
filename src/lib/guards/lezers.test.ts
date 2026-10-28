@@ -3,6 +3,30 @@ import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron, overtreders, plek, regels } from '$lib/test/bronnen';
 
 describe('the readers', () => {
+	it('gives the number of a place a button of 36 × 28 px at least, in the size of the text (F41)', () => {
+		// One rule for PlaceNumber and the article's lid and onderdeel (`plaats-marker`): a
+		// pointer finds it, and "10.12.3" does not break. On a touch screen basis.css puts 44 px
+		// around it, from this size.
+		const css = bron('lib/styles/basis.css');
+		const rule = css.match(/\n\.plaats-marker \{([^}]*)\}/)?.[1] ?? '';
+		expect(rule).toContain('min-width: calc(var(--s-6) + var(--s-1))');
+		expect(rule).toContain('min-height: calc(var(--s-5) + var(--s-1))');
+		expect(rule).toContain('white-space: nowrap');
+		for (const p of [
+			'lib/bron/PlaceNumber.svelte',
+			'lib/components/articles/ArticleText.svelte',
+			'lib/components/explore/readers/JudgmentReader.svelte',
+			'lib/bron/PaperParagraph.svelte'
+		])
+			expect(bron(p), p).not.toMatch(
+				/\.(?:lid__no|part__number|reader-para-num)[^{]*\{[^}]*font-size: var\(--t-(?:body-2|micro)\)/
+			);
+		expect(bron('lib/bron/PlaceNumber.svelte')).toContain('font-size: var(--t-body)');
+		expect(bron('lib/bron/PaperParagraph.svelte')).not.toMatch(
+			/plaats-marker[^}]*font-size: var\(--t-micro\)/
+		);
+	});
+
 	it('searches a long text in one place, in the frame of every reader of a long text (W14)', () => {
 		// "Zoek in dit stuk" is the frame's (ReaderFrame `find`): a law, an article, a bijlage, a
 		// stuk and a uitspraak ask for it; none draws a search of its own over its text.

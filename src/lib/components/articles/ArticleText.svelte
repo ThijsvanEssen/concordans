@@ -856,6 +856,8 @@
 		line-height: var(--lh-body);
 		color: var(--ink-3);
 		text-align: right;
+		/* A number wider than the column grows to the left, into the margin. */
+		justify-self: end;
 	}
 	.lid__body {
 		min-width: 0;
@@ -950,7 +952,6 @@
 	}
 	.part__number {
 		flex: none;
-		min-width: 1.6em;
 		color: var(--ink-3);
 	}
 	/* The lid or onderdeel the pointer is on, and not one inside it, as the one whose menu is
