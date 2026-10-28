@@ -104,7 +104,10 @@ export function rowNotation(
 	}
 	// An uitspraak is cited as its heading cites it (HR 19 juli 2019), as everywhere else.
 	if (n.collection === 'judgments')
-		return { title: citationRecord({ kind: 'judgment', cite: n.cite, props: p })?.short ?? name, detail: null };
+		return {
+			title: citationRecord({ kind: 'judgment', cite: n.cite, props: p })?.short ?? name,
+			detail: null
+		};
 	if (n.collection !== 'documents') return { title: name, detail: null };
 	const dossier = textOf(p.dossier_number);
 	const nr = typeof p.sequence === 'number' ? p.sequence : null;
