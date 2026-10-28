@@ -54,6 +54,7 @@
 
 	const colour = kindColour;
 	const m = $derived(sketch.center);
+	const centre = $derived(VORMEN[sketch.shape]);
 	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
 	const FOCUS = FOCUS_SPEC.size;
 	const HALO = FOCUS_SPEC.halo;
@@ -186,19 +187,15 @@
 		{#if !centreHull}
 			<g class="focus">
 				<title>{name}</title>
-				<rect
-					x={m.x - FOCUS / 2 - HALO}
-					y={m.y - FOCUS / 2 - HALO}
-					width={FOCUS + 2 * HALO}
-					height={FOCUS + 2 * HALO}
-					fill="var(--paper)"
-				/>
-				<rect
-					x={m.x - FOCUS / 2}
-					y={m.y - FOCUS / 2}
-					width={FOCUS}
-					height={FOCUS}
-					fill="var(--ink)"
+				<circle cx={m.x} cy={m.y} r={FOCUS / 2 + HALO} fill="var(--paper)" />
+				<!-- The bron in its own vorm, in ink (an article as the open square), as the canvas's focus. -->
+				<path
+					d={centre.d}
+					transform="translate({m.x - FOCUS / 2} {m.y - FOCUS / 2}) scale({FOCUS / 16})"
+					fill={centre.wijze === 'lijn' ? 'var(--paper)' : 'var(--ink)'}
+					stroke={centre.wijze === 'lijn' ? 'var(--ink)' : 'none'}
+					stroke-width={centre.wijze === 'lijn' ? 2 : 0}
+					fill-rule={centre.wijze === 'gat' ? 'evenodd' : 'nonzero'}
 				/>
 				<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
 					>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan

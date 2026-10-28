@@ -37,7 +37,8 @@
 				kaart = {
 					Tekening: ns.default,
 					sketch: sk.sketch(kaartVan(schets), schets.centrum.naam, undefined, 'article', {
-						home: schets.centrum.law
+						home: schets.centrum.law,
+						centre: { collection: 'articles', key: schets.centrum.id }
 					})
 				};
 			})

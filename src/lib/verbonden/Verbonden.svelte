@@ -415,7 +415,11 @@
 					centerName,
 					phone ? PHONE_SKETCH_LIMIT : undefined,
 					selection.drawClass,
-					{ centreKind: focusKindOf(selection.collection), home: homeLaw }
+					{
+						centreKind: focusKindOf(selection.collection),
+						home: homeLaw,
+						centre: selection
+					}
 				)
 			: null
 	);
