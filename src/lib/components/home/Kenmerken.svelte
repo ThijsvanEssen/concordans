@@ -1,18 +1,18 @@
 <script lang="ts">
-	// The three steps of the start page, a plan that stands forward: one framed block, three
-	// numbered parts with an arrow between them (under each other on a phone). The server's
-	// HTML of `/` writes the same list (start.json, home.py); app.html sets it alike.
+	// What Concordans does, in three small pictures with a line each: a search field, an
+	// article with its Verbonden, the Knoppen Volg and Bewaar. Quiet, grey and ink, no data.
+	// The server's HTML of `/` writes the same list (start.json, home.py); app.html sets it alike.
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { START } from './start';
 </script>
 
-<ol class="stappen">
-	{#each START.steps as step (step.title)}
+<ul class="kenmerken">
+	{#each START.features as feature (feature.visual)}
 		<li>
-			<span class="beeld beeld--{step.visual}" aria-hidden="true">
-				{#if step.visual === 'zoek'}
+			<span class="beeld beeld--{feature.visual}" aria-hidden="true">
+				{#if feature.visual === 'zoek'}
 					<span class="mini-zoek">art. 6:162 BW</span>
-				{:else if step.visual === 'lees'}
+				{:else if feature.visual === 'lees'}
 					<span class="mini-artikel">
 						<span class="mini-tekst"><i></i><i></i><i></i></span>
 						<span class="mini-verbonden"><em>Verbonden</em><i></i><i></i></span>
@@ -22,56 +22,30 @@
 					<span class="btn"><Picto naam="bewaar" />Bewaar</span>
 				{/if}
 			</span>
-			<b>{step.title}</b>
-			{step.text}
+			<span class="onderschrift">{feature.text}</span>
 		</li>
 	{/each}
-</ol>
+</ul>
 
 <style>
-	.stappen {
+	.kenmerken {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--s-6);
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		counter-reset: stap;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-2);
 	}
 	li {
-		position: relative;
-		counter-increment: stap;
-		padding: var(--s-4);
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-3);
 	}
-	li + li {
-		border-left: 1px solid var(--rule);
-	}
-	li::before {
-		content: counter(stap);
-		display: block;
-		margin-bottom: var(--s-1);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	b {
-		display: block;
-		margin-bottom: var(--s-1);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	/* The picture of a step: small, quiet, in ink and grey, with no data (the real forms of
-	   the search field, the article with Verbonden, the Knoppen). */
 	.beeld {
 		display: flex;
 		align-items: flex-start;
 		gap: var(--s-2);
 		height: 64px;
-		margin-bottom: var(--s-3);
 	}
 	.mini-zoek {
 		display: block;
@@ -118,30 +92,15 @@
 		width: 70%;
 		background: var(--rule-strong);
 	}
-	/* The arrow on the rule between two parts. */
-	li + li::after {
-		content: '→';
-		position: absolute;
-		top: var(--s-4);
-		left: 0;
-		padding: 0 var(--s-1);
-		transform: translateX(-50%);
-		background: var(--paper);
-		color: var(--ink-3);
+	.onderschrift {
+		font-size: var(--t-body-2);
+		line-height: var(--lh-snug);
+		color: var(--ink);
 	}
 	@media (max-width: 640px) {
-		.stappen {
+		.kenmerken {
 			grid-template-columns: minmax(0, 1fr);
-		}
-		li + li {
-			border-top: 1px solid var(--rule);
-			border-left: 0;
-		}
-		li + li::after {
-			content: '↓';
-			top: 0;
-			left: var(--s-4);
-			transform: translateY(-50%);
+			gap: var(--s-5);
 		}
 	}
 </style>

@@ -2,22 +2,10 @@
 	"heading": "Zie hoe wetten, rechtspraak en parlement samenhangen.",
 	"lede": "Zoek een wet, uitspraak, Kamerstuk of dossier en zie wat ermee verbonden is.",
 	"placeholder": "Wet, uitspraak, Kamerstuk, dossier of motie",
-	"steps": [
-		{
-			"title": "Zoek",
-			"visual": "zoek",
-			"text": "Op nummer, citaat of naam. Je komt in de tekst."
-		},
-		{
-			"title": "Lees",
-			"visual": "lees",
-			"text": "Rechts staat Verbonden: wie het artikel aanhaalt, met de passage."
-		},
-		{
-			"title": "Volg",
-			"visual": "volg",
-			"text": "Volg een onderwerp en bewaar wat je vindt in een bundel."
-		}
+	"features": [
+		{ "visual": "zoek", "text": "Eén zoekbalk voor alles" },
+		{ "visual": "lees", "text": "Elk artikel met wie het aanhaalt" },
+		{ "visual": "volg", "text": "Bewaar en volg wat je vindt" }
 	],
 	"questions": {
 		"heading": "Begin met een vraag",

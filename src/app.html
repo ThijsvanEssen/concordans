@@ -252,7 +252,7 @@
 					padding: var(--s-4) var(--s-4) var(--s-8);
 				}
 			}
-			/* The start page (home.py of the API: the promise, the field, three steps and three
+			/* The start page (home.py of the API: the promise, the field, three features and three
 			   questions): set as the app sets it, each value its own (routes/(main)/+page.svelte, home/Stappen.svelte, home/Vragen.svelte, Search,
 			   Keuze, KindGlyph, Uitkomst, frame.css), so the app takes its place unmoved. With
 			   scripts it shows too: it is the first paint. */
@@ -367,54 +367,92 @@
 				text-decoration-color: var(--rule-strong);
 				text-underline-offset: 3px;
 			}
-			/* The three steps (home/Stappen.svelte): one frame, three numbered parts, an arrow
-			   on the rule between them. */
-			#seo:has(> .vragen) > .stappen {
+			/* What Concordans does (home/Kenmerken.svelte): three small pictures with a line each. */
+			#seo:has(> .vragen) > .kenmerken {
 				display: grid;
 				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: var(--s-6);
 				margin: var(--s-6) 0 0;
 				padding: 0;
-				counter-reset: stap;
+				list-style: none;
+			}
+			#seo:has(> .vragen) .kenmerken li {
+				display: flex;
+				flex-direction: column;
+				gap: var(--s-3);
+			}
+			#seo:has(> .vragen) .beeld {
+				display: flex;
+				align-items: flex-start;
+				gap: var(--s-2);
+				height: 64px;
+			}
+			#seo:has(> .vragen) .mini-zoek {
+				display: block;
+				flex: 1;
+				max-width: 220px;
+				padding: var(--s-2) var(--s-3);
 				border: 1px solid var(--rule-strong);
 				border-radius: var(--r-1);
-				color: var(--ink-2);
+				font-size: var(--t-meta);
+				color: var(--ink-3);
 			}
-			#seo:has(> .vragen) > .stappen li {
-				position: relative;
-				counter-increment: stap;
-				padding: var(--s-4);
+			#seo:has(> .vragen) .mini-artikel {
+				display: grid;
+				grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+				flex: 1;
+				max-width: 220px;
+				height: 100%;
+				border: 1px solid var(--rule);
+				border-radius: var(--r-1);
 			}
-			#seo:has(> .vragen) > .stappen li + li {
+			#seo:has(> .vragen) .mini-tekst,
+			#seo:has(> .vragen) .mini-verbonden {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				gap: var(--s-1);
+				padding: var(--s-2);
+			}
+			#seo:has(> .vragen) .mini-verbonden {
 				border-left: 1px solid var(--rule);
 			}
-			#seo:has(> .vragen) > .stappen li::before {
-				content: counter(stap);
-				display: block;
-				margin-bottom: var(--s-1);
+			#seo:has(> .vragen) .mini-verbonden em {
 				font-size: var(--t-micro);
+				font-style: normal;
 				color: var(--ink-3);
 			}
-			/* With scripts the room of the picture the app puts under the number (Stappen.svelte,
-			   .beeld: 64 px and its margin). */
-			.scripts #seo:has(> .vragen) > .stappen li::before {
-				margin-bottom: calc(var(--s-1) + 76px);
-			}
-			#seo:has(> .vragen) > .stappen b {
+			#seo:has(> .vragen) .mini-artikel i {
 				display: block;
-				margin-bottom: var(--s-1);
-				font-size: var(--t-body-2);
-				font-weight: 600;
-				color: var(--ink);
+				height: 4px;
+				border-radius: var(--r-1);
+				background: var(--rule);
 			}
-			#seo:has(> .vragen) > .stappen li + li::after {
-				content: '→';
-				position: absolute;
-				top: var(--s-4);
-				left: 0;
-				padding: 0 var(--s-1);
-				transform: translateX(-50%);
+			#seo:has(> .vragen) .mini-verbonden i {
+				width: 70%;
+				background: var(--rule-strong);
+			}
+			#seo:has(> .vragen) .beeld .btn {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--s-2);
+				box-sizing: border-box;
+				height: var(--veld-h);
+				padding: 0 var(--s-3);
+				border: 1px solid var(--rule-strong);
+				border-radius: var(--r-1);
 				background: var(--paper);
-				color: var(--ink-3);
+				font-family: var(--font-ui);
+				font-size: var(--t-ui);
+				font-weight: 500;
+				line-height: 16px;
+				color: var(--ink);
+				white-space: nowrap;
+			}
+			#seo:has(> .vragen) .onderschrift {
+				font-size: var(--t-body-2);
+				line-height: var(--lh-snug);
+				color: var(--ink);
 			}
 			/* The questions (home/Vragen.svelte): the heading, with scripts the room of the example
 			   of the day (the law network, .wetsnetwerk-plek: quiet as the app keeps it while it is
@@ -482,18 +520,9 @@
 				}
 			}
 			@media (max-width: 640px) {
-				#seo:has(> .vragen) > .stappen {
+				#seo:has(> .vragen) > .kenmerken {
 					grid-template-columns: minmax(0, 1fr);
-				}
-				#seo:has(> .vragen) > .stappen li + li {
-					border-top: 1px solid var(--rule);
-					border-left: 0;
-				}
-				#seo:has(> .vragen) > .stappen li + li::after {
-					content: '↓';
-					top: 0;
-					left: var(--s-4);
-					transform: translateY(-50%);
+					gap: var(--s-5);
 				}
 				.scripts #seo:has(> .vragen) .vragen__lijst::before {
 					min-height: 380px;

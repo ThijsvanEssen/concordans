@@ -1,4 +1,4 @@
-// The fixed text of the start page: what Concordans promises, the field, three steps and
+// The fixed text of the start page: what Concordans promises, the field, three features (a picture each) and
 // three questions it answers. One source for the app and for the server's HTML of `/` (the
 // first paint, home.py of the back end): the build puts start.json beside index.html, and a
 // test keeps the server's copy (start-server.html) equal to it.

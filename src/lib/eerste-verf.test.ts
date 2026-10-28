@@ -102,11 +102,11 @@ describe('the start page: the server HTML as the first paint', () => {
 	};
 
 	it('is shown with scripts only where the server writes the questions: the start page', () => {
-		// The top level of the server's page: the head, the lede, the search form, the steps and the questions.
+		// The top level of the server's page: the head, the lede, the search form, the features and the questions.
 		const top = [...server.matchAll(/<(\w+) class="([^"]+)"[^>]*>/g)][0];
 		expect(top[2]).toBe('blad__kop intro');
 		expect(server).toMatch(
-			/<\/header><p class="lede">.*<\/p><form [^>]*class="search"[^>]*>.*<\/form><ol class="stappen">.*<\/ol><section class="vragen"/s
+			/<\/header><p class="lede">.*<\/p><form [^>]*class="search"[^>]*>.*<\/form><ul class="kenmerken">.*<\/ul><section class="vragen"/s
 		);
 		expect(server.trim().endsWith('</section>')).toBe(true);
 		expect(style).toContain('.js #seo:not(:has(> .vragen))');

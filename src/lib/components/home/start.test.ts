@@ -35,11 +35,13 @@ describe('the start page of the server and of the app', () => {
 		expect(SERVER).toMatch(/<form action="\/" method="get"[^>]*><input type="search" name="q"/);
 	});
 
-	it('has the steps, in the same order and under the same names', () => {
-		const steps = all(SERVER, 'li');
-		expect(steps.map((li) => text(all(li, 'b')[0]))).toEqual(START.steps.map((x) => x.title));
-		expect(steps.slice(0, START.steps.length).map(text)).toEqual(
-			START.steps.map((x) => `${x.title} ${x.text}`)
+	it('has the three features, each a picture and its line, in the same order', () => {
+		const items = all(SERVER, 'li');
+		expect(
+			items.slice(0, START.features.length).map((li) => text(all(li, 'span', 'onderschrift')[0]))
+		).toEqual(START.features.map((x) => x.text));
+		expect(items.map((li) => /class="beeld beeld--(\w+)"/.exec(li)?.[1])).toEqual(
+			START.features.map((x) => x.visual)
 		);
 	});
 
