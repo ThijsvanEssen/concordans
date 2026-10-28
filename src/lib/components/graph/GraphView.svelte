@@ -24,6 +24,7 @@
 	import { lazeKernIds } from '$lib/bron/behoort';
 	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { countedAs, kindOf, stripDate, type Stip } from '$lib/bron/strook';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
@@ -1217,11 +1218,13 @@
 	let stippen = $state<Stip[]>([]);
 	let undated = $state.raw<Collection[]>([]);
 	let stippenSleutel = '';
-	const CITE: Record<string, string> = { stb: 'Stb.', trb: 'Trb.', stcrt: 'Stcrt.' };
 	/** A publication (Staatsblad, Trb., Staatscourant) with a date, named by its key. */
 	const changeName = (id: string) => {
 		const m = /^instruments\/(stb|trb|stcrt)_(\d{4})_(\d+)/.exec(id);
-		return m ? `${CITE[m[1]]} ${m[2]}, ${m[3]}` : undefined;
+		return m
+			? (citationRecord({ kind: 'publication', series: m[1], year: m[2], number: m[3] })?.short ??
+					undefined)
+			: undefined;
 	};
 	/** The day of a member of a group: its own, or a publication's day of publication. */
 	const memberDate = (id: string, collection: Collection) => {

@@ -5,7 +5,7 @@ import { getContext, setContext } from 'svelte';
 
 const KEY = Symbol('weergave-blad');
 
-export type WeergaveBlad = { open: () => void; readonly isOpen: boolean };
+type WeergaveBlad = { open: () => void; readonly isOpen: boolean };
 
 /** The werkplek gives its opener and whether it is open; null where there is no Blad (a wide screen, a test). */
 export const provideWeergaveBlad = (blad: WeergaveBlad) => setContext(KEY, blad);
