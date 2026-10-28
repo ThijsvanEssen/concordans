@@ -549,6 +549,10 @@ describe('the line of a reference', () => {
 	it('says the grondslag between two laws by its direction, one function for all', () => {
 		const instrument = (key: string, title: string) => ({
 			id: `instruments/${key}`,
+			series_id: null,
+			series_position: null,
+			series_size: null,
+			series_basis: null,
 			key,
 			bwb_id: key.toUpperCase(),
 			title,

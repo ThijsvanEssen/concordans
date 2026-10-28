@@ -32,6 +32,10 @@ export const newSv: Succession = {
 		article_number: '2.8.6',
 		path: null,
 		instrument: {
+			series_id: null,
+			series_position: null,
+			series_size: null,
+			series_basis: null,
 			id: 'instruments/wet_stb_2026_56',
 			key: 'wet_stb_2026_56',
 			bwb_id: null,
@@ -67,6 +71,10 @@ export const oldSv: Succession = {
 		article_number: '126ffa',
 		path: '/wetten/BWBR0001903/artikel/126ffa',
 		instrument: {
+			series_id: null,
+			series_position: null,
+			series_size: null,
+			series_basis: null,
 			id: 'instruments/bwbr0001903',
 			key: 'bwbr0001903',
 			bwb_id: 'BWBR0001903',

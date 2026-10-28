@@ -1210,7 +1210,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			signal
 		);
 		return {
-			total: found.total,
+			total: found.total ?? undefined,
 			rows: found.items.map((i) => {
 				const props = { citation_title: i.citation_title, title: i.title, kind: i.kind };
 				return {
