@@ -113,6 +113,7 @@
 		onNodeClick,
 		onMetGroep,
 		onToggleChosen,
+		onAdd,
 		netwerkActive = false,
 		pairSteps = 1,
 		stepsOff = null,
@@ -156,6 +157,8 @@
 		onMetGroep?: (verborgen: ReadonlyMap<string, ContainerKind>) => void;
 		/** Adds a bron to the netwerk, or takes it out. */
 		onToggleChosen?: (node: GraphNode) => void;
+		/** A voorstel from the card of a bron added to the netwerk, by its id. */
+		onAdd?: (id: string, name?: string) => void;
 		netwerkActive?: boolean;
 		/** Aantal stappen of Verband (1 to 3): what Aantal stappen shows there, not the canvas's depth. */
 		pairSteps?: number;
@@ -1647,6 +1650,9 @@
 				onOpen={() => ontmarkeer(false)}
 				onLezen={open}
 				{onToggleChosen}
+				openCount={inFluxMap.get(kaartNode.id) ?? 0}
+				chosen={pinnedIds}
+				{onAdd}
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}

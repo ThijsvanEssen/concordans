@@ -166,6 +166,8 @@
 	import { followServerMove } from '$lib/bron/moved-law';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
 	import { InFlux } from './in-flux.svelte';
+	import { Proposals } from './proposals.svelte';
+	import ProposalsOption from '$lib/proposals/ProposalsOption.svelte';
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
@@ -1662,6 +1664,15 @@
 	const readHref = $derived(withParams(page.url, { tabel: null, soort: null }));
 
 	const inFlux = new InFlux(() => mode === 'graph');
+	// Voorstellen: the lopende voorstellen of the bronnen on the canvas beside them (besluit 37).
+	const PROPOSALS = 'voorstellen';
+	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
+	const proposals = new Proposals(
+		store,
+		() => proposalsOn,
+		() => inFlux.counts,
+		() => mode === 'graph' && view === 'omgeving'
+	);
 
 	let graphView = $state<GraphView | null>(null);
 	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
@@ -2161,6 +2172,7 @@
 								onNodeClick={lees}
 								onMetGroep={(m) => (metGroep = m)}
 								onToggleChosen={toggleChosen}
+								onAdd={addIdToNetwerk}
 								{netwerkActive}
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
@@ -2218,6 +2230,11 @@
 									>
 								{/snippet}
 								{#snippet meer()}
+									<ProposalsOption
+										on={proposalsOn}
+										count={proposals.available}
+										onToggle={() => setUrl({ [PROPOSALS]: proposalsOn ? null : 'ja' })}
+									/>
 									<NetworkOptions
 										around={selectedNode && !selectedNode.stub
 											? bronNaam(selectedNode, $instrumentMetaStore)

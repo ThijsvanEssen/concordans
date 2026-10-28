@@ -23,6 +23,7 @@
 	import Aantekening from '$lib/map/Aantekening.svelte';
 	import Bewaar from '$lib/map/Bewaar.svelte';
 	import { bewaarItem } from '$lib/map/map';
+	import OpenChanges from '$lib/proposals/OpenChanges.svelte';
 
 	let {
 		node,
@@ -37,6 +38,9 @@
 		onVerder,
 		onBack,
 		notities = [],
+		openCount = 0,
+		chosen = new Set<string>(),
+		onAdd,
 		el = $bindable(null)
 	}: {
 		node: GraphNode;
@@ -59,6 +63,12 @@
 		onBack?: () => void;
 		/** The reader's notes on this bron in every bundel, under the card's lines. */
 		notities?: readonly NodeNotitie[];
+		/** The open changes of this bron that a lopend dossier proposes (in flux). */
+		openCount?: number;
+		/** The bronnen of the netwerk, by id. */
+		chosen?: ReadonlySet<string>;
+		/** A voorstel of a dossier added to the netwerk, by its id. */
+		onAdd?: (id: string, name?: string) => void;
 		el?: HTMLElement | null;
 	} = $props();
 
@@ -222,6 +232,10 @@
 			{#each facts as k (k.term)}<dt>{k.term}</dt>
 				<dd>{k.value}</dd>{/each}
 		</dl>
+	{/if}
+
+	{#if openCount > 0 && !node.stub}
+		<OpenChanges id={node.id} {chosen} {onAdd} />
 	{/if}
 
 	<!-- The reader's notes, as on Bundels (Aantekening), read only: changed there. -->
