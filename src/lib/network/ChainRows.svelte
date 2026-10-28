@@ -8,6 +8,7 @@
 	import { kindColour } from '$lib/bron/kleur';
 	import { markOf } from '$lib/bron/vormen';
 	import { drawnLine } from '$lib/components/graph/drawn-line';
+	import { DOT_RADIUS } from '$lib/graph/line-shape';
 	import type { ChainBlock, ChainBron, ChainRow, ChainStep, StepLeg } from './linkchains';
 	import { drawingLabel, rowIds, stepsText, type PairDrawing, type PairEnd } from './pairs';
 
@@ -209,6 +210,7 @@
 								stroke={active(r) ? 'var(--ink)' : l.colour}
 								stroke-width={l.width * (active(r) ? 1.3 : 1)}
 								stroke-dasharray={l.dash}
+								stroke-linecap={l.cap}
 							/>
 							{#if l.head}<polygon
 									class="line"
@@ -218,7 +220,7 @@
 							{#if l.dot}<circle
 									cx={l.dot.x}
 									cy={l.dot.y}
-									r="2.6"
+									r={DOT_RADIUS}
 									fill={active(r) ? 'var(--ink)' : l.colour}
 								/>{/if}
 						{/each}
@@ -337,6 +339,7 @@
 							stroke={active(r) ? 'var(--ink)' : l.colour}
 							stroke-width={l.width * (active(r) ? 1.3 : 1)}
 							stroke-dasharray={l.dash}
+							stroke-linecap={l.cap}
 						/>
 						{#if l.head}<polygon
 								class="line"

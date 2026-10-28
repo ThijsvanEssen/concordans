@@ -14,13 +14,17 @@
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
 	import {
+		edgeCapFor,
 		edgeColorFor,
 		edgeDashFor,
 		edgeStyleFor,
+		edgeToneFor,
+		toneColour,
 		lineThickness,
 		arrowLength
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
+	import { hasArrow } from '$lib/graph/line-kind';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
@@ -307,7 +311,7 @@
 					const style = edgeStyleFor(relation, null, from);
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
-					const head = style === 'lid' ? 0 : headLength(width, arrowLength());
+					const head = hasArrow(style) ? headLength(width, arrowLength()) : 0;
 					return [{ relation, from, style, lit, width, head, o, k, label: l.label }];
 				})
 			)
@@ -340,11 +344,15 @@
 					child: r.child,
 					d: r.d,
 					head,
-					dot: e.style === 'submitter' ? r.end : null,
+					dot: e.style === 'puntenIndiener' ? r.end : null,
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
-					colour: edgeColorFor(e.relation, e.from),
+					colour: toneColour(
+						edgeColorFor(e.relation, e.from),
+						edgeToneFor(e.relation, null, e.from)
+					),
 					dash: edgeDashFor(e.style),
+					cap: edgeCapFor(e.style),
 					width: e.width,
 					lit: e.lit
 				}
@@ -433,7 +441,7 @@
 		stroke={l.colour}
 		stroke-width={l.width}
 		stroke-dasharray={l.dash}
-		stroke-linecap="round"
+		stroke-linecap={l.cap}
 	/>
 	{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
 	{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}

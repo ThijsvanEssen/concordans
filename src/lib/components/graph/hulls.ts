@@ -11,8 +11,11 @@ import type { DrawClass } from '$lib/graph/types';
 import { overlaps, type Rect } from './label-place';
 import {
 	arrowLength,
+	edgeCapFor,
 	edgeColorFor,
 	edgeDashFor,
+	edgeToneFor,
+	toneColour,
 	edgeStyleFor,
 	hullColorFor,
 	hullDashFor,
@@ -20,6 +23,7 @@ import {
 } from './nodeSprites';
 import { EDGE_WEIGHT } from '$lib/graph/types';
 import { curvedLine, AIR } from '$lib/graph/line-shape';
+import { hasArrow } from '$lib/graph/line-kind';
 
 /** Between a hull and its members. */
 export const HULL_MARGIN = 16;
@@ -54,6 +58,7 @@ export type HullLink = {
 	color: string;
 	/** The stroke of its kind (`edgeDashFor`), and its thickness: weight times --netwerk-lijn. */
 	dash: string | undefined;
+	cap: 'round' | 'butt';
 	width: number;
 	dim: boolean;
 	/** The relation in words, shown while one of its hulls is in the hover. */
@@ -181,21 +186,33 @@ function arrowLine(
 	relation: Relation,
 	status: unknown,
 	from: DrawClass
-): { d: string; arrow: string; dash: string | undefined; width: number } {
+): {
+	d: string;
+	arrow: string;
+	color: string;
+	dash: string | undefined;
+	cap: 'round' | 'butt';
+	width: number;
+} {
 	const style = edgeStyleFor(relation, status as string | null, from);
-	const width = lineThickness(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));
+	const width = lineThickness(Math.max(EDGE_WEIGHT[relation], style === 'kort' ? 0.7 : 0));
 	// The ends are already at the edges of their hulls: no air to add.
 	const line = curvedLine(start, end, {
 		ra: -AIR,
 		rb: -AIR,
 		width,
 		arrow: arrowLength(),
-		head: style === 'lid' ? null : 'b'
+		head: hasArrow(style) ? 'b' : null
 	});
 	return {
 		d: line.d,
 		arrow: line.head ? `M${line.head.replaceAll(' ', 'L')}Z` : '',
+		color: toneColour(
+			edgeColorFor(relation, from),
+			edgeToneFor(relation, status as string | null, from)
+		),
 		dash: edgeDashFor(style),
+		cap: edgeCapFor(style),
 		width
 	};
 }
@@ -408,7 +425,6 @@ export function layoutHulls(s: HullScene): HullLayout {
 		links.push({
 			id,
 			...arrowLine(start, end, relation, status, 'document'),
-			color: edgeColorFor(relation, 'document'),
 			dim: active !== null && !lit,
 			label: lit ? said(byCount, status) : null,
 			labelX: (start.x + end.x) / 2,
@@ -486,7 +502,6 @@ function anchorLines(
 		links.push({
 			id: `anker:${key}`,
 			...arrowLine(start, end, attrs.relation as Relation, attrs.status, sourceClass),
-			color: edgeColorFor(attrs.relation as Relation, sourceClass),
 			dim: active !== null && !lit && !active.has(hull.id),
 			label: lit ? said(wordOf(graph, attrs, src, tgt), attrs.status) : null,
 			labelX: (start.x + end.x) / 2,

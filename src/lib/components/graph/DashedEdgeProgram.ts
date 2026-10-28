@@ -1,11 +1,11 @@
-// Custom sigma programs for the lines of the Netwerkcanvas (Lijnen): slightly curved, solid, dashed,
-// dotted or dash-dot, each with an arrowhead of `netwerk-pijl` times its thickness (except Lid van,
-// which has no direction). The body is a quadratic bezier whose control point stands 0,12 of the
+// Custom sigma programs for the lines of the Netwerkcanvas (Lijnen): slightly curved, solid, short
+// dashes, long dashes or round dots, each with an arrowhead of `netwerk-pijl` times its thickness
+// (except the dots, a family without direction). A pattern begins at the arrowhead. The body is a quadratic bezier whose control point stands 0,12 of the
 // line's length beside its middle (BEND, as the Design System draws it); the distance to the
 // curve is found per pixel in the fragment shader, after @sigma/edge-curve (MIT), which this file
 // extends with a dash pattern along the curve and an arrowhead of our own proportions.
 // The arrowhead is a taper of the thickness near the target: it starts at the edge of the target
-// node and is `pijl` diktes long (a `pijl` of 0 draws none).
+// node and is `pijl` diktes long (a `pijl` of 0 draws none). The pattern begins behind it.
 
 import { EdgeProgram } from 'sigma/rendering';
 import { floatColor } from 'sigma/utils';
@@ -104,8 +104,9 @@ void main() {
 
 // The fragment shader finds the point of the curve nearest to the pixel (and its parameter t),
 // tapers the thickness into an arrowhead near the target, and for a broken line discards the
-// unlit stretches of each repeat (`lit`, fractions of one repeat) along t, but not in the
-// arrowhead. A 75/25 split keeps thin edges readable; hard edges keep the colour on screen
+// unlit stretches of each repeat (`lit`, fractions of one repeat) along t, counted from behind
+// the arrowhead, but not in the arrowhead; round dots are the points within half the thickness
+// of a dot's centre. A 75/25 split keeps thin edges readable; hard edges keep the colour on screen
 // exactly the colour passed.
 const fragment = (dash: Dash | null) => /* glsl */ `
 precision highp float;
@@ -162,8 +163,16 @@ void main(void) {
   ${
 		dash
 			? `
-  float pos = fract(nearest.z * length(v_cpC - v_cpA) * 1.01 / (${dash.period.toFixed(1)} * v_pr));
-  if (!inHead && !onDot && !(${dash.lit.map(([a, b]) => `(pos >= ${a.toFixed(3)} && pos < ${b.toFixed(3)})`).join(' || ')})) discard;`
+  float headLen = v_thickness * u_lengthToThicknessRatio;
+  float start = v_targetSize + (headLen > 0.0 ? headLen : ${AIR.toFixed(1)} * v_pr);
+  float along = (1.0 - nearest.z) * length(v_cpC - v_cpA) * 1.01 - start;
+  float pos = fract(along / (${dash.period.toFixed(1)} * v_pr));
+  ${
+		'dots' in dash
+			? `float ds = (fract(pos + 0.5) - 0.5) * ${dash.period.toFixed(1)} * v_pr;
+  if (!inHead && !onDot && length(vec2(ds, dist)) >= halfThickness) discard;`
+			: `if (!inHead && !onDot && !(${dash.lit.map(([a, b]) => `(pos >= ${a.toFixed(3)} && pos < ${b.toFixed(3)})`).join(' || ')})) discard;`
+	}`
 			: ''
 	}
   float t = onDot ? 0.0 : smoothstep(halfThickness - v_feather, halfThickness, dist);
@@ -173,7 +182,9 @@ void main(void) {
 `;
 
 /** `period` in px along the curve (its length is its chord plus a hair); `lit` fractions of it. */
-type Dash = { period: number; lit: readonly (readonly [number, number])[] };
+type Dash =
+	| { period: number; lit: readonly (readonly [number, number])[] }
+	| { period: number; dots: true };
 
 const UNIFORMS = [
 	'u_matrix',
@@ -272,35 +283,25 @@ function createCurveProgram(pijl: number, dash: Dash | null, dot = false) {
 
 /**
  * The programs of the lines, each curved by BEND and with an arrowhead of `pijl` times the line's
- * thickness long (--netwerk-pijl), except `lid`, which has none (Lid van has no direction). The
- * patterns are those of Netwerkcanvas, Lijnen, in px, `lit` as fractions of one repeat: `dashed` a stroke of 4
- * and a gap of 3, `dotted` 1.5 and 3.5, `dashdot` 9, 3, 1.5, 3.
+ * thickness long (--netwerk-pijl), except the dots, which have none (a family without direction).
+ * The patterns are those of Netwerkcanvas, Lijnen, in px, `lit` as fractions of one repeat: `kort`
+ * a stroke of 4 and a gap of 2,5, `lang` 8 and 3, `punten` a round dot every 4 (4,5 for
+ * `puntenIndiener`, which also has the dot at the one who submits). A thread has no arrow.
  */
 export function stippelProgrammas(pijl: number) {
-	const dash = (period: number, lit: Dash['lit'], arrow = pijl) =>
-		createCurveProgram(arrow, { period, lit });
+	const streep = (period: number, lit: number, arrow = pijl) =>
+		createCurveProgram(arrow, { period, lit: [[0, lit / period]] });
+	const punten = (period: number, dot = false, arrow = 0) =>
+		createCurveProgram(arrow, { period, dots: true }, dot);
 	return {
 		arrow: createCurveProgram(pijl, null),
-		submitter: createCurveProgram(pijl, null, true),
-		dashed: dash(7, [[0, 4 / 7]]),
-		dotted: dash(5, [[0, 0.3]]),
-		dashdot: dash(16.5, [
-			[0, 9 / 16.5],
-			[12 / 16.5, 13.5 / 16.5]
-		]),
-		lid: dash(5, [[0, 0.3]], 0),
-		// A thread, a line between two bronnen that are not chosen: no arrow (Netwerkcanvas, Maten).
+		kort: streep(6.5, 4),
+		lang: streep(11, 8),
+		punten: punten(4),
+		puntenPijl: punten(4, false, pijl),
+		puntenIndiener: punten(4.5, true),
 		arrowDraad: createCurveProgram(0, null),
-		submitterDraad: createCurveProgram(0, null, true),
-		dashedDraad: dash(7, [[0, 4 / 7]], 0),
-		dottedDraad: dash(5, [[0, 0.3]], 0),
-		dashdotDraad: dash(
-			16.5,
-			[
-				[0, 9 / 16.5],
-				[12 / 16.5, 13.5 / 16.5]
-			],
-			0
-		)
+		kortDraad: streep(6.5, 4, 0),
+		langDraad: streep(11, 8, 0)
 	};
 }

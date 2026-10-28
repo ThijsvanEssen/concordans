@@ -125,9 +125,9 @@ describe('the hulls of a small canvas', () => {
 			[
 			  {
 			    "arrow": "M384,262L377,269L374,262Z",
-			    "color": "#00487c",
-			    "d": "M155 295Q274 306 375 266",
-			    "dash": "4 3",
+			    "cap": "round",
+			    "color": "rgb(112, 152, 180)",
+			    "d": "M375 266Q274 306 155 295",
 			    "dim": false,
 			    "id": "D->W",
 			    "label": null,
@@ -137,8 +137,9 @@ describe('the hulls of a small canvas', () => {
 			  },
 			  {
 			    "arrow": "M389,248L382,247L385,242Z",
-			    "color": "#456247",
-			    "d": "M256 106Q305 193 384 245",
+			    "cap": "round",
+			    "color": "rgb(106, 129, 107)",
+			    "d": "M384 245Q305 193 256 106",
 			    "dim": false,
 			    "id": "anker:j->W",
 			    "label": null,
@@ -256,6 +257,7 @@ describe('the names of the hulls (UX review N4, N8)', () => {
 			arrow: '',
 			color: '',
 			dash: undefined,
+			cap: 'round' as const,
 			width: 3,
 			dim: false,
 			label: 'noemt',

@@ -10,8 +10,15 @@
 import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { DrawClass } from '$lib/graph/types';
-import { lineKindOf } from '$lib/graph/line-kind';
-import { isAmendingRelation, type Relation } from '$lib/vocabulary';
+import {
+	LINE_KIND_STYLE,
+	lineKindOf,
+	lineStyleOf,
+	type Stroke,
+	type Tone
+} from '$lib/graph/line-kind';
+import { lineStrength } from '$lib/graph/line-strength';
+import type { Relation } from '$lib/vocabulary';
 
 type Tokens = {
 	paper: string;
@@ -105,27 +112,19 @@ export function tokens(): Tokens {
 }
 
 /**
- * The colour of a line by its soort (Netwerkcanvas, Lijnen): Structureel and Deel van in moss,
- * Wijziging in the wet's hue, Aanhaling in slate, Toelichting and Ingediend door in plum,
- * Lid van in grey.
+ * The colour of a line by its soort (Netwerkcanvas, Lijnen): the table of line-kind.ts, read from
+ * the tokens.
  */
 export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string {
-	const t = tokens();
-	switch (lineKindOf(relation, sourceClass)) {
-		case 'structural':
-		case 'part':
-			return t.moss;
-		case 'change':
-			return t.rubriekWetten;
-		case 'citation':
-			return t.slate;
-		case 'explanation':
-		case 'submitter':
-			return t.plum;
-		case 'member':
-			return t.ink3;
-	}
+	return tokens()[LINE_KIND_STYLE[lineKindOf(relation, sourceClass)].colour];
 }
+
+/** The tone of a line by its soort: a change that is only proposed is light. */
+export const edgeToneFor = (
+	relation: Relation,
+	status: string | null | undefined,
+	sourceClass: DrawClass = 'article'
+): Tone => lineStyleOf(relation, sourceClass, status).tone;
 
 /** The thickness of a verbinding at rest: its weight (EDGE_WEIGHT) times --netwerk-lijn. */
 export const lineThickness = (gewicht: number): number =>
@@ -166,6 +165,11 @@ export function dimColor(strength = 0.4): string {
 	return towardPaper(tokens().ink3, strength);
 }
 
+/** A line in its tone at rest, as the drawings of the Design System show it: the top of its window. */
+export function toneColour(color: string, tone: Tone): string {
+	return towardPaper(color, lineStrength(color, tokens().paper, tone, 1));
+}
+
 /** The colour of a group's hull (`--rubriek-*`): Wet, Dossier, Fractie, Commissie, Kabinet. */
 export function hullColorFor(kind: ContainerKind): string {
 	const t = tokens();
@@ -203,54 +207,41 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 }
 
 /**
- * How a line is drawn (Netwerkcanvas, Lijnen): `solid` the band is straight; `dashed` a bron
- * only names the other; `dotted` belongs to; `dashdot` explains; `lid` dotted and without an
- * arrow, as Lid van has no direction; `submitter` solid with a dot at the one who submits.
+ * How a line is stroked (Netwerkcanvas, Lijnen): `solid` the law itself; `kort` and `lang` a bron
+ * names the other (an Aanhaling, a Toelichting); `punten` belongs to, without an arrow (`puntenPijl` with one: a version);
+ * `puntenIndiener` the same with a dot at the one who submits.
  */
-type EdgeStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot' | 'lid' | 'submitter';
+export type EdgeStyle = Stroke;
 
-/**
- * The style of a line by its soort: a citation (Aanhaling) is dashed, a part dotted, a
- * toelichting dash-dot, a membership dotted without an arrow; a change that is only proposed
- * is dashed. The rest is solid.
- */
+/** The stroke of a line by its soort, from the table of line-kind.ts. */
 export function edgeStyleFor(
 	relation: Relation,
 	status: string | null | undefined,
 	sourceClass: DrawClass = 'article'
 ): EdgeStyle {
-	switch (lineKindOf(relation, sourceClass)) {
-		case 'member':
-			return 'lid';
-		case 'submitter':
-			return 'submitter';
-		case 'part':
-			return 'dotted';
-		case 'explanation':
-			return 'dashdot';
-		case 'citation':
-			return 'dashed';
-		case 'change':
-			return isAmendingRelation(relation) && status === 'voorgesteld' ? 'dashed' : 'solid';
-		default:
-			return 'solid';
-	}
+	return lineStyleOf(relation, sourceClass, status).stroke;
 }
 
-/** The line of a style as an SVG dash array: the legend's sample and the key's. */
+/** The line of a style as an SVG dash array, from the head: the legend's sample and the key's. */
 export function edgeDashFor(style: EdgeStyle): string | undefined {
 	switch (style) {
-		case 'dashed':
-			return '4 3';
-		case 'dotted':
-		case 'lid':
-			return '1.5 3.5';
-		case 'dashdot':
-			return '9 3 1.5 3';
+		case 'kort':
+			return '4 2.5';
+		case 'lang':
+			return '8 3';
+		case 'punten':
+		case 'puntenPijl':
+			return '0 4';
+		case 'puntenIndiener':
+			return '0 4.5';
 		case 'solid':
 			return undefined;
 	}
 }
+
+/** The cap of a stroke: round, so a dot is round; flat for a dash, so it keeps its length. */
+export const edgeCapFor = (style: EdgeStyle): 'round' | 'butt' =>
+	style === 'kort' || style === 'lang' ? 'butt' : 'round';
 
 // A sprite is drawn in a 32×32 box onto a canvas of SPRITE_PX and handed over as a PNG. Not
 // as an SVG: sigma's image program draws its atlas once, as soon as an image has loaded, and

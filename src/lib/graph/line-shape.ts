@@ -6,7 +6,7 @@
 /** How far a line bends: its control point stands this part of its length beside its middle. */
 export const BEND = 0.12;
 /** The radius of the dot at the one who submits. */
-export const DOT_RADIUS = 2.6;
+export const DOT_RADIUS = 3.2;
 /** The air between a line and the edge of its bron. */
 export const AIR = 3;
 /** An arrowhead's width to its length. */
@@ -17,7 +17,10 @@ export const MIN_ARROW_PX = 5.5;
 type Point = { x: number; y: number };
 
 type CurvedLine = {
-	/** The body, a quadratic bezier from the edge of the one bron to the edge of the other. */
+	/**
+	 * The body, a quadratic bezier from the edge of the one bron to the edge of the other, drawn
+	 * from the end the line points to (its arrowhead), so a dash pattern begins there.
+	 */
 	d: string;
 	/** The points of the arrowhead, or null. */
 	head: string | null;
@@ -52,6 +55,8 @@ export function curvedLine(
 		arrow: number;
 		head?: 'a' | 'b' | null;
 		dot?: 'a' | 'b' | null;
+		/** The end a line without a head points to, where its pattern begins; default `b`. */
+		end?: 'a' | 'b';
 		bend?: number;
 	}
 ): CurvedLine {
@@ -80,8 +85,9 @@ export function curvedLine(
 		p = { x: p.x + ua * len, y: p.y + va * len };
 	}
 	const dot = o.dot === 'a' ? p : o.dot === 'b' ? q : null;
+	const [s, e] = (o.head ?? o.end ?? 'b') === 'a' ? [p, q] : [q, p];
 	return {
-		d: `M${r1(p.x)} ${r1(p.y)}Q${r1(c.x)} ${r1(c.y)} ${r1(q.x)} ${r1(q.y)}`,
+		d: `M${r1(s.x)} ${r1(s.y)}Q${r1(c.x)} ${r1(c.y)} ${r1(e.x)} ${r1(e.y)}`,
 		head,
 		dot: dot && { x: r1(dot.x), y: r1(dot.y) },
 		middle: { x: r1((p.x + 2 * c.x + q.x) / 4), y: r1((p.y + 2 * c.y + q.y) / 4) }

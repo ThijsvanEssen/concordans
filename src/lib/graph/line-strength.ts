@@ -1,7 +1,10 @@
 // How strong a line of the canvas is drawn at rest (Netwerkcanvas, Lijnen): in its own colour,
-// mixed toward the paper the more lines there are, but never fainter than a line can be read:
-// 3:1 against the paper. A thread (a line between two bronnen that are neither chosen) is meant
+// mixed toward the paper the more lines there are, within the window of its tone (dark, middle,
+// light), but never fainter than a line can be read: 3:1 against the paper, which wins over the
+// window. A thread (a line between two bronnen that are neither chosen) is meant
 // to be faint and has no floor; a hover is in full.
+
+import type { Tone } from './line-kind';
 
 const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
 /** The least contrast of a line with the paper (WCAG, non-text). */
@@ -54,6 +57,19 @@ export function floorStrength(color: string, paper: string): number {
 	return hi;
 }
 
-/** The strength of a line of a fan of `n` lines: in full up to nine, paler beyond, never below the floor. */
-export const lineStrength = (color: string, paper: string, n: number): number =>
-	Math.max(Math.min(1, 3 / Math.sqrt(n || 1)), floorStrength(color, paper));
+/** The window of each tone: the strength of a line in a fan of many (first) and of a few (last). */
+export const TONE_WINDOW: Record<Tone, readonly [number, number]> = {
+	donker: [0.75, 1],
+	middel: [0.5, 0.8],
+	licht: [0.3, 0.55]
+};
+
+/** The strength of a tone in a fan of `n` lines: its top up to nine, its bottom as they grow. */
+export function toneStrength(tone: Tone, n: number): number {
+	const [lo, hi] = TONE_WINDOW[tone];
+	return lo + (hi - lo) * Math.min(1, 3 / Math.sqrt(n || 1));
+}
+
+/** The strength of a line of a fan of `n` lines within its tone, never below the floor. */
+export const lineStrength = (color: string, paper: string, tone: Tone, n: number): number =>
+	Math.max(toneStrength(tone, n), floorStrength(color, paper));
