@@ -397,7 +397,8 @@
 				})
 			: null
 	);
-	// The link opens the text, not the network: a reader who follows it wants to read.
+	// The link opens the text, not the network: a reader who follows it wants to read. `lezen=1`
+	// stays on purpose to open the text; the Citeer menu only shows the address without it (citeItems).
 	const readLink = $derived(
 		page.url.origin + withParams(page.url, { lezen: '1' }, { hash: page.url.hash.slice(1) })
 	);

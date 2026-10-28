@@ -85,6 +85,9 @@
 		border: 0;
 		background: none;
 		font: inherit;
+		/* The size of the text beside it, so that both stand on one line. */
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink-3);
 		text-align: right;
 		white-space: nowrap;
