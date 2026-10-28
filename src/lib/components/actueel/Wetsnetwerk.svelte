@@ -111,4 +111,12 @@
 		font-weight: 600;
 		color: var(--ink);
 	}
+	/* A finger: the link as high as a Knop. */
+	@media (pointer: coarse), (max-width: 640px) {
+		.verkenner {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
+	}
 </style>
