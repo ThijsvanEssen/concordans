@@ -10,15 +10,20 @@
 	import type { Collection } from '$lib/vocabulary';
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import {
+		edgeCapFor,
 		edgeColorFor,
 		edgeDashFor,
 		edgeStyleFor,
+		edgeToneFor,
 		lineThickness,
+		tokens,
 		towardPaper,
 		arrowLength,
 		hullDashFor
 	} from '$lib/components/graph/nodeSprites';
 	import { AIR, DOT_RADIUS, curvedLine } from '$lib/graph/line-shape';
+	import { hasArrow } from '$lib/graph/line-kind';
+	import { lineStrength } from '$lib/graph/line-strength';
 	import {
 		CHAR_WIDTH as CHAR,
 		LINE_H,
@@ -78,9 +83,9 @@
 	const RING = 11;
 
 	// A line rests in the colour of its kind, mixed toward the paper as there are more of them
-	// (3/√n, from 0.35 to 1); the chosen one in ink, 1.3 times as thick, the rest at half.
+	// (within the window of its tone, line-strength); the chosen one in ink, 1.3 times as thick,
+	// the rest at half.
 	const total = $derived(sketch.singles.length + sketch.clusters.length);
-	const strength = $derived(Math.min(1, Math.max(0.35, 3 / Math.sqrt(Math.max(total, 1)))));
 	const chosen = $derived(open !== null);
 
 	type StrokeLine = {
@@ -90,6 +95,7 @@
 		colour: string;
 		width: number;
 		dash: string | undefined;
+		cap: 'round' | 'butt';
 		open: boolean;
 		dimmed: boolean;
 	};
@@ -107,11 +113,14 @@
 		pick: boolean
 	): StrokeLine {
 		const rel = l.relation;
-		const style = rel ? edgeStyleFor(rel, null, l.source) : 'lid';
+		const style = rel ? edgeStyleFor(rel, null, l.source) : 'punten';
 		const width = (rel ? lineThickness(EDGE_WEIGHT[rel]) : lineThickness(weight)) * SKETCH_LINE;
 		const base = rel ? edgeColorFor(rel, l.source) : 'var(--rule-strong)';
+		const strength = rel
+			? lineStrength(base, tokens().paper, edgeToneFor(rel, null, l.source), total)
+			: 1;
 		const colour = pick ? 'var(--ink)' : rel ? towardPaper(base, strength) : base;
-		const points = rel !== null && style !== 'lid' && l.direction !== null;
+		const points = rel !== null && hasArrow(style) && l.direction !== null;
 		// Drawn from the middle to the neighbour: the arrowhead at the end it points to.
 		const toMiddle = l.direction === 'inbound';
 		const shape = curvedLine(
@@ -123,7 +132,8 @@
 				width,
 				arrow: arrowLength(),
 				head: points ? (toMiddle ? 'a' : 'b') : null,
-				dot: style === 'submitter' && points ? (toMiddle ? 'b' : 'a') : null
+				end: toMiddle ? 'a' : 'b',
+				dot: style === 'puntenIndiener' && l.direction !== null ? (toMiddle ? 'b' : 'a') : null
 			}
 		);
 		return {
@@ -133,6 +143,7 @@
 			colour,
 			width: pick ? width * 1.3 : width,
 			dash: edgeDashFor(style),
+			cap: edgeCapFor(style),
 			open: pick,
 			dimmed: chosen && !pick
 		};
@@ -177,7 +188,7 @@
 					stroke={t.colour}
 					stroke-width={t.width}
 					stroke-dasharray={t.dash}
-					stroke-linecap="round"
+					stroke-linecap={t.cap}
 				/>
 				{#if t.head}<polygon points={t.head} fill={t.colour} />{/if}
 				{#if t.dot}<circle cx={t.dot.x} cy={t.dot.y} r={DOT_RADIUS} fill={t.colour} />{/if}

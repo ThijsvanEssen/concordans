@@ -35,7 +35,7 @@
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
-	import { lineKindOf } from '$lib/graph/line-kind';
+	import { hasArrow, lineKindOf, type Tone } from '$lib/graph/line-kind';
 	import {
 		hoverPlaats,
 		lijnLabelPlaats,
@@ -63,6 +63,7 @@
 		badgeAxisOffset,
 		edgeColorFor,
 		edgeStyleFor,
+		edgeToneFor,
 		dimColor,
 		towardPaper,
 		withAlpha,
@@ -862,16 +863,13 @@
 			nodeProgramClasses: { image: NodeImageProgram },
 			edgeProgramClasses: {
 				arrow: metLijnLabel(stippel.arrow as never),
-				submitter: metLijnLabel(stippel.submitter as never),
-				dashed: metLijnLabel(stippel.dashed as never),
-				dotted: metLijnLabel(stippel.dotted as never),
-				dashdot: metLijnLabel(stippel.dashdot as never),
-				lid: metLijnLabel(stippel.lid as never),
+				kort: metLijnLabel(stippel.kort as never),
+				lang: metLijnLabel(stippel.lang as never),
+				punten: metLijnLabel(stippel.punten as never),
+				puntenIndiener: metLijnLabel(stippel.puntenIndiener as never),
 				arrowDraad: metLijnLabel(stippel.arrowDraad as never),
-				submitterDraad: metLijnLabel(stippel.submitterDraad as never),
-				dashedDraad: metLijnLabel(stippel.dashedDraad as never),
-				dottedDraad: metLijnLabel(stippel.dottedDraad as never),
-				dashdotDraad: metLijnLabel(stippel.dashdotDraad as never)
+				kortDraad: metLijnLabel(stippel.kortDraad as never),
+				langDraad: metLijnLabel(stippel.langDraad as never)
 			},
 			defaultDrawEdgeLabel: tekenLijnLabel as never,
 			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 5.5 px long
@@ -1086,14 +1084,15 @@
 				const sourceClass = srcAttrs.drawClass as DrawClass;
 				const style = edgeStyleFor(relation, data.status as string | null, sourceClass);
 				const renderColor = edgeColorFor(relation, sourceClass);
+				const tone = edgeToneFor(relation, data.status as string | null, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
-				/** A thread has no arrow. */
-				const draadType = edgeType === 'lid' ? edgeType : `${edgeType}Draad`;
+				/** A thread has no arrow; a line without one is a thread already. */
+				const draadType = hasArrow(style) ? `${edgeType}Draad` : edgeType;
 				// A cluster's one line weighs 1 (Netwerkcanvas, Cluster).
 				const restSize = lineThickness(
 					srcAttrs.cluster || tgtAttrs.cluster
 						? 1
-						: Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0)
+						: Math.max(EDGE_WEIGHT[relation], style === 'kort' ? 0.7 : 0)
 				);
 				const sourceCollection = srcAttrs.collection as Collection;
 
@@ -1180,7 +1179,7 @@
 							...data,
 							hidden: false,
 							type: edgeType,
-							color: towardPaper(renderColor, fanStrength(renderColor, focusLevel1.size)),
+							color: towardPaper(renderColor, fanStrength(renderColor, tone, focusLevel1.size)),
 							size: restSize,
 							label: ''
 						};
@@ -1233,7 +1232,7 @@
 					...data,
 					hidden: false,
 					type: edgeType,
-					color: towardPaper(renderColor, fanStrength(renderColor, degree)),
+					color: towardPaper(renderColor, fanStrength(renderColor, tone, degree)),
 					size: restSize,
 					label: ''
 				};
@@ -1293,8 +1292,9 @@
 		onReady?.({ refresh, fit, restoreCamera, zoom });
 	});
 
-	/** How strong a line of a fan of `n` lines is drawn: in full up to nine, paler beyond, readable. */
-	const fanStrength = (color: string, n: number) => lineStrength(color, tokens().paper, n);
+	/** How strong a line of a fan of `n` lines is drawn: its tone's top up to nine, paler beyond, readable. */
+	const fanStrength = (color: string, tone: Tone, n: number) =>
+		lineStrength(color, tokens().paper, tone, n);
 	/** A line of a chosen bron or of the focus: not context, not a thread. */
 	const touchesChosen = (src: string, tgt: string) =>
 		src === focusedId || tgt === focusedId || latestPinnedIds.has(src) || latestPinnedIds.has(tgt);
@@ -1355,6 +1355,7 @@
 						stroke={l.color}
 						stroke-width={l.width}
 						stroke-dasharray={l.dash}
+						stroke-linecap={l.cap}
 						fill="none"
 					/>
 					{#if l.arrow}<path d={l.arrow} fill={l.color} />{/if}
@@ -1435,9 +1436,6 @@
 		transition: opacity var(--dur-1) var(--ease);
 	}
 	/* A line between hulls, in the stroke and thickness of its kind. */
-	.hull-link path:first-child {
-		stroke-linecap: round;
-	}
 	.hull-link {
 		opacity: 0.8;
 		transition: opacity var(--dur-1) var(--ease);

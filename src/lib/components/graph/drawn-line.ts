@@ -2,12 +2,16 @@
 // arrow of its kind, mixed toward the paper, bent and ending at the edge of its bron
 // (graph/line-shape). The shared bronnen and the ketens draw their lines with this one.
 import { curvedLine } from '$lib/graph/line-shape';
+import { hasArrow } from '$lib/graph/line-kind';
 import { EDGE_WEIGHT, drawClassOf } from '$lib/graph/types';
 import {
 	arrowLength,
+	edgeCapFor,
 	edgeColorFor,
 	edgeDashFor,
 	edgeStyleFor,
+	edgeToneFor,
+	toneColour,
 	lineThickness
 } from '$lib/components/graph/nodeSprites';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -21,6 +25,7 @@ type DrawnLine = {
 	middle: Point;
 	colour: string;
 	dash: string | undefined;
+	cap: 'round' | 'butt';
 	width: number;
 };
 
@@ -43,22 +48,24 @@ export function drawnLine(
 ): DrawnLine {
 	const rel = o.relation;
 	const from = drawClassOf(o.from ?? 'instruments');
-	const style = rel ? edgeStyleFor(rel, null, from) : 'lid';
+	const style = rel ? edgeStyleFor(rel, null, from) : 'punten';
 	const width = o.width ?? (rel ? Math.max(lineThickness(EDGE_WEIGHT[rel]), 1.4) : 1.4);
 	const shape = curvedLine(a, b, {
 		ra: o.ra,
 		rb: o.rb,
 		width,
 		arrow: arrowLength(),
-		head: style === 'lid' ? null : o.arrow,
-		dot: style === 'submitter' ? 'a' : null
+		head: hasArrow(style) ? o.arrow : null,
+		end: o.arrow ?? 'b',
+		dot: style === 'puntenIndiener' ? 'a' : null
 	});
 	return {
 		...shape,
 		colour: rel
-			? `color-mix(in srgb, ${edgeColorFor(rel, from)} 55%, var(--paper))`
+			? toneColour(edgeColorFor(rel, from), edgeToneFor(rel, null, from))
 			: 'var(--rule-strong)',
 		dash: edgeDashFor(style),
+		cap: edgeCapFor(style),
 		width
 	};
 }

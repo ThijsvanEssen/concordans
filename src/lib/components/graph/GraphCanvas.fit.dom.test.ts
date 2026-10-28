@@ -59,16 +59,13 @@ vi.mock('@sigma/node-image', () => ({ createNodeImageProgram: () => class {} }))
 vi.mock('./DashedEdgeProgram', () => ({
 	stippelProgrammas: () => ({
 		arrow: class {},
-		submitter: class {},
-		dashed: class {},
-		dotted: class {},
-		dashdot: class {},
-		lid: class {},
+		kort: class {},
+		lang: class {},
+		punten: class {},
+		puntenIndiener: class {},
 		arrowDraad: class {},
-		submitterDraad: class {},
-		dashedDraad: class {},
-		dottedDraad: class {},
-		dashdotDraad: class {}
+		kortDraad: class {},
+		langDraad: class {}
 	})
 }));
 

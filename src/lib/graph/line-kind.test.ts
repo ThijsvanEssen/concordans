@@ -1,9 +1,9 @@
 // Every line the canvas draws stands under a row of Relatie (Netwerkcanvas, Lijnen).
 import { describe, expect, it } from 'vitest';
 import { RELATIONS } from '$lib/vocabulary';
-import { edgeColorFor, edgeStyleFor } from '$lib/components/graph/nodeSprites';
+import { edgeColorFor, edgeStyleFor, edgeToneFor } from '$lib/components/graph/nodeSprites';
 import { isDrawn } from './collection-role';
-import { LINE_KINDS, LINE_KIND_SAMPLE, lineKindOf } from './line-kind';
+import { LINE_KINDS, LINE_KIND_SAMPLE, LINE_KIND_STYLE, lineKindOf } from './line-kind';
 import type { DrawClass } from './types';
 
 const KINDS: DrawClass[] = ['article', 'judgment', 'document', 'member'];
@@ -36,7 +36,9 @@ describe('lijnsoorten', () => {
 				expect(edgeColorFor(r, from), `${r} ${from}`).toBe(
 					edgeColorFor(sample.relation, sample.from)
 				);
-				expect(edgeStyleFor(r, null, from) === 'lid', `${r} ${from}`).toBe(kind === 'member');
+				const own = LINE_KIND_STYLE[kind];
+				expect(edgeToneFor(r, null, from), `${r} ${from}`).toBe(own.tone);
+				expect(edgeStyleFor(r, null, from), `${r} ${from}`).toBe(own.stroke);
 			}
 	});
 });

@@ -45,9 +45,9 @@ const ingang = `${TMP}/canvas.ts`;
 writeFileSync(
 	ingang,
 	`export { VORMEN } from '${REPO}/src/lib/bron/vormen';
-export { LINE_KIND_SAMPLE } from '${REPO}/src/lib/graph/line-kind';
+export { LINE_KIND_SAMPLE, hasArrow } from '${REPO}/src/lib/graph/line-kind';
 export { EDGE_WEIGHT } from '${REPO}/src/lib/graph/types';
-export { edgeColorFor, edgeStyleFor, edgeDashFor, lineThickness, arrowLength, hullColorFor, hullDashFor, towardPaper } from '${REPO}/src/lib/components/graph/nodeSprites';
+export { edgeColorFor, edgeStyleFor, edgeDashFor, edgeCapFor, edgeToneFor, toneColour, lineThickness, arrowLength, hullColorFor, hullDashFor, towardPaper } from '${REPO}/src/lib/components/graph/nodeSprites';
 export { ARROW_WIDTH } from '${REPO}/src/lib/graph/line-shape';
 export { HULL_MARGIN, LABEL_GAP } from '${REPO}/src/lib/components/graph/hulls';`
 );
@@ -135,12 +135,14 @@ const r1 = (n) => Math.round(n * 10) / 10;
  * Een lijn van a naar b in de stijl van zijn lijnsoort (line-kind.ts, Netwerkcanvas Lijnen):
  * licht gebogen (`buig` 1 of -1 kiest de kant), kleur, streep en dikte van de soort, ophoudend
  * aan de rand van de bron (ra, rb); de pijlpunt (netwerk-pijl diktes lang, 0,8 daarvan breed)
- * bij b, of bij a met `pijl` 'a'. Ingediend door heeft een punt bij de indiener.
+ * bij b, of bij a met `pijl` 'a'. Ingediend door heeft een punt bij de indiener; het patroon begint bij de kop.
  */
 const lijn = (a, b, soort, { ra = RAND, rb = RAND, buig = 1, pijl = 'b', kleur } = {}) => {
 	const { relation, from } = K.LINE_KIND_SAMPLE[soort];
-	const kl = kleur ?? K.edgeColorFor(relation, from);
+	const kl =
+		kleur ?? K.toneColour(K.edgeColorFor(relation, from), K.edgeToneFor(relation, null, from));
 	const stijl = K.edgeStyleFor(relation, null, from);
+	const metPijl = K.hasArrow(stijl);
 	const dash = K.edgeDashFor(stijl);
 	const w = K.lineThickness(K.EDGE_WEIGHT[relation]);
 	const len = w * K.arrowLength();
@@ -161,20 +163,22 @@ const lijn = (a, b, soort, { ra = RAND, rb = RAND, buig = 1, pijl = 'b', kleur }
 		return `<path d="M${r1(tx)} ${r1(ty)}L${r1(bx + ox)} ${r1(by + oy)}L${r1(bx - ox)} ${r1(by - oy)}z" fill="${kl}"/>`;
 	};
 	let kop = '';
-	if (stijl !== 'lid' && pijl === 'b') {
+	if (metPijl && pijl === 'b') {
 		kop = punt(q, [ub, vb]);
 		q = [q[0] - ub * len, q[1] - vb * len];
-	} else if (stijl !== 'lid' && pijl === 'a') {
+	} else if (metPijl && pijl === 'a') {
 		kop = punt(p, [-ua, -va]);
 		p = [p[0] + ua * len, p[1] + va * len];
 	}
 	const stip =
 		soort === 'submitter'
-			? `<circle cx="${r1(pijl === 'b' ? p[0] : q[0])}" cy="${r1(pijl === 'b' ? p[1] : q[1])}" r="2.6" fill="${kl}"/>`
+			? `<circle cx="${r1(pijl === 'b' ? p[0] : q[0])}" cy="${r1(pijl === 'b' ? p[1] : q[1])}" r="3.2" fill="${kl}"/>`
 			: '';
 	const streep = dash ? ` stroke-dasharray="${dash}"` : '';
+	// Het patroon begint bij de kop: het pad loopt vanaf het einde waarheen de lijn wijst.
+	const [s0, s1] = pijl === 'a' ? [p, q] : [q, p];
 	return (
-		`<path d="M${r1(p[0])} ${r1(p[1])}Q${r1(c[0])} ${r1(c[1])} ${r1(q[0])} ${r1(q[1])}" fill="none" stroke="${kl}" stroke-width="${w}" stroke-linecap="round"${streep}/>` +
+		`<path d="M${r1(s0[0])} ${r1(s0[1])}Q${r1(c[0])} ${r1(c[1])} ${r1(s1[0])} ${r1(s1[1])}" fill="none" stroke="${kl}" stroke-width="${w}" stroke-linecap="${K.edgeCapFor(stijl)}"${streep}/>` +
 		kop +
 		stip
 	);
