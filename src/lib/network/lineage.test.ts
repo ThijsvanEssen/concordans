@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lineage } from './lineage';
+import { cabinetsOfMinistries, lineage } from './lineage';
 
 const node = (id: string, props: Record<string, unknown>) => ({
 	id,
@@ -103,5 +103,55 @@ describe('the keten of a person', () => {
 		} as never;
 		const layers = await lineage(only, ['MEMBER_OF', 'SERVED_IN'], async () => null);
 		expect(layers.map((l) => l.label)).toEqual(['Kamerlid', 'Fractie']);
+	});
+});
+
+describe('the ministeries of a bewindspersoon', () => {
+	const posts = [
+		{ cabinet_key: 'rutte_iv', ministry: 'fin' },
+		{ cabinet_key: 'rutte_iv', ministry: null },
+		{ cabinet_key: 'jetten', ministry: 'az' },
+		{ cabinet_key: 'jetten', ministry: 'fin' },
+		{ cabinet_key: null, ministry: 'ezk' }
+	];
+	it('reads per ministerie the kabinetten of its posts', () => {
+		const m = cabinetsOfMinistries({ government_functions: posts });
+		expect([...m.get('ministries/fin')!].sort()).toEqual(['cabinets/jetten', 'cabinets/rutte_iv']);
+		expect([...m.get('ministries/az')!]).toEqual(['cabinets/jetten']);
+		expect(m.has('ministries/ezk')).toBe(false);
+		expect(cabinetsOfMinistries(null).size).toBe(0);
+	});
+	it('hangs a ministerie under its kabinet, else under the person', async () => {
+		const seat = (relation: string, items: string[]) => ({
+			relation,
+			direction: 'outbound',
+			collection: 'x',
+			type: 'x',
+			total: items.length,
+			next_offset: null,
+			items: items.map((id) => ({ ...node(id, {}), collection: id.split('/')[0] }))
+		});
+		const person = {
+			node: { ...node('members/j', { government_functions: posts }), collection: 'members' },
+			neighbors: {
+				total: 0,
+				buckets: [
+					seat('SERVED_IN', [
+						'ministries/az',
+						'ministries/ezk',
+						'cabinets/jetten',
+						'ministries/fin'
+					])
+				]
+			}
+		} as never;
+		const layers = await lineage(person, ['MEMBER_OF', 'SERVED_IN'], async () => null);
+		const parents = Object.fromEntries(
+			layers.flatMap((l) => l.nodes.map((n) => [n.id, n.parents.map((p) => p.id)]))
+		);
+		expect(parents['ministries/az']).toEqual(['cabinets/jetten']);
+		// rutte_iv is not in the keten: only jetten counts.
+		expect(parents['ministries/fin']).toEqual(['cabinets/jetten']);
+		expect(parents['ministries/ezk']).toEqual(['members/j']);
 	});
 });
