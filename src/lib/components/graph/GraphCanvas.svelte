@@ -1538,7 +1538,7 @@
 		width: 6px;
 		height: 6px;
 		border-radius: var(--r-rond);
-		background: var(--soort-parlement);
+		background: var(--rubriek-kamerstukken);
 		border: 1.5px solid var(--paper);
 		box-sizing: content-box;
 	}
