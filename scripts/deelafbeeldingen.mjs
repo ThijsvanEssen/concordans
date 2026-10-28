@@ -139,7 +139,8 @@ const r1 = (n) => Math.round(n * 10) / 10;
  */
 const lijn = (a, b, soort, { ra = RAND, rb = RAND, buig = 1, pijl = 'b', kleur } = {}) => {
 	const { relation, from } = K.LINE_KIND_SAMPLE[soort];
-	const kl = kleur ?? K.toneColour(K.edgeColorFor(relation, from), K.edgeToneFor(relation, null, from));
+	const kl =
+		kleur ?? K.toneColour(K.edgeColorFor(relation, from), K.edgeToneFor(relation, null, from));
 	const stijl = K.edgeStyleFor(relation, null, from);
 	const metPijl = K.hasArrow(stijl);
 	const dash = K.edgeDashFor(stijl);
