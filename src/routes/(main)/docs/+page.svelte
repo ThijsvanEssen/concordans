@@ -3,7 +3,6 @@
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import { modKey } from '$lib/util/platform';
 	import { RELATIONS } from '$lib/vocabulary';
@@ -76,8 +75,8 @@
 						Een eigen verzameling bewaarde bronnen met aantekeningen, te delen met een link.
 					</KeyRow>
 					<KeyRow key="Open teken">
-						In het netwerk een bron die alleen genoemd wordt en niet in de gegevens staat: alleen de
-						rand is getekend.
+						In het netwerk een bron die alleen genoemd wordt, zonder eigen gegevens: alleen de rand
+						is getekend.
 					</KeyRow>
 					<KeyRow key="Voorgesteld, vastgesteld">
 						Een verbinding is vastgesteld, of voorgesteld als een wetsvoorstel haar nog maar
@@ -309,16 +308,16 @@
 				</p>
 				<ul class="elders">
 					<li>
-						<TekstLink href="/docs/methode">Methode</TekstLink>: hoe de verbindingen ontstaan en
-						waar de grenzen liggen.
+						<a href="/docs/methode" class="cite">Methode</a>: hoe de verbindingen ontstaan en waar
+						de grenzen liggen.
 					</li>
 					<li>
-						<TekstLink href="/bronnen">Bronnen en hergebruik</TekstLink>: waar de gegevens vandaan
+						<a href="/bronnen" class="cite">Bronnen en hergebruik</a>: waar de gegevens vandaan
 						komen en wat ermee mag.
 					</li>
-					<li><TekstLink href="/voorwaarden">Voorwaarden</TekstLink>: wat geldt voor gebruik.</li>
-					<li><TekstLink href="/api">API</TekstLink>: de gegevens zelf opvragen.</li>
-					<li><TekstLink href="/docs/sneltoetsen">Sneltoetsen</TekstLink>: het toetsenbord.</li>
+					<li><a href="/voorwaarden" class="cite">Voorwaarden</a>: wat geldt voor gebruik.</li>
+					<li><a href="/api" class="cite">API</a>: de gegevens zelf opvragen.</li>
+					<li><a href="/docs/sneltoetsen" class="cite">Sneltoetsen</a>: het toetsenbord.</li>
 				</ul>
 			</Sectie>
 		</div>
