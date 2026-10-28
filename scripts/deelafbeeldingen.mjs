@@ -34,7 +34,8 @@ const C = {
 	wet: token('rubriek-wetten'),
 	kst: token('rubriek-kamerstukken'),
 	parl: token('rubriek-parlement'),
-	recht: token('rubriek-rechtspraak')
+	recht: token('rubriek-rechtspraak'),
+	reg: token('rubriek-regering')
 };
 
 // De code van het canvas, gebundeld voor Node. nodeSprites leest de tokens met
@@ -370,7 +371,167 @@ const SCHETS = {
 			]
 		});
 	},
-	uitspraak: () => keten()
+	uitspraak: () => keten(),
+	// Een Kamerlid in zijn fractie; het diende een stuk in een dossier in.
+	lid: () =>
+		schuin(
+			['persoon', C.parl, 'faction', 'Fractie'],
+			['stuk', C.kst, 'dossier', 'Dossier'],
+			'submitter',
+			'uit'
+		),
+	// Een bewindspersoon in zijn kabinet; hij diende een stuk in een dossier in.
+	bewindspersoon: () =>
+		schuin(
+			['bewindspersoon', C.reg, 'cabinet', 'Kabinet'],
+			['stuk', C.kst, 'dossier', 'Dossier'],
+			'submitter',
+			'uit'
+		),
+	// De fractie met haar leden; zij stemde over de stemmingen in een dossier.
+	fractie: () =>
+		schuin(
+			['orgaan', C.parl, 'faction', 'Fractie', 'persoon'],
+			['besluit', C.kst, 'dossier', 'Dossier'],
+			'member',
+			'uit'
+		),
+	// De commissie met haar leden; zij leidt een dossier.
+	commissie: () =>
+		schuin(
+			['orgaan-o', C.parl, 'committee', 'Commissie', 'persoon'],
+			['stuk', C.kst, 'dossier', 'Dossier'],
+			'member',
+			'in'
+		),
+	// Het kabinet in zijn omhulling met vier bewindspersonen; drie van hen op een ministerie.
+	kabinet: () =>
+		schets({
+			hullen: [
+				omhulling(
+					[...HOEKEN.map((p) => [...p, RAND]), [...MIDDEN, RAND_FOCUS]],
+					'cabinet',
+					'Kabinet'
+				)
+			],
+			lijnen: [
+				lijn(HOEKEN[2], RIJ[0], 'member', { buig: 1 }),
+				lijn(HOEKEN[3], RIJ[1], 'member', { buig: 1 }),
+				lijn(HOEKEN[3], RIJ[2], 'member', { buig: -1 })
+			],
+			bronnen: [
+				...HOEKEN.map((p) => teken('bewindspersoon', p, C.reg)),
+				...RIJ.map((p) => teken('ministerie', p, C.reg)),
+				focus('kabinet', MIDDEN)
+			]
+		}),
+	// Het ministerie, geen omhulling: bewindspersonen van een kabinet dienden erin (Lid van
+	// van de omhulling), het leidt een dossier.
+	ministerie: () =>
+		tussenin(
+			'ministerie',
+			['bewindspersoon', C.reg, 'cabinet', 'Kabinet', 'member', 'in'],
+			['stuk', C.kst, 'dossier', 'Dossier', 'member', 'in']
+		),
+	// De Staatsbladpublicatie, nooit in een omhulling: het dossier is aangenomen als deze
+	// publicatie (Structureel), zij wijzigt een wet (Wijziging naar de omhulling).
+	publicatie: () =>
+		tussenin(
+			'publicatie',
+			['stuk', C.kst, 'dossier', 'Dossier', 'structural', 'uit'],
+			['regel-o', C.wet, 'instrument', 'Wet', 'change', 'uit']
+		),
+	// De toezegging in haar dossier, gedaan door een bewindspersoon van een kabinet.
+	toezegging: () =>
+		schuin(
+			['toezegging', C.kst, 'dossier', 'Dossier', 'stuk'],
+			['bewindspersoon', C.reg, 'cabinet', 'Kabinet'],
+			'submitter',
+			'in'
+		),
+	// De stemming in haar dossier; drie fracties stemden erover, elk een eigen knoop.
+	stemming: () => {
+		const boven = omhulling(metFocus(BUREN), 'dossier', 'Dossier');
+		return schets({
+			hullen: [boven],
+			lijnen: FRACTIES.map((p, i) => lijn(p, F, 'member', { rb: RAND_FOCUS, buig: [1, 0, -1][i] })),
+			bronnen: [
+				...BUREN.map((p) => teken('stuk', p, C.kst)),
+				...FRACTIES.map((p) => teken('orgaan', p, C.parl)),
+				focus('besluit', F)
+			]
+		});
+	}
+};
+
+/** Drie fracties als eigen knoop in een boog rechts van de stemming. */
+const FRACTIES = [
+	[188, 88],
+	[200, 146],
+	[164, 204]
+];
+
+/**
+ * Een focus die nooit in een omhulling staat, tussen twee omhullingen: links boven en rechts
+ * onder, elk [vorm, kleur, omhulling, naam, lijnsoort, richting], met één lijn naar de focus
+ * ('in') of van de focus ('uit').
+ */
+const tussenin = (fv, links, rechts) => {
+	const M = [124, 112];
+	const L = [
+		[40, 56],
+		[44, 100],
+		[78, 70]
+	];
+	const kant = ([v, kl, soort, naam, lsoort, richting], leden, buig) => {
+		const h = omhulling(
+			leden.map((p) => [...p, RAND]),
+			soort,
+			naam
+		);
+		const rand = { ra: RAND_FOCUS, rb: h.r - LUCHT, buig };
+		const l =
+			richting === 'uit'
+				? lijn(M, [h.cx, h.cy], lsoort, rand)
+				: lijn([h.cx, h.cy], M, lsoort, { ra: h.r - LUCHT, rb: RAND_FOCUS, buig: -buig });
+		const maat = v === 'regel-o' ? MAAT.artikel : MAAT.bron;
+		return { h, l, tekens: leden.map((p) => teken(v, p, kl, maat)) };
+	};
+	const a = kant(links, L, 1);
+	const b = kant(rechts, ONDER, 1);
+	return schets({
+		hullen: [a.h, b.h],
+		lijnen: [a.l, b.l],
+		bronnen: [...a.tekens, ...b.tekens, focus(fv, M)]
+	});
+};
+
+/**
+ * Schuin, zoals kamerstuk: de focus links boven in zijn omhulling met twee buren, drie bronnen
+ * rechts onder in hun eigen omhulling, één lijn ertussen. Boven [focusvorm, kleur buren,
+ * omhulling, naam, vorm buren], onder [vorm, kleur, omhulling, naam]; de lijn loopt van de focus
+ * naar de onderste omhulling ('uit') of terug ('in').
+ */
+const schuin = ([fv, bkl, bsoort, bnaam, bv = fv], [ov, okl, osoort, onaam], soort, richting) => {
+	const boven = omhulling(metFocus(BUREN), bsoort, bnaam);
+	const onder = omhulling(
+		ONDER.map((p) => [...p, RAND]),
+		osoort,
+		onaam
+	);
+	return schets({
+		hullen: [boven, onder],
+		lijnen: [
+			richting === 'uit'
+				? lijn(F, ONDER[0], soort, { ra: RAND_FOCUS, buig: 1 })
+				: lijn(ONDER[0], F, soort, { rb: RAND_FOCUS, buig: -1 })
+		],
+		bronnen: [
+			...BUREN.map((p) => teken(bv, p, bkl)),
+			...ONDER.map((p) => teken(ov, p, okl)),
+			focus(fv, F)
+		]
+	});
 };
 
 // --- De keten van een uitspraak, zoals Keten in het DS ----------------------------------
@@ -434,7 +595,31 @@ const KAART = {
 	],
 	dossier: ['Dossier', 'De stukken, moties, amendementen en stemmingen van een wetsvoorstel.'],
 	kamerstuk: ['Kamerstuk', 'Met de indieners, de stemming per fractie en het dossier.'],
-	uitspraak: ['Uitspraak', 'Met de wetsartikelen en uitspraken waarnaar de uitspraak verwijst.']
+	uitspraak: ['Uitspraak', 'Met de wetsartikelen en uitspraken waarnaar de uitspraak verwijst.'],
+	lid: ['Kamerlid', 'Met de fracties en de stukken die het Kamerlid indiende.'],
+	bewindspersoon: [
+		'Bewindspersoon',
+		'Met de kabinetten, de ministeries en de stukken die de bewindspersoon indiende.'
+	],
+	fractie: ['Fractie', 'Met de leden, het fractiebestuur en de stemmingen van een fractie.'],
+	commissie: ['Commissie', 'Met de leden, de dossiers en de activiteiten van een Kamercommissie.'],
+	kabinet: ['Kabinet', 'Met de bewindspersonen, de partijen en de fasen van een kabinet.'],
+	ministerie: [
+		'Ministerie',
+		'Met de bewindspersonen, wetten, dossiers en toezeggingen van een ministerie.'
+	],
+	publicatie: [
+		'Publicatie',
+		'Een publicatie in het Staatsblad, met de wetten die ze vaststelt of wijzigt en het dossier.'
+	],
+	toezegging: [
+		'Toezegging',
+		'Wat een bewindspersoon de Kamer toezegt, met de stand, het dossier en de brieven die haar nakomen.'
+	],
+	stemming: [
+		'Stemming',
+		'De uitslag en de stemverdeling per fractie, met het dossier en de stukken.'
+	]
 };
 
 const og = (naam) => {
@@ -473,6 +658,16 @@ for (const naam of Object.keys(KAART)) {
 	writeFileSync(`${TMP}/${naam}.html`, og(naam));
 	await page.goto(`file://${TMP}/${naam}.html`);
 	await page.evaluate(() => document.fonts.ready);
+	// Een kop die niet in de tekstbreedte past, krimpt tot hij past.
+	await page.evaluate(() => {
+		const h1 = document.querySelector('h1');
+		if (!h1) return;
+		const w = h1.parentElement.clientWidth;
+		const r = document.createRange();
+		r.selectNodeContents(h1);
+		const breed = r.getBoundingClientRect().width;
+		if (breed > w) h1.style.fontSize = `${Math.floor((104 * w) / breed)}px`;
+	});
 	// PIL_MATEN: een pil zo breed als zijn naam plus 9 px aan elke kant.
 	await page.evaluate(() => {
 		for (const g of document.querySelectorAll('.pil')) {
