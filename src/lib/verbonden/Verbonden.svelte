@@ -649,7 +649,7 @@
 							{onFilter}
 						/>
 					{/if}
-					<ul class="rows">
+					<ul class="rows" class:is-herladen={wachtSet.has(g.id)} aria-busy={wachtSet.has(g.id)}>
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 							<VerbondenRow
 								{row}
@@ -861,6 +861,11 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+	/* The rows of the former choice stand, quiet, until the new ones are in. */
+	.rows.is-herladen {
+		opacity: 0.5;
+		transition: opacity 0.15s;
 	}
 	/* The counts of the line, a comma between them. */
 	.ook > span + span::before {

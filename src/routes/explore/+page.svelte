@@ -902,15 +902,18 @@
 	// A filter on the rows or the table needs every row, not the first few per group.
 	$effect(() => {
 		const f = filter;
+		// An article's judgments are cut by the API itself (`askedOfApi`): its jaar and rechter
+		// need no other rows.
+		const vanApi = selectedNode?.collection === 'articles';
 		const opRijen =
 			f.lid ||
-			f.rechter ||
+			(f.rechter && !vanApi) ||
 			f.van ||
 			f.tot ||
 			f.geldendOp ||
 			f.betrouwbaarheid ||
 			f.status ||
-			f.jaar ||
+			(f.jaar && !vanApi) ||
 			f.zoek ||
 			// An article's counts per lid under a bronfilter that splits what one of its
 			// buckets holds (toelichtingen without wetsvoorstellen) are counted from its rows.
