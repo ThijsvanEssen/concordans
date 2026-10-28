@@ -438,9 +438,15 @@
 				grid-template-columns: repeat(3, minmax(0, 1fr));
 				gap: var(--s-4);
 			}
+			/* With scripts the example of the day stands beside the tiles: the tiles a narrow
+			   column at the left, the sketch a larger sheet at the right (Vragen.svelte). */
+			.scripts #seo:has(> .vragen) .vragen__lijst {
+				grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+			}
 			.scripts #seo:has(> .vragen) .vragen__lijst::before {
 				content: '';
-				grid-column: 1 / -1;
+				grid-column: 2;
+				grid-row: 1 / span 3;
 				min-height: 224px;
 				border-radius: var(--r-1);
 				background: var(--paper-2);
@@ -470,8 +476,14 @@
 				color: var(--ink);
 			}
 			@media (max-width: 768px) {
-				#seo:has(> .vragen) .vragen__lijst {
+				#seo:has(> .vragen) .vragen__lijst,
+				.scripts #seo:has(> .vragen) .vragen__lijst {
 					grid-template-columns: minmax(0, 1fr);
+				}
+				.scripts #seo:has(> .vragen) .vragen__lijst::before {
+					grid-column: 1;
+					grid-row: auto;
+					order: 1;
 				}
 			}
 			@media (max-width: 640px) {

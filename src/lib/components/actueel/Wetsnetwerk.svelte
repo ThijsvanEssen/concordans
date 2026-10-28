@@ -100,14 +100,14 @@
 
 <style>
 	.wetsnetwerk {
+		display: flex;
+		flex-direction: column;
 		margin: 0;
-		padding: var(--s-4);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-		background: var(--paper);
 	}
+	/* The sheet: the sketch in the middle of it, the caption at its foot. */
 	.veld {
 		position: relative;
+		margin: auto 0;
 	}
 	.lijnen {
 		position: absolute;

@@ -1,6 +1,7 @@
 <script lang="ts">
-	// "Wat kun je ermee?": the living example of the day (a snippet, the law network) and then
-	// three questions Concordans answers, each a tile with a way in. The server's HTML of `/`
+	// "Wat kun je ermee?": three questions Concordans answers, each a tile with a way in, in a
+	// narrow column, and beside them the living example of the day (a snippet, the law network)
+	// as a larger sheet; on a phone the tiles first, then the sheet. The server's HTML of `/`
 	// writes the same section (start.json, home.py); app.html sets it alike.
 	import type { Snippet } from 'svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -12,8 +13,8 @@
 
 <section class="vragen" aria-labelledby="vragen-kop">
 	<h2 id="vragen-kop">{questions.heading}</h2>
-	{@render voorbeeld?.()}
 	<div class="vragen__lijst">
+		{@render voorbeeld?.()}
 		{#each questions.items as item (item.title)}
 			<section class="vraag">
 				<h3>{item.title}</h3>
@@ -62,9 +63,24 @@
 		margin-top: auto;
 		padding-top: var(--s-1);
 	}
+	/* With the example: the tiles a column at the left, the sheet at the right (app.html has it
+	   for the server's page). */
+	.vragen__lijst:has(:global(.voorbeeld)) {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+	}
+	.vragen__lijst > :global(.voorbeeld) {
+		grid-column: 2;
+		grid-row: 1 / span 3;
+	}
 	@media (max-width: 768px) {
-		.vragen__lijst {
+		.vragen__lijst,
+		.vragen__lijst:has(:global(.voorbeeld)) {
 			grid-template-columns: minmax(0, 1fr);
+		}
+		.vragen__lijst > :global(.voorbeeld) {
+			grid-column: 1;
+			grid-row: auto;
+			order: 1;
 		}
 	}
 </style>

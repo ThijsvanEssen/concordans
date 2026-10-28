@@ -313,17 +313,23 @@
 </div>
 
 <style>
-	/* The room of the example while its network is asked (1440: 224 px; a phone: 380 px), the
-	   place of the network quiet; the example stands as high when it is in. */
+	/* The sheet beside the tiles (Vragen.svelte): as high as they are, its room while the
+	   network is asked at least the sketch's (1440: 224 px; a phone: 380 px). */
 	.voorbeeld {
 		display: flex;
 		flex-direction: column;
 		min-height: 224px;
-		margin-bottom: var(--s-4);
 	}
+	.voorbeeld:has(:global(.wetsnetwerk)) {
+		padding: var(--s-4);
+		border: 1px solid var(--rule);
+		border-radius: var(--r-1);
+	}
+	.voorbeeld :global(.wetsnetwerk),
 	.wetsnetwerk-plek {
 		flex: 1;
-		min-height: var(--s-8);
+	}
+	.wetsnetwerk-plek {
 		border-radius: var(--r-1);
 		background: var(--paper-2);
 	}
