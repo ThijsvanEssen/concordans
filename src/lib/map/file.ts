@@ -4,7 +4,7 @@
 // one, as the reader chooses.
 import type { Map, SharedMap } from './map';
 import { BROKEN, payloadOf, readPayload } from './share';
-import { safeFileName } from '$lib/verbonden/export';
+import { safeFileName } from '$lib/util/save-file';
 import { textOf } from '$lib/text/words';
 
 /** The version of the file's form; a file of a later one is not read. */

@@ -8,7 +8,7 @@ import { goto } from '$app/navigation';
 import { fakeApi } from '$lib/test/fakeApi';
 import { markeringVoor } from '$lib/bron/markering.svelte';
 import type { GraphNode } from '$lib/graph/types';
-import { download } from './export';
+import { download } from '$lib/util/save-file';
 import { buildGroups } from './groups';
 import { EMPTY_FILTER } from './filter';
 import { DEFAULT_LOADER_OPTIONS } from './loaders';
@@ -18,7 +18,10 @@ import Verbonden from './Verbonden.svelte';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/explore?bron=a') } }));
 vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
-vi.mock('./export', async (eigen) => ({ ...(await eigen<object>()), download: vi.fn() }));
+vi.mock('$lib/util/save-file', async (eigen) => ({
+	...(await eigen<object>()),
+	download: vi.fn()
+}));
 
 const uitspraak: Row = {
 	ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_2006' },
