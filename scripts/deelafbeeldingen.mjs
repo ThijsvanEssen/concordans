@@ -249,13 +249,6 @@ const ONDER = [
 	[192, 194],
 	[194, 230]
 ];
-// Zonder omhulling: de bron en zijn drie dichter bij elkaar, zoals de Netwerkschets.
-const LOS = [120, 112];
-const LOS_RIJ = [
-	[54, 208],
-	[120, 230],
-	[186, 208]
-];
 // Het algemene beeld: de focus links, de wet eronder, uitspraken erboven, het dossier rechts.
 const AL = {
 	focus: [92, 118],
