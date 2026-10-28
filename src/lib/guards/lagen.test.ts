@@ -82,8 +82,7 @@ describe('the layers', () => {
 			'lib/search/present.ts',
 			'lib/verbonden/document-chamber.ts',
 			'lib/verbonden/groups.ts',
-			'lib/verbonden/loaders.ts',
-			'lib/verbonden/rows.ts'
+			'lib/verbonden/loaders.ts'
 		];
 		const leunt = BRONNEN.filter(
 			({ path, text }) =>

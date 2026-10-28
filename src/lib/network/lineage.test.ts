@@ -155,3 +155,147 @@ describe('the ministeries of a bewindspersoon', () => {
 		expect(parents['ministries/ezk']).toEqual(['members/j']);
 	});
 });
+
+describe('how a row of the list hangs', () => {
+	const bucket = (relation: string, items: unknown[]) => ({
+		relation,
+		direction: 'outbound',
+		collection: 'x',
+		type: 'x',
+		total: items.length,
+		next_offset: null,
+		items
+	});
+	const withMeta = (
+		id: string,
+		meta: Record<string, unknown>,
+		props: Record<string, unknown> = {}
+	) => ({
+		...node(id, props),
+		collection: id.split('/')[0],
+		key: id.split('/')[1],
+		meta
+	});
+	const post = (
+		cabinet_key: string,
+		cabinet: string,
+		fn: string,
+		from: string,
+		to: string | null
+	) => ({
+		cabinet_key,
+		cabinet,
+		function: fn,
+		from_date: from,
+		to_date: to
+	});
+	const person = {
+		node: {
+			...node('members/j', {
+				government_functions: [
+					{ cabinet_key: 'rutte_iv', ministry: 'fin' },
+					{ cabinet_key: 'jetten', ministry: 'az' }
+				],
+				faction_memberships: [
+					{
+						faction_id: 'factions/d66',
+						role: 'Lid',
+						from_date: '2017-03-23',
+						to_date: '2018-10-08'
+					},
+					{ faction_id: 'factions/d66', role: 'Lid', from_date: '2023-12-06', to_date: null }
+				]
+			}),
+			collection: 'members'
+		},
+		neighbors: {
+			total: 0,
+			buckets: [
+				bucket('MEMBER_OF', [
+					withMeta('committees/vz', {
+						from_date: '2021-05-25',
+						to_date: '2023-07-07',
+						role: 'Voorzitter'
+					}),
+					withMeta('committees/pl', {
+						from_date: '2024-09-03',
+						to_date: '2025-11-18',
+						role: 'PlvLid',
+						substitute: true
+					}),
+					withMeta('factions/d66', { from_date: '2026-02-09', to_date: '2026-02-22', role: 'Lid' })
+				]),
+				bucket('SERVED_IN', [
+					withMeta('cabinets/rutte_iv', {
+						posts: [
+							post(
+								'rutte_iv',
+								'kabinet-Rutte IV',
+								'Minister van Financiën',
+								'2024-01-08',
+								'2024-01-12'
+							)
+						]
+					}),
+					withMeta('cabinets/jetten', {
+						posts: [post('jetten', 'kabinet-Jetten', 'Minister-president', '2026-02-23', null)]
+					}),
+					withMeta('ministries/az', {
+						posts: [post('jetten', 'kabinet-Jetten', 'Minister-president', '2026-02-23', null)]
+					}),
+					withMeta('ministries/fin', {
+						posts: [
+							post(
+								'rutte_iv',
+								'kabinet-Rutte IV',
+								'Minister van Financiën',
+								'2024-01-08',
+								'2024-01-12'
+							)
+						]
+					})
+				])
+			]
+		}
+	} as never;
+	const how = async () =>
+		Object.fromEntries(
+			(await lineage(person, ['MEMBER_OF', 'SERVED_IN'], async () => null)).flatMap((l) =>
+				l.nodes.map((n) => [n.id, n.how])
+			)
+		);
+	it('says a seat with its role and years', async () => {
+		const h = await how();
+		expect(h['committees/vz']).toBe('Voorzitter, 2021 – 2023');
+		expect(h['committees/pl']).toBe('Plaatsvervangend lid, 2024 – 2025');
+	});
+	it('says a fractie over all its years, open where the last membership is', async () => {
+		expect((await how())['factions/d66']).toBe('sinds 2017');
+	});
+	it('says a kabinet by the posts held in it and a ministerie by the kabinet it hangs under', async () => {
+		const h = await how();
+		expect(h['cabinets/jetten']).toBe('Minister-president, sinds 2026');
+		expect(h['ministries/fin']).toBe('Onder kabinet-Rutte IV, minister van Financiën, 2024');
+	});
+	it('lists the ministeries in the order of their kabinetten', async () => {
+		const layers = await lineage(person, ['MEMBER_OF', 'SERVED_IN'], async () => null);
+		const kabinetten = layers.find((l) => l.label === 'Kabinet')!.nodes.map((n) => n.id);
+		const ministeries = layers.find((l) => l.label === 'Ministerie')!.nodes.map((n) => n.id);
+		const under = {
+			'ministries/az': 'cabinets/jetten',
+			'ministries/fin': 'cabinets/rutte_iv'
+		} as const;
+		expect(ministeries.map((m) => kabinetten.indexOf(under[m as keyof typeof under]))).toEqual(
+			[...ministeries.map((m) => kabinetten.indexOf(under[m as keyof typeof under]))].sort()
+		);
+	});
+});
+
+describe('how a judgment hangs', () => {
+	it('says the court it appeals from, and the cassatie of the Hoge Raad', async () => {
+		const layers = await lineage(HR, ['APPEAL_OF', 'ADVISES_ON'], ask);
+		const how = Object.fromEntries(layers.flatMap((l) => l.nodes.map((n) => [n.id, n.how])));
+		expect(how['judgments/hr']).toMatch(/^Cassatie van .*; Conclusie van /);
+		expect(how['judgments/hof']).toMatch(/^Hoger beroep van /);
+	});
+});

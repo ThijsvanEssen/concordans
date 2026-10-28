@@ -122,7 +122,7 @@
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
-	import { parentKind } from '$lib/network/chain';
+	import { chainTally } from '$lib/network/chain';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
 	import { pairOf, resolveChoice } from '$lib/network/pairs';
 	import {
@@ -833,27 +833,10 @@
 	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
 		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
 	);
-	const chainCounts = $derived.by(() => {
-		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
-		if (!chainModel || !chainAll) return { kinds: {}, lines: {} };
-		const nodes = chainModel.layers.flatMap((l) => l.nodes);
-		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
-		const byKind: Partial<Record<LineKind, number>> = {};
-		for (const l of lines) byKind[parentKind(l)] = (byKind[parentKind(l)] ?? 0) + 1;
-		const kinds: Partial<Record<FilterGroup, number>> = {};
-		for (const n of nodes) {
-			const k = filterGroupOf(n.collection, n.id.split('/')[1], {
-				celex: n.instrument?.celex ?? null
-			});
-			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
-		}
-		return {
-			kinds,
-			// Each line of the keten counted as the kind it is drawn in: a regulation given by the law is
-			// a grondslag (Structureel), one that names it, or an appeal, an Aanhaling.
-			lines: byKind
-		} satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
-	});
+	// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
+	const chainCounts = $derived(
+		chainModel && chainAll ? chainTally(chainModel, chainAll) : { kinds: {}, lines: {} }
+	);
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
 	const NO_COUNTS = { kinds: {}, lines: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	const sharedCounts = $derived.by(() => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { careerOf, currentTitle, foldPremier, inYears, seatWord, type CareerEntry } from './career';
+import { seatWord } from '$lib/text/zetel';
+import { careerOf, currentTitle, foldPremier, inYears, type CareerEntry } from './career';
 import { yearsOf } from '$lib/text/datum';
 
 const d66 = (from: string, to: string | null, role = 'Lid') => ({

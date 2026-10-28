@@ -11,6 +11,7 @@ import { grondslagArtikelen } from '$lib/text/delegaties';
 import { kindName } from '$lib/text/law-kind';
 import type { Relation } from '$lib/vocabulary';
 import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
+import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 
 type Delegated = Omit<Schema<'InstrumentDelegatedResponse'>, 'items'> & {
 	items: Schema<'InstrumentDelegatedSummaryItem'>[];
@@ -74,6 +75,8 @@ export type ChainNode = {
 	/** `grondslag art. 16, 20 en 33`, `noemt art. 22`: how it hangs under the law. */
 	grondslag: string | null;
 	mentions: string | null;
+	/** How it hangs, said on a phone's list: a seat and its years, an appeal and its court. */
+	how?: string | null;
 	/** The nodes of the layer above it, and how: a power given, or only named. */
 	parents: { id: string; way: 'delegates' | 'mentioned'; relation?: Relation }[];
 	/** The regulations issued under it in turn, one level down. */
@@ -93,6 +96,32 @@ export const parentKind = (p: ChainNode['parents'][number]): LineKind =>
 		parentRelation(p),
 		p.relation === 'REFERS_TO' || p.way === 'mentioned' ? 'judgment' : 'article'
 	);
+
+/**
+ * What Soort and Relatie of the keten count: every bron a kind holds, those listed under an
+ * "Alle N" too (so Tonen and the layer say the same number), and each line drawn as the kind it
+ * is (a regulation given by the law a grondslag, one that names it or an appeal an Aanhaling).
+ */
+export function chainTally(
+	model: { layers: readonly ChainLayer[]; more?: Partial<Record<string, readonly ChainNode[]>> },
+	all: { layers: readonly ChainLayer[] }
+) {
+	const kinds: Partial<Record<FilterGroup, number>> = {};
+	const nodes = [
+		...model.layers.flatMap((l) => l.nodes),
+		...Object.values(model.more ?? {}).flatMap((v) => v ?? [])
+	];
+	for (const n of nodes) {
+		const k = filterGroupOf(n.collection, n.id.split('/')[1], {
+			celex: n.instrument?.celex ?? null
+		});
+		if (k) kinds[k] = (kinds[k] ?? 0) + 1;
+	}
+	const lines: Partial<Record<LineKind, number>> = {};
+	for (const p of all.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents))
+		lines[parentKind(p)] = (lines[parentKind(p)] ?? 0) + 1;
+	return { kinds, lines };
+}
 
 export type ChainLayer = { id: LayerId | `${number}|${string}`; label: string; nodes: ChainNode[] };
 

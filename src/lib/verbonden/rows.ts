@@ -20,7 +20,7 @@ import {
 	type DossierNaamBron
 } from '$lib/bron/dossier-naam';
 import { describeBronShort, UNNAMED } from '$lib/bron/describe';
-import { seatWord } from '$lib/components/parliamentary/career';
+import { seatWord } from '$lib/text/zetel';
 import { stuksoortOf, type Stuksoort } from '$lib/bron/rubrieken';
 import { MODERATE_CONFIDENCE, filterGroupOf, confidenceWord, type FilterGroup } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';

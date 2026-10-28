@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chain } from './chain';
+import { chain, chainTally } from './chain';
 
 const law = (id: string, title: string) => ({
 	id,
@@ -231,5 +231,26 @@ describe('the keten of a law', () => {
 		]);
 		expect(ownArt.parents).toEqual([{ id: 'instruments/uhw', way: 'delegates' }]);
 		expect(k.layers[2].nodes[0].parents.map((p) => p.id)).toEqual(['articles/uhw_10']);
+	});
+});
+
+describe('what Soort and Relatie count in a keten', () => {
+	it('counts the bronnen listed under Alle N with those drawn, so Tonen and the layer say one number', () => {
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Burgerlijk Wetboek Boek 7' },
+			delegated,
+			null,
+			{ max: 1 }
+		);
+		const listed = Object.values(k.more).flat().length;
+		expect(listed).toBeGreaterThan(0);
+		const drawn = k.layers.flatMap((l) => l.nodes).filter((n) => n.collection === 'instruments');
+		expect(chainTally(k, k).kinds.wetten).toBe(drawn.length + listed);
+	});
+	it('counts each line as the kind it is drawn in', () => {
+		const k = chain({ id: 'instruments/bwbr0010346', name: 'BW 7' }, delegated, null);
+		const { lines } = chainTally(k, k);
+		expect(lines.structural).toBeGreaterThan(0);
+		expect(lines.citation).toBeGreaterThan(0);
 	});
 });

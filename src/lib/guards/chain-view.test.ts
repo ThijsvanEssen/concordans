@@ -17,4 +17,19 @@ describe('Keten', () => {
 		expect(chain).toMatch(/sectionColour/);
 		expect(readFileSync('src/lib/network/lineage.ts', 'utf8')).toMatch(/PERSON_LAYERS/);
 	});
+	it('lets the keyboard go layer by layer, each layer’s Alle after its bronnen', () => {
+		const svg = chain.slice(chain.indexOf('<svg'), chain.indexOf('</svg>'));
+		expect(svg.indexOf('class="others"')).toBeGreaterThan(svg.lastIndexOf('class="node"'));
+	});
+	it('shows Alle on a phone as a framed button, a finger’s height', () => {
+		expect(chain).toMatch(/class="btn alle"/);
+		expect(chain).not.toMatch(/btn is-text alle/);
+	});
+	it('draws the sign of a row in the list as the drawing does, one KindGlyph', () => {
+		expect(chain).toMatch(/<KindGlyph vorm=\{vormKey\(k\)\}/);
+		expect(chain).not.toMatch(/<i class="mark"/);
+	});
+	it('leaves room under the list for the floating Weergave button', () => {
+		expect(chain).toMatch(/calc\(var\(--s-8\) \+ var\(--s-4\)\)/);
+	});
 });

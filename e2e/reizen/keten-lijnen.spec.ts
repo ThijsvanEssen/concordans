@@ -137,3 +137,65 @@ test('a ministerie of a bewindspersoon hangs under its kabinet, not under the pe
 	const labels = await page.locator('.chain .layer-label').allTextContents();
 	expect(labels.map((t) => t.trim().toLowerCase())).toContain('ministerie');
 });
+
+test('Tonen counts what the layer says: Commissies and Alle 20 are one number', async ({
+	page
+}) => {
+	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	const alle = page
+		.getByRole('group', { name: 'Keten' })
+		.getByRole('button', { name: /^Alle \d+/ });
+	const n = (await alle.first().textContent())!.replace(/\D/g, '');
+	await expect(
+		page.locator('.legend .optie', { hasText: 'Commissies' }).locator('.aantal')
+	).toHaveText(n);
+});
+
+test('the keyboard goes layer by layer: a layer’s Alle comes after its bronnen', async ({
+	page
+}) => {
+	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
+	const chain = page.getByRole('group', { name: 'Keten' });
+	await expect(chain).toBeVisible();
+	const stops = await chain.evaluate((svg) =>
+		[...svg.querySelectorAll('[tabindex="0"]')].map((e) =>
+			e.classList.contains('others') ? 'alle' : 'bron'
+		)
+	);
+	expect(stops[0]).toBe('bron');
+	for (const [i, s] of stops.entries()) if (s === 'alle') expect(stops[i - 1]).toBe('bron');
+});
+
+test('the label of a layer and its Alle stand clear of the Deel button', async ({ page }) => {
+	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
+	const chain = page.getByRole('group', { name: 'Keten' });
+	await expect(chain).toBeVisible();
+	const deel = await page.getByRole('button', { name: 'Deel', exact: true }).first().boundingBox();
+	const hits = await chain
+		.locator('.others .hit')
+		.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+	for (const top of hits) expect(top).toBeGreaterThanOrEqual(deel!.y + deel!.height);
+});
+
+test('BW 7: a line to a layer further down runs no long U through the layer between', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0005290?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	const { lines, names } = await drawn(page);
+	expect(lines.length).toBeGreaterThan(0);
+	// No line through a name.
+	const through = lines.flatMap((l) =>
+		l.pts.filter((q) => names.some((n) => q.x > n.x0 && q.x < n.x1 && q.y > n.y0 && q.y < n.y1))
+	);
+	expect(through).toHaveLength(0);
+	// No "U": a line goes across no further than its parent and its child are apart (a stem that
+	// runs out beside the layer and back adds to its sideways travel).
+	for (const l of lines) {
+		const dx = l.pts.slice(1).reduce((sum, q, i) => sum + Math.abs(q.x - l.pts[i].x), 0);
+		const net = Math.abs(l.pts.at(-1)!.x - l.pts[0].x);
+		expect(dx - net, l.d).toBeLessThan(100);
+	}
+});

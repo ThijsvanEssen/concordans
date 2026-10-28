@@ -32,10 +32,10 @@
 		careerOf,
 		currentTitle,
 		inYears,
-		seatWord,
 		type CareerEntry,
 		type Signature
 	} from '$lib/components/parliamentary/career';
+	import { seatWord } from '$lib/text/zetel';
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
