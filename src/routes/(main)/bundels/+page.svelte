@@ -100,6 +100,8 @@
 	let naming = $state(false);
 	/** The bundel from a file whose ⋯ lists the bundels to add it to, in place of its items. */
 	let choosing = $state<FileMap | null>(null);
+	/** Nothing kept yet: the page says what a bundel is, where it stays and how to export it (F28). */
+	const leeg = $derived(!opened && kaart.listed.length === 1 && kaart.loose.items.length === 0);
 	/** A bundel from a file that is one of this browser's (by its id): Vervang comes first. */
 	const sameId = (f: FileMap) => !!f.id && kaart.mappen.some((m) => m.id === f.id);
 </script>
@@ -192,7 +194,30 @@
 				</p>
 			{/if}
 
-			<ul class="lijst">
+			{#if leeg}
+				<section class="uitleg" aria-label="Wat een bundel is">
+					<p class="wat">
+						Een bundel is een eigen verzameling bewaarde bronnen met aantekeningen, te delen met een
+						link.
+					</p>
+					<dl>
+						<dt>Bewaren</dt>
+						<dd>
+							Kies Bewaar bij een artikel, uitspraak of stuk. Het komt in Mijn markeringen of in een
+							bundel die je kiest.
+						</dd>
+						<dt>Waar</dt>
+						<dd>
+							In deze browser, zonder account. De wetten, dossiers en artikelen gaan naar de server
+							om te zien wat er nieuw is; aantekeningen niet.
+						</dd>
+						<dt>Exporteren</dt>
+						<dd>Kies Meer, dan Exporteer alle bundels. Er is geen back-up.</dd>
+					</dl>
+					<a class="btn is-primary" href="/zoeken">Zoek een bron</a>
+				</section>
+			{/if}
+			<ul class="lijst" class:leeg>
 				{#if opened && 'maps' in opened}
 					{#each opened.maps as f, n (n)}
 						{@const target = targetOf(f)}
@@ -285,6 +310,33 @@
 {/if}
 
 <style>
+	.uitleg {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-4);
+		max-width: 40rem;
+	}
+	.uitleg p,
+	.uitleg dl {
+		margin: 0;
+	}
+	.uitleg dl {
+		display: grid;
+		grid-template-columns: 7rem minmax(0, 1fr);
+		gap: var(--s-3);
+		font-size: var(--t-meta);
+	}
+	.uitleg dt {
+		font-weight: 600;
+	}
+	.uitleg dd {
+		margin: 0;
+	}
+	/* Nothing kept: the empty Mijn markeringen is not a row to open. */
+	.lijst.leeg {
+		display: none;
+	}
 	.melding {
 		display: flex;
 		flex-wrap: wrap;

@@ -44,7 +44,7 @@ test('a rechtsoverweging cites short, in full and as a link to its place', async
 	await expect(menu.getByRole('menuitem').first()).toHaveText('Link naar dit lid');
 	await menu.getByRole('menuitem', { name: 'Link naar dit lid' }).click();
 	expect(await copied(page)).toContain('#rov-5.3.2');
-	await expect(menu.getByRole('menuitem', { name: 'Bewaar in Losse markeringen' })).toBeVisible();
+	await expect(menu.getByRole('menuitem', { name: 'Bewaar in Mijn markeringen' })).toBeVisible();
 });
 
 test('a cited article opens at the lid the judgment names', async ({ page }) => {

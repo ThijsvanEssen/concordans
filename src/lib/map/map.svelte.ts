@@ -30,8 +30,8 @@ import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
 
 const STORAGE_KEY = 'concordans:mappen';
-const LOOSE_NAME = 'Losse markeringen';
-/** The name a shared Losse markeringen gets with its receiver, beside their own. */
+const LOOSE_NAME = 'Mijn markeringen';
+/** The name a shared Mijn markeringen gets with its receiver, beside their own. */
 const SHARED_LOOSE = 'Gedeelde markeringen';
 /** The bundel the readers keep in this browser session, until it is ended (`keepIn`). */
 const KEEPING = 'concordans:bewaar-in';
@@ -126,11 +126,11 @@ function heleMap(id: string, m: Record<string, unknown>): Pick<Map, 'items' | 'a
 	return { items, ...(a.aantekeningen.length ? { aantekeningen: a.aantekeningen } : {}) };
 }
 
-/** The id of Losse markeringen where the browser keeps no bundels yet: one id, the same in
+/** The id of Mijn markeringen where the browser keeps no bundels yet: one id, the same in
  *  every tab and on the server's page, so its link is its page before and after a write. */
 const LOOSE_ID = 'losse-markeringen';
 
-/** Losse markeringen alone: where this browser keeps none, or none it can read. */
+/** Mijn markeringen alone: where this browser keeps none, or none it can read. */
 const firstState = (): Stand => ({ mappen: [{ ...blank(LOOSE_NAME), id: LOOSE_ID }] });
 
 /** The bundels as this browser keeps them, as written; null where it keeps none. */
@@ -148,7 +148,7 @@ function lees(text = stored()): Stand | null {
 		const raw = JSON.parse(text ?? 'null');
 		if (!raw || !Array.isArray(raw.mappen) || !raw.mappen.length) return null;
 		onleesbaar = {};
-		// The first is Losse markeringen by its place, whatever name it was kept under; a field
+		// The first is Mijn markeringen by its place, whatever name it was kept under; a field
 		// of a later version as it was kept.
 		const mappen: Map[] = raw.mappen.map((m: Map, n: number) => ({
 			...unknownOf(m, MAP_FIELDS),
@@ -195,14 +195,14 @@ class Kaarten {
 		if (kept) this.#stand = kept;
 	}
 	mappen = $derived(this.#stand.mappen);
-	/** Losse markeringen, where Bewaar keeps. */
+	/** Mijn markeringen, where Bewaar keeps. */
 	loose = $derived(this.#stand.mappen[0]);
-	/** The bundels as the overview lists them: Losse markeringen first, then last changed first. */
+	/** The bundels as the overview lists them: Mijn markeringen first, then last changed first. */
 	listed = $derived([
 		this.#stand.mappen[0],
 		...this.#stand.mappen.slice(1).sort((a, b) => b.gewijzigd.localeCompare(a.gewijzigd))
 	]);
-	/** Losse markeringen: the first bundel, emptied but never deleted. */
+	/** Mijn markeringen: the first bundel, emptied but never deleted. */
 	isDefault = (m: Pick<Map, 'id'>) => m.id === this.#stand.mappen[0].id;
 	/** The bundels that hold an item, in the order of the list. */
 	holding = (i: Pick<MapItem, 'id' | 'at'>): Map[] =>
@@ -239,10 +239,10 @@ class Kaarten {
 	}
 
 	// ── Items ─────────────────────────────────────────────────────────────────
-	/** Bewaar: into a bundel, Losse markeringen where none is named; never out of one. Taking
+	/** Bewaar: into a bundel, Mijn markeringen where none is named; never out of one. Taking
 	 *  a bron out is per bundel, by its tick (BundleChecklist), never all at once. */
 	keep(i: MapItem, id?: string) {
-		// Losse markeringen as the browser keeps it now, not as this tab read it.
+		// Mijn markeringen as the browser keeps it now, not as this tab read it.
 		this.#vers();
 		const loose = this.loose.id;
 		this.add(i, id ?? loose);
@@ -250,7 +250,7 @@ class Kaarten {
 	#keeping = $state<string | null>(keepingNow());
 	/** The bundel the readers keep in, named on Bewaar with a way back to it, from Andere bron
 	 *  toevoegen on its page until the reader ends it or goes back to it (UX-toets A21 #1);
-	 *  null: Bewaar keeps in Losse markeringen. */
+	 *  null: Bewaar keeps in Mijn markeringen. */
 	keeping = $derived(this.#stand.mappen.find((m) => m.id === this.#keeping) ?? null);
 	/** Where Bewaar keeps now. */
 	keepsIn = $derived(this.keeping ?? this.loose);
@@ -405,7 +405,7 @@ class Kaarten {
 		if (items.length) keptIn(m.naam, bundlePageHref(m));
 		return m;
 	}
-	/** A new name; Losse markeringen keeps its own. */
+	/** A new name; Mijn markeringen keeps its own. */
 	hernoem(id: string, naam: string) {
 		this.#vers();
 		const t = naam.trim();
@@ -416,7 +416,7 @@ class Kaarten {
 		};
 		this.#bewaar();
 	}
-	/** Gone for good; Losse markeringen stays (it is emptied instead). */
+	/** Gone for good; Mijn markeringen stays (it is emptied instead). */
 	verwijder(id: string) {
 		this.#vers();
 		if (this.isDefault({ id })) return;

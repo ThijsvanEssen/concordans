@@ -27,8 +27,19 @@ type Guard = {
 	allow(pattern: RegExp): void;
 };
 
-export const test = base.extend<{ guard: Guard; touch: boolean }>({
-	context: async ({ context, baseURL }, use) => {
+export const test = base.extend<{ guard: Guard; touch: boolean; eersteBewaar: boolean }>({
+	// The notice of the first Bewaar of a session is out of the way of every other test, as if
+	// the session had shown it; a test of the notice itself sets `eersteBewaar`.
+	eersteBewaar: [false, { option: true }],
+	context: async ({ context, baseURL, eersteBewaar }, use) => {
+		if (!eersteBewaar)
+			await context.addInitScript(() => {
+				try {
+					sessionStorage.setItem('concordans.bewaarmelding', '1');
+				} catch {
+					// A page without storage shows the notice once; the tests have storage.
+				}
+			});
 		// The day of the fixtures, time running from there. Only Date: Playwright's clock would
 		// also replace performance, and with it the paint timings the smoke test reads.
 		await context.addInitScript((today) => {
