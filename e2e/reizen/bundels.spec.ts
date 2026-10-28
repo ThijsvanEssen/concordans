@@ -11,13 +11,13 @@ import {
 	selectWords
 } from '../support/bundels';
 
-test('Bewaar keeps in Losse markeringen; the check in its list takes it out again', async ({
+test('Bewaar keeps in Mijn markeringen; the check in its list takes it out again', async ({
 	page
 }) => {
 	await keepArticle(page);
 	await page.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
 	const menu = page.getByRole('menu', { name: 'Bewaar art. 6:162 BW in bundel' });
-	const loose = menu.getByRole('menuitemcheckbox', { name: 'Losse markeringen' });
+	const loose = menu.getByRole('menuitemcheckbox', { name: 'Mijn markeringen' });
 	await expect(loose).toHaveAttribute('aria-checked', 'true');
 	await loose.click();
 	await expect(page.getByRole('button', { name: 'Bewaar', exact: true })).toBeVisible();
@@ -41,8 +41,8 @@ test('the overview opens a bundel in place; its page groups what it keeps', asyn
 	await keepArticle(page);
 	await keepPlaces(page);
 	await page.goto('/bundels');
-	await page.getByRole('link', { name: 'Losse markeringen' }).click();
-	await expect(page.getByRole('button', { name: 'Details van Losse markeringen' })).toHaveAttribute(
+	await page.getByRole('link', { name: 'Mijn markeringen' }).click();
+	await expect(page.getByRole('button', { name: 'Details van Mijn markeringen' })).toHaveAttribute(
 		'aria-expanded',
 		'true'
 	);
@@ -50,7 +50,7 @@ test('the overview opens a bundel in place; its page groups what it keeps', asyn
 	await page.getByRole('link', { name: 'Open bundel' }).click();
 
 	await expect(page).toHaveURL(/\/bundels\/losse-markeringen$/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Losse markeringen');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mijn markeringen');
 	await expect(
 		page.getByRole('heading', { level: 3, name: 'Burgerlijk Wetboek Boek 6' })
 	).toBeVisible();
@@ -96,7 +96,7 @@ test('two tabs keep at the same time and each sees what the other kept', async (
 	const two = await context.newPage();
 	await keepArticle(one);
 	await two.goto('/bundels');
-	await expect(two.getByRole('link', { name: 'Losse markeringen' })).toBeVisible();
+	await expect(two.getByRole('link', { name: 'Mijn markeringen' })).toBeVisible();
 
 	await keepPlaces(two);
 	await one.goto('/bundels/losse-markeringen');
@@ -107,7 +107,7 @@ test('two tabs keep at the same time and each sees what the other kept', async (
 	).toBeVisible();
 
 	// A note half typed in one tab stays whole while the other writes.
-	const note = one.getByRole('textbox', { name: 'Aantekening bij Losse markeringen' });
+	const note = one.getByRole('textbox', { name: 'Aantekening bij Mijn markeringen' });
 	await note.fill('Onderzoeksvraag: aansprakelijkheid');
 	await two.goto(ARTICLE);
 	await two.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
@@ -133,6 +133,8 @@ test('a shared link opens the bundel in a browser that has none', async ({ conte
 	const fresh = await other.newPage();
 	await fresh.goto(new URL(link!).pathname + new URL(link!).hash);
 	await expect(fresh.getByRole('heading', { level: 1 })).toBeVisible();
+	await expect(fresh.getByText('Gedeelde bundel, via een link')).toBeVisible();
+	await expect(fresh.getByRole('button', { name: 'Bewaar als kopie' })).toBeVisible();
 	await expect(fresh.getByRole('link', { name: 'art. 6:162 lid 2 BW' })).toBeVisible();
 	await expect(
 		fresh.getByRole('link', { name: /^HR 20 december 2019, .*r\.o\. 5\.3\.2$/ })
@@ -147,7 +149,7 @@ test('Meer › PDF opens the print dialog', async ({ page }) => {
 	await page.evaluate(() => {
 		window.print = () => void ((window as unknown as { printed: boolean }).printed = true);
 	});
-	await page.getByRole('button', { name: 'Meer bij Losse markeringen' }).click();
+	await page.getByRole('button', { name: 'Meer bij Mijn markeringen' }).click();
 	await page.getByRole('menuitem', { name: 'PDF' }).click();
 	expect(await page.evaluate(() => (window as unknown as { printed?: boolean }).printed)).toBe(
 		true
@@ -176,7 +178,7 @@ test('arceer words of a lid and see them again in the bundel', async ({ page, to
 	await page.goto(ARTICLE);
 	await expect(page.getByText(/ongeschreven recht/)).toBeVisible();
 	await selectWords(page, 'lid-2', 'ongeschreven recht', touch);
-	// The menu of the place, by the words: Arceer keeps them, in Losse markeringen.
+	// The menu of the place, by the words: Arceer keeps them, in Mijn markeringen.
 	const menu = page.getByRole('menu', { name: 'art. 6:162 lid 2 BW, "ongeschreven recht"' });
 	if (touch) {
 		// While the finger is down nothing opens and nothing scrolls: iOS would drag the

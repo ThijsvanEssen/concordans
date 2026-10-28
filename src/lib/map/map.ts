@@ -134,7 +134,7 @@ const dossierKey = (nr: string) =>
 		.replace(/[\s_]+/, '-')
 		.toUpperCase()}`;
 
-/** Bundels by name in a sentence: `Losse markeringen en Thuiswerk`. */
+/** Bundels by name in a sentence: `Mijn markeringen en Thuiswerk`. */
 export const namesOf = (maps: readonly Pick<Map, 'naam'>[]): string =>
 	maps.length < 2
 		? (maps[0]?.naam ?? '')

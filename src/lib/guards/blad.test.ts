@@ -1,6 +1,6 @@
 // The one sheet (Design System, Principe 6): every dialog with a scrim stands in ui/Blad.svelte.
 import { describe, expect, it } from 'vitest';
-import { overtreders, plek } from '$lib/test/bronnen';
+import { bron, overtreders, plek } from '$lib/test/bronnen';
 
 describe('the Blad', () => {
 	it('has no dialog of its own with a scrim or a scroll lock outside ui/Blad.svelte', () => {
@@ -23,5 +23,12 @@ describe('the Blad', () => {
 				[plek('lib/components/ui/Blad.svelte'), plek('lib/actions/scroll-lock.ts')]
 			)
 		).toEqual([]);
+	});
+
+	it('hands the sheet Inhoud its button as opener, for the focus after Escape (F45)', () => {
+		expect(bron('routes/explore/TocSheet.svelte')).toMatch(/\{onClose\} \{opener\}/);
+		expect(bron('routes/explore/+page.svelte')).toMatch(
+			/<TocSheet[\s\S]*?opener=\{\(\) => inhoudKnop\}/
+		);
 	});
 });

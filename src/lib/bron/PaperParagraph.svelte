@@ -132,8 +132,8 @@
 		left: 0;
 		width: var(--alinea-num);
 		padding-right: var(--s-2);
-		font-size: var(--t-micro);
-		line-height: calc(var(--lh-body) * var(--t-body));
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 	}
 	/* Its ring inside the column: the bundel's pane cuts what stands outside it. */
 	.alinea > :global(.plaats-marker:focus-visible) {

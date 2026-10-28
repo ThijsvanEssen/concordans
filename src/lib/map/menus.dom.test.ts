@@ -60,8 +60,8 @@ describe('Meer › Toevoegen aan … on a shared bundel', () => {
 		await settle();
 		await fireEvent.click(screen.getByRole('menuitem', { name: 'Toevoegen aan …' }));
 		await settle();
-		expect(items()).toEqual(['Losse markeringen']);
-		expect(document.activeElement?.textContent).toBe('Losse markeringen');
+		expect(items()).toEqual(['Mijn markeringen']);
+		expect(document.activeElement?.textContent).toBe('Mijn markeringen');
 		await fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
 		await settle();
 		expect(screen.queryByRole('menu')).toBeNull();
@@ -88,7 +88,7 @@ describe('the ⋯ of a bundel from a file', () => {
 		await settle();
 		await fireEvent.click(screen.getByRole('menuitem', { name: 'Toevoegen aan …' }));
 		await settle();
-		expect(document.activeElement?.textContent).toBe('Losse markeringen');
+		expect(document.activeElement?.textContent).toBe('Mijn markeringen');
 		await fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
 		await settle();
 		expect(screen.queryByRole('menu')).toBeNull();
@@ -109,12 +109,12 @@ describe('Bewaard in a reader (the coordinator’s choice 1)', () => {
 		await settle();
 		expect(
 			screen
-				.getByRole('menuitemcheckbox', { name: 'Losse markeringen' })
+				.getByRole('menuitemcheckbox', { name: 'Mijn markeringen' })
 				.getAttribute('aria-checked')
 		).toBe('true');
 		expect(kaart.heeft(lid)).toBe(true);
 		// Out per bundel, by its tick.
-		await fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Losse markeringen' }));
+		await fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Mijn markeringen' }));
 		expect(kaart.heeft(lid)).toBe(false);
 	});
 });

@@ -8,10 +8,13 @@
 
 	let {
 		onClose,
+		opener,
 		always = false,
 		children
 	}: {
 		onClose: () => void;
+		/** The button Inhoud, where the focus goes back to on closing. */
+		opener?: () => HTMLElement | null;
 		/** Also above 1100 px, as a drawer at the left: beside the network the contents have no column. */
 		always?: boolean;
 		children: Snippet;
@@ -29,7 +32,7 @@
 </script>
 
 {#if always || narrow.current}
-	<Blad title="Inhoud" place="links" upTo="tablet" {onClose}>
+	<Blad title="Inhoud" place="links" upTo="tablet" {onClose} {opener}>
 		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div class="body" onclick={onBodyClick}>
 			{@render children()}

@@ -241,9 +241,9 @@
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}
-			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
+			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar als kopie</button>
 		{/if}
-		<!-- An empty Losse markeringen has nothing to take along, to empty or to delete. -->
+		<!-- An empty Mijn markeringen has nothing to take along, to empty or to delete. -->
 		{#if b.items.length || !m || !kaart.isDefault(m)}
 			<TekstMenu rechts label="Meer bij {b.naam}" tekst="Meer" onClose={() => (choosing = false)}>
 				{#snippet inhoud(close)}
@@ -441,7 +441,10 @@
      list column. -->
 <article class="bundel blad__indeling" id={anchor}>
 	<header class="blad__kop">
-		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
+		<div class="kopstuk">
+			{#if !m}<span class="kenmerk">Gedeelde bundel, via een link</span>{/if}
+			<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
+		</div>
 		{@render actions()}
 	</header>
 	<!-- The name, the question and the working line over the groups; the groups of the bundel
@@ -487,6 +490,21 @@
 	}
 	.leeg {
 		margin: 0;
+	}
+	.kopstuk {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-1);
+		min-width: 0;
+	}
+	/* What a shared bundel is, over its name. */
+	.kenmerk {
+		padding: 0 var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-rond);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.hernoem {
 		max-width: 480px;

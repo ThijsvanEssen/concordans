@@ -127,7 +127,7 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 	});
 
 	it('keeps no hidden bundel where Bewaar keeps (decision 20A, UX-toets A14 #2 and #3)', () => {
-		// Bewaar keeps in Losse markeringen; its menu ticks every bundel that holds the bron.
+		// Bewaar keeps in Mijn markeringen; its menu ticks every bundel that holds the bron.
 		expect(overtreders((t) => /\bkaart\.(?:actief|kies|bewaarIn)\b/.test(t))).toEqual([]);
 		const list = bron('lib/map/BundleChecklist.svelte');
 		expect(list).toMatch(/<Picto naam="tick"/);
@@ -169,7 +169,7 @@ describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)
 			/<MapView\b[^>]*(\{shared\}|shared=)/
 		);
 		const v = bron('lib/map/MapView.svelte');
-		expect(v).toMatch(/>Bewaar<\/button/);
+		expect(v).toMatch(/>Bewaar als kopie<\/button/);
 		for (const label of ['Toevoegen aan …', 'Niet bewaren']) expect(v).toContain(label);
 	});
 

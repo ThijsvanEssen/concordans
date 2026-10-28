@@ -103,9 +103,40 @@ export const sign = {
 	}
 };
 
-/** Kept in a bundle: the line with the bundle as link, and the sign at Bundels. */
+/** The first Bewaar of a session says where it stays (F17): once per session, not per page. */
+const NOTICE_KEY = 'concordans.bewaarmelding';
+let noticeSeen = false;
+
+/** True the first time in a session; the page works without storage (then once per page load). */
+function firstOfSession(): boolean {
+	if (noticeSeen) return false;
+	noticeSeen = true;
+	try {
+		if (sessionStorage.getItem(NOTICE_KEY)) return false;
+		sessionStorage.setItem(NOTICE_KEY, '1');
+	} catch (e) {
+		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
+	}
+	return true;
+}
+
+let noticeNow = $state<{ bundle: string; href: string } | null>(null);
+
+/** The notice of the first Bewaar: it stays until the reader closes it (BewaarMelding). */
+export const notice = {
+	get now() {
+		return noticeNow;
+	},
+	close() {
+		noticeNow = null;
+	}
+};
+
+/** Kept in a bundle: the line with the bundle as link, and the sign at Bundels. The first
+ *  Bewaar of a session gives the notice in its place, which also says where the bundle stays. */
 export function keptIn(bundle: string, href: string, undo?: () => void) {
-	announce('Bewaard in', { label: bundle, href }, undo);
+	if (firstOfSession()) noticeNow = { bundle, href };
+	else announce('Bewaard in', { label: bundle, href }, undo);
 	sign.set('bundels');
 }
 

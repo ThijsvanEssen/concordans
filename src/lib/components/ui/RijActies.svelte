@@ -37,7 +37,7 @@
 		onClose?: () => void;
 	} = $props();
 
-	/** The bundels that hold the item: Bewaar keeps it in Losse markeringen; Bewaard opens the
+	/** The bundels that hold the item: Bewaar keeps it in Mijn markeringen; Bewaard opens the
 	 *  bundels with their ticks (BundleChecklist), and takes nothing out itself. */
 	const held = $derived(item ? kaart.holding(item) : []);
 	const bewaard = $derived(held.length > 0);

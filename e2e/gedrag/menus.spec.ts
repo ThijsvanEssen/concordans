@@ -44,8 +44,8 @@ const MENUS: Case[] = [
 	{
 		name: 'Meer of a bundel',
 		url: '/bundels/losse-markeringen',
-		opener: 'Meer bij Losse markeringen',
-		menu: /^Meer bij Losse markeringen$/,
+		opener: 'Meer bij Mijn markeringen',
+		menu: /^Meer bij Mijn markeringen$/,
 		prepare: keepArticle
 	}
 ];
