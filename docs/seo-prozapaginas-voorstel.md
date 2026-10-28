@@ -1,6 +1,6 @@
 # Voorstel: tekst in de serverHTML van de prozapagina's
 
-Status: gekozen (A, alle zes pagina's, Thijs 28 okt). Front end gebouwd in dezelfde PR (`spa-texts.json`); de back end moet het bestand nog serveren. Bij `docs/seo-toets.md`, bevinding 1.
+Status: gekozen (A, alle zes pagina's, Thijs 28 okt). Front end gebouwd in dezelfde PR (`spa-texts.json`); de back end serveert het bestand in lawgraph PR 1029 (https://github.com/ThijsvanEssen/lawgraph/pull/1029). De tekst is `dl/dt/dd` voor de sleutellijsten van `/bronnen` en de sneltoetsen; de omzetting zit in `spa-texts.test.ts`. Bij `docs/seo-toets.md`, bevinding 1.
 
 ## Probleem
 

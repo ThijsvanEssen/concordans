@@ -13,13 +13,36 @@ vi.mock('$app/state', () => ({ page: { route, url: new URL('https://concordans.n
 // index.html, as it reads spa-routes.json. spa-texts.test.ts keeps the file equal to the pages.
 
 /** The page's markup as plain text structure: headings, paragraphs, lists, tables and links. */
+/** The lists the pages set as div and span (KeyList, KeyRow, the shortcut table) as dl, dt and dd. */
+const LIST_CLASS: Record<string, string> = {
+	'key-list': 'dl',
+	'shortcut-table': 'dl',
+	key: 'dt',
+	'shortcut-desc': 'dt',
+	value: 'dd',
+	'shortcut-keys': 'dd'
+};
+function listTag(...[tag, close, name, attrs]: string[]): string {
+	// Closing tags carry no class: the stack of what each opening tag became says which.
+	if (close) return listStack.pop() ?? tag;
+	const classes = / class="([^"]*)"/.exec(attrs)?.[1].split(' ') ?? [];
+	const as = classes.map((c) => LIST_CLASS[c]).find(Boolean);
+	listStack.push(as ? `</${as}>` : `</${name}>`);
+	return as ? `<${as}>` : tag;
+}
+const listStack: string[] = [];
+
 function serverText(html: string): string {
+	listStack.length = 0;
 	return (
 		html
 			.replace(/<!--[\s\S]*?-->/g, '')
 			// Controls and scripts are the app's, not the text's.
 			.replace(/<(button|script|style|svg|form|input|select|textarea)\b[\s\S]*?<\/\1>/g, '')
 			.replace(/<(input|img|br|hr)\b[^>]*>/g, '')
+			// What the app fetches shows "Laden…" at first: no text of the page.
+			.replace(/<p[^>]*>Laden…<\/p>/g, '')
+			.replace(/<(\/?)(div|span)\b([^>]*)>/g, listTag)
 			// Wrappers of the layout: the text is what stands in them.
 			.replace(/<\/?(div|header|section|span|small)\b[^>]*>/g, ' ')
 			// Every attribute but where a link goes.
