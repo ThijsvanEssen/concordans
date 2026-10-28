@@ -50,6 +50,7 @@
 		hasNodes = false,
 		reach = null,
 		counting = false,
+		proposals,
 		kindRowsShown = null,
 		kindsSettled = true,
 		withCurrentMember = false
