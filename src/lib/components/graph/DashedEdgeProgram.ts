@@ -288,6 +288,19 @@ export function stippelProgrammas(pijl: number) {
 			[0, 9 / 16.5],
 			[12 / 16.5, 13.5 / 16.5]
 		]),
-		lid: dash(5, [[0, 0.3]], 0)
+		lid: dash(5, [[0, 0.3]], 0),
+		// A thread, a line between two bronnen that are not chosen: no arrow (Netwerkcanvas, Maten).
+		arrowDraad: createCurveProgram(0, null),
+		submitterDraad: createCurveProgram(0, null, true),
+		dashedDraad: dash(7, [[0, 4 / 7]], 0),
+		dottedDraad: dash(5, [[0, 0.3]], 0),
+		dashdotDraad: dash(
+			16.5,
+			[
+				[0, 9 / 16.5],
+				[12 / 16.5, 13.5 / 16.5]
+			],
+			0
+		)
 	};
 }

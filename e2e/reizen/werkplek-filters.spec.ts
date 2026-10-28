@@ -16,12 +16,10 @@ test('Alleen verbonden bronnen draws only the bron of the page with its surround
 	await page.goto(`/wetten/BWBR0010346?mode=netwerk&netwerk=${CHOSEN.join(',')}`);
 	await openSheet(page);
 	const strip = page.getByRole('complementary', { name: 'Bronnen en filters' });
-	// The filters of the strip, behind Filter on a narrow screen, and the option under Meer.
+	// The filters of the strip, behind Filter on a narrow screen, and the option under Tonen.
 	const toggle = strip.getByRole('button', { name: 'Filter', exact: true });
 	await expect(strip.getByRole('region', { name: 'Weergave' }).or(toggle).first()).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
-	const meer = strip.getByRole('region', { name: 'Filters' }).getByRole('button', { name: 'Meer' });
-	if ((await meer.getAttribute('aria-expanded')) !== 'true') await meer.click();
 	const filter = strip.getByRole('button', { name: 'Alleen verbonden bronnen' });
 	await expect(filter).toHaveAttribute('aria-pressed', 'false');
 	await expect(drawn(page).nth(1)).toBeAttached();

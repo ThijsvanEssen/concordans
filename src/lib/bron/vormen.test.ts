@@ -37,3 +37,11 @@ describe('a European or international regeling', () => {
 		expect(VORMEN['regel-int'].wijze).toBe('gat');
 	});
 });
+
+describe('the vorm of a Staatsblad publication', () => {
+	it('is its own, not the regel of a wet', async () => {
+		const { vormVanBron } = await import('./vormen');
+		expect(vormVanBron('instruments', { kind: 'publicatie' }, 'stb_2026_314')).toBe('publicatie');
+		expect(vormVanBron('instruments', { kind: 'wet' }, 'wet_stb_2026_314')).toBe('regel');
+	});
+});

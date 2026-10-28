@@ -16,6 +16,14 @@
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
 	import { bronLabel } from '$lib/vocabulary';
+	import { bronKind } from '$lib/components/graph/bron-kind';
+
+	/** What a chosen bron is, in a word: a publication is no wet. */
+	const soortVan = (e: NetwerkEntry) =>
+		(e.node?.raw?.props?.kind === 'publicatie'
+			? bronKind(e.collection, e.node.raw.props)
+			: bronLabel(e.collection)
+		).toLowerCase();
 
 	let {
 		entries,
@@ -64,16 +72,6 @@
 	const pending = $derived(
 		entries.length < expected ? Math.min(expected, FOLD_AT) - Math.min(entries.length, FOLD_AT) : 0
 	);
-
-	/** What a group's members are called: a wet's artikelen, a fractie's leden. */
-	const membersOf = (c: NetwerkEntry['collection']) =>
-		c === 'instruments'
-			? 'artikelen'
-			: c === 'dossiers'
-				? 'stukken'
-				: c === 'cabinets' || c === 'ministries'
-					? 'bewindspersonen'
-					: 'leden';
 </script>
 
 <!-- Three blocks under a rule, one task each (NetwerkPaneel in the design system): Gekozen,
@@ -134,21 +132,10 @@
 								<span class="rij__label">{e.label}</span>
 								{#if e.alone}
 									<span class="rij__staat" title="Geen verbinding met de andere gekozen bronnen"
-										>{bronLabel(e.collection).toLowerCase()}, zonder verbinding</span
-									>
-								{:else if e.via}
-									<span
-										class="rij__staat"
-										title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {membersOf(
-											e.collection
-										)}"
-										>{bronLabel(e.collection).toLowerCase()}, via {formatCount(e.via.used)} van {formatCount(
-											e.via.total
-										)}
-										{membersOf(e.collection)}</span
+										>{soortVan(e)}, zonder verbinding</span
 									>
 								{:else}
-									<span class="rij__staat">{bronLabel(e.collection).toLowerCase()}</span>
+									<span class="rij__staat">{soortVan(e)}</span>
 								{/if}
 							</span>
 						</button>

@@ -92,12 +92,6 @@
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
-	import {
-		parseOverlay,
-		overlayParam,
-		DEFAULT_HEAT_MONTHS,
-		type Overlay
-	} from '$lib/selection/overlay';
 	import { AMENDING_RELATIONS, NODE_TYPES, parseNodeId } from '$lib/vocabulary';
 	import {
 		articleOf,
@@ -170,7 +164,7 @@
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
-	import { OverlayCounts } from './overlay-counts.svelte';
+	import { InFlux } from './in-flux.svelte';
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
@@ -197,12 +191,6 @@
 	store.neighborhood.subscribe((r) => (reach = r));
 	store.selection.subscribe((n) => {
 		selectedNode = n;
-	});
-
-	/** The bronnen on the canvas, for the heat overlay, which counts only those. */
-	let canvasIds = $state<string[]>([]);
-	store.nodes.subscribe((ns) => {
-		canvasIds = ns.map((n) => n.id).filter((id) => !id.startsWith('synth:'));
 	});
 
 	/** The focus names a bron the data does not hold: said in words, no failure. */
@@ -340,8 +328,6 @@
 	leesBewaard();
 	const netwerkQuery = $derived(netwerkQueryOf(params));
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
-	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
-	// clusters, the faint bronnen between and the cap of 100 keep it light there.
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
 	// "Alleen verbonden bronnen" is a filter on the netwerk, not a replacement: ?omgeving names
@@ -1426,7 +1412,6 @@
 		if (mode !== 'graph') return;
 		untrack(() => {
 			composer.surroundings = omgeving;
-			composer.drawsPaths = omgeving;
 			if (n.ids.length > 0) composer.compose(n);
 			else if (composer.composed) {
 				composer.release();
@@ -1528,8 +1513,7 @@
 		if (focus || pad || netwerkQuery || mode === 'index') return;
 		const saved = keptNetwerk();
 		if (!saved) return;
-		// The bronnen between start shown, whatever the last netwerk had (Thijs, 9 Oct:
-		// "standaard aan"); only a link that says ?tussen=0 keeps them off.
+		// An old address with ?tussen is read without it.
 		untrack(() => setUrl({ ...Object.fromEntries(new URLSearchParams(saved)), tussen: null }));
 	});
 	const linkIdOf = (node: GraphNode) =>
@@ -1691,12 +1675,7 @@
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
 	const readHref = $derived(withParams(page.url, { tabel: null }));
 
-	// ── Overlay (open dossiers or citations per month, never both) ────────────
-	const overlay = $derived<Overlay>(parseOverlay(params.get('overlay')));
-	const overlayCounts = new OverlayCounts(
-		() => overlay,
-		() => canvasIds
-	);
+	const inFlux = new InFlux(() => mode === 'graph');
 
 	let graphView = $state<GraphView | null>(null);
 	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
@@ -1741,15 +1720,6 @@
 		const collection = target?.collection ?? (pad ? collectionOfPad(pad) : null);
 		if (collection && mode !== 'index') preloadReader(collection);
 	});
-
-	const setOverlay = (o: Overlay) => setUrl({ overlay: overlayParam(o) });
-	const toggleHeat = () =>
-		setOverlay(
-			overlay.kind === 'heat' ? { kind: 'none' } : { kind: 'heat', months: DEFAULT_HEAT_MONTHS }
-		);
-	const setHeatPeriod = (months: number) => setOverlay({ kind: 'heat', months });
-	const toggleMutatie = () =>
-		setOverlay(overlay.kind === 'open' ? { kind: 'none' } : { kind: 'open' });
 
 	// ── Share ────────────────────────────────────────────────────────────────
 	const shareCopier = createCopier();
@@ -2199,9 +2169,7 @@
 								expecting={netwerkActive ? shownNetwork.ids.length : 0}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
-								inFluxMap={overlayCounts.inFlux}
-								heatMap={overlayCounts.heat}
-								{overlay}
+								inFluxMap={inFlux.counts}
 								{marked}
 								onMark={(id) => setUrl({ [MARK_PARAM]: id })}
 								onNodeClick={lees}
@@ -2211,13 +2179,9 @@
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
 								onFilter={applyFilter}
-								onOpenFilter={() => (filterOpen = true)}
 								onDepth={setDepth}
 								onLaadSoort={netwerkActive ? undefined : laadSoort}
 								{laadtSoort}
-								onToggleHeat={toggleHeat}
-								onHeatPeriodChange={setHeatPeriod}
-								onToggleMutatie={toggleMutatie}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
@@ -2275,11 +2239,6 @@
 											: null}
 										aroundOn={!!aroundId}
 										onAround={toggleAround}
-										chosen={netwerk.ids.length}
-										between={netwerk.tussen}
-										betweenCount={composer.joiningCount}
-										partial={composer.partial}
-										onBetween={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
 									/>
 								{/snippet}
 								{#snippet canvasOverlay()}

@@ -11,6 +11,8 @@ export function bronKind(
 ): string {
 	if (collection !== 'instruments') return bronLabel(collection);
 	const text = (v: unknown) => (typeof v === 'string' ? v : null);
+	// A publication of the Staatsblad is no wet: the strook and the card name it so.
+	if (props?.kind === 'publicatie') return 'Publicatie';
 	return lawKind({
 		kind: text(props?.kind),
 		jurisdiction: text(props?.jurisdiction),

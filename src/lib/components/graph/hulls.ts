@@ -75,6 +75,8 @@ export type HullGroups = {
 	drawn: (group: ContainerGroup) => boolean;
 	/** The kinds of group switched off. */
 	hiddenKinds: ReadonlySet<string>;
+	/** The anchors with no hull: ordinary bronnen, their lines are sigma's. */
+	alone?: ReadonlyMap<string, string>;
 };
 
 const isAnchor = (graph: Graph, id: string) =>
@@ -87,9 +89,9 @@ const isAnchor = (graph: Graph, id: string) =>
 export function hullLinkOf(
 	src: string,
 	tgt: string,
-	{ graph, groups, groupsOf, drawn }: HullGroups
+	{ graph, groups, groupsOf, drawn, alone }: HullGroups
 ): { from: string; to: string } | null {
-	if (!isAnchor(graph, tgt)) return null;
+	if (!isAnchor(graph, tgt) || alone?.has(tgt)) return null;
 	const to = [...(groupsOf.get(tgt) ?? [])][0];
 	const from = [...(groupsOf.get(src) ?? [])].find((id) => {
 		const group = groups.get(id);
@@ -104,7 +106,7 @@ export function hullLinkOf(
  * hull is drawn; then the line is the hulls' layer's, not sigma's.
  */
 export function anchorWithHull(id: string, h: HullGroups): boolean {
-	if (!isAnchor(h.graph, id)) return false;
+	if (!isAnchor(h.graph, id) || h.alone?.has(id)) return false;
 	return [...(h.groupsOf.get(id) ?? [])].some((g) => {
 		const group = h.groups.get(g);
 		return !!group && h.drawn(group) && !h.hiddenKinds.has(group.kind);
@@ -141,14 +143,20 @@ export type HullScene = HullGroups & {
 	glyphs?: readonly Rect[];
 };
 
-type HullLayout = { hulls: Hull[]; links: HullLink[]; hitAreas: HullHitArea[] };
+/** `alone`: the anchors with nothing of their group drawn, by id and name: they stand as an ordinary bron. */
+type HullLayout = {
+	hulls: Hull[];
+	links: HullLink[];
+	hitAreas: HullHitArea[];
+	alone: ReadonlyMap<string, string>;
+};
 
 type Drawn = Hull & {
 	polygon: Point[];
 	center: Point;
 	members: ReadonlySet<string>;
-	/** Only its anchor drawn: its name is all there is of it. */
-	alone: boolean;
+	/** The top of its disc. */
+	top: number;
 };
 
 /**
@@ -197,7 +205,11 @@ const said = (words: string, status: unknown) =>
 	[words, status === 'voorgesteld' ? 'voorgesteld' : null].filter(Boolean).join(', ');
 
 /** The hull of each drawn group, with its name placed where no other name stands. */
-function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<string, Drawn> } {
+function drawHulls(s: HullScene): {
+	drawn: Map<string, Drawn>;
+	anchorHull: Map<string, Drawn>;
+	alone: Map<string, string>;
+} {
 	const { graph } = s;
 	const drawn = new Map<string, Drawn>();
 	// The labels placed so far, and the focus's name: a hull's label takes a free place
@@ -206,7 +218,13 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 	const taken: Rect[] = [...(s.focusName ? [s.focusName] : []), ...(s.glyphs ?? [])];
 	/** Per anchor, the hull drawn for it. */
 	const anchorHull = new Map<string, Drawn>();
-	for (const group of s.groups.values()) {
+	const alone = new Map<string, string>();
+	// A hull that holds another's anchor (a dossier and the wet it makes) goes round that hull,
+	// with room for its name: the inner ones first.
+	const anchors = (group: ContainerGroup) =>
+		[...group.members].filter((id) => isAnchor(graph, id)).length;
+	const ordered = [...s.groups.values()].sort((a, b) => anchors(a) - anchors(b));
+	for (const group of ordered) {
 		if (!s.drawn(group) || s.hiddenKinds.has(group.kind)) continue;
 		const points: Point[] = [];
 		let anchorPoint: Point | null = null;
@@ -215,18 +233,41 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 			const attrs = graph.getNodeAttributes(id);
 			if (s.isHidden(id, attrs)) continue;
 			const p = s.toViewport({ x: attrs.x as number, y: attrs.y as number });
-			if (attrs.anchor) anchorPoint = p;
+			const inner = attrs.anchor ? anchorHull.get(id) : undefined;
+			if (inner && inner.id !== group.id) {
+				// Round the inner disc, its name inside this one's margin.
+				for (const q of inner.polygon) points.push(q);
+				points.push({ x: inner.center.x, y: inner.top - LABEL_HEIGHT - LABEL_GAP });
+			} else if (attrs.anchor) anchorPoint = p;
 			else points.push(p);
 		}
+		graph.forEachNode((id, attrs) => {
+			if (attrs.inHull !== group.id || s.isHidden(id, attrs)) return;
+			const c = s.toViewport({ x: attrs.x as number, y: attrs.y as number });
+			const r = s.radiusOf(id);
+			for (const [dx, dy] of [
+				[r, 0],
+				[-r, 0],
+				[0, r],
+				[0, -r]
+			])
+				points.push({ x: c.x + dx, y: c.y + dy });
+			// A chosen wet's own point (where its lines end) stands in its disc too.
+			if (anchorPoint) points.push(anchorPoint);
+		});
 		// The anchor is no bron: the hull goes round what it holds, not to where the anchor is
-		// pulled (Awb with only art. 3:4 was a pill to an empty point, Thijs 9 Oct). An anchor
-		// alone is its own empty hull.
-		if (points.length === 0 && anchorPoint) points.push(anchorPoint);
-		// One member is a hull when it is a container's anchor (the wet or fractie itself,
-		// drawn as an empty hull), the dossier of a stuk on a path between chosen bronnen
-		// (`lone`), or an article: an article always stands in its wet (Thijs, 9 Oct).
+		// pulled. With nothing of it drawn there is no hull: the anchor is an ordinary bron, its
+		// sign and its name (Netwerkcanvas, Omhulling zonder leden; Thijs, 27 Oct).
 		const anchor = [...group.members].find((id) => isAnchor(graph, id));
-		if (points.length < (anchor || group.lone || group.kind === 'instrument' ? 1 : 2)) continue;
+		if (points.length === 0 && anchorPoint && anchor) {
+			const own =
+				s.namesOf(group).short || (graph.getNodeAttribute(anchor, 'anchorNaam') as string);
+			if (own) alone.set(anchor, own);
+			continue;
+		}
+		// One member is a hull when the dossier of a stuk on a path between chosen bronnen
+		// (`lone`), or an article: an article always stands in its wet (Thijs, 9 Oct).
+		if (points.length < (group.lone || group.kind === 'instrument' ? 1 : 2)) continue;
 		const names = s.namesOf(group);
 		const label =
 			names.short ||
@@ -235,22 +276,13 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 		// The full name while the hull, or a bron in it, is under the pointer.
 		const inHover =
 			s.hoveredHullId === group.id || (s.hoveredId !== null && group.members.has(s.hoveredId));
-		// An anchor alone (a wet with nothing of it drawn) is its name: without it an empty
-		// circle (UX review N8). It is named whatever stands around it.
-		const alone = !!anchor && points.length === 1 && points[0] === anchorPoint;
-		// In a netwerk, a hull of only bronnen between the chosen ones names itself on a hover or
-		// zoomed in; zoomed out its name would cover the chosen bronnen (6e).
-		const quiet =
-			!alone &&
-			s.pinnedIds.size > 0 &&
-			!inHover &&
-			s.zoomedOut &&
-			![...group.members].some((id) => id === s.focusedId || s.pinnedIds.has(id));
-		const shown = quiet ? '' : inHover && names.full ? names.full : label;
+		// A hull always names itself: its articles are named by number inside it (A301).
+		const shown = inHover && names.full ? names.full : label;
 		// The label anchors to this hull's own outline, not a raw member point: a bron in
 		// several groups at once (a lid on many commissies) would otherwise put every one of
 		// its hulls' labels on that one shared point.
-		const { outline, polygon, path } = hullOutline(points, HULL_MARGIN);
+		const shape = hullOutline(points, HULL_MARGIN);
+		const { outline, polygon, path } = shape;
 		const top = outline.reduce((a, b) => (b.y < a.y ? b : a));
 		// Above the hull's top, but never past the edge of the canvas: a hull at the border (or
 		// a fit that leaves little room) would cut its label in half.
@@ -280,7 +312,7 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 				break;
 			}
 		}
-		if (!place && (inHover || alone)) place = at;
+		if (!place && inHover) place = at;
 		const hull: Drawn = {
 			id: group.id,
 			path,
@@ -294,12 +326,12 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 			polygon,
 			center: centroid(points),
 			members: group.members,
-			alone
+			top: top.y
 		};
 		drawn.set(group.id, hull);
-		if (anchor) anchorHull.set(anchor, hull);
+		if (anchor && !anchorHull.has(anchor)) anchorHull.set(anchor, hull);
 	}
-	return { drawn, anchorHull };
+	return { drawn, anchorHull, alone };
 }
 
 const wordOf = (graph: Graph, attrs: Record<string, unknown>, src: string, tgt: string) =>
@@ -312,8 +344,8 @@ const wordOf = (graph: Graph, attrs: Record<string, unknown>, src: string, tgt: 
 
 export function layoutHulls(s: HullScene): HullLayout {
 	const { graph } = s;
-	if (s.groups.size === 0) return { hulls: [], links: [], hitAreas: [] };
-	const { drawn, anchorHull } = drawHulls(s);
+	if (s.groups.size === 0) return { hulls: [], links: [], hitAreas: [], alone: new Map() };
+	const { drawn, anchorHull, alone } = drawHulls(s);
 
 	// One line per pair of hulls, from where it leaves the one to where it enters the other.
 	// It says every verbinding it stands for, each in the words of its own source (relation-words.ts),
@@ -389,7 +421,8 @@ export function layoutHulls(s: HullScene): HullLayout {
 	const hulls = [...drawn.values()];
 	hideCrowdedNames(s, hulls);
 	return {
-		hulls: hulls.map(({ polygon: _p, center: _c, members: _m, alone: _a, ...hull }) => hull),
+		alone,
+		hulls: hulls.map(({ polygon: _p, center: _c, members: _m, ...hull }) => hull),
 		links,
 		hitAreas: hulls.map((h) => {
 			const w = s.labelWidth(h.label);
@@ -471,9 +504,7 @@ function anchorLines(
  */
 function hideCrowdedNames(s: HullScene, hulls: Drawn[]) {
 	const precedence = (h: Drawn) =>
-		(h.alone || s.hoveredHullId === h.id || (s.hoveredId !== null && h.members.has(s.hoveredId))
-			? 4
-			: 0) +
+		(s.hoveredHullId === h.id || (s.hoveredId !== null && h.members.has(s.hoveredId)) ? 4 : 0) +
 		(s.focusedId !== null && h.members.has(s.focusedId) ? 2 : 0) +
 		([...h.members].some((id) => s.pinnedIds.has(id)) ? 1 : 0);
 	const placed: Rect[] = [];

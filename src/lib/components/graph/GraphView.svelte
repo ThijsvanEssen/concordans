@@ -42,7 +42,8 @@
 	} from '$lib/selection/cluster';
 	import { groupFor, openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
-	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens } from './nodeSprites';
+	import { clusterSprite, spriteForVorm, IMAGE_SIZE_BUMP, tokens } from './nodeSprites';
+	import { formatCount } from '$lib/text/getal';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
@@ -65,8 +66,6 @@
 	import { kolomPlekken } from '$lib/selection/kolommen';
 	import { radialLayout } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import type { Overlay } from '$lib/selection/overlay';
-	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
@@ -98,14 +97,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		| 'onFilter'
-		| 'onOpenFilter'
-		| 'onLaadSoort'
-		| 'laadtSoort'
-		| 'onToggleHeat'
-		| 'onHeatPeriodChange'
-		| 'onToggleMutatie'
-		| 'counting'
+		'onFilter' | 'onLaadSoort' | 'laadtSoort' | 'counting'
 	>;
 
 	let {
@@ -117,8 +109,6 @@
 		selectedEdgeId = null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
-		heatMap = new Map() as NodeCounts,
-		overlay = { kind: 'none' } as Overlay,
 		marked = null,
 		onMark,
 		onNodeClick,
@@ -157,8 +147,6 @@
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
 		lineLids?: ReadonlyMap<string, string>;
 		inFluxMap?: NodeCounts;
-		heatMap?: NodeCounts;
-		overlay?: Overlay;
 		/** The bron marked, as the address holds it (?marked): its card open. */
 		marked?: string | null;
 		/** A bron was marked, or none is any more: the page writes it in the address. */
@@ -571,7 +559,7 @@
 	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
 	// (dossier, fractie, commissie) een stap groter.
 	/** A cluster bron stands for forty or more: a step larger than a group. */
-	const CLUSTER_SIZE = 12;
+	const CLUSTER_SIZE = 16;
 	const NODE_SIZE: Record<DrawClass, number> = {
 		article: 8,
 		instrument: 8,
@@ -611,6 +599,15 @@
 
 	/** Within a sector: by date, the oldest first, then by name. */
 	const inOrder = (a: string, b: string) => {
+		// Clusters beside the bron they hang on: by where that bron stands, left to right.
+		const endX = (id: string) => {
+			const c = clusterById.get(id);
+			const end = c?.ends?.[0]?.id ?? (c ? selection?.id : undefined);
+			return end && g.hasNode(end) ? (g.getNodeAttribute(end, 'x') as number) : null;
+		};
+		const xa = endX(a);
+		const xb = endX(b);
+		if (xa !== null && xb !== null && xa !== xb) return xb - xa;
 		const da = String(g.getNodeAttribute(a, 'date') ?? '');
 		const db = String(g.getNodeAttribute(b, 'date') ?? '');
 		return da && db && da !== db
@@ -625,15 +622,39 @@
 	 * drawn around, in the middle; every other bron in the sector of its kind. No force layout:
 	 * one netwerk is drawn the same way each time.
 	 */
+	/** The group an anchor stands for: its own container. */
+	const anchorGroup = (id: string): string | null => {
+		const n = lookup.get(id);
+		return n ? containerIdFor(n.raw ?? { collection: n.collection, key: n.key }) : null;
+	};
+
 	function runLayout() {
 		if (g.order === 0) return;
 		const centre = pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : [];
+		// The hull a bron stands in: a wet's own for its anchor, else the first that holds it.
+		const hullOf = (id: string): string | null => {
+			// A chosen law's own articles as one cluster stand in its disc.
+			const own = /^cluster:articles@(.+)$/.exec(id)?.[1];
+			if (own) return anchorGroup(own);
+			let first: string | null = null;
+			for (const [gid, group] of containerGroups) {
+				if (!group.members.has(id)) continue;
+				if (g.hasNode(id) && g.getNodeAttribute(id, 'anchor') && gid === anchorGroup(id))
+					return gid;
+				// An article in its wet first; then the first other group that holds it.
+				if (group.kind === 'instrument' && !g.getNodeAttribute(id, 'anchor')) return gid;
+				first ??= gid;
+			}
+			return first;
+		};
 		radialLayout(
 			g,
 			centre,
 			(id) => String(g.getNodeAttribute(id, 'filterGroup') ?? 'overig'),
 			FILTER_GROUPS,
-			inOrder
+			inOrder,
+			hullOf,
+			(hull, id) => !!containerGroups.get(hull)?.members.has(id)
 		);
 		canvas?.refresh();
 		scheduleFit();
@@ -667,8 +688,14 @@
 	/** An article that no longer holds (Netwerkcanvas, Vervallen): a dimmed sign, "vervallen" in its name. */
 	const isRepealed = (n: GraphNode) =>
 		n.collection === 'articles' && n.raw?.props?.repealed === true;
+	/** In its wet's hull an article is its number: the hull's pill names the wet (DS: "art. 7:248"). */
+	const inLawHull = (id: string) =>
+		[...containerGroups.values()].some((gr) => gr.kind === 'instrument' && gr.members.has(id));
 	const nodeLabel = (n: GraphNode) => {
-		const name = canvasNames.get(n.id) ?? baseName(n);
+		const full = canvasNames.get(n.id) ?? baseName(n);
+		const short =
+			n.collection === 'articles' && inLawHull(n.id) && /^art(?:ikel|\.)?\s+(\S+)/i.exec(full);
+		const name = short ? `art. ${short[1]}` : full;
 		return isRepealed(n) ? `${name}, vervallen` : name;
 	};
 
@@ -777,6 +804,10 @@
 		foldable = expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
 		const signature = clusters.map((c) => `${c.id}:${c.members.length}`).join(',');
 		if (!rawChanged && signature === drawnClusters) {
+			if (layoutStale) {
+				layoutStale = false;
+				runLayout();
+			}
 			applyFilters();
 			return;
 		}
@@ -793,14 +824,17 @@
 		drawNodes(toDraw);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
+			// What belongs to a wet stands in its disc: no Deel van-line from its articles' cluster.
 			...clusters.flatMap((c) =>
-				c.ends
-					? c.ends.map((end) =>
-							clusterEdge({ ...c, relation: end.relation, toFocus: end.toEnd }, end.id)
-						)
-					: focus
-						? [clusterEdge(c, focus)]
-						: []
+				c.id.startsWith('cluster:articles@')
+					? []
+					: c.ends
+						? c.ends.map((end) =>
+								clusterEdge({ ...c, relation: end.relation, toFocus: end.toEnd }, end.id)
+							)
+						: focus
+							? [clusterEdge(c, focus)]
+							: []
 			)
 		]);
 		// Counted and drawn once, nodes and edges together.
@@ -977,6 +1011,10 @@
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
+				// A chosen law's own articles as one cluster: drawn in its disc (hulls.ts).
+				inHull: /^cluster:articles@(.+)$/.exec(n.id)?.[1]
+					? anchorGroup(/^cluster:articles@(.+)$/.exec(n.id)![1])
+					: null,
 				// A cluster counts its members in Soort: "Uitspraken 200", not 1.
 				members: (n as GraphNode & { members?: number }).members ?? 1,
 				color: TRANSPARENT,
@@ -999,13 +1037,18 @@
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
 				kleur: colour,
-				image: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
+				image: isClusterId(n.id)
+					? clusterSprite(formatCount((n as GraphNode & { members?: number }).members ?? 0), colour)
+					: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
 				forceLabel: true
 			};
 			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
 			if (n.anchor)
 				Object.assign(attrs, {
 					anchor: true,
+					// What it is drawn as when nothing of its hull is: an ordinary bron.
+					ownImage: attrs.image,
+					ownSize: attrs.size,
 					image: undefined,
 					size: 2,
 					label: '',
@@ -1043,10 +1086,12 @@
 		if (changed) scheduleFit();
 		// A change of what stands in the middle orders the canvas again too.
 		const centre = pinnedIds.size > 0 ? [...pinnedIds].join() : (selection?.id ?? '');
-		if (changed || centre !== centreBefore) runLayout();
+		if (changed || centre !== centreBefore || layoutStale) runLayout();
+		layoutStale = false;
 		centreBefore = centre;
 	}
 	let centreBefore = '';
+	let layoutStale = false;
 
 	function drawEdges(allEdges: GraphEdge[]) {
 		const es = allEdges.filter((e) => isDrawn(e.relation));
@@ -1110,6 +1155,8 @@
 			}),
 			store.containers.subscribe((groups) => {
 				containerGroups = groups;
+				// Who stands in which hull decides where they stand.
+				layoutStale = true;
 				queueRedraw();
 			})
 		];
@@ -1308,19 +1355,14 @@
 		periode={filter.van || filter.tot || eersteJaar !== laatsteJaar ? periode : undefined}
 		{meer}
 		{...legend}
-		{verbonden}
 		{filter}
 		reach={externCounts || yearPeriod ? null : reach}
-		outlines={externCounts ? 0 : containerGroups.size}
 		hiddenAnnexes={filters.hiddenAnnexes}
 		onToggleAnnexes={toggleAnnexes}
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
-		hiddenGroups={filters.hiddenGroups}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
-		{overlay}
-		inFluxCount={inFluxMap.size}
 		{hasNodes}
 		{kindRowsShown}
 		{kindsSettled}
@@ -1455,10 +1497,6 @@
 					{selectedEdgeId}
 					{lineLids}
 					{inFluxMap}
-					{heatMap}
-					heatActive={overlay.kind === 'heat'}
-					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
-					mutatieActive={overlay.kind === 'open'}
 					externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
 					{notitieIds}
 					onNodeClick={(id) => {

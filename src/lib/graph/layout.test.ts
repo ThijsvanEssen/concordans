@@ -48,6 +48,54 @@ describe('radialLayout', () => {
 	});
 });
 
+describe('radialLayout: hulls (Netwerkcanvas, Omhulling)', () => {
+	const g = () => {
+		const graph = new Graph();
+		for (const id of ['c/1', 'c/2', 'w/1', 'w/2', 'w/3', 'u/1'])
+			graph.addNode(id, { x: 0, y: 0, anchor: false });
+		return graph;
+	};
+	const hullOf = (id: string) => (id.startsWith('w/') ? 'W' : null);
+	const holds = (h: string, id: string) => h === 'W' && id.startsWith('w/');
+	const kind = (id: string) => id.split('/')[0];
+	const cmp = (a: string, b: string) => a.localeCompare(b);
+	const apart = (graph: Graph, a: string, b: string) =>
+		Math.hypot(at(graph, a).x - at(graph, b).x, at(graph, a).y - at(graph, b).y);
+
+	it('stands the members of one hull together, as one place on the ring', () => {
+		const graph = g();
+		radialLayout(graph, ['c/1'], kind, ['w', 'u'], cmp, hullOf, holds);
+		for (const [a, b] of [
+			['w/1', 'w/2'],
+			['w/2', 'w/3'],
+			['w/1', 'w/3']
+		])
+			expect(apart(graph, a, b)).toBeLessThan(120);
+		expect(apart(graph, 'w/1', 'u/1')).toBeGreaterThan(120);
+	});
+
+	it('stands the other members round a chosen member, beginning at the bottom', () => {
+		const graph = g();
+		radialLayout(graph, ['w/1'], kind, ['w', 'u'], cmp, hullOf, holds);
+		const centre = at(graph, 'w/1');
+		for (const id of ['w/2', 'w/3'])
+			expect(Math.hypot(at(graph, id).x - centre.x, at(graph, id).y - centre.y)).toBeCloseTo(76);
+		// The first satellite stands straight below, in sigma's y: the top is the pill's.
+		expect(at(graph, 'w/2').x).toBeCloseTo(centre.x);
+		expect(at(graph, 'w/2').y).toBeLessThan(centre.y);
+	});
+
+	it('sets more than three chosen bronnen in two rows, so no disc stands on a name', () => {
+		const graph = new Graph();
+		const ids = ['a/1', 'a/2', 'a/3', 'a/4', 'a/5', 'a/6'];
+		for (const id of ids) graph.addNode(id, { x: 0, y: 0 });
+		radialLayout(graph, ids, kind, ['a'], cmp);
+		expect(new Set(ids.map((id) => Math.sign(at(graph, id).y))).size).toBe(2);
+		for (let i = 1; i < ids.length; i++)
+			expect(apart(graph, ids[i - 1], ids[i])).toBeGreaterThan(100);
+	});
+});
+
 describe('forEachRealNeighbor and realDegree', () => {
 	it('pass over a link that is no line', () => {
 		const g = new Graph();

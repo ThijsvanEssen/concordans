@@ -63,7 +63,12 @@ vi.mock('./DashedEdgeProgram', () => ({
 		dashed: class {},
 		dotted: class {},
 		dashdot: class {},
-		lid: class {}
+		lid: class {},
+		arrowDraad: class {},
+		submitterDraad: class {},
+		dashedDraad: class {},
+		dottedDraad: class {},
+		dashdotDraad: class {}
 	})
 }));
 

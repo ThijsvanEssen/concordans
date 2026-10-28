@@ -8,7 +8,7 @@ import { expect, test } from '../support/test';
 import { openSheet, closeSheet } from '../support/sheet';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
-const KEPT = 'netwerk=instruments%2Fbwbr0005289&tussen=0';
+const KEPT = 'netwerk=instruments%2Fbwbr0005289';
 
 const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
 /** The text of the panel Netwerk, unfolded where a phone folds it. */
@@ -64,7 +64,7 @@ test('no chosen bron shows its key, after a 502 and Opnieuw either (N6)', async 
 				})
 			: route.fallback()
 	);
-	await page.goto('/explore?netwerk=instruments/bwbr0005289&tussen=0');
+	await page.goto('/explore?netwerk=instruments/bwbr0005289');
 	await expect(page.getByText(/kon niet worden geladen/)).toBeVisible();
 	const failed = await panelText(page);
 	expect(failed).toContain('Bron laden');

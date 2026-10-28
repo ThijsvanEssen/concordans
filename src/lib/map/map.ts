@@ -590,7 +590,7 @@ export const netwerkIds = (items: readonly MapItem[]): string[] => [
 export function netwerkHref(items: readonly MapItem[]): string | null {
 	const ids = netwerkIds(items);
 	if (!ids.length) return null;
-	const params = netwerkParams({ ids, uit: new Set(), tussen: false });
+	const params = netwerkParams({ ids, uit: new Set() });
 	const query = new URLSearchParams();
 	for (const [name, value] of Object.entries(params)) if (value !== null) query.set(name, value);
 	return queryHref('/explore', query);

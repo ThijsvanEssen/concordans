@@ -3,7 +3,6 @@ import type { Neighbor } from '$lib/api/nodes';
 import {
 	syncOn,
 	onlyAround,
-	deelVan,
 	between,
 	isOn,
 	netwerkParams,
@@ -19,39 +18,34 @@ const BUMA = 'members/buma';
 const SR = 'instruments/bwbr0001854';
 
 describe('the netwerk in the URL', () => {
-	it('reads the chosen bronnen, the ones switched off and the joining switch', () => {
+	it('reads the chosen bronnen, and the ones switched off', () => {
 		const n = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA},${SR}&uit=${BUMA}`));
 		expect(n.ids).toEqual([JETTEN, BUMA, SR]);
 		expect(isOn(n, JETTEN)).toBe(true);
 		expect(isOn(n, BUMA)).toBe(false);
-		expect(n.tussen).toBe(true);
 	});
 
 	it('ignores what is no bron, a double and an uit that is not chosen', () => {
-		const n = parseNetwerk(
-			new URLSearchParams(`netwerk=${JETTEN},onzin,${JETTEN}&uit=${SR}&tussen=0`)
-		);
+		const n = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},onzin,${JETTEN}&uit=${SR}`));
 		expect(n.ids).toEqual([JETTEN]);
 		expect(n.uit.size).toBe(0);
-		expect(n.tussen).toBe(false);
 	});
 
 	it('writes nothing for an empty netwerk', () => {
-		expect(netwerkParams(parseNetwerk(new URLSearchParams('tussen=0')))).toEqual({
+		expect(netwerkParams(parseNetwerk(new URLSearchParams()))).toEqual({
 			netwerk: null,
-			uit: null,
-			tussen: null
+			uit: null
 		});
 	});
 
 	it('adds, switches and removes', () => {
 		let n = withAdded(parseNetwerk(new URLSearchParams()), JETTEN, BUMA);
 		n = withToggled(n, BUMA);
-		expect(netwerkParams(n)).toEqual({ netwerk: `${JETTEN},${BUMA}`, uit: BUMA, tussen: null });
+		expect(netwerkParams(n)).toEqual({ netwerk: `${JETTEN},${BUMA}`, uit: BUMA });
 		n = withAdded(n, BUMA);
 		expect(isOn(n, BUMA)).toBe(true);
 		n = withRemoved(withToggled(n, JETTEN), JETTEN);
-		expect(netwerkParams(n)).toEqual({ netwerk: BUMA, uit: null, tussen: null });
+		expect(netwerkParams(n)).toEqual({ netwerk: BUMA, uit: null });
 	});
 });
 
@@ -97,31 +91,11 @@ describe('what joins the chosen bronnen', () => {
 	});
 });
 
-describe('a netwerk on a phone', () => {
-	it('starts without the bronnen between, and keeps the choice to show them', () => {
-		const q = new URLSearchParams(`netwerk=${JETTEN},${BUMA}`);
-		const n = parseNetwerk(q, false);
-		expect(n.tussen).toBe(false);
-		expect(netwerkParams(n, false).tussen).toBeNull();
-		const shown = { ...n, tussen: true };
-		expect(netwerkParams(shown, false).tussen).toBe('1');
-		expect(parseNetwerk(new URLSearchParams(`netwerk=${JETTEN}&tussen=1`), false).tussen).toBe(
-			true
-		);
-	});
-
-	it('reads ?tussen=0 the same on any screen', () => {
-		const q = new URLSearchParams(`netwerk=${JETTEN}&tussen=0`);
-		expect(parseNetwerk(q, true).tussen).toBe(false);
-		expect(parseNetwerk(q, false).tussen).toBe(false);
-	});
-});
-
-describe('deelVan', () => {
-	it('says how many members a path ran through only where the API took part of them', () => {
-		expect(deelVan({ used: 200, total: 846 })).toEqual({ used: 200, total: 846 });
-		expect(deelVan({ used: 12, total: 12 })).toBeUndefined();
-		expect(deelVan(undefined)).toBeUndefined();
+describe('an old address with ?tussen', () => {
+	it('is read without it: the bronnen between are no longer a choice', () => {
+		const n = parseNetwerk(new URLSearchParams(`netwerk=${JETTEN},${BUMA}&tussen=0`));
+		expect(n).toEqual({ ids: [JETTEN, BUMA], uit: new Set() });
+		expect(netwerkParams(n)).toEqual({ netwerk: `${JETTEN},${BUMA}`, uit: null });
 	});
 });
 

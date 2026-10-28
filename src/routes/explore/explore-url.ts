@@ -6,7 +6,7 @@
 // ?tabel=1 (all verbindingen as a table), ?naast (a toelichting or judgment beside the
 // article), ?overlay, ?diepte and ?alles=1 (how far the canvas reaches), the bronfilter
 // (?bronnen, ?lid, ?rechter, ?van, ?tot, ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek),
-// the netwerk of chosen bronnen (?netwerk, ?uit, ?tussen), ?paneel (a phone's tab, read once)
+// the netwerk of chosen bronnen (?netwerk, ?uit), ?paneel (a phone's tab, read once)
 // and the position inside the text as the fragment.
 import { padHref, type Pad } from '$lib/bron/address';
 import { keyEcli } from '$lib/text/ecli';
@@ -48,7 +48,7 @@ export function depthFor(
  */
 export function netwerkQuery(params: URLSearchParams): string {
 	const own = new URLSearchParams();
-	for (const name of ['netwerk', 'uit', 'tussen', 'omgeving']) {
+	for (const name of ['netwerk', 'uit', 'omgeving']) {
 		const value = name === 'uit' ? offOf(params.get(name)).chosen.join(',') : params.get(name);
 		if (value !== null && (value || name !== 'uit')) own.set(name, value);
 	}

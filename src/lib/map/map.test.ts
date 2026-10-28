@@ -215,13 +215,10 @@ describe('the map', () => {
 		const lid3 = { ...lid2, at: 'lid-3', kort: 'art. 6:162 lid 3 BW' };
 		expect(netwerkIds([lid2, ro, lid3])).toEqual([lid2.id, ro.id]);
 		const href = netwerkHref([lid2, ro, lid3])!;
-		expect(href).toBe(
-			'/explore?netwerk=articles/bwbr0005289_162,judgments/ecli_nl_hr_2019_2006&tussen=0'
-		);
+		expect(href).toBe('/explore?netwerk=articles/bwbr0005289_162,judgments/ecli_nl_hr_2019_2006');
 		// As the Verkenner reads it: these bronnen on, none between them.
 		const n = parseNetwerk(new URL(href, 'https://concordans.nl').searchParams);
 		expect(n.ids).toEqual([lid2.id, ro.id]);
-		expect(n.tussen).toBe(false);
 		expect(n.uit.size).toBe(0);
 		expect(netwerkHref([])).toBeNull();
 	});

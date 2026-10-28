@@ -1,33 +1,22 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
-	import { NL } from '$lib/text/collator';
 	// The filter of the werkplek, which is also its key (besluit 39): Tonen (the kinds drawn,
 	// of how many where the API cut them off, and the step that loads them all), Relatie (the
-	// lijnsoorten drawn, a line sample each), the Periode the page gives; under Meer the preset,
-	// the lid and the overlays. Omtrekken and Bijlagen are rows of Tonen.
-	import FoldButton from '$lib/components/ui/FoldButton.svelte';
+	// lijnsoorten drawn, a line sample each), the Periode the page gives. Bijlagen and the netwerk's own
+	// filter are rows of Tonen.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import type { Snippet } from 'svelte';
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { HEAT_PERIODS, type Overlay } from '$lib/selection/overlay';
 	import type { Collection } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
 		FILTER_GROUP_LABEL,
-		PRESETS,
-		activePreset,
 		stuksoortOn,
 		toggleFilterGroup,
 		toggleStuksoort,
-		withPreset,
 		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import type { VerbondenState } from '$lib/verbonden/data-source';
-	import { allRows, lidCounts } from '$lib/verbonden/view';
 	import {
 		LINE_KINDS,
 		LINE_KIND_LABEL,
@@ -48,25 +37,16 @@
 	import { kindRowCount, type KindRow } from './kind-rows';
 
 	let {
-		verbonden,
 		filter,
 		onFilter,
-		onOpenFilter,
 		onLaadSoort,
 		laadtSoort = new Set<string>(),
 		hiddenLines,
 		onToggleLine,
 		hiddenAnnexes = false,
 		onToggleAnnexes,
-		outlines = 0,
-		hiddenGroups = new Set(),
 		onToggleGroup,
 		canvasCounts,
-		overlay = { kind: 'none' } as Overlay,
-		inFluxCount = 0,
-		onToggleHeat,
-		onHeatPeriodChange,
-		onToggleMutatie,
 		hasNodes = false,
 		reach = null,
 		counting = false,
@@ -76,10 +56,8 @@
 		kindsSettled = true,
 		withCurrentMember = false
 	}: {
-		verbonden: VerbondenState;
 		filter: VerbondenFilter;
 		onFilter: (f: VerbondenFilter) => void;
-		onOpenFilter: () => void;
 		/** All the focus's direct neighbours of one kind (the per-kind step). */
 		onLaadSoort?: (collection: Collection) => void;
 		/** The kinds being loaded so. */
@@ -89,10 +67,6 @@
 		/** Bijlagen (a bron of no kind of its own) switched off. */
 		hiddenAnnexes?: boolean;
 		onToggleAnnexes?: () => void;
-		/** How many outlines the canvas draws; the Vinkje Omtrekken stands where there are some. */
-		outlines?: number;
-		/** Groupings switched off: no hull around their bronnen. */
-		hiddenGroups?: ReadonlySet<ContainerKind>;
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
@@ -103,11 +77,6 @@
 				Record<FilterGroup, { count: number; van: number; groepen: ContainerKind[] }>
 			>;
 		};
-		overlay?: Overlay;
-		inFluxCount?: number;
-		onToggleHeat?: () => void;
-		onHeatPeriodChange?: (months: number) => void;
-		onToggleMutatie?: () => void;
 		hasNodes?: boolean;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
@@ -115,7 +84,7 @@
 		counting?: boolean;
 		/** The block Periode, after Relatie. */
 		periode?: Snippet;
-		/** First under Meer: the netwerk's own filters (NetworkOptions). */
+		/** The netwerk's own filters, last rows of Tonen (NetworkOptions). */
 		meer?: Snippet;
 		/** Soort around one bron: the soorten of Verbonden, drawn of their whole (kind-rows.ts, N1). */
 		kindRowsShown?: KindRow[] | null;
@@ -124,9 +93,6 @@
 		/** Leden drawn filled while current, as an outline once gone: the key says so (N13). */
 		withCurrentMember?: boolean;
 	} = $props();
-
-	const MEER = 'netwerk:meer';
-	const meerOpen = $derived(isOpen(MEER, false));
 
 	// The kinds count what is on the canvas, with a selection too: the legend is the key to
 	// the drawing, open as closed; the focus's direct verbindingen are in Verbonden (besluit 29).
@@ -152,21 +118,7 @@
 		LINE_KINDS.filter((l) => (canvasCounts.lines?.[l] ?? 0) > 0 || hiddenLines.has(l))
 	);
 	const annexes = $derived(canvasCounts.annexes ?? 0);
-	/** Omtrekken are on while no grouping is switched off. */
-	const outlinesOn = $derived(hiddenGroups.size === 0);
-	function toggleOutlines() {
-		const kinds = Object.keys(GROUP_LABEL) as ContainerKind[];
-		for (const kind of kinds) if (outlinesOn === !hiddenGroups.has(kind)) onToggleGroup?.(kind);
-	}
 
-	// Tonen names the soorten as Verbonden does, also where the canvas draws a wet, a dossier, a
-	// fractie, a commissie or a kabinet as a hull: the row switches that soort on or off.
-	const lids = $derived(
-		[...(verbonden.lidTellingen ?? lidCounts(allRows(verbonden.groups)))]
-			.map(([k]) => k)
-			.filter((k) => k !== '')
-			.sort(NL.compare)
-	);
 	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
 		filter.bronnen === null || filter.bronnen.has(k);
 	/** A row of Soort is on while every kind of the bronfilter it holds is. */
@@ -190,9 +142,6 @@
 		const m = canvasCounts.metGroep?.[k];
 		return m && isOn(k) && m.count > 0 && m.count >= m.van ? m.groepen : null;
 	};
-
-	const mutOn = $derived(overlay.kind === 'open');
-	const heatOn = $derived(overlay.kind === 'heat');
 </script>
 
 {#snippet tonenRest()}
@@ -212,9 +161,7 @@
 				/>{/snippet}
 		</FilterOptie>
 	{/if}
-	{#if outlines > 0 || hiddenGroups.size > 0}
-		<FilterOptie label="Omtrekken" on={outlinesOn} onToggle={toggleOutlines} />
-	{/if}
+	{@render meer?.()}
 {/snippet}
 
 <aside class="legend">
@@ -223,7 +170,7 @@
 		<p class="empty stil">Nog geen bronnen in het netwerk.</p>
 	{:else}
 		<!-- Around one bron: the soorten of Verbonden, how many drawn of how many (N1, N2). -->
-		{#if kindRowsShown}{#if kindRowsShown.length > 0 || annexes > 0 || outlines > 0}
+		{#if kindRowsShown}{#if kindRowsShown.length > 0 || annexes > 0}
 				<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 					{#each kindRowsShown as r, i (r.id)}
 						{@const on = rowOn(r)}
@@ -285,7 +232,7 @@
 				</Sectie>
 			{/if}
 			<!-- The kinds drawn, and one switched off: no rows of nothing, no heading without rows. -->
-		{:else if kinds.length > 0 || annexes > 0 || outlines > 0}
+		{:else if kinds.length > 0 || annexes > 0}
 			<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
@@ -370,106 +317,6 @@
 			</Sectie>
 		{/if}
 		{@render periode?.()}
-		<div class="verder">
-			<FoldButton sleutel={MEER} open={meerOpen} controls="netwerk-meer">Meer</FoldButton>
-		</div>
-		{#if meerOpen}
-			<div class="verder__inhoud" id="netwerk-meer">
-				{#if meer}<section class="block">{@render meer()}</section>{/if}
-				<section class="block">
-					<div class="block__label">Beperk tot</div>
-					<TekstMenu
-						label="Beperk tot"
-						tekst="Beperk tot"
-						waarde={activePreset(filter)?.id ?? null}
-						opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
-						onSelect={(id) => {
-							const p = PRESETS.find((x) => x.id === id);
-							if (p) onFilter(withPreset(filter, p));
-						}}
-					>
-						{#snippet onder(sluit)}
-							<button
-								type="button"
-								role="menuitem"
-								class="tekstmenu__item"
-								onclick={() => {
-									sluit();
-									onOpenFilter();
-								}}>Kies bronnen en verbindingen</button
-							>
-						{/snippet}
-					</TekstMenu>
-				</section>
-
-				{#if lids.length > 0}
-					<section class="block">
-						<div class="block__label">Lid</div>
-						<TekstMenu
-							label="Lid"
-							waarde={filter.lid ?? ''}
-							opties={[
-								{ waarde: '', label: 'Alle leden' },
-								...lids.map((lid) => ({ waarde: lid, label: `Lid ${lid}` })),
-								{ waarde: 'geen', label: 'Lid niet genoemd' }
-							]}
-							onSelect={(v) => onFilter({ ...filter, lid: v === '' ? null : v })}
-						/>
-					</section>
-				{/if}
-
-				<section class="block">
-					<div class="block__label">Markering</div>
-					<div class="block">
-						<TekstMenu
-							label="Markering"
-							waarde={mutOn ? 'mut' : heatOn ? 'heat' : 'geen'}
-							opties={[
-								{ waarde: 'geen', label: 'Geen' },
-								{
-									waarde: 'mut',
-									label: `Openstaande dossiers${mutOn && inFluxCount > 0 ? ` (${inFluxCount})` : ''}`,
-									uit: !onToggleMutatie,
-									titel: 'Een ring om de bronnen die een wetsvoorstel wil wijzigen'
-								},
-								{
-									waarde: 'heat',
-									label: 'Verwijzingen per maand',
-									uit: !onToggleHeat,
-									titel: 'Hoe vaak een bron in de gekozen periode is aangehaald'
-								}
-							]}
-							onSelect={(w) => {
-								if (w === 'geen') {
-									if (mutOn) onToggleMutatie?.();
-									else if (heatOn) onToggleHeat?.();
-								} else if (w === 'mut') {
-									if (heatOn) onToggleHeat?.();
-									if (!mutOn) onToggleMutatie?.();
-								} else {
-									if (mutOn) onToggleMutatie?.();
-									if (!heatOn) onToggleHeat?.();
-								}
-							}}
-						/>
-						{#if heatOn}
-							<div class="sub">
-								<Keuze
-									label="Periode"
-									waarde={overlay.kind === 'heat' ? String(overlay.months) : null}
-									opties={HEAT_PERIODS.map((m) => ({
-										waarde: String(m),
-										label: `${m} maanden`,
-										uit: !onHeatPeriodChange
-									}))}
-									onSelect={(m) => onHeatPeriodChange?.(Number(m))}
-								/>
-							</div>
-						{/if}
-					</div>
-				</section>
-			</div>
-		{/if}
 	{/if}
 </aside>
 
@@ -489,16 +336,6 @@
 		color: var(--ink-2);
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
-	}
-	.verder {
-		padding: var(--s-1) 0;
-		border-top: 1px solid var(--rule);
-	}
-	.verder__inhoud {
-		display: flex;
-		flex-direction: column;
-		--lezer-stap: var(--s-4);
-		gap: var(--lezer-stap);
 	}
 	/* The bronnen one step further, under the soorten of Verbonden. */
 	.block__sub {
@@ -528,19 +365,7 @@
 		margin: 0;
 		font-size: var(--t-micro);
 	}
-	.block__label {
-		display: flex;
-		justify-content: space-between;
-		margin-bottom: var(--s-2);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	.empty {
 		margin: 0;
-	}
-	/* One line that says what a control does, or why it is off. */
-	.sub {
-		margin-top: var(--s-2);
 	}
 </style>

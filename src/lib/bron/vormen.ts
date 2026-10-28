@@ -9,6 +9,7 @@ export type Vorm =
 	| 'regel'
 	| 'regel-int'
 	| 'regel-o'
+	| 'publicatie'
 	| 'uitspraak'
 	| 'stuk'
 	| 'voorstel'
@@ -38,6 +39,8 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
 	// 12 px it still reads as a hole (3.75 px).
 	'regel-int': { d: 'M2 2h12v12H2zM5.5 5.5v5h5v-5z', wijze: 'gat' },
 	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn' },
+	// A publication of the Staatsblad: the square of a regel with its corner folded.
+	publicatie: { d: 'M2 2h9l3 3v9H2z', wijze: 'vul' },
 	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul' },
 	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul' },
 	// Een wetsvoorstel is een blad met een open vak, los van de toelichting.
@@ -142,6 +145,7 @@ export function vormVanBron(
 	relation?: string | null
 ): Vorm {
 	const vorm = vormOf(collection);
+	if (collection === 'instruments' && props?.kind === 'publicatie') return 'publicatie';
 	if (vorm === 'regel' && isInternational({ key, props })) return 'regel-int';
 	if (collection === 'members' && isMinister(props, relation)) return 'bewindspersoon';
 	if (collection === 'documents' && typeof props?.kind === 'string' && BILL_KIND.test(props.kind))

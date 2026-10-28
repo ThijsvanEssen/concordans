@@ -29,6 +29,8 @@ export type End = {
 	 * Verbonden put on the canvas).
 	 */
 	ties?: boolean;
+	/** A publication of the Staatsblad: an act that states what it enacts or changes, with a line to each wet. */
+	publication?: boolean;
 };
 
 type Connection = {
@@ -53,6 +55,13 @@ export type Placement =
 	| { place: 'line'; meta: boolean; anchor?: Side }
 	| { place: 'none'; anchor?: Side };
 
+/** A publication of the Staatsblad (Stb. 2026, 314): an instrument of the kind publicatie, with no articles of its own. */
+export const isPublication = (
+	node: { collection?: string; props?: unknown } | undefined
+): boolean =>
+	node?.collection === 'instruments' &&
+	(node.props as Record<string, unknown> | null | undefined)?.kind === 'publicatie';
+
 const other = (side: Side): Side => (side === 'source' ? 'target' : 'source');
 const SIDES: Side[] = ['target', 'source'];
 
@@ -62,6 +71,14 @@ export function placeConnection(c: Connection): Placement {
 	// the article says it; on the canvas a law would gather some 1.300 of them.
 	if (relation === 'TRANSPOSED_TO' && target.hull === 'instrument') return { place: 'none' };
 	const end = (side: Side) => (side === 'source' ? source : target);
+	// A publication of the Staatsblad stands in no outline: its dossier is a line to it,
+	// "aangenomen als" (Netwerkcanvas, Staatsblad-publicatie).
+	if (relation === 'LEGISLATED_IN' && source.publication && target.hull === 'dossier') {
+		if (source.drawn && target.drawn) return { place: 'line', meta: true };
+		if (source.drawn) return { place: 'line', meta: true, anchor: 'target' };
+		if (target.drawn) return { place: 'line', meta: true, anchor: 'source' };
+		return { place: 'none' };
+	}
 	/** The first side, target before source, for which `test` holds with the other end drawn. */
 	const sideWhere = (test: (side: Side) => boolean) =>
 		SIDES.find((side) => end(other(side)).drawn && test(side));
@@ -90,7 +107,8 @@ export function placeConnection(c: Connection): Placement {
 		(side) => !end(side).drawn && end(side).hull === 'instrument' && isAmendingRelation(relation)
 	);
 	if (changed === 'target') return line(false, 'target');
-	if (changed === 'source') return { place: 'none', anchor: 'source' };
+	if (changed === 'source')
+		return source.publication ? line(false, 'source') : { place: 'none', anchor: 'source' };
 
 	if (!source.drawn || !target.drawn) return { place: 'none' };
 	const semantic = edgeCategory(relation, source.drawClass) === 'semantic';
