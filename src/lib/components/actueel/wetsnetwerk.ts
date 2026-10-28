@@ -20,7 +20,7 @@ import {
 	type ChangedLaw,
 	type DossierChange
 } from '$lib/components/parliamentary/changed-articles';
-import { dossierName } from '$lib/bron/dossier-naam';
+import { dossierName, dossierVolledigeTitel } from '$lib/bron/dossier-naam';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { AMENDING_BILL_KINDS } from '$lib/votes/stages';
@@ -29,7 +29,8 @@ type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;
 
 /** A bill the Kamer passed: by its dossier, the day and the Kamer. */
-type Kandidaat = { number: string; naam: string; datum: string; kamer: Chamber };
+/** `titel`: the whole title where the name is cut, for the heading of the band. */
+type Kandidaat = { number: string; naam: string; titel: string; datum: string; kamer: Chamber };
 
 /** The changed-articles asked at most, the summary's candidates and the older ones together. */
 const POGINGEN = 4;
@@ -51,6 +52,7 @@ export function kandidaten(items: readonly FeedItem[]): Kandidaat[] {
 		.map((i) => ({
 			number: i.dossier!.number,
 			naam: dossierName(i.dossier!),
+			titel: dossierVolledigeTitel(i.dossier!) ?? dossierName(i.dossier!),
 			datum: i.date,
 			kamer: i.vote!.chamber
 		}))

@@ -5,6 +5,38 @@
 	import { report } from '$lib/api/errors';
 	import { inView } from '$lib/actions/in-view';
 	import { CONTACT_EMAIL } from '$lib/site/contact';
+	import { BUNDLES_PATH } from '$lib/map/page';
+
+	/** Three columns: using it, the explanation of it, and what stands behind it. */
+	const KOLOMMEN: { kop: string; links: { href: string; label: string }[] }[] = [
+		{
+			kop: 'Gebruiken',
+			links: [
+				{ href: '/', label: 'Zoeken' },
+				{ href: '/explore', label: 'Netwerk' },
+				{ href: '/actueel', label: 'Actueel' },
+				{ href: BUNDLES_PATH, label: 'Bundels' }
+			]
+		},
+		{
+			kop: 'Uitleg',
+			links: [
+				{ href: '/docs', label: 'Documentatie' },
+				{ href: '/docs/methode', label: 'Methode' },
+				{ href: '/api', label: 'API' }
+			]
+		},
+		{
+			kop: 'Over',
+			links: [
+				{ href: '/over', label: 'Over Concordans' },
+				{ href: '/bronnen', label: 'Bronnen en hergebruik' },
+				{ href: '/voorwaarden', label: 'Voorwaarden' },
+				{ href: '/privacy', label: 'Privacy' },
+				{ href: `mailto:${CONTACT_EMAIL}`, label: 'Fout gevonden? Mail ons' }
+			]
+		}
+	];
 
 	// How current the data is, one line on every page (Thijs, 10 Oct: out of the page heads,
 	// docs/bediening.md, Bronregels): from /api/stats, asked once the footer comes into view.
@@ -22,92 +54,25 @@
 			<a href="/" class="foot-logo no-underline raak-rij" aria-label="Concordans, startpagina">
 				<Wordmark size={28} />
 			</a>
-			<p>
-				Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen. Zonder account, zonder
-				cookies.
-			</p>
+			<p>Wetten, uitspraken en Kamerstukken, met hun onderlinge verbindingen.</p>
 		</div>
 
-		<nav class="foot-col" aria-labelledby="foot-kop-0">
-			<p class="foot-head" id="foot-kop-0">Concordans</p>
-			<ul>
-				<li><a href="/explore" class="no-underline raak-rij">Netwerk</a></li>
-				<li><a href="/docs" class="no-underline raak-rij">Documentatie</a></li>
-				<li><a href="/docs/methode" class="no-underline raak-rij">Methode</a></li>
-				<li><a href="/api" class="no-underline raak-rij">API</a></li>
-			</ul>
-		</nav>
-
-		<nav class="foot-col" aria-labelledby="foot-kop-1">
-			<p class="foot-head" id="foot-kop-1">Officiële bronnen</p>
-			<ul>
-				<li>
-					<a
-						href="https://wetten.overheid.nl"
-						target="_blank"
-						rel="external noopener"
-						class="no-underline raak-rij">wetten.overheid.nl</a
-					>
-				</li>
-				<li>
-					<a
-						href="https://www.rechtspraak.nl/uitspraken"
-						target="_blank"
-						rel="external noopener"
-						class="no-underline raak-rij">rechtspraak.nl</a
-					>
-				</li>
-				<li>
-					<a
-						href="https://www.tweedekamer.nl"
-						target="_blank"
-						rel="external noopener"
-						class="no-underline raak-rij">tweedekamer.nl</a
-					>
-				</li>
-				<li>
-					<a
-						href="https://www.eerstekamer.nl"
-						target="_blank"
-						rel="external noopener"
-						class="no-underline raak-rij">eerstekamer.nl</a
-					>
-				</li>
-				<li>
-					<a
-						href="https://www.officielebekendmakingen.nl"
-						target="_blank"
-						rel="external noopener"
-						class="no-underline raak-rij">officielebekendmakingen.nl</a
-					>
-				</li>
-				<li>
-					<a
-						href="https://eur-lex.europa.eu"
-						target="_blank"
-						rel="external noopener"
-						class="no-underline raak-rij">eur-lex.europa.eu</a
-					>
-				</li>
-			</ul>
-		</nav>
-
-		<nav class="foot-col" aria-labelledby="foot-kop-2">
-			<p class="foot-head" id="foot-kop-2">Over</p>
-			<ul>
-				<li><a href="/over" class="no-underline raak-rij">Over Concordans</a></li>
-				<li><a href="/bronnen" class="no-underline raak-rij">Bronnen en hergebruik</a></li>
-				<li><a href="/voorwaarden" class="no-underline raak-rij">Voorwaarden</a></li>
-				<li><a href="/privacy" class="no-underline raak-rij">Privacy</a></li>
-				<li><a href="/voorwaarden#fouten" class="no-underline raak-rij">Fouten melden</a></li>
-			</ul>
-		</nav>
+		{#each KOLOMMEN as kolom, i (kolom.kop)}
+			<nav class="foot-col" aria-labelledby="foot-kop-{i}">
+				<p class="foot-head" id="foot-kop-{i}">{kolom.kop}</p>
+				<ul>
+					{#each kolom.links as link (link.href)}
+						<li><a href={link.href} class="no-underline raak-rij">{link.label}</a></li>
+					{/each}
+				</ul>
+			</nav>
+		{/each}
 	</div>
 
 	<div class="container foot-bottom" use:inView={askStand}>
 		<span
-			>© 2026 Concordans, <a href="mailto:{CONTACT_EMAIL}" class="raak-rij">{CONTACT_EMAIL}</a
-			></span
+			>© 2026 Concordans, <a href="mailto:{CONTACT_EMAIL}" class="raak-rij">{CONTACT_EMAIL}</a>,
+			zonder account, zonder cookies</span
 		>
 		{#if stand}<span class="stand">{standLine(stand)}</span>{/if}
 	</div>
@@ -196,8 +161,11 @@
 
 	@media (max-width: 1024px) {
 		.foot-grid {
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: var(--s-6);
+		}
+		.foot-blurb {
+			grid-column: 1 / -1;
 		}
 	}
 
@@ -207,7 +175,7 @@
 			padding-inline: var(--s-5);
 		}
 		.foot-grid {
-			grid-template-columns: 1fr;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 		.foot-bottom {
 			flex-direction: column;

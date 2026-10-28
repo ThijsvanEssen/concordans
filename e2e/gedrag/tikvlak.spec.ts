@@ -97,8 +97,8 @@ test.describe('on a phone', () => {
 
 	test('the ways in on the start page are 44 px to a finger', async ({ page }) => {
 		await page.goto('/');
-		await expect(page.locator('.entrances a').first()).toBeVisible();
-		const g = await links(page, '.entrances a');
+		await expect(page.locator('.vragen__lijst a').first()).toBeVisible();
+		const g = await links(page, '.hint a, .vragen__lijst a');
 		expect(Object.keys(g).length).toBeGreaterThan(4);
 		expect(klein(g)).toEqual([]);
 	});

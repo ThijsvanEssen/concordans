@@ -18,10 +18,11 @@ function files(dir: string): string[] {
 }
 
 describe('the positioning of Concordans', () => {
-	it('is one sentence on the start page, in the shared-link text and in the footer', () => {
-		expect(START.heading).toBe(SENTENCE);
+	it('is one sentence in the title and description of the start page and the shared-link text', () => {
 		expect(read('src/app.html')).toContain(`content="${SENTENCE}"`);
-		expect(read('src/lib/components/layout/SiteFooter.svelte')).toContain(SENTENCE);
+		// The heading of the start page promises; the footer describes, in other words.
+		expect(read('src/lib/components/layout/SiteFooter.svelte')).not.toContain(SENTENCE);
+		expect(read('src/lib/components/layout/SiteFooter.svelte')).not.toContain(START.heading);
 		const home = JSON.parse(read('src/lib/seo/spa-routes.json')).find(
 			(r: { path: string }) => r.path === '/'
 		);

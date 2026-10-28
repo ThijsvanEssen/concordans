@@ -54,13 +54,35 @@ test('a scope narrows the search to its kind', async ({ page }) => {
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
-test('the start page leads into Samenhang, an article and a vote', async ({ page }) => {
+test('the start page promises, tries a search for you and answers three questions', async ({
+	page
+}) => {
 	await page.goto('/');
-	await expect(
-		page.getByRole('region', { name: 'Artikel' }).getByRole('link').first()
-	).toHaveAttribute('href', /\/wetten\//);
-	await expect(page.getByRole('region', { name: 'Stemming' })).toContainText(/voor.*tegen/);
-	await page.getByRole('region', { name: 'Artikel' }).getByRole('link').first().click();
+	const main = page.getByRole('main');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+		'Zie hoe wetten, rechtspraak en parlement samenhangen.'
+	);
+	// The steps stand forward, in three parts.
+	await expect(main.locator('ol.stappen li')).toHaveCount(3);
+	// A trial search of the hint fills the field in place; the steps and questions give way.
+	await main.getByRole('link', { name: 'Awb', exact: true }).click();
+	await expect(page.getByRole('combobox', { name: 'Zoeken' })).toHaveValue('Awb');
+	await expect(page).toHaveURL(/\/$/);
+	await expect(main.locator('ol.stappen')).toHaveCount(0);
+	await expect(main.getByRole('heading', { level: 2, name: 'Wat kun je ermee?' })).toHaveCount(0);
+});
+
+test('the first question of the start page opens an article with what refers to it', async ({
+	page
+}) => {
+	await page.goto('/');
+	const vragen = page.getByRole('region', { name: 'Wat kun je ermee?' });
+	await expect(vragen.getByRole('heading', { level: 3 })).toHaveText([
+		'Wie haalt dit artikel aan?',
+		'Hoe stemde de Kamer?',
+		'Wat onderzoek ik?'
+	]);
+	await vragen.getByRole('link', { name: /art\. 6:162 BW/ }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
 });
 

@@ -129,7 +129,7 @@ describe('the frame of a page', () => {
 		expect(bron('routes/(main)/+layout.svelte')).toMatch(
 			/class="blad-hoogte"[\s\S]*min-height: 100dvh/
 		);
-		expect(bron('routes/(main)/+page.svelte')).toMatch(/\{:else if networkLoading\}/);
+		expect(bron('routes/(main)/+page.svelte')).toMatch(/\{#if lawNetwork \|\| networkLoading\}[\s\S]*wetsnetwerk-plek/);
 	});
 
 	it('names the page a subpage belongs to as a crumb: one link, as a reader’s band', () => {

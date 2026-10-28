@@ -11,7 +11,7 @@
 	import type { Schets, SchetsBron } from './wetsnetwerk';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 
-	let { schets }: { schets: Schets } = $props();
+	let { schets, kop = 'h2' }: { schets: Schets; kop?: 'h2' | 'h3' | 'h4' } = $props();
 
 	const k = $derived(schets.kandidaat);
 	const keten = $derived(schets.keten);
@@ -85,7 +85,7 @@
 		<KindGlyph vorm="voorstel" size={12} />Laatst aangenomen wetsvoorstel: {CHAMBER_NAME[k.kamer]},
 		{langeDatum(k.datum)}
 	</p>
-	<h2 id="wetsnetwerk-heading">{k.naam}</h2>
+	<svelte:element this={kop} id="wetsnetwerk-heading" class="naamkop">{k.titel}</svelte:element>
 
 	<ol class="keten">
 		{#each stappen as st (st.vorm)}
@@ -152,7 +152,7 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	h2 {
+	.naamkop {
 		margin: 0 0 var(--s-3);
 		font-size: var(--t-h3);
 		font-weight: 600;
@@ -301,7 +301,7 @@
 		.waarom {
 			color: var(--ink-2);
 		}
-		h2 {
+		.naamkop {
 			margin-bottom: var(--s-3);
 			font-size: var(--t-h2);
 		}

@@ -123,7 +123,13 @@ const citedBy = {
 	items: [judgment('A', 264), judgment('A', 264), judgment('B', 167), judgment('C', 3)]
 } as unknown as CitedBy;
 
-const k = { number: '36547', naam: 'Wet mensenhandel', datum: '2026-09-29', kamer: 'EK' as const };
+const k = {
+	number: '36547',
+	naam: 'Wet mensenhandel',
+	titel: 'Wet mensenhandel',
+	datum: '2026-09-29',
+	kamer: 'EK' as const
+};
 
 describe('schetsVan', () => {
 	const s = schetsVan(k, changes, citedBy)!;

@@ -197,7 +197,7 @@
 				height: var(--balk-h);
 				border-bottom: 1px solid var(--rule);
 			}
-			.js #seo:not(:has(> .entrances)) {
+			.js #seo:not(:has(> .vragen)) {
 				display: none;
 			}
 			/* .blad with a reading width (.blad--tekst). */
@@ -252,22 +252,22 @@
 					padding: var(--s-4) var(--s-4) var(--s-8);
 				}
 			}
-			/* The start page (home.py of the API, the three ways in): set as the app sets it,
-			   each value its own (routes/(main)/+page.svelte, home/Entrances.svelte, Search,
+			/* The start page (home.py of the API: the promise, the field, three steps and three
+			   questions): set as the app sets it, each value its own (routes/(main)/+page.svelte, home/Stappen.svelte, home/Vragen.svelte, Search,
 			   Keuze, KindGlyph, Uitkomst, frame.css), so the app takes its place unmoved. With
 			   scripts it shows too: it is the first paint. */
-			#seo:has(> .entrances) {
+			#seo:has(> .vragen) {
 				font-size: var(--t-meta);
 				line-height: var(--lh-snug);
 				overflow-wrap: normal;
 				text-rendering: optimizeLegibility;
 			}
-			#seo:has(> .entrances) *,
-			#seo:has(> .entrances) *::before,
-			#seo:has(> .entrances) *::after {
+			#seo:has(> .vragen) *,
+			#seo:has(> .vragen) *::before,
+			#seo:has(> .vragen) *::after {
 				box-sizing: border-box;
 			}
-			#seo:has(> .entrances) > * {
+			#seo:has(> .vragen) > * {
 				max-width: none;
 			}
 			/* Newsreader where it was there for the first paint; else the fallback, until the
@@ -275,7 +275,7 @@
 			   does not reflow the text under the reader, and the app's start page, in the same
 			   letter, takes the place of the server's to the pixel, its text no larger (the
 			   largest paint stays the first). The script at the top sets the class. */
-			.vaste-letter #seo:has(> .entrances),
+			.vaste-letter #seo:has(> .vragen),
 			.vaste-letter .home {
 				--font-serif:
 					'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia,
@@ -283,7 +283,7 @@
 				font-family: var(--font-serif);
 			}
 			/* The head of the page (.blad__kop, .blad__titel) and what Concordans is. */
-			#seo:has(> .entrances) > .blad__kop {
+			#seo:has(> .vragen) > .blad__kop {
 				display: flex;
 				flex-wrap: wrap;
 				align-items: flex-start;
@@ -292,7 +292,7 @@
 				margin: 0 0 var(--s-4);
 			}
 			/* Its own face too when the app's stylesheet comes (.blad__titel names one). */
-			#seo:has(> .entrances) h1 {
+			#seo:has(> .vragen) h1 {
 				margin: 0;
 				font-family: inherit;
 				font-size: var(--t-h1);
@@ -301,26 +301,24 @@
 				color: var(--ink);
 				overflow-wrap: anywhere;
 			}
-			#seo:has(> .entrances) .lead {
-				flex-basis: 100%;
+			#seo:has(> .vragen) > .lede {
 				max-width: var(--blad-tekst);
-				margin: calc(-1 * var(--s-2)) 0 0;
+				margin: 0 0 var(--s-4);
 				font-size: var(--t-body-2);
 				line-height: var(--lh-body);
 				color: var(--ink-2);
 			}
 			/* The field with its mark (Search); with scripts, over it the room of the scopes
-			   (Keuze) and the gap under them, under it the room of the law
-			   network (.wetsnetwerk-plek), quiet as the app keeps it while it is asked. Without
-			   scripts neither comes, and no room stands empty. */
-			#seo:has(> .entrances) > .search {
+			   (Keuze) and the gap under them. Without scripts it does not come, and no
+			   room stands empty. */
+			#seo:has(> .vragen) > .search {
 				display: grid;
 				grid-template-columns: minmax(0, 1fr);
 			}
-			.scripts #seo:has(> .entrances) > .search {
+			.scripts #seo:has(> .vragen) > .search {
 				padding-top: calc(var(--veld-h) + var(--s-3));
 			}
-			#seo:has(> .entrances) > .search::before {
+			#seo:has(> .vragen) > .search::before {
 				content: '';
 				grid-area: 1 / 1;
 				z-index: 1;
@@ -333,15 +331,8 @@
 					center / 16px 16px no-repeat;
 				pointer-events: none;
 			}
-			.scripts #seo:has(> .entrances) > .search::after {
-				content: '';
-				min-height: 366px;
-				margin-top: var(--s-6);
-				border-radius: var(--r-1);
-				background: var(--paper-2);
-			}
 			/* The field: its frame and padding, and the input's own pixel inside them. */
-			#seo:has(> .entrances) input {
+			#seo:has(> .vragen) input {
 				grid-area: 1 / 1;
 				width: 100%;
 				margin: 0;
@@ -357,156 +348,150 @@
 				line-height: normal;
 				color: var(--ink);
 			}
-			#seo:has(> .entrances) input::-webkit-search-decoration,
-			#seo:has(> .entrances) input::-webkit-search-cancel-button {
+			#seo:has(> .vragen) input::-webkit-search-decoration,
+			#seo:has(> .vragen) input::-webkit-search-cancel-button {
 				appearance: none;
 			}
-			#seo:has(> .entrances) input::placeholder {
+			#seo:has(> .vragen) input::placeholder {
 				color: var(--ink-3);
 				font-style: italic;
 				opacity: 1;
 			}
-			#seo:has(> .entrances) input:focus {
+			#seo:has(> .vragen) input:focus {
 				border-color: var(--ink-3);
 				outline: 2px solid var(--ink);
 				outline-offset: 2px;
 			}
-			/* The three ways in (Entrances). */
-			#seo:has(> .entrances) > .entrances {
-				display: grid;
-				grid-template-columns: repeat(3, minmax(0, 1fr));
-				gap: var(--s-5);
-				margin-top: var(--s-6);
-			}
-			#seo:has(> .entrances) .entrance {
-				display: flex;
-				flex-direction: column;
-				gap: var(--s-2);
-				padding: var(--s-3) 0 0;
-				border-top: 1px solid var(--ink);
-			}
-			#seo:has(> .entrances) .entrance h2 {
-				margin: 0;
+			/* The trial searches under the field (home/+page.svelte, .hint). */
+			#seo:has(> .vragen) > .hint {
+				margin: var(--s-3) 0 0;
 				font-size: var(--t-meta);
-				font-weight: 600;
 				line-height: var(--lh-snug);
 				color: var(--ink-3);
 			}
-			#seo:has(> .entrances) .entrance .title,
-			#seo:has(> .entrances) .entrance li a {
-				display: inline-block;
-				padding: var(--s-1) 0;
+			#seo:has(> .vragen) a {
+				text-decoration: underline;
+				text-decoration-color: var(--rule-strong);
+				text-underline-offset: 3px;
+			}
+			#seo:has(> .vragen) > .hint a {
 				color: var(--ink);
 			}
-			#seo:has(> .entrances) .entrance .title {
+			/* The three steps (home/Stappen.svelte): one frame, three numbered parts, an arrow
+			   on the rule between them. */
+			#seo:has(> .vragen) > .stappen {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				margin: var(--s-6) 0 0;
+				padding: 0;
+				counter-reset: stap;
+				border: 1px solid var(--rule-strong);
+				border-radius: var(--r-1);
+				color: var(--ink-2);
+			}
+			#seo:has(> .vragen) > .stappen li {
+				position: relative;
+				counter-increment: stap;
+				padding: var(--s-4);
+			}
+			#seo:has(> .vragen) > .stappen li + li {
+				border-left: 1px solid var(--rule);
+			}
+			#seo:has(> .vragen) > .stappen li::before {
+				content: counter(stap);
+				display: block;
+				margin-bottom: var(--s-1);
+				font-size: var(--t-micro);
+				color: var(--ink-3);
+			}
+			#seo:has(> .vragen) > .stappen b {
+				display: block;
+				margin-bottom: var(--s-1);
+				font-size: var(--t-body-2);
+				font-weight: 600;
+				color: var(--ink);
+			}
+			#seo:has(> .vragen) > .stappen li + li::after {
+				content: '→';
+				position: absolute;
+				top: var(--s-4);
+				left: 0;
+				padding: 0 var(--s-1);
+				transform: translateX(-50%);
+				background: var(--paper);
+				color: var(--ink-3);
+			}
+			/* The questions (home/Vragen.svelte): the heading, with scripts the room of the example
+			   of the day (the law network, .wetsnetwerk-plek: quiet as the app keeps it while it is
+			   asked), and the three tiles. */
+			#seo:has(> .vragen) > .vragen {
+				margin: var(--s-6) 0 0;
+			}
+			#seo:has(> .vragen) .vragen h2 {
+				margin: 0 0 var(--s-3);
+				font-size: var(--t-h2);
+				font-weight: 600;
+				line-height: var(--lh-snug);
+			}
+			#seo:has(> .vragen) .vragen__lijst {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: var(--s-4);
+			}
+			.scripts #seo:has(> .vragen) .vragen__lijst::before {
+				content: '';
+				grid-column: 1 / -1;
+				min-height: 356px;
+				border-radius: var(--r-1);
+				background: var(--paper-2);
+			}
+			#seo:has(> .vragen) .vraag {
+				display: flex;
+				flex-direction: column;
+				gap: var(--s-2);
+				padding: var(--s-4);
+				border: 1px solid var(--rule);
+				border-radius: var(--r-1);
+				color: var(--ink-2);
+			}
+			#seo:has(> .vragen) .vraag h3 {
+				margin: 0;
 				font-size: var(--t-body-2);
 				font-weight: 600;
 				line-height: var(--lh-snug);
+				color: var(--ink);
 			}
-			#seo:has(> .entrances) .entrance p {
+			#seo:has(> .vragen) .vraag p {
 				margin: 0;
 			}
-			#seo:has(> .entrances) .entrance .meta {
-				font-size: var(--t-micro);
-				color: var(--ink-3);
+			#seo:has(> .vragen) .vraag p:last-child {
+				margin-top: auto;
+				padding-top: var(--s-1);
+				color: var(--ink);
 			}
-			#seo:has(> .entrances) .entrance ul {
-				display: flex;
-				flex-direction: column;
-				font-size: var(--t-meta);
-				color: var(--ink-2);
-			}
-			#seo:has(> .entrances) .entrance li {
-				display: flex;
-				align-items: center;
-				gap: var(--s-2);
-				padding: 0;
-			}
-			/* Each line with the mark of what it opens (KindGlyph): an article, a judgment, a
-			   Kamerstuk. */
-			#seo:has(> .entrances) .entrance li:has(> a)::before {
-				content: '';
-				flex: none;
-				width: 12px;
-				height: 12px;
-				background: var(--ink);
-				mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 3h10v10H3z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E")
-					center / 12px 12px no-repeat;
-			}
-			#seo:has(> .entrances) .entrance li:has(> a[href^='/uitspraken/'])::before,
-			#seo:has(> .entrances) .entrance li:has(> a[href$='bronnen=uitspraken'])::before {
-				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M14.5 8a6.5 6.5 0 1 1-13 0a6.5 6.5 0 1 1 13 0z'/%3E%3C/svg%3E");
-			}
-			#seo:has(> .entrances) .entrance li:has(> a[href*='bronnen=toelichtingen'])::before {
-				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 1h6.5l3 3v11H3.5z'/%3E%3C/svg%3E");
-			}
-			/* The note of the bundel in italics, its label small. */
-			#seo:has(> .entrances) .entrance .note {
-				font-style: italic;
-			}
-			#seo:has(> .entrances) .entrance .note-label {
-				font-size: var(--t-micro);
-				font-style: normal;
-				color: var(--ink-3);
-			}
-			/* The outcome and the sides of the vote, each with its box (Uitkomst, Stem): Voor
-			   filled in moss, Tegen and Verworpen open in the accent. */
-			#seo:has(> .entrances) .entrance .outcome {
-				display: flex;
-				align-items: center;
-				gap: var(--s-2);
-				font-size: var(--t-meta);
-			}
-			#seo:has(> .entrances) .entrance .uitkomst,
-			#seo:has(> .entrances) .entrance dt {
-				display: flex;
-				align-items: baseline;
-				gap: var(--s-2);
-				font-weight: 600;
-				color: var(--uitkomst-nee);
-			}
-			#seo:has(> .entrances) .entrance .uitkomst::before,
-			#seo:has(> .entrances) .entrance dt::before {
-				content: '';
-				flex: none;
-				width: 10px;
-				height: 10px;
-				border: 2px solid var(--uitkomst-nee);
-			}
-			#seo:has(> .entrances) .entrance .sides {
-				display: grid;
-				grid-template-columns: max-content minmax(0, 1fr);
-				gap: var(--s-1) var(--s-3);
-				margin: 0;
-				font-size: var(--t-meta);
-				line-height: var(--lh-snug);
-			}
-			#seo:has(> .entrances) .entrance .uitkomst::before,
-			#seo:has(> .entrances) .entrance dt::before {
-				transform: translateY(1px);
-			}
-			#seo:has(> .entrances) .entrance dt:first-of-type {
-				color: var(--uitkomst-ja);
-			}
-			#seo:has(> .entrances) .entrance dt:first-of-type::before {
-				border: 0;
-				background: var(--uitkomst-ja);
-			}
-			#seo:has(> .entrances) .entrance dd {
-				margin: 0;
-				color: var(--ink-2);
-			}
-			@media (max-width: 1024px) {
-				#seo:has(> .entrances) > .entrances {
+			@media (max-width: 768px) {
+				#seo:has(> .vragen) .vragen__lijst {
 					grid-template-columns: minmax(0, 1fr);
-					gap: var(--s-4);
 				}
 			}
 			@media (max-width: 640px) {
-				.scripts #seo:has(> .entrances) > .search::after {
-					min-height: 264px;
+				#seo:has(> .vragen) > .stappen {
+					grid-template-columns: minmax(0, 1fr);
 				}
-				#seo:has(> .entrances) input {
+				#seo:has(> .vragen) > .stappen li + li {
+					border-top: 1px solid var(--rule);
+					border-left: 0;
+				}
+				#seo:has(> .vragen) > .stappen li + li::after {
+					content: '↓';
+					top: 0;
+					left: var(--s-4);
+					transform: translateY(-50%);
+				}
+				.scripts #seo:has(> .vragen) .vragen__lijst::before {
+					min-height: 440px;
+				}
+				#seo:has(> .vragen) input {
 					font-size: var(--t-body);
 				}
 			}
