@@ -134,7 +134,7 @@ function membersLabel(selection: Collection): { label: string; one: string; many
 
 /**
  * A soort called otherwise on the page of a kind of bron: a commissie's reader counts its leden
- * now ("Huidige leden"), Verbonden every lid it has had.
+ * now ("Leden", "Plaatsvervangers"), Verbonden every lid it has had.
  */
 const LABEL_ON: Partial<Record<Collection, Partial<Record<KindId, string>>>> = {
 	committees: { members: 'Leden ooit' },

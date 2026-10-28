@@ -1,7 +1,8 @@
 // The tiles of a commissie: its leden as the data has them (a gap is not "0 Leden", B11), its
-// open dossiers as the API counts them, the outcomes only of the dossiers all loaded.
+// open dossiers as the API counts them, the outcomes only of the dossiers all loaded. Its seats:
+// the leden and the plaatsvervangers apart, the oud-leden where none sit today.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import { fakeApi } from '$lib/test/fakeApi';
 import type { GraphNode } from '$lib/graph/types';
 import CommitteeReader from './CommitteeReader.svelte';
@@ -40,24 +41,74 @@ const read = async (detail: Record<string, unknown>) => {
 };
 
 describe('the tiles of a commissie', () => {
-	it('says a commissie without a seat in the data is not known, not "0 Leden"', async () => {
+	it('says a commissie without a seat in the data has none from the source, not "0 Leden"', async () => {
 		const tiles = await read({ members: null, dossiers: [], dossier_total: 0 });
-		expect(tiles['Huidige leden']).toBe('niet in de gegevens');
+		expect(tiles.Leden).toBeUndefined();
+		expect(screen.getByText('De bron geeft geen leden voor deze commissie.')).toBeTruthy();
+		expect(screen.queryByText('Toon de oud-leden')).toBeNull();
 	});
 
-	it('counts the leden it has, and none when no seat is current', async () => {
+	it('counts the leden and the plaatsvervangers apart', async () => {
 		const tiles = await read({
-			members: [{ key: 'm1', name: 'A. Jansen', role: null }],
+			members: [
+				{ key: 'm1', name: 'A. Jansen', role: 'Lid' },
+				{ key: 'm2', name: 'B. de Vries', role: 'Voorzitter' },
+				{ key: 'm3', name: 'C. Bakker', role: 'PlvLid' }
+			],
 			dossiers: [],
 			dossier_total: 0
 		});
-		expect(tiles['Huidige leden']).toBe('1');
+		expect(tiles.Leden).toBe('2');
+		expect(tiles.Plaatsvervangers).toBe('1');
+		expect(screen.getByRole('region', { name: 'Plaatsvervangers' }).textContent).toContain(
+			'C. Bakker'
+		);
 	});
 
-	it('counts none when no seat is current', async () => {
-		expect((await read({ members: [], dossiers: [], dossier_total: 0 }))['Huidige leden']).toBe(
-			'0'
-		);
+	it('shows the oud-leden in place when no seat is current', async () => {
+		const { asked } = fakeApi({
+			'/api/committees/{slug}': ({ params }) => ({
+				key: 'c1',
+				chamber: 'TK',
+				active_dossier_count: 0,
+				members:
+					params.query?.current_only === false
+						? [{ key: 'm9', name: 'D. Oud', role: 'Lid', to_date: '2017-11-09' }]
+						: [],
+				dossiers: [],
+				dossier_total: 0
+			}),
+			'/api/cabinets': []
+		});
+		render(CommitteeReader, { node });
+		await screen.findByText('Geen huidige leden.', { exact: false });
+		expect(asked('/api/committees/{slug}')).toHaveLength(1);
+		await fireEvent.click(screen.getByText('Toon de oud-leden'));
+		expect(asked('/api/committees/{slug}')[1].query).toMatchObject({ current_only: false });
+		const oud = await screen.findByRole('region', { name: 'Oud-leden' });
+		expect(oud.textContent).toContain('D. Oud');
+	});
+
+	it('labels a commissie by `sitting`, and not at all where the API has no `sitting` yet', async () => {
+		await read({ members: [], sitting: true });
+		expect(screen.getByText('Actief')).toBeTruthy();
+	});
+
+	it('labels a commissie that no longer sits Opgeheven', async () => {
+		fakeApi({
+			'/api/committees/{slug}': { key: 'c1', chamber: 'TK', members: [], sitting: false },
+			'/api/cabinets': []
+		});
+		render(CommitteeReader, { node });
+		await screen.findByText('Geen huidige leden.', { exact: false });
+		expect(screen.getByText('Opgeheven')).toBeTruthy();
+		expect(screen.queryByText('Actief')).toBeNull();
+	});
+
+	it('gives no label without `sitting` (production before API 0.80.15)', async () => {
+		await read({ members: [] });
+		expect(screen.queryByText('Actief')).toBeNull();
+		expect(screen.queryByText('Opgeheven')).toBeNull();
 	});
 
 	it('takes the open dossiers from the API, not from the page of dossiers loaded', async () => {

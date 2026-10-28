@@ -163,6 +163,16 @@ describe('the request of a list', () => {
 			chamber: 'EK',
 			active_to: '2024-12-31'
 		});
+		// The sitting ones unless the ended are asked; a period says which itself (API 0.80.15).
+		expect(query('committees')).toEqual({ chamber: 'TK' });
+		expect(query('committees', 'include_inactive=1')).toEqual({
+			chamber: 'TK',
+			include_ended: true
+		});
+		expect(query('committees', 'include_inactive=1&van=2020-01-01')).toEqual({
+			chamber: 'TK',
+			active_from: '2020-01-01'
+		});
 	});
 
 	it('asks the stemmingen with one q and the outcome as a boolean', () => {
@@ -249,6 +259,8 @@ describe('the filters of a list', () => {
 		expect(chips('members', 'kamer=EK&include_inactive=1')).toEqual([]);
 		expect(chips('factions', 'kamer=EK&include_inactive=1')).toEqual([]);
 		expect(chips('committees', 'kamer=EK&only_active=1')).toEqual([]);
+		expect(chips('committees', 'include_inactive=1')).toEqual(['Ook opgeheven commissies']);
+		expect(chips('committees', 'kamer=EK&include_inactive=1')).toEqual([]);
 	});
 });
 
