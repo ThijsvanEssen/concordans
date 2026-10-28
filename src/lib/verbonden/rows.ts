@@ -4,7 +4,9 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { articleRef } from '$lib/text/bw';
 import { NOT_IN_DATA } from '$lib/text/coverage';
-import { capitalize, escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
+import { getInstrumentMeta } from '$lib/api/instrument-cache';
+import { lawIdOf } from '$lib/graph/types';
+import { escapeRegExp, lowerFirst, textOf } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/text/ecli';
 import { korteDatum } from '$lib/text/datum';
@@ -17,14 +19,16 @@ import {
 	kamerstukNummer,
 	type DossierNaamBron
 } from '$lib/bron/dossier-naam';
-import { describeBron, UNNAMED } from '$lib/bron/describe';
-import { seatWord } from '$lib/components/parliamentary/career';
+import { describeBronShort, UNNAMED } from '$lib/bron/describe';
+import { seatWord } from '$lib/text/seat';
+import { stuksoortOf, type Stuksoort } from '$lib/bron/rubrieken';
 import { MODERATE_CONFIDENCE, filterGroupOf, confidenceWord, type FilterGroup } from './filter';
 import { isDerived, positionsLabel, readEdge } from './edge-meta';
 import { relationWords } from './relation-words';
 import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
 import type { Cite } from '$lib/text/judgment-heading';
+import type { CitedOutcome } from './cited-outcome';
 
 import type { Neighbor } from '$lib/api/nodes';
 
@@ -37,6 +41,8 @@ export type Row = {
 	/** Words about the bron that no other field carries: party, abbreviation, the place in the law. */
 	context: string | null;
 	filterGroup: FilterGroup;
+	/** What a stuk is (a facet of the soort Stukken). */
+	stuksoort?: Stuksoort;
 	/** Position inside the bron the row opens at: `rov-5.1`, `lid-2`. */
 	at?: string | null;
 	/** The lid of the selected article the verbinding names: `2`. Null when it names none. */
@@ -78,6 +84,8 @@ export type Row = {
 	court?: string | null;
 	/** A judgment as the API cites it. */
 	cite?: Cite | null;
+	/** How a judgment that cites the selected article ended: the meta line says it, or says it is not known. */
+	uitkomst?: CitedOutcome | null;
 	/** How often the judgment itself is cited (`inbound_citation_count`), where the order asks for it. */
 	cited?: number | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
@@ -147,9 +155,25 @@ export function aardOf(
 		: label;
 }
 
+/**
+ * An article of another law names its law: `Artikel 3 HPW`. Where the neighbour carries no
+ * abbreviation, the law's own (the cache of names) supplies it, and its full title for the hover.
+ */
+function withLawName(collection: string, props: Record<string, unknown>): Record<string, unknown> {
+	if (collection !== 'articles' || typeof props.instrument_abbreviation === 'string') return props;
+	const meta = getInstrumentMeta(lawIdOf(props));
+	const short = meta?.abbreviation ?? meta?.shortTitle;
+	if (!meta || !short) return props;
+	return {
+		...props,
+		instrument_abbreviation: short,
+		instrument_citation_title: props.instrument_citation_title ?? meta.citationTitle ?? short
+	};
+}
+
 export function rowOfNeighbor(n: Neighbor): Row | null {
 	if (!isCollection(n.collection)) return null;
-	const props = n.props ?? {};
+	const props = withLawName(n.collection, n.props ?? {});
 	const meta = (n.meta ?? {}) as Record<string, unknown>;
 	const inbound = n.direction === 'inbound';
 	// The paragraphs and the passage are the row's own where it is the citing judgment; else
@@ -159,12 +183,13 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 	const edge = readEdge(meta, { direction: inbound ? 'inbound' : 'outbound', citingEcli: ecli });
 	return {
 		ref: refOf(n.collection, n.key, props),
-		...describeBron(n.collection, n.key, n.display_name, props, n.cite),
+		...describeBronShort(n.collection, n.key, n.display_name, props, n.cite),
 		...(edge.position ? { position: edge.position } : {}),
 		...(edge.passageAt ? { passageAt: edge.passageAt } : {}),
 		...(edge.noot ? { noot: edge.noot } : {}),
 		...(edge.bereik ? { bereik: edge.bereik } : {}),
 		filterGroup: filterGroupOf(n.collection, n.key, props, n.relation),
+		...(n.collection === 'documents' ? { stuksoort: stuksoortOf(props, n.relation) } : {}),
 		lid: edge.lid,
 		derived: isDerived(n.confidence),
 		proposed: n.status === 'voorgesteld' || undefined,
@@ -258,15 +283,19 @@ export function uniqueRows(rows: Row[]): Row[] {
 	});
 }
 
+type MetaPart = {
+	text: string;
+	kind: 'lid' | 'proposed' | 'derived' | 'plain' | 'uitkomst' | 'onbekend';
+	/** At hover: the clause of the decision that says the outcome. */
+	title?: string | null;
+};
+
 /**
  * The meta line of a row, as separate words; the panel joins them. With `verbinding`, the row
  * has its line of the verbinding (`hoe.ts`), which says the lid, the place, the aard and
  * whether it is derived: the meta line leaves them out, and a vote's outcome.
  */
-export function metaParts(
-	row: Row,
-	verbinding = false
-): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
+export function metaParts(row: Row, verbinding = false): MetaPart[] {
 	return zonderNaam(row.title, metaPartsVan(row, verbinding));
 }
 
@@ -274,7 +303,7 @@ export function metaParts(
  * The meta line does not say the name again: "D66" under "D66-fractie" (UX-toets 10 Oct,
  * #16). A plain part the title already holds, as a word, is left out.
  */
-function zonderNaam<P extends { text: string; kind: string }>(title: string, parts: P[]): P[] {
+function zonderNaam<P extends MetaPart>(title: string, parts: P[]): P[] {
 	const t = title.toLowerCase();
 	return parts.filter((p) => {
 		if (p.kind !== 'plain') return true;
@@ -285,11 +314,14 @@ function zonderNaam<P extends { text: string; kind: string }>(title: string, par
 	});
 }
 
-function metaPartsVan(
-	row: Row,
-	verbinding: boolean
-): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
-	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
+function metaPartsVan(row: Row, verbinding: boolean): MetaPart[] {
+	const parts: MetaPart[] = [];
+	if (row.uitkomst)
+		parts.push({
+			text: row.uitkomst.text,
+			kind: row.uitkomst.vastgesteld ? 'uitkomst' : 'onbekend',
+			title: row.uitkomst.title
+		});
 	if (verbinding) {
 		if (row.missing) parts.push({ text: NOT_IN_DATA, kind: 'plain' });
 		if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
@@ -447,13 +479,13 @@ type UnresolvedCitation = {
 	paragraph_ids?: string[];
 };
 
-/** `Art. 843a Rv`: the article as a row of Verbonden names it, before its law. */
+/** `Artikel 843a Rv`: the article as a row of Verbonden names it, before its law. */
 const unresolvedTitle = (c: UnresolvedCitation) =>
-	`${capitalize(articleRef(null, c.article_number))} ${c.law}`;
+	`${articleRef(null, c.article_number, { form: 'Artikel' })} ${c.law}`;
 
 /**
  * The articles a judgment cites of laws outside the dataset, as rows without a link:
- * `Art. 3 Opiumwet`, niet in de dataset.
+ * `Artikel 3 Opiumwet`, niet in de dataset.
  */
 export function unresolvedRows(citations: UnresolvedCitation[]): Row[] {
 	return citations.map((c) => ({

@@ -52,4 +52,12 @@ describe('statusOf', () => {
 		expect(statusOf(v({}))).toBeNull();
 		expect(statusOf(null)).toBeNull();
 	});
+	it('says ingetrokken of a law, vervallen of an article (docs/woorden.md)', () => {
+		expect(statusOf(v({ state: 'expired', date: '2020-01-01' }), 'wet')).toEqual({
+			text: 'Ingetrokken per 1\u00a0januari\u00a02020',
+			negative: true
+		});
+		expect(statusOf(v({ state: 'expired' }), 'wet')?.text).toBe('Ingetrokken');
+		expect(statusOf(v({ state: 'expired' }), 'artikel')?.text).toBe('Vervallen');
+	});
 });

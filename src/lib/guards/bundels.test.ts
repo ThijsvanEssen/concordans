@@ -34,11 +34,11 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		expect(v).toMatch(/<TekstMenu\b[^>]*tekst="Meer"/);
 		for (const label of [
 			'Kopieer citaten',
-			'Download CSV',
-			'Download bestand',
+			'Exporteer CSV',
+			'Exporteer bestand',
 			'>PDF<',
 			'>Hernoem<',
-			'>Bundel verwijderen<',
+			'>Bundel wissen<',
 			'>Wissen<'
 		])
 			expect(v, label).toContain(label);
@@ -58,8 +58,8 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 			expect(v, gone).not.toContain(gone);
 	});
 
-	it('asks the research question in a field with a placeholder, not from a menu', () => {
-		expect(view()).toMatch(/<Aantekening[^>]*placeholder="Onderzoeksvraag of aantekening"/);
+	it('asks the research question as an empty field under its label, not from a menu', () => {
+		expect(view()).toMatch(/<Aantekening[^>]*\bfield\b/);
 	});
 
 	it('keeps one working line: the place for the view, the order and Alles uitklappen', () => {
@@ -82,7 +82,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		const g = groups();
 		expect(g).toMatch(/<RijActies\b[^>]*>\s*\{#snippet menu\(/);
 		expect(g).not.toMatch(/<IconButton\b|>↑<|>↓<|>×<|class="knoppen"/);
-		for (const label of ['>Omhoog<', '>Omlaag<', 'Haal uit ']) expect(g, label).toContain(label);
+		for (const label of ['>Omhoog<', '>Omlaag<', '>Weghalen<']) expect(g, label).toContain(label);
 		// The way to the reader in the opened row, not in every row at rest.
 		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(g)?.[1] ?? '';
 		expect(aside).not.toMatch(/In de lezer|Bron ↗/);
@@ -93,7 +93,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 		// The judgments under Rechtspraak (groepen); every group's places by one placeRows.
 		const g = groups();
 		expect(g).toContain('rowTitle(');
-		expect(g).toMatch(/\{#each placeRows\(g\.items\) as r/);
+		expect(g).toMatch(/\{#each placeRows\(items\) as r/);
 		expect(bron('lib/map/BundleRow.svelte')).toContain('placeRows(');
 	});
 });
@@ -106,7 +106,7 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 		expect(o).toMatch(/class="blad__kop"[\s\S]*?class="blad__titel">Bundels</);
 		expect(o).toContain('Nieuwe bundel');
 		expect(o).toMatch(/<TekstMenu\b[^>]*tekst="Meer"/);
-		for (const label of ['Bestand openen', 'Alle bundels downloaden']) expect(o).toContain(label);
+		for (const label of ['Bestand openen', 'Exporteer alle bundels']) expect(o).toContain(label);
 		// Gone: every bundel in full, the facet column, the words of before.
 		for (const gone of [
 			'<MapView {m}',
@@ -127,12 +127,12 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 	});
 
 	it('keeps no hidden bundel where Bewaar keeps (decision 20A, UX-toets A14 #2 and #3)', () => {
-		// Bewaar keeps in Losse markeringen; its menu ticks every bundel that holds the bron.
+		// Bewaar keeps in Mijn markeringen; its menu ticks every bundel that holds the bron.
 		expect(overtreders((t) => /\bkaart\.(?:actief|kies|bewaarIn)\b/.test(t))).toEqual([]);
 		const list = bron('lib/map/BundleChecklist.svelte');
 		expect(list).toMatch(/<Picto naam="tick"/);
 		expect(list).toContain('kaart.toggleIn(');
-		expect(list).toContain('placeholder="Naam"');
+		expect(list).toContain('placeholder="Naam van de bundel"');
 		// Nothing out of every bundel in one click: Bewaard, a row's bookmark and a place's menu
 		// open the bundels with their ticks (UX-toets A14, the coordinator's choice 1).
 		expect(overtreders((t) => /\bkaart\.wissel\(/.test(t))).toEqual([]);
@@ -148,9 +148,9 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 
 	it('asks a new bundel’s name in place, and says Sluiten for a broken link as for a file', () => {
 		const o = overview();
-		expect(o).toContain('placeholder="Naam"');
+		expect(o).toContain('placeholder="Naam van de bundel"');
 		expect(o).not.toMatch(/Link onvolledig of beschadigd<\/span>\s*<TekstLink[^>]*>Niet bewaren/);
-		expect(o.match(/>Sluiten</g)).toHaveLength(2);
+		expect(o.match(/label="Sluiten"/g)).toHaveLength(2);
 	});
 
 	it('shows a bundel from a file as a row, marked, with Bewaar and its ⋯', () => {
@@ -169,7 +169,7 @@ describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)
 			/<MapView\b[^>]*(\{shared\}|shared=)/
 		);
 		const v = bron('lib/map/MapView.svelte');
-		expect(v).toMatch(/>Bewaar<\/button/);
+		expect(v).toMatch(/>Bewaar als kopie<\/button/);
 		for (const label of ['Toevoegen aan …', 'Niet bewaren']) expect(v).toContain(label);
 	});
 

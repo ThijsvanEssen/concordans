@@ -10,8 +10,6 @@
 		sleutel,
 		open,
 		controls,
-		label,
-		quiet = false,
 		children
 	}: {
 		sleutel: string;
@@ -19,10 +17,6 @@
 		open: boolean;
 		/** The id of what it opens. */
 		controls?: string;
-		/** For a screen reader, where the words are not the heading's (a count). */
-		label?: string;
-		/** The quiet form beside a name: a count in the letter of a control. */
-		quiet?: boolean;
 		children: Snippet;
 	} = $props();
 </script>
@@ -30,10 +24,8 @@
 <button
 	type="button"
 	class="fold-knop raakvlak"
-	class:quiet
 	aria-expanded={open}
 	aria-controls={open ? controls : undefined}
-	aria-label={label}
 	onclick={() => zetOpen(sleutel, !open)}>{@render children()}<Caret {open} side /></button
 >
 
@@ -51,18 +43,25 @@
 		cursor: pointer;
 		text-align: left;
 	}
+	/* On a touch screen its target (.raakvlak) reaches past the heading: over the row under it,
+	   not under it. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.fold-knop {
+			z-index: 1;
+		}
+	}
 	.fold-knop:hover {
 		color: var(--ink);
 		text-decoration-line: underline;
-		text-underline-offset: 3px;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: var(--onderstreping);
 	}
-	.fold-knop.quiet {
-		gap: 0;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-3);
+	/* The caret stands a gap (--s-2) after the count, level with the line, whole on hover. */
+	.fold-knop :global(.caret) {
+		align-self: center;
+		margin-left: 0;
 	}
-	.fold-knop.quiet:hover {
-		text-decoration-line: none;
+	.fold-knop:hover :global(.caret) {
+		opacity: 1;
 	}
 </style>

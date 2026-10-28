@@ -2,7 +2,6 @@
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened. What it asks and what the list makes
 	// of the answers is the session (session.svelte.ts); this draws it.
-	import { notHeld } from '$lib/text/coverage';
 	import { QUERY_MAX_LENGTH } from '$lib/api/search';
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
@@ -17,7 +16,7 @@
 	import type { BronRef } from '$lib/bron/ref';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
-	import { searchedLine } from '$lib/text/coverage';
+	import { notHeld, searchedLine } from '$lib/text/coverage';
 	import { conceptOf, resultsHref } from './results';
 	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
@@ -29,6 +28,7 @@
 
 	let {
 		overlay = false,
+		dropdown = false,
 		picker = false,
 		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
@@ -45,6 +45,8 @@
 		initial?: string;
 		/** Inside the overlay the field takes focus and the list scrolls within the dialog. */
 		overlay?: boolean;
+		/** The list lies over the page under the field, as a menu, and moves nothing (the start page). */
+		dropdown?: boolean;
 		/** A field that picks one bron (Bron toevoegen): no period and no line of what is searched. */
 		picker?: boolean;
 		placeholder?: string;
@@ -137,7 +139,12 @@
 
 <svelte:window onpointermove={(e) => (pointerAt = placeOf(e))} />
 
-<div class="search" class:search--overlay={overlay} class:search--picker={picker}>
+<div
+	class="search"
+	class:search--overlay={overlay}
+	class:search--picker={picker}
+	class:search--dropdown={dropdown}
+>
 	<div class="field">
 		{#if search.spinning}
 			<span class="spinner" aria-hidden="true"></span>
@@ -208,8 +215,8 @@
 		{/if}
 		{#if search.outsideLaw}
 			<p class="state stil" role="status">
-				"{search.q}" staat niet in Concordans.
-				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
+				{notHeld(`"${search.q}"`)}.
+				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="external noopener"
 					>wetten.overheid.nl</a
 				>
 			</p>
@@ -500,6 +507,12 @@
 		border-radius: var(--r-1);
 		flex-shrink: 0;
 	}
+	/* No keyboard to name on a touch screen or a phone. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.kbd {
+			display: none;
+		}
+	}
 
 	.spinner {
 		width: 16px;
@@ -528,6 +541,24 @@
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
+	}
+
+	/* A menu under the field: over what stands below it, which keeps its place. */
+	.search--dropdown {
+		position: relative;
+	}
+	.search--dropdown .list--filled {
+		position: absolute;
+		top: calc(100% + var(--s-1));
+		left: 0;
+		right: 0;
+		z-index: var(--z-float);
+		max-height: min(70vh, 560px);
+		overflow-y: auto;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		background: var(--paper);
+		box-shadow: var(--shadow-pop);
 	}
 
 	.group + .group,
@@ -649,7 +680,7 @@
 	}
 
 	.row-expired {
-		color: var(--uitkomst-nee);
+		color: var(--ink-3);
 	}
 	/* A picker marks the words found with the wash, as the text of a bron does. */
 	.search--picker .row-snippet mark {

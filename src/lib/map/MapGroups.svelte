@@ -4,11 +4,12 @@
 	// reader's own order; each item a row of Bladeren on one line of citation. A click on a
 	// row opens what it keeps in place (MapInhoud); the reader is a step further, from there.
 	// What else a row or a group's head does is in its ⋯ (RijActies, as Bladeren's rows):
-	// Aantekening, Omhoog and Omlaag, Haal uit bundel; a law the regulations based on it. The
+	// Aantekening, Omhoog and Omlaag, Weghalen; a law the regulations based on it. The
 	// reader's notes, an item's and a group's, in the one form (Aantekening). A shared bundel
 	// (a link, a file) is read only: no notes to change, no order, nothing to take out.
 	import type { SvelteSet } from 'svelte/reactivity';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -95,6 +96,7 @@
 				<Aantekening
 					tekst={i.notitie}
 					bij={i.kort}
+					bundel={map?.naam}
 					bind:open={() => noteOpen === key, (v) => (noteOpen = v ? key : null)}
 					onBewaar={map ? (t) => kaart.notitie(i, t, map.id) : undefined}
 				/>
@@ -140,10 +142,11 @@
 							type="button"
 							role="menuitem"
 							class="tekstmenu__item"
+							aria-label="{cite.title} uit de bundel weghalen"
 							onclick={() => {
 								close();
 								kaart.weg(i, m.id);
-							}}>Haal uit bundel</button
+							}}>Weghalen</button
 						>
 					{/snippet}
 				</RijActies>
@@ -152,7 +155,9 @@
 		{#snippet detail()}
 			{#if external}
 				{#if i.url}<p class="adres">
-						<TekstLink href={i.url} target="_blank" rel="noopener noreferrer">Bron ↗</TekstLink>
+						<TekstLink href={i.url} target="_blank" rel="external noopener noreferrer"
+							>Bron</TekstLink
+						>
 					</p>{/if}
 			{:else}
 				{#if fresh?.isNew(i)}<FreshList
@@ -166,6 +171,15 @@
 	</IndexRow>
 {/snippet}
 
+{#snippet itemRows(items: MapItem[])}
+	<ul class="rijen">
+		{#each placeRows(items) as r (itemKey(r.head))}
+			{@render row(r.head, false, r.kept)}
+			{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
+		{/each}
+	</ul>
+{/snippet}
+
 {#each groups as g (g.sleutel)}
 	{@const note = notes[g.sleutel]}
 	{#if g.groep}
@@ -173,96 +187,86 @@
 		{@const lawOpen = !!law && open.has(`law:${g.sleutel}`)}
 		{@const groupLines = fresh?.group(g.sleutel) ?? []}
 		{@const linesOpen = groupLines.length > 0 && open.has(`new:${g.sleutel}`)}
-		<div class="groep-kop" id={groupAnchor(g.sleutel)}>
-			<h3 class="groep">
-				{g.groep}{#if groupLines.length}<button
-						type="button"
-						class="nieuw-knop raakvlak"
-						aria-expanded={linesOpen}
-						aria-label="Nieuw in {g.groep}"
-						onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
-					>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
-			</h3>
-			{#if law || (map && !note)}
-				<RijActies naam={g.groep}>
-					{#snippet menu(close)}
-						{#if law}
-							<button
-								type="button"
-								role="menuitemcheckbox"
-								class="tekstmenu__item"
-								aria-checked={lawOpen}
-								onclick={() => {
-									close();
-									toggle(`law:${g.sleutel}`);
-								}}>Regelingen gebaseerd op</button
+		<div class="groep">
+			<Sectie title={g.groep} niveau={3} inklapbaar={false} id={groupAnchor(g.sleutel)}>
+				{#snippet mark()}
+					{#if groupLines.length}<button
+							type="button"
+							class="nieuw-knop raakvlak"
+							aria-expanded={linesOpen}
+							aria-label="Nieuw in {g.groep}"
+							onclick={() => toggle(`new:${g.sleutel}`)}><NewMark /></button
+						>{:else if fresh && g.items.some((i) => fresh.isNew(i))}<NewMark />{/if}
+				{/snippet}
+				{#snippet naast()}
+					{#if law || (map && !note)}
+						<RijActies naam={g.groep}>
+							{#snippet menu(close)}
+								{#if law}
+									<button
+										type="button"
+										role="menuitemcheckbox"
+										class="tekstmenu__item"
+										aria-checked={lawOpen}
+										onclick={() => {
+											close();
+											toggle(`law:${g.sleutel}`);
+										}}>Regelingen gebaseerd op</button
+									>
+								{/if}
+								{#if map && !note}
+									<button
+										type="button"
+										role="menuitem"
+										class="tekstmenu__item"
+										onclick={() => {
+											close();
+											groupNoteOpen = g.sleutel;
+										}}>Aantekening</button
+									>
+								{/if}
+							{/snippet}
+						</RijActies>
+					{/if}
+				{/snippet}
+				{#if linesOpen && fresh}
+					<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
+				{/if}
+				{#if law && lawOpen}
+					<div class="wet-open">
+						<MapRegelingen laad={() => onderWet(law)} />
+						<p class="verder">
+							<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(law)}`)}
+								>Wet in de lezer</TekstLink
 							>
-						{/if}
-						{#if map && !note}
-							<button
-								type="button"
-								role="menuitem"
-								class="tekstmenu__item"
-								onclick={() => {
-									close();
-									groupNoteOpen = g.sleutel;
-								}}>Aantekening</button
-							>
-						{/if}
-					{/snippet}
-				</RijActies>
-			{/if}
+						</p>
+					</div>
+				{/if}
+				<Aantekening
+					tekst={note}
+					bij={g.groep}
+					bundel={map?.naam}
+					bind:open={
+						() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)
+					}
+					onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
+				/>
+				{@render itemRows(g.items)}
+			</Sectie>
 		</div>
-		{#if linesOpen && fresh}
-			<div class="wet-open"><FreshList since={fresh.since} lines={groupLines} /></div>
-		{/if}
-		{#if law && lawOpen}
-			<div class="wet-open">
-				<MapRegelingen laad={() => onderWet(law)} />
-				<p class="verder">
-					<TekstLink href={buildBronHref(null, `instruments/${lawNodeKey(law)}`)}
-						>Wet in de lezer</TekstLink
-					>
-				</p>
-			</div>
-		{/if}
-		<Aantekening
-			tekst={note}
-			bij={g.groep}
-			bind:open={() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)}
-			onBewaar={map ? (t) => kaart.groepNotitie(g.sleutel, t, map.id) : undefined}
-		/>
+	{:else}
+		{@render itemRows(g.items)}
 	{/if}
-	<ul class="rijen">
-		{#each placeRows(g.items) as r (itemKey(r.head))}
-			{@render row(r.head, false, r.kept)}
-			{#each r.places as p (itemKey(p))}{@render row(p, true)}{/each}
-		{/each}
-	</ul>
 {/each}
 
 <style>
-	/* A law, dossier or Rechtspraak over its rows, as a day over Actueel's; its ⋯ at the right. */
-	.groep-kop {
-		/* A jump from the column of groups lands under the sticky bar. */
-		scroll-margin-top: calc(var(--topbar-h) + var(--s-4));
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--s-2);
-		margin: var(--s-3) 0 0;
-		border-bottom: 1px solid var(--rule-strong);
-	}
+	/* One group follows another at the step of a section's groups. */
 	.groep {
-		margin: 0;
-		padding: var(--s-1) 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
+		margin-top: var(--s-3);
 	}
 	/* The ⋯ of a group's head shows on its hover and focus, as a row's on the row's. */
-	.groep-kop:hover :global(.rij-knop),
-	.groep-kop:focus-within :global(.rij-knop) {
+	.groep :global(.kop:hover .rij-knop),
+	.groep :global(.kop:focus-within .rij-knop) {
 		opacity: 1;
 	}
 	/* The mark of a group with something new opens what came in, in place. */
@@ -331,17 +335,17 @@
 	   with what follows; the ⋯ and the hover's grey left out; the address of a source
 	   outside it. */
 	@media print {
-		.groep-kop {
+		.groep :global(.kop) {
 			break-after: avoid;
 		}
-		.groep-kop :global(.rij-acties) {
+		.groep :global(.kop .rij-acties) {
 			display: none;
 		}
 		.rijen :global(.row-wrap) {
 			break-inside: avoid;
 		}
 		.rijen :global(.row) {
-			grid-template-columns: var(--row-lead) minmax(0, 1fr);
+			grid-template-columns: var(--voorkolom) minmax(0, 1fr);
 			background: none;
 		}
 		.rijen :global(.row-aside) {

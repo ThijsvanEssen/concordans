@@ -20,18 +20,22 @@ test('a lid names the office, the fractie and the record', async ({ page }) => {
 		page.getByRole('navigation', { name: 'Behoort bij' }).getByRole('link', { name: /^D66/ })
 	).toHaveAttribute('href', /\/fracties\//);
 	const career = page.getByRole('button', { name: 'Loopbaan' });
-	await career.click();
 	await expect(career).toHaveAttribute('aria-expanded', 'true');
+	await career.click();
+	await expect(career).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('a fractie gives its seats, its chair and its leden', async ({ page }) => {
 	await page.goto('/fracties/d66');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('D66');
 	await expect(page.getByText(/^26\s+zetels, fractie sinds/)).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Jan Paternotte', exact: true })).toBeVisible();
+	await expect(
+		page.getByRole('link', { name: 'Jan Paternotte', exact: true }).first()
+	).toBeVisible();
 	const leden = page.getByRole('button', { name: /^Leden( \d+)?$/ });
-	await leden.click();
 	await expect(leden).toHaveAttribute('aria-expanded', 'true');
+	await leden.click();
+	await expect(leden).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('a cabinet names its coalition and shows its seats in both Kamers', async ({ page }) => {
@@ -84,4 +88,18 @@ test('the votes of a bewindspersoon split where the API filters in_office=false'
 	await page.goto('/leden/rob-jetten');
 	await expect(page.getByRole('heading', { name: /^Als bewindspersoon/ })).toBeVisible();
 	await expect(page.getByRole('heading', { name: /^Als Kamerlid/ })).toBeVisible();
+});
+
+test('on a lid the date column is one for Loopbaan and Toezeggingen', async ({ page }) => {
+	await page.goto('/leden/rob-jetten');
+	const kolom = async (naam: string) => {
+		const sectie = page.locator('section', { has: page.getByRole('button', { name: naam }) });
+		return sectie.locator('.datum').first().boundingBox();
+	};
+	const loopbaan = await kolom('Loopbaan');
+	const toezeggingen = await kolom('Toezeggingen');
+	expect(loopbaan).not.toBeNull();
+	expect(toezeggingen).not.toBeNull();
+	expect(toezeggingen!.x).toBeCloseTo(loopbaan!.x, 0);
+	expect(toezeggingen!.width).toBeCloseTo(loopbaan!.width, 0);
 });

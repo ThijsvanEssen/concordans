@@ -130,8 +130,8 @@
 					class="ac__basis"
 					href={basis.url}
 					target="_blank"
-					rel="noopener noreferrer"
-					title={basis.id ?? undefined}>Transponeringstabel ↗</a
+					rel="external noopener noreferrer"
+					title={basis.id ?? undefined}>Transponeringstabel</a
 				>
 			{:else}
 				<span class="ac__basis">Transponeringstabel</span>

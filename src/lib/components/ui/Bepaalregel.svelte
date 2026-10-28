@@ -7,6 +7,7 @@
 	import type { Option } from './option';
 	import Periode from './Periode.svelte';
 	import Keuze from './Keuze.svelte';
+	import Tekstveld from './Tekstveld.svelte';
 
 	let {
 		zoek = null,
@@ -47,10 +48,10 @@
 					if (zoek.knop && !zoek.knop.disabled) zoek.knop.onSubmit();
 				}}
 			>
-				<input
+				<Tekstveld
 					id="{uid}-zoek"
 					type={zoek.knop ? 'text' : 'search'}
-					aria-label={zoek.naam}
+					label={zoek.naam}
 					placeholder={zoek.placeholder}
 					value={zoek.waarde}
 					oninput={(e) => zoek.onInput(e.currentTarget.value)}
@@ -121,33 +122,6 @@
 		display: flex;
 		gap: var(--s-2);
 		margin: 0;
-	}
-	input {
-		box-sizing: border-box;
-		flex: 1;
-		min-width: 0;
-		width: 100%;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-	}
-	input::placeholder {
-		color: var(--ink-3);
-	}
-	input:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 1px;
-	}
-	/* A finger's 44 px: a field has no target outside its box. */
-	@media (pointer: coarse), (max-width: 768px) {
-		input {
-			height: var(--veld-h-raak);
-		}
 	}
 	@media (max-width: 768px) {
 		.vak {

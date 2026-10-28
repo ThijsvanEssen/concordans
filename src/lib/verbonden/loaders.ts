@@ -4,8 +4,9 @@
 import { formatCount } from '$lib/text/getal';
 import { isBill, motionOrAmendment } from '$lib/text/document-kind';
 import { NL } from '$lib/text/collator';
-import { capitalize, plural, textOf } from '$lib/text/words';
+import { plural, textOf } from '$lib/text/words';
 import { citationRecord } from '$lib/text/citation-record';
+import { stuksoortOf } from '$lib/bron/rubrieken';
 import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { ifExists, report } from '$lib/api/errors';
 import { geteld } from '$lib/api/decisions';
@@ -23,6 +24,7 @@ import { naastHetStuk, stukkenInDezelfdeZaak } from './zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { rowsOfCitedBy } from './cited-by';
+import { isStrafGroep } from './cited-outcome';
 import { CITED_BY_PAGE, LAW_JUDGMENTS } from '$lib/api/first-pages';
 import { getArticleDetail, getDelegated, getLawBasis, getLawDelegated } from '$lib/api/articles';
 import {
@@ -65,7 +67,7 @@ import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, lidAnchor, parseAnchor } from '$lib/text/anchor';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { aardOf, historyRow, uniqueRows, rowOfNeighbor, unresolvedRows, type Row } from './rows';
-import { describeBron } from '$lib/bron/describe';
+import { describeBron, describeBronShort } from '$lib/bron/describe';
 import { activityLine, rolesLine, citedLine } from './lines';
 import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
@@ -198,7 +200,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 			const props = { ecli: j.ecli };
 			return {
 				ref: { collection: 'judgments' as const, key: j.key },
-				...describeBron('judgments', j.key, j.display_name, props, j.cite),
+				...describeBronShort('judgments', j.key, j.display_name, props, j.cite),
 				filterGroup: filterGroupOf('judgments', j.key, props, 'REFERS_TO'),
 				relation: 'REFERS_TO' as const,
 				direction: 'inbound' as const,
@@ -283,6 +285,32 @@ const RELATED_MAX = 500;
 
 /** The laws of a dossier whose own verbindingen are read for the international group. */
 const MAX_LAWS = 3;
+
+/**
+ * The European and international instruments of the first `upto` laws of a dossier, and the
+ * next `MAX_LAWS` laws by "Volgende" where there are more: no law is left unread silently.
+ * Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
+ */
+async function internationalOfLaws(
+	laws: readonly { ref: { key: string } }[],
+	signal: AbortSignal,
+	upto: number
+): Promise<Loaded> {
+	const found = await Promise.all(
+		laws
+			.slice(0, upto)
+			.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], signal))
+	);
+	const rows = new Map<string, Row>();
+	for (const neighbors of found) {
+		const group = buildGroups('instruments', neighbors).find((g) => g.id === 'international');
+		for (const row of group?.rows ?? []) rows.set(row.ref.key, { ...row, relation: undefined });
+	}
+	return {
+		rows: [...rows.values()],
+		page: laws.length > upto ? () => internationalOfLaws(laws, signal, upto + MAX_LAWS) : undefined
+	};
+}
 
 /** The laws a member or a fractie has worked on, with the number of their documents. */
 async function touched(
@@ -581,9 +609,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'dossier-committees': async (ctx) => ({
 		rows: (await hubOf(ctx)).committees
 	}),
-	'dossier-documents-tk': async (ctx) => ({
-		rows: (await hubOf(ctx)).tweedeKamer
-	}),
+	'dossier-documents-tk': async (ctx) => {
+		const hub = await hubOf(ctx);
+		return { rows: hub.tweedeKamer, total: hub.tkTotal };
+	},
 	'dossier-documents-ek': async (ctx) => ({
 		rows: (await hubOf(ctx)).eersteKamer
 	}),
@@ -624,20 +653,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// those of its laws, read from the node of each law.
 	'dossier-international': async (ctx) => {
 		const { laws } = await hubOf(ctx);
-		// Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
 		// A law the dataset lacks (`missing`: named in the title, not loaded) has no node to ask.
-		const found = await Promise.all(
-			laws
-				.filter((law) => !law.missing)
-				.slice(0, MAX_LAWS)
-				.map((law) => getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal))
+		return internationalOfLaws(
+			laws.filter((law) => !law.missing),
+			ctx.signal,
+			MAX_LAWS
 		);
-		const rows = new Map<string, Row>();
-		for (const neighbors of found) {
-			const group = buildGroups('instruments', neighbors).find((g) => g.id === 'international');
-			for (const row of group?.rows ?? []) rows.set(row.ref.key, { ...row, relation: undefined });
-		}
-		return { rows: [...rows.values()] };
 	},
 
 	'article-explanatory': async ({ node }) => {
@@ -708,9 +729,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						}
 					}
 				: undefined;
+		const straf = isStrafGroep(options.area, data.facets?.subject_area, data.judgment_total);
 		// One row per judgment; each overweging that cites the article is a mention.
 		const loaded = (items: typeof data.items): Loaded => ({
-			rows: rowsOfCitedBy(items, options.order === 'cited'),
+			rows: rowsOfCitedBy(items, options.order === 'cited', straf),
 			total: data.judgment_total,
 			mentions: data.total,
 			judgmentsOf,
@@ -858,20 +880,18 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const law = lawId ? names.get(lawId) : null;
 				const number = textOf(n.props.article_number) || key.slice(key.indexOf('_') + 1);
 				row.ref = { collection: 'articles', key };
-				// As the API names an article: `Art. 3 Regeling …`, from its citation record.
+				// As the API names an article: `Artikel 3 Regeling …`, from its citation record.
 				const title = lawName(law, '');
 				row.title =
 					real?.display_name ??
 					(title
-						? capitalize(
-								citationRecord({
-									kind: 'article',
-									bwbId: lawId,
-									articleNumber: number,
-									shortTitle: law?.shortTitle ?? null,
-									citationTitle: title
-								}).short
-							)
+						? citationRecord({
+								kind: 'article',
+								bwbId: lawId,
+								articleNumber: number,
+								shortTitle: law?.shortTitle ?? null,
+								citationTitle: title
+							}).heading
 						: (articleName(lawId, number) ?? number));
 				row.derived = false;
 			}
@@ -1079,6 +1099,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 							}
 						: {}),
 					filterGroup: filterGroupOf('documents', p.key, props, 'AMENDS'),
+					stuksoort: stuksoortOf(props, 'AMENDS'),
 					relation: 'AMENDS' as const,
 					direction: 'inbound' as const,
 					props
@@ -1116,6 +1137,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			ref: { collection: 'documents', key: p.key },
 			...describeBron('documents', p.key, p.title ?? null, props),
 			filterGroup: filterGroupOf('documents', p.key, props, 'ABOUT'),
+			stuksoort: stuksoortOf(props, 'ABOUT'),
 			relation: 'ABOUT',
 			direction: 'outbound',
 			props
@@ -1188,7 +1210,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			signal
 		);
 		return {
-			total: found.total,
+			total: found.total ?? undefined,
 			rows: found.items.map((i) => {
 				const props = { citation_title: i.citation_title, title: i.title, kind: i.kind };
 				return {
@@ -1328,7 +1350,7 @@ async function euLinks(
 			const j = link.judgment;
 			add({
 				ref: { collection: 'judgments', key: j.key },
-				...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
+				...describeBronShort('judgments', j.key, j.display_name, { ...j }, j.cite),
 				filterGroup: 'internationaal',
 				derived: isDerived(link.confidence)
 			});

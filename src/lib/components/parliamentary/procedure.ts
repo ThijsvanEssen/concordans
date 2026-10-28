@@ -400,7 +400,13 @@ export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean |
  */
 const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => BILL_KINDS.has(d.kind ?? '');
 
-export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
+/**
+ * `afgekapt`: the API gave as many entries as were asked, so the oldest are not in the list
+ * (36600-VII: the advice of 9 Sep 2024 is older than the 200 newest). What the list does not
+ * hold is then no absence: a group with no entry says nothing of the advice but what the phases
+ * of the dossier say, which are whole.
+ */
+export function procedure(d: Detail, entries: Entry[], metOverig: boolean, afgekapt = false) {
 	const st = stand(d);
 	const procedureEntries = entries.filter((e) => metOverig || isProcedure(e));
 	const overig = entries.filter((e) => !isProcedure(e));
@@ -413,7 +419,16 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const state = st?.bodies.map((b) => b.state) ?? (wetsvoorstel ? ['open', 'now', 'open'] : []);
 
 	const rvs = regelsVan(per.get('rvs') ?? [], 'rvs', d.number, inhoud);
-	if (rvs.length || wetsvoorstel)
+	const advies = d.phases?.find((p) => p.name === 'Advies Raad van State');
+	if (afgekapt && !rvs.length && wetsvoorstel && advies?.done)
+		rvs.push({
+			id: 'rvs-fase',
+			datum: advies.date ?? null,
+			teken: 'activiteit',
+			soort: 'activities',
+			zin: 'Advies uitgebracht'
+		});
+	if (rvs.length || (wetsvoorstel && !afgekapt))
 		groepen.push({
 			id: 'rvs',
 			titel: 'Raad van State',

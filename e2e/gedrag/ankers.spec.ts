@@ -5,6 +5,7 @@ import type { Page } from '@playwright/test';
 import paragraphs from '../../src/lib/fixtures/paper-paragraphs-api.json' with { type: 'json' };
 import { patchApi } from '../support/api';
 import { expect, test } from '../support/test';
+import { catchClipboard } from '../support/bundels';
 
 /** The place `id` is on screen and marked as the one landed on. */
 async function landed(page: Page, id: string) {
@@ -59,11 +60,12 @@ test('#p- opens a Kamerstuk at the alinea, by the number the API gives it', asyn
 	).toBeVisible();
 });
 
-test('the link a lid menu gives out opens at that lid', async ({ page }) => {
+test('the link a lid menu gives out opens at that lid', async ({ page, context }) => {
+	const copied = await catchClipboard(context);
 	await page.goto('/wetten/BWBR0005289/artikel/6:162');
 	await page.getByRole('button', { name: 'art. 6:162 lid 3 BW: citeren, bewaren' }).click();
-	const link = page.getByRole('menu').getByRole('menuitem', { name: / link$/ });
-	const href = (await link.textContent())!.replace(/\s*link$/, '').trim();
+	await page.getByRole('menu').getByRole('menuitem', { name: 'Link naar dit lid' }).click();
+	const href = (await copied(page))!;
 	expect(href).toMatch(/#lid-3$/);
 	await page.goto(new URL(href).pathname + new URL(href).search + new URL(href).hash);
 	await landed(page, 'lid-3');

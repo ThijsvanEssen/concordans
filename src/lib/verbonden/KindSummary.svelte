@@ -8,22 +8,26 @@
 	import { openHref, refId } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
-	import { PREVIEW_ROWS } from './view';
+	import { NEXT_ROWS, PREVIEW_ROWS } from './view';
 	import { ankerVanRij, caseNumberOf, isNested, repeatedTitles, rowKey, type Row } from './rows';
 	import { shortLine, type Kind } from './summary';
 	import type { TierCount } from './tiers';
 	import VerbondenRow from './VerbondenRow.svelte';
 	import TierBar from './TierBar.svelte';
+	import TierSwatch from './TierSwatch.svelte';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { shapeOfTier } from './tiers';
+	import { vormVanBron } from '$lib/bron/vormen';
 
 	let {
 		kinds,
 		selection,
 		tiers = null,
 		tiersPending = false,
+		tiersCounted = null,
 		open = new Set<string>(),
 		kindTools,
 		hasMore = () => false,
@@ -32,7 +36,8 @@
 		onRetry,
 		onProposedText,
 		onAddToNetwerk,
-		inNetwerk
+		inNetwerk,
+		telt = true
 	}: {
 		kinds: Kind[];
 		selection: GraphNode;
@@ -40,6 +45,8 @@
 		tiers?: TierCount[] | null;
 		/** The bar is asked and not in: its room stands, so the soorten under it do not move. */
 		tiersPending?: boolean;
+		/** The strook counts `geteld` of the `van` judgments: the rows that are in. */
+		tiersCounted?: { counted: number; of: number } | null;
 		/** "Alle N": the soort with its groups. */
 		/** The soorten opened in place with all their rows. */
 		open?: Set<string>;
@@ -55,14 +62,46 @@
 		onProposedText?: (row: Row) => void;
 		onAddToNetwerk?: (row: Row) => void;
 		inNetwerk?: (row: Row) => boolean;
+		/** Every group in: a heading counts only then, its place kept until (F5). */
+		telt?: boolean;
 	} = $props();
 
+	const lists: Record<string, HTMLUListElement | null> = $state({});
 	/** The row opened in place: one at a time. */
 	let opened = $state<string | null>(null);
+	// Keyed on the id, not the object: a node that comes again as the same bron resets nothing.
+	const selectionId = $derived(selection.id);
 	$effect(() => {
-		void selection.id;
+		void selectionId;
 		opened = null;
+		cap = {};
 	});
+	/**
+	 * How many rows an opened soort shows once "Volgende" is used: `NEXT_ROWS` more a click,
+	 * whatever a page of the API brings, so the N in the words is what the click adds. Before
+	 * the first click the soort shows every row that is in.
+	 */
+	let cap = $state<Record<string, number>>({});
+	const shownRows = (k: Kind) =>
+		open.has(k.id) && cap[k.id] != null ? k.rows.slice(0, cap[k.id]) : k.rows;
+	const hidden = (k: Kind) => (cap[k.id] != null ? Math.max(0, k.rows.length - cap[k.id]) : 0);
+	const more = (k: Kind) => open.has(k.id) && (hasMore(k.id) || hidden(k) > 0);
+	const next = (k: Kind) => {
+		cap[k.id] = (cap[k.id] ?? k.rows.length) + NEXT_ROWS;
+		if (k.rows.length < cap[k.id]) onMore?.(k.id);
+	};
+	$effect(() => {
+		for (const k of kinds) {
+			if (!open.has(k.id)) delete cap[k.id];
+			// A page that brought fewer than asked: the next one, until the click is met.
+			else if (cap[k.id] != null && k.rows.length < cap[k.id] && hasMore(k.id)) onMore?.(k.id);
+		}
+	});
+	/** The vlak of the instantie of a judgment's row; none for another bron. */
+	const tierShapeOf = (row: Row) =>
+		row.ref.collection === 'judgments' && typeof row.props?.tier === 'string'
+			? shapeOfTier(row.props.tier)
+			: null;
 	const toggle = (row: Row) => (opened = opened === rowKey(row) ? null : rowKey(row));
 
 	/**
@@ -85,10 +124,10 @@
 	{@const repeated = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
-			<span>{k.label}</span><span class="kind__count">{formatCount(countOf(k))}</span>
+			<span>{k.label}</span><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
-			<TierBar parts={tiers} pending={tiersPending} />
+			<TierBar parts={tiers} pending={tiersPending} counted={tiersCounted} />
 		{/if}
 		{#if k.failed && k.rows.length === 0}
 			<LoadState
@@ -99,8 +138,8 @@
 			/>
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
-		<ul class="kind__rows">
-			{#each open.has(k.id) ? k.rows : k.rows
+		<ul class="kind__rows" bind:this={lists[k.id]}>
+			{#each open.has(k.id) ? shownRows(k) : k.rows
 						.filter((r) => !isNested(r))
 						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 				{#if opened === rowKey(row)}
@@ -120,17 +159,43 @@
 						</ul>
 					</li>
 				{:else}
+					{@const shape = tierShapeOf(row)}
+					{@const line = shortLine(row)}
 					<li class="kind__row" class:kind__onder={isNested(row)}>
-						<a
-							class="kind__title"
-							href={openHref(row.ref, { at: ankerVanRij(row) })}
-							aria-expanded="false"
-							onclick={(e) => terPlekke(e, () => toggle(row))}
-							>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
-									row
-								)}{/if}</a
-						>
-						{#if shortLine(row)}<span class="kind__line">{shortLine(row)}</span>{/if}
+						<div class="kind__kop">
+							<span class="kind__vlak"
+								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
+										vorm={row.stuksoort === 'wetsvoorstellen'
+											? 'voorstel'
+											: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
+										size={11}
+									/>{/if}</span
+							>
+							<a
+								class="kind__title"
+								title={typeof row.props?.instrument_citation_title === 'string' &&
+								row.ref.collection === 'articles'
+									? row.props.instrument_citation_title
+									: undefined}
+								href={openHref(row.ref, { at: ankerVanRij(row) })}
+								aria-expanded="false"
+								onclick={(e) => terPlekke(e, () => toggle(row))}
+								>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
+										row
+									)}{/if}</a
+							>
+						</div>
+						{#if row.uitkomst}
+							<!-- How the judgment ended, or that the data does not say: never left out. -->
+							<span class="kind__line kind__line--vlak"
+								><span
+									class="kind__uitkomst kind__uitkomst--{row.uitkomst.vastgesteld
+										? 'bekend'
+										: 'onbekend'}"
+									title={row.uitkomst.title ?? undefined}>{row.uitkomst.text}</span
+								>{#if line}, {line}{/if}</span
+							>
+						{:else if line}<span class="kind__line kind__line--vlak">{line}</span>{/if}
 					</li>
 				{/if}
 			{:else}
@@ -141,12 +206,22 @@
 				{/each}
 			{/each}
 		</ul>
-		<!-- Opened, the rows come a page at a time: how many of how many stand, and the next
-		     page one click further, never the whole at once (T11). -->
-		{#if open.has(k.id) && hasMore(k.id)}
+		<!-- Opened, the rows come a page at a time: the next page one click further, with how
+		     many still wait, never the whole at once (T11). -->
+		{#if more(k)}
+			{@const shown = shownRows(k).length}
 			<p class="kind__all kind__vervolg">
-				<span class="kind__stand">{formatCount(k.rows.length)} van {formatCount(k.count)}</span>
-				<TekstLink onclick={() => onMore?.(k.id)}>Meer laden</TekstLink>
+				<AlleN
+					volgende
+					noun={k.noun}
+					stap={NEXT_ROWS}
+					rest={Math.max(k.count, k.rows.length) > shown
+						? Math.max(k.count, k.rows.length) - shown
+						: null}
+					loaded={shown}
+					list={lists[k.id]}
+					onclick={() => next(k)}
+				/>
 			</p>
 		{/if}
 		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
@@ -186,9 +261,6 @@
 		gap: var(--s-4);
 		align-items: baseline;
 	}
-	.kind__stand {
-		color: var(--ink-3);
-	}
 	.kind__count {
 		font-weight: 400;
 		color: var(--ink-3);
@@ -208,12 +280,27 @@
 	.kind__open:first-child {
 		border-top: 0;
 	}
+	/* The row opens on the line its title stood on: the row has the padding of the closed one. */
 	.kind__open {
 		margin: 0 calc(-1 * var(--s-4));
+		padding-block: 0;
 	}
 	/* A regulation issued under the one above it. */
 	.kind__onder {
 		padding-left: var(--s-4);
+	}
+	.kind__kop {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--s-2);
+	}
+	/* On the first line of the title (24 px). */
+	.kind__vlak {
+		flex: none;
+		margin-top: var(--s-2);
+	}
+	.kind__line--vlak {
+		padding-left: calc(var(--s-3) + var(--s-2));
 	}
 	.kind__title {
 		display: block;
@@ -225,13 +312,16 @@
 	.kind__title:hover,
 	.kind__title:focus-visible {
 		text-decoration: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.kind__line {
 		display: block;
 		font-size: var(--t-micro);
 		line-height: 20px;
 		color: var(--ink-3);
+	}
+	.kind__uitkomst--bekend {
+		color: var(--ink-2);
 	}
 	.kind__all {
 		margin: var(--s-2) 0 0;
@@ -247,10 +337,12 @@
 	.pending--short {
 		width: 45%;
 	}
-	/* A finger's 44 px: a title's place to tap is its line and the one under it. */
+	/* A finger's 44 px: a title is a line of its own that high. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.kind__title {
-			padding-block: var(--s-1);
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 </style>

@@ -1,5 +1,5 @@
 // The bar of filters of a list page (FilterBar, besluit 40): on a wide screen a button per
-// dimension that opens a menu, on a phone Verfijnen that opens a sheet of folds.
+// dimension that opens a menu, on a phone Filter that opens a sheet of folds.
 import type { Locator, Page } from '@playwright/test';
 
 const named = (label: string) => new RegExp(`^${label}(:|$)`);
@@ -25,8 +25,8 @@ export async function openFilter(
 			await fold.click();
 		return (name) => menu.getByRole('menuitemcheckbox', { name });
 	}
-	await page.getByRole('button', { name: /^Verfijnen/ }).click();
-	const sheet = page.getByRole('dialog', { name: 'Verfijnen' });
+	await page.getByRole('button', { name: /^Filter/ }).click();
+	const sheet = page.getByRole('dialog', { name: 'Filter' });
 	const fold = sheet.getByRole('button', { name: button, exact: true });
 	if ((await fold.getAttribute('aria-expanded')) === 'false') await fold.click();
 	return (name) => sheet.locator('.fold-body').getByRole('button', { name });

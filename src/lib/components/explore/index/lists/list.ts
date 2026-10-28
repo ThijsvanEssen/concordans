@@ -17,7 +17,7 @@ export const PAGE = LIST_PAGE;
 /** The first option is the default. With `dir` it is sorted here, else by the API. */
 export type SortDef = { id: string; label: string; dir?: 'asc' | 'desc' };
 
-/** The heads over the three columns of a row, and the width of the aside (the lead's is --row-lead). */
+/** The heads over the three columns of a row, and the width of the aside (the lead's is --voorkolom). */
 export type Columns = { lead: string; body: string; aside: string | string[]; asideW: number };
 
 /** What a request gives: the rows and, where it counts them, the total. */

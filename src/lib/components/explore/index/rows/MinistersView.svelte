@@ -2,7 +2,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import NameLink from '$lib/bron/NameLink.svelte';
-	import { plural } from '$lib/text/words';
+	import { capitalize, plural } from '$lib/text/words';
 	import CabinetOccupancy from '../CabinetOccupancy.svelte';
 	import NaastPosten from '../NaastPosten.svelte';
 	import { OPEN_STATUS, inOffice, period, type Cabinet } from '../government';
@@ -67,7 +67,7 @@
 {:else if shown && occupancy}
 	<!-- One title line; the chart is the list: a block opens its details. -->
 	<h2 class="gov-title">
-		<a href={openHref(`cabinets/${shown.key}`)}>{shown.name}</a>
+		<a href={openHref(`cabinets/${shown.key}`)}>{capitalize(shown.name)}</a>
 	</h2>
 	<!-- "sinds 2026, minister-president Rob Jetten, 28 bewindspersonen": no space before a comma. -->
 	<p class="gov-sub">

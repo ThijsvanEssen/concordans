@@ -7,13 +7,14 @@
 	import NetworkButton from './NetworkButton.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { SOURCES, sourceOf } from '$lib/nav/sources';
+	import { bronRol } from '$lib/nav/bron-rol';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
 	const isHome = $derived($page.url.pathname === '/');
 	// The source a page stands under: the list of Bladeren or the bron read; the network, the
 	// start page and Mijn stand under none.
-	const source = $derived(sourceOf($page.url));
+	const source = $derived(sourceOf($page.url, $bronRol));
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 
 	// Something kept or followed shows a sign at Mijn until the reader has been there (the
@@ -50,6 +51,7 @@
 		{#each SOURCES as s (s.id)}
 			<a
 				href={s.href}
+				title={s.holds}
 				class="nav-link"
 				class:is-active={source?.id === s.id}
 				aria-current={source?.id === s.id ? 'page' : undefined}>{s.label}</a
@@ -87,7 +89,7 @@
 				<span class="kbd">{modKey}K</span>
 			</button>
 		{/if}
-		<NetworkButton />
+		<div class="netwerk-slot"><NetworkButton /></div>
 		<div class="mine-slot"><MineMenu /></div>
 	</div>
 </header>
@@ -97,7 +99,7 @@
 		position: sticky;
 		top: 0;
 		z-index: var(--z-topbar);
-		height: var(--topbar-h);
+		height: var(--balk-h);
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
 		display: flex;
@@ -190,7 +192,7 @@
 	   icon, and the links draw closer. */
 	@media (max-width: 1439px) {
 		.search-trigger {
-			width: 240px;
+			width: var(--zijkolom);
 		}
 		.kbd {
 			display: none;
@@ -215,7 +217,7 @@
 		}
 	}
 
-	/* A phone: the logo and the Netwerk button; Zoeken, Bladeren, Actueel and Mijn are the tab
+	/* A phone: the logo alone; Zoeken, Bronnen, Netwerk, Actueel and Mijn are the tab
 	   bar (TabBalk). */
 	@media (max-width: 768px) {
 		.topbar {
@@ -225,6 +227,7 @@
 		}
 		.topbar-nav,
 		.search-trigger,
+		.netwerk-slot,
 		.mine-slot {
 			display: none;
 		}

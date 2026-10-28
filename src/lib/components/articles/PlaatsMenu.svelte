@@ -19,7 +19,7 @@
 	// The menu of a place in a text (a lid, an onderdeel, a sub), opened from its own marker
 	// ("1.", "a.") or a click on its text (concept 21, variant B; Thijs, 10 Oct: "nummer of lid
 	// of onder-markering als menu"). Nothing stands beside the text at rest. The menu names
-	// the place, then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
+	// the place, Link naar dit lid (its address with its anchor), then the forms to copy, Kopieer tekst, Bewaar, and where the place leads on
 	// (its verbindingen, its history). In the top layer by its marker, with the keys of a menu:
 	// Escape gives the focus back to the marker, a click outside closes it.
 	// Words selected in the text open the same menu (O4, besluit 24), by the words: the place
@@ -32,12 +32,13 @@
 	import { kaart } from '$lib/map/map.svelte';
 	import type { MapItem } from '$lib/map/map';
 	import BundleChecklist from '$lib/map/BundleChecklist.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { formatCount } from '$lib/text/getal';
 
 	let {
 		anker,
 		title,
-		cite = [],
+		cite: forms = [],
 		tekst,
 		bewaar = null,
 		verbindingen = null,
@@ -52,6 +53,7 @@
 		anker: HTMLElement;
 		/** The place, as it is cited: `art. 1:1 onder q sub 1 Wft`, `Lid 2`. */
 		title: string;
+		/** The forms to cite; its link, the place's address with its anchor, is Link naar dit lid. */
 		cite?: CiteItem[];
 		/** The text Kopieer tekst copies. */
 		tekst: () => string;
@@ -76,6 +78,9 @@
 		onClose: () => void;
 	} = $props();
 
+	/** The address of the place with its anchor: Link naar dit lid, the first item of the menu. */
+	const lidLink = $derived(forms.find((c) => c.kind === 'link')?.text ?? null);
+	const cite = $derived(forms.filter((c) => c.kind !== 'link'));
 	/** The words the menu is of, their start in the head. */
 	const words = $derived(fragment?.exact ?? shading?.exact ?? null);
 	const QUOTE = 32;
@@ -90,7 +95,6 @@
 	/** The field of the aantekening, open in place in the menu. */
 	let writing = $state(false);
 	let note = $state('');
-	const focus = (field: HTMLTextAreaElement) => field.focus();
 
 	const copier = createCopier();
 	const aan = $derived(!!bewaar && kaart.heeft(bewaar));
@@ -124,6 +128,15 @@
 	use:menu={{ open: true, close: onClose, trigger: anker }}
 >
 	<p class="kop">{head}</p>
+	{#if lidLink}
+		<button
+			type="button"
+			class="tekstmenu__item"
+			role="menuitem"
+			onclick={() => kopieer(lidLink, 'lidlink', `link naar ${title}`)}
+			>{copier.label('lidlink', 'Link naar dit lid')}</button
+		>
+	{/if}
 	{#if cite.length}
 		<p class="label">Kopieer als</p>
 		{#each cite as c (c.kind)}
@@ -132,7 +145,8 @@
 				class="tekstmenu__item tekstmenu__item--paar"
 				role="menuitem"
 				onclick={() => kopieer(withWords(c), c.kind, citedWhat(cite, c, title))}
-				><span class="vorm" class:link={c.kind === 'link'}>{copier.label(c.kind, c.text)}</span
+				><span class="vorm" class:link={c.kind === 'link'}
+					>{copier.label(c.kind, c.shown ?? c.text)}</span
 				><span class="soort">{c.kind}</span></button
 			>
 		{/each}
@@ -154,18 +168,19 @@
 				sluit();
 			}}
 		>
-			<textarea
+			<Tekstveld
+				multiline
 				bind:value={note}
-				rows="3"
 				placeholder="Aantekening"
-				aria-label="Aantekening bij {head}"
-				use:focus
-				onkeydown={(e) => {
+				label="Aantekening bij {head}"
+				focus
+				onkeydown={(e: KeyboardEvent) => {
 					// The arrows move in the note, not to the menu's items; Escape still closes it.
 					if (/^(Arrow(Up|Down)|Home|End)$/.test(e.key)) e.stopPropagation();
-					if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
+					if (e.key === 'Enter' && (e.metaKey || e.ctrlKey))
+						(e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
 				}}
-			></textarea>
+			/>
 			<button type="submit" class="tekstmenu__item">Bewaar aantekening</button>
 		</form>
 	{:else if fragment?.shade}
@@ -296,19 +311,6 @@
 		gap: var(--s-1);
 		margin: 0;
 		padding: var(--s-1) var(--s-3);
-	}
-	/* The field at 16px: below that a phone zooms in on focus. */
-	.aantekening textarea {
-		box-sizing: border-box;
-		width: 100%;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
-		resize: vertical;
 	}
 	.aantekening .tekstmenu__item {
 		padding-inline: 0;

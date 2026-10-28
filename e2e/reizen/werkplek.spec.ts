@@ -4,14 +4,15 @@
 // back as it was, with the same chips and the same bron marked.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
+import { openSheet, closeSheet } from '../support/sheet';
+import { netwerkKnop } from '../support/navigation';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:163';
 
-const netwerkKnop = (page: Page) =>
-	page.getByRole('banner').getByRole('button', { name: /^Netwerk/ });
 const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
 /** The chips of the netwerk, the panel unfolded where a phone folds it. */
 async function chips(page: Page) {
+	await openSheet(page);
 	const fold = panel(page).getByRole('button', { name: /^Netwerk \d+ bron/ });
 	const chosen = panel(page).getByRole('button', { pressed: true });
 	await expect(fold.or(chosen.first())).toBeVisible();
@@ -31,7 +32,7 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	await expect(page).toHaveURL(/6:163\?toon=netwerk$/);
 	const rij = page.getByRole('region', { name });
 	await expect(rij).toContainText(name.split(',')[0]);
-	await rij.getByRole('button', { name: 'Zet in het netwerk' }).click();
+	await rij.getByRole('button', { name: 'Aan het netwerk toevoegen' }).click();
 	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 1 bron');
 
 	await netwerkKnop(page).click();
@@ -45,6 +46,7 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	// the right (a sheet under the canvas on a phone), covering no bron.
 	await page.goto(`${page.url()}&kies=${encodeURIComponent(id)}`);
 	const gekozen = await (await chips(page)).allInnerTexts();
+	await closeSheet(page);
 	const lees = page.getByRole('link', { name: 'Lees', exact: true });
 	await expect(lees).toBeVisible();
 	await lees.click();
@@ -63,7 +65,9 @@ test('the keten of a law: its regulations in layers, a click opens the card with
 	touch
 }) => {
 	await page.goto('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
+	await openSheet(page);
 	await expect(page.getByRole('button', { name: 'Keten', pressed: true })).toBeVisible();
+	await closeSheet(page);
 	// On a wide screen a drawing in layers, on a phone a list per layer.
 	const regeling = touch
 		? page.getByRole('region', { name: 'AMvB' }).getByRole('button').first()

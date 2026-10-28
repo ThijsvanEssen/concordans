@@ -6,6 +6,7 @@ import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
 	containerKindOf,
+	focusKindOf,
 	createContainerGroups,
 	type ContainerKind
 } from '../container-membership';
@@ -23,7 +24,7 @@ import {
 	type GraphNode
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
-import { periodOf, placeConnection, type End } from './placement';
+import { isPublication, periodOf, placeConnection, type End } from './placement';
 
 /**
  * The names of a container's hull: short on the hull, in full on hover. A dossier by its number
@@ -69,7 +70,8 @@ export function createGraphContext() {
 	const pinnedStore = writable<Set<string>>(new Set());
 	const filtersStore = writable<GraphFilters>({
 		...DEFAULT_FILTERS,
-		hiddenRelations: new Set(DEFAULT_FILTERS.hiddenRelations),
+		hiddenLines: new Set(DEFAULT_FILTERS.hiddenLines),
+		hiddenAnnexes: DEFAULT_FILTERS.hiddenAnnexes,
 		hiddenGroups: new Set(DEFAULT_FILTERS.hiddenGroups)
 	});
 	const trimmedCountStore = writable(0);
@@ -161,7 +163,7 @@ export function createGraphContext() {
 			protect.add(selected.id);
 			// A selected container has no edges of its own to protect its children by
 			// (they are containment, not peer edges): protect its current hull instead.
-			const selectedContainerKind = selected.raw && containerKindOf(selected.raw.collection);
+			const selectedContainerKind = selected.raw && focusKindOf(selected.raw.collection);
 			const selectedContainerId =
 				selected.raw && selectedContainerKind && containerIdFor(selected.raw);
 			const group = selectedContainerId ? containers.get(selectedContainerId) : undefined;
@@ -233,7 +235,12 @@ export function createGraphContext() {
 	};
 
 	/** The end of a verbinding as `placeConnection` reads it. */
-	const endOf = (collection: string, node: GraphNode | null | undefined): End => ({
+	const endOf = (
+		collection: string,
+		node: GraphNode | null | undefined,
+		props?: Record<string, unknown> | null
+	): End => ({
+		publication: isPublication({ collection, props }),
 		hull: containerKindOf(collection),
 		drawn: !!node,
 		drawClass: node?.drawClass ?? 'other'
@@ -266,20 +273,15 @@ export function createGraphContext() {
 	/**
 	 * `mergeResponse` without the trim and the emit, and limited to the neighbours
 	 * `keep` accepts by node id: a composed netwerk draws only what ties its bronnen.
-	 * A container `joins` accepts is drawn as a point with a verbinding to the centre,
-	 * not as a hull around it: a commissie two chosen bronnen share ties them, and a
-	 * hull around both would pull them onto each other. A bron "onderdeel van" it (a stuk
-	 * of a dossier two chosen stukken share) is in its hull all the same (`placeConnection`).
 	 */
 	const mergeInto = (
 		response: Schema<'NodeGraphResponse'>,
 		draw = Number.POSITIVE_INFINITY,
-		keep?: (id: string) => boolean,
-		joins?: (id: string) => boolean
+		keep?: (id: string) => boolean
 	): string | null => {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
-		const centerContainerKind = containerKindOf(response.node.collection);
+		const centerContainerKind = focusKindOf(response.node.collection);
 		// A fractie, commissie, dossier or wet is its hull, and its anchor the point what is
 		// not in it ties to (VVD's stemmingen, "100 stemmingen"): without it those lines had
 		// no end and their bronnen went unseen.
@@ -290,14 +292,18 @@ export function createGraphContext() {
 		}
 		touchNode(center.id, center);
 
-		const near = { ...endOf(response.node.collection, center), drawn: true };
+		const near = {
+			...endOf(response.node.collection, center, response.node.props),
+			hull: centerContainerKind,
+			drawn: true
+		};
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
 			const id = nodeId(neighbor.collection, neighbor.key);
 			if (keep && !keep(id)) continue;
 			const relation = relationOf(neighbor.relation);
 			if (!relation) continue;
 			const other = drawable(neighbor);
-			const far = { ...endOf(neighbor.collection, other), ties: !!joins?.(id) };
+			const far = endOf(neighbor.collection, other, neighbor.props);
 			const outbound = neighbor.direction === 'outbound';
 			const placement = placeConnection({
 				relation,
@@ -347,7 +353,7 @@ export function createGraphContext() {
 	 * stays on the canvas with nothing of its own drawn around it yet.
 	 */
 	const anchorContainer = (node: BaseNode): GraphNode | null => {
-		const kind = containerKindOf(node.collection);
+		const kind = focusKindOf(node.collection);
 		const anchor = kind && nodeToGraphNode(node);
 		if (!kind || !anchor) return null;
 		anchor.anchor = true;

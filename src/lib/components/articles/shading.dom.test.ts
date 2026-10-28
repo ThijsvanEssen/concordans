@@ -1,6 +1,6 @@
 // Arceren in the text of an article (O4, besluit 24): the reader's text of every place is the
 // text `placeText` counts; words selected open the place's menu by the words, Arceer keeps
-// them as a fragment on the place (in Losse markeringen where it was not kept), and an anchor
+// them as a fragment on the place (in Mijn markeringen where it was not kept), and an anchor
 // that no longer holds says so in one grey line, never silently.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/svelte';
@@ -36,7 +36,7 @@ const EMPTY = {
 	mappen: [
 		{
 			id: 'losse-markeringen',
-			naam: 'Losse markeringen',
+			naam: 'Mijn markeringen',
 			items: [],
 			volgorde: 'groep',
 			gewijzigd: '2026-10-01T00:00:00Z'
@@ -142,7 +142,7 @@ describe('words selected in a lid', () => {
 		expect(screen.getByRole('menuitem', { name: 'Aantekening' })).toBeTruthy();
 	});
 
-	it('Arceer keeps the lid in Losse markeringen with the fragment', async () => {
+	it('Arceer keeps the lid in Mijn markeringen with the fragment', async () => {
 		const { container, kaart } = open();
 		await select(container, 'lid-2', 'ongeschreven recht');
 		await fireEvent.click(screen.getByRole('menuitem', { name: 'Arceer' }));
@@ -182,7 +182,7 @@ describe('words selected in a lid', () => {
 			mappen: [
 				{
 					id: 'losse-markeringen',
-					naam: 'Losse markeringen',
+					naam: 'Mijn markeringen',
 					items: [whole],
 					volgorde: 'groep',
 					gewijzigd: '2026-10-01T00:00:00Z'
@@ -284,7 +284,7 @@ describe('an anchor that no longer holds', () => {
 		mappen: [
 			{
 				id: 'losse-markeringen',
-				naam: 'Losse markeringen',
+				naam: 'Mijn markeringen',
 				items: [
 					{
 						id: ID,
@@ -336,18 +336,18 @@ describe('the note of an arcering (O4 step 6)', () => {
 	const here = { waar: 'lid-2', exact: words, start };
 
 	it('stands under its place at rest, no word of it, in the form of Aantekening', () => {
-		const { container } = open({ mappen: [map('losse-markeringen', 'Losse markeringen', here)] });
+		const { container } = open({ mappen: [map('losse-markeringen', 'Mijn markeringen', here)] });
 		const lid2 = container.querySelector(`[${PLACE}="lid-2"]`)!;
 		const note = lid2.querySelector('.noot .aantekening')!;
 		expect(note.textContent).toContain('Ook ongeschreven');
-		expect(note.querySelector('.label')?.textContent).toBe('Aantekening');
+		expect(note.querySelector('.label')?.textContent).toBe('Mijn markeringen');
 		expect(walkText(lid2).text).toBe(placeText(bron, 'lid-2'));
 		expect(container.querySelectorAll('.noot')).toHaveLength(1);
 	});
 
 	it('opens the menu of its arcering on a click, where it is changed', async () => {
 		const { container, kaart } = open({
-			mappen: [map('losse-markeringen', 'Losse markeringen', here)]
+			mappen: [map('losse-markeringen', 'Mijn markeringen', here)]
 		});
 		const button = container.querySelector<HTMLElement>('.noot button')!;
 		expect(button.getAttribute('aria-haspopup')).toBe('menu');
@@ -363,22 +363,22 @@ describe('the note of an arcering (O4 step 6)', () => {
 		expect(container.querySelector('.noot')?.textContent).toContain('Ongeschreven recht telt mee');
 	});
 
-	it('names its bundel where the notes come from more than one', () => {
+	it('names its bundel in the label of each note', () => {
 		const { container } = open({
 			mappen: [
-				map('losse-markeringen', 'Losse markeringen', here),
+				map('losse-markeringen', 'Mijn markeringen', here),
 				map('onderzoek', 'Onderzoek art. 6:162 BW', here, 'Zie ook lid 3')
 			]
 		});
 		expect(
 			[...container.querySelectorAll('.noot .label')].map((l) => l.textContent).sort()
-		).toEqual(['Aantekening, Losse markeringen', 'Aantekening, Onderzoek art. 6:162 BW']);
+		).toEqual(['Mijn markeringen', 'Onderzoek art. 6:162 BW']);
 	});
 
 	it('stands under the line of an arcering whose words are no longer found', () => {
 		const { container } = open({
 			mappen: [
-				map('losse-markeringen', 'Losse markeringen', {
+				map('losse-markeringen', 'Mijn markeringen', {
 					waar: 'lid-2',
 					exact: 'zwaarwegend belang',
 					start: 4

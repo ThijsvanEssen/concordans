@@ -9,7 +9,8 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
-	import { collectionOf, INDEX_TABS } from './categories';
+	import { INDEX_TABS } from './categories';
+	import { shapeOfCategory } from '$lib/bron/vormen';
 	import { getStats } from '$lib/api/stats';
 	import { formatCount } from '$lib/text/getal';
 	import { report } from '$lib/api/errors';
@@ -35,7 +36,6 @@
 
 	<!-- The groups of the page, as a facet column holds its groups: a way to each. -->
 	<Inhoudsopgave
-		label="Groepen van bronnen"
 		items={INDEX_TABS.map((groep) => ({ label: groep.label, id: anker(groep.label) }))}
 	/>
 
@@ -47,7 +47,7 @@
 						{@const n = telVan(cat.key)}
 						<li>
 							<a href={indexHref(cat.key)} title={cat.about}
-								><KindGlyph collection={collectionOf(cat.key)} size={14} /><span>{cat.label}</span
+								><KindGlyph vorm={shapeOfCategory(cat.key)} size={14} /><span>{cat.label}</span
 								>{#if n !== null}<span class="tel">{formatCount(n)}</span>{/if}</a
 							>
 						</li>

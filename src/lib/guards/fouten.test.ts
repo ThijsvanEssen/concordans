@@ -50,10 +50,7 @@ describe('errors that are not swallowed', () => {
 				(l) => EIGEN_FOUT.test(l) && !COMMENTAAR.test(l),
 				[
 					plek('lib/components/ui/copy.svelte.ts', 'a clipboard that refuses, on its button'),
-					plek(
-						'routes/(main)/onderwerpen/overzicht/+page.svelte',
-						'a CSV made here, not loaded; its button asks again'
-					),
+					plek('lib/components/ui/LoadState.svelte', 'the one sentence of a failure'),
 					plek(
 						'lib/components/explore/BronFailure.svelte',
 						'the heading of the page of a bron that could not be loaded'
@@ -81,6 +78,10 @@ describe('errors that are not swallowed', () => {
 					plek(
 						'lib/components/explore/IndexView.svelte',
 						'Volgende becomes Opnieuw in its own place under the rows loaded'
+					),
+					plek(
+						'lib/onderwerpen/Kruiswoord.svelte',
+						'the columns whose count broke off: no one request to ask again, the sentence is LoadState’s'
 					)
 				]
 			)
@@ -95,7 +96,7 @@ describe('errors that are not swallowed', () => {
 				[
 					plek('lib/components/ui/LoadState.svelte'),
 					plek(
-						'lib/components/explore/IndexView.svelte',
+						'lib/components/ui/AlleN.svelte',
 						'Volgende becomes Opnieuw in its own place under the rows loaded'
 					)
 				]

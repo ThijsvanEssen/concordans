@@ -118,7 +118,7 @@
 			</ReaderHead>
 
 			{#if board.length > 0}
-				<Sectie title="Fractiebestuur" collection="members">
+				<Sectie title="Fractiebestuur">
 					<dl class="board">
 						{#each board as seat, i (i)}
 							<dt>{seat.function ?? ''}</dt>
@@ -146,11 +146,7 @@
 				{/if}
 				<!-- A fractie that is no more has no leden now: no list of none (R3-L F6). -->
 				{#if !endedOn}
-					<Sectie
-						title="Leden"
-						collection="members"
-						aantal={leden.state.status === 'ready' ? lijst.length : null}
-					>
+					<Sectie title="Leden" aantal={leden.state.status === 'ready' ? lijst.length : null}>
 						<LoadState state={leden.state} what="De ledenlijst" retry={leden.retry}>
 							{#snippet empty()}<p class="stil">{capitalize(noneHeld('leden'))}.</p>{/snippet}
 							{#snippet children(lijst)}
@@ -166,12 +162,12 @@
 			{/if}
 
 			{#if votes.state.status === 'error'}
-				<Sectie title="Stemgedrag in de Eerste Kamer" collection="decisions">
+				<Sectie title="Stemgedrag in de Eerste Kamer">
 					<LoadState state={votes.state} what="Het stemgedrag" retry={votes.retry} />
 				</Sectie>
 			{:else if votes.state.status === 'ready' && votes.state.data && votes.state.data.total > 0}
 				{@const stemmen = votes.state.data}
-				<Sectie title="Stemgedrag in de Eerste Kamer" collection="decisions">
+				<Sectie title="Stemgedrag in de Eerste Kamer">
 					<p class="vote-line">{ekVoteLine(stemmen.counts, stemmen.total)}.</p>
 					<ul class="votes">
 						{#each stemmen.items as v (v.decision_key)}

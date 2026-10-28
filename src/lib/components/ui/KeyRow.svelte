@@ -20,7 +20,7 @@
 	}
 	.key {
 		flex: none;
-		width: 11em;
+		width: 10em;
 		color: var(--ink-3);
 	}
 	.value {

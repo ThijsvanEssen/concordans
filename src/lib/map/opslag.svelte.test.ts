@@ -113,11 +113,11 @@ const voorBundels = JSON.stringify({
 });
 
 describe('the bundels kept before Bundels (decision 19)', () => {
-	it('reads every item back, the first bundel as Losse markeringen', async () => {
+	it('reads every item back, the first bundel as Mijn markeringen', async () => {
 		const b = browser();
 		b.data.set(OPSLAG, voorBundels);
 		const kaart = await tab(b);
-		expect(kaart.mappen.map((m) => m.naam)).toEqual(['Losse markeringen', 'Wet en dossier']);
+		expect(kaart.mappen.map((m) => m.naam)).toEqual(['Mijn markeringen', 'Wet en dossier']);
 		const cbw = kaart.mappen[1];
 		expect(cbw.items).toEqual(items);
 		expect(cbw.notitie).toBe('Verhouding tot NIS2');
@@ -126,12 +126,12 @@ describe('the bundels kept before Bundels (decision 19)', () => {
 });
 
 describe('a reader’s bundels as kept on 20 Oct (live, after Bundels)', () => {
-	it('shows every bundel with all it holds, the first as Losse markeringen', async () => {
+	it('shows every bundel with all it holds, the first as Mijn markeringen', async () => {
 		const b = browser();
 		b.data.set(OPSLAG, JSON.stringify(kept20Oct));
 		const kaart = await tab(b);
 		expect(kaart.listed.map((m) => [m.naam, m.items.length])).toEqual([
-			['Losse markeringen', 0],
+			['Mijn markeringen', 0],
 			['Twee wetten en een memorie van toelichting', 5],
 			['Een artikel', 1]
 		]);
@@ -152,7 +152,7 @@ describe('a write', () => {
 				mappen: [
 					{
 						id: 'eerste',
-						naam: 'Losse markeringen',
+						naam: 'Mijn markeringen',
 						items: [],
 						volgorde: 'groep',
 						gewijzigd: '2026-10-15T09:00:00.000Z'
@@ -222,7 +222,7 @@ describe('a write', () => {
 });
 
 describe('a browser that keeps no bundels yet', () => {
-	it('names Losse markeringen by one id: the same in every tab, the server’s page and after a reload', async () => {
+	it('names Mijn markeringen by one id: the same in every tab, the server’s page and after a reload', async () => {
 		// UX-toets A28: the row linked to /bundels/<id> while the browser kept another id.
 		const b = browser();
 		const een = await tab(b);
@@ -237,7 +237,7 @@ describe('a browser that keeps no bundels yet', () => {
 		expect((await tab(b)).mappen.find((m) => m.id === link)?.items).toEqual([lid]);
 	});
 
-	it('keeps what two tabs keep in Losse markeringen, both', async () => {
+	it('keeps what two tabs keep in Mijn markeringen, both', async () => {
 		const b = browser();
 		const een = await tab(b);
 		const ander = await tab(b);
@@ -257,7 +257,7 @@ describe('a field of a later version (onderzoeksflow stap 1: lees vers, gooi nie
 		mappen: [
 			{
 				id: 'eerste',
-				naam: 'Losse markeringen',
+				naam: 'Mijn markeringen',
 				items: [{ ...ro, toekomst: 'los' }],
 				volgorde: 'groep',
 				gewijzigd: '2026-10-15T09:00:00.000Z',

@@ -30,7 +30,7 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Follow from '$lib/components/ui/Follow.svelte';
 	import { atomHref } from '$lib/components/actueel/feed';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import FilterBar from './index/FilterBar.svelte';
 	import { activeFilters, type FacetGroup } from './index/facets';
@@ -45,10 +45,10 @@
 		INDEX_CATEGORIES,
 		categoryLabel,
 		categoryNoun,
-		collectionOf,
 		type IndexCategory
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { shapeOfCategory } from '$lib/bron/vormen';
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
@@ -205,6 +205,8 @@
 	/** Loads the page from `offset` of the list asked last; a newer load aborts `signal`. */
 	let fetchPage: (offset: number, signal: AbortSignal) => Promise<void> = async () => {};
 
+	/** The rows the next page brings: the list's own limit, else a page. */
+	let pageSize = $state(PAGE);
 	let loadMoreAbort: AbortController | null = null;
 	/** The load in progress, which a list kept from before replaces (see Coming back). */
 	let loadAbort: AbortController | null = null;
@@ -218,6 +220,7 @@
 		// The rows asked at a time: the list's own limit, else a page.
 		const limit = (query as { limit?: unknown } | null)?.limit;
 		const size = typeof limit === 'number' ? limit : PAGE;
+		pageSize = size;
 		// A first page sets its state while this effect runs: read without depending on it.
 		const set = (patch: Record<string, unknown>) =>
 			untrack(() => {
@@ -561,7 +564,7 @@
 					data-sveltekit-noscroll
 					data-sveltekit-keepfocus
 				>
-					<KindGlyph collection={collectionOf(cat.key)} size={11} />
+					<KindGlyph vorm={shapeOfCategory(cat.key)} size={11} />
 					<span class="cat-name">{cat.label}</span>
 				</a>
 			{/each}
@@ -639,7 +642,8 @@
 						<div class="shown" class:shown--stale={loading}>
 							{#if list.Rows && rowsShown && rows}
 								{#if rows.length === 0}
-									{@render empty(list.emptyNoun?.(p) ?? list.noun)}
+									<!-- Not while counting: the empty page of the filters before is stale. -->
+									{#if !loading}{@render empty(list.emptyNoun?.(p) ?? list.noun)}{/if}
 								{:else}
 									<div class="list-head" aria-hidden="true">
 										<span>{columns.lead}</span>
@@ -763,11 +767,15 @@
 					<Kenmerk error={loadMoreError.error} />
 				</p>
 			{/if}
-			{#if loadingMore}<span>Laden…</span>{:else}<TekstLink onclick={loadMore}
-					>{loadMoreError
-						? 'Opnieuw'
-						: `Volgende ${noun}${remaining > 0 ? `, nog ${formatCount(remaining)}` : ''}`}</TekstLink
-				>{/if}
+			<AlleN
+				volgende
+				{noun}
+				stap={pageSize}
+				rest={remaining > 0 ? remaining : null}
+				laden={loadingMore}
+				opnieuw={!!loadMoreError}
+				onclick={loadMore}
+			/>
 		</div>
 	{/if}
 {/snippet}
@@ -862,7 +870,7 @@
 	/* The heads of the columns, over the rows in the same grid. */
 	.list-head {
 		display: grid;
-		grid-template-columns: var(--row-lead) minmax(0, 1fr) var(--row-aside);
+		grid-template-columns: var(--voorkolom) minmax(0, 1fr) var(--row-aside);
 		gap: var(--s-5);
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
@@ -904,7 +912,7 @@
 	/* ── List and row ────────────────────────────────────────────────── */
 	.skelet-rij {
 		display: grid;
-		grid-template-columns: var(--row-lead) minmax(0, 1fr);
+		grid-template-columns: var(--voorkolom) minmax(0, 1fr);
 		gap: var(--s-5);
 		align-items: center;
 		height: var(--s-8);
@@ -946,16 +954,6 @@
 		color: var(--ink-3);
 		margin-top: 2px;
 	}
-	/* A dossier by name in the narrow lead: two lines at most, the whole on hover. */
-	.results :global(.row-id-naam) {
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		overflow: hidden;
-		overflow-wrap: break-word;
-	}
-
 	.results :global(.row-sub) {
 		display: block;
 		margin-top: var(--s-1);

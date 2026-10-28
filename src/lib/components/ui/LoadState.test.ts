@@ -13,17 +13,20 @@ const children = createRawSnippet((names: () => string[]) => ({
 			.join('')}</ul>`
 }));
 
+/** The failure's words stand in the accent, in a span: the sentence reads through it. */
 const html = (state: State<string[]>, extra: Record<string, unknown> = {}) =>
 	render(LoadState<string[]>, {
 		props: { state, what: 'De fractie', empty, children, ...extra }
-	}).body;
+	}).body.replace(/<span class="fout[^"]*">(.*?)<\/span>/g, '$1');
 
 describe('LoadState', () => {
 	it('says Laden… in a quiet line, or holds the place with a skeleton', () => {
-		expect(html({ status: 'loading' })).toMatch(/<p class="stil[^"]*">Laden…(?:<!---->)?<\/p>/);
+		expect(html({ status: 'loading' })).toMatch(
+			/<p class="stil[^"]*"[^>]*>Laden…(?:<!---->)?<\/p>/
+		);
 		const block = html({ status: 'loading' }, { form: 'block' });
 		expect(block).toContain('skeleton');
-		expect(block).not.toContain('Laden…');
+		expect(block).toContain('class="sr-only" role="status">Laden…');
 		expect(block).not.toContain('role="alert"');
 	});
 

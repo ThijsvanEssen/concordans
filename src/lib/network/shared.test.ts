@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { verbandModel, sentence } from './shared';
+import { verbandModel, sentence, rowNotation } from './shared';
 
 const NAMES: Record<string, { name: string; collection: 'articles' | 'members' | 'factions' }> = {
 	'articles/a': { name: 'Art. 126ffa Sv', collection: 'articles' },
@@ -56,49 +56,68 @@ describe('the weergave Verband', () => {
 	const direct = [{ from: 'members/d', to: 'factions/v', relation: 'MEMBER_OF' as const }];
 
 	it('keeps what a pair shares when a bron is added (Thijs, 23 Oct)', () => {
-		const vier = verbandModel(
-			['articles/a', 'members/d', 'factions/v'],
-			[evaluatie],
-			direct,
-			names
-		);
-		const vijf = verbandModel(
-			['articles/a', 'members/d', 'factions/v', 'members/r'],
-			[evaluatie, motie],
-			direct,
-			names
-		);
+		const vier = verbandModel([evaluatie], direct, names);
+		const vijf = verbandModel([evaluatie, motie], direct, names);
 		expect(vier.rows.map((r) => r.id)).toEqual(['documents/evaluatie']);
 		expect(vijf.rows.map((r) => r.id)).toEqual(['documents/evaluatie', 'documents/motie']);
 		expect(vijf.judgments).toEqual([{ at: ['articles/a', 'members/d'], total: 3 }]);
 	});
 
 	it('gives the same Verband for the same bronnen in another order', () => {
-		const een = verbandModel(
-			['members/r', 'members/d', 'articles/a'],
-			[motie, evaluatie],
-			[],
-			names
-		);
-		const twee = verbandModel(
-			['articles/a', 'members/d', 'members/r'],
-			[evaluatie, motie],
-			[],
-			names
-		);
+		const een = verbandModel([motie, evaluatie], [], names);
+		const twee = verbandModel([evaluatie, motie], [], names);
 		expect(een.rows.map((r) => [r.id, r.at])).toEqual(twee.rows.map((r) => [r.id, r.at]));
 		expect(een.judgments).toEqual(twee.judgments);
 	});
 
-	it('says the verbindingen between the chosen bronnen themselves, and names one without any', () => {
-		const m = verbandModel(
-			['articles/a', 'members/d', 'factions/v', 'members/r'],
-			[evaluatie],
-			direct,
-			names
-		);
+	it('says the verbindingen between the chosen bronnen themselves, and what each pair shares in all', () => {
+		const m = verbandModel([evaluatie], direct, names);
 		expect(m.direct.map((d) => d.at)).toEqual([['factions/v', 'members/d']]);
 		expect(m.direct[0].text).toMatch(/^Dilan Yeşilgöz .+ VVD$/);
-		expect(m.alone).toEqual(['members/r']);
+		expect(m.direct[0]).toMatchObject({ from: 'members/d', to: 'factions/v' });
+		expect(m.pairs).toEqual([{ at: ['articles/a', 'members/d'], total: 4 }]);
+	});
+});
+
+describe('Verband as the DS writes it', () => {
+	const paper = (props: Record<string, unknown>) =>
+		({
+			id: 'documents/x',
+			key: 'x',
+			collection: 'documents',
+			type: 'document',
+			display_name: 'Memorie van toelichting: Wijziging van de Gemeentewet en meer en nog…',
+			labels: [],
+			props,
+			links: []
+		}) as unknown as Parameters<typeof rowNotation>[0];
+
+	it('names a Kamerstuk by its notation, its title and year under it, never cut off by the API', () => {
+		const r = rowNotation(
+			paper({
+				dossier_number: '36545',
+				sequence: 3,
+				kind: 'Memorie van toelichting',
+				title: 'Wijziging van de Gemeentewet',
+				date: '2018-03-02'
+			})
+		);
+		expect(r.title).toBe('36545, nr. 3 Memorie van toelichting');
+		expect(r.detail).toBe('Wijziging van de Gemeentewet, 2018');
+		expect(r.title).not.toContain('…');
+	});
+	it('names a dossier by its number, so that it is not the wet of the same name', () => {
+		const r = rowNotation({
+			id: 'dossiers/36496',
+			collection: 'dossiers',
+			display_name: 'Wet betaalbare huur',
+			props: { number: '36496', short_title: 'Wet betaalbare huur' }
+		} as unknown as Parameters<typeof rowNotation>[0]);
+		expect(r.title).toBe('36496 Wet betaalbare huur');
+	});
+	it('keeps the name of any other bron', () => {
+		expect(
+			rowNotation({ ...paper({}), collection: 'instruments', id: 'instruments/a' }).detail
+		).toBeNull();
 	});
 });

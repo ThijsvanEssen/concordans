@@ -379,7 +379,7 @@
 			</ReaderHead>
 
 			{#if toegelicht.length > 0}
-				<Sectie title="Licht toe" collection="articles" aantal={doc.explains?.length ?? 0}>
+				<Sectie title="Licht toe" aantal={doc.explains?.length ?? 0}>
 					<ul class="toegelicht">
 						{#each toegelicht as w (w.bwbId)}
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}
@@ -546,8 +546,13 @@
 				<!-- The page at the Tweede Kamer is in Citeer; the file the text came from here. -->
 				<footer class="foot">
 					{#if doc.file_url}
-						<a href={doc.file_url} target="_blank" rel="noopener noreferrer" class="full-link">
-							Origineel bestand ↗
+						<a
+							href={doc.file_url}
+							target="_blank"
+							rel="external noopener noreferrer"
+							class="full-link raakvlak"
+						>
+							Origineel bestand
 						</a>
 					{/if}
 				</footer>
@@ -722,10 +727,16 @@
 	.wet {
 		color: var(--ink);
 	}
+	/* The underline is the text's, not a border: a name that breaks over two lines keeps one
+	   rule under both parts, none of it loose at the break. */
 	.submitted :global(a) {
 		color: var(--ink);
-		text-decoration: none;
-		border-bottom: 1px solid var(--rule-strong);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+		-webkit-box-decoration-break: clone;
+		box-decoration-break: clone;
 	}
 	.submitted :global(a:hover) {
 		color: var(--ink);

@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { ApiError } from '$lib/api/client';
 	import { isRateLimited, isSlow } from '$lib/api/errors';
 	import { RATE_LIMIT_TEXT } from './RateLimit.svelte';
 
@@ -7,11 +8,26 @@
 	 * tekstversies"), slow, broken or asked too often.
 	 */
 	export function failureText(what: string, error: unknown, plural = false) {
-		const verb = plural ? 'konden' : 'kon';
-		if (isRateLimited(error)) return `${RATE_LIMIT_TEXT}.`;
-		return isSlow(error)
-			? `${what} ${verb} niet op tijd worden geladen.`
-			: `${what} ${verb} niet worden geladen.`;
+		const [subject, no, rest] = failureParts(what, error, plural);
+		return no ? `${subject} ${no} ${rest}` : subject;
+	}
+
+	/**
+	 * The sentence in three parts: its subject, "kon niet" (the words in the accent, DS
+	 * LoadState: an error is red, with words beside it) and the rest. A 429 is one part.
+	 */
+	function failureParts(
+		what: string,
+		error: unknown,
+		plural = false,
+		unbuilt = false
+	): [string, string, string] {
+		const no = plural ? 'konden niet' : 'kon niet';
+		if (isRateLimited(error)) return [`${RATE_LIMIT_TEXT}.`, '', ''];
+		// What the answer is read from is not built yet (`unbuilt`): said, not broken.
+		if (unbuilt && error instanceof ApiError && error.status === 503)
+			return [`${what} ${plural ? 'zijn' : 'is'} nog niet beschikbaar.`, '', ''];
+		return [what, no, isSlow(error) ? 'op tijd worden geladen.' : 'worden geladen.'];
 	}
 
 	/** Nothing to show: no answer, or an empty list. */
@@ -28,12 +44,14 @@
 	import RateLimit, { answered } from './RateLimit.svelte';
 	import type { LoadState } from '$lib/util/load.svelte';
 	import Kenmerk from './Kenmerk.svelte';
+	import SlowLoad from './SlowLoad.svelte';
 	import TekstLink from './TekstLink.svelte';
 
 	let {
 		state,
 		what,
 		plural = false,
+		unbuilt = false,
 		retry,
 		form = 'line',
 		tag = 'p',
@@ -45,6 +63,8 @@
 		what: string;
 		/** `what` is plural ("De tekstversies"): they konden niet worden geladen. */
 		plural?: boolean;
+		/** A 503 means what the answer is read from is not built yet: "nog niet beschikbaar". */
+		unbuilt?: boolean;
 		retry?: () => void;
 		form?: 'line' | 'block';
 		/** The element of a line: `span` inside running text or a card that is a span. */
@@ -52,6 +72,10 @@
 		empty?: Snippet;
 		children?: Snippet<[T]>;
 	} = $props();
+
+	const parts = $derived(
+		failureParts(what, state.status === 'error' ? state.error : null, plural, unbuilt)
+	);
 
 	// A 429 asks again by itself once per subject; an answer gives that back.
 	$effect(() => {
@@ -66,8 +90,9 @@
 			<div class="skeleton__line"></div>
 			<div class="skeleton__line skeleton__line--short"></div>
 		</div>
+		<SlowLoad label="Laden…" />
 	{:else}
-		<svelte:element this={tag} class="stil">Laden…</svelte:element>
+		<SlowLoad label="Laden…" visible {tag} />
 	{/if}
 {:else if state.status === 'error' && isRateLimited(state.error)}
 	<!-- A 429: the seconds for the eye; a screen reader hears the sentence once. -->
@@ -96,7 +121,8 @@
 		class:failure--block={form === 'block'}
 		role="alert"
 	>
-		{failureText(what, state.error, plural)}
+		{parts[0]} <span class="fout">{parts[1]}</span>
+		{parts[2]}
 		{#if retry}
 			<TekstLink onclick={retry}>Opnieuw</TekstLink>
 		{/if}
@@ -109,6 +135,10 @@
 {/if}
 
 <style>
+	/* "kon niet": the words of a failure in the accent, beside the sentence that says what. */
+	.fout {
+		color: var(--uitkomst-nee);
+	}
 	.failure--block {
 		padding: var(--s-5) 0;
 		font-family: var(--font-serif);

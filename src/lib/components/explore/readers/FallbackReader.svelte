@@ -72,7 +72,9 @@
 			<p class="text">{textOf(p.text)}</p>
 		{/if}
 		{#if source}
-			<a class="source" href={source} target="_blank" rel="noopener noreferrer">tweedekamer.nl ↗</a>
+			<a class="source" href={source} target="_blank" rel="external noopener noreferrer"
+				>tweedekamer.nl</a
+			>
 		{/if}
 	</article>
 </ReaderFrame>
@@ -92,7 +94,7 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
-		max-width: var(--measure);
+		max-width: var(--regel);
 		white-space: pre-line;
 	}
 	.source {

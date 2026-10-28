@@ -1,7 +1,7 @@
 <script lang="ts">
-	// The actions of a list row: Bewaar and In het netwerk (Thijs, 10 Oct: "Vinkje en +-je zijn niet
+	// The actions of a list row: Bewaar and Aan het netwerk toevoegen (Thijs, 10 Oct: "Vinkje en +-je zijn niet
 	// intuïtief"). One look in every state (Thijs, 10 Oct: "toch wat raar met de verschillen in
-	// hoe ze weergegeven worden"): two fixed places, Bewaar then In het netwerk, so nothing moves from
+	// hoe ze weergegeven worden"): two fixed places, Bewaar then the network, so nothing moves from
 	// row to row; a glyph without a frame, open in ink-3 when off, filled in ink when on. Off they
 	// show on the row's hover or focus (always on a touch screen), on always. A hover on the glyph
 	// gives it ink and a wash behind it; the keyboard's focus the ink ring. A row with more to do
@@ -9,7 +9,8 @@
 	// shows as they do, and closes on a tap outside (actions/menu.ts).
 	import type { Snippet } from 'svelte';
 	import { menu as menuAction } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
+	import MenuList from './MenuList.svelte';
+	import TekstMenu from './TekstMenu.svelte';
 	import Picto from './Picto.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { namesOf, type MapItem } from '$lib/map/map';
@@ -30,23 +31,18 @@
 		 * without it its place stays empty. */
 		netwerk?: { aan: boolean; voegToe: () => void; haalWeg?: () => void } | null;
 		/** What the ⋯ holds, with the function that closes it; without it no ⋯. A row with a ⋯
-		 *  alone has no places for Bewaar and In het netwerk. */
+		 *  alone has no places for Bewaar and the network. */
 		menu?: Snippet<[() => void]>;
 		/** After the ⋯ closes, however: a menu that changed what it shows goes back. */
 		onClose?: () => void;
 	} = $props();
 
-	/** The bundels that hold the item: Bewaar keeps it in Losse markeringen; Bewaard opens the
+	/** The bundels that hold the item: Bewaar keeps it in Mijn markeringen; Bewaard opens the
 	 *  bundels with their ticks (BundleChecklist), and takes nothing out itself. */
 	const held = $derived(item ? kaart.holding(item) : []);
 	const bewaard = $derived(held.length > 0);
 	const into = $derived(kaart.keepsIn);
 	let open = $state(false);
-	let button = $state<HTMLElement | null>(null);
-	const close = () => {
-		open = false;
-		onClose?.();
-	};
 	let bundlesOpen = $state(false);
 	let keptButton = $state<HTMLElement | null>(null);
 	const closeBundles = () => (bundlesOpen = false);
@@ -55,32 +51,20 @@
 <span class="rij-acties">
 	{#if !menu || item || netwerk}{@render places()}{/if}
 	{#if menu}
-		<span class="plek plek--menu" use:menuAction={{ open, close }}>
-			<button
-				type="button"
-				class="rij-knop"
-				class:is-open={open}
-				bind:this={button}
-				aria-haspopup="menu"
-				aria-expanded={open}
-				aria-label="{naam}: meer"
+		<span class="plek plek--menu">
+			<TekstMenu
+				label="{naam}: meer"
 				title="Meer"
-				onclick={() => (open ? close() : (open = true))}>⋯</button
+				buttonClass="rij-knop"
+				caret={false}
+				rechts
+				ownClick
+				{onClose}
+				bind:open
 			>
-			{#if open && button}
-				<!-- A click in the list is the menu's, not the row's under it. -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="tekstmenu__lijst"
-					role="menu"
-					tabindex="-1"
-					aria-label="{naam}: meer"
-					use:topLayer={{ anchor: button, close, align: 'right' }}
-					onclick={(e) => e.stopPropagation()}
-				>
-					{@render menu(close)}
-				</div>
-			{/if}
+				{#snippet knop()}⋯{/snippet}
+				{#snippet inhoud(close)}{@render menu(close)}{/snippet}
+			</TekstMenu>
 		</span>
 	{/if}
 </span>
@@ -105,17 +89,15 @@
 				><Picto naam={bewaard ? 'bewaard' : 'bewaar'} /></button
 			>
 			{#if bundlesOpen && keptButton}
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="tekstmenu__lijst"
-					role="menu"
-					tabindex="-1"
-					aria-label="{naam}: bundels"
-					use:topLayer={{ anchor: keptButton, close: closeBundles, align: 'right' }}
-					onclick={(e) => e.stopPropagation()}
+				<MenuList
+					anchor={keptButton}
+					label="{naam}: bundels"
+					close={closeBundles}
+					align="right"
+					ownClick
 				>
 					<BundleChecklist item={kept} close={closeBundles} />
-				</div>
+				</MenuList>
 			{/if}
 		{/if}
 	</span>
@@ -129,10 +111,14 @@
 				aria-pressed={n.aan}
 				aria-label={n.aan
 					? n.haalWeg
-						? `${naam} uit het netwerk halen`
+						? `${naam} uit het netwerk weghalen`
 						: `${naam} staat in het netwerk`
 					: `${naam} aan het netwerk toevoegen`}
-				title={n.aan ? (n.haalWeg ? 'Uit het netwerk halen' : 'In het netwerk') : 'In het netwerk'}
+				title={n.aan
+					? n.haalWeg
+						? 'Uit het netwerk weghalen'
+						: 'Staat in het netwerk'
+					: 'Aan het netwerk toevoegen'}
 				onclick={() => (n.aan ? n.haalWeg?.() : n.voegToe())}
 				><Picto naam={n.aan ? 'netwerk' : 'netwerk-o'} /></button
 			>
@@ -153,7 +139,12 @@
 		width: var(--tik-h);
 		height: var(--tik-h);
 	}
-	.rij-knop {
+	.rij-acties .plek--menu :global(.tekstmenu) {
+		display: grid;
+		width: 100%;
+		height: 100%;
+	}
+	.rij-acties :global(.rij-knop) {
 		display: inline-grid;
 		place-items: center;
 		width: 100%;
@@ -166,29 +157,29 @@
 		cursor: pointer;
 		opacity: 0;
 	}
-	.rij-knop.is-active {
+	.rij-acties :global(.rij-knop.is-active) {
 		color: var(--ink);
 		opacity: 1;
 	}
-	:global([data-rij]:hover) .rij-knop,
-	:global([data-rij]:focus-within) .rij-knop {
+	:global([data-rij]:hover) .rij-acties :global(.rij-knop),
+	:global([data-rij]:focus-within) .rij-acties :global(.rij-knop) {
 		opacity: 1;
 	}
-	.rij-knop:hover {
+	.rij-acties :global(.rij-knop:hover) {
 		color: var(--ink);
 		background: var(--wassing);
 	}
-	.rij-knop:focus-visible,
-	.rij-knop.is-open {
+	.rij-acties :global(.rij-knop:focus-visible),
+	.rij-acties :global(.rij-knop[aria-expanded='true']) {
 		opacity: 1;
 	}
-	.plek--menu .rij-knop {
+	.rij-acties .plek--menu :global(.rij-knop) {
 		font-family: var(--font-ui);
 		font-size: var(--t-body-2);
 		line-height: 1;
 	}
 	@media (hover: none) {
-		.rij-knop {
+		.rij-acties :global(.rij-knop) {
 			opacity: 1;
 		}
 	}

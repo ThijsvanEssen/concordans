@@ -5,23 +5,28 @@
 import type { Page } from '@playwright/test';
 import { CORS } from '../support/api';
 import { expect, test } from '../support/test';
+import { openSheet, closeSheet } from '../support/sheet';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
-const KEPT = 'netwerk=instruments%2Fbwbr0005289&tussen=0';
+const KEPT = 'netwerk=instruments%2Fbwbr0005289';
 
 const panel = (page: Page) => page.getByRole('region', { name: 'Netwerk' });
 /** The text of the panel Netwerk, unfolded where a phone folds it. */
 async function panelText(page: Page) {
+	await openSheet(page);
 	const fold = panel(page).getByRole('button', { name: /^Netwerk \d+ bron/ });
 	if (await fold.isVisible()) await fold.click();
 	return panel(page).innerText();
 }
 const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
 async function legend(page: Page) {
+	await openSheet(page);
 	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
-	await expect(strip(page).getByRole('heading', { name: 'Weergave' }).or(toggle)).toBeVisible();
+	await expect(
+		strip(page).getByRole('region', { name: 'Weergave' }).or(toggle).first()
+	).toBeVisible();
 	if (await toggle.isVisible()) await toggle.click();
-	return strip(page).getByRole('region', { name: 'Legenda' });
+	return strip(page).getByRole('region', { name: 'Filters' });
 }
 
 test('a clean link draws the same with and without a netwerk kept in this browser (N7)', async ({
@@ -59,11 +64,12 @@ test('no chosen bron shows its key, after a 502 and Opnieuw either (N6)', async 
 				})
 			: route.fallback()
 	);
-	await page.goto('/explore?netwerk=instruments/bwbr0005289&tussen=0');
+	await page.goto('/explore?netwerk=instruments/bwbr0005289');
 	await expect(page.getByText(/kon niet worden geladen/)).toBeVisible();
 	const failed = await panelText(page);
 	expect(failed).toContain('Bron laden');
 	expect(failed).not.toMatch(/bwbr\d+/i);
+	await closeSheet(page);
 
 	broken = false;
 	await page.getByRole('button', { name: 'Opnieuw' }).click();
@@ -77,13 +83,13 @@ test('a relation switched off stays in the address and after a reload, with one 
 	page
 }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	const noemt = (await legend(page)).getByRole('button', { name: /^Haalt aan/ });
+	const noemt = (await legend(page)).getByRole('button', { name: /^Aanhaling/ });
 	await expect(noemt).toHaveAttribute('aria-pressed', 'true');
 	await noemt.click();
-	await expect(page).toHaveURL(/[?&]uit=REFERS_TO/);
+	await expect(page).toHaveURL(/[?&]uit=citation/);
 	await page.reload();
-	await expect(page).toHaveURL(/[?&]uit=REFERS_TO/);
-	await expect((await legend(page)).getByRole('button', { name: /^Haalt aan/ })).toHaveAttribute(
+	await expect(page).toHaveURL(/[?&]uit=citation/);
+	await expect((await legend(page)).getByRole('button', { name: /^Aanhaling/ })).toHaveAttribute(
 		'aria-pressed',
 		'false'
 	);
@@ -110,10 +116,10 @@ test('Verband says it is looking, then that nothing joins the bronnen (N9)', asy
 		'/explore?netwerk=instruments/bwbr0005289,instruments/bwbr0005537&weergave=verband'
 	);
 	await expect(page.getByText('Verband zoeken', { exact: true })).toBeVisible();
-	// Nothing to filter by yet: the legend holds no Soort.
-	await expect((await legend(page)).getByRole('heading', { name: 'Soort' })).toHaveCount(0);
+	// Nothing to filter by yet: the legend holds no Tonen.
+	await expect((await legend(page)).getByRole('heading', { name: 'Tonen' })).toHaveCount(0);
 	answer();
-	await expect(page.getByText('Geen verband gevonden binnen 2 stappen')).toBeVisible();
+	await expect(page.getByText('Geen keten binnen 1 stap')).toBeVisible();
 	await expect(page.getByText('Verband zoeken', { exact: true })).toHaveCount(0);
-	await expect((await legend(page)).getByRole('heading', { name: 'Soort' })).toHaveCount(0);
+	await expect((await legend(page)).getByRole('heading', { name: 'Tonen' })).toHaveCount(0);
 });

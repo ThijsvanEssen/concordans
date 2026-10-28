@@ -1,6 +1,6 @@
 // The role of each collection on the canvas, in one table: the kind it is drawn as, the hull
 // it is drawn as instead of a bron (a wet, fractie, commissie or dossier; a cabinet holds its
-// bewindspersonen as a commissie its leden), whether it is asked and drawn as a neighbour of
+// bewindspersonen as a commissie its leden, in a hull of its own), whether it is asked and drawn as a neighbour of
 // a focus, and its column in a netwerk's first layout (0 parliament, 1 law, 2 judgments).
 import { bronLabel, REGULATION_LABEL, type Collection, type Relation } from '$lib/vocabulary';
 import type { ContainerKind } from './container-membership';
@@ -17,6 +17,12 @@ type Role = {
 	 */
 	neighbour: boolean;
 	column: 0 | 1 | 2;
+	/**
+	 * The hull it is drawn as when it is the focus or chosen, where it has none as a neighbour:
+	 * a ministerie holds its bewindspersonen and toezeggingen then (UX review N5), but a wet or
+	 * a dossier it leads does not go into a hull of it.
+	 */
+	focusHull?: ContainerKind;
 };
 
 export const COLLECTION_ROLE: Record<Collection, Role> = {
@@ -35,8 +41,14 @@ export const COLLECTION_ROLE: Record<Collection, Role> = {
 	members: { drawClass: 'member', hull: null, neighbour: true, column: 0 },
 	factions: { drawClass: 'faction', hull: 'faction', neighbour: true, column: 0 },
 	committees: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
-	cabinets: { drawClass: 'committee', hull: 'committee', neighbour: true, column: 0 },
-	ministries: { drawClass: 'committee', hull: null, neighbour: true, column: 0 }
+	cabinets: { drawClass: 'cabinet', hull: 'cabinet', neighbour: true, column: 0 },
+	ministries: {
+		drawClass: 'cabinet',
+		hull: null,
+		focusHull: 'cabinet',
+		neighbour: true,
+		column: 0
+	}
 };
 
 /**
@@ -47,6 +59,7 @@ export const GROUP_LABEL: Record<ContainerKind, string> = {
 	instrument: REGULATION_LABEL,
 	faction: bronLabel('factions'),
 	committee: bronLabel('committees'),
+	cabinet: bronLabel('cabinets'),
 	dossier: bronLabel('dossiers')
 };
 
@@ -55,10 +68,3 @@ export const GROUP_LABEL: Record<ContainerKind, string> = {
  * versions across time: real, but the reader's version navigation, not the network's.
  */
 export const isDrawn = (relation: Relation): boolean => relation !== 'VERSION_OF';
-
-/** The relations to a hull: it groups them, so the legend offers no line to switch. */
-const TO_A_HULL = new Set<Relation>(['PART_OF', 'MEMBER_OF', 'LED_BY']);
-
-/** Whether the legend offers a relation as a line to switch on or off. */
-export const inLegend = (relation: Relation): boolean =>
-	isDrawn(relation) && !TO_A_HULL.has(relation);

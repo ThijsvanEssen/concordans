@@ -319,7 +319,7 @@ describe('metaParts', () => {
 			ref: { collection: 'factions', key: 'd66' },
 			title: 'D66-fractie',
 			context: 'D66',
-			filterGroup: 'leden'
+			filterGroup: 'kamerleden'
 		};
 		expect(metaParts(fractie).map((p) => p.text)).toEqual([]);
 		expect(metaParts(fractie, true).map((p) => p.text)).toEqual([]);
@@ -399,7 +399,7 @@ describe('unresolvedRows', () => {
 		const [row] = unresolvedRows([
 			{ law: 'Rv', article_number: '843a', leden: ['1'], paragraph_ids: ['rov-3.2'] }
 		]);
-		expect(row.title).toBe('Art. 843a Rv');
+		expect(row.title).toBe('Artikel 843a Rv');
 		expect(row.missing).toBe(true);
 		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de gegevens']);
 	});
@@ -548,5 +548,29 @@ describe('historyRow', () => {
 		expect(row?.proposed).toBe(true);
 		expect(row?.context).toBe('voorgesteld, doet vervallen, Dossier 36000');
 		expect(historyRow({})).toBeNull();
+	});
+});
+
+describe('an article of another law names its law', () => {
+	it('puts the abbreviation behind the number, in full: Artikel 3 HPW', async () => {
+		const { rowOfNeighbor } = await import('./rows');
+		const { recordInstrument } = await import('$lib/api/instrument-cache');
+		recordInstrument({
+			bwb_id: 'BWBR0099999',
+			title: 'Huisvestingswet van de Proef',
+			citation_title: 'Huisvestingswet van de Proef',
+			abbreviation: 'HPW'
+		} as never);
+		const n = {
+			collection: 'articles',
+			key: 'BWBR0099999_3',
+			display_name: 'Artikel 3',
+			direction: 'outbound',
+			relation: 'REFERS_TO',
+			props: { bwb_id: 'BWBR0099999', article_number: '3' }
+		};
+		const row = rowOfNeighbor(n as never)!;
+		expect(row.title).toBe('Artikel 3 HPW');
+		expect(row.props?.instrument_citation_title).toBe('Huisvestingswet van de Proef');
 	});
 });

@@ -6,14 +6,15 @@
 	//
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
+	import { bronRol } from '$lib/nav/bron-rol';
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
-	import { afterNavigate, goto } from '$app/navigation';
-	import type { Collection, Relation } from '$lib/vocabulary';
+	import { goto } from '$app/navigation';
+	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
@@ -22,7 +23,6 @@
 	import {
 		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
-		NEIGHBORHOOD_CAP_PHONE,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
@@ -41,7 +41,7 @@
 	import { getNodeCanvas, getNodeHull } from '$lib/api/records';
 	import { inPool } from '$lib/api/pool';
 	import { kopNode } from '$lib/bron/first-node';
-	import { bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
+	import { NETWORK_MODE, bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
 	import { refOf, type BronRef } from '$lib/bron/ref';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
@@ -89,13 +89,8 @@
 	import { allRows, filterGroups, lidCounts, memberCountsUnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
+	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
-	import {
-		parseOverlay,
-		overlayParam,
-		DEFAULT_HEAT_MONTHS,
-		type Overlay
-	} from '$lib/selection/overlay';
 	import { AMENDING_RELATIONS, NODE_TYPES, parseNodeId } from '$lib/vocabulary';
 	import {
 		articleOf,
@@ -105,7 +100,7 @@
 		nodeToGraphNode,
 		syntheticNode
 	} from '$lib/graph/types';
-	import { bronNaam } from '$lib/bron/naam';
+	import { bronNaam, bronFullName } from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
 		padOfFocus,
@@ -118,22 +113,31 @@
 	import { lawName } from '$lib/text/instrument-meta';
 	import { keyEcli } from '$lib/text/ecli';
 	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
-	import NetworkOptions from '$lib/selection/NetworkOptions.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import type { Option } from '$lib/components/ui/option';
 	import ChainView from '$lib/network/ChainView.svelte';
 	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
+	import { chainTally } from '$lib/network/chain';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
+	import { pairOf, resolveChoice } from '$lib/network/pairs';
+	import {
+		chainsModel,
+		MAX_ROWS,
+		MAX_STEPS,
+		type ChainsResponse,
+		type ChainsState
+	} from '$lib/network/linkchains';
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
-	import { getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
+	import { getChains, getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
 	import { getEuLinks } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
-		onlyAround,
 		netwerkParams,
 		parseNetwerk,
 		withAdded,
@@ -156,9 +160,9 @@
 	import { panelOfKey, verbondenInView, type Panel } from './panels';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
-	import { ColumnWidths, type Column } from './column-widths.svelte';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
-	import { OverlayCounts } from './overlay-counts.svelte';
+	import { InFlux } from './in-flux.svelte';
+	import { Proposals } from './proposals.svelte';
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
@@ -169,6 +173,11 @@
 	const composer = new NetwerkComposer(store, () => graphView);
 
 	let selectedNode = $state<GraphNode | null>(null);
+	// The Topbalk marks a person by their current role, from the node as it is loaded.
+	$effect(() => {
+		bronRol.set(selectedNode?.collection === 'members' ? (selectedNode.raw?.props ?? null) : null);
+		return () => bronRol.set(null);
+	});
 	/**
 	 * A focus on its way while another bron is still selected: the reader shows its loading
 	 * state instead of the old text until the new bron's head is in (UX 8 Oct: a dossier opened
@@ -180,12 +189,6 @@
 	store.neighborhood.subscribe((r) => (reach = r));
 	store.selection.subscribe((n) => {
 		selectedNode = n;
-	});
-
-	/** The bronnen on the canvas, for the heat overlay, which counts only those. */
-	let canvasIds = $state<string[]>([]);
-	store.nodes.subscribe((ns) => {
-		canvasIds = ns.map((n) => n.id).filter((id) => !id.startsWith('synth:'));
 	});
 
 	/** The focus names a bron the data does not hold: said in words, no failure. */
@@ -290,29 +293,11 @@
 	const alles = $derived(params.get('alles') === '1');
 	// The API's most at one step (2.000 from 0.79.45, #545).
 	const ALLES_GRENS = 2000;
-	// The per-kind step: all of one kind of the focus's direct neighbours, page by page (500,
-	// /api/nodes props=canvas), up to SOORT_GRENS; the Legenda's row says how many came.
-	const SOORT_GRENS = 5000;
-	let laadtSoort = $state(new Set<string>());
-	async function laadSoort(soort: Collection) {
-		const target = parseNodeId(reach?.focal ?? '');
-		if (!target || laadtSoort.has(soort)) return;
-		laadtSoort = new Set([...laadtSoort, soort]);
-		try {
-			await store.laadSoort(target.collection, target.key, soort, { grens: SOORT_GRENS });
-		} catch (e) {
-			// The row keeps its count; Alle laden stays.
-			report('Verkenner soort', e);
-		} finally {
-			laadtSoort = new Set([...laadtSoort].filter((c) => c !== soort));
-		}
-	}
+	// A bron alone has no 0 steps: Alleen gekozen is a netwerk's.
 	const depthFor = (drawClass: DrawClass) =>
-		depthOfClass(drawClass, { explicit: explicitDepth, all: alles });
+		Math.max(1, depthOfClass(drawClass, { explicit: explicitDepth, all: alles }));
 	// The bron the canvas is drawn around; a click selects another without moving it.
 	let anchorClass = $state<DrawClass>('other');
-	const depth = $derived(depthFor(anchorClass));
-
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
 	//
@@ -323,17 +308,40 @@
 	leesBewaard();
 	const netwerkQuery = $derived(netwerkQueryOf(params));
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
-	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
-	// clusters, the faint bronnen between and the cap of 100 keep it light there.
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
-	// "Alleen verbonden bronnen" is a filter on the netwerk, not a replacement: ?omgeving names
-	// the bron whose surroundings alone are drawn; the chosen bronnen stay in the address, greyed,
-	// and come back when the filter goes off.
-	const AROUND = 'omgeving';
-	const aroundId = $derived(parseNodeId(params.get(AROUND) ?? '') ? params.get(AROUND) : null);
-	const shownNetwork = $derived(aroundId ? onlyAround(netwerk, aroundId) : netwerk);
-	const netwerkActive = $derived(shownNetwork.ids.length > 0);
+	const netwerkActive = $derived(netwerk.ids.length > 0);
+
+	// What Aantal stappen shows: with a netwerk the steps of its bronnen (the most any asks), else
+	// the bron the canvas is drawn around.
+	const depth = $derived(
+		netwerkActive && explicitDepth !== null
+			? explicitDepth
+			: netwerkActive
+				? Math.max(
+						1,
+						...composer.entries
+							.filter((e) => e.on && e.node)
+							.map((e) => depthOfClass(e.node!.drawClass, { explicit: null, all: false }))
+					)
+				: depthFor(anchorClass)
+	);
+	/**
+	 * How far the netwerk reached, for Aantal stappen: the steps beyond the first and whether the
+	 * API cut one of them off; at one step, whether a bron's own neighbours came in part (not
+	 * known at Alleen gekozen: no step is greyed out before one is asked).
+	 */
+	const netwerkReach = $derived<NeighborhoodReach>(
+		composer.reach
+			? { focal: '', ...composer.reach, buckets: composer.cut }
+			: {
+					focal: '',
+					depth: 1,
+					capped: composer.cut.length > 0 && !composer.extending && explicitDepth !== 0,
+					cap: NEIGHBORHOOD_CAP,
+					buckets: composer.cut
+				}
+	);
 	/** Outside the werkplek, the netwerk kept in this browser: a bron read is added to it. */
 	const bewaard = $derived(parseNetwerk(new URLSearchParams(keptNetwerk() ?? '')));
 	/** The netwerk a bron is added to: the werkplek's, or the kept one while reading. */
@@ -354,6 +362,16 @@
 	type ViewId = (typeof VIEWS)[number]['waarde'];
 	const view = $derived<ViewId>(
 		VIEWS.find((w) => w.waarde === params.get(VIEW_PARAM))?.waarde ?? 'omgeving'
+	);
+	/** Verband compares bronnen: it is offered from two chosen ones, the page's bron counting. */
+	const verbandPossible = $derived(
+		composer.entries.filter((e) => e.on).length +
+			(selectedNode &&
+			!selectedNode.id.startsWith('synth:') &&
+			!composer.entries.some((e) => e.on && e.node?.id === selectedNode?.id)
+				? 1
+				: 0) >=
+			2
 	);
 	const chooseView = (w: ViewId) =>
 		setUrl({ [VIEW_PARAM]: w === 'omgeving' ? null : w, [MARK_PARAM]: null });
@@ -420,14 +438,20 @@
 	 * regulations that only name the law, or only those issued under it (the default: a
 	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
 	 */
+	/** The search for a bron to add, open (the panel's and the empty canvas's button). */
+	let toevoegenOpen = $state(false);
 	let chainExpired = $state(false);
 	let chainMentions = $state(false);
 	let chainBasedOff = $state(false);
-	const chainHidden = $derived(
-		new Set<Relation>([
-			...(chainMentions ? [] : (['REFERS_TO'] as const)),
-			...(chainBasedOff ? (['BASED_ON'] as const) : [])
-		])
+	/** The kinds of line a lineage keten (a judgment's appeals, a fractie's continuations) switched off. */
+	let lineageOff = $state.raw<ReadonlySet<LineKind>>(new Set());
+	const chainHidden = $derived<ReadonlySet<LineKind>>(
+		lineageStart
+			? lineageOff
+			: new Set<LineKind>([
+					...(chainMentions ? [] : (['citation'] as const)),
+					...(chainBasedOff ? (['structural'] as const) : [])
+				])
 	);
 	let chainData = $state.raw<{
 		bwb: string;
@@ -567,7 +591,7 @@
 				: null
 			: chainOf(chainMentions)
 	);
-	const chainAll = $derived(chainMentions ? chainModel : chainOf(true));
+	const chainAll = $derived(chainMentions || lineageStart ? chainModel : chainOf(true));
 	/** The article the keten starts from, as the drawing names it: marked until another is. */
 	const chainArticleId = $derived(
 		chainArticle ? (chainModel?.layers.find((l) => l.id === 'article')?.nodes[0]?.id ?? null) : null
@@ -673,9 +697,10 @@
 			.filter((e) => e.on && e.node)
 			.map((e) => ({
 				id: e.node!.id,
-				name: bronNaam(e.node!, $instrumentMetaStore),
-				collection: e.collection,
-				connections: e.connections ?? null
+				name: bronFullName(e.node!, $instrumentMetaStore),
+				short: bronNaam(e.node!, $instrumentMetaStore),
+				props: e.node!.raw?.props ?? null,
+				collection: e.collection
 			}));
 		if (
 			selectedNode &&
@@ -684,9 +709,10 @@
 		)
 			ends.push({
 				id: selectedNode.id,
-				name: bronNaam(selectedNode, $instrumentMetaStore),
-				collection: selectedNode.collection,
-				connections: null
+				name: bronFullName(selectedNode, $instrumentMetaStore),
+				short: bronNaam(selectedNode, $instrumentMetaStore),
+				props: selectedNode.raw?.props ?? null,
+				collection: selectedNode.collection
 			});
 		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));
 	});
@@ -730,7 +756,7 @@
 			pairs,
 			async (pair) => {
 				if (!pairKept.has(pair))
-					pairKept.set(pair, await getShared({ ids: pair, limit: 8 }, ac.signal));
+					pairKept.set(pair, await getShared({ ids: pair, limit: MAX_ROWS }, ac.signal));
 				return pairKept.get(pair) ?? null;
 			},
 			{ parallel: 2 }
@@ -764,67 +790,101 @@
 		const here = sharedData?.key === sharedKey ? sharedData : null;
 		if (!here || here.failure) return null;
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
-		return verbandModel(
-			sharedDrawn.map((e) => e.id),
-			here.answers,
-			here.direct,
-			(id) => ({ name: byId.get(id)?.name ?? id, collection: byId.get(id)?.collection ?? null })
-		);
+		return verbandModel(here.answers, here.direct, (id) => ({
+			name: byId.get(id)?.name ?? id,
+			collection: byId.get(id)?.collection ?? null
+		}));
+	});
+	/**
+	 * Aantal stappen of Verband: 1 is what the bronnen share (/api/nodes/shared), 2 and 3 add the
+	 * ketens through laws and articles between them (/api/chains). ?diepte, as Omgeving's; unset
+	 * is 1. With three or more bronnen the Keuze (?paar) names the pair whose ketens are
+	 * sought; Alle has none.
+	 */
+	const pairSteps = $derived(Math.max(1, Math.min(MAX_STEPS, explicitDepth ?? 1)));
+	const PAIR_PARAM = 'paar';
+	const pairChoice = $derived(resolveChoice(params.get(PAIR_PARAM), sharedDrawn, sharedState));
+	const vcPair = $derived(sharedDrawn.length === 2 || sharedState ? pairOf(pairChoice) : null);
+	const vcKey = $derived(vcPair && pairSteps >= 2 ? `${vcPair.join(',')}:${pairSteps}` : '');
+	let vcData = $state.raw<
+		{ key: string; response: ChainsResponse } | { key: string; error: unknown } | null
+	>(null);
+	let vcTries = $state(0);
+	$effect(() => {
+		const key = vcKey;
+		void vcTries;
+		if (!key) return;
+		const [ids, steps] = key.split(':');
+		let current = true;
+		const ac = new AbortController();
+		// Cold it takes 10 to 12 s (slowApi, 30 s); another choice breaks the question off.
+		getChains({ ids, max_steps: Number(steps) }, ac.signal)
+			.then((response) => current && (vcData = { key, response }))
+			.catch((error) => {
+				if (!current || isAborted(error)) return;
+				report('Verband, ketens', error);
+				vcData = { key, error };
+			});
+		return () => {
+			current = false;
+			ac.abort();
+		};
+	});
+	const vcState = $derived.by((): ChainsState | null => {
+		if (!vcKey || !vcPair) return null;
+		const here = vcData?.key === vcKey ? vcData : null;
+		if (!here) return { status: 'loading' };
+		if ('error' in here) return { status: 'error', error: here.error, retry: () => vcTries++ };
+		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
+		return {
+			status: 'ready',
+			model: chainsModel(
+				here.response,
+				vcPair,
+				(id) => ({
+					id,
+					name: byId.get(id)?.name ?? id,
+					collection: byId.get(id)?.collection ?? null
+				}),
+				pairSteps
+			)
+		};
 	});
 	/** An API without /api/nodes/shared: Verband says so, it does not guess from the canvas. */
 	const sharedGap = $derived(
 		sharedData?.key === sharedKey && sharedData.failure === 'niet'
-			? 'gedeelde bronnen niet beschikbaar'
+			? 'gedeelde bronnen nog niet beschikbaar'
 			: sharedEnds.length > SHARED_ENDS
 				? `${formatCount(SHARED_ENDS)} van ${formatCount(sharedEnds.length)} gekozen bronnen`
 				: null
 	);
 	// Soort and Relatie of a weergave of its own count what it draws, and its filter hides it.
-	let hiddenRelations = $state.raw<ReadonlySet<Relation>>(new Set());
-	store.filters.subscribe((f) => (hiddenRelations = f.hiddenRelations));
+	let hiddenLines = $state.raw<ReadonlySet<LineKind>>(new Set());
+	store.filters.subscribe((f) => (hiddenLines = f.hiddenLines));
 	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
 		new Set(FILTER_GROUPS.filter((k) => filter.bronnen && !filter.bronnen.has(k)))
 	);
-	const chainCounts = $derived.by(() => {
-		// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
-		if (!chainModel || !chainAll) return { kinds: {}, relations: {} };
-		const nodes = chainModel.layers.flatMap((l) => l.nodes);
-		const lines = chainAll.layers.flatMap((l) => l.nodes).flatMap((n) => n.parents);
-		const kinds: Partial<Record<FilterGroup, number>> = {};
-		for (const n of nodes) {
-			const k = filterGroupOf(n.collection, n.id.split('/')[1], {
-				celex: n.instrument?.celex ?? null
-			});
-			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
-		}
-		return {
-			kinds,
-			relations: {
-				BASED_ON: lines.filter((l) => l.way === 'delegates').length,
-				REFERS_TO: lines.filter((l) => l.way === 'mentioned').length
-			},
-			// A regulation names the law: Noemt.
-			refersFrom: ['instruments' as const]
-		} satisfies Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'>;
-	});
+	// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
+	const chainCounts = $derived(
+		chainModel && chainAll ? chainTally(chainModel, chainAll) : { kinds: {}, lines: {} }
+	);
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
-	const NO_COUNTS = { kinds: {}, relations: {} } satisfies Pick<
-		CanvasCounts,
-		'kinds' | 'relations'
-	>;
+	const NO_COUNTS = { kinds: {}, lines: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	const sharedCounts = $derived.by(() => {
 		if (!sharedState) return null;
 		const kinds: Partial<Record<FilterGroup, number>> = {};
 		for (const r of sharedState.rows) {
 			const k = filterGroupOf(r.collection, r.node.key, r.node.props);
-			if (k) kinds[k] = (kinds[k] ?? 0) + 1;
+			// The judgments are counted from their totals, below, not from the rows drawn.
+			if (k && r.collection !== 'judgments') kinds[k] = (kinds[k] ?? 0) + 1;
 		}
 		const judgments = sharedState.judgments.reduce((n, j) => n + j.total, 0);
 		if (judgments) kinds.uitspraken = (kinds.uitspraken ?? 0) + judgments;
-		const relations: Partial<Record<Relation, number>> = {};
+		const lines: Partial<Record<LineKind, number>> = {};
 		for (const r of sharedState.rows)
-			for (const rel of r.relations) relations[rel] = (relations[rel] ?? 0) + 1;
-		return { kinds, relations } satisfies Pick<CanvasCounts, 'kinds' | 'relations'>;
+			for (const rel of new Set(r.relations.map((x) => lineKindOf(x, drawClassOf(r.collection)))))
+				lines[rel] = (lines[rel] ?? 0) + 1;
+		return { kinds, lines } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
 	});
 	/** The tijdstrook of Verband: the shared bronnen with a date. */
 	const sharedDots = $derived(
@@ -836,7 +896,11 @@
 	const sharedCard = $derived.by(() => {
 		const r = sharedState?.rows.find((x) => x.id === marked);
 		const node = r ? (store.getNodeById(r.id) ?? nodeToGraphNode(r.node)) : null;
-		return r && node ? { node, ties: r.how } : null;
+		if (r && node) return { node, ties: r.how };
+		// A kenmerk or a tussenbron of a keten.
+		const known = vcState?.status === 'ready' && marked ? vcState.model.known.get(marked) : null;
+		const bronNode = known?.node ? nodeToGraphNode(known.node) : null;
+		return bronNode ? { node: bronNode, ties: [] } : null;
 	});
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
@@ -859,8 +923,8 @@
 	$effect(() => {
 		const node = mode === 'index' ? null : selectedNode;
 		// In Tekst on a phone Verbonden stands under the text: it loads once it comes in view.
-		const panel = mode === 'read' && panelSeen ? 'verbonden' : mobilePanel;
-		const view = { phone: telefoon, table: tableMode, panel };
+		const panel = mode === 'read' && panelSeen ? 'verbonden' : readTab;
+		const view = { phone: telefoon, table: tableMode, panel, canvasOnly: mode === 'graph' };
 		if (node && !verbondenInView(node.collection, view)) return;
 		source.load(node);
 	});
@@ -868,21 +932,24 @@
 	// A filter on the rows or the table needs every row, not the first few per group.
 	$effect(() => {
 		const f = filter;
+		// An article's judgments are cut by the API itself (`askedOfApi`): its jaar and rechter
+		// need no other rows.
+		const vanApi = selectedNode?.collection === 'articles';
 		const opRijen =
 			f.lid ||
-			f.rechter ||
+			(f.rechter && !vanApi) ||
 			f.van ||
 			f.tot ||
 			f.geldendOp ||
 			f.betrouwbaarheid ||
 			f.status ||
-			f.jaar ||
+			(f.jaar && !vanApi) ||
 			f.zoek ||
 			// An article's counts per lid under a bronfilter that splits what one of its
 			// buckets holds (toelichtingen without wetsvoorstellen) are counted from its rows.
 			(f.bronnen &&
 				selectedNode?.collection === 'articles' &&
-				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen)));
+				!(verbonden.lidPerBak && memberCountsUnder(verbonden.lidPerBak, f.bronnen, f.stuksoort)));
 		// Asked again for each bron Verbonden starts on: a readable address names it later.
 		void verbonden.id;
 		if (tableMode || opRijen) source.volledig().catch((e) => report('Verbonden volledig', e));
@@ -908,7 +975,7 @@
 			!filter.status &&
 			!filter.betrouwbaarheid &&
 			!filter.jaar
-			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen)
+			? memberCountsUnder(verbonden.lidPerBak, filter.bronnen, filter.stuksoort)
 			: null
 	);
 	// Else counted from the rows, once they are all in or where the API counts no lid.
@@ -922,14 +989,14 @@
 				: new Map<string, number>())
 	);
 	const billCount = $derived(
-		allRows(verbonden.groups).filter((r) => r.filterGroup === 'wetsvoorstellen').length
+		allRows(verbonden.groups).filter((r) => r.stuksoort === 'wetsvoorstellen').length
 	);
 	// The first lading is the nodes' sample (5 of 21 on UHW 3): while the wijzigingen are on their
 	// way the count says "meer dan", so it does not spring to another number on the same page.
 	const billMore = $derived(
 		!!verbonden.wachtend?.includes('changes') ||
 			verbonden.groups.some(
-				(g) => g.capped && g.rows.some((r) => r.filterGroup === 'wetsvoorstellen')
+				(g) => g.capped && g.rows.some((r) => r.stuksoort === 'wetsvoorstellen')
 			)
 	);
 
@@ -987,7 +1054,7 @@
 			lids.set(edgeKey(edge.source, edge.target, edge.relation), card.verbinding.lid);
 		return lids;
 	});
-	/** Zet in het netwerk from the card Verbinding: the row's bron joins the netwerk. */
+	/** Aan het netwerk toevoegen from the card Verbinding: the row's bron joins the netwerk. */
 	function showInNetwork(row: Row) {
 		const id = focusOf(row.ref);
 		if (id) addIdToNetwerk(id, row.title);
@@ -1060,7 +1127,7 @@
 	// is drawn.
 	let focusEpoch = 0;
 	// The most bronnen a neighbourhood brings: fewer on a phone.
-	const omgevingGrens = telefoon ? NEIGHBORHOOD_CAP_PHONE : NEIGHBORHOOD_CAP;
+	const omgevingGrens = NEIGHBORHOOD_CAP;
 
 	async function expandAround(node: GraphNode, epoch: number) {
 		if (node.id.startsWith('synth:')) return;
@@ -1340,16 +1407,33 @@
 	let metGroep = $state<ReadonlyMap<string, ContainerKind>>(new Map());
 
 	$effect(() => {
-		const n = shownNetwork;
+		const n = netwerk;
 		const omgeving = view === 'omgeving';
+		// Aantal stappen 0 is Alleen gekozen: no surroundings. Read here, so a change of ?diepte
+		// composes again.
+		const steps = explicitDepth;
 		if (mode !== 'graph') return;
 		untrack(() => {
-			composer.surroundings = omgeving;
-			composer.drawsPaths = omgeving;
+			composer.surroundings = omgeving && steps !== 0;
+			composer.steps = steps;
 			if (n.ids.length > 0) composer.compose(n);
-			else if (composer.composed) composer.release();
+			else if (composer.composed) {
+				composer.release();
+				if (focus) drawFocusAgain(focus);
+			}
 		});
 	});
+
+	/**
+	 * The last bron of a netwerk taken out while a page's own bron is the focus: the canvas goes
+	 * back to what that page drew, not what the removed bron brought (its 200 uitspraken).
+	 */
+	function drawFocusAgain(id: string) {
+		store.reset();
+		deepenedId = '';
+		loadedFocus = id;
+		loadFocus(id).catch((e) => showFocusError(e, id));
+	}
 
 	/**
 	 * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
@@ -1385,11 +1469,20 @@
 	const OFF = 'uit';
 	const filtersOff = $derived(offOf(params.get(OFF)));
 	$effect(() => {
-		const { relations, groups } = filtersOff;
+		const { lines, annexes, groups } = filtersOff;
 		untrack(() => {
 			const now = get(store.filters);
-			if (sameSet(relations, now.hiddenRelations) && sameSet(groups, now.hiddenGroups)) return;
-			store.setFilters({ hiddenRelations: new Set(relations), hiddenGroups: new Set(groups) });
+			if (
+				sameSet(lines, now.hiddenLines) &&
+				annexes === now.hiddenAnnexes &&
+				sameSet(groups, now.hiddenGroups)
+			)
+				return;
+			store.setFilters({
+				hiddenLines: new Set(lines),
+				hiddenAnnexes: annexes,
+				hiddenGroups: new Set(groups)
+			});
 		});
 	});
 	let filtersStart = true;
@@ -1400,10 +1493,20 @@
 			return;
 		}
 		const off = untrack(() => filtersOff);
-		if (sameSet(off.relations, f.hiddenRelations) && sameSet(off.groups, f.hiddenGroups)) return;
+		if (
+			sameSet(off.lines, f.hiddenLines) &&
+			off.annexes === f.hiddenAnnexes &&
+			sameSet(off.groups, f.hiddenGroups)
+		)
+			return;
 		untrack(() =>
 			setUrl({
-				[OFF]: offValue({ ...off, relations: [...f.hiddenRelations], groups: [...f.hiddenGroups] })
+				[OFF]: offValue({
+					...off,
+					lines: [...f.hiddenLines],
+					annexes: f.hiddenAnnexes,
+					groups: [...f.hiddenGroups]
+				})
 			})
 		);
 	});
@@ -1414,8 +1517,7 @@
 		if (focus || pad || netwerkQuery || mode === 'index') return;
 		const saved = keptNetwerk();
 		if (!saved) return;
-		// The bronnen between start shown, whatever the last netwerk had (Thijs, 9 Oct:
-		// "standaard aan"); only a link that says ?tussen=0 keeps them off.
+		// An old address with ?tussen is read without it.
 		untrack(() => setUrl({ ...Object.fromEntries(new URLSearchParams(saved)), tussen: null }));
 	});
 	const linkIdOf = (node: GraphNode) =>
@@ -1428,15 +1530,6 @@
 		if (wachtOp && selectedNode && (selectedNode.id === wachtOp || selectedLinkId === wachtOp))
 			wachtOp = null;
 	});
-
-	function toggleAround() {
-		if (aroundId) return setUrl({ [AROUND]: null });
-		const id = selectedLinkId;
-		if (!id) return;
-		// The first bron of an empty canvas grows out of it, as a bron added does.
-		if (!netwerkActive) composer.keepCanvas();
-		setUrl({ [AROUND]: id });
-	}
 
 	function addToNetwerk(node: GraphNode) {
 		const id = linkIdOf(node);
@@ -1466,8 +1559,11 @@
 	function toggleChosen(node: GraphNode) {
 		const id = linkIdOf(node);
 		if (!id) return;
-		if (netwerk.ids.includes(id)) setNetwerk(withRemoved(netwerk, id));
-		else addToNetwerk(node);
+		if (!netwerk.ids.includes(id)) return addToNetwerk(node);
+		setNetwerk(withRemoved(netwerk, id));
+		meldNetwerk(`${kort(bronNaam(node, $instrumentMetaStore))} weggehaald uit het netwerk.`, () =>
+			setNetwerk(withAdded(netwerk, id))
+		);
 	}
 
 	// Wissen leaves nothing: no chosen bronnen, no focus, no canvas, nothing remembered for
@@ -1483,7 +1579,6 @@
 				netwerk: null,
 				uit: null,
 				tussen: null,
-				[AROUND]: null,
 				focus: null,
 				[SHOW]: null,
 				[MARK_PARAM]: null,
@@ -1513,25 +1608,6 @@
 		if (netwerkActive) return siteTitle('Netwerk');
 		return routeKop('/explore').title;
 	});
-
-	// The ← of the network goes back inside Concordans; a bron opened from a link
-	// elsewhere (a new tab, a shared link) has no step to go back to, so it goes home.
-	let steppedIn = $state(false);
-	// A replaced entry (a filter) is no step; a link, Back itself, or a change of bron or
-	// of reading mode is.
-	// On the first page `from` can be there without a url: reading it threw, the first
-	// navigation never ended and SvelteKit never took over the links (every click a full
-	// load, 10 Oct 2026).
-	afterNavigate((nav) => {
-		const van = nav.from?.url;
-		const naar = nav.to?.url;
-		const from = van ? exploreUrl(van).searchParams : null;
-		const to = naar ? exploreUrl(naar).searchParams : null;
-		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
-		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('mode'))
-			steppedIn = true;
-	});
-	const goBack = () => (steppedIn ? history.back() : goto('/'));
 
 	/**
 	 * A change of view that Back should undo (reading at full width, clearing the netwerk)
@@ -1566,34 +1642,38 @@
 	// Netwerk tonen and Netwerk verbergen in Verbonden: one step each, so Back undoes it.
 	const setShowNetwork = (on: boolean) => setUrl({ [SHOW]: on ? 'netwerk' : null }, { push: true });
 	// Always explicit: an unset diepte means 1 for a container and 2 for every other bron,
-	// so a plain "2" click does not remove the param.
-	// With a netwerk a depth adds context around the selection; the netwerk stays.
-	function setDepth(d: number) {
-		if (!netwerkActive) {
-			setUrl({ diepte: String(d) });
-			return;
-		}
-		const node = selectedNode;
-		if (!node || node.id.startsWith('synth:')) return;
-		graphView?.suppressFit();
-		store
-			.expandNeighborhood(node.collection, node.key, {
-				depth: d,
-				cap: omgevingGrens,
-				additive: true
-			})
-			.then(() => graphView?.fitWhenSettled())
-			.catch((e) => showFocusError(e, node.key));
-	}
+	// so a plain "2" click does not remove the param. In Omgeving it reaches the chosen bronnen
+	// (the page's bron when none is chosen); in Verband it is the pair's.
+	const setDepth = (d: number) => setUrl({ diepte: String(d) });
 
 	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
-	const readHref = $derived(withParams(page.url, { tabel: null }));
+	// "Alle 10.406" of a kind the canvas cut off: those bronnen as a list, the table under that
+	// kind (?soort), not as many nodes (Thijs, 28 Oct); the canvas keeps its cap. The werkplek
+	// stays in the address, bronfilter and all: Terug leads back to it as it was.
+	const lijstHref = (bronnen: readonly FilterGroup[]) =>
+		withParams(page.url, { tabel: '1', soort: bronnen.join(',') || null, naast: null });
+	const tabelSoort = $derived(
+		(params.get('soort') ?? '')
+			.split(',')
+			.filter((k): k is FilterGroup => (FILTER_GROUPS as readonly string[]).includes(k))
+	);
+	/** The table's bronfilter: of the kinds of ?soort only, where the list came from Tonen. */
+	const tableFilter = $derived<VerbondenFilter>(
+		tabelSoort.length
+			? { ...filter, bronnen: new Set(tabelSoort.filter((k) => filter.bronnen?.has(k) ?? true)) }
+			: filter
+	);
+	const readHref = $derived(withParams(page.url, { tabel: null, soort: null }));
 
-	// ── Overlay (open dossiers or citations per month, never both) ────────────
-	const overlay = $derived<Overlay>(parseOverlay(params.get('overlay')));
-	const overlayCounts = new OverlayCounts(
-		() => overlay,
-		() => canvasIds
+	const inFlux = new InFlux(() => mode === 'graph');
+	// Voorstellen: the lopende voorstellen of the bronnen on the canvas beside them (besluit 37).
+	const PROPOSALS = 'voorstellen';
+	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
+	const proposals = new Proposals(
+		store,
+		() => proposalsOn,
+		() => inFlux.counts,
+		() => mode === 'graph' && view === 'omgeving'
 	);
 
 	let graphView = $state<GraphView | null>(null);
@@ -1640,23 +1720,16 @@
 		if (collection && mode !== 'index') preloadReader(collection);
 	});
 
-	const setOverlay = (o: Overlay) => setUrl({ overlay: overlayParam(o) });
-	const toggleHeat = () =>
-		setOverlay(
-			overlay.kind === 'heat' ? { kind: 'none' } : { kind: 'heat', months: DEFAULT_HEAT_MONTHS }
-		);
-	const setHeatPeriod = (months: number) => setOverlay({ kind: 'heat', months });
-	const toggleMutatie = () =>
-		setOverlay(overlay.kind === 'open' ? { kind: 'none' } : { kind: 'open' });
-
 	// ── Share ────────────────────────────────────────────────────────────────
 	const shareCopier = createCopier();
 	const handleShareView = () => shareCopier.copy(page.url.toString(), 'share');
 
-	// On a phone Verbonden stands under the text; the key 3 brings it forward.
-	let mobilePanel = $state<Panel>('reader');
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
-	let readTab = $state<'tekst' | 'verbonden'>('tekst');
+	let readTab = $state<Panel>('tekst');
+	const READ_CHOICE: Option<Panel>[] = [
+		{ waarde: 'tekst', label: 'Tekst' },
+		{ waarde: 'verbonden', label: 'Verbonden' }
+	];
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -1680,6 +1753,8 @@
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
 	// instead of taking a permanent column.
 	let tocOpen = $state(false);
+	/** The button Inhoud: where the focus goes back to when its sheet closes (a click does not always focus it). */
+	let inhoudKnop = $state<HTMLButtonElement | null>(null);
 	$effect(() => {
 		void selectedNode?.id;
 		tocOpen = false;
@@ -1727,8 +1802,6 @@
 	);
 
 	// ── Resizable columns ────────────────────────────────────────────────────
-	const widths = new ColumnWidths();
-	onMount(() => widths.load());
 
 	// ── Keys ─────────────────────────────────────────────────────────────────
 	// L reads the selected bron at full width, or goes back to the network; ignored
@@ -1748,30 +1821,22 @@
 			);
 			return;
 		}
-		// 1 and 3: the layers of a bron, Tekst and Verbonden (Thijs, 10 Oct); 3 puts the focus on
-		// Verbonden's first row, for J and K.
+		// 1 and 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's
+		// first row, for J and K.
 		const panel = panelOfKey(e.key);
 		if (panel && selectedNode && mode === 'read') {
 			e.preventDefault();
-			kiesPaneel(panel);
+			readTab = panel;
 			if (panel === 'verbonden')
 				requestAnimationFrame(() =>
 					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
 				);
 			return;
 		}
-		// O: the filter Alleen verbonden bronnen on or off for the selected bron.
-		if (e.key.toLowerCase() === 'o' && mode === 'graph' && (aroundId || selectedNode)) {
-			e.preventDefault();
-			toggleAround();
-			return;
-		}
 		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		e.preventDefault();
 		setReading(readAction === 'read');
 	}
-
-	const kiesPaneel = (id: Panel) => (mobilePanel = id);
 
 	/** What the key L does: read the bron, or open the werkplek with it. */
 	const readAction = $derived<'read' | 'network' | null>(
@@ -1911,12 +1976,13 @@
 				</div>
 				{#if beside}
 					<div class="reader__beside" bind:this={besideEl}>
-						<a
-							class="reader__close"
-							href={closeBesideHref}
-							data-sveltekit-noscroll
-							aria-label="Sluiten">×</a
-						>
+						<div class="reader__close">
+							<IconButton
+								label="Sluiten"
+								onclick={() => goto(closeBesideHref, { noScroll: true, keepFocus: true })}
+								>×</IconButton
+							>
+						</div>
 						{#if besideJudgmentNode}
 							{#if judgmentReader.component}
 								{@const JudgmentReader = judgmentReader.component}
@@ -1986,16 +2052,6 @@
 	{/if}
 {/snippet}
 
-{#snippet handle(which: Column)}
-	<div
-		class="resize-handle resize-handle--{which}"
-		onpointerdown={(e) => widths.start(e, which)}
-		onpointermove={widths.move}
-		onpointerup={widths.end}
-		aria-hidden="true"
-	></div>
-{/snippet}
-
 {#snippet viewMiddle(scale: number)}
 	{#if view === 'keten'}
 		<ChainView
@@ -2007,7 +2063,7 @@
 			chosen={marked ?? chainArticleId}
 			gap={chainGap}
 			{hiddenKinds}
-			hiddenRelations={chainHidden}
+			hiddenLines={chainHidden}
 			amending={chainModel?.amending.length ?? 0}
 			expired={chainData?.delegated?.expired_total
 				? {
@@ -2034,13 +2090,18 @@
 			{scale}
 			ends={sharedDrawn}
 			model={sharedState}
+			choice={pairChoice}
+			onChoice={(c) => setUrl({ [PAIR_PARAM]: c, [MARK_PARAM]: null })}
 			chosen={marked}
 			gap={sharedGap}
 			{hiddenKinds}
-			{hiddenRelations}
+			{hiddenLines}
 			failure={sharedFailure}
 			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
-			onChoose={(r) => setUrl({ [MARK_PARAM]: r.id })}
+			steps={pairSteps}
+			chains={vcState}
+			onChoose={(id) => setUrl({ [MARK_PARAM]: id })}
+			onSteps={setDepth}
 		/>
 	{/if}
 {/snippet}
@@ -2053,12 +2114,11 @@
 				<div class="index-rol"><IndexOverzicht /></div>
 			{:else if indexChunk.component}{@const IndexViewC = indexChunk.component}<IndexViewC
 					category={indexKind}
-				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<p
-					class="explore-empty stil"
-					role="status"
+				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<div
+					class="explore-empty"
 				>
-					Laden…
-				</p>{/if}
+					<LoadState state={{ status: 'loading' }} what="De lijst" />
+				</div>{/if}
 		{:else if nietGevonden}
 			<NietGevonden title="Bron niet gevonden" kop={false}>
 				<p>{padNotHeld ? `${notHeld(nameOfPad(pad!, lawNameOf))}.` : focusNotHeld}</p>
@@ -2089,39 +2149,27 @@
 								{filter}
 								{verbonden}
 								{depth}
-								reach={netwerkActive
-									? {
-											focal: '',
-											depth: 1,
-											capped: composer.cut.length > 0,
-											cap: NEIGHBORHOOD_CAP,
-											buckets: composer.cut
-										}
-									: reach}
-								counting={netwerkActive && composer.loading}
+								{pairSteps}
+								reach={netwerkActive ? netwerkReach : reach}
+								counting={netwerkActive && (composer.loading || composer.extending)}
+								expecting={netwerkActive ? netwerk.ids.length : 0}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
-								inFluxMap={overlayCounts.inFlux}
-								heatMap={overlayCounts.heat}
-								{overlay}
+								inFluxMap={inFlux.counts}
 								{marked}
 								onMark={(id) => setUrl({ [MARK_PARAM]: id })}
 								onNodeClick={lees}
 								onMetGroep={(m) => (metGroep = m)}
 								onToggleChosen={toggleChosen}
+								onAdd={addIdToNetwerk}
 								{netwerkActive}
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
-								onBack={goBack}
-								onGoForward={() => history.forward()}
 								onFilter={applyFilter}
-								onOpenFilter={() => (filterOpen = true)}
 								onDepth={setDepth}
-								onLaadSoort={netwerkActive ? undefined : laadSoort}
-								{laadtSoort}
-								onToggleHeat={toggleHeat}
-								onHeatPeriodChange={setHeatPeriod}
-								onToggleMutatie={toggleMutatie}
+								lijstHref={netwerkActive ? undefined : lijstHref}
+								{view}
+								onToevoegen={() => (toevoegenOpen = true)}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
 								middenZoom={view !== 'keten'}
 								surroundings={view === 'omgeving'}
@@ -2131,15 +2179,26 @@
 										? (sharedCounts ?? NO_COUNTS)
 										: null}
 								extern={view === 'keten' ? chainCard : view === 'verband' ? sharedCard : null}
-								externRelations={view === 'keten'
+								externLines={view === 'keten'
 									? {
 											hidden: chainHidden,
-											toggle: (r) => {
-												if (r === 'REFERS_TO') chainMentions = !chainMentions;
-												if (r === 'BASED_ON') chainBasedOff = !chainBasedOff;
+											toggle: (l) => {
+												if (lineageStart) {
+													const next = new Set(lineageOff);
+													if (!next.delete(l)) next.add(l);
+													lineageOff = next;
+												} else if (l === 'citation') chainMentions = !chainMentions;
+												else if (l === 'structural') chainBasedOff = !chainBasedOff;
 											}
 										}
 									: null}
+								proposals={view === 'omgeving'
+									? {
+											on: proposalsOn,
+											count: proposals.available,
+											onToggle: () => setUrl({ [PROPOSALS]: proposalsOn ? null : 'ja' })
+										}
+									: undefined}
 								externStippen={view === 'keten'
 									? chainDots
 									: view === 'verband'
@@ -2148,17 +2207,20 @@
 							>
 								{#snippet viewChoice()}
 									<!-- Nothing chosen, nothing to view three ways: the field Bron toevoegen alone. -->
-									{#if focus || pad || netwerkActive}<div class="view-choice">
-											<h3 class="weergave__kop">Weergave</h3>
-											<Keuze
-												label="Weergave"
-												waarde={view}
-												opties={VIEWS.filter(
-													(w) => w.waarde !== 'keten' || chainPossible || view === 'keten'
-												).map((w) => ({ waarde: w.waarde, label: w.label }))}
-												onSelect={chooseView}
-											/>
-										</div>{/if}
+									{#if focus || pad || netwerkActive}
+										<Keuze
+											label="Weergave"
+											vol
+											waarde={view}
+											opties={VIEWS.filter(
+												(w) =>
+													w.waarde === 'omgeving' ||
+													w.waarde === view ||
+													(w.waarde === 'keten' ? chainPossible : verbandPossible)
+											).map((w) => ({ waarde: w.waarde, label: w.label }))}
+											onSelect={chooseView}
+										/>
+									{/if}
 								{/snippet}
 
 								{#snippet balk()}
@@ -2166,22 +2228,9 @@
 										>{shareCopier.label('share', 'Deel')}</button
 									>
 								{/snippet}
-								{#snippet meer()}
-									<NetworkOptions
-										around={selectedNode && !selectedNode.stub
-											? bronNaam(selectedNode, $instrumentMetaStore)
-											: null}
-										aroundOn={!!aroundId}
-										onAround={toggleAround}
-										chosen={netwerk.ids.length}
-										between={netwerk.tussen}
-										betweenCount={composer.joiningCount}
-										partial={composer.partial}
-										onBetween={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
-									/>
-								{/snippet}
 								{#snippet canvasOverlay()}
 									<NetwerkPanel
+										bind:searching={toevoegenOpen}
 										entries={netwerkActive
 											? composer.entries.map((e) =>
 													e.node
@@ -2190,10 +2239,13 @@
 												)
 											: []}
 										loading={composer.loading}
+										expected={netwerkActive ? netwerk.ids.length : 0}
 										{telefoon}
 										onSelect={addIdToNetwerk}
 										selection={selectedNode &&
 										selectedLinkId &&
+										reach &&
+										selectedNode.id !== reach.focal &&
 										!netwerk.ids.includes(selectedLinkId)
 											? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 											: null}
@@ -2203,15 +2255,12 @@
 											store.setFilters({ hiddenGroups: uit });
 										}}
 										onToggle={(id) => {
-											if (aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withToggled(netwerk, id));
 										}}
 										onRemove={(id) => {
-											if (id === aroundId) setUrl({ [AROUND]: null });
 											setNetwerk(withRemoved(netwerk, id));
 										}}
 										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-										onClearContext={() => store.clearContext()}
 										onClear={wisAlles}
 									/>
 								{/snippet}
@@ -2238,17 +2287,19 @@
 						onRetry={() => source.reload()}
 						{verbonden}
 						selection={selectedNode}
-						{filter}
+						filter={tableFilter}
 						onOpenFilter={() => (filterOpen = true)}
 						onRow={openRowCard}
 						backHref={readHref}
+						backLabel={params.get('mode') === NETWORK_MODE
+							? 'Terug naar het netwerk'
+							: 'Terug naar de tekst'}
 					/>
-				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<p
-						class="explore-empty stil"
-						role="status"
+				{:else if connectionsTable.error}{@render chunkMissing(connectionsTable)}{:else}<div
+						class="explore-empty"
 					>
-						Laden…
-					</p>{/if}
+						<LoadState state={{ status: 'loading' }} what="De tabel" />
+					</div>{/if}
 				{#if card}
 					<div class="explore-table__card">
 						<VerbindingCard
@@ -2262,37 +2313,24 @@
 			</div>
 		{:else if selectedNode}
 			{@const withContents = hasContents}
-			<div
-				class="explore-read"
-				class:explore-read--with-nav={withContents}
-				class:is-resizing={!!widths.drag}
-				style:--panel-w={widths.css('panel')}
-			>
+			<div class="explore-read" class:explore-read--with-nav={withContents}>
 				<!-- On a phone the text and Verbonden are two tabs, Verbonden one tap away (A197-a, UX
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
-					<div class="lees-tabs" role="tablist" aria-label="Tekst of Verbonden">
-						<button
-							type="button"
-							role="tab"
-							class="mobile-tab"
-							class:is-active={readTab === 'tekst'}
-							aria-selected={readTab === 'tekst'}
-							onclick={() => (readTab = 'tekst')}>Tekst</button
-						>
-						<button
-							type="button"
-							role="tab"
-							class="mobile-tab"
-							class:is-active={readTab === 'verbonden'}
-							aria-selected={readTab === 'verbonden'}
-							onclick={() => (readTab = 'verbonden')}>Verbonden</button
-						>
+					<div class="lees-tabs">
+						<Keuze
+							vol
+							label="Tekst of Verbonden"
+							opties={READ_CHOICE}
+							waarde={readTab}
+							onSelect={(w) => (readTab = w)}
+						/>
 					</div>
 					{#if withContents}
 						<button
 							type="button"
-							class="mobile-tab mobile-tab--toc"
+							class="btn mobile-tab--toc"
+							bind:this={inhoudKnop}
 							aria-haspopup="dialog"
 							aria-expanded={tocOpen}
 							onclick={() => (tocOpen = true)}>Inhoud</button
@@ -2313,7 +2351,6 @@
 				>
 					{@render reader()}
 				</div>
-				{@render handle('panel')}
 				<div
 					class="col col--panel"
 					class:mobile-hidden={readTab === 'tekst'}
@@ -2328,7 +2365,9 @@
 				</div>
 			</div>
 			{#if withContents && tocOpen}
-				<TocSheet onClose={() => (tocOpen = false)}>{@render toc()}</TocSheet>
+				<TocSheet onClose={() => (tocOpen = false)} opener={() => inhoudKnop}
+					>{@render toc()}</TocSheet
+				>
 			{/if}
 		{:else if loadFailure}
 			{@render bronFout(loadFailure)}
@@ -2361,8 +2400,8 @@
 	.explore-shell {
 		display: flex;
 		flex-direction: column;
-		height: calc(100vh - var(--topbar-h) - var(--tabbar-h));
-		height: calc(100dvh - var(--topbar-h) - var(--tabbar-h));
+		height: calc(100vh - var(--balk-h) - var(--tabbar-h));
+		height: calc(100dvh - var(--balk-h) - var(--tabbar-h));
 		overflow: hidden;
 	}
 
@@ -2389,41 +2428,6 @@
 	.werkplek .col--graph {
 		flex: 1;
 	}
-	/* Weergave, a block of the strip at the left (mockup A197-b). */
-	.view-choice {
-		padding: var(--s-4) 0;
-		border-top: 1px solid var(--rule);
-	}
-	.weergave__kop {
-		margin: 0 0 var(--s-3);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
-	@media (max-width: 768px) {
-		.view-choice {
-			padding: 0;
-			border-top: 0;
-		}
-		.weergave__kop {
-			display: none;
-		}
-		/* The three over the row's width, as the mockup's 390. */
-		.view-choice :global(.keuze) {
-			display: flex;
-		}
-		.view-choice :global(.keuze > *) {
-			flex: 1;
-			justify-content: center;
-		}
-	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.view-choice :global(.keuze > *) {
-			min-height: var(--veld-h-raak);
-		}
-	}
-	@media (max-width: 768px) {
-	}
 
 	.explore-read {
 		flex: 1;
@@ -2447,50 +2451,21 @@
 		z-index: var(--z-float);
 	}
 
-	/* The widths that follow the screen, until a column is dragged. Verbonden is as wide as
-	   a group's heading with its count and its box on one line ("Uitspraken die dit artikel
-	   aanhalen 127", Thijs 10 Oct: "het kader zelf sowieso iets breder altijd"); the room
-	   comes from the network, never from the reader. Below 1440 Verbonden grows with the
-	   screen to 408, so the network keeps 252 at 1280 and the reader 610 down to 1172. At
-	   1440 Verbonden 432 and the network 328, so the reader keeps 670 and its lid numbers
-	   in the margin (ArticleText's container query at 600). From 1600 the room goes to the
-	   network (at least 328): the reader keeps some 850px (a measure of 700 in the middle),
-	   Verbonden grows a little, from 432 to at most 480 at 2080 (Thijs: "niet te veel").
-	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
+	/* Verbonden is as wide with every reader (an article, a stuk, a lid): 400 from 1280, as
+	   mockup V1, with room for the text and its contents beside it (A190, Thijs 23 Oct);
+	   below, it grows with the screen from 340 to 408. The reader cannot drag it. */
 	.explore-read {
 		--nav-w-auto: 200px;
-		--graph-w-auto: 360px;
-		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
-		--panel: var(--panel-w, var(--panel-w-auto));
+		--panel: clamp(340px, calc(100vw - 872px), 408px);
 	}
-	/* Beside the reader's contents (200) Verbonden leaves the reader its room below 1280. */
-	@media (max-width: 1279px) {
-		.explore-read--with-nav {
-			--panel-w-auto: clamp(340px, calc(100vw - 900px), 408px);
-		}
-	}
-	@media (min-width: 1440px) {
-		.explore-read {
-			--graph-w-auto: 328px;
-			--panel-w-auto: 432px;
-		}
-	}
-	@media (min-width: 1600px) {
-		.explore-read {
-			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
-			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
-		}
-	}
-	/* Reading, Verbonden is 400 from 1280, as mockup V1: room for the text and its contents
-	   beside it (A190, Thijs 23 Oct); below, the width above. */
 	@media (min-width: 1280px) {
 		.explore-read {
-			--panel-w-auto: 400px;
+			--panel: 400px;
 		}
 	}
 
 	.explore-read {
-		grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: minmax(0, 1fr) var(--panel);
 	}
 	/* A reader without contents (a kabinet, a lid, a fractie) and Verbonden stand together in
 	   the middle of the screen: the room is the same at both outer edges, none kept for
@@ -2500,7 +2475,7 @@
 		.explore-read:not(.explore-read--with-nav) {
 			grid-template-columns:
 				minmax(0, calc(790px + var(--s-6) + var(--s-8)))
-				5px var(--panel);
+				var(--panel);
 			justify-content: center;
 		}
 		/* No numbers hang at its left: the step to the edge is Verbonden's at the right. */
@@ -2510,9 +2485,7 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) 5px var(
-				--panel
-			);
+		grid-template-columns: calc(var(--nav-w, var(--nav-w-auto)) + 5px) minmax(0, 1fr) var(--panel);
 	}
 	/* The reading view with its contents keeps margins at both sides from 1280 (A208d, Thijs
 	   23 Oct: "meer ruimte aan de zijkanten"): 24, 32 from 1440, and on a wide screen the whole
@@ -2522,9 +2495,6 @@
 	@media (min-width: 1280px) {
 		.explore-read--with-nav {
 			padding-inline: max(var(--s-5), calc((100vw - 1680px) / 2));
-		}
-		.explore-read.explore-read--with-nav .col--panel {
-			padding-right: var(--s-3);
 		}
 	}
 	@media (min-width: 1440px) {
@@ -2559,9 +2529,6 @@
 	}
 	.explore-read .panel {
 		height: auto;
-	}
-	.explore-read .resize-handle--panel::before {
-		background: transparent;
 	}
 
 	.panel {
@@ -2603,31 +2570,15 @@
 		background: var(--paper-2);
 	}
 
-	/* A finger's target: 24 px on a desktop, 44 px below 768 (a phone, 200% zoom). */
+	/* The close of the toelichting opened beside the text: an IconButton in the corner. */
 	.reader__close {
 		position: absolute;
 		top: var(--s-1);
 		right: var(--s-2);
 		z-index: var(--z-raised);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: var(--tik-h);
-		min-height: var(--tik-h);
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: 1;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-
-	.reader__close:hover {
-		color: var(--ink);
 	}
 	@media (max-width: 768px) {
 		.reader__close {
-			min-width: var(--veld-h-raak);
-			min-height: var(--veld-h-raak);
 			top: 0;
 			right: 0;
 		}
@@ -2671,80 +2622,29 @@
 		}
 	}
 
-	/* A hairline until touched, not a constant grey bar: the 5px track is the hit
-	   area, drawn as a thin centred line that only widens under the pointer. */
-	.resize-handle {
-		height: 100%;
-		width: 5px;
-		cursor: col-resize;
-		background: transparent;
-		flex-shrink: 0;
-		position: relative;
-		z-index: var(--z-raised);
-	}
-
-	.resize-handle::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 2px;
-		width: 1px;
-		background: var(--rule);
-		transition:
-			left var(--dur-1) var(--ease),
-			width var(--dur-1) var(--ease),
-			background var(--dur-1) var(--ease);
-	}
-
-	.resize-handle:hover::before,
-	.is-resizing .resize-handle::before {
-		left: 1px;
-		width: 3px;
-		background: var(--rule-strong);
-	}
-
 	/* The tabs of a phone and of the narrow read view: shown by the media rules below. */
 	/* A height in whole pixels: the tabs' own grew 32 → 32.5 px when the UI font came, and
 	   moved the text under them half a pixel (FE2, 10 Oct: 0 px after the first paint). */
 	.mobile-tabs {
 		display: none;
-		height: var(--veld-h);
+		align-items: center;
+		gap: var(--s-2);
 		box-sizing: border-box;
+		height: var(--veld-h);
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper-2);
 	}
-	/* A finger's 44 px on a touch screen and below 768: the tabs' own height, between the bar and the text. */
-	@media (pointer: coarse), (max-width: 768px) {
+	/* A phone: Tekst and Verbonden are a Keuze, a finger high, with a margin around it. */
+	@media (max-width: 768px) {
 		.mobile-tabs {
-			height: var(--veld-h-raak);
+			height: auto;
+			padding: var(--s-2) var(--s-3);
 		}
 	}
-	.mobile-tabs .mobile-tab {
-		flex: 1;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-3);
-		background: none;
-		border: 0;
-		border-bottom: 2px solid transparent;
-		padding: var(--s-2) var(--s-1) var(--s-2);
-		cursor: pointer;
-		margin-bottom: -1px;
-	}
-
-	/* The tab chosen: ink and a rule under it (A197-a). */
-	.mobile-tabs .mobile-tab.is-active {
-		color: var(--ink);
-		border-bottom-color: var(--ink);
-		font-weight: 500;
-	}
-
+	/* Inhoud beside it is a Knop. */
 	.mobile-tab--toc {
 		flex: none;
 		margin-left: auto;
-		padding-inline: var(--s-4);
-		color: var(--ink-2);
 	}
 
 	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above
@@ -2756,7 +2656,7 @@
 	@media (max-width: 1100px) {
 		.explore-read,
 		.explore-read--with-nav {
-			grid-template-columns: minmax(0, 1fr) 5px var(--panel);
+			grid-template-columns: minmax(0, 1fr) var(--panel);
 			grid-template-rows: auto minmax(0, 1fr);
 		}
 		.explore-read .mobile-tabs {
@@ -2764,8 +2664,7 @@
 			grid-column: 1 / -1;
 			grid-row: 1;
 		}
-		.explore-read .col,
-		.explore-read .resize-handle {
+		.explore-read .col {
 			grid-row: 2;
 		}
 		.explore-read .toc-column {
@@ -2812,9 +2711,6 @@
 		/* Verbonden as a tab of its own: the page's margins, its own scroll. */
 		.explore-read .col--panel {
 			padding: var(--s-5) var(--s-4) var(--s-7);
-		}
-		.resize-handle {
-			display: none;
 		}
 	}
 </style>

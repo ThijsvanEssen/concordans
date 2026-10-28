@@ -1,15 +1,17 @@
 // Samenhang: the network of a bron on the canvas (?mode=netwerk), its legend, the bronnen in it as a list, the Verbonden
 // table and its export.
 import { expect, test } from '../support/test';
+import { openSheet } from '../support/sheet';
 import { naarVerbonden } from '../support/navigation';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 
 /** The legend stands in the strip at the left; narrower, under the button Filter. */
 async function openFilters(page: import('@playwright/test').Page) {
+	await openSheet(page);
 	const filter = page.getByRole('button', { name: 'Filter', exact: true });
 	await filter
-		.or(page.getByRole('region', { name: 'Legenda' }))
+		.or(page.getByRole('region', { name: 'Filters' }))
 		.first()
 		.waitFor();
 	if (await filter.isVisible()) await filter.click();
@@ -32,7 +34,7 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 	// The network fills in steps; the count is read once it has.
 	await page.waitForLoadState('networkidle');
 	await openFilters(page);
-	const legend = page.getByRole('region', { name: 'Legenda' });
+	const legend = page.getByRole('region', { name: 'Filters' });
 	const judgments = legend.getByRole('button', { name: /^Uitspraken [\d.]+( van [\d.]+)?$/ });
 	await expect(judgments).toHaveAttribute('aria-pressed', 'true');
 	const before = await drawn(page).getAttribute('aria-label');
@@ -67,8 +69,8 @@ for (const { stuk, own, votes } of [
 	});
 }
 
-// The Legenda counts what is drawn, with the focus selected too, open as closed (besluit 29):
-// the focus's direct verbindingen are in Verbonden, not here ("Stemmingen 0" beside 49 drawn).
+// Soort names the soorten of Verbonden and how many of each are drawn (N1): the stemmingen
+// drawn are counted, "N" or "N van M", in Stemmingen and, past its count, Overige stemmingen.
 test('the open legend counts the stemmingen drawn, the focus selected', async ({ page }) => {
 	await page.goto('/kamerstukken/36799/31?mode=netwerk');
 	await page.waitForLoadState('networkidle');
@@ -76,10 +78,16 @@ test('the open legend counts the stemmingen drawn, the focus selected', async ({
 	const stemmingen = items.filter((t) => t.endsWith(', Stemming')).length;
 	expect(stemmingen).toBeGreaterThan(0);
 	await openFilters(page);
-	const legend = page.getByRole('region', { name: 'Legenda' });
-	await expect(legend.getByRole('button', { name: /^Stemmingen [\d.]+$/ })).toHaveAccessibleName(
-		`Stemmingen ${stemmingen}`
+	const legend = page.getByRole('region', { name: 'Filters' });
+	const rows = legend.getByRole('button', {
+		name: /^(Overige s|S)temmingen [\d.]+( van [\d.]+)?$/
+	});
+	await expect(rows.first()).toBeVisible();
+	await expect(legend.locator('[aria-label="wordt geteld"]')).toHaveCount(0);
+	const getekend = (await rows.allInnerTexts()).map((t) =>
+		Number(/(?:^|\s)([\d.]+)(?: van |$)/.exec(t.replace('\n', ' '))![1].replace(/\./g, ''))
 	);
+	expect(getekend.reduce((a, b) => a + b, 0)).toBe(stemmingen);
 });
 
 test('Verbonden as a table, exported as CSV', async ({ page }) => {
@@ -100,6 +108,7 @@ test('Verbonden as a table, exported as CSV', async ({ page }) => {
 
 test('an empty werkplek is empty: the field Bron toevoegen, no example', async ({ page }) => {
 	await page.goto('/explore');
+	await openSheet(page);
 	const network = page.getByRole('region', { name: 'Netwerk' });
 	// The field, or on a phone the button that opens it.
 	await expect(
@@ -108,24 +117,27 @@ test('an empty werkplek is empty: the field Bron toevoegen, no example', async (
 			.or(network.getByRole('button', { name: 'Bron toevoegen' }))
 	).toBeVisible();
 	await expect(network.getByRole('button', { pressed: true })).toHaveCount(0);
-	await page.waitForTimeout(500);
+	// The werkplek has drawn its empty canvas: the heading is there, and no bron on the list.
+	await expect(page.getByTestId('werkplek')).toBeVisible();
+	await expect(page.locator('.canvas-node-list li')).toHaveCount(0);
 	await expect(page).toHaveURL(/\/explore$/);
 	await expect(page.getByText(/^Voorbeeld/)).toHaveCount(0);
 });
 
-test('a bron in the network becomes the focus, and Samenhang follows it', async ({
-	page,
-	touch
-}) => {
-	test.skip(touch, 'the list of the network is the keyboard way at 1440');
+test('a bron in the network becomes the focus, and Samenhang follows it', async ({ page }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	const stuk = drawn(page)
-		.getByRole('link', { name: /, Stuk$/ })
-		.first();
-	const name = (await stuk.getAttribute('aria-label')) ?? (await stuk.textContent())!;
-	await stuk.focus();
+	// Past forty, the stukken of 6:162 stand as one cluster (UX review N4): an article beside it.
+	const artikel = drawn(page)
+		.getByRole('link', { name: /, Artikel$/ })
+		.nth(1);
+	const name = (await artikel.getAttribute('aria-label')) ?? (await artikel.textContent())!;
+	await artikel.focus();
+	// Enter chooses it as a click does (R9); Enter again reads it.
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/kamerstukken\//);
+	await expect(page).toHaveURL(/[?&]kies=/);
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/artikel\//);
+	await expect(page).not.toHaveURL(/6:162/);
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-	expect(name).toMatch(/, Stuk$/);
+	expect(name).toMatch(/, Artikel$/);
 });

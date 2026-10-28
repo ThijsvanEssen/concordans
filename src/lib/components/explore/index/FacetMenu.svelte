@@ -6,6 +6,7 @@
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import { FIND_FROM, headed, type FacetButton, type FacetGroup } from './facets';
@@ -93,13 +94,15 @@
 							onClick: () => g.onChange(o.value === g.value ? '' : o.value)
 						}))}
 			{#if options.length > FIND_FROM}
-				<input
-					type="search"
-					aria-label="Zoek in {g.label.toLowerCase()}"
-					placeholder="Zoek een {g.label.toLowerCase()}"
-					value={typed[g.id] ?? ''}
-					oninput={(e) => (typed = { ...typed, [g.id]: e.currentTarget.value })}
-				/>
+				<div class="zoek">
+					<Tekstveld
+						type="search"
+						label="Zoek in {g.label.toLowerCase()}"
+						placeholder="Zoek een {g.label.toLowerCase()}"
+						value={typed[g.id] ?? ''}
+						oninput={(e) => (typed = { ...typed, [g.id]: e.currentTarget.value })}
+					/>
+				</div>
 			{/if}
 			<ul class="options" id="{uid}-o-{g.id}">
 				{#each matching(g, options) as o (o.id)}
@@ -136,13 +139,15 @@
 			/>
 		{:else if g.kind === 'text'}
 			{@const t = g}
-			<input
-				type="search"
-				aria-label={t.label}
-				placeholder={t.placeholder}
-				value={t.value}
-				onchange={(e) => t.onChange(e.currentTarget.value.trim())}
-			/>
+			<div class="zoek">
+				<Tekstveld
+					type="search"
+					label={t.label}
+					placeholder={t.placeholder}
+					value={t.value}
+					onchange={(e) => t.onChange(e.currentTarget.value.trim())}
+				/>
+			</div>
 		{/if}
 	</div>
 {/each}
@@ -170,7 +175,7 @@
 		margin: 0;
 		padding: 0;
 	}
-	/* An option a line of a menu: 32 px for a pointer, a finger's 44 below 768 and on touch. */
+	/* An option a line of a menu: 32 px for a pointer (FilterOptie has the finger's 44). */
 	.options :global(.optie) {
 		min-height: var(--veld-h);
 	}
@@ -182,31 +187,7 @@
 	.options li :global(.optie:has(.label.wrap) > .vinkje) {
 		margin-top: 0;
 	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.options :global(.optie) {
-			min-height: var(--veld-h-raak);
-		}
-	}
-	input {
-		display: block;
-		width: 100%;
-		height: var(--veld-h);
+	.zoek {
 		margin: 0 0 var(--s-2);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-	}
-	input::placeholder {
-		color: var(--ink-3);
-	}
-	@media (max-width: 768px) {
-		input {
-			height: var(--veld-h-raak);
-			font-size: var(--t-input);
-		}
 	}
 </style>

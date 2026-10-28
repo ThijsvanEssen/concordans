@@ -2,9 +2,10 @@
 	import { joinParts } from '$lib/text/words';
 	import { titleParts } from '$lib/text/title-parts';
 	// The head of every reader, one form (Thijs, 10 Oct: "gelijke experience op gelijke
-	// pagina's"): the line of the kind or the place of the bron, the title, what stands under
-	// the title, and the status line with the actions at its right, in that order and with the
-	// same steps between them. A reader passes data and its words: the actions come from
+	// pagina's"; Lezerkop, DS): the line of the kind or the place of the bron, the title with
+	// the actions floating at the right of its first line (a phone: under it), what stands
+	// under the title, and the stand and the facts as one block under one rule, in that order
+	// and with the same steps between them. A reader passes data and its words: the actions come from
 	// KopActies through `acties`, Bewaar always, Citeer where the kind is cited (KOP_ACTIES);
 	// what only one kind has (Vergelijken, the peildatum) comes in `extra`, before them.
 	import SoortLink from '$lib/bron/SoortLink.svelte';
@@ -88,7 +89,47 @@
 	/** The words after Zoek, which a phone leaves to a screen reader; with their space. */
 	const FIND_REST = ' in dit stuk';
 	const finder = getContext<FindInText | undefined>(FIND_KEY);
+	const hasTools = $derived(!!finder?.find || !!tools);
+	// Zoek in dit stuk stands at the right of the block's last line of facts: the strip, else
+	// the words of the status, else the line of what comes late, else a line of its own. What
+	// only a kind has (an article's toelichting) stands at the right of a phrase that comes
+	// late, which has a line of its own kept from the start.
+	const atLater = $derived(!!later || laterPlek);
+	const findAt = $derived(
+		facts ? 'facts' : statusLine || statusHeld ? 'words' : atLater ? 'later' : 'alone'
+	);
+	const toolsAt = $derived(atLater ? 'later' : findAt);
 </script>
+
+<!-- Zoek in dit stuk: a tool of the text, not an action on the bron: bare, with its glass. -->
+{#snippet findTool(where: string)}
+	<button
+		type="button"
+		class="find-btn raakvlak {where}"
+		class:is-active={finder?.search.open}
+		aria-expanded={finder?.search.open}
+		onclick={() => finder?.search.toggle()}
+		><svg
+			width="14"
+			height="14"
+			viewBox="0 0 16 16"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.6"
+			aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
+		><span>Zoek<span class="find-rest">{FIND_REST}</span></span></button
+	>
+{/snippet}
+
+<!-- The tools of the text at the right of the block's last line: Zoek in dit stuk (not on a
+     phone, where it stands with the actions), then what only this kind has. -->
+{#snippet toolbox(here: string)}
+	{#if (finder?.find && findAt === here) || (tools && toolsAt === here)}<span class="reader-toolbox"
+			>{#if finder?.find && findAt === here}{@render findTool(
+					'find-btn--band'
+				)}{/if}{#if toolsAt === here}{@render tools?.()}{/if}</span
+		>{/if}
+{/snippet}
 
 <div class="reader-head">
 	<div class="reader-line" class:reader-line--plaats={collection === 'articles'}>
@@ -115,62 +156,55 @@
 		{/if}
 		{@render nav?.()}
 	</div>
-	<!-- A break may fall after a colon (an ECLI); copying keeps the text as it is. -->
-	<!-- The page's one h1: the bron (UX-toets 10 Oct, #21). -->
-	<h1 class="reader-title">
-		{#each titleParts(title) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
-	</h1>
-	{#if onderTitel}<div class="reader-onder">{@render onderTitel()}</div>{/if}
-	<!-- The status, then the actions on a row of their own: the words have the column's width,
-	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
-	     beside them (Thijs, 10 Oct, approved suggestion 5). On every reader in this place. -->
-	<!-- The actions of the stuk in one row, right under its title and before its status and
-	     facts, on every reader alike (A190, Thijs 23 Oct; E2: a frame for an action or a menu):
-	     what only this kind has, Bewaar and Citeer, then Zoek in dit stuk. -->
-	<span class="reader-status__acties">
-		{@render extra?.()}
-		<KopActies
-			bewaar={acties.bewaar}
-			wat={acties.wat ?? ''}
-			cite={cited ? (acties.cite ?? []) : []}
-			naam={acties.naam ?? ''}
-			bron={acties.bron ?? null}
-			tekst={acties.tekst}
-			follow={acties.follow ?? null}
-			atom={acties.atom ?? null}
-		/>
-		{#if finder?.find}
-			<!-- A tool of the text, not an action on the bron: bare, with its glass, at the row's
-			     right edge (E2: a frame for an action or a menu; Thijs chose variant x, 23 Oct). -->
-			<button
-				type="button"
-				class="find-btn raakvlak"
-				class:is-active={finder.search.open}
-				aria-expanded={finder.search.open}
-				onclick={() => finder.search.toggle()}
-				><svg
-					width="14"
-					height="14"
-					viewBox="0 0 16 16"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.6"
-					aria-hidden="true"><circle cx="7" cy="7" r="4.8" /><path d="M10.6 10.6 14 14" /></svg
-				><span>Zoek<span class="find-rest">{FIND_REST}</span></span></button
-			>
-		{/if}
-		{@render tools?.()}
-	</span>
-	<div class="reader-status">
-		<!-- The words of the status where there are any or their room is kept: no empty line. -->
-		{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
-				{@render statusLine?.()}
-			</div>{/if}
-		{#if facts}<div class="reader-facts">{@render facts()}</div>{/if}
-		<!-- What comes after the text (an article's bills) under the facts: its room is held at
-		     the foot of the head, before the text, not between the actions and the facts. -->
-		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
+	<!-- The actions float at the right of the title's first line, before the h1 in the code (the
+	     h1 stays the first heading): a long title gives way on its first line only. On a phone
+	     the row stands under the title (Lezerkop, A281). -->
+	<div class="reader-titelrij">
+		<span class="reader-status__acties">
+			{@render extra?.()}
+			<KopActies
+				bewaar={acties.bewaar}
+				wat={acties.wat ?? ''}
+				cite={cited ? (acties.cite ?? []) : []}
+				naam={acties.naam ?? ''}
+				bron={acties.bron ?? null}
+				tekst={acties.tekst}
+				follow={acties.follow ?? null}
+				atom={acties.atom ?? null}
+			/>
+			{#if finder?.find}{@render findTool('find-btn--rij')}{/if}
+		</span>
+		<!-- A break may fall after a colon (an ECLI); copying keeps the text as it is. -->
+		<!-- The page's one h1: the bron (UX-toets 10 Oct, #21). -->
+		<h1 class="reader-title">
+			{#each titleParts(title) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
+		</h1>
 	</div>
+	{#if onderTitel}<div class="reader-onder">{@render onderTitel()}</div>{/if}
+	<!-- The stand and the facts one block under one rule. Zoek in dit stuk, a tool of the text,
+	     stands at the right of the block's last line (the strip; the status where there is no
+	     strip); on a phone it stands in the row of the actions. -->
+	{#if statusLine || statusHeld || facts || later || laterPlek || hasTools}
+		<div
+			class="reader-status"
+			class:reader-status--zoek={!facts && !statusLine && !statusHeld && !later && !laterPlek}
+		>
+			<!-- The words of the status where there are any or their room is kept: no empty line. -->
+			{#if statusLine || statusHeld}<div class="reader-status__woorden" class:plek={statusHeld}>
+					{@render statusLine?.()}{@render toolbox('words')}
+				</div>{/if}
+			{#if facts}<div class="reader-facts">
+					<div class="reader-facts__strook">{@render facts()}</div>
+					{@render toolbox('facts')}
+				</div>{/if}
+			{@render toolbox('alone')}
+			<!-- What comes after the text (an article's bills) under the facts: its room is held at
+			     the foot of the head, before the text, not between the actions and the facts. -->
+			{#if atLater}<div class="reader-status__later">
+					{@render later?.()}{@render toolbox('later')}
+				</div>{/if}
+		</div>
+	{/if}
 	{#if children}<div class="reader-rijen">{@render children()}</div>{/if}
 </div>
 <!-- The field under the head, beside it and not in it: it stays at the top of the text while
@@ -181,10 +215,10 @@
 	/>{/if}
 
 <style>
-	/* One step from the head to what follows, on every reader: a reader that spaces its blocks
-	   with a gap names it (--lezer-stap), and the head's margin makes up the rest. */
+	/* One step, s-5, from the head to what follows, on every reader: a reader that spaces its
+	   blocks with a gap names it (--lezer-stap), and the head's margin makes up the rest. */
 	.reader-head {
-		margin-bottom: calc(var(--s-6) - var(--lezer-stap, 0px));
+		margin-bottom: max(0px, calc(var(--s-5) - var(--lezer-stap, 0px)));
 	}
 
 	.reader-line {
@@ -250,8 +284,14 @@
 		}
 	}
 
+	/* The title with the actions at its right: a float, so only the first line of a long title
+	   gives way (a step of s-4 from it) and the rest has the whole column. */
+	.reader-titelrij {
+		display: flow-root;
+	}
 	.reader-title {
-		margin: 0 0 var(--s-2);
+		margin: 0;
+		min-width: 0;
 		font-family: var(--font-serif);
 		font-weight: 600;
 		font-size: var(--t-h1);
@@ -262,24 +302,38 @@
 		   column. */
 		overflow-wrap: anywhere;
 	}
+	/* Lezerkop (DS): on a phone the title is t-h2. */
+	@media (max-width: 768px) {
+		.reader-title {
+			font-size: var(--t-h2);
+		}
+	}
+	/* Under the title: s-2, and no room where there is nothing. */
 	.reader-onder {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);
-		margin: 0 0 var(--s-2);
+		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	/* The status line: its words in ink at meta size, the actions at its right; on a phone the
-	   actions on a line of their own (KopActies). */
+	.reader-onder:not(:has(*)),
+	.reader-rijen:not(:has(*)) {
+		display: none;
+	}
+	/* The stand and the facts, one block under one rule: s-3 above the rule and under it,
+	   s-2 between the lines. A popup of the status (the versions of an article) hangs from the
+	   block's start. */
 	.reader-status {
-		/* A popup of the status (the versions of an article) hangs from the line's start. */
 		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: var(--s-2);
+		margin-top: var(--s-3);
+		padding-top: var(--s-3);
+		border-top: 1px solid var(--rule);
 	}
 	.reader-status__woorden {
 		display: flex;
@@ -311,39 +365,43 @@
 	.reader-status__woorden :global(p) {
 		margin: 0;
 	}
-	/* The row of actions between the title and the status, a step from each. */
+	/* The actions float at the right of the title's first line, level with its top. */
 	.reader-status__acties {
+		float: right;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--s-2);
-		margin: var(--s-3) 0;
+		margin: 1px 0 var(--s-1) var(--s-4);
 	}
-	/* On a touch screen and below 768 the lines of the status and of the actions stand apart enough that
-	   the 44 px of their controls (.btn, .tekstmenu__knop) do not meet. */
-	@media (pointer: coarse), (max-width: 768px) {
-		.reader-status {
-			gap: var(--s-4);
-		}
-		.reader-status__acties {
-			row-gap: var(--s-5);
-			margin-bottom: var(--s-4);
-		}
-		/* The actions of the head are a finger's 44 px themselves, not only their target
-		   (UX-toets T9). */
-		.reader-status__acties :global(.btn),
-		.find-btn {
-			min-height: var(--veld-h-raak);
-		}
+	/* The strip of facts with the tools at its last line's right. */
+	.reader-facts {
+		align-self: stretch;
+		display: flex;
+		align-items: flex-end;
+		gap: var(--s-4);
 	}
-	/* Zoek in dit stuk: the quiet tool at the right of Bewaar and Citeer, in the letter of the
-	   controls, underlined under the pointer and while the field is open. */
+	.reader-facts__strook {
+		flex: 1;
+		min-width: 0;
+	}
+	.reader-toolbox {
+		flex: none;
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin-left: auto;
+	}
+	.reader-status--zoek {
+		align-items: stretch;
+	}
+	/* Zoek in dit stuk: the quiet tool, in the letter of the controls, underlined under the
+	   pointer and while the field is open. */
 	.find-btn {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
 		height: var(--veld-h);
-		margin-left: auto;
 		padding: 0 var(--s-2);
 		border: 0;
 		background: none;
@@ -351,21 +409,10 @@
 		font-size: var(--t-ui);
 		color: var(--ink-2);
 		cursor: pointer;
+		white-space: nowrap;
 	}
-	/* On a phone one word on the row of Bewaar and Citeer, not a line of its own (UX-toets
-	   T9); its whole name stays for a screen reader. */
-	@media (max-width: 640px) {
-		.find-btn {
-			padding: 0 var(--s-1);
-		}
-		.find-rest {
-			position: absolute;
-			width: 1px;
-			height: 1px;
-			overflow: hidden;
-			clip-path: inset(50%);
-			white-space: nowrap;
-		}
+	.find-btn--rij {
+		display: none;
 	}
 	.find-btn:hover,
 	.find-btn.is-active {
@@ -373,13 +420,71 @@
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
-	/* The facts a block of their own between the words of the status and the actions, a
-	   hairline over them; no rule under the actions, the text's own first rule follows. */
-	.reader-facts {
-		align-self: stretch;
-		margin: var(--s-2) 0 var(--s-1);
-		padding-top: var(--s-3);
-		border-top: 1px solid var(--rule);
+	/* A phone and a touch screen: the head is a column, the actions in one row of 44 px under
+	   the title (s-4 above and below) with Zoek as a word at its right; the title, what stands
+	   under it, the row, then the block. The words after Zoek stay for a screen reader. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.reader-head {
+			display: flex;
+			flex-direction: column;
+		}
+		.reader-line {
+			order: 0;
+		}
+		.reader-titelrij {
+			display: contents;
+		}
+		.reader-title {
+			order: 1;
+		}
+		.reader-onder {
+			order: 2;
+		}
+		.reader-status__acties {
+			order: 3;
+			float: none;
+			margin: var(--s-4) 0;
+		}
+		.reader-status {
+			order: 4;
+			margin-top: 0;
+			align-items: stretch;
+		}
+		.reader-rijen {
+			order: 5;
+		}
+		/* Bewaar, Citeer and Zoek are a finger's 44 px themselves, not only their target
+		   (UX-toets T9). */
+		.reader-status__acties :global(.btn),
+		.find-btn {
+			min-height: var(--veld-h-raak);
+		}
+		/* A reader with no action has no row. */
+		.reader-status__acties:has(> :global(.kop-acties:empty)):not(
+				:has(> :not(:global(.kop-acties)))
+			) {
+			display: none;
+		}
+		.find-btn--rij {
+			display: inline-flex;
+			margin-left: auto;
+			padding: 0 var(--s-1);
+		}
+		.find-btn--band {
+			display: none;
+		}
+		.find-btn--rij .find-rest {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+		/* A block with nothing but Zoek has nothing left to draw on a phone. */
+		.reader-status--zoek:not(:has(.reader-toolbox > :not(.find-btn--band))) {
+			display: none;
+		}
 	}
 	.reader-rijen {
 		display: grid;

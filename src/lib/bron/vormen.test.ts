@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FILTER_GROUPS } from '$lib/verbonden/filter';
-import { FILTER_GROUP_VORM, VORMEN, VORM_VAN, vormVan, vormVanBron } from './vormen';
+import { SORT_SHAPE, VORMEN, VORM_VAN, vormVan, vormVanBron } from './vormen';
 
 describe('vormen', () => {
 	it('gives every collection a shape that exists', () => {
@@ -8,7 +8,7 @@ describe('vormen', () => {
 	});
 
 	it('gives every kind in the bronfilter a shape', () => {
-		for (const kind of FILTER_GROUPS) expect(VORMEN[FILTER_GROUP_VORM[kind]]).toBeDefined();
+		for (const kind of FILTER_GROUPS) expect(VORMEN[SORT_SHAPE[kind]]).toBeDefined();
 	});
 
 	it('reads the shape from an id', () => {
@@ -32,8 +32,16 @@ describe('a European or international regeling', () => {
 			'regel-int'
 		);
 		expect(vormVanBron('instruments', { jurisdiction: 'nl' }, 'bwbr0005289')).toBe('regel');
-		expect(FILTER_GROUP_VORM.internationaal).toBe('regel-int');
-		expect(FILTER_GROUP_VORM.internationaal).not.toBe(FILTER_GROUP_VORM.wetten);
+		expect(SORT_SHAPE.internationaal).toBe('regel-int');
+		expect(SORT_SHAPE.internationaal).not.toBe(SORT_SHAPE.wetten);
 		expect(VORMEN['regel-int'].wijze).toBe('gat');
+	});
+});
+
+describe('the vorm of a Staatsblad publication', () => {
+	it('is its own, not the regel of a wet', async () => {
+		const { vormVanBron } = await import('./vormen');
+		expect(vormVanBron('instruments', { kind: 'publicatie' }, 'stb_2026_314')).toBe('publicatie');
+		expect(vormVanBron('instruments', { kind: 'wet' }, 'wet_stb_2026_314')).toBe('regel');
 	});
 });

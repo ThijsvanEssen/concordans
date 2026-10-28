@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fallbackLawName } from '$lib/text/enacted-law';
+	import { lineStrength } from '$lib/graph/line-strength';
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
 	import { forEachRealNeighbor, realDegree } from '$lib/graph/layout';
 	import {
@@ -20,6 +22,7 @@
 		type Hull,
 		type HullGroups,
 		type HullHitArea,
+		distanceToRim,
 		type HullLink
 	} from './hulls';
 	import Picto from '$lib/components/ui/Picto.svelte';
@@ -33,19 +36,26 @@
 	import type { GraphFilters } from '$lib/graph/store/types';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
+	import { hasArrow, lineKindOf, type Tone } from '$lib/graph/line-kind';
 	import {
 		hoverPlaats,
-		labelX,
 		lijnLabelPlaats,
-		plaatsLabel,
+		planLabels,
+		type LabelCandidate,
 		type Rect as LabelRect
 	} from './label-place';
+	import { fitBox, insetsOf, NAME_BELOW, type Insets } from './fit-box';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
-	import type { FilterGroup, Rechter } from '$lib/verbonden/filter';
+	import type { FilterGroup, HiddenKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { lawName } from '$lib/text/instrument-meta';
-	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
+	import {
+		formerMembers,
+		isDrawnGroup,
+		type ContainerGroup,
+		type Period
+	} from '$lib/graph/container-membership';
 	import { untilDate, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { pointInPolygon } from '$lib/graph/hull';
@@ -54,14 +64,15 @@
 		badgeAxisOffset,
 		edgeColorFor,
 		edgeStyleFor,
+		edgeToneFor,
 		dimColor,
 		towardPaper,
 		withAlpha,
 		tokens,
-		lijnDikte,
-		pijlLengte,
-		PIJL_BREED
+		lineThickness,
+		arrowLength
 	} from './nodeSprites';
+	import { BEND, MIN_ARROW_PX } from '$lib/graph/line-shape';
 
 	export type GraphCanvasApi = {
 		refresh: () => void;
@@ -75,7 +86,7 @@
 		graph,
 		focusedId = null as string | null,
 		filters = null as GraphFilters | null,
-		hiddenKinds = new Set<FilterGroup>() as ReadonlySet<FilterGroup>,
+		hiddenKinds = new Set<HiddenKind>() as ReadonlySet<HiddenKind>,
 		pinnedIds = new Set<string>() as Set<string>,
 		coreIds = null as ReadonlySet<string> | null,
 		containerGroups = new Map<string, ContainerGroup>() as Map<string, ContainerGroup>,
@@ -86,15 +97,12 @@
 		selectedEdgeId = null as string | null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
-		heatMap = new Map() as NodeCounts,
-		heatActive = false,
-		heatPeriodMonths = 12,
-		mutatieActive = false,
 		onNodeClick,
 		onNodeDoubleClick,
-		onNodeHover,
 		onEdgeClick,
 		onStageClick,
+		onHullClick,
+		markedId = null as string | null,
 		onReady,
 		onCameraChange,
 		onDrawn,
@@ -105,7 +113,7 @@
 		focusedId?: string | null;
 		filters?: GraphFilters | null;
 		/** Kinds of bron the bronfilter hides: not drawn, and their edges not drawn. */
-		hiddenKinds?: ReadonlySet<FilterGroup>;
+		hiddenKinds?: ReadonlySet<HiddenKind>;
 		/** The chosen bronnen of a netwerk: always named, a little larger. */
 		pinnedIds?: Set<string>;
 		/** While a netwerk is drawn, its chosen bronnen and what ties them; the rest is context and steps back. */
@@ -132,15 +140,14 @@
 		/** The bronnen drawn, after every change of what is hidden: what the Legenda counts. */
 		onDrawn?: (drawn: ReadonlySet<string>) => void;
 		inFluxMap?: NodeCounts;
-		heatMap?: NodeCounts;
-		heatActive?: boolean;
-		heatPeriodMonths?: number;
-		mutatieActive?: boolean;
 		onNodeClick?: (id: string) => void;
 		onNodeDoubleClick?: (id: string) => void;
-		onNodeHover?: (id: string, vx: number, vy: number) => void;
 		onEdgeClick?: (id: string) => void;
 		onStageClick?: () => void;
+		/** A click on the name or the rim of a hull: the bron that stands for it (a wet), chosen. */
+		onHullClick?: (anchor: string) => void;
+		/** The bron marked (its card open): the hull it stands for is chosen, ink on a halo. */
+		markedId?: string | null;
 		onReady?: (api: GraphCanvasApi) => void;
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
@@ -151,23 +158,23 @@
 
 	let wrap: HTMLDivElement;
 	let destroyed = false;
-	/** The names drawn in this frame, so the next one stands beside them, not over them. */
-	let labelsTaken: LabelRect[] = [];
 	/** Where each name stands in this frame: its hover stands there too, not beside it. */
 	let labelsAt = new Map<string, LabelRect>();
-	/** Where the focus's name stands this frame, reserved before the others (voorbehouden). */
 	/** A phone's width, where the canvas names only the bronnen that matter most. */
 	const narrow = typeof window === 'undefined' ? null : window.matchMedia('(max-width: 768px)');
-	let focusPlek: { x: number; y: number } | null = null;
+	/** The hulls' names as they stand: a bron's name keeps clear of them. Set before a frame. */
+	let hullNames: LabelRect[] = [];
+	/** Where the names of this frame stand (`planLabels`), made at its first name. */
+	let labelPlan: Map<string, LabelRect> | null = null;
+	/** The signs of the bronnen in this frame: a hull's name keeps clear of them. */
+	let glyphRects: LabelRect[] = [];
+	const labelWidths = new Map<string, number>();
 	/**
 	 * The places taken before the names are drawn (UX test 10 Oct, #25: names over one another):
-	 * the hulls' labels, a layer of their own drawn after sigma's names, as they stand, and the
-	 * focus's name, which always stands beside its bron. The other names find a free place
-	 * around them.
+	 * the hulls' labels, a layer of their own drawn after sigma's names, as they stand.
 	 */
 	function voorbehouden(): LabelRect[] {
 		const taken: LabelRect[] = [];
-		focusPlek = null;
 		if (!renderer || !wrap) return taken;
 		const box = wrap.getBoundingClientRect();
 		for (const el of wrap.querySelectorAll<HTMLElement>('.hull-label, .hull-link-label')) {
@@ -175,25 +182,70 @@
 			if (r.width > 0)
 				taken.push({ x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height });
 		}
-		if (focusedId && graph.hasNode(focusedId)) {
-			// The name as drawn, after the reducers (short on the canvas).
-			const data = renderer.getNodeDisplayData(focusedId);
-			const label = data?.label ?? '';
-			if (label && data && !data.hidden) {
-				const { x, y } = renderer.framedGraphToViewport(data);
-				const size = renderer.getSetting('labelSize');
-				labelMeasure ??= document.createElement('canvas').getContext('2d');
-				if (labelMeasure) {
-					labelMeasure.font = `${renderer.getSetting('labelWeight')} ${size}px ${renderer.getSetting('labelFont')}`;
-					const w = labelMeasure.measureText(label).width + 4;
-					const h = size + 4;
-					const grootte = renderer.scaleSize(data.size);
-					focusPlek = { x: labelX(x, grootte, w, box.width), y: y - h / 2 };
-					taken.push({ ...focusPlek, w, h });
-				}
-			}
-		}
 		return taken;
+	}
+	/** Higher goes first: the focus, the chosen bronnen, a cluster, the bronnen in the hover. */
+	const rankOf = (id: string, cluster: boolean) =>
+		latestPinnedIds.has(id)
+			? 4
+			: cluster
+				? 3
+				: id === hoveredId
+					? 2
+					: hoveredNeighbours.has(id)
+						? 1
+						: 0;
+	/** The name of the focus stands in 600 (besluit 36): it is wider than the others. */
+	const FOCUS_WEIGHT = '600';
+	const widthIn600 = (context: CanvasRenderingContext2D, label: string) => {
+		const was = context.font;
+		context.font = was.replace(/^\S+/, FOCUS_WEIGHT);
+		const w = context.measureText(label).width + 4;
+		context.font = was;
+		return w;
+	};
+	const weightOf = (key: string | undefined, normal: string) =>
+		key !== undefined && key === focusedId ? FOCUS_WEIGHT : normal;
+	/**
+	 * The names of this frame and where they stand (UX review N4): every bron drawn, its sign;
+	 * every bron with a name, a candidate for `planLabels`, in the order of its rank.
+	 */
+	function makeLabelPlan(
+		view: SigmaType,
+		context: CanvasRenderingContext2D,
+		settings: { labelSize: number; labelRenderedSizeThreshold: number }
+	): Map<string, LabelRect> {
+		const candidates: LabelCandidate[] = [];
+		const glyphs: LabelRect[] = [];
+		const h = settings.labelSize + 4;
+		graph.forEachNode((id) => {
+			const d = view.getNodeDisplayData(id);
+			if (!d || d.hidden) return;
+			const { x, y } = view.framedGraphToViewport(d);
+			const size = view.scaleSize(d.size);
+			glyphs.push({ x: x - size, y: y - size, w: 2 * size, h: 2 * size });
+			if (!d.label || (!d.forceLabel && size < settings.labelRenderedSizeThreshold)) return;
+			let w = id === focusedId ? widthIn600(context, d.label) : labelWidths.get(d.label);
+			if (w === undefined) labelWidths.set(d.label, (w = context.measureText(d.label).width + 4));
+			const cluster = !!(d as { cluster?: boolean }).cluster;
+			candidates.push({
+				id,
+				x,
+				y,
+				size,
+				w,
+				h,
+				rank: rankOf(id, cluster),
+				always: id === focusedId
+			});
+		});
+		glyphRects = glyphs;
+		const dpr = window.devicePixelRatio || 1;
+		const room = { width: context.canvas.width / dpr, height: context.canvas.height / dpr };
+		// Netwerkcanvas: hooguit 12 namen in rust; on a phone fewer, the chosen bronnen first.
+		const max = hoveredId !== null ? undefined : narrow?.matches ? 6 : 12;
+		const rims = hullHitAreas.map((a) => a.polygon);
+		return planLabels(candidates, room, hullNames, glyphs, max, rims);
 	}
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
@@ -210,16 +262,12 @@
 
 	// Plain mutable refs read inside sigma reducer closures, not reactive state.
 	let latestFilters: GraphFilters | null = null;
-	let latestHiddenKinds: ReadonlySet<FilterGroup> = new Set();
+	let latestHiddenKinds: ReadonlySet<HiddenKind> = new Set();
 	let latestPinnedIds = new Set<string>();
 	let latestCoreIds: ReadonlySet<string> | null = null;
 	let latestSelectedEdge: string | null = null;
 	let latestLineLids: ReadonlyMap<string, string> = new Map();
 	let latestInFluxMap: NodeCounts = new Map();
-	let latestHeatMap: NodeCounts = new Map();
-	let latestHeatActive = false;
-	let latestHeatPeriodMonths = 12;
-	let latestMutatieActive = false;
 	let latestContainerGroups: Map<string, ContainerGroup> = new Map();
 	/**
 	 * Members of the focused hull whose seat in it has ended, with its last day: drawn in the
@@ -260,10 +308,6 @@
 
 	$effect(() => {
 		latestInFluxMap = inFluxMap ?? new Map();
-		latestHeatMap = heatMap ?? new Map();
-		latestHeatActive = heatActive ?? false;
-		latestHeatPeriodMonths = heatPeriodMonths ?? 12;
-		latestMutatieActive = mutatieActive ?? false;
 		updateViewportLabels();
 		redrawInFrame();
 	});
@@ -304,45 +348,20 @@
 		id !== focusedId &&
 		!graph.getNodeAttribute(id, 'cluster');
 
-	/**
-	 * A bron between the chosen bronnen of a netwerk ("bronnen ertussen"): faint and without a
-	 * label until a hover, so the chosen bronnen and what ties them directly carry the view
-	 * (UX evaluation of 8 Oct, point 1: 204 bronnen read as a tangle). A cluster of them keeps
-	 * its name.
-	 */
-	const isTussen = (id: string) =>
-		latestCoreIds !== null &&
-		latestPinnedIds.size > 0 &&
-		latestCoreIds.has(id) &&
-		!latestPinnedIds.has(id) &&
-		id !== focusedId &&
-		!graph.getNodeAttribute(id, 'cluster');
-
 	/** Per bron and hull: how many lines it draws into that hull, and the one that stands
 	 *  for them (see edge-bundles). */
 	let bundels: Bundels = { linesIntoGroup: new Map(), bundles: new Map() };
 	function recomputeLinesIntoGroup() {
-		const lijnen: Lijn[] = [];
+		const lines: Lijn[] = [];
 		graph.forEachEdge((id, attrs, source, target) => {
-			if (!attrs.layoutOnly) lijnen.push({ id, source, target });
+			if (!attrs.layoutOnly) lines.push({ id, source, target });
 		});
-		bundels = telBundels(lijnen, nodeGroupIds);
+		bundels = telBundels(lines, nodeGroupIds);
 	}
 
 	$effect(() => {
 		const focusGroup = focusContainerId ? containerGroups.get(focusContainerId) : undefined;
-		// Ended before the hull's own last day: a cabinet that has ended does not make all its
-		// bewindspersonen former ones, only those who left before it did.
-		const zetels = [...(focusGroup?.periods ?? [])];
-		const eind = zetels.some(([, p]) => p.to === null)
-			? vandaag()
-			: (zetels
-					.map(([, p]) => p.to as string)
-					.sort()
-					.at(-1) ?? '');
-		latestGewezen = new Map(
-			zetels.filter(([, p]) => p.to !== null && p.to < eind).map(([id, p]) => [id, p.to as string])
-		);
+		latestGewezen = formerMembers(focusGroup, vandaag());
 		redrawInFrame();
 	});
 
@@ -363,24 +382,9 @@
 		redrawInFrame();
 	});
 
-	// Activity halos: HTML rings above the canvas, from rule-strong at low activity
-	// to ink at saturation.
-	type ActivityHalo = { id: string; vx: number; vy: number; ringPx: number; color: string };
-	let activityHalos = $state<ActivityHalo[]>([]);
-
-	function heatColor(t: number): string {
-		const hex = (s: string) => parseInt(s, 16);
-		const from = tokens().ruleStrong.replace('#', '');
-		const to = tokens().ink.replace('#', '');
-		const mix = (i: number) =>
-			Math.round(
-				hex(from.slice(i, i + 2)) + t * (hex(to.slice(i, i + 2)) - hex(from.slice(i, i + 2)))
-			);
-		return `rgb(${mix(0)},${mix(2)},${mix(4)})`;
-	}
-
-	type MutatieBadge = { id: string; vx: number; vy: number; count: number };
-	let mutatieBadges = $state<MutatieBadge[]>([]);
+	/** A bron a lopend wetsvoorstel wil wijzigen (Netwerkcanvas, Openstaand): a dot at its top right. */
+	type OpenstaandStip = { id: string; vx: number; vy: number };
+	let openstaand = $state<OpenstaandStip[]>([]);
 	/** A bron with a note of the reader's: its mark, in ink while it is open or in focus. */
 	type NotitieMerk = { id: string; vx: number; vy: number; open: boolean; dim: boolean };
 	let notitieMerken = $state<NotitieMerk[]>([]);
@@ -398,13 +402,30 @@
 		groups: latestContainerGroups,
 		groupsOf: nodeGroupIds,
 		drawn: drawnGroup,
-		hiddenKinds: hiddenGroupKinds
+		hiddenKinds: hiddenGroupKinds,
+		alone: aloneAnchors
 	});
 
 	const lawAnchor = (id: string) =>
 		graph.hasNode(id) &&
 		!!graph.getNodeAttribute(id, 'anchor') &&
 		graph.getNodeAttribute(id, 'collection') === 'instruments';
+
+	/** How near the rim a click chooses its hull; a finger needs more. */
+	const RIM_HIT = 6;
+	const RIM_HIT_TOUCH = 14;
+	/** The anchor of the hull whose name or rim stands at `p` (the one drawn last on top), if any. */
+	function hullClickAt(p: { x: number; y: number }): string | null {
+		const reach = window.matchMedia('(pointer: coarse)').matches ? RIM_HIT_TOUCH : RIM_HIT;
+		let hit: string | null = null;
+		for (const area of hullHitAreas) {
+			if (!area.anchor) continue;
+			const r = area.label;
+			const onName = area.named && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+			if (onName || distanceToRim(p, area.polygon) <= reach) hit = area.anchor;
+		}
+		return hit;
+	}
 
 	function onHullPointer(event: PointerEvent) {
 		const box = wrap.getBoundingClientRect();
@@ -416,16 +437,42 @@
 			const onLabel = p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
 			if (onLabel || pointInPolygon(p, area.polygon)) hit = area.id;
 		}
+		// Its name and its rim choose it: a hand there.
+		if (hoveredEdgeId === null && sigmaHoveredId === null)
+			wrap.style.cursor = hullClickAt(p) ? 'pointer' : '';
 		if (hit === hoveredHullId) return;
 		hoveredHullId = hit;
 		computeHulls();
 	}
 
 	// Around the nodes on a fit: the hull margin and a little air. Above them, the
-	// label pill of a hull (8 px gap, 22 px pill) and the edge gap on top of that.
+	// label pill of a hull (6 px gap, 22 px pill) and the edge gap on top of that.
 	const STAGE_PADDING = HULL_MARGIN + 6;
 	// STAGE_PADDING already holds the hull margin and 6 px of it.
 	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 6;
+
+	/** Between what stands over the canvas and the nearest bron's sign. */
+	const EDGE_AIR = 16;
+	/**
+	 * What a fit keeps free on each side, beyond STAGE_PADDING: a hull's name above, a bron's
+	 * name below, and what stands over the canvas (`[data-over-doek]`: the zoom) with a little air.
+	 */
+	function freeEdges(): Insets {
+		const over = wrap?.parentElement
+			? [...wrap.parentElement.querySelectorAll<HTMLElement>(':scope > [data-over-doek]')].map(
+					(el) => el.getBoundingClientRect()
+				)
+			: [];
+		const covered = wrap ? insetsOf(wrap.getBoundingClientRect(), over) : null;
+		const beyond = (px: number | undefined) =>
+			px ? Math.max(0, px - STAGE_PADDING + EDGE_AIR) : 0;
+		return {
+			top: Math.max(LABEL_ROOM, beyond(covered?.top)),
+			right: beyond(covered?.right),
+			bottom: Math.max(NAME_BELOW, beyond(covered?.bottom)),
+			left: beyond(covered?.left)
+		};
+	}
 
 	// The width of a hull label, to keep it on the canvas: its text in the pill's face
 	// (.hull-label), plus the padding and border.
@@ -433,9 +480,12 @@
 	function labelWidth(text: string): number {
 		labelMeasure ??= document.createElement('canvas').getContext('2d');
 		if (!labelMeasure) return 0;
-		labelMeasure.font = `600 11.5px ${tokens().fontLabel}`;
+		labelMeasure.font = `600 13px ${tokens().fontSerif}`;
 		return labelMeasure.measureText(text).width + 18;
 	}
+
+	/** The anchors that stand as an ordinary bron: nothing of their group drawn. */
+	let aloneAnchors: ReadonlyMap<string, string> = new Map();
 
 	function computeHulls() {
 		if (!renderer) {
@@ -450,8 +500,13 @@
 			radiusOf: (id) => view.getNodeDisplayData(id)?.size ?? 4,
 			namesOf: (group) => {
 				const meta = group.kind === 'instrument' ? getInstrumentMeta(group.id) : null;
+				// A law whose meta is not loaded: by its publication or CELEX number, so its articles
+				// still stand in a named hull.
 				return {
-					short: (meta ? (meta.shortTitle ?? meta.citationTitle) : group.label) || group.label,
+					short:
+						(meta ? (meta.shortTitle ?? meta.citationTitle) : group.label) ||
+						group.label ||
+						(group.kind === 'instrument' ? fallbackLawName(group.id) : ''),
 					full: lawName(meta, group.fullLabel)
 				};
 			},
@@ -465,53 +520,41 @@
 			hoveredNeighbours,
 			focusedId,
 			pinnedIds: latestPinnedIds,
-			focusName: focusedId ? labelsAt.get(focusedId) : undefined
+			focusName: focusedId ? labelsAt.get(focusedId) : undefined,
+			glyphs: glyphRects,
+			markedIds: new Set([markedId, focusContainerId].filter((id): id is string => !!id))
 		});
+		const was = [...aloneAnchors].join();
+		aloneAnchors = layout.alone;
+		// An anchor without a hull is a bron now (or no longer): its name and its lines follow.
+		if ([...aloneAnchors].join() !== was) renderer?.refresh({ schedule: true });
 		hulls = layout.hulls;
 		hullLinks = layout.links;
 		hullHitAreas = layout.hitAreas;
 	}
-
-	const HEAT_SATURATION_RATE = 5;
 
 	function updateViewportLabels() {
 		const sizeDivisor = renderer
 			? Math.min(Math.sqrt(renderer.getCamera().getState().ratio), 1.5)
 			: 1;
 
-		if (renderer && latestHeatActive && latestHeatMap.size > 0) {
-			const halos: ActivityHalo[] = [];
-			const months = Math.max(1, latestHeatPeriodMonths);
+		if (renderer && latestInFluxMap.size > 0) {
+			const stippen: OpenstaandStip[] = [];
 			graph.forEachNode((id, attrs) => {
 				if (attrs.hidden || isHiddenNode(id, attrs)) return;
-				const activity = latestHeatMap.get(id) ?? 0;
-				if (activity <= 0) return;
-				const rate = activity / months;
-				const t = Math.min(rate / HEAT_SATURATION_RATE, 1);
-				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
-				const ringPx = baseR + 4 + t * 16;
+				if ((latestInFluxMap.get(id) ?? 0) <= 0) return;
+				// A hull's anchor is a point, not a sign: only an anchor standing as a bron has one.
+				if (attrs.anchor && !aloneAnchors.has(id)) return;
+				const size = (attrs.anchor ? attrs.ownSize : attrs.size) as number | undefined;
+				const baseR = (size ?? 5) / sizeDivisor;
 				const vp = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
-				halos.push({ id, vx: vp.x, vy: vp.y, ringPx, color: heatColor(t) });
+				// Beside the sign, on its edge at the top right, not over it.
+				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm) + 3;
+				stippen.push({ id, vx: vp.x + offset, vy: vp.y - offset });
 			});
-			activityHalos = halos;
-		} else if (activityHalos.length) {
-			activityHalos = [];
-		}
-
-		if (renderer && latestMutatieActive && latestInFluxMap.size > 0) {
-			const badges: MutatieBadge[] = [];
-			graph.forEachNode((id, attrs) => {
-				if (attrs.hidden || isHiddenNode(id, attrs)) return;
-				const count = latestInFluxMap.get(id) ?? 0;
-				if (count <= 0) return;
-				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
-				const vp = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
-				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm);
-				badges.push({ id, vx: vp.x + offset, vy: vp.y - offset, count });
-			});
-			mutatieBadges = badges;
-		} else if (mutatieBadges.length) {
-			mutatieBadges = [];
+			openstaand = stippen;
+		} else if (openstaand.length) {
+			openstaand = [];
 		}
 
 		const merken: NotitieMerk[] = [];
@@ -574,16 +617,20 @@
 				return;
 			const groups = [...(nodeGroupIds.get(id) ?? [])].map((g) => latestContainerGroups.get(g));
 			if (groups.some((g) => g && drawnGroup(g))) return;
+			if (attrs.inHull) return;
 			const shown = graph.someEdge(
 				id,
 				(_e, a, src, tgt) => !a.layoutOnly && !hiddenEnd(src === id ? tgt : src)
 			);
 			if (!shown) next.add(id);
 		});
-		// A container's anchor that only repeats its hull: the bronnen it ties are in it.
+		// A container's anchor that only repeats its hull: the bronnen it ties are in it. Not the
+		// focus's own: it is the bron the canvas is about, in the list for the keyboard too (N5).
 		const anchors: string[] = [];
 		graph.forEachNode((id, attrs) => {
-			if (attrs.anchor && id !== focusedId) anchors.push(id);
+			if (!attrs.anchor || id === focusedId) return;
+			if (focusContainerId && nodeGroupIds.get(id)?.has(focusContainerId)) return;
+			anchors.push(id);
 		});
 		const leftOut = redundantAnchors({
 			anchors,
@@ -603,15 +650,30 @@
 	let drawn: ReadonlySet<string> | null = null;
 	/** Tells `onDrawn` what is drawn now, when that changed. */
 	function reportDrawn() {
-		if (!onDrawn) return;
 		const now = new Set<string>();
+		let stepBack = 0;
+		let standing = 0;
 		graph.forEachNode((id, attrs) => {
-			if (!isHiddenNode(id, attrs)) now.add(id);
+			if (isHiddenNode(id, attrs)) return;
+			standing++;
+			if (isDimmedNode(id, attrs)) stepBack++;
+			else now.add(id);
 		});
+		nodeCount = standing;
+		dimmedCount = stepBack;
+		if (!onDrawn) return;
 		if (drawn && drawn.size === now.size && [...now].every((id) => drawn!.has(id))) return;
 		drawn = now;
 		onDrawn(now);
 	}
+
+	/** The bronnen standing on the canvas, and how many of them are dimmed (outside the period). */
+	let nodeCount = $state(0);
+	let dimmedCount = $state(0);
+
+	/** A dated bron outside the chosen period stays, dimmed with its lines (Tijdstrook, 28 %). */
+	const isDimmedNode = (id: string, attrs: Record<string, unknown>) =>
+		id !== focusedId && !latestPinnedIds.has(id) && outsideYears(attrs.date);
 
 	const outsideYears = (date: unknown) =>
 		typeof date === 'string' &&
@@ -623,8 +685,9 @@
 		rechter !== null && attrs.collection === 'judgments' && attrs.rechter !== rechter;
 
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
+		(!!latestFilters?.hiddenAnnexes && attrs.drawClass === 'other') ||
 		latestHiddenKinds.has(attrs.filterGroup as FilterGroup) ||
-		outsideYears(attrs.date) ||
+		(!!attrs.stuksoort && latestHiddenKinds.has(`stuksoort:${attrs.stuksoort}` as HiddenKind)) ||
 		otherCourt(attrs);
 
 	// The focus and the chosen bronnen stay drawn under every filter: Soort off for their own
@@ -637,6 +700,28 @@
 	 * a step of the focus woke five, each a render of the whole canvas. Nothing they do reads
 	 * the drawing back; a fit or a measurement after a refresh stays synchronous.
 	 */
+	/** Half a finger's 44 px target: a tap this near a bron chooses it (touch only). */
+	const TAP_RADIUS = 22;
+	/** The bron nearest to a tap, within the radius of a finger's target; touch only. */
+	function tapTarget(x: number, y: number): string | null {
+		if (!renderer || !window.matchMedia('(pointer: coarse)').matches) return null;
+		const r = renderer;
+		let best: string | null = null;
+		let bestD = TAP_RADIUS;
+		graph.forEachNode((id, attrs) => {
+			if (attrs.anchor) return;
+			const d = r.getNodeDisplayData(id);
+			if (!d || d.hidden) return;
+			const p = r.framedGraphToViewport(d);
+			const dist = Math.hypot(p.x - x, p.y - y);
+			if (dist < bestD) {
+				bestD = dist;
+				best = id;
+			}
+		});
+		return best;
+	}
+
 	const redrawInFrame = () => renderer?.refresh({ schedule: true });
 
 	function refresh() {
@@ -679,17 +764,18 @@
 			// One bron (the first of a netwerk) spans no box: centre it in one.
 			if (maxX - minX < 1) [minX, maxX] = [minX - 50, maxX + 50];
 			if (maxY - minY < 1) [minY, maxY] = [minY - 50, maxY + 50];
-			// The nodes fill the canvas up to STAGE_PADDING px, which holds a hull's own
-			// margin. Above, a hull's label pill needs LABEL_ROOM px more: the box grows
-			// upward (graph y points up) by the share of the height those pixels take.
-			const height = maxY - minY || 1;
-			const dims = renderer.getDimensions();
-			const usable = dims.height - 2 * STAGE_PADDING;
-			const top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
-			renderer.setCustomBBox({
-				x: [minX, maxX > minX ? maxX : minX + 1],
-				y: [minY, minY + height + top]
-			});
+			// The nodes fill the canvas up to STAGE_PADDING px, which holds a hull's own margin;
+			// each side keeps more free (fitBox): a hull's name pill above, a bron's name below the
+			// lowest bron, the zoom at the side (UX review N8).
+			renderer.setCustomBBox(
+				fitBox(
+					{ x: minX, y: minY },
+					{ x: maxX, y: maxY },
+					renderer.getDimensions(),
+					STAGE_PADDING,
+					freeEdges()
+				)
+			);
 		} else {
 			renderer.setCustomBBox(null);
 		}
@@ -751,17 +837,12 @@
 		wrap.addEventListener('wheel', handMoved, { passive: true });
 		wrap.addEventListener('pointerdown', handMoved);
 
-		const [
-			{ default: Sigma },
-			{ createEdgeArrowProgram },
-			{ createNodeImageProgram },
-			{ stippelProgrammas }
-		] = await Promise.all([
-			import('sigma'),
-			import('sigma/rendering'),
-			import('@sigma/node-image'),
-			import('./DashedEdgeProgram')
-		]);
+		const [{ default: Sigma }, { createNodeImageProgram }, { stippelProgrammas }] =
+			await Promise.all([
+				import('sigma'),
+				import('@sigma/node-image'),
+				import('./DashedEdgeProgram')
+			]);
 		// Left before sigma had loaded (a quick step to the next bron): no container to draw in.
 		if (destroyed) return;
 		const t = tokens();
@@ -782,7 +863,19 @@
 			const w = context.measureText(data.label).width + 6;
 			const h = size + 4;
 			const room = context.canvas.width / (window.devicePixelRatio || 1);
-			const p = lijnLabelPlaats(source.x, source.y, target.x, target.y, w, h, room);
+			// The middle of the curve, not of the chord: both ends shift by half the bend.
+			const len = Math.hypot(target.x - source.x, target.y - source.y) || 1;
+			const bx = (-(target.y - source.y) / len) * BEND * len * 0.5;
+			const by = ((target.x - source.x) / len) * BEND * len * 0.5;
+			const p = lijnLabelPlaats(
+				source.x + bx,
+				source.y + by,
+				target.x + bx,
+				target.y + by,
+				w,
+				h,
+				room
+			);
 			context.fillStyle = t.paper;
 			context.fillRect(p.x, p.y, w, h);
 			context.fillStyle = t.ink;
@@ -800,24 +893,25 @@
 			padding: 0
 		});
 
-		const stippel = stippelProgrammas(pijlLengte());
+		const stippel = stippelProgrammas(arrowLength());
 		renderer = new Sigma(graph, wrap, {
 			// Every node is its vorm, a sprite (nodeSprites): the image program alone, which reads
 			// `color` as the ground behind the sprite.
 			nodeProgramClasses: { image: NodeImageProgram },
 			edgeProgramClasses: {
-				arrow: metLijnLabel(
-					createEdgeArrowProgram({
-						lengthToThicknessRatio: pijlLengte(),
-						widenessToThicknessRatio: pijlLengte() * PIJL_BREED
-					}) as never
-				),
-				dashed: metLijnLabel(stippel.dashed as never),
-				dotted: metLijnLabel(stippel.dotted as never)
+				arrow: metLijnLabel(stippel.arrow as never),
+				kort: metLijnLabel(stippel.kort as never),
+				lang: metLijnLabel(stippel.lang as never),
+				punten: metLijnLabel(stippel.punten as never),
+				puntenIndiener: metLijnLabel(stippel.puntenIndiener as never),
+				arrowDraad: metLijnLabel(stippel.arrowDraad as never),
+				kortDraad: metLijnLabel(stippel.kortDraad as never),
+				langDraad: metLijnLabel(stippel.langDraad as never)
 			},
 			defaultDrawEdgeLabel: tekenLijnLabel as never,
-			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 4.5 px long.
-			minEdgeThickness: 1.4,
+			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 5.5 px long
+			// (Netwerkcanvas, Maten).
+			minEdgeThickness: MIN_ARROW_PX / arrowLength(),
 			defaultNodeType: 'image',
 			defaultEdgeType: 'arrow',
 			zIndex: true,
@@ -830,8 +924,11 @@
 			labelColor: { color: t.ink2 },
 			edgeLabelColor: { color: t.ink },
 			edgeLabelFont: t.fontLabel,
-			edgeLabelSize: 11.5,
-			labelDensity: 1.4,
+			// The words on a line: 12 px in italics (t-note, Netwerkcanvas).
+			edgeLabelSize: 12,
+			edgeLabelWeight: 'italic 400',
+			// Every name is asked for: which stand is the plan's to say (planLabels).
+			labelDensity: 1000,
 			labelGridCellSize: 60,
 			labelRenderedSizeThreshold: 3,
 
@@ -847,36 +944,28 @@
 			defaultDrawNodeLabel: (context, data, settings) => {
 				if (!data.label) return;
 				const size = settings.labelSize;
-				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
-				const w = context.measureText(data.label).width;
-				// Right of the bron, left, above or below it, where no other name stands; the
-				// focus always ($lib label-place). A name with no free place waits for a hover.
-				const room = context.canvas.width / (window.devicePixelRatio || 1);
-				const focus = ((data as { zIndex?: number }).zIndex ?? 0) >= 2;
-				// The focus's name beside it where it stands in this frame: the place reserved before the
-				// frame can be the one before the order moved it (a name alone in a corner, T10).
-				const eigen =
-					(data as { key?: string }).key === focusedId && focusPlek
-						? { x: labelX(data.x, data.size, w + 4, room), y: data.y - (size + 4) / 2 }
-						: null;
-				const at =
-					eigen ??
-					plaatsLabel(data.x, data.y, data.size, w + 4, size + 4, room, labelsTaken, focus);
+				const normal = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				context.font = normal;
+				// Where the plan of this frame puts it: right of the bron, left, above or below it,
+				// where no other name or bron stands; the focus always ($lib label-place). A name
+				// with no free place, or past the frame's sixty, waits for a hover.
+				// Sigma draws its first frame before `new Sigma` returns: no plan without it.
+				if (!renderer) return;
+				labelPlan ??= makeLabelPlan(renderer, context, settings);
+				const key = (data as { key?: string }).key ?? '';
+				const at = labelPlan.get(key);
 				if (!at) return;
-				if (!eigen) labelsTaken.push({ x: at.x, y: at.y, w: w + 4, h: size + 4 });
-				labelsAt.set((data as { key?: string }).key ?? '', {
-					x: at.x,
-					y: at.y,
-					w: w + 4,
-					h: size + 4
-				});
+				labelsAt.set(key, at);
 				const x = at.x + 2;
 				const y = at.y + 2 + size / 2;
 				context.save();
 				context.globalAlpha = 1;
 				context.fillStyle = t.paper;
-				context.fillRect(x - 2, y - size / 2 - 2, w + 4, size + 4);
+				context.fillRect(at.x, at.y, at.w, at.h);
 				context.restore();
+				const weight = weightOf(key, settings.labelWeight);
+				if (weight !== settings.labelWeight)
+					context.font = `${weight} ${size}px ${settings.labelFont}`;
 				context.fillStyle = settings.labelColor.attribute
 					? (((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
 						settings.labelColor.color ??
@@ -890,7 +979,8 @@
 			defaultDrawNodeHover: (context, data, settings) => {
 				if (data.anchor || !data.label) return;
 				const size = settings.labelSize;
-				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				const weight = weightOf((data as { key?: string }).key, settings.labelWeight);
+				context.font = `${weight} ${size}px ${settings.labelFont}`;
 				const w = context.measureText(data.label).width + 4;
 				const h = size + 4;
 				const room = context.canvas.width / (window.devicePixelRatio || 1);
@@ -900,7 +990,7 @@
 					h
 				};
 				context.save();
-				context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+				context.shadowColor = withAlpha(t.ink, 0.18);
 				context.shadowBlur = 6;
 				context.fillStyle = t.paper;
 				context.beginPath();
@@ -915,9 +1005,23 @@
 				context.fillText(data.label, plek.x + 2, plek.y + 2 + size / 2 + size / 3);
 			},
 
-			nodeReducer: (id, data) => {
+			nodeReducer: (id, own) => {
+				// An anchor with nothing of its hull drawn stands as an ordinary bron.
+				const alone = aloneAnchors.get(id);
+				const data =
+					own.anchor && alone
+						? { ...own, anchor: false, image: own.ownImage, size: own.ownSize, label: alone }
+						: own;
 				if (isHiddenNode(id, data)) return { ...data, hidden: true };
 				if (data.anchor) return { ...data, label: '', forceLabel: false };
+				if (isDimmedNode(id, data))
+					return {
+						...data,
+						hidden: false,
+						label: '',
+						color: t.paper2,
+						image: spriteForVorm(data.vorm as Vorm, true, false)
+					};
 
 				const f0 = latestFilters;
 				// No single node to focus around when the selection is a container (a wet,
@@ -965,10 +1069,17 @@
 				// each other sigma leaves some out, never those of the hover, the focus, the chosen
 				// bronnen and a cluster bron, whose name ("250 uitspraken") is what it says.
 				const chosen = latestPinnedIds.has(id);
+				// A cluster says its count in its circle; its name ("56 uitspraken") on a hover.
+				const cluster = !!data.cluster;
 				const forceLabel =
-					(inHover && inFocusGroup) || id === focusedId || chosen || !!data.cluster;
+					(inHover && inFocusGroup && (!cluster || id === hoveredId)) || id === focusedId || chosen;
 				// On a phone only those names: the others would cover each other (UX-toets T10b).
-				const label = forceLabel || !narrow?.matches ? (data.label as string) : '';
+				const label =
+					cluster && id !== hoveredId
+						? ''
+						: forceLabel || !narrow?.matches
+							? (data.label as string)
+							: '';
 
 				if (id !== focusedId && chosen)
 					return {
@@ -1005,7 +1116,8 @@
 					return { ...data, hidden: true };
 
 				const relation = data.relation as Relation;
-				if (latestFilters?.hiddenRelations.has(relation)) return { ...data, hidden: true };
+				if (latestFilters?.hiddenLines.has(lineKindOf(relation, srcAttrs.drawClass as DrawClass)))
+					return { ...data, hidden: true };
 				const h = hullGroups();
 				if (hullLinkOf(src, tgt, h) || anchorWithHull(src, h) || anchorWithHull(tgt, h))
 					return { ...data, hidden: true };
@@ -1014,10 +1126,18 @@
 					return { ...data, hidden: true };
 
 				const sourceClass = srcAttrs.drawClass as DrawClass;
-				const style = edgeStyleFor(relation, data.status as string | null);
+				const style = edgeStyleFor(relation, data.status as string | null, sourceClass);
 				const renderColor = edgeColorFor(relation, sourceClass);
+				const tone = edgeToneFor(relation, data.status as string | null, sourceClass);
 				const edgeType = style === 'solid' ? 'arrow' : style;
-				const restSize = lijnDikte(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));
+				/** A thread has no arrow; a line without one is a thread already. */
+				const draadType = hasArrow(style) ? `${edgeType}Draad` : edgeType;
+				// A cluster's one line weighs 1 (Netwerkcanvas, Cluster).
+				const restSize = lineThickness(
+					srcAttrs.cluster || tgtAttrs.cluster
+						? 1
+						: Math.max(EDGE_WEIGHT[relation], style === 'kort' ? 0.7 : 0)
+				);
 				const sourceCollection = srcAttrs.collection as Collection;
 
 				if (edge === latestSelectedEdge) {
@@ -1044,6 +1164,17 @@
 						zIndex: 3
 					};
 				}
+
+				// A line of a bron outside the period steps back with it.
+				if (isDimmedNode(src, srcAttrs) || isDimmedNode(tgt, tgtAttrs))
+					return {
+						...data,
+						hidden: false,
+						type: edgeType,
+						color: dimColor(0.28),
+						size: restSize * 0.7,
+						label: ''
+					};
 
 				if (hoveredId !== null) {
 					const incident = src === hoveredId || tgt === hoveredId;
@@ -1072,18 +1203,12 @@
 
 				// A line to context, or through a bron between the chosen ones, steps back behind the
 				// chosen bronnen and what ties them directly.
-				if (
-					(isContext(src) || isContext(tgt) || isTussen(src) || isTussen(tgt)) &&
-					src !== focusedId &&
-					tgt !== focusedId
-				) {
+				if ((isContext(src) || isContext(tgt)) && !touchesChosen(src, tgt)) {
 					return {
 						...data,
 						hidden: false,
-						type: edgeType,
-						// Through a bron between the chosen ones: fainter still, two hundred of them
-						// are a haze otherwise.
-						color: dimColor(isTussen(src) || isTussen(tgt) ? 0.12 : 0.2),
+						type: draadType,
+						color: dimColor(0.2),
 						size: restSize * 0.7,
 						label: ''
 					};
@@ -1093,12 +1218,12 @@
 					// The focus's own verbindingen carry the view: in full when they are few,
 					// as a fan in their own colour when there are hundreds, so the fan reads as
 					// one shape and a single line still shows on hover.
-					if (src === focusedId || tgt === focusedId) {
+					if (touchesChosen(src, tgt)) {
 						return {
 							...data,
 							hidden: false,
 							type: edgeType,
-							color: towardPaper(renderColor, fanStrength(focusLevel1.size)),
+							color: towardPaper(renderColor, fanStrength(renderColor, tone, focusLevel1.size)),
 							size: restSize,
 							label: ''
 						};
@@ -1111,9 +1236,10 @@
 					return {
 						...data,
 						hidden: false,
-						type: edgeType,
+						type: draadType,
 						color: towardPaper(renderColor, 0.25),
-						size: restSize * 0.7,
+						// A thread: 0,6 of the thickness (Netwerkcanvas, Maten).
+						size: restSize * 0.6,
 						label: ''
 					};
 				}
@@ -1124,7 +1250,7 @@
 					return {
 						...data,
 						hidden: false,
-						type: edgeType,
+						type: draadType,
 						color: dimColor(0.3),
 						size: restSize * 0.6,
 						label: ''
@@ -1150,7 +1276,7 @@
 					...data,
 					hidden: false,
 					type: edgeType,
-					color: towardPaper(renderColor, fanStrength(degree)),
+					color: towardPaper(renderColor, fanStrength(renderColor, tone, degree)),
 					size: restSize,
 					label: ''
 				};
@@ -1169,7 +1295,8 @@
 		});
 
 		renderer.on('beforeRender', () => {
-			labelsTaken = voorbehouden();
+			hullNames = voorbehouden();
+			labelPlan = null;
 			labelsAt = new Map();
 		});
 		renderer.on('afterRender', updateViewportLabels);
@@ -1180,11 +1307,18 @@
 			onNodeDoubleClick?.(node);
 		});
 		renderer.on('clickEdge', ({ edge }) => onEdgeClick?.(edge));
-		renderer.on('clickStage', () => onStageClick?.());
-		renderer.on('enterNode', ({ node, event }) => {
+		renderer.on('clickStage', ({ event }) => {
+			// A finger is no pixel: a tap within 22 px of a bron (a 44 px target) chooses it.
+			const hit = tapTarget(event.x, event.y);
+			if (hit) return onNodeClick?.(hit);
+			// The name or the rim of a hull chooses the bron it stands for (a wet).
+			const anchor = hullClickAt({ x: event.x, y: event.y });
+			if (anchor) onHullClick?.(anchor);
+			else onStageClick?.();
+		});
+		renderer.on('enterNode', ({ node }) => {
 			sigmaHoveredId = node;
 			setHoveredId(node);
-			onNodeHover?.(node, event.x, event.y);
 		});
 		renderer.on('leaveNode', () => {
 			sigmaHoveredId = null;
@@ -1204,8 +1338,12 @@
 		onReady?.({ refresh, fit, restoreCamera, zoom });
 	});
 
-	/** How strong a line of a fan of `n` lines is drawn: in full up to nine, paler beyond. */
-	const fanStrength = (n: number) => Math.min(1, Math.max(0.35, 3 / Math.sqrt(n || 1)));
+	/** How strong a line of a fan of `n` lines is drawn: its tone's top up to nine, paler beyond, readable. */
+	const fanStrength = (color: string, tone: Tone, n: number) =>
+		lineStrength(color, tokens().paper, tone, n);
+	/** A line of a chosen bron or of the focus: not context, not a thread. */
+	const touchesChosen = (src: string, tgt: string) =>
+		src === focusedId || tgt === focusedId || latestPinnedIds.has(src) || latestPinnedIds.has(tgt);
 
 	let focusLevel1 = new Set<string>();
 	function recomputeFocusLevel1() {
@@ -1230,6 +1368,8 @@
 <div
 	bind:this={wrap}
 	class="canvas-wrap"
+	data-nodes={nodeCount}
+	data-dimmed={dimmedCount}
 	onpointermove={onHullPointer}
 	onpointerleave={() => {
 		if (hoveredHullId !== null) {
@@ -1245,12 +1385,15 @@
 	{#if hulls.length > 0}
 		<svg class="hull-overlay" aria-hidden="true">
 			{#each hulls as h (h.id)}
+				<!-- Chosen: the rim in ink on a halo of paper (Netwerkcanvas, Gekozen). -->
+				{#if h.chosen}<path class="hull-halo" class:is-dim={h.dim} d={h.path} />{/if}
 				<path
 					class="hull"
+					class:is-chosen={h.chosen}
 					class:is-dim={h.dim}
 					d={h.path}
-					fill={withAlpha(h.color, 0.08)}
-					stroke={h.color}
+					fill={withAlpha(h.color, 0.05)}
+					stroke={h.chosen ? 'var(--ink)' : h.color}
 					stroke-dasharray={h.dash}
 				/>
 			{/each}
@@ -1259,10 +1402,12 @@
 					<path
 						d={l.d}
 						stroke={l.color}
-						stroke-dasharray={l.dashed ? '3 3' : undefined}
+						stroke-width={l.width}
+						stroke-dasharray={l.dash}
+						stroke-linecap={l.cap}
 						fill="none"
 					/>
-					<path d={l.arrow} fill={l.color} />
+					{#if l.arrow}<path d={l.arrow} fill={l.color} />{/if}
 				</g>
 			{/each}
 		</svg>
@@ -1271,28 +1416,18 @@
 				<span
 					class="hull-label"
 					class:is-dim={h.dim}
+					class:is-chosen={h.chosen}
 					class:is-long={h.long}
-					style="left:{h.labelX}px; top:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
+					style="--x:{h.labelX}px; --y:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
 				>
 			{/each}
 			{#each hullLinks as l (l.id)}
 				{#if l.label}
 					<span
 						class="hull-link-label"
-						style="left:{l.labelX}px; top:{l.labelY}px; --link-color:{l.color}">{l.label}</span
+						style="--x:{l.labelX}px; --y:{l.labelY}px; --link-color:{l.color}">{l.label}</span
 					>
 				{/if}
-			{/each}
-		</div>
-	{/if}
-	{#if activityHalos.length > 0}
-		<div class="activity-overlay" aria-hidden="true">
-			{#each activityHalos as h (h.id)}
-				<span
-					class="activity-ring"
-					style="left:{h.vx}px; top:{h.vy}px; width:{h.ringPx * 2}px; height:{h.ringPx *
-						2}px; border-color:{h.color}"
-				></span>
 			{/each}
 		</div>
 	{/if}
@@ -1308,12 +1443,15 @@
 			{/each}
 		</div>
 	{/if}
-	{#if mutatieBadges.length > 0}
-		<div class="mutatie-overlay" aria-hidden="true">
-			{#each mutatieBadges as b (b.id)}
-				<span class="mutatie-badge" style="left:{b.vx}px; top:{b.vy}px"
-					>{b.count > 1 ? b.count : ''}</span
-				>
+	{#if openstaand.length > 0}
+		<div class="openstaand-overlay" aria-hidden="true">
+			{#each openstaand as b (b.id)}
+				<span
+					class="openstaand-stip"
+					data-openstaand={b.id}
+					title="Lopend wetsvoorstel"
+					style="left:{b.vx}px; top:{b.vy}px"
+				></span>
 			{/each}
 		</div>
 	{/if}
@@ -1344,14 +1482,22 @@
 		pointer-events: none;
 	}
 	.hull-overlay .hull {
-		stroke-width: 1.5;
+		stroke-width: 1.6;
 		transition: opacity var(--dur-1) var(--ease);
 	}
-	/* A line between hulls: thin and fine-dashed, so it reads as a relation, not a road. */
-	.hull-link path:first-child {
-		stroke-width: 1.2;
-		stroke-linecap: round;
+	.hull-overlay .hull.is-chosen {
+		stroke-width: 2.4;
 	}
+	.hull-overlay .hull-halo {
+		fill: none;
+		stroke: var(--paper);
+		stroke-width: 6.4;
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	.hull-halo.is-dim {
+		opacity: 0.3;
+	}
+	/* A line between hulls, in the stroke and thickness of its kind. */
 	.hull-link {
 		opacity: 0.8;
 		transition: opacity var(--dur-1) var(--ease);
@@ -1363,12 +1509,15 @@
 	}
 	.hull-link-label {
 		position: absolute;
-		transform: translate(-50%, -50%);
+		left: 0;
+		top: 0;
+		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 50%));
 		padding: 1px var(--s-2);
 		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
-		font-size: var(--t-label);
+		font-size: var(--t-note);
+		font-style: italic;
 		color: var(--link-color);
 		white-space: nowrap;
 	}
@@ -1382,48 +1531,41 @@
 		overflow: hidden;
 		z-index: 4;
 	}
+	/* Placed by transform, not left and top: a label that moves with the layout is no layout
+	   shift (N17c). */
 	.hull-label {
 		position: absolute;
-		transform: translate(-50%, -100%);
-		padding: 2px var(--s-2);
-		border-radius: var(--r-rond);
-		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
+		left: 0;
+		top: 0;
+		transform: translate(calc(var(--x) - 50%), calc(var(--y) - 100%));
+		padding: 1px var(--s-2);
+		border-radius: var(--r-1);
+		/* Pure paper, an edge of 1 px in the colour of its kind (Netwerkcanvas, Omhulling). */
+		background: var(--paper);
 		border: 1px solid var(--hull-color);
 		font-family: var(--font-serif);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
+		line-height: 18px;
 		font-weight: 600;
 		/* The name in ink: the lighter groups (Dossier, 3.1:1) are too faint for text. */
-		color: var(--ink-2);
+		color: var(--ink);
 		white-space: nowrap;
 		/* A dossier's title in full can be wider than the canvas: it wraps (.is-long). */
 		max-width: calc(100% - 20px);
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+	.hull-label.is-chosen {
+		border-color: var(--ink);
+	}
 	.hull-label.is-long {
 		width: max-content;
 		white-space: normal;
-		border-radius: var(--r-1);
 		line-height: var(--lh-snug);
 	}
 
-	.activity-overlay {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		overflow: hidden;
-		z-index: 5;
-	}
-	.activity-ring {
-		position: absolute;
-		transform: translate(-50%, -50%);
-		border-radius: 50%;
-		border: 2px solid;
-		background: transparent;
-	}
-
 	/* A badge on a bron with an open dossier: the count when more than one. */
-	.mutatie-overlay {
+	.openstaand-overlay {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;
@@ -1454,24 +1596,14 @@
 	.notitie-merk.is-dim {
 		opacity: 0.4;
 	}
-	.mutatie-badge {
+	.openstaand-stip {
 		position: absolute;
 		transform: translate(-50%, -50%);
-		min-width: 14px;
-		height: 14px;
-		padding: 0 3px;
+		width: 6px;
+		height: 6px;
 		border-radius: var(--r-rond);
-		background: var(--ink);
-		color: var(--paper);
+		background: var(--rubriek-kamerstukken);
 		border: 1.5px solid var(--paper);
-		box-shadow: 0 0 0 1px var(--ink);
-		font-family: var(--font-serif);
-		font-size: var(--t-glyph);
-		font-weight: 600;
-		line-height: 11px;
-		text-align: center;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		box-sizing: content-box;
 	}
 </style>

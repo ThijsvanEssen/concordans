@@ -7,13 +7,37 @@
 	import { VORMEN } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
 	import type { Collection } from '$lib/vocabulary';
-	import { LINE_H, WIDTH, clusterLine, type Sketch } from './sketch';
+	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import {
+		edgeCapFor,
+		edgeColorFor,
+		edgeDashFor,
+		edgeStyleFor,
+		edgeToneFor,
+		lineThickness,
+		tokens,
+		towardPaper,
+		arrowLength,
+		hullDashFor
+	} from '$lib/components/graph/nodeSprites';
+	import { AIR, DOT_RADIUS, curvedLine } from '$lib/graph/line-shape';
+	import { hasArrow } from '$lib/graph/line-kind';
+	import { lineStrength } from '$lib/graph/line-strength';
+	import {
+		CHAR_WIDTH as CHAR,
+		LINE_H,
+		SKETCH_LINE,
+		WIDTH,
+		drawnCount,
+		type Sketch,
+		type SketchLine
+	} from './sketch';
 
 	let {
 		sketch,
 		name,
+		home = null,
 		open = null,
 		onSingle,
 		onGroup
@@ -21,6 +45,8 @@
 		sketch: Sketch;
 		/** The bron in the middle, short (LABEL_MAX). */
 		name: string;
+		/** The law an article stands in, short (`BW`): the bron is drawn in its omhulling with this pil. */
+		home?: string | null;
 		/** The bron on its own opened under the drawing, by its id. */
 		open?: string | null;
 		/** A bron on its own was clicked: its row opens under the drawing, or closes. */
@@ -36,61 +62,178 @@
 	};
 
 	const colour = kindColour;
-	/** A group of Kamerstukken is dashed, as a dossier on the canvas. */
-	const dashed = (c: Collection | null) => c === 'documents' || c === 'dossiers';
+	/** A group's edge as its hull on the canvas: a dossier dashed, a fractie dotted, a commissie dash-dot, a kabinet dash-dot-dot. */
+	const hullDash = (c: Collection | null) =>
+		c === 'documents' || c === 'dossiers'
+			? hullDashFor('dossier')
+			: c === 'factions'
+				? hullDashFor('faction')
+				: c === 'committees'
+					? hullDashFor('committee')
+					: c === 'cabinets'
+						? hullDashFor('cabinet')
+						: undefined;
 
 	const m = $derived(sketch.center);
-	const groups = $derived(sketch.clusters.length);
-	const description = $derived(
-		[
-			sketch.singles.length ? `${formatCount(sketch.singles.length)} afzonderlijk` : null,
-			groups
-				? `${formatCount(groups)} ${plural(groups, 'groep', 'groepen')}, ${formatCount(sketch.inClusters)} in totaal`
-				: null
-		]
-			.filter(Boolean)
-			.join(', ')
+	/** The focus: 18 px of ink on a halo of paper (Netwerkcanvas, Maten). */
+	const FOCUS = 18;
+	const HALO = 4.5;
+	/** The radius of a bron the line stops at, and of the ring round the chosen one. */
+	const NODE = 6.5;
+	const RING = 11;
+
+	// A line rests in the colour of its kind, mixed toward the paper as there are more of them
+	// (within the window of its tone, line-strength); the chosen one in ink, 1.3 times as thick,
+	// the rest at half.
+	const total = $derived(sketch.singles.length + sketch.clusters.length);
+	const chosen = $derived(open !== null);
+
+	type StrokeLine = {
+		d: string;
+		head: string | null;
+		dot: { x: number; y: number } | null;
+		colour: string;
+		width: number;
+		dash: string | undefined;
+		cap: 'round' | 'butt';
+		open: boolean;
+		dimmed: boolean;
+	};
+	/**
+	 * A line from the bron in the middle to a neighbour at (x, y), of `radiusStop` radius: in the style
+	 * of its kind (Netwerkcanvas, Lijnen), slightly curved, the arrowhead at the end it points to
+	 * and, for Ingediend door, a dot at the one who submits.
+	 */
+	function lineTo(
+		l: SketchLine,
+		x: number,
+		y: number,
+		radiusStop: number,
+		weight: number,
+		pick: boolean
+	): StrokeLine {
+		const rel = l.relation;
+		const style = rel ? edgeStyleFor(rel, null, l.source) : 'punten';
+		const width = (rel ? lineThickness(EDGE_WEIGHT[rel]) : lineThickness(weight)) * SKETCH_LINE;
+		const base = rel ? edgeColorFor(rel, l.source) : 'var(--rule-strong)';
+		const strength = rel
+			? lineStrength(base, tokens().paper, edgeToneFor(rel, null, l.source), total)
+			: 1;
+		const colour = pick ? 'var(--ink)' : rel ? towardPaper(base, strength) : base;
+		const points = rel !== null && hasArrow(style) && l.direction !== null;
+		// Drawn from the middle to the neighbour: the arrowhead at the end it points to.
+		const toMiddle = l.direction === 'inbound';
+		const shape = curvedLine(
+			{ x: m.x, y: m.y },
+			{ x, y },
+			{
+				ra: FOCUS / 2 + HALO - AIR,
+				rb: radiusStop - AIR,
+				width,
+				arrow: arrowLength(),
+				head: points ? (toMiddle ? 'a' : 'b') : null,
+				end: toMiddle ? 'a' : 'b',
+				dot: style === 'puntenIndiener' && l.direction !== null ? (toMiddle ? 'b' : 'a') : null
+			}
+		);
+		return {
+			d: shape.d,
+			head: shape.head,
+			dot: shape.dot,
+			colour,
+			width: pick ? width * 1.3 : width,
+			dash: edgeDashFor(style),
+			cap: edgeCapFor(style),
+			open: pick,
+			dimmed: chosen && !pick
+		};
+	}
+	const lines = $derived(
+		sketch.singles.map((l) => ({ id: l.id, ...lineTo(l, l.x, l.y, NODE, 0.7, open === l.id) }))
 	);
+	const groupLines = $derived(
+		sketch.clusters.map((b) => ({ id: b.id, ...lineTo(b, b.x, b.y, Math.max(b.r, 14), 1, false) }))
+	);
+	const caption = $derived(drawnCount(sketch));
+	/** The omhulling of the law round the bron and its name, with the pil at its top left. */
+	const hull = $derived.by(() => {
+		if (!home) return null;
+		const half = Math.max(
+			44,
+			(Math.max(...sketch.centerLines.map((l) => l.length), 0) * CHAR) / 2 + 14
+		);
+		const y = m.y - 26;
+		const pill = Math.round(home.length * 7.6 + 18);
+		return {
+			x: m.x - half,
+			y,
+			w: 2 * half,
+			h: 26 + 34 + Math.max(0, sketch.centerLines.length - 1) * LINE_H + 12,
+			pill
+		};
+	});
 </script>
 
 <figure class="sketch" data-testid="network-sketch">
 	<svg
 		viewBox="0 0 {WIDTH} {sketch.height}"
 		role="group"
-		aria-label="Netwerk rond {name}: {description}"
+		aria-label="Netwerk rond {name}: {caption}"
 	>
-		{#each sketch.singles as l (l.id)}
-			<line
-				x1={m.x}
-				y1={m.y}
-				x2={l.x}
-				y2={l.y}
-				class="line"
-				class:is-open={open === l.id}
-				stroke-width={open === l.id ? 2 : 1.5}
-			/>
-		{/each}
-		{#each sketch.clusters as b (b.id)}
-			<line x1={m.x} y1={m.y} x2={b.x} y2={b.y} class="line" stroke-width={clusterLine(b.count)} />
+		{#each [...lines, ...groupLines] as t (t.id)}
+			<g class="line" class:is-dim={t.dimmed}>
+				<path
+					d={t.d}
+					fill="none"
+					stroke={t.colour}
+					stroke-width={t.width}
+					stroke-dasharray={t.dash}
+					stroke-linecap={t.cap}
+				/>
+				{#if t.head}<polygon points={t.head} fill={t.colour} />{/if}
+				{#if t.dot}<circle cx={t.dot.x} cy={t.dot.y} r={DOT_RADIUS} fill={t.colour} />{/if}
+			</g>
 		{/each}
 
+		{#if hull && home}
+			<rect
+				class="hull"
+				x={hull.x}
+				y={hull.y}
+				width={hull.w}
+				height={hull.h}
+				rx="22"
+				aria-hidden="true"
+			/>
+		{/if}
 		<g class="focus">
 			<title>{name}</title>
-			<rect x={m.x - 11} y={m.y - 11} width="22" height="22" fill="var(--ink)" />
 			<rect
-				x={m.x - 17}
-				y={m.y - 17}
-				width="34"
-				height="34"
-				fill="none"
-				stroke="var(--ink)"
-				stroke-width="1.5"
+				x={m.x - FOCUS / 2 - HALO}
+				y={m.y - FOCUS / 2 - HALO}
+				width={FOCUS + 2 * HALO}
+				height={FOCUS + 2 * HALO}
+				fill="var(--paper)"
+			/>
+			<rect
+				x={m.x - FOCUS / 2}
+				y={m.y - FOCUS / 2}
+				width={FOCUS}
+				height={FOCUS}
+				fill="var(--ink)"
 			/>
 			<text x={m.x} y={m.y + 34} text-anchor="middle" class="name name--focus"
 				>{#each sketch.centerLines as line, i (i)}<tspan x={m.x} dy={i ? LINE_H : 0}>{line}</tspan
 					>{/each}</text
 			>
 		</g>
+
+		{#if hull && home}
+			<g class="pil" aria-hidden="true">
+				<rect x={hull.x + 14} y={hull.y - 10} width={hull.pill} height="20" rx="3" />
+				<text x={hull.x + 14 + hull.pill / 2} y={hull.y + 4} text-anchor="middle">{home}</text>
+			</g>
+		{/if}
 
 		{#each sketch.singles as l (l.id)}
 			{@const v = VORMEN[l.shape]}
@@ -106,17 +249,11 @@
 			>
 				<title>{l.title}</title>
 				<circle cx={l.x} cy={l.y} r={l.hit} class="hit" />
-				{#if open === l.id}<rect
-						class="sel"
-						x={l.x - 12}
-						y={l.y - 12}
-						width="24"
-						height="24"
-						rx="2"
-					/>{/if}
+				<circle cx={l.x} cy={l.y} r={NODE + 3} fill="var(--paper)" />
+				{#if open === l.id}<circle class="sel" cx={l.x} cy={l.y} r={RING} />{/if}
 				<path
 					d={v.d}
-					transform="translate({l.x - 7} {l.y - 7}) scale(0.875)"
+					transform="translate({l.x - 6.4} {l.y - 6.4}) scale(0.8)"
 					fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(l.collection, l.hue)}
 					stroke={v.wijze === 'lijn' ? colour(l.collection, l.hue) : 'none'}
 					stroke-width={v.wijze === 'lijn' ? 2.4 : 0}
@@ -148,7 +285,8 @@
 					fill="var(--paper)"
 					stroke={colour(b.collection, b.hue)}
 					stroke-width="2.5"
-					stroke-dasharray={dashed(b.collection) ? '6 4' : undefined}
+					stroke-dasharray={hullDash(b.collection)}
+					stroke-linecap="round"
 				/>
 				<text x={b.x} y={b.y + 4.5} text-anchor="middle" class="count">{formatCount(b.count)}</text>
 				<text x={b.lx} y={b.ly} text-anchor="middle" class="name"
@@ -158,30 +296,8 @@
 			</g>
 		{/each}
 	</svg>
-	<figcaption class="legend">
-		{#if sketch.singles.length}
-			<span class="legend__part"
-				><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"
-					><rect width="10" height="10" fill="var(--ink-2)" /></svg
-				>{formatCount(sketch.singles.length)} afzonderlijk</span
-			>
-		{/if}
-		{#if groups}
-			<span class="legend__part"
-				><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"
-					><circle
-						cx="6"
-						cy="6"
-						r="4.8"
-						fill="none"
-						stroke="var(--ink-2)"
-						stroke-width="1.6"
-					/></svg
-				>{formatCount(groups)}
-				{plural(groups, 'groep', 'groepen')}, {formatCount(sketch.inClusters)} in totaal</span
-			>
-		{/if}
-	</figcaption>
+	<!-- One line that counts what is drawn (Netwerkschets, Tekst). -->
+	<figcaption class="caption">{caption}</figcaption>
 </figure>
 
 <style>
@@ -198,14 +314,26 @@
 		margin: 0 auto;
 		overflow: visible;
 	}
-	.line {
-		stroke: var(--rule-strong);
-		opacity: 0.55;
+	/* A chosen neighbour: its line in ink, the rest at half. */
+	.line.is-dim {
+		opacity: 0.5;
 	}
-	/* The bron opened under the drawing: its line in ink, a frame around it. */
-	.line.is-open {
-		stroke: var(--ink);
-		opacity: 1;
+	.hull {
+		fill: color-mix(in srgb, var(--rubriek-wetten) 5%, transparent);
+		stroke: var(--rubriek-wetten);
+		stroke-linecap: round;
+		stroke-width: 1.6;
+	}
+	.pil rect {
+		fill: var(--paper);
+		stroke: var(--rubriek-wetten);
+		stroke-width: 1;
+	}
+	.pil text {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		fill: var(--ink);
 	}
 	.sel {
 		fill: none;
@@ -256,22 +384,13 @@
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
-	/* One line that counts what is drawn (besluit 29.3). */
-	.legend {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0 var(--s-4);
+	/* One line that counts what is drawn. */
+	.caption {
 		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-ui);
-		line-height: 20px;
-		color: var(--ink-2);
-	}
-	.legend__part {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		white-space: nowrap;
+		font-size: var(--t-micro);
+		line-height: 18px;
+		text-align: center;
+		color: var(--ink-3);
 	}
 </style>

@@ -38,14 +38,14 @@ const MENUS: Case[] = [
 	{
 		name: 'the versions of an article',
 		url: '/wetten/BWBR0001840/artikel/23',
-		opener: '3 tekstversies',
+		opener: 'Tekstversies: 3',
 		menu: /^Tekstversies$/
 	},
 	{
 		name: 'Meer of a bundel',
 		url: '/bundels/losse-markeringen',
-		opener: 'Meer bij Losse markeringen',
-		menu: /^Meer bij Losse markeringen$/,
+		opener: 'Meer bij Mijn markeringen',
+		menu: /^Meer bij Mijn markeringen$/,
 		prepare: keepArticle
 	}
 ];

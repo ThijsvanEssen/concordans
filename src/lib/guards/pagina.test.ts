@@ -129,7 +129,9 @@ describe('the frame of a page', () => {
 		expect(bron('routes/(main)/+layout.svelte')).toMatch(
 			/class="blad-hoogte"[\s\S]*min-height: 100dvh/
 		);
-		expect(bron('routes/(main)/+page.svelte')).toMatch(/\{:else if networkLoading\}/);
+		expect(bron('routes/(main)/+page.svelte')).toMatch(
+			/\{#if lawNetwork \|\| networkLoading\}[\s\S]*wetsnetwerk-plek/
+		);
 	});
 
 	it('names the page a subpage belongs to as a crumb: one link, as a reader’s band', () => {
@@ -165,6 +167,14 @@ describe('the frame of a page', () => {
 });
 
 describe('a text page', () => {
+	it('heads its parts with Sectie, not a heading of its own', () => {
+		expect(
+			BRONNEN.filter(({ path }) => path.startsWith('routes/(main)'))
+				.filter(({ text }) => /class="section(-title)?"/.test(text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
 	it('lists key and value with KeyList, which breaks a long value on a phone', () => {
 		// Three copies drifted apart: /docs did not stack, and its addresses ran past their row
 		// at 375 px, cut off (code-eenvoud F24).

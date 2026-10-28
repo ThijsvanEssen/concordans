@@ -5,8 +5,9 @@
 	// law itself is one step further, its title.
 	import { getLawReferences } from '$lib/api/articles';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { formatCount } from '$lib/text/getal';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { load } from '$lib/util/load.svelte';
+	import MoreLink from '$lib/components/ui/AlleN.svelte';
 	import { richtingKop, verwijzingenPerRichting, type Richting } from './wet-verwijzingen';
 
 	let {
@@ -25,27 +26,16 @@
 	/** Referring articles shown before Alle. */
 	const GETOOND = 8;
 
-	let richtingen = $state<Richting[] | null | 'laden'>('laden');
-	let alle = $state(false);
-	$effect(() => {
-		const [a, b] = [van, naar];
-		richtingen = 'laden';
-		let stale = false;
-		getLawReferences(a, b)
-			.then((r) => {
-				if (!stale) richtingen = verwijzingenPerRichting(r.items ?? []);
-			})
-			.catch(() => {
-				if (!stale) richtingen = null;
-			});
-		return () => (stale = true);
-	});
-
-	const aantal = $derived(
-		Array.isArray(richtingen) ? richtingen.reduce((n, r) => n + r.regels.length, 0) : 0
+	const loaded = load(
+		() => `${van} ${naar}`,
+		() => getLawReferences(van, naar).then((r) => verwijzingenPerRichting(r.items ?? [])),
+		'Wetverwijzingen'
 	);
+	let alle = $state(false);
+	const richtingen = $derived<Richting[]>(loaded.state.status === 'ready' ? loaded.state.data : []);
+
+	const aantal = $derived(richtingen.reduce((n, r) => n + r.regels.length, 0));
 	const getoond = $derived.by(() => {
-		if (!Array.isArray(richtingen)) return [];
 		let rest = alle ? Infinity : GETOOND;
 		return richtingen.map((r) => {
 			const regels = r.regels.slice(0, Math.max(0, rest));
@@ -56,11 +46,7 @@
 </script>
 
 <div class="verwijzingen">
-	{#if richtingen === 'laden'}
-		<p class="stil">Laden…</p>
-	{:else if richtingen === null}
-		<p class="stil">Verwijzingen nog niet beschikbaar</p>
-	{:else}
+	<LoadState state={loaded.state} what="De verwijzingen" plural retry={loaded.retry}>
 		{#each getoond as r (r.richting)}
 			{#if r.regels.length}
 				{#if getoond.length > 1}<p class="kop">{richtingKop(r.richting, dit)}</p>{/if}
@@ -84,12 +70,10 @@
 		{/each}
 		{#if aantal > GETOOND}
 			<p class="alle">
-				<TekstLink onclick={() => (alle = !alle)}
-					>{alle ? 'Minder' : `Alle ${formatCount(aantal)} artikelen`}</TekstLink
-				>
+				<MoreLink {aantal} noun="artikelen" open={alle} onclick={() => (alle = !alle)} />
 			</p>
 		{/if}
-	{/if}
+	</LoadState>
 </div>
 
 <style>
@@ -123,10 +107,5 @@
 	.alle {
 		margin: var(--s-2) 0 0;
 		font-size: var(--t-micro);
-	}
-	.stil {
-		margin: 0;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 </style>

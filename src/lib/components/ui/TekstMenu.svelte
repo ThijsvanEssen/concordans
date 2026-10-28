@@ -3,12 +3,13 @@
 	// framed) with the word of its value and a caret. It opens a list under itself; the chosen
 	// option in weight. The one form for every select in
 	// Concordans: Alle bronnen, Per soort, Nieuwste eerst, Alle jaren. A menu that holds more
-	// than a list (two lists side by side) passes its own `inhoud`.
+	// than a list (two lists side by side) passes its own `inhoud`. Mijn, Volg and the ⋯ of a
+	// row are this menu with the button of their place (`buttonClass`, `knop`, `caret`).
 	import type { Option } from './option';
 	import type { Snippet } from 'svelte';
 	import { menu } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
 	import Caret from './Caret.svelte';
+	import MenuList from './MenuList.svelte';
 
 	/** `uit`: shown, not to be chosen now (its reason in `titel`). */
 
@@ -25,7 +26,11 @@
 		onClose,
 		gekozen: aan = false,
 		breed = false,
-		open = $bindable(false)
+		open = $bindable(false),
+		buttonClass = 'btn tekstmenu__knop',
+		caret = true,
+		title,
+		ownClick = false
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
 		label: string;
@@ -51,6 +56,14 @@
 		breed?: boolean;
 		/** Open; bound, so another control opens the menu too (Bewaard beside Bewaar's caret). */
 		open?: boolean;
+		/** The button's class where it is not a framed Knop: Mijn in the bar, the ⋯ of a row. */
+		buttonClass?: string;
+		/** The caret after the button's words; a glyph (⋯) has none. */
+		caret?: boolean;
+		/** The button's hover title. */
+		title?: string;
+		/** A click in the list is the menu's, not the row's under it. */
+		ownClick?: boolean;
 	} = $props();
 
 	let button = $state<HTMLElement | null>(null);
@@ -65,23 +78,24 @@
 <div class="tekstmenu" use:menu={{ open, close: sluit }}>
 	<button
 		type="button"
-		class="btn tekstmenu__knop"
+		class={buttonClass}
 		class:is-active={aan}
+		{title}
 		bind:this={button}
 		aria-haspopup="menu"
 		aria-expanded={open}
 		aria-label={!woorden || label.includes(woorden) ? label : `${label}: ${woorden}`}
 		onclick={() => (open ? sluit() : (open = true))}
-		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
+		>{#if knop}{@render knop()}{:else}{woorden}{/if}{#if caret}<Caret {open} />{/if}</button
 	>
 	{#if open && button}
-		<!-- In the top layer (actions/top-layer.ts), so no column that scrolls on its own (the
-		     facets of Bladeren, the Overzicht) cuts it off; its keys and clicks stay the menu's. -->
-		<div
-			class="tekstmenu__lijst {breed ? 'is-breed' : ''}"
-			role="menu"
-			aria-label={label}
-			use:topLayer={{ anchor: button, close: sluit, align: rechts ? 'right' : 'left' }}
+		<MenuList
+			anchor={button}
+			{label}
+			close={sluit}
+			align={rechts ? 'right' : 'left'}
+			wide={breed}
+			{ownClick}
 		>
 			{#if inhoud}
 				{@render inhoud(sluit)}
@@ -104,7 +118,7 @@
 			{#if onder}
 				<div class="tekstmenu__onder">{@render onder(sluit)}</div>
 			{/if}
-		</div>
+		</MenuList>
 	{/if}
 </div>
 

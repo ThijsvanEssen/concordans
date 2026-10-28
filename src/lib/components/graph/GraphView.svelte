@@ -2,7 +2,6 @@
 	import { clickOutside } from '$lib/actions/top-layer';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag, yearFraction } from '$lib/text/datum';
-	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onMount, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
@@ -14,29 +13,43 @@
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
-	import { readingOrder } from './canvas-keys';
+	import { readingOrder, stepPointer } from './canvas-keys';
 	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
+	import NetworkChoice from './NetworkChoice.svelte';
+	import ViewSheet from './ViewSheet.svelte';
+	import { provideWeergaveBlad } from '$lib/network/weergave-blad';
+	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
+	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
+	import { lazeKernIds } from '$lib/bron/behoort';
+	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
+	import { citationRecord } from '$lib/text/citation-record';
+	import { countedAs, kindOf, stripDate, type Stip } from '$lib/bron/strook';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
+	import type { LineKind } from '$lib/graph/line-kind';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
 	import {
 		CLUSTER_MAX_LOOSE,
+		clusterHeading,
 		clusterLabel,
 		clustersOf,
 		tussenClustersOf,
-		clusterZinnen,
+		clusterBinding,
 		isClusterId,
 		type Cluster
 	} from '$lib/selection/cluster';
 	import { groupFor, openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
-	import { spriteForVorm, IMAGE_SIZE_BUMP } from './nodeSprites';
+	import { clusterSprite, spriteForVorm, IMAGE_SIZE_BUMP, tokens } from './nodeSprites';
+	import { formatCount } from '$lib/text/getal';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
+	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
@@ -44,6 +57,7 @@
 	import { kindColour } from '$lib/bron/kleur';
 	import {
 		containerIdFor,
+		formerMembers,
 		momentOf,
 		type Period,
 		isContainerKind,
@@ -54,18 +68,16 @@
 	import { kolomPlekken } from '$lib/selection/kolommen';
 	import { radialLayout } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
-	import type { Overlay } from '$lib/selection/overlay';
-	import { DEFAULT_HEAT_MONTHS } from '$lib/selection/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
 		filterGroupOf,
+		hiddenKindsOf,
 		rechterOf,
-		type FilterGroup,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
-	import { listedGroups, type VerbondenState } from '$lib/verbonden/data-source';
-	import { CLUSTER_CARD, clusterCardAt, placeCard } from '$lib/selection/card-place';
+	import { stuksoortOf } from '$lib/bron/rubrieken';
+	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { relationWords } from '$lib/verbonden/relation-words';
 	import { sentence } from '$lib/network/shared';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
@@ -85,16 +97,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		| 'onFilter'
-		| 'onOpenFilter'
-		| 'depth'
-		| 'onDepth'
-		| 'onLaadSoort'
-		| 'laadtSoort'
-		| 'onToggleHeat'
-		| 'onHeatPeriodChange'
-		| 'onToggleMutatie'
-		| 'counting'
+		'onFilter' | 'lijstHref' | 'counting' | 'proposals'
 	>;
 
 	let {
@@ -102,32 +105,34 @@
 		filter,
 		verbonden,
 		reach = null,
+		expecting = 0,
 		selectedEdgeId = null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
-		heatMap = new Map() as NodeCounts,
-		overlay = { kind: 'none' } as Overlay,
 		marked = null,
 		onMark,
 		onNodeClick,
 		onMetGroep,
 		onToggleChosen,
+		onAdd,
 		netwerkActive = false,
+		pairSteps = 1,
 		onEdgeClick,
 		onClear,
-		onBack,
-		onGoForward,
 		canvasOverlay,
 		balk,
 		viewChoice,
-		meer,
+		depth,
+		onDepth,
+		view = 'omgeving',
 		midden,
 		surroundings = false,
 		externCounts = null,
 		extern = null,
 		externStippen = null,
 		middenZoom = true,
-		externRelations = null,
+		externLines = null,
+		onToevoegen,
 		...legend
 	}: {
 		store: GraphStore;
@@ -135,12 +140,12 @@
 		verbonden: VerbondenState;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
+		/** The bronnen of the netwerk asked and not yet in: Weergave keeps its place meanwhile. */
+		expecting?: number;
 		selectedEdgeId?: string | null;
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
 		lineLids?: ReadonlyMap<string, string>;
 		inFluxMap?: NodeCounts;
-		heatMap?: NodeCounts;
-		overlay?: Overlay;
 		/** The bron marked, as the address holds it (?marked): its card open. */
 		marked?: string | null;
 		/** A bron was marked, or none is any more: the page writes it in the address. */
@@ -151,12 +156,14 @@
 		onMetGroep?: (verborgen: ReadonlyMap<string, ContainerKind>) => void;
 		/** Adds a bron to the netwerk, or takes it out. */
 		onToggleChosen?: (node: GraphNode) => void;
+		/** A voorstel from the card of a bron added to the netwerk, by its id. */
+		onAdd?: (id: string, name?: string) => void;
 		netwerkActive?: boolean;
+		/** Aantal stappen of Verband (1 to 3): what Aantal stappen shows there, not the canvas's depth. */
+		pairSteps?: number;
 		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
-		onBack?: () => void;
-		onGoForward?: () => void;
 		/** The panel Netwerk, in the strip at the left. */
 		canvasOverlay?: Snippet;
 		/** At the top right of the canvas: Deel. */
@@ -164,25 +171,31 @@
 		/** After the chosen bronnen: the Weergave (Omgeving, Verband, Keten). */
 		viewChoice?: Snippet;
 		/** First under Meer of the legend: the netwerk's own filters. */
-		meer?: Snippet;
 		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
 		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
-		externCounts?: Pick<CanvasCounts, 'kinds' | 'relations' | 'refersFrom'> | null;
+		externCounts?: Pick<CanvasCounts, 'kinds' | 'lines'> | null;
 		/**
 		 * A weergave of its own in the canvas's place (Keten, Verband): the card at the right is
 		 * then `extern`'s, the tijdstrook `externStippen`.
 		 */
+		/** The weergave chosen; `midden` and `middenZoom` follow it. */
+		view?: 'omgeving' | 'verband' | 'keten';
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
-		externStippen?: readonly { jaar: number; collection: Collection }[] | null;
+		externStippen?: readonly Stip[] | null;
 		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
-		externRelations?: {
-			hidden: ReadonlySet<Relation>;
-			toggle: (r: Relation) => void;
+		externLines?: {
+			hidden: ReadonlySet<LineKind>;
+			toggle: (l: LineKind) => void;
 		} | null;
+		/** Empty canvas: what the reader can do, add a bron. */
+		onToevoegen?: () => void;
+		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
+		depth: number;
+		onDepth: (d: number) => void;
 	} & LegendProps = $props();
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
@@ -222,13 +235,77 @@
 		yearPeriod ?? momentOf(focusNodeId, containerGroups.values(), vandaag())
 	);
 
-	const hiddenKinds = $derived<ReadonlySet<FilterGroup>>(
-		filter.bronnen ? new Set(FILTER_GROUPS.filter((k) => !filter.bronnen!.has(k))) : new Set()
-	);
+	const hiddenKinds = $derived(hiddenKindsOf(filter));
 
 	// What the canvas draws, as it says it (GraphCanvas `onDrawn`), counted for the Legenda,
 	// the sidebar and the keyboard's list.
 	let drawn: ReadonlySet<string> = new Set();
+	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
+	let drawnBronnen = $state<DrawnBron[]>([]);
+	function drawnBronnenOf(ids: readonly string[]): DrawnBron[] {
+		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
+		// A focus drawn as a hull (a wet, a dossier, a fractie) holds what it draws: one step.
+		const focus = g.findNode(
+			(id, a) =>
+				id.toLowerCase() === focal &&
+				!a.anchor &&
+				!isContainerKind(lookup.get(id)?.drawClass ?? 'other')
+		);
+		const out: DrawnBron[] = [];
+		const take = (n: GraphNode | undefined, direct: boolean) => {
+			if (!n || n.anchor || n.id.toLowerCase() === focal || drawClassOf(n.collection) === 'other')
+				return;
+			const props = n.raw?.props ?? undefined;
+			const filterGroup = filterGroupOf(n.collection, n.key, props ?? null);
+			out.push({ id: n.id, collection: n.collection, key: n.key, props, filterGroup, direct });
+		};
+		for (const id of ids) {
+			const c = isClusterId(id) ? clusterById.get(id) : undefined;
+			// A cluster's members hang on the focus alone.
+			if (c) for (const m of c.members) take(store.getNodeById(m) ?? lookup.get(m), true);
+			else take(lookup.get(id), !focus || g.areNeighbors(focus, id));
+		}
+		return out;
+	}
+
+	// Soort around one bron reads Verbonden (kind-rows.ts, N1): its soorten, its words, its counts.
+	let chain = $state<{ id: string; ids: ReadonlySet<string> } | null>(null);
+	$effect(() => {
+		const id = verbonden.id;
+		const bron = id ? parseNodeId(id) : null;
+		if (!id || !bron || chain?.id === id) return;
+		lazeKernIds(bron.collection, bron.key, {}).then(
+			(ids) => {
+				if (verbonden.id === id) chain = { id, ids: new Set(ids) };
+			},
+			() => (chain = { id, ids: new Set() })
+		);
+	});
+	const kindFocusOf = $derived(
+		kindFocus({ netwerkActive, extern: !!externCounts, reach, panelId: verbonden.id })
+	);
+	const kindRowsShown = $derived.by(() => {
+		const bron = kindFocusOf ? parseNodeId(kindFocusOf.id) : null;
+		// Around one bron Soort is Verbonden's from the start: no counts of the canvas before it.
+		if (!kindFocusOf || !bron) return netwerkActive || externCounts ? null : [];
+		// Verbonden of another bron says nothing of this one: its soorten wait.
+		const v = kindFocusOf.own ? verbonden : { groups: [], buckets: null };
+		const ids = kindFocusOf.own && chain?.id === verbonden.id ? chain.ids : new Set<string>();
+		return kindRows({
+			focus: bron,
+			kinds: panelKinds(v, bron.collection, ids),
+			groups: v.groups,
+			chain: ids,
+			drawn: drawnBronnen,
+			buckets: reach?.buckets ?? lightBuckets(v.buckets)
+		});
+	});
+	/** A focus whose leden are drawn filled while current, an outline once gone (N13). */
+	const withCurrentMember = $derived(
+		!!focusContainerId &&
+			formerMembers(containerGroups.get(focusContainerId), vandaag()).size > 0 &&
+			(selection?.collection === 'factions' || selection?.collection === 'committees')
+	);
 	function telCanvas() {
 		const verborgen = metGroepVerborgen({
 			groups: containerGroups.values(),
@@ -242,10 +319,12 @@
 			selectionId: selection?.id ?? null,
 			hiddenKinds,
 			rechter: filter.rechter,
+			period: yearPeriod,
 			verborgen,
-			hiddenRelations: filters.hiddenRelations
+			hiddenLines: filters.hiddenLines
 		});
 		canvasCounts = geteld.counts;
+		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
 		telJaren();
 		// The keyboard's list sorts what is drawn: only a change sorts it again.
 		if (
@@ -341,7 +420,15 @@
 	let hoverNode = $state<GraphNode | null>(null);
 	// The bronnen drawn on the canvas, for the keyboard's list of them, and the one in its focus.
 	let drawnIds = $state<string[]>([]);
+	// Its counts once Verbonden is in, the slower of the two, and the canvas has drawn: no
+	// number springs (F5).
+	const kindsSettled = $derived(
+		!!kindFocusOf?.own && panelSettled(verbonden) && drawnIds.length > 0
+	);
+	// The bron in focus in the keyboard's list: it lights up on the canvas, nothing more (R9).
 	let keyNode = $state<GraphNode | null>(null);
+	// The bron the arrows point at on the canvas itself, in the list's order (stepPointer).
+	let pijl = $state<GraphNode | null>(null);
 	const listNodes = $derived(
 		readingOrder(
 			drawnIds.flatMap((id) => lookup.get(id) ?? []),
@@ -349,25 +436,33 @@
 		)
 	);
 	function onKeyNode(n: GraphNode | null) {
-		if (n && stilNa === n.id) {
-			// Back from its card with Escape: the bron has the focus, its card stays closed.
-			stilNa = null;
-			keyNode = n;
-			return;
-		}
-		stilNa = null;
 		keyNode = n;
-		hoverNode = n;
+		if (n) pijl = null;
 	}
+	/** ← and → on the canvas: the bron pointed at moves, from the one marked if any. */
+	function wijs(key: string) {
+		const at = pijl?.id ?? gemarkeerd?.id ?? null;
+		const id = stepPointer(
+			key,
+			at,
+			listNodes.map((n) => n.id)
+		);
+		if (id === undefined) return false;
+		pijl = lookup.get(id) ?? null;
+		return true;
+	}
+	// A bron that left the canvas is pointed at no longer.
+	$effect(() => {
+		if (pijl && !drawnIds.includes(pijl.id)) pijl = null;
+	});
 	// The card of the bron in the keyboard's list: Tab goes into it, Escape and Shift+Tab back
 	// to that bron, Tab past its last action on to the canvas (UX test 10 Oct, #14).
 	let citeEl = $state<HTMLElement | null>(null);
 	let keyOpener: HTMLElement | null = null;
-	let stilNa: string | null = null;
 	function kaartIn(opener: HTMLElement) {
 		const eerste = citeEl?.querySelector<HTMLElement>('a[href], button');
 		const kaart = citeEl;
-		if (!keyNode || !kaart || !eerste) return false;
+		if (!keyNode || hoverNode?.id !== keyNode.id || !kaart || !eerste) return false;
 		keyOpener = opener;
 		// Focus that leaves card and list elsewhere (a click on the page) closes the card.
 		const weg = (e: FocusEvent) => {
@@ -377,42 +472,34 @@
 			if (!naar || kaart.contains(naar) || naar === canvasWrap) return;
 			kaart.removeEventListener('focusout', weg);
 			if (naar && opener.closest('ul')?.contains(naar)) return;
-			if (keyNode) {
-				keyNode = null;
-				hoverNode = null;
-			}
+			keyNode = null;
 		};
 		kaart.addEventListener('focusout', weg);
 		eerste.focus();
 		return true;
 	}
-	// A click or tap outside the card and the list of bronnen closes the card of the keyboard's
-	// bron, as a menu does.
+	// A click or tap outside the card and the list of bronnen: the keyboard's bron no longer
+	// lights up, as a menu closes.
 	$effect(() => {
 		if (!keyNode) return;
 		return clickOutside(
 			() => [citeEl, canvasWrap?.parentElement?.querySelector('.canvas-node-list')],
-			() => {
-				keyNode = null;
-				hoverNode = null;
-			}
+			() => (keyNode = null)
 		);
 	});
-	/** Escape on the bron in the list: its card closes, the focus stays (UX-toets B6). */
+	/** Escape on the bron in the list: the card of the bron chosen closes, the focus stays (B6). */
 	function closeCard() {
 		if (!keyNode || !hoverNode) return false;
-		stilNa = keyNode.id;
-		hoverNode = null;
+		ontmarkeer();
 		return true;
 	}
 	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
-		if (sluit) stilNa = keyNode?.id ?? null;
+		if (sluit) ontmarkeer();
 		if (focus === 'canvas') {
 			keyNode = null;
-			hoverNode = null;
+			pijl = gemarkeerd;
 			canvasWrap?.focus({ preventScroll: true });
 		} else {
-			if (sluit) hoverNode = null;
 			keyOpener?.focus();
 		}
 	}
@@ -423,7 +510,6 @@
 	function markeer(n: GraphNode) {
 		if (gemarkeerd?.id === n.id) return open(n);
 		gemarkeerd = n;
-		keyNode = null;
 		hoverNode = n;
 		onMark?.(n.id);
 	}
@@ -471,13 +557,14 @@
 	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
 	// (dossier, fractie, commissie) een stap groter.
 	/** A cluster bron stands for forty or more: a step larger than a group. */
-	const CLUSTER_SIZE = 12;
+	const CLUSTER_SIZE = 16;
 	const NODE_SIZE: Record<DrawClass, number> = {
 		article: 8,
 		instrument: 8,
 		judgment: 8,
 		dossier: 10,
 		committee: 10,
+		cabinet: 10,
 		faction: 10,
 		member: 8,
 		document: 8,
@@ -500,6 +587,7 @@
 	$effect(() => {
 		void $instrumentMetaStore;
 		if (g.order === 0) return;
+		untrack(() => nameAll([...lookup.values()].filter((n) => g.hasNode(n.id))));
 		g.forEachNode((id) => {
 			const n = lookup.get(id);
 			if (n) g.setNodeAttribute(id, 'label', nodeLabel(n));
@@ -509,6 +597,15 @@
 
 	/** Within a sector: by date, the oldest first, then by name. */
 	const inOrder = (a: string, b: string) => {
+		// Clusters beside the bron they hang on: by where that bron stands, left to right.
+		const endX = (id: string) => {
+			const c = clusterById.get(id);
+			const end = c?.ends?.[0]?.id ?? (c ? selection?.id : undefined);
+			return end && g.hasNode(end) ? (g.getNodeAttribute(end, 'x') as number) : null;
+		};
+		const xa = endX(a);
+		const xb = endX(b);
+		if (xa !== null && xb !== null && xa !== xb) return xb - xa;
 		const da = String(g.getNodeAttribute(a, 'date') ?? '');
 		const db = String(g.getNodeAttribute(b, 'date') ?? '');
 		return da && db && da !== db
@@ -523,26 +620,82 @@
 	 * drawn around, in the middle; every other bron in the sector of its kind. No force layout:
 	 * one netwerk is drawn the same way each time.
 	 */
+	/** The group an anchor stands for: its own container. */
+	const anchorGroup = (id: string): string | null => {
+		const n = lookup.get(id);
+		return n ? containerIdFor(n.raw ?? { collection: n.collection, key: n.key }) : null;
+	};
+
 	function runLayout() {
 		if (g.order === 0) return;
 		const centre = pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : [];
+		// The hull a bron stands in: a wet's own for its anchor, else the first that holds it.
+		const hullOf = (id: string): string | null => {
+			// A chosen law's own articles as one cluster stand in its disc.
+			const own = /^cluster:articles@(.+)$/.exec(id)?.[1];
+			if (own) return anchorGroup(own);
+			let first: string | null = null;
+			for (const [gid, group] of containerGroups) {
+				if (!group.members.has(id)) continue;
+				if (g.hasNode(id) && g.getNodeAttribute(id, 'anchor') && gid === anchorGroup(id))
+					return gid;
+				// An article in its wet first; then the first other group that holds it.
+				if (group.kind === 'instrument' && !g.getNodeAttribute(id, 'anchor')) return gid;
+				first ??= gid;
+			}
+			return first;
+		};
 		radialLayout(
 			g,
 			centre,
 			(id) => String(g.getNodeAttribute(id, 'filterGroup') ?? 'overig'),
 			FILTER_GROUPS,
-			inOrder
+			inOrder,
+			hullOf,
+			(hull, id) => !!containerGroups.get(hull)?.members.has(id)
 		);
 		canvas?.refresh();
 		scheduleFit();
 	}
 
 	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
-	// Kamerstuk by its kind and number (`stukLabel`). The full name is in the panel and the card.
-	const nodeLabel = (n: GraphNode) =>
-		isClusterId(n.id) || n.drawClass === 'document'
+	// Kamerstuk by its kind, its dossier and its number (`stukLabel`, `metDossier`). The full
+	// name is in the panel and the card.
+	const baseName = (n: GraphNode, eigen = ownDossiers()) =>
+		isClusterId(n.id)
 			? n.label
-			: kort(bronNaam(n, $instrumentMetaStore));
+			: n.drawClass === 'document'
+				? withDossier(n.label, n.raw?.props, eigen)
+				: kort(bronNaam(n, $instrumentMetaStore));
+	/** The dossiers in focus or chosen: their stukken stand in their hull without the number. */
+	const ownDossiers = () =>
+		new Set(
+			[selection?.id, ...pinnedIds]
+				.filter((id): id is string => !!id && id.startsWith('dossiers/'))
+				.map((id) =>
+					dossierOfBron(lookup.get(id) ?? { id, collection: 'dossiers', key: id.slice(9) })
+				)
+				.filter((d): d is string => !!d)
+		);
+	/** The names of the canvas, each its own (`onderscheiden`): set before the nodes are drawn. */
+	let canvasNames = new Map<string, string>();
+	const nameAll = (nodes: GraphNode[]) => {
+		const eigen = ownDossiers();
+		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
+	};
+	/** An article that no longer holds (Netwerkcanvas, Vervallen): a dimmed sign, "vervallen" in its name. */
+	const isRepealed = (n: GraphNode) =>
+		n.collection === 'articles' && n.raw?.props?.repealed === true;
+	/** In its wet's hull an article is its number: the hull's pill names the wet (DS: "art. 7:248"). */
+	const inLawHull = (id: string) =>
+		[...containerGroups.values()].some((gr) => gr.kind === 'instrument' && gr.members.has(id));
+	const nodeLabel = (n: GraphNode) => {
+		const full = canvasNames.get(n.id) ?? baseName(n);
+		const short =
+			n.collection === 'articles' && inLawHull(n.id) && /^art(?:ikel|\.)?\s+(\S+)/i.exec(full);
+		const name = short ? `art. ${short[1]}` : full;
+		return isRepealed(n) ? `${name}, vervallen` : name;
+	};
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -564,8 +717,8 @@
 	/** Kinds shown in full that would fold: their count, for the button that folds them. */
 	let foldable = $state<Cluster[]>([]);
 	let clusteredFor: string | null = null;
-	let clusterCard = $state<{ cluster: Cluster; x: number; y: number } | null>(null);
-	let lastPointer: { x: number; y: number } | null = null;
+	/** The cluster whose card stands in the strip at the right (Canvaskaart). */
+	let clusterCard = $state<{ cluster: Cluster } | null>(null);
 
 	let rawChanged = false;
 	let drawnClusters = '';
@@ -649,6 +802,10 @@
 		foldable = expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
 		const signature = clusters.map((c) => `${c.id}:${c.members.length}`).join(',');
 		if (!rawChanged && signature === drawnClusters) {
+			if (layoutStale) {
+				layoutStale = false;
+				runLayout();
+			}
 			applyFilters();
 			return;
 		}
@@ -660,20 +817,22 @@
 			clusterById.set(c.id, c);
 			for (const id of c.members) folded.add(id);
 		}
-		drawNodes([
-			...rawNodes.filter((n) => !folded.has(n.id)),
-			...clusters.map((c) => clusterNode(c))
-		]);
+		const toDraw = [...rawNodes.filter((n) => !folded.has(n.id)), ...clusters.map(clusterNode)];
+		nameAll(toDraw.filter(isCanvasNode));
+		drawNodes(toDraw);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
+			// What belongs to a wet stands in its disc: no Deel van-line from its articles' cluster.
 			...clusters.flatMap((c) =>
-				c.ends
-					? c.ends.map((end) =>
-							clusterEdge({ ...c, relation: end.relation, toFocus: end.toEnd }, end.id)
-						)
-					: focus
-						? [clusterEdge(c, focus)]
-						: []
+				c.id.startsWith('cluster:articles@')
+					? []
+					: c.ends
+						? c.ends.map((end) =>
+								clusterEdge({ ...c, relation: end.relation, toFocus: end.toEnd }, end.id)
+							)
+						: focus
+							? [clusterEdge(c, focus)]
+							: []
 			)
 		]);
 		// Counted and drawn once, nodes and edges together.
@@ -723,8 +882,9 @@
 	}
 
 	/**
-	 * One click on a cluster: its card beside it, as a row opens in place. Opened from the
-	 * list of the network (Enter), the focus goes into the card and comes back on Escape.
+	 * One click on a cluster: its card in the strip at the right, as the card of a bron stands
+	 * (Canvaskaart). Opened from the list of the network (Enter), the focus goes into the card
+	 * and comes back on Escape.
 	 */
 	let clusterOpener: HTMLElement | null = null;
 	function openCluster(id: string, opener: HTMLElement | null = null) {
@@ -735,41 +895,27 @@
 			afterTick(() =>
 				canvasWrap?.parentElement?.querySelector<HTMLElement>('.cluster-kaart button')?.focus()
 			);
-		const at = lastPointer ?? { x: CLUSTER_CARD.gap, y: CLUSTER_CARD.gap };
-		clusterCard = {
-			cluster: c,
-			...clusterCardAt(at, canvasWrap?.clientWidth ?? CLUSTER_CARD.w)
-		};
-		// Measured once drawn, before it is painted: the card moves off the panels it covers.
-		afterTick(() => {
-			const card = canvasWrap?.querySelector<HTMLElement>('.cluster-kaart');
-			if (!canvasWrap || !card || !clusterCard) return;
-			const origin = canvasWrap.getBoundingClientRect();
-			const boxOf = (el: Element) => {
-				const r = el.getBoundingClientRect();
-				return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
-			};
-			const obstacles = [...(buhne ?? canvasWrap).querySelectorAll(FLOATING)]
-				.map(boxOf)
-				.filter((b) => b.w > 0 && b.h > 0);
-			const place = placeCard(
-				at,
-				{ w: card.offsetWidth, h: card.offsetHeight },
-				{ width: canvasWrap.clientWidth, height: canvasWrap.clientHeight },
-				obstacles
-			);
-			clusterCard = { ...clusterCard, ...place };
-		});
+		clusterCard = { cluster: c };
 	}
 	/** The group in Verbonden that lists the cluster's kind, as "Bekijk in Verbonden" opens it. */
 	const groupOf = (c: Cluster) => {
 		// The groups Verbonden shows: its kern and inhoud stand elsewhere.
 		const own = verbonden.id?.split('/')[0] ?? '';
-		return groupFor(listedGroups(own as Collection, verbonden.groups), c.collection);
+		return groupFor(contextGroups(verbonden.groups, own as Collection), c.collection);
 	};
-	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
-	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .vouw';
-
+	/**
+	 * Of how many a cluster's kind there are, as Soort says it: the row of the legend that draws
+	 * most of that kind, else the API's whole of its collection (N2). Null when all are there.
+	 */
+	const clusterTotal = (c: Cluster): number | null => {
+		if (c.ends) return null;
+		const row = (kindRowsShown ?? [])
+			.filter((r) => r.collection === c.collection)
+			.sort((a, b) => b.drawn - a.drawn)[0];
+		if (row) return row.total;
+		const buckets = reach?.buckets ?? lightBuckets(verbonden.buckets);
+		return buckets.find((b) => b.collection === c.collection)?.total ?? null;
+	};
 	function closeClusterCard(e: PointerEvent) {
 		if (clusterCard && !(e.target as HTMLElement | null)?.closest?.('.cluster-kaart'))
 			clusterCard = null;
@@ -777,7 +923,7 @@
 
 	function drawNodes(nodes: GraphNode[]) {
 		const newIds = new Set(nodes.map((n) => n.id));
-		skipNextFit = keepsCamera('full', newIds);
+		skipNextFit = keepsCamera(newIds);
 
 		let changed = false;
 		const addedThisSync = new Set<string>();
@@ -828,9 +974,19 @@
 			if (!isCanvasNode(n)) continue;
 			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
+			const repealed = isRepealed(n);
+			const colour = repealed
+				? tokens().ink3
+				: pinnedIds.has(n.id)
+					? undefined
+					: kindColour(n.collection, null, n.raw?.props);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
+				// A chosen law's own articles as one cluster: drawn in its disc (hulls.ts).
+				inHull: /^cluster:articles@(.+)$/.exec(n.id)?.[1]
+					? anchorGroup(/^cluster:articles@(.+)$/.exec(n.id)![1])
+					: null,
 				// A cluster counts its members in Soort: "Uitspraken 200", not 1.
 				members: (n as GraphNode & { members?: number }).members ?? 1,
 				color: TRANSPARENT,
@@ -838,6 +994,7 @@
 				vorm,
 				collection: n.collection,
 				filterGroup: filterGroupOf(n.collection, n.key, n.raw?.props ?? null),
+				stuksoort: n.collection === 'documents' ? stuksoortOf(n.raw?.props) : null,
 				// The court of a judgment, as the bronfilter's rechter reads it.
 				rechter:
 					n.collection === 'judgments'
@@ -847,23 +1004,29 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub: !!n.stub,
-				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
+				stub: !!n.stub || repealed,
+				date: stripDate(n.raw?.props, n.collection as Collection, n.id)?.slice(0, 10) ?? null,
+				// A group's members by their days, so Tonen counts those inside the period only.
+				memberDates: isClusterId(n.id)
+					? (clusterById.get(n.id)?.members ?? []).map(
+							(m) => memberDate(m, n.collection as Collection)?.slice(0, 10) ?? null
+						)
+					: undefined,
 				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
-				kleur: pinnedIds.has(n.id) ? undefined : kindColour(n.collection),
-				image: spriteForVorm(
-					vorm,
-					!!n.stub,
-					false,
-					pinnedIds.has(n.id) ? undefined : kindColour(n.collection)
-				),
+				kleur: colour,
+				image: isClusterId(n.id)
+					? clusterSprite(formatCount((n as GraphNode & { members?: number }).members ?? 0), colour)
+					: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
 				forceLabel: true
 			};
 			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
 			if (n.anchor)
 				Object.assign(attrs, {
 					anchor: true,
+					// What it is drawn as when nothing of its hull is: an ordinary bron.
+					ownImage: attrs.image,
+					ownSize: attrs.size,
 					image: undefined,
 					size: 2,
 					label: '',
@@ -901,10 +1064,12 @@
 		if (changed) scheduleFit();
 		// A change of what stands in the middle orders the canvas again too.
 		const centre = pinnedIds.size > 0 ? [...pinnedIds].join() : (selection?.id ?? '');
-		if (changed || centre !== centreBefore) runLayout();
+		if (changed || centre !== centreBefore || layoutStale) runLayout();
+		layoutStale = false;
 		centreBefore = centre;
 	}
 	let centreBefore = '';
+	let layoutStale = false;
 
 	function drawEdges(allEdges: GraphEdge[]) {
 		const es = allEdges.filter((e) => isDrawn(e.relation));
@@ -939,12 +1104,6 @@
 		if (changed) scheduleFit();
 	}
 
-	// A bron under the pointer lights up with its lines (GraphCanvas); its card waits for a
-	// click: no card covers the canvas (besluit 39).
-	function handleNodeHover(_nodeId: string, vx?: number, vy?: number) {
-		if (vx !== undefined && vy !== undefined) lastPointer = { x: vx, y: vy };
-	}
-
 	onMount(() => {
 		const unsub = [
 			store.nodes.subscribe(syncNodes),
@@ -968,6 +1127,8 @@
 			}),
 			store.containers.subscribe((groups) => {
 				containerGroups = groups;
+				// Who stands in which hull decides where they stand.
+				layoutStale = true;
 				queueRedraw();
 			})
 		];
@@ -984,28 +1145,29 @@
 			clusterCard = null;
 			return;
 		}
+		const opCanvas = !!canvasWrap?.contains(document.activeElement);
+		// Escape: first the bron pointed at, then the one chosen.
+		if (e.key === 'Escape' && pijl && opCanvas) {
+			pijl = null;
+			return;
+		}
 		if (e.key === 'Escape' && gemarkeerd) {
 			ontmarkeer();
 			return;
 		}
-		if (e.key === 'Enter' && gemarkeerd && canvasWrap?.contains(document.activeElement)) {
+		// Enter chooses the bron pointed at, as a click does; on the one chosen it reads it.
+		const kies = pijl ?? gemarkeerd;
+		if (e.key === 'Enter' && kies && opCanvas) {
 			e.preventDefault();
-			open(gemarkeerd);
+			if (isClusterId(kies.id)) openCluster(kies.id, canvasWrap);
+			else markeer(kies);
 			return;
 		}
 		if (e.key === 'Escape') {
 			onClear?.();
 			return;
 		}
-		if (!canvasWrap?.contains(document.activeElement)) return;
-		if (e.key === 'ArrowLeft' && onBack) {
-			e.preventDefault();
-			onBack();
-		}
-		if (e.key === 'ArrowRight' && onGoForward) {
-			e.preventDefault();
-			onGoForward();
-		}
+		if (opCanvas && wijs(e.key)) e.preventDefault();
 	}
 
 	function toggleGroup(kind: ContainerKind) {
@@ -1015,10 +1177,14 @@
 		store.setFilters({ hiddenGroups: next });
 	}
 
-	function toggleRelation(r: Relation) {
-		const next = new Set(filters.hiddenRelations);
-		if (!next.delete(r)) next.add(r);
-		store.setFilters({ hiddenRelations: next });
+	function toggleAnnexes() {
+		store.setFilters({ hiddenAnnexes: !filters.hiddenAnnexes });
+	}
+
+	function toggleLine(l: LineKind) {
+		const next = new Set(filters.hiddenLines);
+		if (!next.delete(l)) next.add(l);
+		store.setFilters({ hiddenLines: next });
 	}
 
 	/** The scale of a weergave of its own, by its zoom. */
@@ -1027,41 +1193,72 @@
 	let buhne = $state<HTMLDivElement | null>(null);
 
 	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
-	let filtersOpen = $state(false);
+	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
+	let sheetOpen = $state(false);
+	provideWeergaveBlad({
+		open: () => (sheetOpen = true),
+		get isOpen() {
+			return sheetOpen;
+		}
+	});
+	let sheetOpener = $state<HTMLButtonElement | null>(null);
+	/** The card of a bron marked is a sheet at the foot on a phone: the button stands above it. */
+	let cardHeight = $state(0);
+	let stripHeight = $state(0);
+	function closeSheet() {
+		sheetOpen = false;
+		sheetOpener?.focus();
+	}
 
 	// ── The tijdstrook ──────────────────────────────────────────────────────────
 	// Every bron on the canvas with a date, whatever the period: the strip shows what lies
 	// outside it too, so the period can widen again.
-	let stippen = $state<{ jaar: number; collection: Collection }[]>([]);
+	let stippen = $state<Stip[]>([]);
+	let undated = $state.raw<Collection[]>([]);
 	let stippenSleutel = '';
+	/** A publication (Staatsblad, Trb., Staatscourant) with a date, named by its key. */
+	const changeName = (id: string) => {
+		const m = /^instruments\/(stb|trb|stcrt)_(\d{4})_(\d+)/.exec(id);
+		return m
+			? (citationRecord({ kind: 'publication', series: m[1], year: m[2], number: m[3] })?.short ??
+					undefined)
+			: undefined;
+	};
+	/** The day of a member of a group: its own, or a publication's day of publication. */
+	const memberDate = (id: string, collection: Collection) => {
+		const n = store.getNodeById(id);
+		return stripDate(n?.raw?.props, collection, id);
+	};
 	function telJaren() {
-		const nieuw: { jaar: number; collection: Collection }[] = [];
-		const add = (date: unknown, collection: Collection) => {
-			if (typeof date !== 'string') return;
+		const nieuw: Stip[] = [];
+		const zonder: Collection[] = [];
+		const add = (date: string | null, from: Collection, id: string) => {
+			const collection = countedAs(from, store.getNodeById(id)?.raw?.props);
+			if (date === null) {
+				if (kindOf(collection) || collection === 'articles' || collection === 'annexes')
+					zonder.push(collection);
+				return;
+			}
 			const jaar = yearFraction(date);
-			if (jaar > 1000) nieuw.push({ jaar, collection });
+			if (jaar > 1000) nieuw.push({ jaar, collection, change: changeName(id) });
 		};
 		g.forEachNode((id, a) => {
 			// A group counts its members by their years: 143 uitspraken are 143 dots (R3-N B8).
 			if (isClusterId(id))
 				for (const m of clusterById.get(id)?.members ?? [])
-					add(store.getNodeById(m)?.raw?.props?.date, a.collection as Collection);
-			else add(a.date, a.collection as Collection);
+					add(memberDate(m, a.collection as Collection), a.collection as Collection, m);
+			else add(typeof a.date === 'string' ? a.date : null, a.collection as Collection, id);
 		});
-		const sleutel = nieuw.map((s) => `${s.jaar}${s.collection}`).join();
+		const sleutel =
+			nieuw.map((s) => `${s.jaar}${s.collection}${s.change ?? ''}`).join() + zonder.join();
 		if (sleutel !== stippenSleutel) {
 			stippenSleutel = sleutel;
 			stippen = nieuw;
+			undated = zonder;
 		}
 	}
 	/** The dots of the strip: the canvas's, or those of a weergave of its own (Keten, Verband). */
 	const strookStippen = $derived(externStippen ?? stippen);
-	const eersteJaar = $derived(
-		strookStippen.length ? String(Math.floor(Math.min(...strookStippen.map((s) => s.jaar)))) : ''
-	);
-	const laatsteJaar = $derived(
-		strookStippen.length ? String(Math.floor(Math.max(...strookStippen.map((s) => s.jaar)))) : ''
-	);
 	const jaarVan = (dag: string | null) => (dag ? Number(dag.slice(0, 4)) : null);
 	/** A period chosen by its years: the bronfilter holds it as days (?van, ?tot). */
 	function kiesPeriode(van: number | null, tot: number | null) {
@@ -1070,11 +1267,6 @@
 			van: van === null ? null : `${van}-01-01`,
 			tot: tot === null ? null : `${tot}-12-31`
 		});
-	}
-	function veldJaar(e: Event): number | null {
-		const v = (e.currentTarget as HTMLInputElement).value.trim();
-		const n = Number(v);
-		return v && Number.isInteger(n) && n > 1000 && n < 3000 ? n : null;
 	}
 
 	// ── How the bron of the card is tied to the chosen bronnen ─────────────────
@@ -1116,8 +1308,9 @@
 
 <!-- Deel and the zoom, the same over the canvas and over a weergave of its own. -->
 {#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void, zoomen = true)}
-	{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
-	{#if zoomen}<div class="zoom">
+	<!-- data-over-doek: what stands over the canvas, kept free by a fit (GraphCanvas). -->
+	{#if balk}<div class="doek-balk" data-over-doek>{@render balk()}</div>{/if}
+	{#if zoomen}<div class="zoom" data-over-doek>
 			<IconButtonPaar
 				name="Zoom"
 				first={{ label: 'Uitzoomen', onclick: zoomOut, sign: '−' }}
@@ -1127,49 +1320,35 @@
 		</div>{/if}
 {/snippet}
 
-{#snippet periode()}
-	<section class="block" aria-labelledby="werkplek-periode">
-		<h3 class="strook__kop" id="werkplek-periode">Periode</h3>
-		<p class="periode">
-			<input
-				class="veld"
-				inputmode="numeric"
-				aria-label="Van het jaar"
-				placeholder={eersteJaar}
-				value={jaarVan(filter.van) ?? ''}
-				onchange={(e) => kiesPeriode(veldJaar(e), jaarVan(filter.tot))}
-			/>
-			<span>tot</span>
-			<input
-				class="veld"
-				inputmode="numeric"
-				aria-label="Tot en met het jaar"
-				placeholder={laatsteJaar}
-				value={jaarVan(filter.tot) ?? ''}
-				onchange={(e) => kiesPeriode(jaarVan(filter.van), veldJaar(e))}
-			/>
-		</p>
-	</section>
+<!-- A phone: at the foot of the canvas, left; the zoom is in the bar above it. -->
+{#snippet sheetButton()}
+	<button
+		type="button"
+		class="btn sheet-button"
+		style:--kaart-h="{cardHeight}px"
+		style:--strook-h="{stripHeight}px"
+		aria-haspopup="dialog"
+		aria-expanded={sheetOpen}
+		bind:this={sheetOpener}
+		onclick={() => (sheetOpen = !sheetOpen)}>Weergave</button
+	>
 {/snippet}
 
 {#snippet sidebar()}
 	<GraphSidebar
-		periode={filter.van || filter.tot || eersteJaar !== laatsteJaar ? periode : undefined}
-		{meer}
 		{...legend}
-		{verbonden}
 		{filter}
-		selectionCollection={selection?.collection ?? null}
-		reach={externCounts ? null : reach}
-		hiddenRelations={externRelations?.hidden ?? filters.hiddenRelations}
-		onToggleRelation={externRelations?.toggle ?? toggleRelation}
-		hiddenGroups={filters.hiddenGroups}
+		reach={externCounts || yearPeriod ? null : reach}
+		hiddenAnnexes={filters.hiddenAnnexes}
+		onToggleAnnexes={toggleAnnexes}
+		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
+		onToggleLine={externLines?.toggle ?? toggleLine}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
-		{overlay}
-		inFluxCount={inFluxMap.size}
-		{netwerkActive}
 		{hasNodes}
+		{kindRowsShown}
+		{kindsSettled}
+		{withCurrentMember}
 	/>
 {/snippet}
 
@@ -1177,25 +1356,27 @@
 	<!-- The strip at the left (besluit 39): the way back and the Weergave, the chosen bronnen,
 	     then the legend that is the filter and the period. First in the page, so a Tab reaches
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
-	<aside class="strook strook--links" aria-label="Bronnen en filters">
-		{@render canvasOverlay?.()}
-		{@render viewChoice?.()}
-		<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
-		{#if hasNodes || midden}
-			<button
-				type="button"
-				class="btn filterknop raakvlak-knop"
-				aria-expanded={filtersOpen}
-				aria-controls="werkplek-filters"
-				onclick={() => (filtersOpen = !filtersOpen)}>Filter</button
+	<ViewSheet open={sheetOpen} onClose={closeSheet} opener={() => sheetOpener}>
+		<aside class="strook strook--links" aria-label="Bronnen en filters">
+			{@render canvasOverlay?.()}
+			<NetworkChoice
+				{view}
+				viewSlot={viewChoice}
+				depth={view === 'verband' ? pairSteps : depth}
+				{onDepth}
+				withNetwerk={netwerkActive && view === 'omgeving'}
+				reach={externCounts ? null : reach}
+				empty={!hasNodes && !midden && !selection && expecting === 0}
 			>
-			<div class="strook__filters" class:is-open={filtersOpen} id="werkplek-filters">
-				<section class="legenda-inhoud" aria-label="Legenda">
-					{@render sidebar()}
-				</section>
-			</div>
-		{/if}
-	</aside>
+				<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
+				{#if (hasNodes || midden) && !legend.counting}
+					<section class="legenda-inhoud" aria-label="Filters">
+						{@render sidebar()}
+					</section>
+				{/if}
+			</NetworkChoice>
+		</aside>
+	</ViewSheet>
 	<div class="graph-main">
 		<!-- On a phone Deel and the zoom in a bar of their own above the drawing: over it they
 		     covered its bronnen (UX-toets T10b). -->
@@ -1233,6 +1414,8 @@
 				nodes={listNodes}
 				isChosen={(id) => pinnedIds.has(id)}
 				onFocusNode={onKeyNode}
+				onKies={markeer}
+				aangewezen={pijl}
 				onTab={kaartIn}
 				onEscape={closeCard}
 				houdt={(el) => !!el && (!!citeEl?.contains(el) || el === canvasWrap)}
@@ -1246,7 +1429,12 @@
 				bind:this={canvasWrap}
 				role="application"
 				aria-label="Netwerk. Pijl links en rechts: vorige en volgende bron."
+				data-aangewezen={pijl?.id}
 				tabindex="0"
+				onfocusout={(e) => {
+					// Tab elsewhere: no bron pointed at. A tap (focus to nowhere) keeps it.
+					if (e.relatedTarget && !canvasWrap?.contains(e.relatedTarget as Node)) pijl = null;
+				}}
 				onpointerenter={() => {
 					fitFollows = false;
 					handOpCanvas = true;
@@ -1265,6 +1453,15 @@
 					() => canvas?.zoom(1 / 1.5),
 					() => canvas?.fit()
 				)}
+				{#if !hasNodes && !midden && !selection && onToevoegen}
+					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
+					<div class="canvas-leeg">
+						<p class="canvas-leeg__kop">Nog geen bron gekozen</p>
+						<button type="button" class="btn raakvlak-knop" onclick={onToevoegen}
+							>+ Bron toevoegen</button
+						>
+					</div>
+				{/if}
 				<GraphCanvas
 					graph={g}
 					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
@@ -1280,11 +1477,7 @@
 					{selectedEdgeId}
 					{lineLids}
 					{inFluxMap}
-					{heatMap}
-					heatActive={overlay.kind === 'heat'}
-					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
-					mutatieActive={overlay.kind === 'open'}
-					externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
+					externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
 					{notitieIds}
 					onNodeClick={(id) => {
 						if (isClusterId(id)) return openCluster(id);
@@ -1298,11 +1491,16 @@
 						const n = lookup.get(id);
 						if (n) open(n);
 					}}
+					markedId={gemarkeerd?.id ?? null}
+					onHullClick={(id) => {
+						// The name or the rim of a hull chooses the wet it stands for, its card in the strip.
+						const n = lookup.get(id);
+						if (n) markeer(n);
+					}}
 					onEdgeClick={(id) => {
 						const e = store.getEdgeById(id);
 						if (e) onEdgeClick?.(e);
 					}}
-					onNodeHover={handleNodeHover}
 					onStageClick={() => {
 						ontmarkeer();
 						onClear?.();
@@ -1314,7 +1512,7 @@
 					onReady={(api) => {
 						canvas = api;
 						canvas.refresh();
-						const camera = skipNextFit && savedCamera('full');
+						const camera = skipNextFit && savedCamera();
 						if (camera) {
 							canvas.restoreCamera(camera);
 							skipNextFit = false;
@@ -1323,54 +1521,10 @@
 						}
 					}}
 					onCameraChange={(state) => {
-						saveCamera('full', state);
+						saveCamera(state);
 					}}
 				/>
 
-				{#if clusterCard}
-					{@const c = clusterCard.cluster}
-					<CanvasKaart
-						class="cluster-kaart"
-						title={clusterLabel(c)}
-						role="dialog"
-						tabindex="-1"
-						style="left:{clusterCard.x}px; top:{clusterCard.y}px"
-						onkeydown={(e: KeyboardEvent) => {
-							if (!isEscape(e)) return;
-							e.preventDefault();
-							clusterCard = null;
-							if (clusterOpener?.isConnected) clusterOpener.focus();
-						}}
-					>
-						{#snippet kop()}
-							<p class="cluster-naam">
-								<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
-							</p>
-						{/snippet}
-						{#each clusterZinnen( c, c.ends ? null : groupOf(c), (c.ends ?? []).flatMap((e) => {
-								const n = lookup.get(e.id);
-								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
-							}) ) as zin (zin)}
-							<p class="cluster-zin">{zin}</p>
-						{/each}
-						<div class="cluster-knoppen">
-							<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
-							<button type="button" class="btn is-text" onclick={() => showCluster(c)}
-								>Toon alle {formatCount(c.members.length)} in het netwerk</button
-							>
-							{#if !c.ends && groupOf(c)}
-								<button
-									type="button"
-									class="btn is-text"
-									onclick={() => {
-										openGroup(c.collection);
-										clusterCard = null;
-									}}>Bekijk in Verbonden</button
-								>
-							{/if}
-						</div>
-					</CanvasKaart>
-				{/if}
 				{#if foldable.length > 0}
 					<div class="vouw">
 						{#each foldable as c (c.id)}
@@ -1394,7 +1548,12 @@
 						/>
 					</div>
 				{:else if $netwerkMelding}
-					<p class="netwerk-melding" role="status">
+					<p
+						class="netwerk-melding"
+						role="status"
+						style:--kaart-h="{cardHeight}px"
+						style:--strook-h="{stripHeight}px"
+					>
 						{$netwerkMelding.tekst}
 						{#if $netwerkMelding.terug}
 							<button
@@ -1410,20 +1569,78 @@
 				{/if}
 			</div>
 		</div>
-		<Tijdstrook
-			stippen={strookStippen}
-			van={jaarVan(filter.van)}
-			tot={jaarVan(filter.tot)}
-			onPeriode={kiesPeriode}
-		/>
+		<div
+			class="strook-hoogte"
+			data-wacht={legend.counting || undefined}
+			bind:clientHeight={stripHeight}
+		>
+			<Tijdstrook
+				stippen={legend.counting ? [] : strookStippen}
+				undated={externStippen ? [] : undated}
+				van={jaarVan(filter.van)}
+				tot={jaarVan(filter.tot)}
+				fromDay={filter.van}
+				toDay={filter.tot}
+				onPeriode={kiesPeriode}
+				onDays={(van, tot) => legend.onFilter({ ...filter, van: van || null, tot: tot || null })}
+			/>
+		</div>
 	</div>
+	{@render sheetButton()}
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
-		class:is-open={!!(midden ? extern : hoverNode)}
+		class:is-open={!!clusterCard || !!(midden ? extern : hoverNode)}
 		aria-label="Kaart"
+		bind:clientHeight={cardHeight}
 	>
-		{#if midden ? extern : hoverNode}
+		{#if clusterCard}
+			{@const c = clusterCard.cluster}
+			<CanvasKaart
+				class="cluster-kaart"
+				title={clusterHeading(c, clusterTotal(c))}
+				role="dialog"
+				tabindex="-1"
+				onkeydown={(e: KeyboardEvent) => {
+					if (!isEscape(e)) return;
+					e.preventDefault();
+					clusterCard = null;
+					if (clusterOpener?.isConnected) clusterOpener.focus();
+				}}
+			>
+				{#snippet kop()}
+					<p class="cluster-naam">
+						<KindGlyph collection={c.collection} size={14} />{clusterHeading(c, clusterTotal(c))}
+					</p>
+				{/snippet}
+				{@const tied = clusterBinding(
+					c,
+					(c.ends ?? []).flatMap((e) => {
+						const n = lookup.get(e.id);
+						return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
+					})
+				)}
+				{#if tied}<p class="cluster-zin">{tied}</p>{/if}
+				<div class="cluster-knoppen">
+					<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
+					<AlleN
+						aantal={c.members.length}
+						noun={bronPlural(c.collection).toLowerCase()}
+						onclick={() => showCluster(c)}
+					/>
+					{#if !c.ends && groupOf(c)}
+						<button
+							type="button"
+							class="btn is-text"
+							onclick={() => {
+								openGroup(c.collection);
+								clusterCard = null;
+							}}>Bekijk in Verbonden</button
+						>
+					{/if}
+				</div>
+			</CanvasKaart>
+		{:else if midden ? extern : hoverNode}
 			{@const kaartNode = midden ? extern!.node : hoverNode!}
 			<CanvasHoverCard
 				node={kaartNode}
@@ -1435,6 +1652,9 @@
 				onOpen={() => ontmarkeer(false)}
 				onLezen={open}
 				{onToggleChosen}
+				openCount={inFluxMap.get(kaartNode.id) ?? 0}
+				chosen={pinnedIds}
+				{onAdd}
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
@@ -1453,11 +1673,19 @@
 	.graph-view {
 		position: relative;
 		display: grid;
-		grid-template-columns: 300px minmax(0, 1fr) 360px;
+		grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
+		--strook: calc(var(--zijkolom) + 2 * var(--s-4));
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
 		isolation: isolate;
+	}
+	/* The strip of the card takes room only while a bron is marked. */
+	.graph-view:not(:has(.strook--kaart.is-open)) {
+		grid-template-columns: var(--strook) minmax(0, 1fr);
+	}
+	.strook--kaart:not(.is-open) {
+		display: none;
 	}
 	.strook {
 		min-height: 0;
@@ -1466,19 +1694,18 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4) var(--s-5);
+		padding: var(--s-4);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
-		padding: var(--s-5);
+		padding: var(--s-4);
 		border-left: 1px solid var(--rule);
 	}
-	.strook__kop {
-		margin: 0 0 var(--s-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	/* The card of a cluster stands in the strip on its paper, as the card of a bron does. */
+	.strook--kaart :global(.canvas-kaart__kop),
+	.strook--kaart :global(.canvas-kaart__inhoud) {
+		padding-left: 0;
+		padding-right: 0;
 	}
 	/* Deel at the top right of the canvas, as the mockup's Deel and Exporteer. */
 	.doek-balk {
@@ -1491,59 +1718,42 @@
 	}
 	/* The panel Netwerk and its start stand in the strip, on its paper: no card of their own. */
 	.strook--links :global(.canvas-kaart) {
-		position: static;
-		transform: none;
-		width: auto;
-		max-width: none;
-		max-height: none;
 		margin: 0 0 var(--s-4);
 		padding: 0;
-		border: 0;
-		box-shadow: none;
-		background: none;
 	}
-	/* Bronnen titled as the blocks under it: Soort, Relatie, Periode. */
+	/* The two blocks of the strip, Bronnen and Weergave, are headed as a section of a page
+	   (Sectie, niveau 2); what is in them, Gekozen, Tonen, Relatie, a level lower (niveau 3). */
 	.strook--links :global(.canvas-kaart__titel) {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font: var(--niveau-1-sectie);
+		color: var(--ink);
 	}
 	.strook--links :global(.canvas-kaart__kop),
 	.strook--links :global(.canvas-kaart__inhoud) {
 		padding-left: 0;
 		padding-right: 0;
 	}
-	.filterknop {
-		display: none;
+	.strook--links :global(.canvas-kaart.netwerkkeuze) {
+		padding-top: var(--s-4);
+		border-top: 1px solid var(--rule);
 	}
-	.periode {
+	/* The blocks in them a step apart. */
+	.strook--links :global(.canvas-kaart__inhoud) {
 		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
+		flex-direction: column;
+		gap: var(--s-4);
 	}
-	.veld {
-		box-sizing: border-box;
-		width: 84px;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
+	.sheet-button {
+		display: none;
 	}
 	/* Between a phone and three strips (1024): the strips narrower, the canvas and its tijdstrook
 	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
 		.graph-view {
-			grid-template-columns: 240px minmax(0, 1fr);
+			grid-template-columns: var(--strook) minmax(0, 1fr);
 		}
 		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
 		.graph-view:has(.strook--kaart.is-open) {
-			grid-template-columns: 240px minmax(0, 1fr) 300px;
+			grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
 		}
 		.strook--links {
 			padding: var(--s-4);
@@ -1555,8 +1765,8 @@
 			display: none;
 		}
 	}
-	/* A phone: the canvas takes the width; the strip at the left heads it, its filters under the
-	   button Filter, and the card is a sheet at the foot of the canvas. */
+	/* A phone: the canvas takes the width; the strip at the left heads it, with the filters in its
+	   Weergave, and the card is a sheet at the foot of the canvas. */
 	@media (max-width: 768px) {
 		.graph-view {
 			display: flex;
@@ -1568,10 +1778,8 @@
 			flex-wrap: wrap;
 			align-items: flex-start;
 			gap: 0 var(--s-3);
-			max-height: 60%;
-			padding: var(--s-2) var(--s-4);
+			padding: var(--s-2) var(--s-4) var(--s-4);
 			border-right: 0;
-			border-bottom: 1px solid var(--rule);
 		}
 		.strook--links > :global(*) {
 			flex-basis: 100%;
@@ -1580,21 +1788,17 @@
 			min-width: 0;
 			margin: 0;
 		}
-		.strook--links > .filterknop {
-			flex: none;
-			margin: 0 0 var(--s-2) var(--s-2);
-		}
-		/* The Weergave and Filter on one row, as the mockup's 390. */
-		.strook--links > :global(.view-choice) {
-			flex: 1 1 0;
-			min-width: 0;
-		}
-
-		.filterknop {
+		/* Weergave: at the foot of the canvas, left, a finger high; the sheet is its own. */
+		.sheet-button {
+			position: absolute;
+			left: var(--s-3);
+			/* Above the Tijdstrook, or the card where it stands higher: over neither. */
+			bottom: calc(var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)));
+			z-index: var(--z-float);
 			display: inline-flex;
-		}
-		.strook__filters:not(.is-open) {
-			display: none;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+			box-shadow: var(--shadow-pop);
 		}
 		.graph-main {
 			flex: 1;
@@ -1644,13 +1848,6 @@
 		.doek-balk :global(.btn) {
 			min-width: var(--veld-h-raak);
 		}
-		.strook--links :global(.canvas-kaart__kop) {
-			display: none;
-		}
-		/* The filters of the netwerk itself come with Filter, as the legend does. */
-		.strook--links:not(:has(.strook__filters.is-open)) :global(.netwerk-acties) {
-			display: none;
-		}
 		.strook--kaart {
 			max-height: 45%;
 			padding-top: var(--s-2);
@@ -1667,14 +1864,6 @@
 			background: var(--rule);
 		}
 	}
-	@media (pointer: coarse), (max-width: 768px) {
-		.filterknop {
-			height: var(--veld-h-raak);
-		}
-		.veld {
-			height: var(--veld-h-raak);
-		}
-	}
 
 	.graph-main {
 		flex: 1;
@@ -1685,6 +1874,20 @@
 	}
 	.control-bar {
 		display: none;
+	}
+	.strook-hoogte {
+		flex: none;
+		display: flex;
+		flex-direction: column;
+	}
+	/* The Tijdstrook is on its way: its place is held, so the canvas above it does not shrink. */
+	.strook-hoogte[data-wacht] {
+		min-height: 92px;
+	}
+	@media (max-width: 768px) {
+		.strook-hoogte[data-wacht] {
+			min-height: 116px;
+		}
 	}
 	.middle-stage {
 		position: relative;
@@ -1709,23 +1912,43 @@
 		visibility: hidden;
 		pointer-events: none;
 	}
+	.canvas-leeg {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--s-3);
+		pointer-events: none;
+	}
+	.canvas-leeg__kop {
+		margin: 0;
+		color: var(--ink-3);
+	}
+	.canvas-leeg .btn {
+		pointer-events: auto;
+	}
 	.graph-canvas-wrap {
 		flex: 1;
 		position: relative;
 		overflow: hidden;
 	}
-	/* The list of bronnen holds the focus for the keyboard: the canvas shows it. */
-	:global(.buhne:has(.canvas-node-list :focus-visible) .graph-canvas-wrap) {
-		outline: 2px solid var(--focus);
-		outline-offset: -2px;
+	/* The list of bronnen holds the focus for the keyboard: the canvas shows it. The ring is
+	   drawn over the canvas, which would cover an outline of its own box. */
+	:global(.buhne:has(.canvas-node-list :focus-visible) .graph-canvas-wrap)::after,
+	.graph-canvas-wrap:focus-visible::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		box-shadow: inset 0 0 0 2px var(--netwerk-focus);
+		pointer-events: none;
 	}
 
 	.graph-canvas-wrap:focus {
 		outline: none;
-	}
-	.graph-canvas-wrap:focus-visible {
-		outline: 2px solid var(--netwerk-focus);
-		outline-offset: -2px;
 	}
 
 	/* Zoom in, out and back to everything, as on a map. */
@@ -1813,7 +2036,10 @@
 		position: absolute;
 		left: var(--s-3);
 		right: calc(var(--s-3) + 40px + var(--s-2));
-		bottom: calc(var(--s-3) + 48px);
+		/* Above the Weergave button, which stands above the card (--kaart-h): covering neither. */
+		bottom: calc(
+			var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)) + var(--veld-h-raak) + var(--s-2)
+		);
 		z-index: var(--z-float);
 		display: none;
 		flex-wrap: wrap;

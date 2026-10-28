@@ -1,27 +1,31 @@
 <script lang="ts">
-	// The tab bar of a phone (768 px and narrower; besluit 36): Zoeken, Bladeren, Actueel, Mijn.
-	// Bladeren and Mijn open a sheet over the page, above the bar, with the soorten bron or
+	// The tab bar of a phone (768 px and narrower; besluit 36): Zoeken, Bronnen, Netwerk, Actueel, Mijn.
+	// Bronnen and Mijn open a Blad over the page, above the bar, with the soorten bron or
 	// what the reader keeps; a tap outside the sheet, Escape or the tab again closes it (a
-	// tap closes by its click, never by the focus that leaves: actions/menu.ts). The menu of
+	// tap closes by its click, never by the focus that leaves). The menu of
 	// the top bar on a wider screen has the same items (SOURCES, MINE).
-	import { clickOutside } from '$lib/actions/top-layer';
+	import Blad from '$lib/components/ui/Blad.svelte';
 	import { page } from '$app/state';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { SOURCES, sourceOf } from '$lib/nav/sources';
+	import { bronRol } from '$lib/nav/bron-rol';
 	import { MINE, mineAt } from '$lib/nav/mine';
+	import Picto from '$lib/components/ui/Picto.svelte';
+	import { count } from '$lib/text/words';
+	import { networkState } from '$lib/nav/network';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
-	type Sheet = 'bladeren' | 'mijn';
+	type Sheet = 'bronnen' | 'mijn';
 	let sheet = $state<Sheet | null>(null);
-	let barEl: HTMLElement | null = $state(null);
-	let sheetEl: HTMLElement | null = $state(null);
+	let opener: HTMLElement | null = null;
 
 	const path = $derived(page.url.pathname);
-	const source = $derived(sourceOf(page.url));
+	const source = $derived(sourceOf(page.url, $bronRol));
 	const mine = $derived(mineAt(path));
 	const onActueel = $derived(path.startsWith('/actueel'));
+	const network = $derived(networkState(page.url));
 	const fresh = $derived(sign.has('bundels') || sign.has('gevolgd'));
 
 	// A page of another place closes the sheet.
@@ -30,63 +34,46 @@
 		sheet = null;
 	});
 
-	// A tap outside the sheet and the bar closes it; the bar's own tabs toggle.
-	$effect(() => {
-		if (!sheet) return;
-		return clickOutside(
-			() => [sheetEl, barEl],
-			() => (sheet = null)
-		);
-	});
-
-	function onKey(e: KeyboardEvent) {
-		if (e.key !== 'Escape' || !sheet) return;
-		barEl?.querySelector<HTMLElement>(`[data-sheet="${sheet}"]`)?.focus();
-		sheet = null;
+	function toggle(s: Sheet, e: MouseEvent) {
+		opener = e.currentTarget as HTMLElement;
+		sheet = sheet === s ? null : s;
 	}
-
-	const toggle = (s: Sheet) => (sheet = sheet === s ? null : s);
 </script>
 
-<svelte:window onkeydown={onKey} />
-
 {#if sheet}
-	<div class="scrim" aria-hidden="true"></div>
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<div
-		class="sheet"
-		role="dialog"
-		tabindex="-1"
-		aria-label={sheet === 'bladeren' ? 'Bladeren op soort bron' : 'Mijn'}
-		bind:this={sheetEl}
-		onclick={() => (sheet = null)}
+	<Blad
+		title={sheet === 'bronnen' ? 'Bronnen' : 'Mijn'}
+		aboveTabbar
+		opener={() => opener}
+		onClose={() => (sheet = null)}
 	>
-		{#if sheet === 'bladeren'}
-			<h2 class="sheet__head">Bladeren op soort bron</h2>
-			{#each SOURCES as s (s.id)}
-				<a
-					class="menuitem"
-					href={s.href}
-					aria-current={source?.id === s.id ? 'page' : undefined}
-					class:is-active={source?.id === s.id}>{s.label}<span>{s.holds}</span></a
-				>
-			{/each}
-		{:else}
-			<h2 class="sheet__head">Mijn</h2>
-			{#each MINE as m (m.id)}
-				<a
-					class="menuitem"
-					href={m.href}
-					aria-current={mine === m.id ? 'page' : undefined}
-					class:is-active={mine === m.id}
-					>{m.label}{#if sign.has(m.id)}<NewMark />{/if}</a
-				>
-			{/each}
-		{/if}
-	</div>
+		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+		<div class="sheet__lijst" onclick={() => (sheet = null)}>
+			{#if sheet === 'bronnen'}
+				{#each SOURCES as s (s.id)}
+					<a
+						class="menuitem"
+						href={s.href}
+						aria-current={source?.id === s.id ? 'page' : undefined}
+						class:is-active={source?.id === s.id}>{s.label}<span>{s.holds}</span></a
+					>
+				{/each}
+			{:else}
+				{#each MINE as m (m.id)}
+					<a
+						class="menuitem"
+						href={m.href}
+						aria-current={mine === m.id ? 'page' : undefined}
+						class:is-active={mine === m.id}
+						>{m.label}{#if sign.has(m.id)}<NewMark />{/if}</a
+					>
+				{/each}
+			{/if}
+		</div>
+	</Blad>
 {/if}
 
-<nav class="tabbar" aria-label="Hoofdmenu" bind:this={barEl}>
+<nav class="tabbar" aria-label="Hoofdmenu">
 	<button type="button" class="tab" onclick={() => onSearchOpen?.()}>
 		<svg
 			width="20"
@@ -101,10 +88,10 @@
 	<button
 		type="button"
 		class="tab"
-		class:is-active={sheet ? sheet === 'bladeren' : source !== null}
-		data-sheet="bladeren"
-		aria-expanded={sheet === 'bladeren'}
-		onclick={() => toggle('bladeren')}
+		class:is-active={sheet ? sheet === 'bronnen' : source !== null}
+		data-sheet="bronnen"
+		aria-expanded={sheet === 'bronnen'}
+		onclick={(e) => toggle('bronnen', e)}
 	>
 		<svg
 			width="20"
@@ -114,8 +101,19 @@
 			stroke="currentColor"
 			stroke-width="1.5"
 			aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" /></svg
-		>Bladeren
+		>Bronnen
 	</button>
+	<a
+		class="tab"
+		class:is-active={!sheet && network.pressed}
+		href={network.href}
+		role="button"
+		aria-pressed={network.pressed}
+		aria-label={network.count ? `Netwerk, ${count(network.count, 'bron', 'bronnen')}` : undefined}
+		><Picto naam="netwerk-o" size={20} />Netwerk{#if network.count}<span class="tab__aantal"
+				>{network.count}</span
+			>{/if}</a
+	>
 	<a
 		class="tab"
 		class:is-active={!sheet && onActueel}
@@ -138,7 +136,7 @@
 		class:is-active={sheet ? sheet === 'mijn' : mine !== null}
 		data-sheet="mijn"
 		aria-expanded={sheet === 'mijn'}
-		onclick={() => toggle('mijn')}
+		onclick={(e) => toggle('mijn', e)}
 	>
 		<svg
 			width="20"
@@ -153,9 +151,7 @@
 </nav>
 
 <style>
-	.tabbar,
-	.sheet,
-	.scrim {
+	.tabbar {
 		display: none;
 	}
 	@media (max-width: 768px) {
@@ -190,35 +186,23 @@
 			text-decoration: none;
 			cursor: pointer;
 		}
+		.tab {
+			position: relative;
+		}
+		.tab__aantal {
+			position: absolute;
+			top: var(--s-2);
+			right: calc(50% - var(--s-6));
+			font-size: var(--t-micro);
+			line-height: 1;
+			color: var(--ink-3);
+		}
 		.tab.is-active {
 			color: var(--ink);
 			box-shadow: inset 0 2px 0 var(--ink);
 		}
-		.scrim {
-			display: block;
-			position: fixed;
-			inset: 0;
-			z-index: calc(var(--z-float) - 1);
-			background: var(--scherm);
-		}
-		.sheet {
-			display: block;
-			position: fixed;
-			left: 0;
-			right: 0;
-			bottom: var(--tabbar-h);
-			z-index: var(--z-float);
-			max-height: calc(100dvh - var(--tabbar-h) - var(--topbar-h));
-			overflow-y: auto;
-			padding: var(--s-3) var(--s-4) var(--s-4);
-			background: var(--paper);
-			border-top: 1px solid var(--rule-strong);
-		}
-		.sheet__head {
-			margin: 0 0 var(--s-2);
-			font-size: var(--t-label);
-			font-weight: 600;
-			color: var(--ink-3);
+		.sheet__lijst {
+			padding: 0 var(--s-4) var(--s-4);
 		}
 		.menuitem {
 			display: flex;

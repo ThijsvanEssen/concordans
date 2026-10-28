@@ -2,6 +2,7 @@
 // the rows that pass, the counts and the years of the judgments.
 import { plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
+import type { Stuksoort } from '$lib/bron/rubrieken';
 import { relationLabel } from './relation-words';
 import { sumLidCounts } from '$lib/api/nodes';
 import {
@@ -15,12 +16,20 @@ import {
 import { atLeast, formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
+import { refId } from '$lib/bron/href';
+import { ecliKey } from '$lib/text/ecli';
+import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
+import { byImportance, importanceOf } from './importance';
+import { kindsOf, type Kind } from './summary';
 
 /** The rows a closed group of the panel shows, and holds the place of while they come. */
 export const PREVIEW_ROWS = 3;
+/** The rows "Volgende" adds to an opened soort: the N in its words. */
+export const NEXT_ROWS = 50;
 
 /** Whether the filter has a criterion that cuts inside a group, so its total no longer holds. */
 const cutsRows = (f: VerbondenFilter) =>
+	f.stuksoort !== null ||
 	f.lid !== null ||
 	f.rechter !== null ||
 	f.area !== null ||
@@ -31,6 +40,10 @@ const cutsRows = (f: VerbondenFilter) =>
 	f.status !== null ||
 	f.jaar !== null ||
 	f.zoek !== '';
+
+/** The soort a group's noun names (`leden` of a fractie, `toelichtingen` of a dossier). */
+const sortOfNoun = (noun: string): FilterGroup =>
+	noun === 'leden' ? 'kamerleden' : noun === 'toelichtingen' ? 'stukken' : (noun as FilterGroup);
 
 /** The kind a group counts for: that of its rows. */
 const filterGroupOfRows = (g: Group): FilterGroup | null => g.rows[0]?.filterGroup ?? null;
@@ -48,7 +61,15 @@ export function filterGroups(
 	const cut = cutsRows(f);
 	return groups
 		.map((g) => {
-			const rows = g.rows.filter((r) => rowPasses(r, f));
+			// A group asked again keeps the rows of its former cut, as they stand, until the
+			// new ones are in: what the API cuts is not cut again by the new choice.
+			const cutBy = wachtend.has(g.id) ? (g.cutBy ?? []) : [];
+			const rowFilter = {
+				...f,
+				jaar: cutBy.includes('jaar') ? null : f.jaar,
+				rechter: cutBy.includes('rechter') ? null : f.rechter
+			};
+			const rows = g.rows.filter((r) => rowPasses(r, rowFilter));
 			// A name that follows its rows follows the rows the filter leaves.
 			const label = g.labelOf ? g.labelOf(rows) : g.label;
 			// What the loader asked of the API itself (the year of a wet's judgments, BE-51; the
@@ -73,7 +94,7 @@ export function filterGroups(
 					rows.length === 0 &&
 					!cut &&
 					wachtend.has(g.id) &&
-					(!f.bronnen || f.bronnen.has(g.noun as FilterGroup))
+					(!f.bronnen || f.bronnen.has(sortOfNoun(g.noun ?? '')))
 			};
 		})
 		.filter((g) => g.rows.length > 0 || g.laden || (g.failed && !cut));
@@ -173,6 +194,17 @@ export function groupTotals(groups: Group[]): Partial<Record<FilterGroup, number
 	return totals;
 }
 
+/** Per stuksoort, the number of stukken among the rows: the counts of the block Stuksoort. */
+export function stuksoortTotals(groups: Group[]): Partial<Record<Stuksoort, number>> {
+	const totals: Partial<Record<Stuksoort, number>> = {};
+	for (const r of allRows(groups))
+		if (r.filterGroup === 'stukken') {
+			const s = r.stuksoort ?? 'overige';
+			totals[s] = (totals[s] ?? 0) + 1;
+		}
+	return totals;
+}
+
 /**
  * Per relation, the number of verbindingen and its label: every word its rows say, the most
  * said first (`haalt aan, verwijst naar` on an article cited by judgments and articles alike).
@@ -229,7 +261,7 @@ export function hiddenLine(
 const GROUPS_OF_BUCKET: Record<string, FilterGroup[]> = {
 	judgments: ['uitspraken'],
 	articles: ['artikelen'],
-	documents: ['toelichtingen', 'wetsvoorstellen', 'dossiers']
+	documents: ['stukken']
 };
 
 /**
@@ -239,8 +271,10 @@ const GROUPS_OF_BUCKET: Record<string, FilterGroup[]> = {
  */
 export function memberCountsUnder(
 	per: Map<string, Map<string, number>>,
-	bronnen: ReadonlySet<FilterGroup> | null
+	bronnen: ReadonlySet<FilterGroup> | null,
+	stuksoort: ReadonlySet<string> | null = null
 ): Map<string, number> | null {
+	if (stuksoort && per.has('documents') && (!bronnen || bronnen.has('stukken'))) return null;
 	if (!bronnen) return sumLidCounts(per);
 	for (const collection of per.keys()) {
 		const kinds = GROUPS_OF_BUCKET[collection];
@@ -302,3 +336,83 @@ export function courtCounts(groups: Group[]): Partial<Record<Court, number>> {
 	}
 	return counts;
 }
+
+// ── The one count of Verbonden (N1): the panel, its head and the legend of the werkplek ──
+
+/** Whether a group of a bron is its kern or its own content, which its reader shows itself. */
+export const isOwnGroup = (collection: Collection, g: Group) =>
+	isKernGroep(collection, g) || isInhoudGroep(collection, g);
+
+/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
+const translationOf = (r: Row) => {
+	const ecli = r.props?.translation_of;
+	return typeof ecli === 'string' && ecli.trim() ? `judgments/${ecliKey(ecli)}` : null;
+};
+
+/**
+ * The ids of the bronnen the reader names itself: the rows of its kern and its own content, and
+ * the bronnen its band's lazy lines name (`keten`, lazeKernIds).
+ */
+const ownIds = (
+	groups: readonly Group[],
+	collection: Collection,
+	chain: ReadonlySet<string> = new Set()
+): Set<string> =>
+	new Set([
+		...groups
+			.filter((g) => isKernGroep(collection, g))
+			.flatMap((g) => g.rows.map((r) => refId(r.ref))),
+		...chain
+	]);
+
+/**
+ * The groups of Verbonden: the context of a bron, without its kern and its own content (the
+ * reader shows those), without a bron the band names already, the most important first where
+ * the API does not rank them (importance.ts).
+ */
+export function contextGroups(
+	groups: readonly Group[],
+	collection: Collection,
+	chain: ReadonlySet<string> = new Set()
+): Group[] {
+	const theirs = ownIds(groups, collection, chain);
+	return groups
+		.filter((g) => !isOwnGroup(collection, g))
+		.map((g) => {
+			const own = g.rows.filter(
+				(r) => !theirs.has(refId(r.ref)) && !theirs.has(translationOf(r) ?? '')
+			);
+			const gone = g.rows.length - own.length;
+			const rank = g.orders ? null : importanceOf(collection, g.id);
+			const rows = rank ? byImportance(own, rank) : own;
+			return gone || rank ? { ...g, rows, total: g.total != null ? g.total - gone : g.total } : g;
+		});
+}
+
+/**
+ * The soorten of Verbonden with their counts: what the panel heads and the legend of the
+ * werkplek both say, so they name the same kinds with the same words and numbers (N1).
+ */
+export function panelKinds(
+	v: { groups: readonly Group[]; buckets?: ReadonlyMap<string, number> | null },
+	collection: Collection,
+	chain: ReadonlySet<string> = new Set()
+): Kind[] {
+	return kindsOf(
+		contextGroups(v.groups, collection, chain),
+		collection,
+		v.buckets,
+		v.groups.filter((g) => isOwnGroup(collection, g))
+	);
+}
+
+/**
+ * Whether the counts of Verbonden are final: nothing loads any more, so no number shown springs
+ * (F5: 267, 583, 4.003). A group that failed is done too: it says so in its place.
+ */
+export const panelSettled = (v: {
+	id?: string | null;
+	loading: boolean;
+	groups: readonly Group[];
+	wachtend?: readonly string[];
+}) => !!v.id && !v.loading && (v.wachtend?.length ?? 0) === 0 && v.groups.every((g) => !g.laden);

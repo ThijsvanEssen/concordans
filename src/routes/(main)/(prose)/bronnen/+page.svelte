@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import KeyList from '$lib/components/ui/KeyList.svelte';
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import CoverageLine from '$lib/components/ui/Coverage.svelte';
@@ -14,8 +15,16 @@
 	import { TIERS, TIER_LABEL } from '$lib/vocabulary';
 	import { COVERAGE, PUBLISHERS, SOURCE_LABEL } from '$lib/bron/herkomst';
 
-	const stats = load(() => 'stats', getStats, 'Bronnen');
-	const coverage = load(() => 'coverage', getCoverage, 'Bronnen dekking');
+	const stats = load(
+		() => 'stats',
+		(_, signal) => getStats(signal),
+		'Bronnen'
+	);
+	const coverage = load(
+		() => 'coverage',
+		(_, signal) => getCoverage(signal),
+		'Bronnen dekking'
+	);
 
 	/** How current each source is (`data_as_of`): the last date in its data, and when it was fetched. */
 	const asOfIn = (stats: Stats) =>
@@ -47,8 +56,7 @@
 		<header class="blad__kop"><h1 class="blad__titel">Bronnen en hergebruik</h1></header>
 		<p class="stub-lede">Concordans gebruikt alleen officiële bronnen.</p>
 
-		<div class="section" id="herkomst">
-			<h2 class="section-title">Herkomst</h2>
+		<Sectie title="Herkomst" niveau={2} inklapbaar={false} id="herkomst">
 			<KeyList>
 				{#each PUBLISHERS as p (p.name)}
 					<KeyRow key={p.name}
@@ -59,14 +67,14 @@
 					>
 				{/each}
 			</KeyList>
-		</div>
+		</Sectie>
 
-		<div class="section" id="dekking">
-			<h2 class="section-title">Dekking en stand</h2>
+		<Sectie title="Dekking en stand" niveau={2} inklapbaar={false} id="dekking">
 			<p>
 				Het netwerk bevat een selectie uit deze bronnen; wat erbuiten valt, staat bij de
 				<a href="/docs/methode#grenzen" class="cite">grenzen</a>.
 			</p>
+			<!-- Each block stands on its own answer: the colleges appear when /stats/coverage is there. -->
 			<LoadState state={stats.state} what="De dekking" retry={stats.retry}>
 				{#snippet children(stats)}
 					<KeyList>
@@ -74,43 +82,41 @@
 							<KeyRow key={c.label}>{formatCount(stats.nodes[c.collection] ?? 0)}</KeyRow>
 						{/each}
 					</KeyList>
-					<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
-						{#snippet children(coverage)}
-							<KeyList>
-								{#each tiersIn(coverage) as t (t.tier)}
-									<KeyRow key={TIER_LABEL[t.tier]}
-										>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
-												0,
-												4
-											)}
-											{untilDate(t.last_date)}{/if}</KeyRow
-									>
-								{/each}
-							</KeyList>
-						{/snippet}
-					</LoadState>
-					{@const asOf = asOfIn(stats)}
-					{#if asOf.length}
-						<p class="list-note">Stand per bron</p>
-						<KeyList>
-							{#each asOf as a (a.source)}
-								<!-- A source the runs no longer fetch from says so, with the day it reached. -->
-								<KeyRow key={a.source}
-									>{#if coverageLine(a.completeness)}<CoverageLine
-											coverage={a.completeness}
-										/>{:else}{a.newest ? `${throughDate(a.newest)}, ` : ''}opgehaald {onDate(
-											a.fetched
-										)}{/if}</KeyRow
-								>
-							{/each}
-						</KeyList>
-					{/if}
 				{/snippet}
 			</LoadState>
-		</div>
+			<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
+				{#snippet children(coverage)}
+					<KeyList>
+						{#each tiersIn(coverage) as t (t.tier)}
+							<KeyRow key={TIER_LABEL[t.tier]}
+								>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(0, 4)}
+									{untilDate(t.last_date)}{/if}</KeyRow
+							>
+						{/each}
+					</KeyList>
+				{/snippet}
+			</LoadState>
+			{#if stats.state.status === 'ready'}
+				{@const asOf = asOfIn(stats.state.data)}
+				{#if asOf.length}
+					<p class="list-note">Stand per bron</p>
+					<KeyList>
+						{#each asOf as a (a.source)}
+							<!-- A source the runs no longer fetch from says so, with the day it reached. -->
+							<KeyRow key={a.source}
+								>{#if coverageLine(a.completeness)}<CoverageLine
+										coverage={a.completeness}
+									/>{:else}{a.newest ? `${throughDate(a.newest)}, ` : ''}opgehaald {onDate(
+										a.fetched
+									)}{/if}</KeyRow
+							>
+						{/each}
+					</KeyList>
+				{/if}
+			{/if}
+		</Sectie>
 
-		<div class="section" id="hergebruik">
-			<h2 class="section-title">Hergebruik en aanhalen</h2>
+		<Sectie title="Hergebruik en aanhalen" niveau={2} inklapbaar={false} id="hergebruik">
 			<p>
 				De wetgeving, de publicaties in Staatsblad, Staatscourant en Tractatenblad, de open data van
 				de Tweede Kamer en de gegevens van rijksoverheid.nl vallen onder CC0 1.0: vrij te
@@ -133,7 +139,7 @@
 				Concordans, verbindingen van art. 273f Sr,
 				https://concordans.nl/wetten/BWBR0001854/artikel/273f (geraadpleegd 7 oktober 2026).
 			</p>
-		</div>
+		</Sectie>
 
 		<div class="meta-row">
 			<a href="/over" class="meta-link">Over Concordans</a>

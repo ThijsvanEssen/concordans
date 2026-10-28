@@ -2,6 +2,7 @@ import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { BaseNode, GraphNode, GraphEdge } from '../types';
+import type { LineKind } from '../line-kind';
 import type { ContainerGroup, ContainerKind, Period } from '../container-membership';
 
 /** The API's default depth of a neighbourhood: three steps. */
@@ -10,10 +11,9 @@ export const NEIGHBORHOOD_DEPTH = 3;
  * The most bronnen one neighbourhood brings (Thijs, 9 Oct: "diepte houden, max omlaag"). At 150
  * the ten busiest bronnen of a cap of 200 all stay (126ffa Sv, 3:4 Awb, HR Urgenda, a Kamerlid,
  * dossier 36547 on prod), at 45 to 55 % of the bytes for a dossier, 75 to 80 % for the rest.
- * A phone draws fewer: 100, where a Kamerlid keeps six of the ten.
+ * The same on every width (besluit 49).
  */
 export const NEIGHBORHOOD_CAP = 150;
-export const NEIGHBORHOOD_CAP_PHONE = 100;
 
 /** A neighbourhood as drawn: around `focal`, `depth` steps, `capped` at the cap. */
 export type NeighborhoodReach = {
@@ -46,8 +46,10 @@ export type CanvasRow = {
 };
 
 export type GraphFilters = {
-	/** Relations the legend switched off; their edges are not drawn. */
-	hiddenRelations: Set<Relation>;
+	/** Lijnsoorten Relatie switched off; their edges are not drawn. */
+	hiddenLines: Set<LineKind>;
+	/** Bijlagen (what is drawn as no kind of its own) switched off in Tonen. */
+	hiddenAnnexes: boolean;
 	/** Groupings the legend switched off: their bronnen stand loose, without a hull. */
 	hiddenGroups: Set<ContainerKind>;
 	/** Semantic edges with a lower confidence are left out. */
@@ -66,7 +68,8 @@ type GraphExpansionOptions = {
 };
 
 export const DEFAULT_FILTERS: GraphFilters = {
-	hiddenRelations: new Set<Relation>(),
+	hiddenLines: new Set<LineKind>(),
+	hiddenAnnexes: false,
 	hiddenGroups: new Set<ContainerKind>(),
 	semanticThreshold: 0.6,
 	neighborLimit: 30,
@@ -100,17 +103,6 @@ export type GraphStore = {
 	/** How far the last neighbourhood reached, and whether the API cut it off at its cap. */
 	neighborhood: Readable<NeighborhoodReach | null>;
 	/**
-	 * All the direct neighbours of one collection of a bron on the canvas, page by page, up to
-	 * `grens` (the per-kind step of "Alles laden"). The reach's count of that collection
-	 * follows. Returns how many there are now.
-	 */
-	laadSoort: (
-		collection: Collection,
-		key: string,
-		soort: Collection,
-		opts?: { grens?: number; signal?: AbortSignal }
-	) => Promise<number>;
-	/**
 	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
 	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
 	 */
@@ -124,30 +116,22 @@ export type GraphStore = {
 			nodeTypes?: string[];
 			/** Adds to the canvas instead of replacing its context. */
 			additive?: boolean;
+			/** Says whether the API cut this neighbourhood off at its cap, once it is in. */
+			onCut?: (capped: boolean) => void;
 		}
 	) => Promise<GraphNode | null>;
 	/**
 	 * Draws a netwerk: its chosen bronnen, what ties them, and the context still tied to
-	 * them. `fresh` drops every other bron. Returns the bronnen tied to no other one, and
-	 * the joining bronnen drawn.
+	 * them. `fresh` drops every other bron. Returns the bronnen tied to no other one.
 	 */
 	compose: (input: {
 		participants: NetwerkParticipant[];
-		withJoining: boolean;
 		fresh: boolean;
-		/** Bronnen on the paths between the chosen ones (`mergePaths`), kept as joining. */
-		onPaths?: string[];
-		/** Chosen bronnen a drawn path reaches: tied, not alone. */
-		tiedByPaths?: string[];
 		/** The weergave Omgeving: every neighbour of each chosen bron, not only what they share. */
 		surroundings?: boolean;
-	}) => { alone: ReadonlySet<string>; joining: string[] };
-	/** Draws the paths between chosen bronnen (`/api/paths`, API 0.73); returns what it drew. */
-	mergePaths: (response: Schema<'PathsResponse'>) => Promise<{ onPath: string[]; tied: string[] }>;
+	}) => { alone: ReadonlySet<string> };
 	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
 	core: Readable<ReadonlySet<string> | null>;
-	/** Leaves only the chosen bronnen, what ties them and the selection. */
-	clearContext: () => void;
 	/** Ends the netwerk: nothing is chosen any more, the canvas stays as it is. */
 	releaseNetwerk: () => void;
 	setSelection: (nodeId: string | null) => void;

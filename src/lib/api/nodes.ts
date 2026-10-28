@@ -1,6 +1,6 @@
 import type { QueryOf, Schema } from '$lib/api/types';
 import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
-import { ApiError, api, clientFor, unwrap } from './client';
+import { ApiError, api, clientFor, slowApi, unwrap } from './client';
 import { isNotFound } from './errors';
 import { once } from './records';
 
@@ -182,7 +182,7 @@ export function sumLidCounts(
 	return counts;
 }
 
-/** Every node and edge within `depth` hops, in one traversal. */
+/** Every node and edge within `depth` hops, in one traversal; cold it takes 10 s (`slowApi`). */
 export const getNodeNeighborhood = (
 	collection: Collection,
 	key: string,
@@ -200,7 +200,7 @@ export const getNodeNeighborhood = (
 	} = {}
 ) =>
 	unwrap(
-		api.GET('/api/nodes/{collection}/{key}/neighborhood', {
+		slowApi.GET('/api/nodes/{collection}/{key}/neighborhood', {
 			params: {
 				path: path(collection, key),
 				query: {
@@ -215,10 +215,6 @@ export const getNodeNeighborhood = (
 			signal: opts.signal
 		})
 	);
-
-/** The paths between bronnen (`/api/paths`). */
-export const getPaths = (query: QueryOf<'/api/paths'>) =>
-	unwrap(api.GET('/api/paths', { params: { query } }));
 
 /**
  * What two to five bronnen share: the neighbours of each of them, per collection, a page of
@@ -235,6 +231,13 @@ export async function getShared(
 		return null;
 	});
 }
+
+/**
+ * The chains of 2 or 3 steps between two bronnen (`/api/chains`, API 0.80.12): cold it takes
+ * 10 to 12 s, so it waits as long as the API does (`slowApi`, 30 s) and stops with the signal.
+ */
+export const getChains = (query: QueryOf<'/api/chains'>, signal?: AbortSignal) =>
+	unwrap(slowApi.GET('/api/chains', { params: { query }, signal }));
 
 /**
  * The surroundings of a stuk, zaak, stemming, toezegging or activiteit in one answer (API

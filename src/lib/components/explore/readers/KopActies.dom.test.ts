@@ -16,9 +16,11 @@ describe('KopActies', () => {
 
 		await fireEvent.click(knop);
 		await tick();
-		expect(screen.getByRole('button', { name: 'Bewaard lid 2' }).getAttribute('aria-pressed')).toBe(
-			'true'
-		);
+		expect(
+			screen
+				.getByRole('button', { name: 'Bewaard in Mijn markeringen' })
+				.getAttribute('aria-pressed')
+		).toBe('true');
 	});
 
 	it('shows no Bewaar without an item to keep', () => {

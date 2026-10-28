@@ -1,16 +1,17 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import { voteCitation } from '$lib/bron/naam';
-	import { dossierLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
+	import { dossierLabel, officialNumber } from '$lib/bron/dossier-naam';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { inhoudVan, stemmingInhoud } from '$lib/components/open/rij-inhoud';
 	import { stemmingNaam } from '$lib/votes/stemming';
 	import Stembalk from '$lib/components/parliamentary/Stembalk.svelte';
 	import { voteBarOf } from '$lib/votes/stembalk';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { korteDatum, weekdag } from '$lib/text/datum';
-	import { plural } from '$lib/text/words';
+	import { weekdag } from '$lib/text/datum';
+	import RowDossier from './RowDossier.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import { motionKindLabel } from '$lib/text/motion-kind';
 	import { NO_DECISION_KIND, decisionMethod, decisionOutcome } from '$lib/votes/decision-kind';
@@ -20,44 +21,25 @@
 	type Row = Schema<'DecisionSummaryDTO'>;
 	let { ctx }: ViewProps<Row, DecisionsState> = $props();
 
-	/** Per sitting day, all its decisions under the filters, also those not yet loaded. */
-	const dayCounts = $derived(
-		new Map((ctx.state.facets?.days ?? []).map((d) => [d.date, d] as const))
-	);
 	// Sorted by date, the decisions of one sitting day are one group: the Kamer votes in blocks.
 	const days = $derived.by(() => {
 		const rows = ctx.rows ?? [];
-		if (ctx.sort.id !== 'date') return [{ date: null, rows, count: rows.length, passed: 0 }];
-		const days: { date: string | null; rows: Row[]; passed: number }[] = [];
+		if (ctx.sort.id !== 'date') return [{ date: null, rows }];
+		const days: { date: string | null; rows: Row[] }[] = [];
 		for (const s of rows) {
 			const last = days.at(-1);
 			const day = last && last.date === (s.date ?? null) ? last : null;
 			if (day) day.rows.push(s);
-			else days.push({ date: s.date ?? null, rows: [s], passed: 0 });
+			else days.push({ date: s.date ?? null, rows: [s] });
 		}
-		// The day's own numbers, from the facet; the rows loaded may be fewer.
-		return days.map((d) => {
-			const facet = d.date ? dayCounts.get(d.date) : undefined;
-			return {
-				...d,
-				count: facet?.count ?? d.rows.length,
-				passed: facet?.passed ?? d.rows.filter((r) => r.passed).length
-			};
-		});
+		return days;
 	});
 </script>
 
 {#each days as day (day.date)}
 	{#if day.date}
-		{@const failed = day.count - day.passed}
 		<div class="day-head">
 			<h3 class="day-title">{weekdag(day.date)}</h3>
-			<span class="day-meta"
-				>{day.count}
-				{plural(day.count, 'stemming', 'stemmingen')}: {day.passed} aangenomen,
-				{failed}
-				verworpen</span
-			>
 		</div>
 	{/if}
 	<ul class="list">
@@ -80,30 +62,26 @@
 				{#snippet lead()}
 					{#if !day.date || kindLabel}
 						<span class="row-id-main"
-							><Waarde value={day.date ? kindLabel : korteDatum(s.date)} /></span
+							>{#if day.date}<Waarde value={kindLabel} />{:else}<DateTime iso={s.date} />{/if}</span
 						>
 						{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 							{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
-							<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-								>{dossierLabel(d)}</span
-							>
+							<span class="row-id-sub">{dossierLabel({ number: d.number })}</span>
 						{/if}
 					{:else if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
 						{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
 						<span class="row-id-main">{officialNumber(d.number)}</span>
-						{#if dossierOwnName(d)}
-							<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
-								>{dossierOwnName(d)}</span
-							>
-						{/if}
 					{/if}
 				{/snippet}
 				{#snippet body()}
-					{#if bar}
+					<!-- Under a subject the dossier is by name here; without one the title says it. -->
+					{#if s.subject?.trim()}<RowDossier dossier={s.dossiers?.[0]} />{/if}
+					<!-- The opened row draws the bar large; the small one goes while it is open. -->
+					{#if bar && ctx.p.open !== bron}
 						<span class="stem-mini"
 							><Stembalk model={bar} compact members={s.vote_kind === 'member'} /></span
 						>
-					{:else if decisionMethod(s)}
+					{:else if !bar && decisionMethod(s)}
 						<span class="row-method">{decisionMethod(s)}</span>
 					{/if}
 				{/snippet}
@@ -153,11 +131,6 @@
 	}
 	.day-title::first-letter {
 		text-transform: uppercase;
-	}
-	.day-meta {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	/* The vote's bar, under the name of the stemming. */
 	.stem-mini {

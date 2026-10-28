@@ -6,7 +6,7 @@ import GraphSidebar from './GraphSidebar.svelte';
 import { EMPTY_FILTER } from '$lib/verbonden/filter';
 import { DEFAULT_LOADER_OPTIONS } from '$lib/verbonden/loaders';
 
-const props = (selectionCollection: 'documents' | null) => ({
+const props = (_selectionCollection: 'documents' | null) => ({
 	verbonden: {
 		id: 'documents/x',
 		groups: [],
@@ -15,14 +15,15 @@ const props = (selectionCollection: 'documents' | null) => ({
 		options: DEFAULT_LOADER_OPTIONS
 	},
 	filter: EMPTY_FILTER,
-	selectionCollection,
+
 	onFilter: () => {},
 	onOpenFilter: () => {},
-	depth: 1,
-	onDepth: () => {},
-	hiddenRelations: new Set<never>(),
-	onToggleRelation: () => {},
-	canvasCounts: { kinds: { stemmingen: 49, wetsvoorstellen: 30 } },
+	hiddenLines: new Set<never>(),
+	onToggleLine: () => {},
+	canvasCounts: {
+		kinds: { stemmingen: 49, stukken: 30 },
+		stuksoorten: { wetsvoorstellen: 20, toelichtingen: 10 }
+	},
 	hasNodes: true
 });
 
@@ -31,6 +32,9 @@ describe('the Legenda counts', () => {
 		it(`what the canvas draws, ${selectionCollection ? 'with' : 'without'} a selection`, () => {
 			const { getByRole } = render(GraphSidebar, props(selectionCollection));
 			expect(getByRole('button', { name: /^Stemmingen/ }).textContent).toMatch(/49/);
-			expect(getByRole('button', { name: /^Wetsvoorstellen/ }).textContent).toMatch(/30/);
+			expect(getByRole('button', { name: /^Stukken/ }).textContent).toMatch(/30/);
+			// What the stukken are is a block of its own, the stuksoort.
+			expect(getByRole('button', { name: /^Wetsvoorstellen/ }).textContent).toMatch(/20/);
+			expect(getByRole('button', { name: /^Toelichtingen/ }).textContent).toMatch(/10/);
 		});
 });

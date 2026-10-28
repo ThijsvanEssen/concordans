@@ -3,10 +3,11 @@
 // state from these; writing the address stays with the page.
 //
 // ?mode=index (Bladeren, with ?kind), ?focus (the bron), ?lezen=1 (read at full width),
-// ?tabel=1 (all verbindingen as a table), ?naast (a toelichting or judgment beside the
+// ?tabel=1 (all verbindingen as a table; ?soort narrows it to kinds, from the werkplek's
+// Tonen, which ?mode=netwerk leads back to), ?naast (a toelichting or judgment beside the
 // article), ?overlay, ?diepte and ?alles=1 (how far the canvas reaches), the bronfilter
 // (?bronnen, ?lid, ?rechter, ?van, ?tot, ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek),
-// the netwerk of chosen bronnen (?netwerk, ?uit, ?tussen), ?paneel (a phone's tab, read once)
+// the netwerk of chosen bronnen (?netwerk, ?uit), ?paneel (a phone's tab, read once)
 // and the position inside the text as the fragment.
 import { padHref, type Pad } from '$lib/bron/address';
 import { keyEcli } from '$lib/text/ecli';
@@ -19,14 +20,19 @@ import { filterParams, parseFilter } from '$lib/verbonden/filter';
 import { parseNodeId } from '$lib/vocabulary';
 import { offOf } from '$lib/selection/off';
 
-/** The steps from the focus the canvas can show, and what an unreadable ?diepte means. */
-export const DEPTH = { min: 1, max: 3, fallback: 2 } as const;
+/**
+ * The steps from the chosen bronnen the canvas can show, and what an unreadable ?diepte means.
+ * 0 is Alleen gekozen: only the netwerk's own bronnen and what ties them; a bron alone has no 0.
+ */
+export const DEPTH = { min: 0, max: 3, fallback: 2 } as const;
 
 /** ?diepte within its bounds; null where the address does not say. */
 export function explicitDepth(params: URLSearchParams): number | null {
 	const value = params.get('diepte');
 	if (!value) return null;
-	return Math.min(DEPTH.max, Math.max(DEPTH.min, Number(value) || DEPTH.fallback));
+	const steps = Number(value);
+	if (!Number.isFinite(steps)) return DEPTH.fallback;
+	return Math.min(DEPTH.max, Math.max(DEPTH.min, Math.trunc(steps)));
 }
 
 /**
@@ -48,7 +54,7 @@ export function depthFor(
  */
 export function netwerkQuery(params: URLSearchParams): string {
 	const own = new URLSearchParams();
-	for (const name of ['netwerk', 'uit', 'tussen', 'omgeving']) {
+	for (const name of ['netwerk', 'uit']) {
 		const value = name === 'uit' ? offOf(params.get(name)).chosen.join(',') : params.get(name);
 		if (value !== null && (value || name !== 'uit')) own.set(name, value);
 	}

@@ -9,11 +9,11 @@ describe('the whole of a kind the API cut off', () => {
 	});
 
 	it('goes to the last kind of a collection, less what the others draw', () => {
-		const cuts = kindCuts([{ collection: 'documents', total: 132, kept: 68 }], {
-			toelichtingen: 2,
-			dossiers: 66
+		const cuts = kindCuts([{ collection: 'instruments', total: 132, kept: 68 }], {
+			internationaal: 2,
+			wetten: 66
 		});
-		expect(cuts).toEqual({ dossiers: { total: 130, collection: 'documents' } });
+		expect(cuts).toEqual({ wetten: { total: 130, collection: 'instruments' } });
 	});
 
 	it('says nothing where all came, or where nothing of it is drawn', () => {

@@ -1,0 +1,83 @@
+// How strong a line of the canvas is drawn at rest (Netwerkcanvas, Lijnen): in its own colour,
+// mixed toward the paper the more lines there are, within the window of its tone (dark, middle,
+// light), but never fainter than a line can be read: 3:1 against the paper (2,5:1 for light,
+// besluit 36), which wins over the window. A thread (a line between two bronnen that are neither chosen) is meant
+// to be faint and has no floor; a hover is in full.
+
+import type { Tone } from './line-kind';
+
+const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
+/** The least contrast of a line with the paper (WCAG, non-text). */
+export const LINE_CONTRAST = 3;
+/**
+ * The least contrast of the light tone (Aanhaling, Lid van, a proposed change) with the paper:
+ * besluit 36 keeps 3:1 for dark and middle, and gives light 2,5:1 so it can stay apart from them.
+ */
+export const LIGHT_CONTRAST = 2.5;
+
+const rgb = (hex: string): [number, number, number] | null => {
+	const m = HEX.exec(hex.trim());
+	return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+};
+
+const luminance = ([r, g, b]: [number, number, number]) => {
+	const f = (c: number) => {
+		const s = c / 255;
+		return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+	};
+	return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+};
+
+/** The contrast ratio of two #rrggbb colours (1 to 21); 21 when one is not a hex colour. */
+export function contrast(a: string, b: string): number {
+	const x = rgb(a);
+	const y = rgb(b);
+	if (!x || !y) return 21;
+	const [hi, lo] = [luminance(x), luminance(y)].sort((p, q) => q - p);
+	return (hi + 0.05) / (lo + 0.05);
+}
+
+/** `color` mixed `strength` of the way from the paper (0) to itself (1), as #rrggbb. */
+export function mixed(color: string, paper: string, strength: number): string {
+	const c = rgb(color);
+	const p = rgb(paper);
+	if (!c || !p) return color;
+	const hex = (i: number) =>
+		Math.round(c[i] * strength + p[i] * (1 - strength))
+			.toString(16)
+			.padStart(2, '0');
+	return `#${hex(0)}${hex(1)}${hex(2)}`;
+}
+
+/** The weakest strength at which `color` still holds `least` against `paper`; 1 if never. */
+export function floorStrength(color: string, paper: string, least = LINE_CONTRAST): number {
+	if (contrast(color, paper) < least) return 1;
+	let lo = 0;
+	let hi = 1;
+	for (let i = 0; i < 12; i++) {
+		const mid = (lo + hi) / 2;
+		if (contrast(mixed(color, paper, mid), paper) >= least) hi = mid;
+		else lo = mid;
+	}
+	return hi;
+}
+
+/** The window of each tone: the strength of a line in a fan of many (first) and of a few (last). */
+export const TONE_WINDOW: Record<Tone, readonly [number, number]> = {
+	donker: [0.75, 1],
+	middel: [0.5, 0.8],
+	licht: [0.3, 0.55]
+};
+
+/** The strength of a tone in a fan of `n` lines: its top up to nine, its bottom as they grow. */
+export function toneStrength(tone: Tone, n: number): number {
+	const [lo, hi] = TONE_WINDOW[tone];
+	return lo + (hi - lo) * Math.min(1, 3 / Math.sqrt(n || 1));
+}
+
+/** The strength of a line of a fan of `n` lines within its tone, never below the floor. */
+export const lineStrength = (color: string, paper: string, tone: Tone, n: number): number =>
+	Math.max(
+		toneStrength(tone, n),
+		floorStrength(color, paper, tone === 'licht' ? LIGHT_CONTRAST : LINE_CONTRAST)
+	);

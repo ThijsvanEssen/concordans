@@ -9,9 +9,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { sinceDate } from '$lib/text/datum';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import FoldButton from '$lib/components/ui/FoldButton.svelte';
-	import { isOpen, subKey } from '$lib/components/ui/dicht.svelte';
+	import { subKey } from '$lib/components/ui/dicht.svelte';
 	import {
 		articleLabel,
 		byArticle,
@@ -39,97 +37,68 @@
 	let open = $state<Record<string, boolean>>({});
 </script>
 
-<Sectie title="Gewijzigde artikelen" collection="articles" aantal={data.articles}>
+<Sectie title="Gewijzigde artikelen" aantal={data.articles}>
 	{#each data.laws as l, i (l.law.id ?? `buiten-${i}`)}
 		{@const artikelen = byArticle(l.changes)}
 		{@const key = l.law.id ?? `buiten-${i}`}
 		{@const alle = open[key] ?? false}
 		{@const gedeeld = sharedEnactment(l)}
 		<!-- A law's heading opens and closes its articles; open until closed, kept per law. -->
-		{@const wetSleutel = subKey(`wet:${key}`)}
-		{@const wetOpen = isOpen(wetSleutel, true)}
-		<div class="wet">
-			<h4 class="wet-naam">
-				<KindGlyph collection="instruments" size={12} />
-				{#if l.law.id}<BronLink ref={l.law.id}>{naamVanId(l.law.id, l.law.display_name)}</BronLink
-					>{:else}{l.law.display_name ?? l.law.bwb_id ?? l.law.celex}{/if}
-				<FoldButton
-					sleutel={wetSleutel}
-					open={wetOpen}
-					quiet
-					label="{wetOpen ? 'Artikelen verbergen' : 'Artikelen tonen'}: {l.law.display_name ??
-						l.law.bwb_id ??
-						''}">{artikelen.length}</FoldButton
-				>
-			</h4>
-			{#if wetOpen}
-				{#if gedeeld}
-					<p class="samen">
-						<BronLink ref={gedeeld.source.id}
-							>{naamVanId(gedeeld.source.id, gedeeld.source.display_name)}</BronLink
-						>{gedeeld.effective_date ? `, in werking ${sinceDate(gedeeld.effective_date)}.` : '.'}
-					</p>
-				{/if}
-				<ul class="artikelen">
-					{#each alle ? artikelen : artikelen.slice(0, PREVIEW) as a (a.article.id)}
-						<li>
-							<span class="artikel">
-								{#if a.article.key}<BronLink ref={`articles/${a.article.key}`}
-										>{articleLabel(l.law, a.article)}</BronLink
-									>{:else}{articleLabel(l.law, a.article)}{/if}
-							</span>
-							{#each a.changes as c, j (j)}
-								<span class="wijziging">
-									{#if gedeeld}{changeHead(c)}{:else}{changeHead(c)}, {stageLead(c)}<BronLink
-											ref={c.source.id}>{naamVanId(c.source.id, c.source.display_name)}</BronLink
-										>{/if}
-								</span>
-							{/each}
-						</li>
-					{/each}
-				</ul>
-				{#if artikelen.length > PREVIEW}
-					<p class="alle">
-						<AlleN
-							aantal={artikelen.length}
-							noun="artikelen"
-							open={alle}
-							onclick={() => (open = { ...open, [key]: !alle })}
-						/>
-					</p>
-				{/if}
+		<Sectie
+			niveau={4}
+			title={l.law.id
+				? naamVanId(l.law.id, l.law.display_name)
+				: (l.law.display_name ?? l.law.bwb_id ?? l.law.celex ?? '')}
+			aantal={artikelen.length}
+			sleutel={subKey(`wet:${key}`)}
+		>
+			{#snippet naast()}{#if l.law.id}<BronLink ref={l.law.id}>Wet openen</BronLink>{/if}{/snippet}
+			{#if gedeeld}
+				<p class="samen">
+					<BronLink ref={gedeeld.source.id}
+						>{naamVanId(gedeeld.source.id, gedeeld.source.display_name)}</BronLink
+					>{gedeeld.effective_date ? `, in werking ${sinceDate(gedeeld.effective_date)}.` : '.'}
+				</p>
 			{/if}
-		</div>
+			<ul class="artikelen">
+				{#each alle ? artikelen : artikelen.slice(0, PREVIEW) as a (a.article.id)}
+					<li>
+						<span class="artikel">
+							{#if a.article.key}<BronLink ref={`articles/${a.article.key}`}
+									>{articleLabel(l.law, a.article)}</BronLink
+								>{:else}{articleLabel(l.law, a.article)}{/if}
+						</span>
+						{#each a.changes as c, j (j)}
+							<span class="wijziging">
+								{#if gedeeld}{changeHead(c)}{:else}{changeHead(c)}, {stageLead(c)}<BronLink
+										ref={c.source.id}>{naamVanId(c.source.id, c.source.display_name)}</BronLink
+									>{/if}
+							</span>
+						{/each}
+					</li>
+				{/each}
+			</ul>
+			{#if artikelen.length > PREVIEW}
+				<p class="alle">
+					<AlleN
+						aantal={artikelen.length}
+						noun="artikelen"
+						open={alle}
+						onclick={() => (open = { ...open, [key]: !alle })}
+					/>
+				</p>
+			{/if}
+		</Sectie>
 	{/each}
 	{#each zonder as w (w.key)}
-		<div class="wet">
-			<h4 class="wet-naam">
-				<KindGlyph collection="instruments" size={12} />
-				<BronLink ref={`instruments/${w.key}`}
-					>{w.name ?? w.short ?? naamVan('instruments', w)}</BronLink
-				>
-			</h4>
+		<Sectie niveau={4} inklapbaar={false} title={w.name ?? w.short ?? naamVan('instruments', w)}>
+			{#snippet naast()}<BronLink ref={`instruments/${w.key}`}>Wet openen</BronLink>{/snippet}
 			<p class="samen">Geen gewijzigde artikelen in de gegevens.</p>
-		</div>
+		</Sectie>
 	{/each}
 </Sectie>
 
 <style>
-	.wet {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.wet-naam {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-	}
 	/* The publication a law's changes share, or that it has none in the data: a state line. */
 	.samen {
 		margin: 0;

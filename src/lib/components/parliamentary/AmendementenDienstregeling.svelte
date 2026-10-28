@@ -15,13 +15,12 @@
 	import { load } from '$lib/util/load.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
-	import { maandNaam } from '$lib/text/datum';
+	import { maandNaam, maandagVan } from '$lib/text/datum';
 	import { noneHeld } from '$lib/text/coverage';
 	import {
 		getAmendementen,
 		inStemming,
 		kolomVan,
-		maandagVan,
 		type Dienstregeling,
 		type Rij
 	} from './amendementen';
@@ -96,7 +95,6 @@
 		id={FOLD.amendments}
 		sleutel={FOLD.amendments}
 		title="Amendementen"
-		collection="documents"
 		aantal={regeling?.rijen.length ?? null}
 	>
 		{#if timetable.state.status === 'error'}

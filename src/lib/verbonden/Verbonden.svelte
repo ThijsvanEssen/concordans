@@ -1,8 +1,7 @@
 <script lang="ts">
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the table in
 	// groups.ts, under the bronfilter.
-	import { ecliKey } from '$lib/text/ecli';
-	import { capitalize, joinAnd, plural } from '$lib/text/words';
+	import { capitalize, joinAnd, plural, textOf } from '$lib/text/words';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -11,8 +10,8 @@
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
-	import { refId } from '$lib/bron/href';
-	import type { GraphNode } from '$lib/graph/types';
+	import { lawIdOf, type GraphNode } from '$lib/graph/types';
+	import { bwCode } from '$lib/text/bw';
 	import {
 		filterGroupCount,
 		emptyLine,
@@ -30,6 +29,7 @@
 	import { LOAD_FAILED, type VerbondenState } from './data-source';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
 	import PendingGroup from './PendingGroup.svelte';
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import GroupHead from './GroupHead.svelte';
 	import TierBar from './TierBar.svelte';
 	import JudgmentOrderLine from './JudgmentOrderLine.svelte';
@@ -40,12 +40,12 @@
 	import NetworkSketch from './NetworkSketch.svelte';
 	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
-	import { kindsOf, kindsTotal, kindOfGroup } from './summary';
+	import { panel } from './panel-groups.svelte';
+	import { kindsTotal, kindOfGroup, previewPerKind } from './summary';
 	import { PHONE_SKETCH_LIMIT, sketch as drawSketch, type SketchGroup } from './sketch';
-	import { citingTiers, lawTiers, type TierCount } from './tiers';
-	import { importanceOf, byImportance } from './importance';
+	import { citingTiers, lawTiers, tierParts, type TierCount } from './tiers';
 	import type { LoaderOptions } from './loaders';
-	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
+	import { lazeKernIds } from '$lib/bron/behoort';
 	import {
 		PREVIEW_ROWS,
 		countLine,
@@ -54,7 +54,11 @@
 		shownLabel,
 		totalCount,
 		fixedGroups,
-		yearHistogram
+		yearHistogram,
+		contextGroups,
+		isOwnGroup,
+		panelSettled,
+		panelKinds
 	} from './view';
 
 	let {
@@ -194,42 +198,18 @@
 			(e) => report('Verbonden kern', e)
 		);
 	});
-	/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
-	const vertalingVan = (r: Row) => {
-		const ecli = r.props?.translation_of;
-		return typeof ecli === 'string' && ecli.trim() ? `judgments/${ecliKey(ecli)}` : null;
-	};
-	const kernIds = $derived(
-		new Set([
-			...verbonden.groups
-				.filter((g) => isKernGroep(selection.collection, g))
-				.flatMap((g) => g.rows.map((r) => refId(r.ref))),
-			...keten
-		])
-	);
-	const groepen = $derived(
-		verbonden.groups
-			.filter(
-				(g) => !isKernGroep(selection.collection, g) && !isInhoudGroep(selection.collection, g)
-			)
-			.map((g) => {
-				const own = g.rows.filter(
-					(r) => !kernIds.has(refId(r.ref)) && !kernIds.has(vertalingVan(r) ?? '')
-				);
-				const weg = g.rows.length - own.length;
-				// The most important first where the API does not rank them (importance.ts).
-				const rank = g.orders ? null : importanceOf(selection.collection, g.id);
-				const rows = rank ? byImportance(own, rank) : own;
-				return weg || rank ? { ...g, rows, total: g.total != null ? g.total - weg : g.total } : g;
-			})
-	);
+	// The context of the bron, one count with the legend of the werkplek (view.ts, N1).
+	const groepen = $derived(contextGroups(verbonden.groups, selection.collection, keten));
+	// The filter sheet counts these same groups (panel-groups.svelte.ts).
+	$effect(() => {
+		panel.groups = groepen;
+		return () => {
+			panel.groups = null;
+		};
+	});
 	const alleenKern = $derived(
 		groepen.every((g) => g.rows.length === 0 && !g.failed) &&
-			verbonden.groups.some(
-				(g) =>
-					g.rows.length > 0 &&
-					(isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g))
-			)
+			verbonden.groups.some((g) => g.rows.length > 0 && isOwnGroup(selection.collection, g))
 	);
 	// A group whose loader is under way keeps its place with "laden…" (VerbondenState.wachtend).
 	const filtered = $derived(filterGroups(groepen, filter, new Set(verbonden.wachtend ?? [])));
@@ -269,6 +249,8 @@
 			totalCount(vast) === 0
 	);
 	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
+	/** Every group in: only then the head counts, so its number never springs (F5). */
+	const settled = $derived(panelSettled(verbonden));
 
 	/** The one count of every verbinding, unfiltered: the API's, the sum of the buckets of the light
 	 *  node, once it is larger than what the groups hold so far. The head and the link to the table
@@ -283,16 +265,7 @@
 	// ── At a glance: per soort its count and the three to read (summary.ts) ──
 	// In Tekst Verbonden opens on the soorten; "Alle N" opens one with its groups, its order and
 	// its filters; a bronfilter in the address (a lid's count, Filter) shows the groups at once.
-	const kinds = $derived(
-		kindsOf(
-			groepen,
-			selection.collection,
-			verbonden.buckets,
-			verbonden.groups.filter(
-				(g) => isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g)
-			)
-		)
-	);
+	const kinds = $derived(panelKinds(verbonden, selection.collection, keten));
 	/** The soorten opened in place with all their rows, from "Alle N" or a circle of the
 	 *  network: one view of Verbonden, no second one per soort (A208e). */
 	let openKinds = $state(new Set<string>());
@@ -302,6 +275,10 @@
 	});
 	const filtering = $derived(Object.values(filterParams(filter)).some((v) => v !== null));
 	const overview = $derived(!!onShowNetwork && !filtering);
+	/** The heads to come: per soort in the overview, as they stay once the rows are in. */
+	const pendingHeads = $derived(
+		overview ? previewPerKind(verbonden.preview ?? []) : (verbonden.preview ?? [])
+	);
 	/** A soort opened in place with its rows, from "Alle N" or a circle of the network; again
 	 *  "Alle N" (Minder) closes it. */
 	/** The groups whose rows a soort shows: the laws hold several soorten (T11). */
@@ -359,7 +336,32 @@
 		);
 		return () => ac.abort();
 	});
-	const parts = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
+	const partsApi = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
+	// The judgments that cite a judgment have no facet of the API: the instanties are counted
+	// from the rows that are in, "N van M" while there are more (UX-toets C10).
+	const tally = $derived.by(() => {
+		if (selection.collection !== 'judgments') return null;
+		const k = kinds.find((x) => x.id === 'judgments');
+		if (!k || k.rows.length === 0) return null;
+		const facet = new Map<string, number>();
+		for (const r of k.rows) {
+			const tier = typeof r.props?.tier === 'string' ? r.props.tier : '';
+			facet.set(tier, (facet.get(tier) ?? 0) + 1);
+		}
+		const tierSplit = tierParts(
+			[...facet].map(([value, count]) => ({ value, count })),
+			k.rows.length
+		);
+		// One instantie is no strook, and "alle" of a part would not be true.
+		return tierSplit.length > 1 ? { parts: tierSplit, of: Math.max(k.count, k.rows.length) } : null;
+	});
+	const parts = $derived(tally ? tally.parts : partsApi);
+	/** How many of the soort's judgments the strook counts, where not all. */
+	const tiersCounted = $derived(
+		tally && tally.of > tally.parts.reduce((n, p) => n + p.count, 0)
+			? { counted: tally.parts.reduce((n, p) => n + p.count, 0), of: tally.of }
+			: null
+	);
 	/** The bar per instantie is asked and not in: its room is held (UX-toets T9b, A202). */
 	const tiersPending = $derived.by(() => {
 		const props = selection.raw?.props ?? {};
@@ -381,17 +383,37 @@
 					count: k.count,
 					rows: k.rows,
 					capped: k.partial,
-					parts: k.id === 'judgments' ? parts : null
+					parts: k.id === 'judgments' && !tiersCounted ? parts : null
 				}))
 			: []
 	);
 	const centerName = $derived(networkName ?? selection.label ?? '');
+	/** An article is drawn in the omhulling of its law, with the law's short name in the pil. */
+	const homeLaw = $derived(
+		selection.drawClass === 'article'
+			? (textOf(selection.raw?.props?.['instrument_abbreviation']) ??
+					bwCode(lawIdOf(selection.raw?.props)))
+			: null
+	);
 	// On a phone fewer bronnen stand on their own: past a dozen a soort is one circle with its
 	// count, so no names lie over each other in the narrow drawing (A208e).
-	const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
+	let phone = $state(typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches);
+	$effect(() => {
+		if (typeof matchMedia !== 'function') return;
+		const query = matchMedia('(max-width: 768px)');
+		const update = () => (phone = query.matches);
+		update();
+		query.addEventListener('change', update);
+		return () => query.removeEventListener('change', update);
+	});
 	const sketched = $derived(
 		showNetwork
-			? drawSketch(sketchGroups, centerName, phone ? PHONE_SKETCH_LIMIT : undefined)
+			? drawSketch(
+					sketchGroups,
+					centerName,
+					phone ? PHONE_SKETCH_LIMIT : undefined,
+					selection.drawClass
+				)
 			: null
 	);
 	/** The bron on its own opened under the drawing. */
@@ -483,10 +505,7 @@
 		     not move when it comes (UX-toets T9, A190). -->
 		{#if !empty}
 			<span class="head__count"
-				>{!(
-					verbonden.groups.length > 0 ||
-					(!verbonden.loading && !verbonden.failed && verbonden.id)
-				)
+				>{!settled
 					? ''
 					: overview
 						? // The sum of the soorten shown under it, so the head and the soorten agree (R3-L
@@ -515,6 +534,7 @@
 			<NetworkSketch
 				sketch={sketched}
 				name={centerName}
+				home={homeLaw}
 				open={schetsOpen?.id ?? null}
 				onSingle={(id) => (schetsId = schetsId === id ? null : id)}
 				onGroup={openKind}
@@ -533,8 +553,10 @@
 			<KindSummary
 				{kinds}
 				{selection}
+				telt={settled}
 				tiers={parts}
 				{tiersPending}
+				{tiersCounted}
 				open={openKinds}
 				onOpen={(id) => openKind(id, true)}
 				{kindTools}
@@ -557,13 +579,13 @@
 			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
 			<!-- Each group in its place, with blank rows as many as it will show (#1): what
 			     comes fills them in, and nothing below moves. -->
-			{#each verbonden.preview?.length ? verbonden.preview : [null] as p, i (p?.id ?? i)}
-				{#if p?.section && p.section !== verbonden.preview?.[i - 1]?.section}
+			{#each pendingHeads.length ? pendingHeads : [null] as p, i (p?.id ?? i)}
+				{#if p?.section && p.section !== pendingHeads[i - 1]?.section}
 					<h3 class="section">{p.section}</h3>
 				{/if}
 				<PendingGroup group={p} collection={selection.collection} />
 			{/each}
-			<p class="sr-only" role="status">Verbindingen laden</p>
+			<SlowLoad label="Verbindingen laden" />
 		{/if}
 
 		{#each overview ? [] : shown as g, i (g.id)}
@@ -628,7 +650,7 @@
 							{onFilter}
 						/>
 					{/if}
-					<ul class="rows">
+					<ul class="rows" class:is-herladen={wachtSet.has(g.id)} aria-busy={wachtSet.has(g.id)}>
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
 							<VerbondenRow
 								{row}
@@ -717,7 +739,7 @@
 
 <style>
 	.verbonden {
-		scroll-margin-top: var(--topbar-h);
+		scroll-margin-top: var(--balk-h);
 		display: flex;
 		flex-direction: column;
 		height: 100%;
@@ -840,6 +862,11 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+	/* The rows of the former choice stand, quiet, until the new ones are in. */
+	.rows.is-herladen {
+		opacity: 0.5;
+		transition: opacity 0.15s;
 	}
 	/* The counts of the line, a comma between them. */
 	.ook > span + span::before {

@@ -7,7 +7,10 @@
 import { refId } from '$lib/bron/href';
 import type { BronRef } from '$lib/bron/ref';
 import { vormVanBron } from '$lib/bron/vormen';
-import type { Collection } from '$lib/vocabulary';
+import { drawClassOf, type DrawClass } from '$lib/graph/types';
+import { plural } from '$lib/text/words';
+import { formatCount } from '$lib/text/getal';
+import { bronPlural, type Collection, type Relation } from '$lib/vocabulary';
 import type { TierCount } from './tiers';
 import type { Row } from './rows';
 
@@ -16,7 +19,7 @@ export const SKETCH_LIMIT = 40;
 /** On a phone, a dozen: the drawing is narrow. */
 export const PHONE_SKETCH_LIMIT = 12;
 /** The longest line of a name: a longer name wraps at its words. */
-export const LABEL_MAX = 24;
+export const LABEL_MAX = 22;
 /** The longest line of a circle's name, under the circle. */
 const CIRCLE_LINE = 14;
 /** The height of a line of a name. */
@@ -27,7 +30,7 @@ const R_SINGLE = 118;
 const R_CLUSTER = 128;
 const MARGIN = 16;
 /** The width of a character of a name at 12 px, to keep a name inside the drawing. */
-const CHAR_WIDTH = 7;
+export const CHAR_WIDTH = 7;
 
 export type SketchGroup = {
 	id: string;
@@ -35,17 +38,26 @@ export type SketchGroup = {
 	name: string;
 	/** The kind of most of its bronnen, for its colour. */
 	collection: Collection | null;
-	/** The soort that has a colour of its own besides its collection's (the regulations). */
+	/** The kind that has a colour of its own besides its collection's (the regulations). */
 	hue?: string | null;
 	count: number;
 	rows: Row[];
 	/** The API cut the group off: its rows are not all there is, so it stands as one. */
 	capped?: boolean;
 	/** Its parts as the API counts them (instanties), else none. */
-	parts?: readonly TierCount[] | null;
+	parts?: readonly Pick<TierCount, 'tier' | 'label' | 'count'>[] | null;
 };
 
-type Single = {
+/** How a line of the drawing runs: its relation, whom it comes from, and to whom it points. */
+export type SketchLine = {
+	relation: Relation | null;
+	/** `inbound`: the other bron names the one in the middle; `outbound`: the other way. */
+	direction: 'inbound' | 'outbound' | null;
+	/** The kind of the bron the line comes from: a citation by an article is structural. */
+	source: DrawClass;
+};
+
+type Single = SketchLine & {
 	id: string;
 	ref: BronRef;
 	title: string;
@@ -65,7 +77,7 @@ type Single = {
 	hit: number;
 };
 
-type Circle = {
+type Circle = SketchLine & {
 	id: string;
 	/** The group of Verbonden it stands for. */
 	group: string;
@@ -99,8 +111,8 @@ export type Sketch = {
 const radius = (count: number): number =>
 	Math.min(32, Math.max(14, 8 + 6 * Math.log10(Math.max(count, 1))));
 
-/** The width of the line to a group: thicker with more bronnen behind it. */
-export const clusterLine = (count: number): number => 1.5 + 0.4 * Math.log10(Math.max(count, 1));
+/** The width of a line in the drawing: 0.8 of the canvas's (Netwerkschets, Maten). */
+export const SKETCH_LINE = 0.8;
 
 /** `n` angles spread over [from, to] (degrees), at the middle where there is one. */
 function angles(n: number, from: number, to: number): number[] {
@@ -120,13 +132,13 @@ export function divide(
 	limit = SKETCH_LIMIT
 ): {
 	singles: { row: Row; hue: string | null }[];
-	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly'>[];
+	clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'source'>[];
 } {
 	const withCount = groups.filter((g) => g.count > 0);
 	const smallestFirst = [...withCount].sort((a, b) => a.count - b.count);
 	const singles: { row: Row; hue: string | null }[] = [];
 	const seen = new Set<string>();
-	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly'>[] = [];
+	const clusters: Omit<Circle, 'x' | 'y' | 'r' | 'lines' | 'lx' | 'ly' | 'source'>[] = [];
 	let room = limit;
 	smallestFirst.forEach((g, i) => {
 		const toGo = smallestFirst.length - 1 - i;
@@ -144,8 +156,16 @@ export function divide(
 		const own = g.parts?.length
 			? g.parts.map((d) => ({ id: `${g.id}:${d.tier ?? 'other'}`, label: d.label, count: d.count }))
 			: [{ id: g.id, label: g.name, count: g.count }];
+		const line = g.rows.find((r) => r.relation);
 		for (const p of own)
-			clusters.push({ ...p, group: g.id, collection: g.collection, hue: g.hue ?? null });
+			clusters.push({
+				...p,
+				group: g.id,
+				collection: g.collection,
+				hue: g.hue ?? null,
+				relation: line?.relation ?? null,
+				direction: line?.direction ?? null
+			});
 		room -= own.length;
 	});
 	// In the order of the panel, not by size.
@@ -154,10 +174,24 @@ export function divide(
 	return { singles, clusters };
 }
 
-/** A name over lines of at most `max` characters, broken at its words; a word longer stays whole. */
+const breek = (word: string, max: number): string[] => {
+	if (word.length <= max) return [word];
+	const parts: string[] = [];
+	let rest = word;
+	while (rest.length > max) {
+		parts.push(`${rest.slice(0, max - 1)}-`);
+		rest = rest.slice(max - 1);
+	}
+	return [...parts, rest];
+};
+
+/** A name over lines of at most `max` characters, broken at its words; a word longer than a line breaks with a hyphen. */
 export function wrap(name: string, max: number): string[] {
 	const lines: string[] = [];
-	for (const word of name.split(/\s+/).filter(Boolean)) {
+	for (const word of name
+		.split(/\s+/)
+		.filter(Boolean)
+		.flatMap((w) => breek(w, max))) {
 		const last = lines.at(-1);
 		if (last != null && last.length + 1 + word.length <= max)
 			lines[lines.length - 1] = `${last} ${word}`;
@@ -189,7 +223,9 @@ const boxOf = (x: number, y: number, lines: string[]): Box => {
 export function sketch(
 	groups: readonly SketchGroup[],
 	centerName = '',
-	limit = SKETCH_LIMIT
+	limit = SKETCH_LIMIT,
+	/** The kind of the bron in the middle, whom an outbound line comes from. */
+	centerClass: DrawClass = 'article'
 ): Sketch {
 	const { singles: single, clusters: clu } = divide(groups, limit);
 	const cx = WIDTH / 2;
@@ -204,7 +240,9 @@ export function sketch(
 		const lines = wrap(b.label, CIRCLE_LINE);
 		const y = R_CLUSTER * Math.sin(a);
 		const r = radius(b.count);
-		return { ...b, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
+		const source =
+			b.direction === 'outbound' ? centerClass : drawClassOf(b.collection ?? 'documents');
+		return { ...b, source, lines, lx: inside(x, lines), ly: y + r + 16, x, y, r };
 	});
 	// A circle's name never lies over another's: under its circle where that is free, else
 	// above it, else none (its title and the list name it).
@@ -252,6 +290,9 @@ export function sketch(
 			shape: vormVanBron(row.ref.collection, row.props, row.ref.key),
 			collection: row.ref.collection,
 			hue,
+			relation: row.relation ?? null,
+			direction: row.direction ?? null,
+			source: row.direction === 'outbound' ? centerClass : drawClassOf(row.ref.collection),
 			x,
 			y,
 			lx: inside(x, lines),
@@ -307,4 +348,24 @@ export function sketch(
 function rank(i: number, n: number): number {
 	if (i === 0 || i === n - 1) return -1;
 	return Math.abs(i - (n - 1) / 2);
+}
+
+/**
+ * The one line under the drawing that counts what is drawn: `7 bronnen, 1 groep van 38 uitspraken`.
+ * Groups of one kind say what they hold; groups of several say `bronnen`.
+ */
+export function drawnCount(s: Pick<Sketch, 'singles' | 'clusters' | 'inClusters'>): string {
+	const parts: string[] = [];
+	const n = s.singles.length;
+	if (n > 0) parts.push(`${formatCount(n)} ${plural(n, 'bron', 'bronnen')}`);
+	const g = s.clusters.length;
+	if (g > 0) {
+		const kinds = new Set(s.clusters.map((c) => c.collection));
+		const kind = kinds.size === 1 && s.clusters[0].collection;
+		const noun = kind ? bronPlural(kind).toLowerCase() : 'bronnen';
+		parts.push(
+			`${formatCount(g)} ${plural(g, 'groep', 'groepen')} van ${formatCount(s.inClusters)} ${noun}`
+		);
+	}
+	return parts.join(', ');
 }

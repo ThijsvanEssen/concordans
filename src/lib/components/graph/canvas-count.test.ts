@@ -23,7 +23,7 @@ const count = (drawn: string[]) =>
 		hiddenKinds: new Set(),
 		rechter: null,
 		verborgen: new Map([['dossier', 'dossier' as const]]),
-		hiddenRelations: new Set()
+		hiddenLines: new Set()
 	});
 
 describe('countCanvas', () => {
@@ -47,5 +47,44 @@ describe('sameIds', () => {
 		expect(sameIds(['a', 'b'], ['b', 'a'])).toBe(true);
 		expect(sameIds(['a', 'b'], ['a', 'c'])).toBe(false);
 		expect(sameIds(['a'], ['a', 'b'])).toBe(false);
+	});
+});
+
+describe('countCanvas, the period', () => {
+	it('counts per kind what stands inside the years, and every bron without a date', () => {
+		const graph = new Graph();
+		graph.addNode('a', { filterGroup: 'uitspraken', date: '2012-05-01' });
+		graph.addNode('b', { filterGroup: 'uitspraken', date: '2020-05-01' });
+		graph.addNode('c', { filterGroup: 'artikelen' });
+		const { counts } = countCanvas({
+			graph,
+			drawn: new Set(['a', 'b', 'c']),
+			selectionId: null,
+			hiddenKinds: new Set(),
+			rechter: null,
+			period: { from: '2011-01-01', to: '2016-12-31' },
+			verborgen: new Map(),
+			hiddenLines: new Set()
+		});
+		expect(counts.kinds).toEqual({ uitspraken: 1, artikelen: 1 });
+	});
+	it('counts of a group the members inside the years, as the strip does', () => {
+		const graph = new Graph();
+		graph.addNode('g', {
+			filterGroup: 'stukken',
+			members: 4,
+			memberDates: ['2012-05-01', '2020-05-01', '2013-01-01', null]
+		});
+		const { counts } = countCanvas({
+			graph,
+			drawn: new Set(['g']),
+			selectionId: null,
+			hiddenKinds: new Set(),
+			rechter: null,
+			period: { from: '2011-01-01', to: '2016-12-31' },
+			verborgen: new Map(),
+			hiddenLines: new Set()
+		});
+		expect(counts.kinds).toEqual({ stukken: 3 });
 	});
 });

@@ -17,8 +17,8 @@ describe('the depth', () => {
 		['diepte=1', 1],
 		['diepte=3', 3],
 		['diepte=9', 3],
-		['diepte=-2', 1],
-		['diepte=0', 2],
+		['diepte=-2', 0],
+		['diepte=0', 0],
 		['diepte=x', 2]
 	])('?%s gives %s', (query, depth) => {
 		expect(explicitDepth(q(query))).toBe(depth);
@@ -35,9 +35,9 @@ describe('the depth', () => {
 });
 
 describe('the params of a part of the state', () => {
-	it('keeps the netwerk to its own three params', () => {
+	it('keeps the netwerk to its own params, and reads an old ?tussen without it', () => {
 		expect(netwerkQuery(q('focus=a/b&netwerk=members/m1,members/m2&tussen=0&lid=2'))).toBe(
-			'netwerk=members%2Fm1%2Cmembers%2Fm2&tussen=0'
+			'netwerk=members%2Fm1%2Cmembers%2Fm2'
 		);
 		expect(netwerkQuery(q('focus=a/b'))).toBe('');
 	});

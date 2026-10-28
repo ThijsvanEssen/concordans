@@ -10,6 +10,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { focusFirstItem } from '$lib/actions/menu';
 	import { download, safeFileName } from '$lib/verbonden/export';
@@ -142,7 +143,6 @@
 		);
 	const focusAdd = () => afterTick(() => document.getElementById(`erbij-${anchor}`)?.focus());
 	/** The field takes the whole name on opening, to type over it. */
-	const selectAll = (field: HTMLInputElement) => field.select();
 	function confirm() {
 		if (!m) return;
 		if (asking === 'delete') {
@@ -196,7 +196,7 @@
 				`${fileBase}.csv`,
 				csv(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde, vandaag())
 			)
-		)}>Download CSV</button
+		)}>Exporteer CSV</button
 	>
 	<button
 		type="button"
@@ -208,7 +208,7 @@
 				cslJson(b.items, (i) => itemAddress(i, page.url.origin), b.volgorde, vandaag()),
 				'application/json'
 			)
-		)}>Download CSL-JSON</button
+		)}>Exporteer CSL-JSON</button
 	>
 	{#if m}
 		{@const own = m}
@@ -217,7 +217,7 @@
 			role="menuitem"
 			class="tekstmenu__item"
 			onclick={act(close, () => download(mapFileName([own]), mapFile([own]), 'application/json'))}
-			>Download bestand</button
+			>Exporteer bestand</button
 		>
 	{/if}
 	<button
@@ -241,9 +241,9 @@
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}
-			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar</button>
+			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar als kopie</button>
 		{/if}
-		<!-- An empty Losse markeringen has nothing to take along, to empty or to delete. -->
+		<!-- An empty Mijn markeringen has nothing to take along, to empty or to delete. -->
 		{#if b.items.length || !m || !kaart.isDefault(m)}
 			<TekstMenu rechts label="Meer bij {b.naam}" tekst="Meer" onClose={() => (choosing = false)}>
 				{#snippet inhoud(close)}
@@ -282,7 +282,7 @@
 										type="button"
 										role="menuitem"
 										class="tekstmenu__item"
-										onclick={act(close, () => (asking = 'delete'))}>Bundel verwijderen</button
+										onclick={act(close, () => (asking = 'delete'))}>Bundel wissen</button
 									>
 								{/if}
 							</div>
@@ -329,12 +329,11 @@
 				focusHead();
 			}}
 		>
-			<!-- svelte-ignore a11y_autofocus -->
-			<input
+			<Tekstveld
 				name="naam"
-				autofocus
-				use:selectAll
-				aria-label="Naam van de bundel"
+				focus
+				selectAll
+				label="Naam van de bundel"
 				value={own.naam}
 				onblur={(e) => {
 					kaart.hernoem(own.id, e.currentTarget.value);
@@ -353,13 +352,9 @@
 	{/if}
 	{#if asking}
 		<p class="vraag">
-			<span>{b.naam} {asking === 'delete' ? 'verwijderen' : 'wissen'}?</span>
-			<button type="button" class="btn" onclick={confirm}
-				>{asking === 'delete' ? 'Verwijderen' : 'Wissen'}</button
-			>
-			<TekstLink onclick={() => (asking = null)}
-				>{asking === 'delete' ? 'Niet verwijderen' : 'Niet wissen'}</TekstLink
-			>
+			<span>{b.naam} wissen?</span>
+			<button type="button" class="btn" onclick={confirm}>Wissen</button>
+			<TekstLink onclick={() => (asking = null)}>Niet wissen</TekstLink>
 		</p>
 	{/if}
 	{#if shared?.skipped}
@@ -370,11 +365,12 @@
 		<Aantekening
 			tekst={own.notitie}
 			bij={own.naam}
-			placeholder="Onderzoeksvraag of aantekening"
+			bundel={own.naam}
+			field
 			onBewaar={(t) => kaart.mapNotitie(t, own.id)}
 		/>
 	{:else}
-		<Aantekening tekst={b.notitie} bij={b.naam} />
+		<Aantekening tekst={b.notitie} bij={b.naam} bundel={b.naam} />
 	{/if}
 	{#if m}<p class="papier">Gewijzigd {korteDatum(vandaag(new Date(m.gewijzigd)))}</p>{/if}
 	<div class="werkregel">
@@ -445,7 +441,10 @@
      list column. -->
 <article class="bundel blad__indeling" id={anchor}>
 	<header class="blad__kop">
-		<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
+		<div class="kopstuk">
+			{#if !m}<span class="kenmerk">Gedeelde bundel, via een link</span>{/if}
+			<h1 class="blad__titel" tabindex="-1">{b.naam}</h1>
+		</div>
 		{@render actions()}
 	</header>
 	<!-- The name, the question and the working line over the groups; the groups of the bundel
@@ -454,7 +453,6 @@
 	<div class="voor blad__lijst">{@render voor()}</div>
 	{#if b.volgorde === 'groep' && groups.length > 1}
 		<Inhoudsopgave
-			label="Groepen van {b.naam}"
 			items={groups.map((g) => ({ label: g.groep, id: groupAnchor(g.sleutel) }))}
 			zonderAdres={!m}
 		/>
@@ -493,19 +491,24 @@
 	.leeg {
 		margin: 0;
 	}
-	.hernoem {
-		margin: 0;
+	.kopstuk {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-1);
+		min-width: 0;
 	}
-	.hernoem input {
-		box-sizing: border-box;
-		width: 100%;
-		max-width: 480px;
-		padding: var(--s-1) var(--s-2);
+	/* What a shared bundel is, over its name. */
+	.kenmerk {
+		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 600;
+		border-radius: var(--r-rond);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.hernoem {
+		max-width: 480px;
+		margin: 0;
 	}
 	.vraag {
 		display: flex;

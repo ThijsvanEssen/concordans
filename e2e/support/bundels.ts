@@ -7,21 +7,21 @@ import { expect } from './test';
 export const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 export const JUDGMENT = '/uitspraken/ECLI:NL:HR:2019:2006';
 
-/** Bewaar on the article 6:162 BW: into Losse markeringen. */
+/** Bewaar on the article 6:162 BW: into Mijn markeringen. */
 export async function keepArticle(page: Page) {
 	await page.goto(ARTICLE);
 	await page.getByRole('button', { name: 'Bewaar', exact: true }).click();
-	await expect(page.getByRole('button', { name: 'Bewaard', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: /^Bewaard/ })).toBeVisible();
 }
 
 /** Lid 2 of 6:162 BW and r.o. 5.3.2 of Urgenda, each through its own menu. */
 export async function keepPlaces(page: Page) {
 	await page.goto(ARTICLE);
 	await page.getByRole('button', { name: 'art. 6:162 lid 2 BW: citeren, bewaren' }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar in Losse markeringen' }).click();
+	await page.getByRole('menuitem', { name: 'Bewaar in Mijn markeringen' }).click();
 	await page.goto(JUDGMENT);
 	await page.getByRole('button', { name: 'Overweging 5.3.2: citeren, bewaren' }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar in Losse markeringen' }).click();
+	await page.getByRole('menuitem', { name: 'Bewaar in Mijn markeringen' }).click();
 }
 
 /** What the page puts on the clipboard, read back by the test (headless has no clipboard). */

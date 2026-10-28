@@ -41,6 +41,18 @@
 		color: inherit;
 		text-decoration: none;
 	}
+	/* A finger's target reaching down only, to the title it stands over: the breadcrumb above
+	   keeps its own (.raakvlak) and the two never overlap. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.soort {
+			position: relative;
+		}
+		.soort::after {
+			content: '';
+			position: absolute;
+			inset: 0 calc(-1 * var(--s-1)) calc(-1 * (var(--veld-h-raak) - 100%)) calc(-1 * var(--s-1));
+		}
+	}
 	.soort:hover {
 		color: var(--ink);
 		text-decoration: underline;

@@ -3,7 +3,8 @@ import {
 	CLUSTER_MAX_LOOSE,
 	clusterLabel,
 	clustersOf,
-	clusterZinnen,
+	clusterBinding,
+	clusterHeading,
 	TUSSEN_MAX_LOOSE,
 	tussenClustersOf
 } from './cluster';
@@ -54,27 +55,46 @@ describe('clustersOf', () => {
 		).toEqual([]);
 	});
 
+	it('folds uitspraken that also cite an article beside the focus (BH2815, N4)', () => {
+		// 137 uitspraken cite HR BH2815 and most of them an article the focus cites too.
+		const js = judgments(137);
+		const art = { id: 'articles/6_162', collection: 'articles' as const };
+		const edges = [
+			...citing(js),
+			{ source: focus, target: art.id, relation: 'REFERS_TO' },
+			...js.slice(0, 126).map((j) => ({ source: j.id, target: art.id, relation: 'REFERS_TO' }))
+		];
+		const [c, ...rest] = clustersOf([...nodes(137), art], edges, focus, new Set(), new Set());
+		expect(rest).toEqual([]);
+		expect(clusterLabel(c)).toBe('137 uitspraken');
+		expect(c.alsoTied).toBe(true);
+		expect(clusterBinding(c)).toBeNull();
+	});
+
 	it('makes no cluster without a focus', () => {
 		const js = judgments(50);
 		expect(clustersOf(nodes(50), citing(js), null, new Set(), new Set())).toEqual([]);
 	});
 });
 
-describe('clusterZinnen', () => {
-	const c = { members: Array.from({ length: 172 }, (_, i) => `j${i}`), neighbours: 174 };
+describe('clusterBinding', () => {
+	it('says no more than a label, and only for a cluster between several bronnen', () => {
+		expect(clusterBinding({})).toBeNull();
+		expect(clusterBinding({ ends: [] }, ['Gemw', 'BW6'])).toBe('Verbonden met Gemw en BW6');
+		expect(clusterBinding({ ends: [] })).toBe('Verbonden met dezelfde bronnen');
+	});
+});
 
-	it('explains the count against the loose ones and the total of Verbonden (art. 6:162)', () => {
-		expect(clusterZinnen(c, { label: 'Uitspraken die dit artikel aanhalen', total: 250 })).toEqual([
-			'Alleen met deze bron verbonden.',
-			'2 andere staan los: ook met een andere bron verbonden.',
-			'In het netwerk: 174 van de 250 uitspraken die dit artikel aanhalen.'
-		]);
+describe('clusterHeading', () => {
+	const c = { collection: 'decisions' as const, members: Array.from({ length: 200 }, String) };
+
+	it('names the whole where there are more than it holds (N2: VVD)', () => {
+		expect(clusterHeading(c, 63600)).toBe('200 van 63.600 stemmingen');
 	});
 
-	it('says no more where the network holds them all', () => {
-		expect(
-			clusterZinnen({ members: c.members, neighbours: 172 }, { label: 'X', total: 172 })
-		).toEqual(['Alleen met deze bron verbonden.']);
+	it('is its label where it holds them all', () => {
+		expect(clusterHeading(c, 200)).toBe(clusterLabel(c));
+		expect(clusterHeading(c, null)).toBe(clusterLabel(c));
 	});
 });
 
@@ -116,8 +136,8 @@ describe('tussenClustersOf', () => {
 
 	it('names the chosen bronnen on its card', () => {
 		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
-		expect(clusterZinnen(c, null, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toEqual([
-			'Elk alleen verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015.'
-		]);
+		expect(clusterBinding(c, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toBe(
+			'Verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015'
+		);
 	});
 });

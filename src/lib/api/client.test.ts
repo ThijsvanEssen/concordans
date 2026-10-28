@@ -10,7 +10,9 @@ import {
 	slowApi,
 	unwrap
 } from './client';
-import { getNodeGraph, NODE_BUCKET } from './nodes';
+import { getNodeGraph, getNodeNeighborhood, NODE_BUCKET } from './nodes';
+import { getFactionDossiers } from './verbonden';
+import { getFeedSummary } from './feed';
 
 describe('api timeouts', () => {
 	afterEach(() => vi.restoreAllMocks());
@@ -59,6 +61,13 @@ describe('api timeouts', () => {
 		expect(await timeoutsOf(node({ limit: 2 }))).toEqual([SLOW_TIMEOUT_MS]);
 		expect(await timeoutsOf(node({}))).toEqual([SLOW_TIMEOUT_MS]);
 		expect(await timeoutsOf(node({ limit: 1, wait: 'short' }))).toEqual([TIMEOUT_MS]);
+	});
+
+	it('lets the cold calls (neighbourhood, fractie dossiers, Actueel on the start page) wait 30 s (N3)', async () => {
+		const neighborhood = () => getNodeNeighborhood('factions', 'vvd', { depth: 1, cap: 150 });
+		expect(await timeoutsOf(neighborhood)).toEqual([SLOW_TIMEOUT_MS]);
+		expect(await timeoutsOf(() => getFactionDossiers('vvd-koud', 100))).toEqual([SLOW_TIMEOUT_MS]);
+		expect(await timeoutsOf(() => getFeedSummary({ days: 7 }))).toEqual([SLOW_TIMEOUT_MS]);
 	});
 
 	it('tells a timeout from an abort', () => {

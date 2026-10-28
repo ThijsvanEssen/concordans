@@ -1,22 +1,31 @@
+import { SOURCES } from '$lib/nav/sources';
 import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
 
-// The index in four groups: the law and the courts; how the Kamer deals with a subject;
-// who does it in the Kamer; who does it in the government. A category is named as the bron
+// The index in the five rubrieken of the Topbalk (nav/sources.ts), in their order and under their
+// names: Wetten, Rechtspraak, Kamerstukken, Parlement, Regering. A category is named as the bron
 // is everywhere else (`bronPlural`), and says in one sentence what it holds.
 //
 // Bewindspersonen are no collection of their own: they are `members` who held a post in a
 // cabinet. Their category has its own key and stands for `members` wherever a bron is meant.
 
-type Group = { label: string; keys: readonly (Collection | 'ministers')[] };
+const INDEX_GROUPS = SOURCES.map((s) => ({
+	label: s.label,
+	keys: s.lists as readonly IndexCategory[]
+}));
 
-const INDEX_GROUPS = [
-	{ label: 'Recht', keys: ['instruments', 'judgments'] },
-	{ label: 'Parlementaire behandeling', keys: ['dossiers', 'decisions', 'documents'] },
-	{ label: 'Parlement', keys: ['members', 'factions', 'committees'] },
-	{ label: 'Regering', keys: ['cabinets', 'ministries', 'ministers', 'commitments'] }
-] as const satisfies readonly Group[];
-
-export type IndexCategory = (typeof INDEX_GROUPS)[number]['keys'][number];
+export type IndexCategory =
+	| 'instruments'
+	| 'judgments'
+	| 'dossiers'
+	| 'documents'
+	| 'decisions'
+	| 'commitments'
+	| 'members'
+	| 'factions'
+	| 'committees'
+	| 'cabinets'
+	| 'ministries'
+	| 'ministers';
 
 const INDEX_CATEGORY_KEYS: readonly IndexCategory[] = INDEX_GROUPS.flatMap((g) => g.keys);
 
@@ -67,10 +76,10 @@ const ABOUT: Record<IndexCategory, string> = {
 /** The categories in the order of the tab strip, each with its group. */
 export const INDEX_CATEGORIES = INDEX_GROUPS.flatMap((group) =>
 	group.keys.map((key) => ({
-		key: key as IndexCategory,
+		key,
 		label: categoryLabel(key),
 		group: group.label,
-		about: ABOUT[key as IndexCategory]
+		about: ABOUT[key]
 	}))
 );
 

@@ -29,6 +29,10 @@ const formule = (start: number, lid: string | null, kind: Delegatie['kind'] = 'a
 
 const besluit: Regeling = {
 	instrument: {
+		series_id: null,
+		series_position: null,
+		series_size: null,
+		series_basis: null,
 		celex: null,
 		short_title: null,
 		abbreviation: null,
@@ -131,6 +135,10 @@ describe('delegation formulas', () => {
 describe('the grondslag of a regulation', () => {
 	const wet = (key: string, title: string, basis_kind: 'delegates' | 'mentioned' | null) => ({
 		instrument: {
+			series_id: null,
+			series_position: null,
+			series_size: null,
+			series_basis: null,
 			id: `instruments/${key}`,
 			key,
 			bwb_id: key.toUpperCase(),

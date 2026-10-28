@@ -1,7 +1,8 @@
 // The strip of the werkplek is one list per block (Thijs, 23 Oct: "versimpel dit en trek het
-// recht"): Soort holds per kind its glyph, its name and "N van M" in the one column of counts,
-// "Alle laden" under that count only where the kind is cut off; no block Getoond beside it, no
-// load link for the whole; Relatie counts nothing (a group drawn is one line).
+// recht"): Tonen holds per kind its glyph, its name and "N van M" in the one column of counts,
+// M the link to the list where the kind is cut off, on the row itself (Thijs, 28 Oct); no block
+// Getoond beside it, no load link for the whole; Relatie counts nothing (a group drawn is one
+// line).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -13,17 +14,19 @@ const source = readFileSync(
 const rule = (selector: string) =>
 	source.match(new RegExp(`(?:^|\\n)\\s*${selector.replace(/[.]/g, '\\.')} \\{([^}]*)\\}`))?.[1] ??
 	'';
-const relatie = source.slice(source.indexOf('Relatie</h3>'), source.indexOf('{@render periode'));
+const relatie = source.slice(source.indexOf('title="Relatie"'), source.indexOf('{@render periode'));
 
 describe('the strip of the werkplek', () => {
 	it('has no block Getoond and no load link for the whole', () => {
 		expect(source).not.toMatch(/Getoond|onAllesLaden/);
 	});
-	it('puts "Alle laden" under the count, in its column', () => {
-		expect(rule('.laad')).toMatch(/justify-content:\s*flex-end;/);
+	it('links the whole of a kind cut off on its own row, to a list, never loading it as nodes', () => {
+		expect(rule('.rij')).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
+		expect(source).toMatch(/href=\{lijstHref\(bronnen\)\}/);
+		expect(source).not.toMatch(/onLaadSoort|class="laad"/);
 	});
-	it('counts nothing in Relatie', () => {
-		expect(relatie).not.toMatch(/count=/);
+	it('counts the lines of each soort in Relatie, as Tonen counts its kinds', () => {
+		expect(relatie).toMatch(/count=\{canvasCounts\.lines/);
 	});
 });
 
@@ -39,17 +42,17 @@ describe('an option of a filter', () => {
 	});
 	it('centres the box, the mark and the count on the first line of the label', () => {
 		for (const part of ['.voor', '.aantal'])
-			expect(optie).toMatch(new RegExp(`\\n\\t\\${part} \\{[^}]*height: var\\(--regel\\);`));
+			expect(optie).toMatch(new RegExp(`\\n\\t\\${part} \\{[^}]*height: var\\(--optie-h\\);`));
 		expect(optie).toMatch(
-			/\.vinkje\) \{\s*margin-top: calc\(\(var\(--regel\) - var\(--vink\)\) \/ 2\);/
+			/\.vinkje\) \{\s*margin-top: calc\(\(var\(--optie-h\) - var\(--vink\)\) \/ 2\);/
 		);
 	});
 });
 
 describe('Relatie', () => {
-	it('names a line from one definition in every weergave (lineName), no map of its own', () => {
+	it('names a line by its lijnsoort in every weergave, no map of its own', () => {
 		const page = readFileSync(join(process.cwd(), 'src/routes/explore/+page.svelte'), 'utf8');
-		expect(source).toMatch(/lineName\(relation, canvasCounts\.refersFrom\)/);
+		expect(source).toMatch(/LINE_KIND_LABEL\[l\]/);
 		expect(source).not.toMatch(/OWN_WORDS|relationLabels/);
 		expect(page).not.toMatch(/RELATION_WORDS/);
 	});

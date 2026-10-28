@@ -154,7 +154,6 @@ describe('the first paint of an article', () => {
 			'mobile-tabs K-page',
 			'col col--nav',
 			'col col--reader',
-			'resize-handle resize-handle--panel',
 			'col col--panel'
 		]);
 		expect(read.querySelector('.col--reader .reader-frame.K-frame p')!.textContent).toBe('tekst');
@@ -162,7 +161,7 @@ describe('the first paint of an article', () => {
 		// tabs Tekst and Verbonden stand (A197-a).
 		const bare = new DOMParser().parseFromString(frame('', K, false), 'text/html');
 		expect(bare.querySelector('.explore-read--with-nav, .mobile-tab--toc')).toBeNull();
-		expect(bare.querySelectorAll('.lees-tabs [role="tab"]')).toHaveLength(2);
+		expect(bare.querySelectorAll('.lees-tabs [role="group"] button')).toHaveLength(2);
 		expect(bare.querySelector<HTMLElement>('.col--nav')!.hidden).toBe(true);
 	});
 

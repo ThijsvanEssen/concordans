@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { joinAnd, plural } from '$lib/text/words';
+	import { joinAnd } from '$lib/text/words';
 	// The Kruiswoord of a topic (concept ux-voorstel/1f, ronde 6): the months (or weeks) as
 	// rows, a year folded under its totals; the columns under their heading (Stukken,
 	// Stemmingen, a fractie), the column's total at the top. Every number with a count is a
@@ -8,6 +8,7 @@
 	// before this one has a corner in ink. On a phone the grid pans, its labels stay.
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import { failureText } from '$lib/components/ui/LoadState.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import { maandNaam } from '$lib/text/datum';
 	import { jaarVanVak, type Keuze, type Kolom, type Rij, type Vak } from './kruiswoord';
@@ -91,13 +92,12 @@
 		}, [])
 	);
 	const vakkenVan = (j: string) => vakken.filter((v) => jaarVanVak(v) === j);
-	/** "Moties en brieven konden niet worden geteld.", in the order of the columns. */
+	/** The columns that broke off, in the order of the columns: "Moties en brieven" (failureText says it). */
 	const failedLine = $derived.by(() => {
 		const labels = kolommen
 			.filter((c) => failed.has(c.k) && !uit.has(c.k))
 			.map((c, i) => (i ? c.label.toLowerCase() : c.label));
-		if (!labels.length) return null;
-		return `${joinAnd(labels)} ${plural(labels.length, 'kon', 'konden')} niet worden geteld.`;
+		return labels.length ? { what: joinAnd(labels), many: labels.length > 1 } : null;
 	});
 </script>
 
@@ -230,7 +230,7 @@
 	</div>
 </div>
 {#if failedLine}
-	<p class="stil" role="alert">{failedLine}</p>
+	<p class="stil" role="alert">{failureText(failedLine.what, null, failedLine.many)}</p>
 {/if}
 {#if heeftNieuw && nieuwSinds}
 	<p class="legenda">

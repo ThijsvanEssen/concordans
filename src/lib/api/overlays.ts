@@ -1,7 +1,7 @@
+import type { Schema } from './types';
 import { api, unwrap } from './client';
-import { inPool } from './pool';
 
-/** Node id to a count: open proposed mutations (in flux) or recent incoming edges (heat). */
+/** Node id to a count: the open proposed mutations of a bron (in flux). */
 export type NodeCounts = Map<string, number>;
 
 const toMap = (counts: { [nodeId: string]: number }): NodeCounts => new Map(Object.entries(counts));
@@ -9,55 +9,27 @@ const toMap = (counts: { [nodeId: string]: number }): NodeCounts => new Map(Obje
 export const getInFlux = async (signal?: AbortSignal): Promise<NodeCounts> =>
 	toMap(await unwrap(api.GET('/api/nodes/in-flux', { signal })));
 
-/** The most ids one heat request takes (API 0.79.3). */
-export const HEAT_IDS_MAX = 500;
-/**
- * The most characters of ids in one request: 500 ids are some 15 kB of address, more
- * than a proxy takes in a request line (nginx: 8 kB). Encoded, a slash is three.
- */
-export const HEAT_IDS_CHARS = 6000;
+export type InFluxDossier = Schema<'InFluxDossierDTO'>;
 
-/** The ids in portions a request takes: at most HEAT_IDS_MAX, at most HEAT_IDS_CHARS. */
-export function heatPortions(ids: readonly string[]): string[][] {
-	const portions: string[][] = [];
-	let portion: string[] = [];
-	let chars = 0;
-	for (const id of ids) {
-		const size = encodeURIComponent(id).length + 3;
-		if (portion.length && (portion.length >= HEAT_IDS_MAX || chars + size > HEAT_IDS_CHARS)) {
-			portions.push(portion);
-			portion = [];
-			chars = 0;
-		}
-		portion.push(id);
-		chars += size;
-	}
-	if (portion.length) portions.push(portion);
-	return portions;
-}
+/** At most this many ids in one `/in-flux/dossiers` request. */
+const IN_FLUX_IDS_MAX = 500;
 
-/**
- * The heat of the bronnen `ids`, the ones drawn: in portions (`heatPortions`), two at a time
- * (API 0.79.3).
- * The whole map was about 1 MB on small and every node in production; without ids the
- * API now gives its top 10.000. min_count 2 halves the answer; a count of 1 is barely
- * visible as a halo.
- */
-export async function getHeat(
-	months: number,
+/** Node id to its open dossiers (most open changes first): the lopende voorstellen of a bron. */
+export type NodeDossiers = Map<string, InFluxDossier[]>;
+
+export const getInFluxDossiers = async (
 	ids: readonly string[],
 	signal?: AbortSignal
-): Promise<NodeCounts> {
-	const answers = await inPool(
-		heatPortions(ids),
-		(portion) =>
-			unwrap(
-				api.GET('/api/nodes/heat', {
-					params: { query: { months, min_count: 2, ids: portion.join(',') } },
-					signal
-				})
-			),
-		{ parallel: 2 }
-	);
-	return new Map(answers.flatMap((counts) => [...toMap(counts)]));
-}
+): Promise<NodeDossiers> => {
+	const found: NodeDossiers = new Map();
+	for (let i = 0; i < ids.length; i += IN_FLUX_IDS_MAX) {
+		const answer = await unwrap(
+			api.GET('/api/nodes/in-flux/dossiers', {
+				params: { query: { ids: ids.slice(i, i + IN_FLUX_IDS_MAX).join(',') } },
+				signal
+			})
+		);
+		for (const node of answer.nodes) found.set(node.id, node.dossiers);
+	}
+	return found;
+};

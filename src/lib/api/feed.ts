@@ -1,5 +1,5 @@
 // The feed of the Kamers and the Staatsblad: Actueel, the start page and Onderwerpen.
-import { api, clientFor, unwrap, type Wait } from './client';
+import { api, clientFor, slowApi, unwrap, type Wait } from './client';
 import type { QueryOf } from './types';
 
 /**
@@ -23,9 +23,9 @@ export const getFeed = (
 		})
 	);
 
-/** The days of the feed counted, with the events that stand alone. */
+/** The days of the feed counted, with the events that stand alone; cold it takes seconds. */
 export const getFeedSummary = (query: QueryOf<'/api/feed/summary'>, signal?: AbortSignal) =>
-	unwrap(api.GET('/api/feed/summary', { params: { query }, signal }));
+	unwrap(slowApi.GET('/api/feed/summary', { params: { query }, signal }));
 
 /** The feed counted per period. */
 export const getFeedPeriods = (query: QueryOf<'/api/feed/periods'>, signal?: AbortSignal) =>

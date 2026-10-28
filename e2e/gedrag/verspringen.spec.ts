@@ -3,7 +3,7 @@
 import { expect, test } from '../support/test';
 
 test('Actueel: the filters keep their place while the counts come in', async ({ page, touch }) => {
-	test.skip(touch, 'the filters of a phone wait behind Verfijnen');
+	test.skip(touch, 'the filters of a phone wait behind Filter');
 	let release!: () => void;
 	const held = new Promise<void>((done) => (release = done));
 	// The facets answer last, as they do on a cold start.
@@ -58,7 +58,11 @@ for (const r of READERS) {
 		await page.goto(r.path);
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 		// Verbonden is a tab of its own on a phone (A197-a).
-		await expect(page.getByRole('tab', { name: 'Verbonden' })).toBeVisible();
+		await expect(
+			page
+				.getByRole('group', { name: 'Tekst of Verbonden' })
+				.getByRole('button', { name: 'Verbonden' })
+		).toBeVisible();
 		await page.waitForTimeout(1500);
 		const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
 		expect(cls).toBeLessThanOrEqual(0.05);
@@ -78,4 +82,66 @@ test('the text of an article keeps its place when the peildatum comes', async ({
 	const before = (await text.boundingBox())!.y;
 	await expect(page.getByText('Tekst geldend op')).toBeVisible();
 	expect((await text.boundingBox())!.y).toBe(before);
+});
+
+// The card of a bron on the canvas keeps Lees and Toevoegen where they stood while its text comes
+// in (live toets 27 Oct, B1: they dropped 62 px and a click missed).
+test('the card of a bron keeps its actions in place while the text comes in', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'a phone has the sheet, not the strip');
+	let release!: () => void;
+	const held = new Promise<void>((done) => (release = done));
+	await page.route(/\/api\/articles\//, async (route) => {
+		await held;
+		await route.fallback();
+	});
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	const list = page.locator('.canvas-node-list a');
+	await expect(list.nth(1)).toBeAttached();
+	const eerste = list.filter({ hasText: /^Art\./ }).nth(1);
+	await eerste.focus();
+	await page.keyboard.press('Enter');
+	const card = page.locator('.strook--kaart.is-open');
+	const lees = card.getByRole('link', { name: 'Lees', exact: true });
+	const voeg = card.getByRole('button', { name: /^(Toevoegen|Weghalen)$/ });
+	await expect(lees).toBeVisible();
+	await expect(card.getByRole('status')).toBeVisible();
+	const at = async () => ({
+		lees: (await lees.boundingBox())!.y,
+		voeg: (await voeg.boundingBox())!.y
+	});
+	const before = await at();
+	release();
+	await expect(card.getByRole('status')).toHaveCount(0);
+	expect(await at()).toEqual(before);
+});
+
+// The werkplek opens without a shift (N17c): the strip, the canvas and the cards keep their
+// places while the neighbourhood and the uitspraken that cite the article come in; the layout
+// shift of the whole load at most 0.1 ("good"), on a wide screen and on a phone. What is left is
+// the line that says why a step is off, and the dots of the tijdstrook, which find their places
+// when the uitspraken are in.
+test('the werkplek opens without a shift', async ({ page }) => {
+	await page.route(/\/api\/(nodes|verbonden)\//, async (route) => {
+		await new Promise((done) => setTimeout(done, 1200));
+		await route.fallback();
+	});
+	await page.addInitScript(() => {
+		const w = window as unknown as { __cls: number };
+		w.__cls = 0;
+		new PerformanceObserver((list) => {
+			for (const e of list.getEntries() as (PerformanceEntry & {
+				value: number;
+				hadRecentInput: boolean;
+			})[])
+				if (!e.hadRecentInput) w.__cls += e.value;
+		}).observe({ type: 'layout-shift', buffered: true });
+	});
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	await expect(page.locator('.canvas-wrap')).toBeAttached();
+	await page.waitForTimeout(3000);
+	const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+	expect(cls).toBeLessThanOrEqual(0.1);
 });

@@ -247,7 +247,14 @@ export function previewFromNode(
 				lines: null
 			};
 		case 'articles':
-			return { kicker: kind, title: articleTitle(name, props), date: null, lines: null };
+			// The abbreviation heads it ("Artikel 3.34 Ar"); the law's full title stands under it.
+			return {
+				kicker: kind,
+				title: articleTitle(name, props),
+				date: null,
+				lines: null,
+				extra: textOf(props.instrument_citation_title) ?? null
+			};
 		default:
 			return { kicker: kind, title: name, date: null, lines: null };
 	}

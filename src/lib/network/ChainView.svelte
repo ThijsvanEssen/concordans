@@ -1,6 +1,8 @@
 <script lang="ts">
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { FilterGroup } from '$lib/verbonden/filter';
+	import { sortOf } from '$lib/bron/rubrieken';
+	import type { LineKind } from '$lib/graph/line-kind';
 	import type { Relation } from '$lib/vocabulary';
 	// The weergave Keten (besluit 39, mockup A197-c): the law at the top, the articles it gives
 	// powers in, the regulations under them per layer; a line from each to what it hangs under,
@@ -8,13 +10,27 @@
 	// layer (AMvB, Ministeriële regeling, Beleidsregel as headings). One click marks a bron: its
 	// card stands in the strip at the right.
 	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
+	import { capitalize, plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
-	import { edgeColorFor, lijnDikte } from '$lib/components/graph/nodeSprites';
-	import { EDGE_WEIGHT } from '$lib/graph/types';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import {
+		edgeCapFor,
+		edgeColorFor,
+		edgeDashFor,
+		edgeStyleFor,
+		edgeToneFor,
+		toneColour,
+		lineThickness,
+		arrowLength
+	} from '$lib/components/graph/nodeSprites';
+	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
+	import { hasArrow } from '$lib/graph/line-kind';
+	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
+	import { sectionColour } from '$lib/network/person-layers';
+	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import type { ChainNode, ChainLayer } from '$lib/network/chain';
+	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
 
 	let {
@@ -24,7 +40,7 @@
 		gap = null,
 		scale = 1,
 		hiddenKinds = new Set(),
-		hiddenRelations = new Set(),
+		hiddenLines = new Set(),
 		more = {},
 		amending = 0,
 		failure = null,
@@ -66,7 +82,7 @@
 		scale?: number;
 		/** The kinds and relations the filter of the strip switched off. */
 		hiddenKinds?: ReadonlySet<FilterGroup>;
-		hiddenRelations?: ReadonlySet<Relation>;
+		hiddenLines?: ReadonlySet<LineKind>;
 		/** The decrees that only change other regulations: left out of the layers, counted. */
 		amending?: number;
 		/** What could not be loaded, said with Opnieuw (LoadState). */
@@ -80,29 +96,56 @@
 			// The start's own layer stays; another goes with the kind of what it holds.
 			if (l.id === 'law' || l.nodes.some((n) => n.id === start)) return true;
 			const c = l.nodes[0]?.collection;
-			const kind =
-				l.id === 'article'
-					? 'artikelen'
-					: c === 'judgments'
-						? 'uitspraken'
-						: c === 'members' || c === 'factions' || c === 'committees' || c === 'cabinets'
-							? 'leden'
-							: 'wetten';
+			const kind = l.id === 'article' ? 'artikelen' : c ? sortOf(c, '', null) : 'wetten';
 			return !hiddenKinds.has(kind);
 		})
 	);
-	/** A line given (delegates) is a grondslag, one named a mention: the filter Relatie. */
-	const lineShown = (way: 'delegates' | 'mentioned') =>
-		!hiddenRelations.has(way === 'delegates' ? 'BASED_ON' : 'REFERS_TO');
-
 	let width = $state(760);
-	const ROW = 120;
-	const TOP = 48;
+	/** A layer is 104 px high (Keten, Maten). */
+	const ROW = 104;
+	/** From a layer's label to its bronnen, and the line height of a name. */
+	const DROP = 34;
+	const LINE = 14;
+	/** A sign of 14 px on a rim of paper of 2; the bron of the keten 18 px on a halo of 4,5 and an edge of 2. */
+	const SIGN = 14;
+	const RIM = 2;
+	const FOCUS = 18;
+	const HALO = 4.5;
+	const INK_EDGE = 2;
+	/** Room above the first layer: its label and Alle stand clear of the Deel button at the top right. */
+	const TOP = 64;
+	/** The room a subhead takes before the first article of a wet. */
+	const HEAD = 36;
 	const LEFT = 120;
-	const height = $derived(TOP + shown.length * ROW);
-	/** The room of a node in its layer, for the length of its name's lines. */
+	/**
+	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
+	 * ever lies over the rail under its layer.
+	 */
+	const rowHeights = $derived(
+		shown.map((l) => {
+			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 36);
+		})
+	);
+	/** Where each layer begins. */
+	const tops = $derived(
+		rowHeights.map((_, i) => TOP + rowHeights.slice(0, i).reduce((a, b) => a + b, 0))
+	);
+	const height = $derived(TOP + rowHeights.reduce((a, b) => a + b, 0));
+	/** The room of a node in its layer, for the length of its name's lines: at most 22 characters (Keten). */
 	const charsFor = (n: number) =>
-		Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7));
+		Math.min(22, Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7)));
+	/** About what a character of a name takes, in px. */
+	const CHAR = 6;
+	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
+	const halfOf = (k: ChainNode, n: number) =>
+		Math.ceil(
+			(Math.max(
+				...linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(n)).map((r) => r.length)
+			) *
+				CHAR) /
+				2
+		) + 8;
 	/**
 	 * Where each node stands: its layer's row; across, under what it hangs from (the mean of its
 	 * parents' places), kept apart by a node's room and within the width, so the lines run down
@@ -113,6 +156,14 @@
 		const m = new Map<string, { x: number; y: number }>();
 		const left = LEFT;
 		const right = Math.max(LEFT + 200, width - 24);
+		// A lone bron that a line passes over (the conclusie between the hof and the Hoge Raad) steps
+		// aside, so the line does not run through its name.
+		const rowOf = new Map<string, number>();
+		shown.forEach((l, i) => l.nodes.forEach((k) => rowOf.set(k.id, i)));
+		const bypassed = (i: number) =>
+			shown
+				.slice(i + 1)
+				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
 			const gap = (right - left) / n;
@@ -123,58 +174,221 @@
 					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
 				};
 			});
-			wish.sort((a, b) => a.x - b.x);
+			// The articles of one wet stay together, under a subhead of its own; within it, by place.
+			const rank = (k: ChainNode) => layer.nodes.findIndex((q) => q.home === k.home);
+			wish.sort((a, b) => rank(a.k) - rank(b.k) || a.x - b.x);
 			// Apart by a gap from the left, then back within the right edge.
+			// A wet's articles start after room for its subhead, left of its first sign.
+			const many = new Set(wish.map((w) => w.k.home)).size > 1 && layer.id === 'article';
+			const sep = (j: number) => gap + (many && wish[j].k.home !== wish[j - 1]?.k.home ? HEAD : 0);
 			const xs: number[] = [];
-			wish.forEach((w, j) => xs.push(Math.max(w.x, j ? xs[j - 1] + gap : left + gap / 2)));
+			wish.forEach((w, j) =>
+				xs.push(Math.max(w.x, j ? xs[j - 1] + sep(j) : left + sep(0) / 2 + (many ? HEAD : 0)))
+			);
 			for (let j = xs.length - 1; j >= 0; j--)
-				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - gap);
-			wish.forEach((w, j) => m.set(w.k.id, { x: xs[j], y: TOP + i * ROW + 30 }));
+				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - sep(j + 1));
+			// Half its name and some air, to the side that has room.
+			const room = (layer.nodes[0] ? halfOf(layer.nodes[0], n) : 0) + 48;
+			const aside =
+				n === 1 && layer.id !== 'article' && bypassed(i)
+					? xs[0] + room <= right - 40
+						? room
+						: -room
+					: 0;
+			// A name stays within the drawing, whichever side its node stands on.
+			wish.forEach((w, j) => {
+				const half = halfOf(w.k, n);
+				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, width - half));
+				m.set(w.k.id, { x, y: tops[i] + DROP });
+			});
 		});
 		return m;
 	});
-	const lines = $derived(
-		shown.flatMap((l) =>
+	/**
+	 * Where a layer holds the articles of more than one wet, each wet's abbreviation as a small
+	 * subhead left of its first article (BW 7, UHW).
+	 */
+	const subheads = $derived.by(() => {
+		const out: { id: string; label: string; x: number; y: number }[] = [];
+		const row = shown.findIndex((l) => l.id === 'article');
+		const nodes = row < 0 ? [] : shown[row].nodes;
+		const homes = [...new Set(nodes.map((k) => k.home))];
+		if (homes.length < 2) return out;
+		for (const h of homes) {
+			const first = nodes
+				.filter((k) => k.home === h)
+				.flatMap((k) => place.get(k.id) ?? [])
+				.sort((a, b) => a.x - b.x)[0];
+			const wet = shown.flatMap((l) => l.nodes).find((k) => k.id === h);
+			if (!first || !wet) continue;
+			out.push({
+				id: h ?? '',
+				label: wet.instrument?.abbreviation ?? wet.short,
+				x: first.x - 14,
+				y: first.y + 4
+			});
+		}
+		return out;
+	});
+	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
+	const infoOf = $derived.by(() => {
+		const m = new Map<string, { lines: string[] }>();
+		for (const l of shown)
+			for (const k of l.nodes)
+				m.set(k.id, {
+					lines: linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(l.nodes.length))
+				});
+		return m;
+	});
+	/** Where a line leaves a node below its name, 7 px under the last line. */
+	const under = (id: string) => {
+		const i = infoOf.get(id);
+		return 24 + LINE * ((i?.lines.length ?? 1) - 1) + 7;
+	};
+	/** The words on a line of the keten: a judgment's appeal, its cassatie and its conclusie. */
+	const wordOf = (relation: Relation, layer: string) =>
+		relation === 'APPEAL_OF'
+			? layer === 'Hoge Raad'
+				? 'cassatie'
+				: 'hoger beroep'
+			: relation === 'ADVISES_ON'
+				? 'conclusie'
+				: relation === 'CONTINUES'
+					? 'zet voort'
+					: null;
+	/** The box of each name with its sign: where a line must not run (Keten: no line through a name). */
+	const boxes = $derived.by(() => {
+		const out: { id: string; x0: number; x1: number; y0: number; y1: number }[] = [];
+		for (const l of shown)
+			for (const k of l.nodes) {
+				const p = place.get(k.id);
+				if (!p) continue;
+				const half = halfOf(k, l.nodes.length);
+				const article = k.collection === 'articles';
+				const at = article ? p.x - 6 : p.x - half;
+				out.push({
+					id: k.id,
+					x0: at - 2,
+					x1: at + 2 * half + 2,
+					y0: p.y - 14,
+					y1: p.y + 24 + LINE * ((infoOf.get(k.id)?.lines.length ?? 1) - 1) + 4
+				});
+			}
+		for (const t of subheads)
+			out.push({
+				id: `kop:${t.id}`,
+				x0: t.x - t.label.length * 7,
+				x1: t.x,
+				y0: t.y - 12,
+				y1: t.y + 4
+			});
+		return out;
+	});
+	/**
+	 * The lines (Netwerkcanvas, Lijnen) as a stamboom (tree-lines.ts): from under the name of what a
+	 * node hangs under, one stem down, a tak per layer, a short line to each node; in the style of
+	 * its kind. The arrowhead stands where the Design System gives one, at the parent's end; the
+	 * style of the line is this one place.
+	 */
+	const lines = $derived.by(() => {
+		const rails = tops.map((t) => t - 14.5);
+		const nodes = new Map<string, TreeNode>();
+		const rows = new Map<string, number>();
+		shown.forEach((l, i) =>
+			l.nodes.forEach((k) => {
+				const p = place.get(k.id);
+				if (!p) return;
+				rows.set(k.id, i);
+				nodes.set(k.id, { x: p.x, row: i, top: p.y - 12, bottom: p.y + under(k.id) });
+			})
+		);
+		const edges = shown.flatMap((l) =>
 			l.nodes.flatMap((k) =>
 				k.parents.flatMap((o) => {
-					if (!lineShown(o.way)) return [];
-					const a = place.get(o.id);
-					const b = place.get(k.id);
-					return a && b
-						? [
-								{
-									id: `${o.id}~${k.id}`,
-									a,
-									b,
-									relation: o.relation ?? relationOf(o.way),
-									lit: chosen === k.id || chosen === o.id
-								}
-							]
-						: [];
+					if (hiddenLines.has(parentKind(o)) || !nodes.has(o.id) || !nodes.has(k.id)) return [];
+					const relation = parentRelation(o);
+					// A mention is an Aanhaling, the text of the law itself a grondslag.
+					const from: DrawClass =
+						relation === 'REFERS_TO' || o.way === 'mentioned' ? 'judgment' : 'article';
+					const style = edgeStyleFor(relation, null, from);
+					const lit = chosen === k.id || chosen === o.id;
+					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
+					const head = hasArrow(style) ? headLength(width, arrowLength()) : 0;
+					return [{ relation, from, style, lit, width, head, o, k, label: l.label }];
 				})
 			)
-		)
-	);
+		);
+		const routed = treeLines(
+			nodes,
+			edges.map((e) => ({
+				id: `${e.o.id}~${e.k.id}`,
+				parent: e.o.id,
+				child: e.k.id,
+				kind: `${e.style}|${e.relation}`,
+				lead: e.head
+			})),
+			{ rails, boxes }
+		);
+		const byId = new Map(routed.map((r) => [r.id, r]));
+		return edges.flatMap((e) => {
+			const r = byId.get(`${e.o.id}~${e.k.id}`);
+			if (!r) return [];
+			// The arrowhead at the parent's end, pointing up into its name.
+			const w = (e.head * ARROW_WIDTH) / 2;
+			const head = e.head
+				? `${r.tip.x},${r.tip.y} ${r.tip.x - w},${r.tip.y + e.head} ${r.tip.x + w},${r.tip.y + e.head}`
+				: null;
+			const word = wordOf(e.relation, e.label);
+			return [
+				{
+					id: r.id,
+					parent: r.parent,
+					child: r.child,
+					d: r.d,
+					head,
+					dot: e.style === 'puntenIndiener' ? r.end : null,
+					word,
+					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
+					colour: toneColour(
+						edgeColorFor(e.relation, e.from),
+						edgeToneFor(e.relation, null, e.from)
+					),
+					dash: edgeDashFor(e.style),
+					cap: edgeCapFor(e.style),
+					width: e.width,
+					lit: e.lit
+				}
+			];
+		});
+	});
 	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
 	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
-	const colour = (k: ChainNode) => kindColour(k.collection);
-	const vormOf = (k: ChainNode) =>
-		VORMEN[vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1])];
-	/** A line as the canvas draws its relation: a grondslag (BASED_ON), a mention (REFERS_TO). */
-	function relationOf(way: 'delegates' | 'mentioned') {
-		return way === 'delegates' ? ('BASED_ON' as const) : ('REFERS_TO' as const);
-	}
-	/** A name over at most two lines of `max` characters; a longer one ends in "…", its title
-	 *  and the card name it whole. */
-	const linesOf = (s: string, max = 24) => {
+	// In the keten of a person each layer wears the colour of its rubriek (person-layers.ts).
+	const colour = (k: ChainNode) =>
+		(start?.startsWith('members/') ? sectionColour(k.collection) : null) ??
+		kindColour(k.collection);
+	const vormKey = (k: ChainNode) =>
+		vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1]);
+	const vormOf = (k: ChainNode) => VORMEN[vormKey(k)];
+	/** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
+	const linesOf = (s: string, max = 22) => {
 		const out: string[] = [];
 		for (const w of s.split(/\s+/)) {
 			const last = out[out.length - 1];
 			if (last && (last + ' ' + w).length <= max) out[out.length - 1] = `${last} ${w}`;
 			else out.push(w);
 		}
-		return out.length > 2 ? [out[0], `${out[1]}…`] : out;
+		return out;
 	};
+	/** How a row of the list hangs: its seat or court, else its grondslag and what it names. */
+	const howOf = (k: ChainNode) =>
+		k.how ||
+		capitalize(
+			[k.grondslag ? `grondslag ${k.grondslag}` : null, k.mentions ? `noemt ${k.mentions}` : null]
+				.filter(Boolean)
+				.join(', ')
+		) ||
+		null;
 	const press = (e: KeyboardEvent, act: () => void) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -208,6 +422,7 @@
 </script>
 
 {#snippet row(k: ChainNode)}
+	{@const how = howOf(k)}
 	<li>
 		<button
 			type="button"
@@ -216,23 +431,36 @@
 			aria-pressed={chosen === k.id}
 			onclick={() => onChoose(k)}
 		>
-			<span class="list__name"><i class="mark" style:background={colour(k)}></i>{k.name}</span>
-			{#if k.grondslag || k.mentions}<span class="list__how"
-					>{[
-						k.grondslag ? `grondslag ${k.grondslag}` : null,
-						k.mentions ? `noemt ${k.mentions}` : null
-					]
-						.filter(Boolean)
-						.join(', ')}</span
-				>{/if}
+			<span class="list__name"
+				><span class="mark"><KindGlyph vorm={vormKey(k)} size={12} colour={colour(k)} /></span
+				>{k.name}</span
+			>
+			{#if how}<span class="list__how">{how}</span>{/if}
 		</button>
 	</li>
+{/snippet}
+
+{#snippet stroke(l: (typeof lines)[number])}
+	<path
+		class="line"
+		data-parent={l.parent}
+		data-child={l.child}
+		d={l.d}
+		fill="none"
+		stroke={l.colour}
+		stroke-width={l.width}
+		stroke-dasharray={l.dash}
+		stroke-linecap={l.cap}
+	/>
+	{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
+	{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}
+	{#if l.word}<text class="line-word" x={l.wordAt.x} y={l.wordAt.y}>{l.word}</text>{/if}
 {/snippet}
 
 {#snippet allButton(layer: ChainLayer)}
 	<button
 		type="button"
-		class="btn is-text alle raakvlak-knop"
+		class="btn alle"
 		aria-expanded={open.has(layer.id)}
 		onclick={() => toggle(layer.id)}
 		>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</button
@@ -277,47 +505,34 @@
 		aria-label="Keten"
 	>
 		{#each shown as layer, i (layer.id)}
-			<text class="layer-label" x="24" y={TOP + i * ROW + 4}>{layer.label.toUpperCase()}</text>
+			<text class="layer-label" x="24" y={tops[i] + 4}>{layer.label.toUpperCase()}</text>
 			<line
 				class="rail"
 				x1="20"
 				x2={width - 20}
-				y1={TOP + (i + 1) * ROW - 8}
-				y2={TOP + (i + 1) * ROW - 8}
-			/>
-			{#if rest[layer.id]}
-				<g
-					class="others"
-					role="button"
-					tabindex="0"
-					aria-expanded={open.has(layer.id)}
-					onclick={() => toggle(layer.id)}
-					onkeydown={(e) => press(e, () => toggle(layer.id))}
-				>
-					<rect class="hit" x={width - 124} y={TOP + i * ROW - 18} width="104" height="32" />
-					<text x={width - 24} y={TOP + i * ROW + 4} text-anchor="end"
-						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
-					>
-				</g>
-			{/if}
-		{/each}
-		{#each lines as l (l.id)}
-			<line
-				class="line"
-				class:is-active={l.lit}
-				x1={l.a.x}
-				y1={l.a.y + 8}
-				x2={l.b.x}
-				y2={l.b.y - 8}
-				stroke={edgeColorFor(l.relation, 'article')}
-				stroke-width={lijnDikte(EDGE_WEIGHT[l.relation]) * (l.lit ? 1.6 : 1)}
+				y1={tops[i] + rowHeights[i] - 14.5}
+				y2={tops[i] + rowHeights[i] - 14.5}
 			/>
 		{/each}
-		{#each shown as layer (layer.id)}
+		<!-- The lines as one layer, so where they share a stem they do not darken; the marked
+		     ones over it, whole. -->
+		<g class="lines">
+			{#each lines.filter((l) => !l.lit) as l (l.id)}
+				{@render stroke(l)}
+			{/each}
+		</g>
+		{#each lines.filter((l) => l.lit) as l (l.id)}
+			<g>{@render stroke(l)}</g>
+		{/each}
+		{#each subheads as t (t.id)}
+			<text class="subhead" x={t.x} y={t.y} text-anchor="end">{t.label}</text>
+		{/each}
+		{#each shown as layer, i (layer.id)}
 			{#each layer.nodes as k (k.id)}
 				{@const p = place.get(k.id)!}
 				{@const isArticle = k.collection === 'articles'}
 				{@const v = vormOf(k)}
+				{@const info = infoOf.get(k.id)}
 				<g
 					class="node"
 					class:is-active={chosen === k.id}
@@ -331,7 +546,7 @@
 				>
 					<title>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title>
 					<circle cx={p.x} cy={p.y} r="22" class="hit" />
-					{#if otherIds.has(k.id) && chosen !== k.id}<rect
+					{#if otherIds.has(k.id) && chosen !== k.id && k.id !== start}<rect
 							class="sel sel--ander"
 							x={p.x - 12}
 							y={p.y - 12}
@@ -339,7 +554,7 @@
 							height="24"
 							rx="2"
 						/>{/if}
-					{#if chosen === k.id}<rect
+					{#if chosen === k.id && k.id !== start}<rect
 							class="sel"
 							x={p.x - 12}
 							y={p.y - 12}
@@ -347,28 +562,84 @@
 							height="24"
 							rx="2"
 						/>{/if}
-					<path
-						class:vervallen={!!k.expired}
-						d={v.d}
-						transform="translate({p.x - 8} {p.y - 8})"
-						fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(k)}
-						fill-rule="evenodd"
-						stroke={v.wijze === 'lijn' ? colour(k) : 'none'}
-						stroke-width="1.5"
-					/>
+					{#if k.id === start}
+						<!-- The bron of the keten: its sign in ink, with an edge of ink on a halo of paper
+						     (Netwerkcanvas, Focus). -->
+						{@const sc = FOCUS / 16}
+						{@const at = `translate(${p.x - FOCUS / 2} ${p.y - FOCUS / 2}) scale(${sc})`}
+						<path
+							d={v.d}
+							transform={at}
+							fill="none"
+							stroke="var(--paper)"
+							stroke-width={(2 * HALO) / sc}
+							stroke-linejoin="round"
+						/>
+						<path
+							d={v.d}
+							transform={at}
+							fill={v.wijze === 'lijn' ? 'var(--paper)' : 'none'}
+							stroke="var(--ink)"
+							stroke-width={(2 * INK_EDGE) / sc}
+							stroke-linejoin="round"
+						/>
+						{#if v.wijze !== 'lijn'}<path
+								d={v.d}
+								transform={at}
+								fill="var(--ink)"
+								fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+							/>{/if}
+					{:else}
+						{@const sc = SIGN / 16}
+						{@const at = `translate(${p.x - SIGN / 2} ${p.y - SIGN / 2}) scale(${sc})`}
+						<g class:vervallen={!!k.expired}>
+							<path
+								d={v.d}
+								transform={at}
+								fill="var(--paper)"
+								stroke="var(--paper)"
+								stroke-width={(2 * RIM) / sc}
+								stroke-linejoin="round"
+							/>
+							<path
+								d={v.d}
+								transform={at}
+								fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(k)}
+								fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+								stroke={v.wijze === 'lijn' ? colour(k) : 'none'}
+								stroke-width={1.7 / sc}
+							/>
+						</g>
+					{/if}
 					<text
 						class="name {otherIds.has(k.id) ? 'name--ander' : ''}"
-						class:name--law={layer.id === 'law'}
+						class:name--law={layer.id === 'law' || k.id === start}
 						x={isArticle ? p.x - 6 : p.x}
 						y={p.y + 24}
 						text-anchor={isArticle ? 'start' : 'middle'}
-						>{#each linesOf(isArticle ? k.short : k.name, charsFor(layer.nodes.length)) as r, j (j)}<tspan
+						>{#each info?.lines ?? [] as r, j (j)}<tspan
 								x={isArticle ? p.x - 6 : p.x}
-								dy={j ? 14 : 0}>{r}</tspan
+								dy={j ? LINE : 0}>{r}</tspan
 							>{/each}</text
 					>
 				</g>
 			{/each}
+			<!-- After the bronnen of its layer: the keyboard goes layer by layer, Alle last. -->
+			{#if rest[layer.id]}
+				<g
+					class="others"
+					role="button"
+					tabindex="0"
+					aria-expanded={open.has(layer.id)}
+					onclick={() => toggle(layer.id)}
+					onkeydown={(e) => press(e, () => toggle(layer.id))}
+				>
+					<rect class="hit" x={width - 124} y={tops[i] - 18} width="104" height="32" />
+					<text x={width - 24} y={tops[i] + 4} text-anchor="end"
+						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
+					>
+				</g>
+			{/if}
 		{/each}
 	</svg>
 	<!-- On a wide screen the regulations a layer does not draw, listed under the drawing once
@@ -413,6 +684,13 @@
 </div>
 
 <style>
+	/* The wet of a group of articles, small, left of the first (BW 7, UHW). */
+	.subhead {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		fill: var(--ink-3);
+	}
 	.chain {
 		position: relative;
 		flex: 1;
@@ -448,10 +726,12 @@
 		width: 100%;
 		height: auto;
 	}
+	/* A label of a layer is a control label (sans 11 px 600, spaced), not a name. */
 	.layer-label {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-label);
 		font-weight: 600;
+		letter-spacing: 0.06em;
 		fill: var(--ink-3);
 	}
 	.others {
@@ -487,11 +767,19 @@
 	.rail {
 		stroke: var(--rule);
 	}
-	.line {
-		opacity: 0.55;
+	.lines {
+		opacity: 0.7;
 	}
-	.line.is-active {
-		opacity: 1;
+	/* The words on a line, italic, on an edge of paper like a name. */
+	.line-word {
+		font-family: var(--font-serif);
+		font-size: var(--t-note);
+		font-style: italic;
+		fill: var(--ink-3);
+		paint-order: stroke;
+		stroke: var(--paper);
+		stroke-width: 4px;
+		stroke-linejoin: round;
 	}
 	/* Outside the period of the strip: faint, not gone. */
 	.node.is-dim {
@@ -568,7 +856,8 @@
 		}
 		.list {
 			display: block;
-			padding: var(--s-2) var(--s-4) var(--s-8);
+			/* Room under the last row for the floating Weergave button. */
+			padding: var(--s-2) var(--s-4) calc(var(--s-8) + var(--s-4));
 		}
 	}
 	.list__layer {
@@ -617,8 +906,8 @@
 	}
 	.mark {
 		flex: none;
-		width: 10px;
-		height: 10px;
+		display: inline-flex;
+		align-self: center;
 	}
 	.list__how {
 		font-family: var(--font-serif);

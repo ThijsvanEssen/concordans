@@ -343,7 +343,7 @@
 		{/if}
 
 		{#if samenhang.length > 0}
-			<Sectie title="Samenhangende zaken" collection="judgments" aantal={samenhang.length}>
+			<Sectie title="Samenhangende zaken" aantal={samenhang.length}>
 				<ul class="samenhang">
 					{#each samenhang as z (z.key)}
 						<li>
@@ -537,7 +537,7 @@
 		margin: 0 0 var(--s-5);
 		padding: var(--s-4) var(--s-5);
 		background: var(--paper-2);
-		border-left: 3px solid var(--indigo);
+		border-left: 3px solid var(--rubriek-rechtspraak);
 	}
 
 	.reader-summary-para {
@@ -572,7 +572,7 @@
 		vertical-align: baseline;
 		/* The role in the term column (ReaderFrame), like the terms of Behoort bij. */
 		box-sizing: border-box;
-		width: var(--reader-term);
+		width: var(--voorkolom);
 	}
 
 	.reader-parties-name {
@@ -763,9 +763,8 @@
 		align-items: flex-end;
 		gap: var(--s-1);
 		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
+		font-size: var(--t-body);
 		color: var(--ink-3);
-		padding-top: 0.25em;
 		text-align: right;
 		line-height: var(--lh-body);
 		user-select: none;

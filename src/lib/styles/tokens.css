@@ -3,60 +3,56 @@
    reaches the network after a reload. */
 :root {
 	/* ─── Colour ─── */
+	/* Source: the Design System, tokens.json. One theme, Papier: the site has no dark mode. */
 	/* Paper and rules */
-	--paper: #faf8f3;
-	--paper-2: #ece7dc; /* hover, selected row, sheets */
-	--rule: #b9b1a0;
-	--rule-strong: #6f6859;
+	--paper: #fdfdfb;
+	--paper-2: #f0efeb; /* hover, selected row, sheets */
+	--rule: #c6c4be; /* hairlines; never reading text (1.7:1) */
+	--rule-strong: #6a6965; /* the edge of controls and cards; a link's underline at rest */
 
 	/* Ink */
-	--ink: #161513;
-	--ink-2: #3b3834;
-	--ink-3: #5d5951; /* captions; 6.6:1 on paper */
+	--ink: #1f2125;
+	--ink-2: #3d4045;
+	--ink-3: #5f6267; /* captions, counts, meta lines; 6.0:1 on paper, 5.3:1 on paper-2 */
 
-	/* The accent says no: an outcome that says no (--uitkomst-nee), an error, and the § of
-	   the name. Nothing else is red (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het
-	   een doel dient"): a hover and the focus are ink. */
-	--accent: #8c2f28;
-	/* The focus ring: ink, 2 px, 2 px off the element, so it stands on paper, on paper-2
-	   (14.8:1) and around an ink button with the paper between them. */
+	/* The one red of the site. As merk: the § of the wordmark. As accent: only no (rejected,
+	   against, an error, lapsed), always with a word or a shape beside it. Never hover, focus
+	   or emphasis. 5.2:1 on paper, 4.6:1 on paper-2. */
+	--merk: #b5483d;
+	--accent: var(--merk);
+	/* The focus ring: ink, 2 px, 2 px off the element. */
 	--focus: var(--ink);
-	/* Selected text, a passage found, a place landed on: a neutral wash. */
-	--wassing: color-mix(in srgb, var(--rule) 45%, var(--paper));
+	/* Behind words that are found or where the reader lands: a neutral wash. */
+	--wassing: #e3e2dd;
 
 	/* Text an amendment inserted, in a comparison of versions. Deleted text is struck
 	   through in ink, so the two differ by more than colour. */
-	--mark-ins: #ece2bd;
-	--mark-ins-rule: #b39a4e;
-
-	/* The colours of the material */
-	--indigo: #2f3e5e; /* judgments */
-	--moss: #456247; /* structural edges, references between articles */
-	--plum: #5e3a55; /* toelichting */
-	--slate: #4b5563; /* citations by judgments */
+	--mark-ins: #f6edbb;
+	--mark-ins-rule: #bfa23c;
 
 	/* An outcome, always with its shape or word beside it: passed, done, yes; rejected,
 	   withdrawn, no. Dashed is open or expected and needs no colour. */
-	--uitkomst-ja: #2f7d3a;
+	--uitkomst-ja: #2c7737;
 	--uitkomst-nee: var(--accent);
 
-	/* The groups in the network (a hull around their members), each told apart by hue,
-	   by a step of 10 in lightness (L* 30, 40, 50, 59) and by its line: apart also with
-	   deuteranopia, protanopia and in grey. Against the paper 8.9, 6.1, 4.2 and 3.1:1. */
-	--groep-wet: #00487c; /* solid */
-	--groep-fractie: #944078; /* dotted */
-	--groep-commissie: #438365; /* dash and dot */
-	--groep-dossier: #d3762d; /* dashed */
-	/* The regulations issued under a wet in Verbonden's sketch: a hue of their own, L* 45. */
-	--groep-regeling: #8a6208;
+	/* The soorten of the network are the rubrieken of the Topbalk, in five colours (and ink):
+	   lines and areas, a hull around a group told apart also by its line. Never text. */
+	--rubriek-wetten: #00487c; /* wet, regeling, artikel, bijlage; solid, a regeling dashed */
+	--rubriek-rechtspraak: #438365; /* uitspraken; no hull; line and area, not small text */
+	--rubriek-kamerstukken: #cd7127; /* dossier, stuk, stemming, activiteit, toezegging; a dossier dashed */
+	--rubriek-parlement: #ab618e; /* Kamerlid, fractie, commissie; a fractie dotted, a commissie dash-dot */
+	--rubriek-regering: #523c0b; /* kabinet, ministerie, bewindspersoon; a kabinet dash-dot-dot */
+	/* The steps of rubriek-rechtspraak per instantie in Verbonden (areas only). */
+	--rechtspraak-1: #00452b; /* Hoge Raad */
+	--rechtspraak-2: #216246; /* Raad van State, Centrale Raad van Beroep, CBb */
+	--rechtspraak-3: #3e7e60; /* the gerechtshoven */
+	--rechtspraak-4: #589879; /* the rechtbanken; the lightest that still holds 3:1 */
 
-	/* The network's own colours. No red: in the network red only says no, and nothing
-	   there says no yet (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het een doel
-	   dient"). A stuk and its dossier in the dossier's hue, a change to a wet in the wet's,
-	   the focus and a chosen verbinding in ink. */
-	--netwerk-stuk: var(--groep-dossier);
-	--netwerk-dossier: var(--groep-dossier);
-	--netwerk-wijziging: var(--groep-wet);
+	/* The lines of the network. */
+	--moss: #456247; /* structural: artikel to artikel, deel van, gebaseerd op */
+	--plum: #5e3a55; /* toelichting, ingediend door */
+	--slate: #4b5563; /* citation by a judgment, hoger beroep, advies */
+	/* The focus and a chosen verbinding in the network. */
 	--netwerk-focus: var(--ink);
 	/* A verbinding at rest: its weight (0.6 to 1) times this, in pixels at the default zoom
 	   (1.8 to 3 px; dimmed at least 1.4); its arrowhead this many thicknesses long, 0.8 of that
@@ -64,11 +60,11 @@
 	--netwerk-lijn: 3;
 	--netwerk-pijl: 3.2;
 
-	/* Shadows, almost none */
-	--shadow-pop: 0 1px 0 rgba(28, 27, 25, 0.04), 0 8px 24px -12px rgba(28, 27, 25, 0.18);
-	--shadow-modal: 0 6px 24px rgba(28, 27, 25, 0.1);
-	/* The page behind a modal or a sheet. */
-	--scherm: rgba(28, 27, 25, 0.18);
+	/* Shadows, almost none: only what floats above the page. */
+	--shadow-pop: 0 1px 0 rgba(31, 33, 37, 0.04), 0 8px 24px -12px rgba(31, 33, 37, 0.18);
+	--shadow-modal: 0 6px 24px rgba(31, 33, 37, 0.1);
+	/* The page behind a dialog or a sheet. */
+	--scherm: rgba(31, 33, 37, 0.18);
 
 	/* ─── Type ─── */
 	/* One text face, one interface face. */
@@ -79,6 +75,8 @@
 	   choice rows, fields, keys and menus (Thijs, 10 Oct: "typografie is goed").
 	   docs/typografie.md. */
 	--font-ui: 'Schibsted Grotesk', system-ui, sans-serif;
+	/* The § of the wordmark alone (Woordmerk): Playfair Display italic 800, the site's one display face. */
+	--font-merk: 'Playfair Display', var(--font-serif);
 
 	--t-h1: 30px; /* page titles, weight 600 */
 	--t-h2: 24px;
@@ -91,6 +89,7 @@
 	--t-ui-raak: 15px; /* the same on a touch screen, where a control is 44 px */
 	--t-teken: 15px; /* the sign of an icon button; 17px on a touch screen (--t-teken-raak) */
 	--t-teken-raak: 17px;
+	--t-note: 12px; /* the date under a name and the words on a line of a drawing, in --ink-3 */
 	--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 	--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 	--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
@@ -100,7 +99,6 @@
 	   the count, the source. Line heights in whole pixels on the 4px grid. */
 	--niveau-1-pagina: 600 var(--t-h1) / 36px var(--font-serif);
 	--niveau-1-sectie: 600 var(--t-h3) / 28px var(--font-serif);
-	--kleur-1: var(--ink);
 
 	--lh-tight: 1.15;
 	--lh-snug: 1.35;
@@ -121,9 +119,9 @@
 
 	/* ─── Size ─── */
 	/* The frame: the top bar, a page at most this wide, the text of a text page this wide, the
-	   facet column of a list page. */
-	--topbar-h: 60px;
-	/* The tab bar under a phone's page (TabBalk); 0 where there is none. */
+	   side column of a list page and of every card over the network. */
+	--balk-h: 64px;
+	/* The tab bar under a phone's page (TabBalk), as high as the top bar; 0 where there is none. */
 	--tabbar-h: 0px;
 	/* The home bar and the notch of an installed app (viewport-fit=cover in app.html): the
 	   tab bar stands above the bottom one, the page keeps off the side ones. */
@@ -132,10 +130,11 @@
 	--safe-right: env(safe-area-inset-right, 0px);
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
-	--facet-w: 240px;
-	--measure: 66ch;
-	/* The lead column of a list row (IndexRow), where the titles of every list start. */
-	--row-lead: 140px;
+	--zijkolom: 280px; /* the strip of the werkplek (Bronnen, Weergave, a cluster's card) is this wide */
+	--regel: 66ch;
+	/* The column before the content: the number and date of a list row (IndexRow), where the
+	   titles of every list start; the term in a reader (Behoort bij, partijen, Voor and Tegen). */
+	--voorkolom: 120px;
 	/* A lane of a chart over time: a cabinet, a post (KabinettenStrook, CabinetOccupancy). */
 	--lane: var(--s-5);
 	/* The height of a control: a button of any of the three forms, a field, a choice of
@@ -149,14 +148,9 @@
 	/* A finger's target on a touch screen: a control that has no wider target of its own
 	   (.raakvlak) is this high there. */
 	--veld-h-raak: calc(var(--s-6) + var(--s-3));
-	/* The cards over the network (Netwerk, Legenda, a cluster's card): one width, one right
-	   edge (Thijs, 10 Oct). */
-	--paneel-breed: 280px;
-	--paneel-rand: var(--s-3);
-
 	/* An underline: how far below the text it runs; tight under small text in a row. */
-	--underline-offset: 3px;
-	--underline-offset-tight: 2px;
+	--onderstreping: 3px;
+	--onderstreping-krap: 2px;
 
 	/* Radii */
 	--r-1: 3px; /* buttons, inputs */
@@ -178,6 +172,6 @@
 /* The phone has a tab bar under its page (TabBalk), of the height the pages leave free. */
 @media (max-width: 768px) {
 	:root {
-		--tabbar-h: calc(64px + var(--safe-bottom));
+		--tabbar-h: calc(var(--balk-h) + var(--safe-bottom));
 	}
 }

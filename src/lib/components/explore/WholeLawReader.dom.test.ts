@@ -81,7 +81,7 @@ describe('WholeLawReader, what the dataset lacks', () => {
 		const text = container.textContent ?? '';
 		expect(text).not.toContain('geldende tekst in de gegevens');
 		expect([...container.querySelectorAll('.dekking')].map((d) => d.textContent)).toEqual([
-			'Tekst zoals vastgesteld op 27\u00a0april\u00a02016, latere wijzigingen niet verwerkt, EUR-Lex ↗'
+			'Tekst zoals vastgesteld op 27\u00a0april\u00a02016, latere wijzigingen niet verwerkt, EUR-Lex'
 		]);
 	});
 
@@ -91,7 +91,7 @@ describe('WholeLawReader, what the dataset lacks', () => {
 		const { container } = render(WholeLawReader, { bwbId: 'BWBR0038996' });
 		await settle();
 		expect([...container.querySelectorAll('.dekking')].map((d) => d.textContent)).toEqual([
-			'Tekst niet in de gegevens, wetten.overheid.nl ↗'
+			'Tekst niet in de gegevens, wetten.overheid.nl'
 		]);
 		expect(container.textContent).not.toContain('Tekst geldend op');
 	});
@@ -135,7 +135,7 @@ describe('WholeLawReader, whether the law holds (besluit 30)', () => {
 		await settle();
 		const stand = container.querySelector('.validity')!;
 		expect(stand.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-			'Vervallen per 1 januari 2020, opvolger: Nieuwe wet'
+			'Ingetrokken per 1 januari 2020, opvolger: Nieuwe wet'
 		);
 		const text = container.textContent ?? '';
 		expect(text).not.toContain('Geldende tekst');

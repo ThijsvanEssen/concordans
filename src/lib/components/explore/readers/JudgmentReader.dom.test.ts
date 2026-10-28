@@ -49,10 +49,7 @@ describe('JudgmentReader', () => {
 		expect(container.querySelector('h1, h2')?.textContent).toContain('Rb. Rotterdam');
 		expect(screen.getByRole('button', { name: /^Overweging 2\.1:/ })).toBeTruthy();
 		expect(container.textContent).toContain('De kantonrechter zal de beschikking verbeteren');
-		// The section stands closed by default: its heading opens it.
-		const sectie = screen.getByText('Samenhangende zaken').closest('section')!;
-		await fireEvent.click(sectie.querySelector('button')!);
-		await settle();
+		// The section stands open until the reader closes it.
 		const zinnen = [...container.querySelectorAll('.samenhang-zin')].map((z) => z.textContent);
 		expect(zinnen).toEqual([
 			'Zie ook ECLI:NL:RBROT:2026:11738 Inhoudsindicatie van deze uitspraak',

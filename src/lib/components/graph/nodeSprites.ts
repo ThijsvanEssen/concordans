@@ -10,7 +10,15 @@
 import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { DrawClass } from '$lib/graph/types';
-import { isAmendingRelation, type Relation } from '$lib/vocabulary';
+import {
+	LINE_KIND_STYLE,
+	lineKindOf,
+	lineStyleOf,
+	type Stroke,
+	type Tone
+} from '$lib/graph/line-kind';
+import { lineStrength } from '$lib/graph/line-strength';
+import type { Relation } from '$lib/vocabulary';
 
 type Tokens = {
 	paper: string;
@@ -20,47 +28,41 @@ type Tokens = {
 	ink: string;
 	ink2: string;
 	ink3: string;
-	stuk: string;
-	dossier: string;
-	wijziging: string;
 	focus: string;
 	lijn: string;
 	pijl: string;
-	indigo: string;
 	moss: string;
 	plum: string;
 	slate: string;
-	groepWet: string;
-	groepFractie: string;
-	groepCommissie: string;
-	groepDossier: string;
+	rubriekWetten: string;
+	rubriekRechtspraak: string;
+	rubriekKamerstukken: string;
+	rubriekParlement: string;
+	rubriekRegering: string;
 	fontSerif: string;
 	fontLabel: string;
 };
 
 // The values of $lib/styles/tokens.css, for a page without them and for the tests (tokens.test).
 export const FALLBACK: Tokens = {
-	paper: '#faf8f3',
-	paper2: '#ece7dc',
-	rule: '#b9b1a0',
-	ruleStrong: '#6f6859',
-	ink: '#161513',
-	ink2: '#3b3834',
-	ink3: '#5d5951',
-	stuk: '#d3762d',
-	dossier: '#d3762d',
-	wijziging: '#00487c',
-	focus: '#161513',
+	paper: '#fdfdfb',
+	paper2: '#f0efeb',
+	rule: '#c6c4be',
+	ruleStrong: '#6a6965',
+	ink: '#1f2125',
+	ink2: '#3d4045',
+	ink3: '#5f6267',
+	focus: '#1f2125',
 	lijn: '3',
 	pijl: '3.2',
-	indigo: '#2f3e5e',
 	moss: '#456247',
 	plum: '#5e3a55',
 	slate: '#4b5563',
-	groepWet: '#00487c',
-	groepFractie: '#944078',
-	groepCommissie: '#438365',
-	groepDossier: '#d3762d',
+	rubriekWetten: '#00487c',
+	rubriekRechtspraak: '#438365',
+	rubriekKamerstukken: '#cd7127',
+	rubriekParlement: '#ab618e',
+	rubriekRegering: '#523c0b',
 	fontSerif:
 		"'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia, serif",
 	fontLabel:
@@ -75,20 +77,17 @@ export const TOKEN_NAMES: Record<keyof Tokens, string> = {
 	ink: '--ink',
 	ink2: '--ink-2',
 	ink3: '--ink-3',
-	stuk: '--netwerk-stuk',
-	dossier: '--netwerk-dossier',
-	wijziging: '--netwerk-wijziging',
 	focus: '--netwerk-focus',
 	lijn: '--netwerk-lijn',
 	pijl: '--netwerk-pijl',
-	indigo: '--indigo',
 	moss: '--moss',
 	plum: '--plum',
 	slate: '--slate',
-	groepWet: '--groep-wet',
-	groepFractie: '--groep-fractie',
-	groepCommissie: '--groep-commissie',
-	groepDossier: '--groep-dossier',
+	rubriekWetten: '--rubriek-wetten',
+	rubriekRechtspraak: '--rubriek-rechtspraak',
+	rubriekKamerstukken: '--rubriek-kamerstukken',
+	rubriekParlement: '--rubriek-parlement',
+	rubriekRegering: '--rubriek-regering',
 	fontSerif: '--font-serif',
 	// The labels on the canvas are text: the serif, since the sans is for controls only
 	// (docs/typografie.md).
@@ -113,49 +112,25 @@ export function tokens(): Tokens {
 }
 
 /**
- * Edge colours by relation: references between articles and the structure of the
- * law in moss, appeals and gedaan-in in slate, toelichting and ingediend-door
- * in plum, changes to a wet in the wet's hue, the rest (gaat over, geleid door) in grey.
+ * The colour of a line by its soort (Netwerkcanvas, Lijnen): the table of line-kind.ts, read from
+ * the tokens.
  */
 export function edgeColorFor(relation: Relation, sourceClass: DrawClass): string {
-	const t = tokens();
-	switch (relation) {
-		case 'REFERS_TO':
-			return sourceClass === 'article' ? t.moss : t.slate;
-		case 'PART_OF':
-		case 'BASED_ON':
-		case 'IMPLEMENTS':
-		case 'LEGISLATED_IN':
-		case 'VERSION_OF':
-		case 'SCOPED_BY':
-			return t.moss;
-		case 'EXPLAINS':
-		case 'AUTHORED':
-			return t.plum;
-		case 'ESTABLISHES':
-		case 'AMENDS':
-		case 'INTRODUCES':
-		case 'REPEALS':
-			return t.wijziging;
-		case 'APPEAL_OF':
-		case 'ADVISES_ON':
-		case 'ANSWERS':
-		case 'CONTINUES':
-		case 'REFERRED_BY':
-		case 'SAME_AS':
-		case 'MADE_IN':
-			return t.slate;
-		default:
-			return t.ink3;
-	}
+	return tokens()[LINE_KIND_STYLE[lineKindOf(relation, sourceClass)].colour];
 }
 
+/** The tone of a line by its soort: a change that is only proposed is light. */
+export const edgeToneFor = (
+	relation: Relation,
+	status: string | null | undefined,
+	sourceClass: DrawClass = 'article'
+): Tone => lineStyleOf(relation, sourceClass, status).tone;
+
 /** The thickness of a verbinding at rest: its weight (EDGE_WEIGHT) times --netwerk-lijn. */
-export const lijnDikte = (gewicht: number): number => gewicht * (parseFloat(tokens().lijn) || 3);
+export const lineThickness = (gewicht: number): number =>
+	gewicht * (parseFloat(tokens().lijn) || 3);
 /** An arrowhead's length in thicknesses of its line (--netwerk-pijl). */
-export const pijlLengte = (): number => parseFloat(tokens().pijl) || 3.2;
-/** An arrowhead's width to its length. */
-export const PIJL_BREED = 0.8;
+export const arrowLength = (): number => parseFloat(tokens().pijl) || 3.2;
 
 const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
 
@@ -190,24 +165,31 @@ export function dimColor(strength = 0.4): string {
 	return towardPaper(tokens().ink3, strength);
 }
 
-/** The colour of a group's hull (`--groep-*`): Wet, Fractie, Commissie, Dossier. */
+/** A line in its tone at rest, as the drawings of the Design System show it: the top of its window. */
+export function toneColour(color: string, tone: Tone): string {
+	return towardPaper(color, lineStrength(color, tokens().paper, tone, 1));
+}
+
+/** The colour of a group's hull (`--rubriek-*`): Wet, Dossier, Fractie, Commissie, Kabinet. */
 export function hullColorFor(kind: ContainerKind): string {
 	const t = tokens();
 	switch (kind) {
 		case 'instrument':
-			return t.groepWet;
-		case 'faction':
-			return t.groepFractie;
-		case 'committee':
-			return t.groepCommissie;
+			return t.rubriekWetten;
 		case 'dossier':
-			return t.groepDossier;
+			return t.rubriekKamerstukken;
+		case 'faction':
+		case 'committee':
+			return t.rubriekParlement;
+		case 'cabinet':
+			return t.rubriekRegering;
 	}
 }
 
 /**
  * The line of a group's hull, as an SVG dash array: a Wet solid, a Dossier dashed, a
- * Fractie dotted, a Commissie dash and dot. The kind reads without its colour.
+ * Fractie dotted, a Commissie dash and dot, a Kabinet dash, dot and dot. The kind reads
+ * without its colour.
  */
 export function hullDashFor(kind: ContainerKind): string | undefined {
 	switch (kind) {
@@ -219,18 +201,46 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
 			return '1.5 3';
 		case 'committee':
 			return '8 3 1.5 3';
+		case 'cabinet':
+			return '8 3 1.5 3 1.5 3';
 	}
 }
 
-type EdgeStyle = 'solid' | 'dashed' | 'dotted';
+/**
+ * How a line is stroked (Netwerkcanvas, Lijnen): `solid` the law itself; `kort` and `lang` a bron
+ * names the other (an Aanhaling, a Toelichting); `punten` belongs to, without an arrow;
+ * `puntenIndiener` the same with a dot at the one who submits.
+ */
+type EdgeStyle = Stroke;
 
-/** PART_OF and LED_BY are dotted; a change that is proposed, and a vote, are dashed. */
-export function edgeStyleFor(relation: Relation, status: string | null | undefined): EdgeStyle {
-	if (relation === 'PART_OF' || relation === 'LED_BY') return 'dotted';
-	if (relation === 'VOTED') return 'dashed';
-	if (isAmendingRelation(relation) && status === 'voorgesteld') return 'dashed';
-	return 'solid';
+/** The stroke of a line by its soort, from the table of line-kind.ts. */
+export function edgeStyleFor(
+	relation: Relation,
+	status: string | null | undefined,
+	sourceClass: DrawClass = 'article'
+): EdgeStyle {
+	return lineStyleOf(relation, sourceClass, status).stroke;
 }
+
+/** The line of a style as an SVG dash array, from the head: the legend's sample and the key's. */
+export function edgeDashFor(style: EdgeStyle): string | undefined {
+	switch (style) {
+		case 'kort':
+			return '4 2.5';
+		case 'lang':
+			return '8 3';
+		case 'punten':
+			return '0 4';
+		case 'puntenIndiener':
+			return '0 4.5';
+		case 'solid':
+			return undefined;
+	}
+}
+
+/** The cap of a stroke: round, so a dot is round; flat for a dash, so it keeps its length. */
+export const edgeCapFor = (style: EdgeStyle): 'round' | 'butt' =>
+	style === 'kort' || style === 'lang' ? 'butt' : 'round';
 
 // A sprite is drawn in a 32×32 box onto a canvas of SPRITE_PX and handed over as a PNG. Not
 // as an SVG: sigma's image program draws its atlas once, as soon as an image has loaded, and
@@ -245,13 +255,31 @@ const VORM_SCALE = 1.5;
 // Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
 // omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
 const vormCache: Map<string, string> = new Map();
-/** A colour token (`var(--groep-wet)`) as the canvas paints it. */
+/** A colour token (`var(--rubriek-wetten)`) as the canvas paints it. */
 function kleurUit(waarde: string | undefined, fallback: string): string {
 	const naam = waarde?.match(/^var\((--[\w-]+)\)$/)?.[1];
 	if (!naam) return waarde || fallback;
 	if (typeof document === 'undefined') return fallback;
 	return getComputedStyle(document.documentElement).getPropertyValue(naam).trim() || fallback;
 }
+
+/**
+ * The edge of an open sign: a vorm drawn as a line 2 px, in its kind's colour; an open sign
+ * standing for a bron that is gone or outside the period (a repealed article), 1.3 px in ink-3
+ * (Netwerkcanvas, Open teken).
+ */
+export const openStroke = (stub: boolean, wijze: string): number =>
+	stub ? 1.3 : wijze === 'lijn' ? 2 : 1.3;
+
+/**
+ * The focus's ring in the 16-box of vormen.ts: the ink, centred on the edge of the vorm, and the
+ * paper halo under it. An open sign (a vorm drawn as a line) keeps 2 px of its own edge inside
+ * the ring, so its ring is that much wider.
+ */
+export const focusRing = (wijze: string): { ink: number; halo: number } => {
+	const ink = (wijze === 'lijn' ? 2 : 0) + 3;
+	return { ink, halo: ink + 3.2 };
+};
 
 /**
  * The sprite of a vorm in ink, or in the colour of its kind (`colour`, kindColour): the werkplek
@@ -278,19 +306,22 @@ export function spriteForVorm(
 	const path = new Path2D(v.d);
 	const inkt = kleurUit(colour, t.ink);
 	if (focused) {
+		// The ring of ink on a halo of paper, outside the vorm: the sign is drawn over its inner
+		// half, so an open sign's own edge (2 px) does not hide it.
+		const ring = focusRing(v.wijze);
 		ctx.lineJoin = 'round';
 		ctx.strokeStyle = t.paper;
-		ctx.lineWidth = 4;
+		ctx.lineWidth = ring.halo;
 		ctx.stroke(path);
 		ctx.strokeStyle = t.ink;
-		ctx.lineWidth = 1.6;
+		ctx.lineWidth = ring.ink;
 		ctx.stroke(path);
 	}
 	if (stub || v.wijze === 'lijn') {
 		ctx.fillStyle = t.paper;
 		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
 		ctx.strokeStyle = stub ? t.ink3 : inkt;
-		ctx.lineWidth = v.wijze === 'lijn' ? 2 : 1.3;
+		ctx.lineWidth = openStroke(stub, v.wijze);
 		ctx.stroke(path);
 	} else {
 		ctx.fillStyle = inkt;
@@ -312,6 +343,7 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	regel: 6,
 	'regel-int': 6,
 	'regel-o': 5.7,
+	publicatie: 6,
 	uitspraak: 4.6,
 	stuk: 4.5,
 	voorstel: 4.5,
@@ -323,8 +355,43 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	orgaan: 4.4,
 	'orgaan-o': 4.3,
 	kabinet: 4.4,
+	ministerie: 4.4,
+	bewindspersoon: 3.2,
 	overig: 3.5
 };
 
 /** The per-axis offset of a vorm's edge at 45° (top right), in units of the node's radius. */
 export const badgeAxisOffset = (vorm: Vorm): number => (EDGE_AT_45[vorm] * VORM_SCALE) / (VB / 2);
+
+/**
+ * The sprite of a cluster (Netwerkcanvas, Cluster): a disc in the colour of its kind on a rim
+ * of paper, its count inside in paper, "250".
+ */
+export function clusterSprite(count: string, colour: string | undefined): string {
+	const k = `cluster:${count}:${colour ?? ''}`;
+	let url = vormCache.get(k);
+	if (url) return url;
+	const t = tokens();
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = SPRITE_PX;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return '';
+	const c = SPRITE_PX / 2;
+	ctx.fillStyle = t.paper;
+	ctx.beginPath();
+	ctx.arc(c, c, c, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = kleurUit(colour, t.ink);
+	ctx.beginPath();
+	ctx.arc(c, c, c * (19 / 21.5), 0, Math.PI * 2);
+	ctx.fill();
+	ctx.fillStyle = t.paper;
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	const size = count.length > 3 ? 30 : 38;
+	ctx.font = `600 ${size}px ${t.fontSerif}`;
+	ctx.fillText(count, c, c + 2);
+	url = canvas.toDataURL('image/png');
+	vormCache.set(k, url);
+	return url;
+}

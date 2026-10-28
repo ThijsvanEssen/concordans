@@ -1,14 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nog, verderLabel, volgendeBladzijden, vorigeBladzijde } from './law-paging';
+import { nog, volgendeBladzijden, vorigeBladzijde } from './law-paging';
 
 describe('bladeren', () => {
-	it('labels both ways alike', () => {
-		expect(verderLabel('vorige', '12')).toBe('Vorige artikelen, nog 12');
-		expect(verderLabel('volgende', '1.234')).toBe('Volgende artikelen, nog 1.234');
-	});
-
 	it('counts what lies before and after the shown range', () => {
 		expect(nog('vorige', 250, 40, 900)).toBe(250);
 		expect(nog('volgende', 250, 40, 900)).toBe(610);

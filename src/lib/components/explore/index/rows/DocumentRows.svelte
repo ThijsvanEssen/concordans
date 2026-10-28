@@ -1,14 +1,14 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { openHref } from '$lib/bron/href';
-	import { dossierOwnName } from '$lib/bron/dossier-naam';
+	import RowDossier from './RowDossier.svelte';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { citationRecord } from '$lib/text/citation-record';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
-	import { korteDatum } from '$lib/text/datum';
 	import IndexRow from '../IndexRow.svelte';
 	import type { ViewProps } from '../lists/list';
 
@@ -35,21 +35,17 @@
 			{#snippet lead()}
 				<!-- A paper that is no Kamerstuk has its own number (2026D41234). -->
 				<span class="row-id-main"><Waarde value={label ?? doc.document_number} /></span>
-				<!-- The dossier by name under its number (API 0.79.30). -->
-				{#if doc.dossiers?.[0] && dossierOwnName(doc.dossiers[0])}
-					<span class="row-id-sub row-id-naam" title={doc.dossiers[0].title ?? undefined}
-						>{dossierOwnName(doc.dossiers[0])}</span
-					>
-				{/if}
 			{/snippet}
 			{#snippet body()}
 				{@const uitslag = stukUitslag(doc)}
+				<!-- The dossier by name under the title (API 0.79.30). -->
+				<RowDossier dossier={doc.dossiers?.[0]} />
 				{#if doc.kind || uitslag}<span class="row-sub"
 						>{doc.kind ?? ''}{#if uitslag}{doc.kind ? ', ' : ''}<StukUitslag {uitslag} />{/if}</span
 					>{/if}
 			{/snippet}
 			{#snippet aside()}
-				{#if doc.date}<span class="row-sub">{korteDatum(doc.date)}</span>{/if}
+				{#if doc.date}<span class="row-sub"><DateTime iso={doc.date} /></span>{/if}
 			{/snippet}
 			{#snippet detail()}
 				<RijInhoud

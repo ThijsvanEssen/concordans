@@ -23,7 +23,6 @@ const PLACES: Record<string, number> = {
 	'lib/api/instrument-cache.ts': 2,
 	'lib/components/actueel/wetsnetwerk.ts': 2,
 	'lib/components/explore/IndexView.svelte': 1,
-	'lib/graph/store/expansion.ts': 1,
 	'lib/map/MapRegelingen.svelte': 1,
 	// A throw that is no failure: a popover already in that state, a pointer capture
 	// refused, storage or a clipboard that refuses (one storage helper, F32). Each gets a

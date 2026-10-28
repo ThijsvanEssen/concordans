@@ -36,48 +36,28 @@ export function column(data: FirstPaint, k: Classes, painters: Painters): Painte
 	return null;
 }
 
-/** Where the widths a reader dragged are kept (explore/column-widths.svelte.ts). */
-const WIDTHS = 'concordans:panel-widths';
-
 /** The Verkenner reading a bron (explore/+page.svelte): its contents beside it where it has
  *  them (a column, on a narrow screen the tab Inhoud), the reader, Verbonden; only the reader's
  *  column holds anything. */
-export function frame(col: string, k: Classes, contents: boolean, style = ''): string {
+export function frame(col: string, k: Classes, contents: boolean): string {
 	const p = k.page;
 	return (
 		`<div class="explore-shell ${p}"><div class="explore-content ${p}">` +
-		`<div class="explore-read${contents ? ' explore-read--with-nav' : ''} ${p}"${style ? ` style="${style}"` : ''}>` +
+		`<div class="explore-read${contents ? ' explore-read--with-nav' : ''} ${p}">` +
 		// The bar of a narrow screen: on a phone the tabs Tekst and Verbonden, Inhoud where the
 		// bron has contents (A197-a).
-		`<nav class="mobile-tabs${contents ? '' : ' mobile-tabs--tabs'} ${p}"><div class="lees-tabs ${p}" role="tablist"><button type="button" role="tab" class="mobile-tab is-active ${p}" tabindex="-1">Tekst</button><button type="button" role="tab" class="mobile-tab ${p}" tabindex="-1">Verbonden</button></div>` +
+		`<nav class="mobile-tabs${contents ? '' : ' mobile-tabs--tabs'} ${p}"><div class="lees-tabs ${p}"><div class="keuze vol ${k.choice}" role="group" aria-label="Tekst of Verbonden"><button type="button" class="${k.choice}" aria-pressed="true" tabindex="-1">Tekst</button><button type="button" class="${k.choice}" aria-pressed="false" tabindex="-1">Verbonden</button></div></div>` +
 		(contents
-			? `<button type="button" class="mobile-tab mobile-tab--toc ${p}" tabindex="-1" data-later>Inhoud</button>`
+			? `<button type="button" class="btn mobile-tab--toc ${p}" tabindex="-1" data-later>Inhoud</button>`
 			: '') +
 		'</nav>' +
 		`<div class="col col--nav toc-column ${p}"${contents ? '' : ' hidden'}></div>` +
 		`<div class="col col--reader col--measure ${p}"><div class="reader ${p}"><div class="reader__main ${p}">` +
 		`<div class="reader-frame ${k.frame}"><div class="reader-frame__col ${k.frame}">${col}</div></div>` +
 		'</div></div></div>' +
-		`<div class="resize-handle resize-handle--panel ${p}"></div>` +
 		`<div class="col col--panel mobile-hidden ${p}"></div>` +
 		'</div></div></div>'
 	);
-}
-
-/** The widths kept in this browser, as the custom properties of the Verkenner. */
-function widths(): string {
-	let saved: Record<string, unknown> = {};
-	try {
-		saved = JSON.parse(localStorage.getItem(WIDTHS) ?? '{}') ?? {};
-	} catch {
-		return '';
-	}
-	return ([['panelW', '--panel-w']] as const)
-		.flatMap(([name, prop]) => {
-			const w = saved[name];
-			return typeof w === 'number' && w > 0 ? [`${prop}: ${w}px`] : [];
-		})
-		.join('; ');
 }
 
 /** The app's stylesheets, each once: the paint shows when all are in (or failed). */
@@ -117,7 +97,7 @@ export function paint(doc: Document, build: Build, painters: Painters) {
 	const el = doc.createElement('div');
 	el.id = 'first-paint';
 	el.className = 'ev';
-	el.innerHTML = frame(col.html, build.classes, col.contents, widths());
+	el.innerHTML = frame(col.html, build.classes, col.contents);
 	// A bron without contents: the app leaves the tab Inhoud out from the start too
 	// (contents-state), so nothing moves when it takes over.
 	const focus = doc.querySelector<HTMLMetaElement>('meta[name="focus"]')?.content;

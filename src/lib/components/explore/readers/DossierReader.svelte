@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
-	import { textOf } from '$lib/text/words';
+	import { capitalize, textOf } from '$lib/text/words';
 	import { changeVerb } from '$lib/verbonden/relation-words';
 	import { onDate } from '$lib/text/datum';
 	import { bewaarDossier } from '$lib/map/map';
@@ -125,7 +125,7 @@
 			<ReaderHead
 				collection="dossiers"
 				kindLabel={kamerstukNummer(d.number)}
-				title={d.short_title ?? d.title ?? officialNumber(d.number)}
+				title={capitalize(d.short_title ?? d.title ?? officialNumber(d.number))}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
 					bewaar: bewaarDossier(d),
@@ -211,7 +211,12 @@
 			{:else if timeline.state.status === 'error'}
 				<LoadState state={timeline.state} what="De procedure" retry={timeline.retry} />
 			{:else if timeline.state.data}
-				{@const p = procedure(d, timeline.state.data.entries, withOther)}
+				{@const p = procedure(
+					d,
+					timeline.state.data.entries,
+					withOther,
+					timeline.state.data.entries.length >= TIMELINE_LIMIT
+				)}
 				<!-- A paper opens its text in place, the vote on the bill its bar, a day's papers of
 				     the bill their list; the bron is one step further (Thijs, 11 Oct). -->
 				{#snippet inhoud(id: string)}
@@ -225,7 +230,7 @@
 					{/if}
 				{/snippet}
 				<!-- The course of the dossier stands open: the line to read it by (mockup V1-c). -->
-				<Sectie title="Procedure" standaardOpen>
+				<Sectie title="Procedure">
 					<Tijdlijn
 						groepen={p.groepen.map((g) => ({
 							...g,

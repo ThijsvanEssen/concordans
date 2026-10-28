@@ -6,6 +6,7 @@ import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { getDossierDocuments } from '$lib/api/records';
 import { getDossier } from '$lib/api/dossiers';
+import { stuksoortOf } from '$lib/bron/rubrieken';
 import { filterGroupOf } from './filter';
 import { changeRelationOf } from '$lib/vocabulary';
 import { type Row } from './rows';
@@ -19,6 +20,12 @@ export type DossierHub = {
 	/** Memorie van toelichting and nota van toelichting first, then by date, newest first. */
 	tweedeKamer: Row[];
 	eersteKamer: Row[];
+	/**
+	 * The Tweede Kamer's documents as the API counts them, where it gave fewer (a page of 100):
+	 * what lies past the page is counted with the Tweede Kamer, which holds most (N1: 100 said
+	 * where there are 146).
+	 */
+	tkTotal?: number;
 };
 
 type Documents = Schema<'DossierDocumentsResponse'>;
@@ -87,6 +94,7 @@ export function buildDossierHub(
 			ref: { collection: 'documents', key: d.key },
 			...describeBron('documents', d.key, d.display_name, { ...d }),
 			filterGroup: filterGroupOf('documents', d.key, { ...d }),
+			stuksoort: stuksoortOf({ ...d }),
 			relation: 'PART_OF',
 			direction: 'inbound',
 			props: { ...d }
@@ -96,11 +104,15 @@ export function buildDossierHub(
 		(a, b) => Number(b.explanatory) - Number(a.explanatory) || b.date.localeCompare(a.date)
 	);
 
+	const tweedeKamer = rows.filter((r) => r.chamber === 'TK').map((r) => r.row);
+	const eersteKamer = rows.filter((r) => r.chamber === 'EK').map((r) => r.row);
+	const total = documents?.total ?? 0;
 	return {
 		laws: [...laws.values()],
 		committees,
-		tweedeKamer: rows.filter((r) => r.chamber === 'TK').map((r) => r.row),
-		eersteKamer: rows.filter((r) => r.chamber === 'EK').map((r) => r.row)
+		tweedeKamer,
+		eersteKamer,
+		...(total > rows.length ? { tkTotal: total - eersteKamer.length } : {})
 	};
 }
 

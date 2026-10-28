@@ -1,6 +1,6 @@
 // The werkplek in three strips (besluit 39): the panel Netwerk and the legend at the left, the
-// card of a bron at the right; over the canvas only the zoom and a cluster's card, in the
-// controls and the colours of the rest of the site.
+// card of a bron or a cluster at the right; over the canvas only the zoom, in the controls and
+// the colours of the rest of the site.
 import { describe, expect, it } from 'vitest';
 import { BRONNEN, bron, overtreders, regels } from '$lib/test/bronnen';
 
@@ -8,7 +8,7 @@ describe('the network and its cards', () => {
 	it('draws the panel Netwerk and a cluster with CanvasKaart: one frame, one width', () => {
 		// Thijs, 10 Oct: "Deze mogen even breed zijn en hetzelfde soort component zijn". The
 		// folded Netwerk took its content's width (`width: auto`). Width and right edge are
-		// --paneel-breed and --paneel-rand, CanvasKaart's.
+		// the strip's.
 		const kaart = /^\.(netwerk|legenda|cluster-kaart)$/;
 		expect(
 			overtreders((t) =>
@@ -46,7 +46,7 @@ describe('the network and its cards', () => {
 			BRONNEN.filter(
 				(s) =>
 					/^lib\/(components\/graph|netwerk|graph)\//.test(s.path) &&
-					/--accent|\baccent\b|accentSoft|#8c2f28/i.test(s.text)
+					/--accent|\baccent\b|accentSoft|#b5483d/i.test(s.text)
 			).map((s) => s.path)
 		).toEqual([]);
 	});
@@ -123,5 +123,18 @@ describe('Verband and the API', () => {
 		expect(page).toMatch(/inPool\([\s\S]{0,400}getShared\([\s\S]{0,200}\{ parallel: 2 \}/);
 		expect(page).toMatch(/const SHARED_ENDS = 6;/);
 		expect(page).not.toMatch(/Promise\.all\([^)]*getShared/);
+	});
+});
+
+describe('the canvas as the DS draws it (A282)', () => {
+	it('names a repealed article in its name and draws it open in ink-3', () => {
+		const view = bron('lib/components/graph/GraphView.svelte');
+		expect(view).toContain('`${name}, vervallen`');
+		expect(view).toMatch(/const colour = repealed\s*\?\s*tokens\(\)\.ink3/);
+		expect(view).toMatch(/spriteForVorm\(vorm, !!n\.stub \|\| repealed, false, colour\)/);
+	});
+	it('has no handle to drag a column: the columns keep their width', () => {
+		expect(bron('routes/explore/+page.svelte')).not.toMatch(/resize-handle|ColumnWidths/);
+		expect(bron('lib/first-paint/paint.ts')).not.toMatch(/resize-handle|panel-widths/);
 	});
 });

@@ -1,13 +1,15 @@
-// De tekens van Concordans. De vorm zegt wat een bron
-// is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
-// in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
+// De tekens van Concordans. De vorm zegt wat een bron is; in de tekst staat het teken in
+// inkt, in een netwerktekening in de kleur van zijn rubriek (indeling.ts). Eén tabel voor de
+// tekens in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
+// Een rubriek heeft zelf geen teken.
 import { BILL_KIND, isCollection, isInternational, type Collection } from '$lib/vocabulary';
-import type { FilterGroup } from '$lib/verbonden/filter';
+import { isMinister, type Sort } from './rubrieken';
 
 export type Vorm =
 	| 'regel'
 	| 'regel-int'
 	| 'regel-o'
+	| 'publicatie'
 	| 'uitspraak'
 	| 'stuk'
 	| 'voorstel'
@@ -19,6 +21,8 @@ export type Vorm =
 	| 'orgaan'
 	| 'orgaan-o'
 	| 'kabinet'
+	| 'ministerie'
+	| 'bewindspersoon'
 	| 'overig';
 
 /** Hoe een vorm getekend wordt: gevuld, gevuld met een gat, of als lijn. */
@@ -35,6 +39,8 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
 	// 12 px it still reads as a hole (3.75 px).
 	'regel-int': { d: 'M2 2h12v12H2zM5.5 5.5v5h5v-5z', wijze: 'gat' },
 	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn' },
+	// A publication of the Staatsblad: the square of a regel with its corner folded.
+	publicatie: { d: 'M2 2h9l3 3v9H2z', wijze: 'vul' },
 	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul' },
 	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul' },
 	// Een wetsvoorstel is een blad met een open vak, los van de toelichting.
@@ -53,6 +59,13 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
 	orgaan: { d: HEX, wijze: 'vul' },
 	'orgaan-o': { d: HEX_O, wijze: 'lijn' },
 	kabinet: { d: `${HEX}${CIRKEL(8, 8.5, 2.6)}`, wijze: 'gat' },
+	// Een ministerie is de zeshoek met een liggende balk, een bewindspersoon de persoon met een
+	// rond gat in de romp: naast het kabinet (zeshoek met rond gat) en het Kamerlid.
+	['ministerie']: { d: `${HEX}M4.2 7.3h7.6v2.4H4.2z`, wijze: 'gat' },
+	['bewindspersoon']: {
+		d: `${CIRKEL(8, 4.6, 3.2)}M1.5 15c0-4.2 2.9-6.4 6.5-6.4s6.5 2.2 6.5 6.4z${CIRKEL(8, 12.1, 1.8)}`,
+		wijze: 'gat'
+	},
 	overig: { d: CIRKEL(8, 8, 4), wijze: 'lijn' }
 };
 
@@ -73,7 +86,7 @@ export const VORM_VAN: Record<Collection, Vorm> = {
 	factions: 'orgaan',
 	committees: 'orgaan-o',
 	cabinets: 'kabinet',
-	ministries: 'orgaan-o'
+	ministries: 'ministerie'
 };
 
 const vormOf = (collection: string): Vorm =>
@@ -82,31 +95,59 @@ const vormOf = (collection: string): Vorm =>
 /** De vorm van een bron uit zijn id (`decisions/…`) of collectie. */
 export const vormVan = (idOfCollectie: string): Vorm => vormOf(idOfCollectie.split('/')[0]);
 
-/** Het teken van een soort in het bronfilter. */
-export const FILTER_GROUP_VORM: Record<FilterGroup, Vorm> = {
-	artikelen: 'regel-o',
-	wetten: 'regel',
-	uitspraken: 'uitspraak',
-	toelichtingen: 'stuk',
-	wetsvoorstellen: 'voorstel',
-	dossiers: 'dossier',
-	stemmingen: 'besluit',
-	leden: 'persoon',
-	organen: 'orgaan-o',
-	internationaal: 'regel-int'
-};
+/** Het teken van een soort: in Tonen, het filter en Verbonden. */
+export const SORT_SHAPE = Object.fromEntries([
+	['wetten', 'regel'],
+	['artikelen', 'regel-o'],
+	['internationaal', 'regel-int'],
+	['publicaties', 'regel'],
+	['uitspraken', 'uitspraak'],
+	['dossiers', 'dossier'],
+	['stukken', 'stuk'],
+	['stemmingen', 'besluit'],
+	['activiteiten', 'activiteit'],
+	['toezeggingen', 'toezegging'],
+	['kamerzaken', 'dossier'],
+	['kamerleden', 'persoon'],
+	['fracties', 'orgaan'],
+	['commissies', 'orgaan-o'],
+	['kabinetten', 'kabinet'],
+	['ministeries', 'ministerie'],
+	['bewindspersonen', 'bewindspersoon']
+] satisfies [Sort, Vorm][]) as Record<Sort, Vorm>;
+
+/** Het teken van een lijst van Bladeren: een bewindspersoon is een persoon met een gat. */
+export const shapeOfCategory = (category: string): Vorm =>
+	category === 'ministers' ? 'bewindspersoon' : vormVan(category);
+
+/** The mark of one bron: its outline, filled in `colour` or drawn as a line of it on paper. */
+export function markOf(
+	collection: string,
+	colour: string,
+	props?: Record<string, unknown> | null,
+	key = ''
+): { d: string; fill: string; stroke: string } {
+	const vorm = VORMEN[vormVanBron(collection, props, key)];
+	return vorm.wijze === 'lijn'
+		? { d: vorm.d, fill: 'var(--paper)', stroke: colour }
+		: { d: vorm.d, fill: colour, stroke: 'none' };
+}
 
 /**
  * De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken; een
- * Europese of internationale regeling het vierkant met een gat.
+ * Europese of internationale regeling het vierkant met een gat; een persoon met een post in een
+ * kabinet de bewindspersoon (rubrieken.ts, `isMinister`).
  */
 export function vormVanBron(
 	collection: string,
 	props?: Record<string, unknown> | null,
-	key = ''
+	key = '',
+	relation?: string | null
 ): Vorm {
 	const vorm = vormOf(collection);
+	if (collection === 'instruments' && props?.kind === 'publicatie') return 'publicatie';
 	if (vorm === 'regel' && isInternational({ key, props })) return 'regel-int';
+	if (collection === 'members' && isMinister(props, relation)) return 'bewindspersoon';
 	if (collection === 'documents' && typeof props?.kind === 'string' && BILL_KIND.test(props.kind))
 		return 'voorstel';
 	return vorm;

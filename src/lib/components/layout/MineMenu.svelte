@@ -1,40 +1,29 @@
 <script lang="ts">
 	// Mijn at the right of the top bar: a menu of Bundels and Gevolgd, what the reader keeps
 	// and follows. A sign on it (NewMark) until the reader has been at the item that has one.
-	import { menu } from '$lib/actions/menu';
-	import { topLayer } from '$lib/actions/top-layer';
+	// A TekstMenu with the button of the bar: a word beside the links, not a framed Knop.
 	import { page } from '$app/state';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { sign } from '$lib/bevestig/bevestig.svelte';
 	import { MINE, mineAt } from '$lib/nav/mine';
 
 	let open = $state(false);
-	let button = $state<HTMLElement | null>(null);
-	const close = () => (open = false);
 	const current = $derived(mineAt(page.url.pathname));
 </script>
 
-<div class="mijn" use:menu={{ open, close }}>
-	<button
-		type="button"
-		class="mijn__knop"
-		class:is-active={current !== null}
-		bind:this={button}
-		aria-haspopup="menu"
-		aria-expanded={open}
-		onclick={() => (open ? close() : (open = true))}
-		>Mijn{#if !open && (sign.has('bundels') || sign.has('gevolgd'))}<NewMark />{/if}<Caret
-			{open}
-		/></button
+<span class="mijn">
+	<TekstMenu
+		label="Mijn"
+		tekst="Mijn"
+		rechts
+		buttonClass="mijn__knop"
+		gekozen={current !== null}
+		bind:open
 	>
-	{#if open && button}
-		<div
-			class="tekstmenu__lijst"
-			role="menu"
-			aria-label="Mijn"
-			use:topLayer={{ anchor: button, close, align: 'right' }}
-		>
+		{#snippet knop()}Mijn{#if !open && (sign.has('bundels') || sign.has('gevolgd'))}<NewMark
+				/>{/if}{/snippet}
+		{#snippet inhoud(close)}
 			{#each MINE as m (m.id)}
 				<a
 					href={m.href}
@@ -45,17 +34,16 @@
 					>{m.label}{#if sign.has(m.id)}<NewMark />{/if}</a
 				>
 			{/each}
-		</div>
-	{/if}
-</div>
+		{/snippet}
+	</TekstMenu>
+</span>
 
 <style>
 	.mijn {
-		position: relative;
 		display: inline-flex;
 	}
 	/* Beside the links of the bar, in their sans: a menu that reads as one of them. */
-	.mijn__knop {
+	.mijn :global(.mijn__knop) {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-1);
@@ -69,10 +57,10 @@
 		color: var(--ink-3);
 		cursor: pointer;
 	}
-	.mijn__knop:hover,
-	.mijn__knop:focus-visible,
-	.mijn__knop.is-active,
-	.mijn__knop[aria-expanded='true'] {
+	.mijn :global(.mijn__knop:hover),
+	.mijn :global(.mijn__knop:focus-visible),
+	.mijn :global(.mijn__knop.is-active),
+	.mijn :global(.mijn__knop[aria-expanded='true']) {
 		color: var(--ink);
 	}
 </style>

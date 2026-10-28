@@ -38,6 +38,7 @@ import {
 	type LoaderOptions
 } from './loaders';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
+import { kindLabelOn, kindOfGroup } from './summary';
 import type { LoadState } from '$lib/util/load.svelte';
 
 /**
@@ -52,10 +53,6 @@ export const luiTeLaden = (collection: Collection, first: NodeGraph | null): boo
 	(first != null && (first.lid_counts_pending === true || lidCountsOf(first) != null));
 
 const neighborKey = (n: Neighbor) => `${n.relation}|${n.direction}|${n.collection}/${n.key}`;
-
-/** The groups Verbonden lists: what its kern and its inhoud show elsewhere is left out. */
-export const listedGroups = <G extends Group>(collection: Collection, groups: G[]): G[] =>
-	groups.filter((g) => !isKernGroep(collection, g) && !isInhoudGroep(collection, g));
 
 export type VerbondenState = {
 	/** The id of the bron the groups belong to. */
@@ -77,6 +74,9 @@ export type VerbondenState = {
 		section?: string;
 		/** Its order can be chosen: the line of that choice holds its place. */
 		ordered?: boolean;
+		/** Its soort and that soort's name on this page: the head Verbonden's overview shows. */
+		kind?: string;
+		kindLabel?: string;
 	}[];
 	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
@@ -266,6 +266,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						noun: g.noun,
 						section: g.section,
 						ordered: !!g.orders,
+						kind: kindOfGroup(g) ?? undefined,
+						kindLabel: kindOfGroup(g) ? kindLabelOn(kindOfGroup(g)!, collection) : undefined,
 						onvoorspelbaar: !!g.load && !g.bakken && !g.section,
 						count: g.load
 							? g.bakken && !g.countsOpenOnly
@@ -465,14 +467,15 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						});
 				};
 				for (const def of groups) if (def.load) run(def.id, def.load);
-				// Another order or year: the group waits in its place for its new rows.
+				// Another order or year: the group keeps its rows, dimmed (`wachtend`), until its new
+				// rows replace them.
 				rerun = (id) => {
 					const load = groups.find((g) => g.id === id)?.load;
 					if (!load) return;
 					vervolg.delete(id);
 					setNextPage(id, undefined);
 					pending.add(id);
-					groups = groups.map((g) => (g.id === id ? { ...g, rows: [], failed: false } : g));
+					groups = groups.map((g) => (g.id === id ? { ...g, failed: false } : g));
 					zet();
 					run(id, load);
 				};

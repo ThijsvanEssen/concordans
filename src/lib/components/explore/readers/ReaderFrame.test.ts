@@ -14,7 +14,7 @@ const children = createRawSnippet((leden: () => number) => ({
 const html = (state: LoadState<number>, extra: Record<string, unknown> = {}) =>
 	render(ReaderFrame<number>, {
 		props: { state, what: 'Commissie', retry: () => {}, children, ...extra }
-	}).body;
+	}).body.replace(/<span class="fout[^"]*">(.*?)<\/span>/g, '$1');
 
 describe('ReaderFrame', () => {
 	it('holds the place with a skeleton while the reader loads, under the head', () => {

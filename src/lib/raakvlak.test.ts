@@ -77,11 +77,13 @@ describe('the touch target', () => {
 		const nav = read('lib/components/explore/LezenNav.svelte');
 		const navCoarse = nav.slice(nav.indexOf('@media (pointer: coarse)'));
 		expect(navCoarse).toMatch(/\.group__head \{[^}]*padding-block: 0/);
-		const sheet = read('routes/explore/TocSheet.svelte');
-		const sheetCoarse = sheet.slice(sheet.indexOf('@media (pointer: coarse)'));
-		expect(sheet).toContain('@media (pointer: coarse)');
-		expect(sheetCoarse).toMatch(
-			/\.close \{[^}]*min-height: var\(--veld-h-raak\)[^}]*min-width: var\(--veld-h-raak\)/
+		// The sheet's close button is the IconButton, which is 44 px on a touch screen.
+		expect(read('lib/components/ui/Blad.svelte')).toContain(
+			'<IconButton class="sluit" label="Sluiten"'
+		);
+		const icon = read('lib/components/ui/IconButton.svelte');
+		expect(icon.slice(icon.indexOf('@media (pointer: coarse)'))).toMatch(
+			/width: var\(--veld-h-raak\);\s*height: var\(--veld-h-raak\)/
 		);
 	});
 
@@ -113,7 +115,7 @@ describe('the touch target', () => {
 		);
 		// The tab bar of a phone is 64 px high and its items fill it.
 		expect(read('lib/styles/tokens.css')).toMatch(
-			/--tabbar-h: calc\(64px \+ var\(--safe-bottom\)\)/
+			/--tabbar-h: calc\(var\(--balk-h\) \+ var\(--safe-bottom\)\)/
 		);
 		// ... above the home bar of an installed app, with the viewport covering the screen.
 		expect(read('lib/components/layout/TabBar.svelte')).toContain('var(--safe-bottom)');
@@ -124,10 +126,11 @@ describe('the touch target', () => {
 		);
 	});
 
-	it('closes what opens beside the article with a 44 px button below 768 (B32)', () => {
+	it('closes what opens beside the article with an IconButton, a finger high below 768 (B32)', () => {
 		const explore = read('routes/explore/+page.svelte');
-		expect(explore).toMatch(
-			/@media \(max-width: 768px\) \{\s*\.reader__close \{\s*min-width: var\(--veld-h-raak\);\s*min-height: var\(--veld-h-raak\)/
+		expect(explore).toMatch(/<div class="reader__close">\s*<IconButton\s+label="Sluiten"/);
+		expect(read('lib/components/ui/IconButton.svelte')).toMatch(
+			/@media \(pointer: coarse\), \(max-width: 768px\) \{\s*\.iconknop \{\s*width: var\(--veld-h-raak\)/
 		);
 	});
 });

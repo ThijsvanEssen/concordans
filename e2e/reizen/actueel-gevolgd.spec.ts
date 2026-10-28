@@ -12,12 +12,11 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	const all = await count.textContent();
 
 	await openFilter(page, touch, 'Periode');
-	const period = page.getByRole('group', { name: 'Periode' });
-	await period.getByRole('button', { name: 'Maand' }).click();
-	await expect(period.getByRole('button', { name: 'Maand' })).toHaveAttribute(
-		'aria-pressed',
-		'true'
-	);
+	await page.getByRole('button', { name: /Wijzig$/ }).click();
+	const period = page.getByRole('dialog', { name: 'Periode' });
+	await period.getByRole('radio', { name: 'Afgelopen maand' }).click();
+	await period.getByRole('button', { name: 'Toepassen' }).click();
+	await expect(page.getByRole('button', { name: 'Afgelopen maand Wijzig' })).toBeVisible();
 	await page.keyboard.press('Escape');
 	await expect(page).toHaveURL(/\/actueel\?.+/);
 	await expect(count).not.toHaveText(all!);
@@ -26,9 +25,9 @@ test('Actueel: a period and a kind narrow the days', async ({ page, touch }) => 
 	await option(/^Motie/).click();
 	if (touch) await page.keyboard.press('Escape');
 	await expect(chip(page, 'Motie')).toBeVisible();
-	// Each day then counts moties only.
+	// Each day then names its date alone: no count beside it.
 	const days = page.getByRole('heading', { level: 2, name: /\d{4}/ });
-	await expect(days.first()).toHaveText(/\d+ moties?$/);
+	await expect(days.first()).toHaveText(/^[A-Za-z]+\s\d+\s[a-z]+\s\d{4}$/);
 });
 
 test('Actueel: Back finds the earlier days loaded and the place read', async ({ page }) => {
@@ -67,7 +66,7 @@ test('Actueel: who submitted and who voted are two filters, each under its own n
 	// is chosen there.
 	await openFilter(page, touch, 'Ingediend door');
 	if (touch) {
-		const sheet = page.getByRole('dialog', { name: 'Verfijnen' });
+		const sheet = page.getByRole('dialog', { name: 'Filter' });
 		await expect(sheet.getByRole('button', { name: 'Stemde', exact: true })).toBeVisible();
 		await expect(sheet.getByRole('button', { name: 'Stem', exact: true })).toHaveCount(0);
 	} else {
@@ -100,7 +99,7 @@ test('Gevolgd: a topic followed shows its days, keeps after a reload and can be 
 	// Typed before the page has its first answer: kept.
 	await page.getByRole('textbox', { name: 'Onderwerp volgen' }).fill('huur');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Gevolgde onderwerpen');
-	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
+	await expect(page.getByText('gaan als zoekterm naar de server')).toBeVisible();
 	await expect(page.getByRole('textbox', { name: 'Onderwerp volgen' })).toHaveValue('huur');
 	await page.getByRole('button', { name: 'Volg' }).click();
 	const topic = page.getByRole('heading', { level: 2, name: /^huur/ });
@@ -115,17 +114,19 @@ test('Gevolgd: a topic followed shows its days, keeps after a reload and can be 
 	);
 	await topic.getByRole('button', { name: 'Niet meer volgen' }).click();
 	await expect(topic).toHaveCount(0);
-	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
+	await expect(page.getByText('gaan als zoekterm naar de server')).toBeVisible();
 });
 
 test('the overview of a topic sorts its decisions by kind and outcome', async ({ page }) => {
 	await page.goto('/onderwerpen');
-	await expect(page.getByText('Nog geen onderwerpen.')).toBeVisible();
+	await expect(page.getByText('gaan als zoekterm naar de server')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Onderwerp volgen' }).fill('huur');
 	await page.getByRole('button', { name: 'Volg' }).click();
 	await page.getByRole('link', { name: 'Overzicht' }).click();
 	await expect(page).toHaveURL(/\/onderwerpen\/overzicht/);
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('huur');
+	// The fractie is a filter of the bar, as on every list page: one button, no column.
+	await expect(page.getByRole('button', { name: /^(Fractie|Filter)/ }).first()).toBeVisible();
 });
 
 test('Actueel: the days without a sitting and the open motions of no confidence come first', async ({
@@ -155,7 +156,6 @@ test('Gevolgd: a dossier followed from its page, with what is new since the visi
 		/\/api\/feed\.atom\?dossier=36496$/
 	);
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
-	await page.getByRole('menuitem', { name: 'Volg dit dossier' }).click();
 	// Followed: Volg became Gevolgd, as Bewaar becomes Bewaard, a way to Gevolgd in its menu.
 	await page.locator('#main-content').getByRole('button', { name: 'Gevolgd', exact: true }).click();
 	await expect(page.getByRole('menuitem', { name: 'Open Gevolgd' })).toHaveAttribute(
@@ -200,7 +200,9 @@ test('Volg copies the Atom link of the view: on Actueel, in a list and in a doss
 	expect(await copied()).toMatch(/\/api\/feed\.atom\?.*kind=stemming/);
 
 	await page.goto('/dossiers/36496');
+	// Volg keeps the dossier under Gevolgd at once; its menu then keeps the Atom link.
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
+	await page.locator('#main-content').getByRole('button', { name: 'Gevolgd', exact: true }).click();
 	await page.getByRole('menuitem', { name: 'Kopieer Atom-link' }).click();
 	expect(await copied()).toMatch(/\/api\/feed\.atom\?dossier=36496$/);
 });

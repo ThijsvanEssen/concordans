@@ -134,7 +134,7 @@ const dossierKey = (nr: string) =>
 		.replace(/[\s_]+/, '-')
 		.toUpperCase()}`;
 
-/** Bundels by name in a sentence: `Losse markeringen en Thuiswerk`. */
+/** Bundels by name in a sentence: `Mijn markeringen en Thuiswerk`. */
 export const namesOf = (maps: readonly Pick<Map, 'naam'>[]): string =>
 	maps.length < 2
 		? (maps[0]?.naam ?? '')
@@ -590,7 +590,7 @@ export const netwerkIds = (items: readonly MapItem[]): string[] => [
 export function netwerkHref(items: readonly MapItem[]): string | null {
 	const ids = netwerkIds(items);
 	if (!ids.length) return null;
-	const params = netwerkParams({ ids, uit: new Set(), tussen: false });
+	const params = netwerkParams({ ids, uit: new Set() });
 	const query = new URLSearchParams();
 	for (const [name, value] of Object.entries(params)) if (value !== null) query.set(name, value);
 	return queryHref('/explore', query);

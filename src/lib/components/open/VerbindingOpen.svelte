@@ -1,6 +1,6 @@
 <script lang="ts">
 	// A row of the table opened under itself: the passage that names the bron, then the ways
-	// on: Lees (the bron itself), Alleen de omgeving (the bron with what it touches, as a
+	// on: Lees (the bron itself), In het netwerk (the bron with what it touches, as a
 	// double click on the canvas), and what the verbinding is.
 	import { passageOf, type Row } from '../../verbonden/rows';
 	import Picto from '$lib/components/ui/Picto.svelte';
@@ -17,7 +17,7 @@
 		row: Row;
 		openHref: string;
 		openLabel: string;
-		/** Where Alleen de omgeving goes: the bron with what it touches. */
+		/** Where In het netwerk goes: the bron with what it touches. */
 		networkHref: string;
 		onVerbinding: (row: Row) => void;
 	} = $props();
@@ -36,7 +36,7 @@
 		<a href={openHref} data-sveltekit-noscroll class="btn is-primary"
 			><Picto naam="tekst" size={13} />{openLabel}</a
 		>
-		<a href={networkHref} data-sveltekit-noscroll class="btn">Alleen verbonden bronnen</a>
+		<a href={networkHref} data-sveltekit-noscroll class="btn">In het netwerk</a>
 		{#if row.relation}
 			<TekstLink onclick={() => onVerbinding(row)}>Over deze verbinding</TekstLink>
 		{/if}

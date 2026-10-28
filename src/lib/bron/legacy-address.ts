@@ -4,7 +4,7 @@
 // (R3-I F4). `diepte` stays: the werkplek reads it (how far the surroundings reach).
 
 /** What only the werkplek reads: a ?toon=netwerk with one of these is meant for it. */
-const WERKPLEK_PARAMS = ['netwerk', 'uit', 'tussen', 'omgeving'];
+const WERKPLEK_PARAMS = ['netwerk', 'uit', 'tussen'];
 
 /** The address as it reads today, or null when it already does. */
 export function currentAddress(url: URL): URL | null {

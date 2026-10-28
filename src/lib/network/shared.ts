@@ -5,8 +5,10 @@
 // drawn one by one: a much cited pair shares hundreds.
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
+import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossier-naam';
 import { relationWords } from '$lib/verbonden/relation-words';
-import { capitalize, joinAnd } from '$lib/text/words';
+import { citationRecord } from '$lib/text/citation-record';
+import { capitalize, joinAnd, textOf } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 type Shared = Schema<'SharedNeighborsResponse'>;
@@ -20,7 +22,17 @@ export type SharedRow = {
 	/** How it hangs at the chosen bronnen in one line: `Noemt Art. 6:162 BW en Art. 7:658 BW`. */
 	line: string;
 	/** Per chosen bron, how the shared one hangs at it: `Haalt Art. 6:162 BW aan`. */
-	how: { bron: string; text: string; collection: Collection | null }[];
+	how: {
+		bron: string;
+		text: string;
+		collection: Collection | null;
+		/** The line to this bron: its relation, the kind it comes from, and the end its arrow names. */
+		relation: Relation;
+		from: Collection | null;
+		toward: 'row' | 'bron';
+	}[];
+	/** Under it, its title and year: `Wijziging van de Gemeentewet, 2018`; null where it has none. */
+	detail: string | null;
 	/** The relations of its lines, for the filter Relatie. */
 	relations: Relation[];
 	/** The chosen bronnen it hangs at (their ids). */
@@ -68,29 +80,72 @@ function joinLines(
 	].join(', ');
 }
 
-/** The name of a shared bron as the API gives it. */
-const nameOf = (n: Neighbor) => naamVanId(n.id, n.display_name);
+/**
+ * A shared bron by its notation: a Kamerstuk as `36545, nr. 3 Memorie van toelichting`, with
+ * its title and year under it; the API's own name is cut off with "…" and is not used for it.
+ * Any other bron keeps its name.
+ */
+export function rowNotation(
+	n: Pick<Neighbor, 'id' | 'collection' | 'display_name' | 'props' | 'cite'>
+): {
+	title: string;
+	detail: string | null;
+} {
+	const p = (n.props ?? {}) as Record<string, unknown>;
+	const name = naamVanId(n.id, n.display_name);
+	if (n.collection === 'dossiers') {
+		// By its number first, as a Kamerstuk is cited: never the bare name of the wet it made.
+		const d = dossierUitProps({ display_name: n.display_name, ...p }, n.id.split('/')[1]);
+		const own = dossierOwnName(d);
+		return {
+			title: own ? `${officialNumber(d.number)} ${own}` : officialNumber(d.number),
+			detail: null
+		};
+	}
+	// An uitspraak is cited as its heading cites it (HR 19 juli 2019), as everywhere else.
+	if (n.collection === 'judgments')
+		return {
+			title: citationRecord({ kind: 'judgment', cite: n.cite, props: p })?.short ?? name,
+			detail: null
+		};
+	if (n.collection !== 'documents') return { title: name, detail: null };
+	const dossier = textOf(p.dossier_number);
+	const nr = typeof p.sequence === 'number' ? p.sequence : null;
+	const kind = textOf(p.kind);
+	if (!dossier || !kind) return { title: name, detail: textOf(p.title) };
+	const suffix = textOf(p.dossier_suffix);
+	const number = suffix ? `${dossier} ${suffix}` : officialNumber(dossier);
+	const year = textOf(p.date)?.slice(0, 4) ?? null;
+	return {
+		title: `${number}${nr !== null ? `, nr. ${nr}` : ''} ${kind}`,
+		detail: [textOf(p.title), year].filter(Boolean).join(', ') || null
+	};
+}
+
+/** The name of a shared bron: as a Kamerstuk is cited, else as the API gives it. */
+const nameOf = (n: Neighbor) => rowNotation(n).title;
+
+const STRUCTURAL = new Set<Collection>(['cabinets', 'factions', 'committees', 'ministries']);
 
 /** A verbinding between two chosen bronnen themselves: `Dilan Yeşilgöz lid van VVD`. */
 export type DirectLink = { from: string; to: string; relation: Relation };
 
-/**
- * How far Verband looks: a verbinding between two chosen bronnen, or one bron both are tied to
- * (/api/nodes/shared). The paths of Omgeving go further (four steps); Verband does not.
- */
-export const SHARED_STEPS = 2;
-
-export type VerbandModel = {
+export type SharedModel = {
 	/** What chosen bronnen share, each once with every chosen bron it hangs at. */
 	rows: SharedRow[];
 	/** Per pair, the judgments that cite both: counted, drawn as one group each. */
 	judgments: { at: [string, string]; total: number }[];
 	/** The verbindingen between the chosen bronnen themselves, said in words. */
-	direct: { at: [string, string]; text: string; relation: Relation }[];
-	/** The chosen bronnen with no verbinding to any other: said, not left floating. */
-	alone: string[];
-	/** The shared bronnen beyond the rows drawn. */
-	rest: number;
+	direct: {
+		at: [string, string];
+		from: string;
+		to: string;
+		verb: string;
+		text: string;
+		relation: Relation;
+	}[];
+	/** Per pair, everything it shares (the API's total): the number a Keuze and a block count. */
+	pairs: { at: [string, string]; total: number }[];
 };
 
 /**
@@ -101,21 +156,19 @@ export type VerbandModel = {
  * same bronnen in another order give the same Verband.
  */
 export function verbandModel(
-	ends: readonly string[],
 	answers: readonly Shared[],
 	direct: readonly DirectLink[],
-	names: (id: string) => { name: string; collection: Collection | null },
-	max = 12
-): VerbandModel {
+	names: (id: string) => { name: string; collection: Collection | null }
+): SharedModel {
 	const merged = new Map<string, { node: Neighbor; links: Neighbor['links']; rank: number }>();
-	const judgments: VerbandModel['judgments'] = [];
+	const judgments: SharedModel['judgments'] = [];
+	const pairs: SharedModel['pairs'] = [];
 	for (const shared of answers) {
 		const [a, b] = [...shared.ids].sort();
+		pairs.push({ at: [a, b], total: shared.total });
 		for (const bucket of shared.buckets) {
-			if (bucket.collection === 'judgments') {
-				if (bucket.total) judgments.push({ at: [a, b], total: bucket.total });
-				continue;
-			}
+			if (bucket.collection === 'judgments' && bucket.total)
+				judgments.push({ at: [a, b], total: bucket.total });
 			bucket.items.forEach((n, rank) => {
 				const known = merged.get(n.id);
 				if (!known) {
@@ -128,12 +181,14 @@ export function verbandModel(
 			});
 		}
 	}
+	// What ties a bron to its place first (a kabinet, a fractie, a commissie, a ministerie: they
+	// have no citation count to rank by), then the API's order within a pair (the most cited
+	// first), then by id: the same bronnen in another order give the same Verband.
 	const rows = [...merged.values()]
 		.map(({ node, links, rank }) => ({ row: rowOf({ ...node, links }, names), rank }))
 		.sort(
 			(x, y) =>
-				y.row.at.length - x.row.at.length ||
-				x.row.at.join().localeCompare(y.row.at.join()) ||
+				Number(STRUCTURAL.has(y.row.collection)) - Number(STRUCTURAL.has(x.row.collection)) ||
 				x.rank - y.rank ||
 				x.row.id.localeCompare(y.row.id)
 		)
@@ -144,24 +199,17 @@ export function verbandModel(
 		const w = relationWords(d.relation, from.collection, to.collection);
 		return {
 			at: [d.from, d.to].sort() as [string, string],
+			from: d.from,
+			to: d.to,
 			relation: d.relation,
+			verb: w.actief,
 			text: `${from.name} ${w.actief} ${to.name}`
 		};
 	});
-	const tied = new Set([
-		...rows.flatMap((r) => r.at),
-		...judgments.flatMap((j) => j.at),
-		...said.flatMap((d) => d.at)
-	]);
 	judgments.sort((x, y) => y.total - x.total || x.at.join().localeCompare(y.at.join()));
 	said.sort((x, y) => x.at.join().localeCompare(y.at.join()) || x.text.localeCompare(y.text));
-	return {
-		rows: rows.slice(0, max),
-		judgments,
-		direct: said,
-		alone: ends.filter((e) => !tied.has(e)),
-		rest: Math.max(0, rows.length - max)
-	};
+	pairs.sort((x, y) => x.at.join().localeCompare(y.at.join()));
+	return { rows, judgments, direct: said, pairs };
 }
 
 /** One shared bron as a row: its lines to the chosen bronnen, said and joined. */
@@ -182,16 +230,27 @@ function rowOf(
 			name: bron.name,
 			active,
 			side,
-			text: sentence(active, bron.name, side)
+			text: sentence(active, bron.name, side),
+			relation,
+			from: van,
+			toward: l.direction === 'outbound' ? ('row' as const) : ('bron' as const)
 		};
 	});
 	return {
 		id: n.id,
 		line: joinLines(how),
 		name: nameOf(n),
+		detail: rowNotation(n).detail,
 		collection: n.collection as Collection,
 		node: n,
-		how,
+		how: how.map(({ bron, text, collection, relation, from, toward }) => ({
+			bron,
+			text,
+			collection,
+			relation,
+			from,
+			toward
+		})),
 		at: [...new Set(n.links.map((l) => l.source))].sort(),
 		relations: [...new Set(n.links.map((l) => (l.relation ?? 'RELATED_TO') as Relation))]
 	};

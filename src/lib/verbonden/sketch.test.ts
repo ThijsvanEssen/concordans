@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { WIDTH, LABEL_MAX, SKETCH_LIMIT, sketch, divide, wrap, type SketchGroup } from './sketch';
+import {
+	WIDTH,
+	LABEL_MAX,
+	SKETCH_LIMIT,
+	sketch,
+	divide,
+	drawnCount,
+	wrap,
+	type SketchGroup
+} from './sketch';
 import type { Row } from './rows';
 
 const row = (
@@ -135,5 +144,53 @@ describe('the network on request', () => {
 			expect(p.y).toBeGreaterThan(0);
 			expect(p.y).toBeLessThan(s.height);
 		}
+	});
+});
+
+describe('the line under the drawing', () => {
+	it('counts the bronnen on their own and the groups with what they hold', () => {
+		const s = sketch(
+			[group('a', 7, 'articles'), group('uitspraken', 38, 'judgments', 25)],
+			'x',
+			10
+		);
+		expect(drawnCount(s)).toBe('7 bronnen, 1 groep van 38 uitspraken');
+	});
+	it('says bron at one, and bronnen of groups of several kinds', () => {
+		expect(drawnCount(sketch([group('a', 1, 'articles')]))).toBe('1 bron');
+		const s = sketch(
+			[group('u', 300, 'judgments', 25), group('k', 200, 'documents', 25)],
+			'x',
+			SKETCH_LIMIT
+		);
+		expect(drawnCount(s)).toBe('2 groepen van 500 bronnen');
+	});
+});
+
+describe('a line of the drawing', () => {
+	it('knows whom it comes from: the other bron when it names the one in the middle', () => {
+		const inkomend: Row = {
+			...row('judgments', 'j1'),
+			relation: 'REFERS_TO',
+			direction: 'inbound'
+		};
+		const s = sketch([{ ...group('u', 1, 'judgments'), rows: [inkomend] }], 'x');
+		expect(s.singles[0]).toMatchObject({ relation: 'REFERS_TO', source: 'judgment' });
+		const uitgaand: Row = { ...inkomend, direction: 'outbound' };
+		const t = sketch(
+			[{ ...group('u', 1, 'judgments'), rows: [uitgaand] }],
+			'x',
+			SKETCH_LIMIT,
+			'judgment'
+		);
+		expect(t.singles[0].source).toBe('judgment');
+	});
+});
+
+describe('wrap, a word longer than a line', () => {
+	it('breaks it with a hyphen, so it stays inside the drawing', () => {
+		const lines = wrap('Ondermandaatbesluit Rijkswaterstaat', 14);
+		expect(lines.every((l) => l.length <= 14)).toBe(true);
+		expect(lines.join('').replaceAll('-', '')).toBe('OndermandaatbesluitRijkswaterstaat');
 	});
 });

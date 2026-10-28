@@ -49,10 +49,18 @@ vi.mock('sigma', () => ({
 		kill() {}
 	}
 }));
-vi.mock('sigma/rendering', () => ({ createEdgeArrowProgram: () => class {} }));
 vi.mock('@sigma/node-image', () => ({ createNodeImageProgram: () => class {} }));
 vi.mock('./DashedEdgeProgram', () => ({
-	stippelProgrammas: () => ({ dashed: class {}, dotted: class {} })
+	stippelProgrammas: () => ({
+		arrow: class {},
+		kort: class {},
+		lang: class {},
+		punten: class {},
+		puntenIndiener: class {},
+		arrowDraad: class {},
+		kortDraad: class {},
+		langDraad: class {}
+	})
 }));
 
 /** A focus with two neighbours. */

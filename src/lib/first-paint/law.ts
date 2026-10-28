@@ -214,7 +214,7 @@ const GROUNDS_SHOWN = 3;
 function status(v: LawPaint, k: Classes): string | null {
 	const d = v.instrument;
 	const validity = validityOf(d);
-	const s = validity ? statusOf(validity) : null;
+	const s = validity ? statusOf(validity, 'wet') : null;
 	let out = '';
 	if (s) {
 		const next = validity?.successors[0] ?? null;

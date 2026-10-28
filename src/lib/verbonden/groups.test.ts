@@ -172,7 +172,7 @@ describe('buildGroups', () => {
 		} as unknown as Neighbor;
 		const groups = buildGroups('articles', [mvt]);
 		const row = groups.find((g) => g.id === 'documents')!.rows[0];
-		expect(row.filterGroup).toBe('toelichtingen');
+		expect(row.filterGroup).toBe('stukken');
 		expect(row.lid).toBe('2');
 		expect(row.title).toBe('Memorie van toelichting, Kamerstukken II, 36693, nr. 3');
 		expect(row.match).toBe('artikel 300, tweede lid, Sr');
@@ -334,7 +334,7 @@ describe('an appealed decision the dataset lacks', () => {
 		});
 		const rows = groups.find((g) => g.id === 'earlier-instance')?.rows ?? [];
 		expect(rows.map((r) => [r.title, r.missing])).toEqual([
-			['Rechtbank Gelderland, 9\u00a0juli\u00a02025, 24/6811', true]
+			['Rechtbank Gelderland, 9\u00a0jul.\u00a02025, 24/6811', true]
 		]);
 	});
 	it('leaves the groups as they are without one', () => {

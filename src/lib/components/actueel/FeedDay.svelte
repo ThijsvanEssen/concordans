@@ -5,13 +5,14 @@
 	import { voteBarOf } from '$lib/votes/stembalk';
 	import { capitalize, count } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	// One day of Actueel in the shared timeline, as on the homepage: the day as the heading
-	// (rung 2, the timeline is the page), its kinds counted beside it; each line the kind above
+	// (rung 2, the timeline is the page), a date and nothing counted beside it; each line the kind above
 	// its headline, the teken of its kind on the line. An item with content of its own opens it
 	// in place (RijInhoud), a fold of many items of one kind on one dossier its items; the
 	// bron is one step further. Names of persons and dossiers are links, as everywhere. The
-	// counts are the whole day's from the summary when it has come; until then, those of the
-	// lines loaded. The words of a followed topic or a search (`termen`) are marked where the
+	// tally of a fold of votes is the whole day's from the summary when it has come; until then,
+	// that of the lines loaded. The words of a followed topic or a search (`termen`) are marked where the
 	// row shows them; where it does not, a line under the headline says where they are
 	// (`In dossier: …`): the reason the row is there, as the API found it (`matched`). Of a
 	// followed law, how the row is tied to it (`via`). What a row is tied to stands under it
@@ -28,11 +29,9 @@
 	import { fromFeed } from '$lib/bron/submitters';
 	import {
 		KIND_LABEL,
-		countLine,
 		dayLabel,
 		foldTitle,
 		publicationCite,
-		summaryCounts,
 		titleOf,
 		type Day,
 		type DaySummary,
@@ -96,8 +95,6 @@
 	/** A person's fractie colour; a person without a fractie in a quiet rule. */
 	const colorOf = (short: string | null | undefined) =>
 		short ? partyColor(short) : 'var(--rule-strong)';
-
-	const counts = $derived(summary ? summaryCounts(summary) : day.counts);
 
 	const nieuw = (date: string | undefined) =>
 		nieuwSinds && date && date > nieuwSinds ? ', nieuw' : '';
@@ -180,7 +177,7 @@
 </script>
 
 <Tijdlijn
-	groepen={[{ id: day.date, titel: dayLabel(day.date, today), sub: countLine(counts), regels }]}
+	groepen={[{ id: day.date, titel: dayLabel(day.date, today), datum: day.date, regels }]}
 	niveau={2}
 	datums={false}
 	bewaar
@@ -344,9 +341,10 @@
 			<a href={filterHref({ dossier: f.dossier.number })}>Alles over dit dossier in Actueel</a>
 		{:else}
 			{@const date = f.items[0]?.date ?? ''}
-			<a href={filterHref({ soort: 'stemming', van: date, tot: date })}
-				>Alle stemmingen van deze dag</a
-			>
+			<AlleN
+				noun="stemmingen van deze dag"
+				href={filterHref({ soort: 'stemming', van: date, tot: date })}
+			/>
 		{/if}
 	</p>
 {/snippet}
@@ -403,16 +401,13 @@
 		color: var(--ink);
 		text-decoration: underline;
 	}
-	/* The links in a line's meta a finger can hit: the shared target (.raakvlak, lib/styles/basis.css),
-	   on a touch screen and below 768. */
+	/* The links in a line's meta are a line of a finger's 44 px of their own (.raak-rij,
+	   lib/styles/basis.css), on a touch screen and below 768. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.meta :global(a) {
-			position: relative;
-		}
-		.meta :global(a::after) {
-			content: '';
-			position: absolute;
-			inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 	/* Why the row is in a followed topic, where its line does not show the words: a line
@@ -494,13 +489,13 @@
 		font-size: var(--t-meta);
 	}
 	.links a,
-	.links :global(a) {
+	.links :global(a:not(.tekstlink)) {
 		color: var(--ink);
 		text-decoration: none;
 		border-bottom: 1px solid var(--rule-strong);
 	}
 	.links a:hover,
-	.links :global(a:hover) {
+	.links :global(a:not(.tekstlink):hover) {
 		color: var(--ink);
 		text-decoration-line: underline;
 		text-underline-offset: 3px;

@@ -6,6 +6,7 @@
 	// dezelfde twee knoppen als bij een dossier.
 	import type { Snippet } from 'svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 
@@ -18,6 +19,7 @@
 		lezenLabel,
 		netwerk = null,
 		boven,
+		more,
 		opmerkingen = []
 	}: {
 		/** Alleen wat de rij zelf nog niet zegt. */
@@ -32,6 +34,8 @@
 		netwerk?: string | null;
 		/** Iets dat boven de tijdlijn hoort, zoals de standbalk van een dossier. */
 		boven?: Snippet;
+		/** Onder de tijdlijn: de weg naar de rest (AlleN). */
+		more?: Snippet;
 		/** Korte kanttekeningen onder de zin, zoals waarom iemand waarnam. */
 		opmerkingen?: string[];
 	} = $props();
@@ -42,9 +46,9 @@
 	{#each opmerkingen as o (o)}<p class="opmerking">{o}</p>{/each}
 	{@render boven?.()}
 	{#if loading}
-		<p class="laden">Laden…</p>
+		<LoadState state={{ status: 'loading' }} what="De gegevens" />
 	{:else if groepen.some((g) => g.regels.length)}
-		<Tijdlijn {groepen} volgorde="aflopend" />
+		<Tijdlijn {groepen} volgorde="aflopend" meer={more} />
 	{/if}
 	{#if links.length}
 		<p class="links">
@@ -62,7 +66,7 @@
 		<a class="btn is-primary" href={lezen}
 			>{#if netwerk}<Picto naam="tekst" size={13} />{/if}{lezenLabel}</a
 		>
-		{#if netwerk}<a class="btn" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a
+		{#if netwerk}<a class="btn" href={netwerk}><Picto naam="netwerk" size={13} />Open in netwerk</a
 			>{/if}
 	</div>
 </div>
@@ -87,12 +91,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
-	}
-	.laden {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-3);
 	}
 	.links {
 		margin: 0;

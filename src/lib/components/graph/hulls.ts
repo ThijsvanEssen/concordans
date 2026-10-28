@@ -9,19 +9,30 @@ import type { ContainerGroup } from '$lib/graph/container-membership';
 import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 import type { DrawClass } from '$lib/graph/types';
 import { overlaps, type Rect } from './label-place';
-import { edgeColorFor, hullColorFor, hullDashFor } from './nodeSprites';
+import {
+	arrowLength,
+	edgeCapFor,
+	edgeColorFor,
+	edgeDashFor,
+	edgeToneFor,
+	toneColour,
+	edgeStyleFor,
+	hullColorFor,
+	hullDashFor,
+	lineThickness
+} from './nodeSprites';
+import { EDGE_WEIGHT } from '$lib/graph/types';
+import { curvedLine, AIR } from '$lib/graph/line-shape';
+import { hasArrow } from '$lib/graph/line-kind';
 
 /** Between a hull and its members. */
 export const HULL_MARGIN = 16;
 /** Between a hull's top and its name. */
-export const LABEL_GAP = 8;
+export const LABEL_GAP = 6;
 /** The height of a hull's name, one line. */
 export const LABEL_HEIGHT = 22;
 /** Between a hull's name and the edge of the canvas or a panel over it. */
 export const EDGE_GAP = 10;
-/** The length of an arrowhead on a line of a hull, and half its width. */
-const ARROW_LENGTH = 7;
-const ARROW_HALF = 3.5;
 /** The places a hull's name tries: its own, and three steps down into its hull. */
 const LABEL_STEPS = 4;
 
@@ -38,6 +49,10 @@ export type Hull = {
 	long: boolean;
 	/** Out of the hover: the hovered bron is not in it and not tied to it. */
 	dim: boolean;
+	/** The bron that stands for it (a wet's anchor): what a click on its name or rim chooses. */
+	anchor: string | null;
+	/** Chosen: its anchor is the bron marked or in focus; ink ring on a halo of paper. */
+	chosen: boolean;
 };
 
 export type HullLink = {
@@ -45,7 +60,10 @@ export type HullLink = {
 	d: string;
 	arrow: string;
 	color: string;
-	dashed: boolean;
+	/** The stroke of its kind (`edgeDashFor`), and its thickness: weight times --netwerk-lijn. */
+	dash: string | undefined;
+	cap: 'round' | 'butt';
+	width: number;
 	dim: boolean;
 	/** The relation in words, shown while one of its hulls is in the hover. */
 	label: string | null;
@@ -54,7 +72,30 @@ export type HullLink = {
 };
 
 /** Where the pointer finds a hull: its shape, or its name. */
-export type HullHitArea = { id: string; polygon: Point[]; label: Rect };
+export type HullHitArea = {
+	id: string;
+	polygon: Point[];
+	label: Rect;
+	/** Its name stands (a name that waits for a hover is nothing to click). */
+	named: boolean;
+	anchor: string | null;
+};
+
+/** How far `p` stands from the rim of a hull (a closed polygon), in px. */
+export function distanceToRim(p: Point, polygon: readonly Point[]): number {
+	let best = Infinity;
+	for (let i = 0; i < polygon.length; i++) {
+		const a = polygon[i];
+		const b = polygon[(i + 1) % polygon.length];
+		const dx = b.x - a.x;
+		const dy = b.y - a.y;
+		const len2 = dx * dx + dy * dy;
+		const t =
+			len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+		best = Math.min(best, Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)));
+	}
+	return best;
+}
 
 /** The groups of the canvas, as the hulls and the lines read them. */
 export type HullGroups = {
@@ -66,6 +107,8 @@ export type HullGroups = {
 	drawn: (group: ContainerGroup) => boolean;
 	/** The kinds of group switched off. */
 	hiddenKinds: ReadonlySet<string>;
+	/** The anchors with no hull: ordinary bronnen, their lines are sigma's. */
+	alone?: ReadonlyMap<string, string>;
 };
 
 const isAnchor = (graph: Graph, id: string) =>
@@ -78,9 +121,9 @@ const isAnchor = (graph: Graph, id: string) =>
 export function hullLinkOf(
 	src: string,
 	tgt: string,
-	{ graph, groups, groupsOf, drawn }: HullGroups
+	{ graph, groups, groupsOf, drawn, alone }: HullGroups
 ): { from: string; to: string } | null {
-	if (!isAnchor(graph, tgt)) return null;
+	if (!isAnchor(graph, tgt) || alone?.has(tgt)) return null;
 	const to = [...(groupsOf.get(tgt) ?? [])][0];
 	const from = [...(groupsOf.get(src) ?? [])].find((id) => {
 		const group = groups.get(id);
@@ -95,7 +138,7 @@ export function hullLinkOf(
  * hull is drawn; then the line is the hulls' layer's, not sigma's.
  */
 export function anchorWithHull(id: string, h: HullGroups): boolean {
-	if (!isAnchor(h.graph, id)) return false;
+	if (!isAnchor(h.graph, id) || h.alone?.has(id)) return false;
 	return [...(h.groupsOf.get(id) ?? [])].some((g) => {
 		const group = h.groups.get(g);
 		return !!group && h.drawn(group) && !h.hiddenKinds.has(group.kind);
@@ -128,11 +171,27 @@ export type HullScene = HullGroups & {
 	pinnedIds: ReadonlySet<string>;
 	/** Where the focus's name stands: a hull's name stands elsewhere. */
 	focusName: Rect | undefined;
+	/** The signs of the bronnen drawn: a hull's name does not cover them (UX review N4). */
+	glyphs?: readonly Rect[];
+	/** The bronnen marked (their card open) or chosen on the keyboard: their hull is chosen. */
+	markedIds?: ReadonlySet<string>;
 };
 
-type HullLayout = { hulls: Hull[]; links: HullLink[]; hitAreas: HullHitArea[] };
+/** `alone`: the anchors with nothing of their group drawn, by id and name: they stand as an ordinary bron. */
+type HullLayout = {
+	hulls: Hull[];
+	links: HullLink[];
+	hitAreas: HullHitArea[];
+	alone: ReadonlyMap<string, string>;
+};
 
-type Drawn = Hull & { polygon: Point[]; center: Point; members: ReadonlySet<string> };
+type Drawn = Hull & {
+	polygon: Point[];
+	center: Point;
+	members: ReadonlySet<string>;
+	/** The top of its disc. */
+	top: number;
+};
 
 /**
  * A label pill (centred on x, its bottom at y) moved clear of the floating panel: to the
@@ -150,14 +209,40 @@ function clearOfPanel(x: number, y: number, half: number, avoid: HullScene['avoi
 }
 
 /** The path of a line from `start` to the foot of its arrowhead at `end`, and the arrowhead. */
-function arrowLine(start: Point, end: Point): { d: string; arrow: string } {
-	const len = Math.hypot(end.x - start.x, end.y - start.y) || 1;
-	const ux = (end.x - start.x) / len;
-	const uy = (end.y - start.y) / len;
-	const back = { x: end.x - ux * ARROW_LENGTH, y: end.y - uy * ARROW_LENGTH };
+function arrowLine(
+	start: Point,
+	end: Point,
+	relation: Relation,
+	status: unknown,
+	from: DrawClass
+): {
+	d: string;
+	arrow: string;
+	color: string;
+	dash: string | undefined;
+	cap: 'round' | 'butt';
+	width: number;
+} {
+	const style = edgeStyleFor(relation, status as string | null, from);
+	const width = lineThickness(Math.max(EDGE_WEIGHT[relation], style === 'kort' ? 0.7 : 0));
+	// The ends are already at the edges of their hulls: no air to add.
+	const line = curvedLine(start, end, {
+		ra: -AIR,
+		rb: -AIR,
+		width,
+		arrow: arrowLength(),
+		head: hasArrow(style) ? 'b' : null
+	});
 	return {
-		d: `M ${start.x} ${start.y} L ${back.x} ${back.y}`,
-		arrow: `M ${end.x} ${end.y} L ${back.x - uy * ARROW_HALF} ${back.y + ux * ARROW_HALF} L ${back.x + uy * ARROW_HALF} ${back.y - ux * ARROW_HALF} Z`
+		d: line.d,
+		arrow: line.head ? `M${line.head.replaceAll(' ', 'L')}Z` : '',
+		color: toneColour(
+			edgeColorFor(relation, from),
+			edgeToneFor(relation, status as string | null, from)
+		),
+		dash: edgeDashFor(style),
+		cap: edgeCapFor(style),
+		width
 	};
 }
 
@@ -166,16 +251,26 @@ const said = (words: string, status: unknown) =>
 	[words, status === 'voorgesteld' ? 'voorgesteld' : null].filter(Boolean).join(', ');
 
 /** The hull of each drawn group, with its name placed where no other name stands. */
-function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<string, Drawn> } {
+function drawHulls(s: HullScene): {
+	drawn: Map<string, Drawn>;
+	anchorHull: Map<string, Drawn>;
+	alone: Map<string, string>;
+} {
 	const { graph } = s;
 	const drawn = new Map<string, Drawn>();
 	// The labels placed so far, and the focus's name: a hull's label takes a free place
 	// (UX test 10 Oct, #25: "Verdrag tot bescherming…" over "Richtlijn (EU) 2019/1023", the
 	// focus's name covered). The labels lie over the canvas, so they decide.
-	const taken: Rect[] = s.focusName ? [s.focusName] : [];
+	const taken: Rect[] = [...(s.focusName ? [s.focusName] : []), ...(s.glyphs ?? [])];
 	/** Per anchor, the hull drawn for it. */
 	const anchorHull = new Map<string, Drawn>();
-	for (const group of s.groups.values()) {
+	const alone = new Map<string, string>();
+	// A hull that holds another's anchor (a dossier and the wet it makes) goes round that hull,
+	// with room for its name: the inner ones first.
+	const anchors = (group: ContainerGroup) =>
+		[...group.members].filter((id) => isAnchor(graph, id)).length;
+	const ordered = [...s.groups.values()].sort((a, b) => anchors(a) - anchors(b));
+	for (const group of ordered) {
 		if (!s.drawn(group) || s.hiddenKinds.has(group.kind)) continue;
 		const points: Point[] = [];
 		let anchorPoint: Point | null = null;
@@ -184,18 +279,43 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 			const attrs = graph.getNodeAttributes(id);
 			if (s.isHidden(id, attrs)) continue;
 			const p = s.toViewport({ x: attrs.x as number, y: attrs.y as number });
-			if (attrs.anchor) anchorPoint = p;
+			const inner = attrs.anchor ? anchorHull.get(id) : undefined;
+			if (inner && inner.id !== group.id) {
+				// Round the inner disc, its name inside this one's margin.
+				for (const q of inner.polygon) points.push(q);
+				points.push({ x: inner.center.x, y: inner.top - LABEL_HEIGHT - LABEL_GAP });
+			} else if (attrs.anchor) anchorPoint = p;
 			else points.push(p);
 		}
+		let loose = false;
+		graph.forEachNode((id, attrs) => {
+			if (attrs.inHull !== group.id || s.isHidden(id, attrs)) return;
+			if (!attrs.cluster) loose = true;
+			const c = s.toViewport({ x: attrs.x as number, y: attrs.y as number });
+			const r = s.radiusOf(id);
+			for (const [dx, dy] of [
+				[r, 0],
+				[-r, 0],
+				[0, r],
+				[0, -r]
+			])
+				points.push({ x: c.x + dx, y: c.y + dy });
+		});
+		// A chosen wet's own point (where its lines end) stands in its disc too, unless only
+		// clusters stand in it: the disc is the cluster plus 16, not a field out to the anchor.
+		if (anchorPoint && loose) points.push(anchorPoint);
 		// The anchor is no bron: the hull goes round what it holds, not to where the anchor is
-		// pulled (Awb with only art. 3:4 was a pill to an empty point, Thijs 9 Oct). An anchor
-		// alone is its own empty hull.
-		if (points.length === 0 && anchorPoint) points.push(anchorPoint);
-		// One member is a hull when it is a container's anchor (the wet or fractie itself,
-		// drawn as an empty hull), the dossier of a stuk on a path between chosen bronnen
-		// (`lone`), or an article: an article always stands in its wet (Thijs, 9 Oct).
+		// pulled. With nothing of it drawn there is no hull: the anchor is an ordinary bron, its
+		// sign and its name (Netwerkcanvas, Omhulling zonder leden; Thijs, 27 Oct).
 		const anchor = [...group.members].find((id) => isAnchor(graph, id));
-		if (points.length < (anchor || group.lone || group.kind === 'instrument' ? 1 : 2)) continue;
+		if (points.length === 0 && anchorPoint && anchor) {
+			const own =
+				s.namesOf(group).short || (graph.getNodeAttribute(anchor, 'anchorNaam') as string);
+			if (own) alone.set(anchor, own);
+			continue;
+		}
+		// One member is a hull only for an article: an article always stands in its wet (Thijs, 9 Oct).
+		if (points.length < (group.kind === 'instrument' ? 1 : 2)) continue;
 		const names = s.namesOf(group);
 		const label =
 			names.short ||
@@ -204,18 +324,13 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 		// The full name while the hull, or a bron in it, is under the pointer.
 		const inHover =
 			s.hoveredHullId === group.id || (s.hoveredId !== null && group.members.has(s.hoveredId));
-		// In a netwerk, a hull of only bronnen between the chosen ones names itself on a hover or
-		// zoomed in; zoomed out its name would cover the chosen bronnen (6e).
-		const quiet =
-			s.pinnedIds.size > 0 &&
-			!inHover &&
-			s.zoomedOut &&
-			![...group.members].some((id) => id === s.focusedId || s.pinnedIds.has(id));
-		const shown = quiet ? '' : inHover && names.full ? names.full : label;
+		// A hull always names itself: its articles are named by number inside it (A301).
+		const shown = inHover && names.full ? names.full : label;
 		// The label anchors to this hull's own outline, not a raw member point: a bron in
 		// several groups at once (a lid on many commissies) would otherwise put every one of
 		// its hulls' labels on that one shared point.
-		const { outline, polygon, path } = hullOutline(points, HULL_MARGIN);
+		const shape = hullOutline(points, HULL_MARGIN);
+		const { outline, polygon, path } = shape;
 		const top = outline.reduce((a, b) => (b.y < a.y ? b : a));
 		// Above the hull's top, but never past the edge of the canvas: a hull at the border (or
 		// a fit that leaves little room) would cut its label in half.
@@ -256,14 +371,17 @@ function drawHulls(s: HullScene): { drawn: Map<string, Drawn>; anchorHull: Map<s
 			labelX: (place ?? at).x,
 			labelY: (place ?? at).y,
 			dim: false,
+			anchor: anchor ?? null,
+			chosen: !!anchor && (s.markedIds?.has(anchor) ?? false),
 			polygon,
 			center: centroid(points),
-			members: group.members
+			members: group.members,
+			top: top.y
 		};
 		drawn.set(group.id, hull);
-		if (anchor) anchorHull.set(anchor, hull);
+		if (anchor && !anchorHull.has(anchor)) anchorHull.set(anchor, hull);
 	}
-	return { drawn, anchorHull };
+	return { drawn, anchorHull, alone };
 }
 
 const wordOf = (graph: Graph, attrs: Record<string, unknown>, src: string, tgt: string) =>
@@ -276,8 +394,8 @@ const wordOf = (graph: Graph, attrs: Record<string, unknown>, src: string, tgt: 
 
 export function layoutHulls(s: HullScene): HullLayout {
 	const { graph } = s;
-	if (s.groups.size === 0) return { hulls: [], links: [], hitAreas: [] };
-	const { drawn, anchorHull } = drawHulls(s);
+	if (s.groups.size === 0) return { hulls: [], links: [], hitAreas: [], alone: new Map() };
+	const { drawn, anchorHull, alone } = drawHulls(s);
 
 	// One line per pair of hulls, from where it leaves the one to where it enters the other.
 	// It says every verbinding it stands for, each in the words of its own source (relation-words.ts),
@@ -339,9 +457,7 @@ export function layoutHulls(s: HullScene): HullLayout {
 			.join(', ');
 		links.push({
 			id,
-			...arrowLine(start, end),
-			color: edgeColorFor(relation, 'document'),
-			dashed: status === 'voorgesteld',
+			...arrowLine(start, end, relation, status, 'document'),
 			dim: active !== null && !lit,
 			label: lit ? said(byCount, status) : null,
 			labelX: (start.x + end.x) / 2,
@@ -349,16 +465,20 @@ export function layoutHulls(s: HullScene): HullLayout {
 		});
 	}
 	links.push(...anchorLines(s, anchorHull, active));
+	unstacked(links, s.labelWidth);
 
 	const hulls = [...drawn.values()];
 	hideCrowdedNames(s, hulls);
 	return {
+		alone,
 		hulls: hulls.map(({ polygon: _p, center: _c, members: _m, ...hull }) => hull),
 		links,
 		hitAreas: hulls.map((h) => {
 			const w = s.labelWidth(h.label);
 			return {
 				id: h.id,
+				anchor: h.anchor,
+				named: !!h.label,
 				polygon: h.polygon,
 				label: { x: h.labelX - w / 2, y: h.labelY - LABEL_HEIGHT, w, h: LABEL_HEIGHT }
 			};
@@ -413,14 +533,10 @@ function anchorLines(
 		}
 		const hull = (toHull ?? fromHull)!;
 		const lit = s.hoveredHullId === hull.id || (nodeEnd !== null && s.hoveredId === nodeEnd);
+		const sourceClass = graph.getNodeAttribute(src, 'drawClass') as DrawClass;
 		links.push({
 			id: `anker:${key}`,
-			...arrowLine(start, end),
-			color: edgeColorFor(
-				attrs.relation as Relation,
-				graph.getNodeAttribute(src, 'drawClass') as DrawClass
-			),
-			dashed: attrs.status === 'voorgesteld',
+			...arrowLine(start, end, attrs.relation as Relation, attrs.status, sourceClass),
 			dim: active !== null && !lit && !active.has(hull.id),
 			label: lit ? said(wordOf(graph, attrs, src, tgt), attrs.status) : null,
 			labelX: (start.x + end.x) / 2,
@@ -453,5 +569,22 @@ function hideCrowdedNames(s: HullScene, hulls: Drawn[]) {
 			continue;
 		}
 		placed.push(r);
+	}
+}
+
+/**
+ * The words of the lines of a hull in the hover stand where no other line's words stand: the
+ * six lines "noemt" from the Gemeentewet's hull to the bronnen under it said it six times over
+ * one another (UX review N4). A label that would cover one placed before is left out; its
+ * line stays.
+ */
+export function unstacked(links: HullLink[], labelWidth: (text: string) => number): void {
+	const placed: Rect[] = [];
+	for (const link of links) {
+		if (!link.label) continue;
+		const w = labelWidth(link.label);
+		const r = { x: link.labelX - w / 2, y: link.labelY - LABEL_HEIGHT / 2, w, h: LABEL_HEIGHT };
+		if (placed.some((o) => overlaps(r, o))) link.label = null;
+		else placed.push(r);
 	}
 }

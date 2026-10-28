@@ -11,7 +11,8 @@
 	import { navigate } from '$lib/util/address';
 	import { SvelteSet } from 'svelte/reactivity';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { download } from '$lib/verbonden/export';
@@ -99,6 +100,8 @@
 	let naming = $state(false);
 	/** The bundel from a file whose ⋯ lists the bundels to add it to, in place of its items. */
 	let choosing = $state<FileMap | null>(null);
+	/** Nothing kept yet: the page says what a bundel is, where it stays and how to export it (F28). */
+	const leeg = $derived(!opened && kaart.listed.length === 1 && kaart.loose.items.length === 0);
 	/** A bundel from a file that is one of this browser's (by its id): Vervang comes first. */
 	const sameId = (f: FileMap) => !!f.id && kaart.mappen.some((m) => m.id === f.id);
 </script>
@@ -128,12 +131,11 @@
 							if (field.value.trim()) goto(bundlePageHref(kaart.nieuw(field.value)));
 						}}
 					>
-						<!-- svelte-ignore a11y_autofocus -->
-						<input
+						<Tekstveld
 							name="naam"
-							autofocus
-							placeholder="Naam"
-							aria-label="Naam van de nieuwe bundel"
+							focus
+							placeholder="Naam van de bundel"
+							label="Naam van de nieuwe bundel"
 							onkeydown={(e) => {
 								if (e.key === 'Escape') naming = false;
 							}}
@@ -163,7 +165,7 @@
 							onclick={() => {
 								close();
 								download(mapFileName(kaart.mappen), mapFile(kaart.mappen), 'application/json');
-							}}>Alle bundels downloaden</button
+							}}>Exporteer alle bundels</button
 						>
 					{/snippet}
 				</TekstMenu>
@@ -182,17 +184,40 @@
 			{#if shared === BROKEN || oldLink}
 				<p class="melding" role="status">
 					<span>Link onvolledig of beschadigd</span>
-					<TekstLink onclick={() => sharedDone('none')}>Sluiten</TekstLink>
+					<IconButton label="Sluiten" onclick={() => sharedDone('none')}>×</IconButton>
 				</p>
 			{/if}
 			{#if opened && 'error' in opened}
 				<p class="melding" role="status">
 					<span>{opened.error}</span>
-					<TekstLink onclick={() => (opened = null)}>Sluiten</TekstLink>
+					<IconButton label="Sluiten" onclick={() => (opened = null)}>×</IconButton>
 				</p>
 			{/if}
 
-			<ul class="lijst">
+			{#if leeg}
+				<section class="uitleg" aria-label="Wat een bundel is">
+					<p class="wat">
+						Een bundel is een eigen verzameling bewaarde bronnen met aantekeningen, te delen met een
+						link.
+					</p>
+					<dl>
+						<dt>Bewaren</dt>
+						<dd>
+							Kies Bewaar bij een artikel, uitspraak of stuk. Het komt in Mijn markeringen of in een
+							bundel die je kiest.
+						</dd>
+						<dt>Waar</dt>
+						<dd>
+							In deze browser, zonder account. De wetten, dossiers en artikelen gaan naar de server
+							om te zien wat er nieuw is; aantekeningen niet.
+						</dd>
+						<dt>Exporteren</dt>
+						<dd>Kies Meer, dan Exporteer alle bundels. Er is geen back-up.</dd>
+					</dl>
+					<a class="btn is-primary" href="/zoeken">Zoek een bron</a>
+				</section>
+			{/if}
+			<ul class="lijst" class:leeg>
 				{#if opened && 'maps' in opened}
 					{#each opened.maps as f, n (n)}
 						{@const target = targetOf(f)}
@@ -285,6 +310,33 @@
 {/if}
 
 <style>
+	.uitleg {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-4);
+		max-width: 40rem;
+	}
+	.uitleg p,
+	.uitleg dl {
+		margin: 0;
+	}
+	.uitleg dl {
+		display: grid;
+		grid-template-columns: 7rem minmax(0, 1fr);
+		gap: var(--s-3);
+		font-size: var(--t-meta);
+	}
+	.uitleg dt {
+		font-weight: 600;
+	}
+	.uitleg dd {
+		margin: 0;
+	}
+	/* Nothing kept: the empty Mijn markeringen is not a row to open. */
+	.lijst.leeg {
+		display: none;
+	}
 	.melding {
 		display: flex;
 		flex-wrap: wrap;
@@ -314,20 +366,9 @@
 		flex-wrap: nowrap;
 	}
 	.naam {
-		margin: 0;
-	}
-	/* The field at 16px: below that a phone zooms in on focus. */
-	.naam input {
-		box-sizing: border-box;
 		width: 14rem;
 		max-width: 100%;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
+		margin: 0;
 	}
 	/* On a phone the row keeps its number at the right of the name. */
 	@media (max-width: 768px) {

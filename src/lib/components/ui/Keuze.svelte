@@ -12,6 +12,7 @@
 		onSelect,
 		label,
 		vol = false,
+		rijen = false,
 		voor
 	}: {
 		opties: Option<T>[];
@@ -21,12 +22,14 @@
 		label: string;
 		/** The full width of its column, every option as wide as the others (a period). */
 		vol?: boolean;
+		/** On a phone the options in rows of two (Verband: the pairs of three bronnen). */
+		rijen?: boolean;
 		/** Something before the label of an option, such as a Picto. */
 		voor?: Snippet<[T]>;
 	} = $props();
 </script>
 
-<div class="keuze" class:vol role="group" aria-label={label}>
+<div class="keuze" class:vol class:rijen role="group" aria-label={label}>
 	{#each opties as o (o.waarde)}
 		<button
 			type="button"
@@ -115,18 +118,16 @@
 	}
 	/* On a touch screen the segments are a finger's 44 px themselves, no hidden target. */
 	@media (pointer: coarse), (max-width: 768px) {
+		/* The frame is drawn inside as an outline, so it takes no room: the segments are 44 px
+		   themselves, not 42 inside a border. */
 		.keuze {
 			height: var(--veld-h-raak);
+			border: 0;
+			outline: 1px solid var(--rule-strong);
+			outline-offset: -1px;
 		}
 		button {
-			position: relative;
 			font-size: var(--t-ui-raak);
-		}
-		/* The frame counts in the 44 px: the segment's target reaches over its two lines. */
-		button::after {
-			content: '';
-			position: absolute;
-			inset: -1px 0;
 		}
 		button[aria-pressed='true'] {
 			box-shadow: inset 0 -3px 0 var(--ink);
@@ -135,6 +136,24 @@
 		   (six scopes on the start page at 375). */
 		.vol button {
 			font-size: var(--t-ui);
+		}
+		/* In rows of two: equal cells, a rule between the cells and between the rows. */
+		.rijen {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			height: auto;
+		}
+		.rijen button {
+			min-height: var(--veld-h-raak);
+			min-width: 0;
+			border-left: 0;
+			border-radius: 0;
+		}
+		.rijen button:nth-child(even) {
+			border-left: 1px solid var(--rule-strong);
+		}
+		.rijen button:nth-child(n + 3) {
+			border-top: 1px solid var(--rule-strong);
 		}
 	}
 </style>

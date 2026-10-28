@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chain } from './chain';
+import { chain, chainTally } from './chain';
 
 const law = (id: string, title: string) => ({
 	id,
@@ -197,5 +197,85 @@ describe('the keten of a law', () => {
 			['law', 'Richtlijn'],
 			['implementation', 'Implementatie']
 		]);
+	});
+
+	it('puts a wet that hangs under an article in the one layer Wet, with its articles and regelingen under it', () => {
+		const uhw = item('instruments/uhw', 'Uitvoeringswet huurprijzen woonruimte', 'wet', [
+			article('248', 'mentioned')
+		]);
+		uhw.sub_delegated = [
+			{
+				instrument: law('instruments/reg', 'Besluit huurprijzen'),
+				kind: 'amvb',
+				date_in_force: '2006-03-01',
+				expired_on: null,
+				basis_kind: 'delegates',
+				articles: [{ ...article('10'), id: 'articles/uhw_10', key: 'uhw_10' }]
+			}
+		] as never;
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Burgerlijk Wetboek Boek 7' },
+			{ bwb_id: 'BWBR0010346', total: 1, items: [uhw] } as never,
+			null
+		);
+		expect(k.layers.map((l) => l.id)).toEqual(['law', 'article', 'amvb']);
+		expect(k.layers.filter((l) => l.label === 'Wet')).toHaveLength(1);
+		expect(k.layers[0].nodes.map((n) => n.id)).toEqual([
+			'instruments/bwbr0010346',
+			'instruments/uhw'
+		]);
+		const [bw, ownArt] = k.layers[1].nodes;
+		expect(bw.parents).toEqual([
+			{ id: 'instruments/bwbr0010346', way: 'delegates' },
+			{ id: 'instruments/uhw', way: 'mentioned' }
+		]);
+		expect(ownArt.parents).toEqual([{ id: 'instruments/uhw', way: 'delegates' }]);
+		expect(k.layers[2].nodes[0].parents.map((p) => p.id)).toEqual(['articles/uhw_10']);
+	});
+});
+
+describe('what Soort and Relatie count in a keten', () => {
+	it('counts the bronnen listed under Alle N with those drawn, so Tonen and the layer say one number', () => {
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Burgerlijk Wetboek Boek 7' },
+			delegated,
+			null,
+			{ max: 1 }
+		);
+		const listed = Object.values(k.more).flat().length;
+		expect(listed).toBeGreaterThan(0);
+		const drawn = k.layers.flatMap((l) => l.nodes).filter((n) => n.collection === 'instruments');
+		expect(chainTally(k, k).kinds.wetten).toBe(drawn.length + listed);
+	});
+	it('counts each line as the kind it is drawn in', () => {
+		const k = chain({ id: 'instruments/bwbr0010346', name: 'BW 7' }, delegated, null);
+		const { lines } = chainTally(k, k);
+		expect(lines.structural).toBeGreaterThan(0);
+		expect(lines.citation).toBeGreaterThan(0);
+	});
+	it('counts a person by the posts they hold: a bewindspersoon is no Kamerlid', () => {
+		const person = (roles: Record<string, unknown>) => ({
+			id: 'members/x',
+			name: 'X',
+			short: 'X',
+			collection: 'members' as const,
+			kind: null,
+			since: null,
+			grondslag: null,
+			mentions: null,
+			parents: [],
+			further: [],
+			roles
+		});
+		const tally = (roles: Record<string, unknown>) => {
+			const k = {
+				layers: [{ id: '0|Persoon' as const, label: 'Persoon', nodes: [person(roles)] }]
+			};
+			return chainTally(k, k).kinds;
+		};
+		expect(tally({ government_functions: [{ from_date: '2020-01-01', to_date: null }] })).toEqual({
+			bewindspersonen: 1
+		});
+		expect(tally({})).toEqual({ kamerleden: 1 });
 	});
 });

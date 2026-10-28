@@ -45,12 +45,34 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		const eigen: Uitzondering[] = [
 			{ pad: 'lib/styles/basis.css', reden: 'the Knop itself' },
 			{ pad: 'lib/components/ui/IconButton.svelte', reden: 'the one icon button' },
+			{ pad: 'lib/components/ui/Tekstveld.svelte', reden: 'the one text field' },
 			{
 				pad: 'lib/components/layout/TopBar.svelte',
 				reden: 'the search in the bar looks as the field it opens'
 			}
 		];
 		expect(overtreders((t) => regels(t).some(knop), eigen)).toEqual([]);
+	});
+
+	it('draws a text field as the Tekstveld, with the 16 px of a phone', () => {
+		// A text input or a textarea is the field's one form (ui/Tekstveld.svelte). The files below
+		// still draw their own; the list only gets shorter (P2, A250, A254, A255).
+		const veld = (t: string) =>
+			[...t.replace(/<!--[\s\S]*?-->/g, '').matchAll(/<(input|textarea)\b[^>]*>/g)].some(
+				([tag]) => !/type="(checkbox|radio|file|range|hidden)"/.test(tag)
+			);
+		const nog = (pad: string, reden: string): Uitzondering => ({ pad, reden });
+		expect(
+			overtreders(
+				(t) => t.includes('<script') && veld(t.replace(/<script[\s\S]*?<\/script>/g, '')),
+				[
+					plek('lib/components/ui/Tekstveld.svelte', 'the one text field'),
+					nog('lib/search/Search.svelte', 'the search overlay (P2)'),
+					nog('lib/verbonden/FilterSheet.svelte', 'the filter sheet of Verbonden (A255)'),
+					nog('lib/components/ui/Periode.svelte', 'the dates of Periode (A250)')
+				]
+			)
+		).toEqual([]);
 	});
 
 	it('draws an item of a menu with tekstmenu__item', () => {
@@ -66,27 +88,11 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		).toEqual([]);
 	});
 
-	it('styles Verfijnen once, in lib/styles/basis.css', () => {
-		expect(
-			overtreders(
-				(t) =>
-					regels(t).some(
-						(r) =>
-							/\.verfijnen-knop\b/.test(r.selector) && /font-family|text-decoration/.test(r.body)
-					),
-				[plek('lib/styles/basis.css')]
-			)
-		).toEqual([]);
-	});
-
-	it('puts the filters of a phone behind one Verfijnen, with Toon (besluit 30, X4)', () => {
-		expect(
-			overtreders(
-				(t) => /class="verfijnen-knop/.test(t),
-				[plek('lib/components/ui/Verfijnen.svelte', 'the one Verfijnen')]
-			)
-		).toEqual([]);
-		expect(bron('lib/components/ui/Verfijnen.svelte')).toMatch(/onclick=\{showList\}/);
+	it('has no Verfijnen: the filters of a phone are FilterBar alone, with Toon (besluit 30, X4)', () => {
+		expect(overtreders((t) => /verfijnen-knop|<Verfijnen|ui\/Verfijnen/.test(t))).toEqual([]);
+		expect(bron('lib/components/explore/index/FilterBar.svelte')).toMatch(
+			/onclick=\{\(\) => close\(true\)\}>\{show\}/
+		);
 	});
 
 	it("sizes a control at one height, or a finger's", () => {
@@ -187,7 +193,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(verbonden).not.toMatch(/\bPRESETS\b/);
 		expect(verbonden).toMatch(/onclick=\{onOpenFilter\}>Filter</);
 		const sheet = bron('lib/verbonden/FilterSheet.svelte');
-		expect(sheet).toMatch(/#each presetsToChoose as p/);
+		expect(sheet).toMatch(/presetsToChoose\.map/);
 		expect(sheet).toMatch(/#each sourcesToChoose as k/);
 	});
 });

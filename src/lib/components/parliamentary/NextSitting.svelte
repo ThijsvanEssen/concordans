@@ -17,7 +17,8 @@
 	});
 </script>
 
-{#snippet day(d: SittingDay)}{#if d.href}<a href={d.href}>{d.text}</a>{:else}{d.text}{/if}{/snippet}
+{#snippet day(d: SittingDay)}{#if d.href}<a class="raak-rij" href={d.href}>{d.text}</a
+		>{:else}{d.text}{/if}{/snippet}
 
 {#if line}
 	<!-- One day once: votes on the day of the next sitting name it once, with its weekday. -->

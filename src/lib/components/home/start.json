@@ -1,65 +1,28 @@
 {
-	"heading": "Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen.",
-	"placeholder": "Zoek een artikel, uitspraak of motie",
-	"article": {
-		"heading": "Artikel",
-		"title": "Art. 6:162 BW, Onrechtmatige daad",
-		"href": "/wetten/BWBR0005289/artikel/6:162",
-		"parts": [
+	"heading": "Zie hoe wetten, rechtspraak en parlement samenhangen.",
+	"lede": "Zoek een wet, uitspraak, Kamerstuk of dossier en zie wat ermee verbonden is.",
+	"placeholder": "Wet, uitspraak, Kamerstuk, dossier of motie",
+	"questions": {
+		"heading": "Begin met een vraag",
+		"items": [
 			{
-				"collection": "judgments",
-				"label": "Uitspraken die het aanhalen",
-				"bronnen": "uitspraken"
+				"title": "Wie haalt dit artikel aan?",
+				"text": "Uitspraken, Kamerstukken en andere wetten die naar een artikel verwijzen, met de passage.",
+				"linkLabel": "Bekijk een artikel, bijvoorbeeld art. 6:162 BW",
+				"href": "/wetten/BWBR0005289/artikel/6:162"
 			},
 			{
-				"collection": "documents",
-				"label": "Kamerstukken die het noemen",
-				"bronnen": "toelichtingen,wetsvoorstellen,dossiers"
+				"title": "Hoe stemde de Kamer?",
+				"text": "Per motie en wetsvoorstel: de uitslag, het aantal stemmen en welke fracties voor of tegen waren.",
+				"linkLabel": "Bekijk de laatste stemmingen",
+				"href": "/stemmingen"
 			},
 			{
-				"collection": "articles",
-				"label": "Artikelen die ernaar verwijzen",
-				"bronnen": "artikelen"
+				"title": "Hoe houd ik bij wat ik vind?",
+				"text": "Bewaar artikelen, uitspraken en stukken met aantekeningen in een bundel en deel de link.",
+				"linkLabel": "Begin een bundel",
+				"href": "/bundels"
 			}
 		]
-	},
-	"vote": {
-		"heading": "Stemming",
-		"title": "Motie De Hoop en Grinwis over de WOZ-cap niet versoepelen",
-		"href": "/kamerstukken/27926/413",
-		"date": "16 juni 2026, Tweede Kamer",
-		"outcome": "Verworpen",
-		"tally": "54 voor, 96 tegen",
-		"sides": [
-			{ "choice": "Voor", "parties": "PRO, PVV, ChristenUnie, DENK, PvdD, SP, 50PLUS, Volt" },
-			{
-				"choice": "Tegen",
-				"parties": "D66, VVD, CDA, JA21, FVD, Groep Markuszower, BBB, SGP, Lid Keijzer"
-			}
-		]
-	},
-	"bundle": {
-		"heading": "Bundel",
-		"title": "Aansprakelijkheid werkgever thuiswerk",
-		"href": "/bundels#m=tZLRS8MwEMb_lSPPnW035jQvsomw4fBhogNFSroebdY0KWnaIWP_u1e66cZUfPElcPm-I78vd1umhSgYZ2Ohq9KKHJVc5xnKBDZo8xQbtOCyWlZtyTwmHRYV469bJhNqE9bJlcLKjzexDYJg2L8OosvhFTmFI13JpBdSkRvrOvsFjDgZgBQIYbIksTGqlntZEsGpo7Yp2pYKluhigy1Fag2W1HAuwqQ9Rp2nLu_xnWwbdPwIkERtnHQSSXsxNi2VXGXOA2PyLuwN23m_JgzDQ8LzcOEvscL_CfRJu66TtEDtKh9XSkZaRZmN-uSKRD0YhINz6ukCCEqbBouYZt16Pbi7nc_4w5xPF7y94OOnffOB85uuU8I_gJSiJfbpj7rN0_4Pz-7ejgf2bIVIOTRCOUDUsHic9XIlaIAQy_XXsoLRCaEdrdxkSXP9AA",
-		"lines": [
-			{
-				"collection": "articles",
-				"label": "art. 7:658 lid 1 BW",
-				"href": "/wetten/BWBR0005290/artikel/7:658#lid-1"
-			},
-			{
-				"collection": "articles",
-				"label": "art. 7:611 BW",
-				"href": "/wetten/BWBR0005290/artikel/7:611"
-			},
-			{
-				"collection": "judgments",
-				"label": "HR 11 november 2005, ECLI:NL:HR:2005:AU3313",
-				"href": "/uitspraken/ECLI:NL:HR:2005:AU3313"
-			}
-		],
-		"noteLabel": "Aantekening",
-		"note": "Zorgplicht, ook thuis?"
 	}
 }

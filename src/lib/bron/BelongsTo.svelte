@@ -141,7 +141,7 @@
 	let uit = $state(false);
 
 	// The band opens with the soort of the top navigation, as a breadcrumb does: Wetten ›.
-	const source = $derived(sourceOfCollection(node.collection));
+	const source = $derived(sourceOfCollection(node.collection, node.raw?.props));
 	const groepen = $derived(band.onder);
 	// What the phone's first line folds away: the lines after it and the groups; with no line
 	// at all (a kabinet), the groups behind the button alone.
@@ -318,7 +318,7 @@
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset-tight);
+		text-underline-offset: var(--onderstreping-krap);
 	}
 	.soort:hover {
 		text-decoration-color: var(--ink);
@@ -403,7 +403,7 @@
 	.vouw button:focus-visible {
 		color: var(--ink);
 		text-decoration-line: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.lagen li + li::before {
 		content: '›';
@@ -440,13 +440,13 @@
 	.lagen a:hover,
 	.lagen a:focus-visible {
 		text-decoration-line: underline;
-		text-underline-offset: var(--underline-offset);
+		text-underline-offset: var(--onderstreping);
 	}
 	.rijen a {
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
-		text-underline-offset: var(--underline-offset-tight);
+		text-underline-offset: var(--onderstreping-krap);
 		overflow-wrap: anywhere;
 	}
 	.rijen a:hover {

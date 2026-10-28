@@ -1,10 +1,11 @@
 <script lang="ts">
 	// The bundels a bron is in, as a menu's items, the one form wherever a bron is kept: the
 	// caret and Bewaard of a reader's Bewaar, the bookmark of a row, a place's menu (decision
-	// 20A, UX-toets A14). Every bundel in its own order, Losse markeringen first, a tick at
+	// 20A, UX-toets A14). Every bundel in its own order, Mijn markeringen first, a tick at
 	// each that holds the bron: a click puts it in or takes it out of that one bundel, so
 	// nothing is taken out of all at once. Nieuwe bundel asks its name in place.
 	import Picto from '$lib/components/ui/Picto.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { kaart } from './map.svelte';
 	import type { MapItem } from './map';
 
@@ -13,7 +14,6 @@
 	const held = $derived(kaart.holding(item));
 	/** The field of a new bundel's name, with the focus. */
 	let naming = $state(false);
-	const focus = (field: HTMLInputElement) => field.focus();
 </script>
 
 <!-- In their own order, which a tick does not change while the menu is open. -->
@@ -42,7 +42,12 @@
 				close();
 			}}
 		>
-			<input name="naam" placeholder="Naam" aria-label="Naam van de nieuwe bundel" use:focus />
+			<Tekstveld
+				name="naam"
+				placeholder="Naam van de bundel"
+				label="Naam van de nieuwe bundel"
+				focus
+			/>
 		</form>
 	{:else}
 		<button type="button" role="menuitem" class="tekstmenu__item" onclick={() => (naming = true)}
@@ -60,17 +65,5 @@
 	.naam {
 		margin: 0;
 		padding: var(--s-1) var(--s-3);
-	}
-	/* The field at 16px: below that a phone zooms in on focus. */
-	.naam input {
-		box-sizing: border-box;
-		width: 100%;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-input);
-		color: var(--ink);
 	}
 </style>

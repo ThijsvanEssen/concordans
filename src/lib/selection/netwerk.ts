@@ -1,8 +1,7 @@
 // A network put together from bronnen chosen one by one, instead of everything
 // within a number of steps of one focus. The URL holds it: ?netwerk lists the
 // chosen bronnen by the name a link uses (`members/<key>`, `dossiers/37020-XV`),
-// ?uit the ones switched off, and ?tussen=0 hides the bronnen that join them. They show by
-// default, on a phone too (Thijs, 9 Oct), faint and clustered there as everywhere.
+// ?uit the ones switched off.
 import type { GraphNode } from '$lib/graph/types';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Neighbor } from '$lib/api/nodes';
@@ -13,8 +12,6 @@ export type Netwerk = {
 	ids: string[];
 	/** Chosen bronnen that are switched off: listed, not drawn. */
 	uit: ReadonlySet<string>;
-	/** Whether the bronnen that join two chosen ones are drawn. */
-	tussen: boolean;
 };
 
 /** A chosen bron as the panel Netwerk lists it. */
@@ -36,13 +33,7 @@ export type NetwerkEntry = {
 	verborgenMet?: ContainerKind;
 	/** All its verbindingen, as its node counts them: under it in the weergave Verband. */
 	connections?: number;
-	/** A group the paths ran through some of its members of: how many of how many. */
-	via?: { used: number; total: number };
 };
-
-/** Only where the API took part of a group's members: then the chip says so. */
-export const deelVan = (e: { used: number; total: number } | undefined) =>
-	e && e.used < e.total ? e : undefined;
 
 const list = (value: string | null) =>
 	(value ?? '')
@@ -50,21 +41,18 @@ const list = (value: string | null) =>
 		.map((s) => s.trim())
 		.filter((s) => parseNodeId(s) !== null);
 
-/** `tussenStandaard`: whether the bronnen between are drawn when the URL does not say. */
-export function parseNetwerk(params: URLSearchParams, tussenStandaard = true): Netwerk {
+export function parseNetwerk(params: URLSearchParams): Netwerk {
 	const ids = [...new Set(list(params.get('netwerk')))];
 	const uit = new Set(list(params.get('uit')).filter((id) => ids.includes(id)));
-	const t = params.get('tussen');
-	return { ids, uit, tussen: t === '0' ? false : t === '1' ? true : tussenStandaard };
+	return { ids, uit };
 }
 
-/** The URL of a netwerk; ?tussen only where it differs from `tussenStandaard`. */
-export function netwerkParams(n: Netwerk, tussenStandaard = true): Record<string, string | null> {
+/** The URL of a netwerk. */
+export function netwerkParams(n: Netwerk): Record<string, string | null> {
 	const uit = n.ids.filter((id) => n.uit.has(id));
 	return {
 		netwerk: n.ids.length > 0 ? n.ids.join(',') : null,
-		uit: uit.length > 0 ? uit.join(',') : null,
-		tussen: n.ids.length > 0 && n.tussen !== tussenStandaard ? (n.tussen ? '1' : '0') : null
+		uit: uit.length > 0 ? uit.join(',') : null
 	};
 }
 
@@ -80,15 +68,6 @@ export function withRemoved(n: Netwerk, id: string): Netwerk {
 	const uit = new Set(n.uit);
 	uit.delete(id);
 	return { ...n, ids: n.ids.filter((x) => x !== id), uit };
-}
-
-/**
- * The netwerk as the filter Alleen verbonden bronnen shows it: only `id` (added when it is
- * not chosen yet) is on, the others stay listed, switched off. The address keeps the full netwerk.
- */
-export function onlyAround(n: Netwerk, id: string): Netwerk {
-	const ids = n.ids.includes(id) ? n.ids : [...n.ids, id];
-	return { ...n, ids, uit: new Set(ids.filter((x) => x !== id)) };
 }
 
 /** The entries as `n` shows them: their on/off follows the address at once, before a redraw. */
@@ -118,8 +97,6 @@ export type Between = {
 	/** Per participant, the neighbours to draw: another participant, an article of a
 	 *  chosen wet, or a bron it shares with another participant. */
 	keep: Map<string, Set<string>>;
-	/** Bronnen that are no participant but join two or more of them. */
-	joining: Set<string>;
 	/** Participants that are tied to no other participant. */
 	alone: Set<string>;
 };
@@ -134,7 +111,6 @@ const idOf = (n: Pick<Neighbor, 'collection' | 'key'>) => nodeId(n.collection, n
 export function between(
 	participants: Participant[],
 	lawOf: (n: Neighbor) => string | null,
-	withJoining: boolean,
 	/** Keep every neighbour of each participant (the weergave Omgeving), shared or not. */
 	surroundings = false
 ): Between {
@@ -155,7 +131,6 @@ export function between(
 	}
 
 	const keep = new Map<string, Set<string>>();
-	const joining = new Set<string>();
 	const tied = new Set<string>();
 	const tie = (a: string, b: string) => {
 		if (a === b) return;
@@ -185,13 +160,10 @@ export function between(
 				continue;
 			}
 			for (const other of by) tie(p.id, other);
-			if (!withJoining) continue;
-			kept.add(id);
-			joining.add(id);
 		}
 		keep.set(p.id, kept);
 	}
 
 	const alone = new Set(participants.map((p) => p.id).filter((id) => !tied.has(id)));
-	return { keep, joining, alone };
+	return { keep, alone };
 }

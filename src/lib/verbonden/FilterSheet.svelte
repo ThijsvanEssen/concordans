@@ -1,27 +1,33 @@
 <script lang="ts">
-	import { plural } from '$lib/text/words';
+	import { capitalize } from '$lib/text/words';
+	import { panel } from './panel-groups.svelte';
 	import { NL } from '$lib/text/collator';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Blad from '$lib/components/ui/Blad.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { FILTER_GROUP_VORM } from '$lib/bron/vormen';
-	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
+	import { SORT_SHAPE } from '$lib/bron/vormen';
+	import { STUKSOORTEN, STUKSOORT_LABEL } from '$lib/bron/rubrieken';
+	// The filter sheet: soort, relatie, lid, rechter, periode, zekerheid and
 	// status, applied with one button. The same sheet opens from the panel and from
-	// the legend of the network. A modal dialog: the focus goes to the search field on
-	// open, stays inside while it is open, and returns to where it was on close.
-	import { afterTick } from '$lib/util/after-tick';
+	// the legend of the network. A Blad: the focus goes to the search field on open, stays inside
+	// while it is open, and returns to where it was on close.
 	import type { Collection } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
 		FILTER_GROUP_LABEL,
 		EMPTY_FILTER,
+		hasChoice,
+		toggleRelation,
 		PRESETS,
 		RECHTERS,
 		activePreset,
+		stuksoortOn,
 		toggleFilterGroup,
+		toggleStuksoort,
 		withPreset,
 		type Betrouwbaarheid,
 		type Status,
@@ -36,13 +42,14 @@
 		courtCounts,
 		relationCounts,
 		shownCount,
-		totalCount
+		stuksoortTotals
 	} from './view';
 
 	let {
 		open,
 		filter,
-		groups,
+		groups: rawGroups,
+
 		lidTellingen = null,
 		selection,
 		onApply,
@@ -58,7 +65,8 @@
 		onClose: () => void;
 	} = $props();
 
-	const uid = $props.id();
+	// The groups as the head of Verbonden counts them, so button and head name one number.
+	const groups = $derived(panel.groups ?? rawGroups);
 
 	// The sheet edits a draft; the button applies it.
 	let draft = $state<VerbondenFilter>(filter);
@@ -66,44 +74,12 @@
 		if (open) draft = filter;
 	});
 
-	let sheet = $state<HTMLElement | null>(null);
-	let opener: HTMLElement | null = null;
-	$effect(() => {
-		if (!open) return;
-		afterTick(() => {
-			const at = document.activeElement;
-			opener =
-				at instanceof HTMLElement && at !== document.body && !sheet?.contains(at) ? at : null;
-			sheet?.querySelector<HTMLElement>('.search')?.focus();
-		});
-		return () => {
-			const back = opener;
-			opener = null;
-			if (back?.isConnected) back.focus();
-		};
-	});
-
-	const FOCUSABLE =
-		'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
-
-	/** Tab and Shift+Tab go round inside the sheet. */
-	function trap(e: KeyboardEvent) {
-		if (e.key !== 'Tab' || !sheet) return;
-		const els = [...sheet.querySelectorAll<HTMLElement>(FOCUSABLE)];
-		const first = els[0];
-		const last = els.at(-1);
-		if (!first || !last) return;
-		const at = document.activeElement;
-		if (e.shiftKey && (at === first || !sheet.contains(at))) {
-			e.preventDefault();
-			last.focus();
-		} else if (!e.shiftKey && (at === last || !sheet.contains(at))) {
-			e.preventDefault();
-			first.focus();
-		}
-	}
-
 	const totals = $derived(groupTotals(groups));
+	const perStuksoort = $derived(stuksoortTotals(groups));
+	// Only what holds anything is offered; with one stuksoort the stukken need no facet.
+	const stuksoortenToChoose = $derived(
+		STUKSOORTEN.filter((s) => (perStuksoort[s] ?? 0) > 0 || !stuksoortOn(draft, s))
+	);
 	const perCourt = $derived(courtCounts(groups));
 	// Only what holds anything is offered (T11); what is chosen stays, to be undone.
 	const sourcesToChoose = $derived(
@@ -130,7 +106,11 @@
 		[...perLid.entries()].filter(([k]) => k !== '').sort(([a], [b]) => NL.compare(a, b))
 	);
 	const noLid = $derived(perLid.get('') ?? 0);
-	const total = $derived(totalCount(groups));
+	const perStatus = $derived.by(() => {
+		const rows = allRows(groups);
+		const proposed = rows.filter((r) => r.proposed).length;
+		return { proposed, enacted: rows.length - proposed };
+	});
 	const count = $derived(shownCount(groups, draft));
 
 	// The main areas of law of the judgments, where the API counts them (a wet's or an article's);
@@ -170,48 +150,18 @@
 	$effect(() => {
 		if (open) dateMode = filter.geldendOp !== null;
 	});
-
-	function onKey(e: KeyboardEvent) {
-		if (e.key !== 'Escape' || !open || e.defaultPrevented) return;
-		// Stopped, so that Escape does not also clear the selection of the network.
-		e.preventDefault();
-		e.stopPropagation();
-		onClose();
-	}
 </script>
 
-<svelte:window onkeydown={onKey} />
-
 {#if open}
-	<div class="scrim" role="presentation" onclick={onClose}></div>
-	<div
-		class="sheet"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="{uid}-title"
-		tabindex="-1"
-		bind:this={sheet}
-		onkeydown={(e) => {
-			onKey(e);
-			trap(e);
-		}}
-	>
-		<div class="sheet__head">
-			<h2 class="sheet__title" id="{uid}-title">Filter</h2>
-			<span class="sheet__count">{formatCount(count)} van {formatCount(total)}</span>
-			<span class="sheet__space"></span>
-			<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wissen</TekstLink>
-			<IconButton label="Sluiten" onclick={onClose}>×</IconButton>
-		</div>
-
-		<div class="sheet__body">
+	<Blad title="Filter" place="rechts" tall focus=".search" {onClose}>
+		<div class="sheet__inhoud">
 			<div class="block">
-				<input
+				<Tekstveld
 					class="search"
 					type="search"
+					label="Zoek in deze verbindingen"
 					placeholder="Zoek in deze verbindingen"
-					value={draft.zoek}
-					oninput={(e) => (draft = { ...draft, zoek: (e.target as HTMLInputElement).value })}
+					bind:value={() => draft.zoek, (zoek) => (draft = { ...draft, zoek })}
 				/>
 			</div>
 
@@ -251,17 +201,20 @@
 
 			<div class="block">
 				<div class="block__label">Snel</div>
-				{#each presetsToChoose as p (p.id)}
-					<FilterOptie
-						label={p.label}
-						on={activePreset(draft)?.id === p.id}
-						onToggle={() => (draft = withPreset(draft, p))}
-					/>
-				{/each}
+				<Keuze
+					vol
+					label="Snel"
+					opties={presetsToChoose.map((p) => ({ waarde: p.id, label: p.label }))}
+					waarde={activePreset(draft)?.id ?? null}
+					onSelect={(w) => {
+						const p = PRESETS.find((x) => x.id === w);
+						if (p) draft = withPreset(draft, p);
+					}}
+				/>
 			</div>
 
 			<div class="block">
-				<div class="block__label">Bronnen</div>
+				<div class="block__label">Soort</div>
 				{#each sourcesToChoose as k (k)}
 					{@const n = totals[k] ?? 0}
 					<FilterOptie
@@ -270,22 +223,46 @@
 						onToggle={() => (draft = toggleFilterGroup(draft, k))}
 						count={n}
 					>
-						{#snippet voor()}<KindGlyph vorm={FILTER_GROUP_VORM[k]} size={11} />{/snippet}
+						{#snippet voor()}<KindGlyph vorm={SORT_SHAPE[k]} size={11} />{/snippet}
 					</FilterOptie>
 				{/each}
 			</div>
 
+			{#if (totals.stukken ?? 0) > 0 && (stuksoortenToChoose.length > 1 || draft.stuksoort)}
+				<div class="block">
+					<div class="block__label">Stuksoort</div>
+					{#each stuksoortenToChoose as s (s)}
+						<FilterOptie
+							label={STUKSOORT_LABEL[s]}
+							on={stuksoortOn(draft, s)}
+							onToggle={() => (draft = toggleStuksoort(draft, s))}
+							count={perStuksoort[s] ?? 0}
+						>
+							{#snippet voor()}<KindGlyph
+									vorm={s === 'wetsvoorstellen' ? 'voorstel' : 'stuk'}
+									size={11}
+								/>{/snippet}
+						</FilterOptie>
+					{/each}
+				</div>
+			{/if}
+
 			{#if relations.length > 0}
 				<div class="block">
-					<div class="block__label">Verbindingen</div>
-					<ul class="list">
-						{#each relations as r (r.relation)}
-							<li class="list__row">
-								<span class="check__name">{r.label}</span>
-								<span class="check__count">{formatCount(r.count)}</span>
-							</li>
-						{/each}
-					</ul>
+					<div class="block__label">Relatie</div>
+					{#each relations as r (r.relation)}
+						<FilterOptie
+							label={capitalize(r.label)}
+							count={r.count}
+							on={draft.relations === null || draft.relations.has(r.relation)}
+							onToggle={() =>
+								(draft = toggleRelation(
+									draft,
+									r.relation,
+									relations.map((x) => x.relation)
+								))}
+						/>
+					{/each}
 				</div>
 			{/if}
 
@@ -345,10 +322,10 @@
 			{/if}
 
 			<div class="block">
-				<div class="block__label">Betrouwbaarheid</div>
+				<div class="block__label">Zekerheid</div>
 				<Keuze
 					vol
-					label="Betrouwbaarheid"
+					label="Zekerheid"
 					opties={[
 						{ waarde: 'alles', label: 'Alles' },
 						{ waarde: 'bron', label: 'Alleen hoog' },
@@ -363,76 +340,44 @@
 				<div class="block__label">Status</div>
 				<FilterOptie
 					label="Vastgesteld"
+					count={perStatus.enacted}
 					on={statusAan('vastgesteld')}
 					onToggle={() => toggleStatus('vastgesteld')}
 				/>
 				<FilterOptie
 					label="Voorgesteld"
+					count={perStatus.proposed}
 					on={statusAan('voorgesteld')}
 					onToggle={() => toggleStatus('voorgesteld')}
 				/>
 			</div>
 		</div>
-
-		<div class="sheet__foot">
+		{#snippet foot()}
+			{#if hasChoice(draft)}
+				<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
+			{/if}
+			<span class="sheet__space"></span>
 			<button
 				type="button"
 				class="btn is-primary"
 				onclick={() => {
 					onApply(draft);
 					onClose();
-				}}>Toon {formatCount(count)} {plural(count, 'verbinding', 'verbindingen')}</button
+				}}>Toon {formatCount(count)}</button
 			>
-		</div>
-	</div>
+		{/snippet}
+	</Blad>
 {/if}
 
 <style>
-	.scrim {
-		position: fixed;
-		inset: 0;
-		z-index: calc(var(--z-modal) - 1);
-		background: var(--scherm);
-	}
-	.sheet {
-		position: fixed;
-		top: var(--topbar-h);
-		right: 0;
-		bottom: 0;
-		z-index: var(--z-modal);
-		width: 400px;
-		max-width: 100vw;
-		display: flex;
-		flex-direction: column;
-		background: var(--paper);
-		border-left: 1px solid var(--rule-strong);
-		box-shadow: var(--shadow-modal);
+	/* The content of the Blad: the serif of the filter panes. */
+	.sheet__inhoud {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 	}
-	.sheet__head {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		padding: var(--s-4) var(--s-4) var(--s-3);
-	}
-	.sheet__title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		font-weight: 600;
-	}
-	.sheet__count {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.sheet__space {
 		flex: 1;
-	}
-	.sheet__body {
-		flex: 1;
-		overflow-y: auto;
 	}
 	.block {
 		padding: var(--s-4);
@@ -447,36 +392,6 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
-	}
-	.search {
-		width: 100%;
-		height: 32px;
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font: inherit;
-		color: var(--ink);
-	}
-	.search::placeholder {
-		color: var(--ink-3);
-	}
-	.check__name {
-		flex: 1;
-	}
-	.check__count {
-		color: var(--ink-3);
-	}
-	.list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.list__row {
-		display: flex;
-		gap: var(--s-3);
-		padding: var(--s-1) 0;
-		color: var(--ink-2);
 	}
 	.period {
 		display: flex;
@@ -500,18 +415,5 @@
 	}
 	.muted {
 		color: var(--ink-3);
-	}
-	.sheet__foot {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-4);
-		border-top: 1px solid var(--rule);
-		font-size: var(--t-micro);
-	}
-	@media (max-width: 768px) {
-		.sheet {
-			top: 0;
-		}
 	}
 </style>

@@ -26,13 +26,14 @@
 					document.documentElement.classList.add('vaste-letter');
 			});
 		</script>
+		<link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="48x48" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
 		<meta
 			data-seo
 			name="description"
-			content="Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen."
+			content="Zie hoe wetten, rechtspraak en parlement samenhangen: zoek een wet, uitspraak, Kamerstuk of dossier en volg de verbindingen."
 		/>
 		<!-- A shared link's card (B44, X4): the page's own title, description, url and image
 		     come from the server, each after these. The bar of a phone's browser in the
@@ -41,7 +42,7 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:locale" content="nl_NL" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="theme-color" content="#faf8f3" />
+		<meta name="theme-color" content="#fdfdfb" />
 		<!-- The content the server puts in main#seo for a readable address, readable
 		     before the app starts; the root layout removes it as the app mounts. Set as the
 		     app sets a page, so the step to the app is barely seen: the paper, the serif, the
@@ -138,16 +139,17 @@
 					U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 			}
 			:root:has(#seo) {
-				--paper: #faf8f3;
-				--paper-2: #ece7dc;
-				--rule: #b9b1a0;
-				--rule-strong: #6f6859;
-				--ink: #161513;
-				--ink-2: #3b3834;
-				--ink-3: #5d5951;
-				--accent: #8c2f28;
+				--paper: #fdfdfb;
+				--paper-2: #f0efeb;
+				--rule: #c6c4be;
+				--rule-strong: #6a6965;
+				--ink: #1f2125;
+				--ink-2: #3d4045;
+				--ink-3: #5f6267;
+				--merk: #b5483d;
+				--accent: var(--merk);
 				--moss: #456247;
-				--uitkomst-ja: #2f7d3a;
+				--uitkomst-ja: #2c7737;
 				--uitkomst-nee: var(--accent);
 				--font-serif:
 					'Newsreader', 'Newsreader Fallback', 'Newsreader Fallback Noto',
@@ -168,7 +170,7 @@
 				--s-5: 24px;
 				--s-6: 32px;
 				--s-8: 64px;
-				--topbar-h: 60px;
+				--balk-h: 64px;
 				--blad-max: 1440px;
 				--blad-tekst: 720px;
 				--veld-h: 32px;
@@ -192,10 +194,10 @@
 				content: '';
 				display: block;
 				box-sizing: border-box;
-				height: var(--topbar-h);
+				height: var(--balk-h);
 				border-bottom: 1px solid var(--rule);
 			}
-			.js #seo:not(:has(> .entrances)) {
+			.js #seo:not(:has(> .vragen)) {
 				display: none;
 			}
 			/* .blad with a reading width (.blad--tekst). */
@@ -250,22 +252,22 @@
 					padding: var(--s-4) var(--s-4) var(--s-8);
 				}
 			}
-			/* The start page (home.py of the API, the three ways in): set as the app sets it,
-			   each value its own (routes/(main)/+page.svelte, home/Entrances.svelte, Search,
+			/* The start page (home.py of the API: the promise, the field and three
+			   questions): set as the app sets it, each value its own (routes/(main)/+page.svelte, home/Stappen.svelte, home/Vragen.svelte, Search,
 			   Keuze, KindGlyph, Uitkomst, frame.css), so the app takes its place unmoved. With
 			   scripts it shows too: it is the first paint. */
-			#seo:has(> .entrances) {
+			#seo:has(> .vragen) {
 				font-size: var(--t-meta);
 				line-height: var(--lh-snug);
 				overflow-wrap: normal;
 				text-rendering: optimizeLegibility;
 			}
-			#seo:has(> .entrances) *,
-			#seo:has(> .entrances) *::before,
-			#seo:has(> .entrances) *::after {
+			#seo:has(> .vragen) *,
+			#seo:has(> .vragen) *::before,
+			#seo:has(> .vragen) *::after {
 				box-sizing: border-box;
 			}
-			#seo:has(> .entrances) > * {
+			#seo:has(> .vragen) > * {
 				max-width: none;
 			}
 			/* Newsreader where it was there for the first paint; else the fallback, until the
@@ -273,7 +275,7 @@
 			   does not reflow the text under the reader, and the app's start page, in the same
 			   letter, takes the place of the server's to the pixel, its text no larger (the
 			   largest paint stays the first). The script at the top sets the class. */
-			.vaste-letter #seo:has(> .entrances),
+			.vaste-letter #seo:has(> .vragen),
 			.vaste-letter .home {
 				--font-serif:
 					'Newsreader Fallback', 'Newsreader Fallback Noto', 'Newsreader Fallback DejaVu', Georgia,
@@ -281,7 +283,7 @@
 				font-family: var(--font-serif);
 			}
 			/* The head of the page (.blad__kop, .blad__titel) and what Concordans is. */
-			#seo:has(> .entrances) > .blad__kop {
+			#seo:has(> .vragen) > .blad__kop {
 				display: flex;
 				flex-wrap: wrap;
 				align-items: flex-start;
@@ -290,7 +292,7 @@
 				margin: 0 0 var(--s-4);
 			}
 			/* Its own face too when the app's stylesheet comes (.blad__titel names one). */
-			#seo:has(> .entrances) h1 {
+			#seo:has(> .vragen) h1 {
 				margin: 0;
 				font-family: inherit;
 				font-size: var(--t-h1);
@@ -299,26 +301,24 @@
 				color: var(--ink);
 				overflow-wrap: anywhere;
 			}
-			#seo:has(> .entrances) .lead {
-				flex-basis: 100%;
+			#seo:has(> .vragen) > .lede {
 				max-width: var(--blad-tekst);
-				margin: calc(-1 * var(--s-2)) 0 0;
+				margin: 0 0 var(--s-4);
 				font-size: var(--t-body-2);
 				line-height: var(--lh-body);
 				color: var(--ink-2);
 			}
 			/* The field with its mark (Search); with scripts, over it the room of the scopes
-			   (Keuze) and the gap under them, under it the room of the law
-			   network (.wetsnetwerk-plek), quiet as the app keeps it while it is asked. Without
-			   scripts neither comes, and no room stands empty. */
-			#seo:has(> .entrances) > .search {
+			   (Keuze) and the gap under them. Without scripts it does not come, and no
+			   room stands empty. */
+			#seo:has(> .vragen) > .search {
 				display: grid;
 				grid-template-columns: minmax(0, 1fr);
 			}
-			.scripts #seo:has(> .entrances) > .search {
+			.scripts #seo:has(> .vragen) > .search {
 				padding-top: calc(var(--veld-h) + var(--s-3));
 			}
-			#seo:has(> .entrances) > .search::before {
+			#seo:has(> .vragen) > .search::before {
 				content: '';
 				grid-area: 1 / 1;
 				z-index: 1;
@@ -331,15 +331,8 @@
 					center / 16px 16px no-repeat;
 				pointer-events: none;
 			}
-			.scripts #seo:has(> .entrances) > .search::after {
-				content: '';
-				min-height: 366px;
-				margin-top: var(--s-6);
-				border-radius: var(--r-1);
-				background: var(--paper-2);
-			}
 			/* The field: its frame and padding, and the input's own pixel inside them. */
-			#seo:has(> .entrances) input {
+			#seo:has(> .vragen) input {
 				grid-area: 1 / 1;
 				width: 100%;
 				margin: 0;
@@ -355,156 +348,95 @@
 				line-height: normal;
 				color: var(--ink);
 			}
-			#seo:has(> .entrances) input::-webkit-search-decoration,
-			#seo:has(> .entrances) input::-webkit-search-cancel-button {
+			#seo:has(> .vragen) input::-webkit-search-decoration,
+			#seo:has(> .vragen) input::-webkit-search-cancel-button {
 				appearance: none;
 			}
-			#seo:has(> .entrances) input::placeholder {
+			#seo:has(> .vragen) input::placeholder {
 				color: var(--ink-3);
 				font-style: italic;
 				opacity: 1;
 			}
-			#seo:has(> .entrances) input:focus {
+			#seo:has(> .vragen) input:focus {
 				border-color: var(--ink-3);
 				outline: 2px solid var(--ink);
 				outline-offset: 2px;
 			}
-			/* The three ways in (Entrances). */
-			#seo:has(> .entrances) > .entrances {
+			#seo:has(> .vragen) a {
+				text-decoration: underline;
+				text-decoration-color: var(--rule-strong);
+				text-underline-offset: 3px;
+			}
+			/* The questions (home/Vragen.svelte): the heading, with scripts the room of the example
+			   of the day (the law network, .wetsnetwerk-plek: quiet as the app keeps it while it is
+			   asked), and the three tiles. */
+			#seo:has(> .vragen) > .vragen {
+				margin: var(--s-6) 0 0;
+			}
+			#seo:has(> .vragen) .vragen h2 {
+				margin: 0 0 var(--s-3);
+				font-size: var(--t-h2);
+				font-weight: 600;
+				line-height: var(--lh-snug);
+			}
+			#seo:has(> .vragen) .vragen__lijst {
 				display: grid;
 				grid-template-columns: repeat(3, minmax(0, 1fr));
-				gap: var(--s-5);
-				margin-top: var(--s-6);
+				gap: var(--s-4);
 			}
-			#seo:has(> .entrances) .entrance {
+			/* With scripts the example of the day stands beside the tiles: the tiles a narrow
+			   column at the left, the sketch a larger sheet at the right (Vragen.svelte). */
+			.scripts #seo:has(> .vragen) .vragen__lijst {
+				grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+			}
+			.scripts #seo:has(> .vragen) .vragen__lijst::before {
+				content: '';
+				grid-column: 2;
+				grid-row: 1 / span 3;
+				min-height: 224px;
+				border-radius: var(--r-1);
+				background: var(--paper-2);
+			}
+			#seo:has(> .vragen) .vraag {
 				display: flex;
 				flex-direction: column;
 				gap: var(--s-2);
-				padding: var(--s-3) 0 0;
-				border-top: 1px solid var(--ink);
+				padding: var(--s-4);
+				border: 1px solid var(--rule);
+				border-radius: var(--r-1);
+				color: var(--ink-2);
 			}
-			#seo:has(> .entrances) .entrance h2 {
+			#seo:has(> .vragen) .vraag h3 {
 				margin: 0;
-				font-size: var(--t-meta);
-				font-weight: 600;
-				line-height: var(--lh-snug);
-				color: var(--ink-3);
-			}
-			#seo:has(> .entrances) .entrance .title,
-			#seo:has(> .entrances) .entrance li a {
-				display: inline-block;
-				padding: var(--s-1) 0;
-				color: var(--ink);
-			}
-			#seo:has(> .entrances) .entrance .title {
 				font-size: var(--t-body-2);
 				font-weight: 600;
 				line-height: var(--lh-snug);
+				color: var(--ink);
 			}
-			#seo:has(> .entrances) .entrance p {
+			#seo:has(> .vragen) .vraag p {
 				margin: 0;
 			}
-			#seo:has(> .entrances) .entrance .meta {
-				font-size: var(--t-micro);
-				color: var(--ink-3);
+			#seo:has(> .vragen) .vraag p:last-child {
+				margin-top: auto;
+				padding-top: var(--s-1);
+				color: var(--ink);
 			}
-			#seo:has(> .entrances) .entrance ul {
-				display: flex;
-				flex-direction: column;
-				font-size: var(--t-meta);
-				color: var(--ink-2);
-			}
-			#seo:has(> .entrances) .entrance li {
-				display: flex;
-				align-items: center;
-				gap: var(--s-2);
-				padding: 0;
-			}
-			/* Each line with the mark of what it opens (KindGlyph): an article, a judgment, a
-			   Kamerstuk. */
-			#seo:has(> .entrances) .entrance li:has(> a)::before {
-				content: '';
-				flex: none;
-				width: 12px;
-				height: 12px;
-				background: var(--ink);
-				mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 3h10v10H3z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E")
-					center / 12px 12px no-repeat;
-			}
-			#seo:has(> .entrances) .entrance li:has(> a[href^='/uitspraken/'])::before,
-			#seo:has(> .entrances) .entrance li:has(> a[href$='bronnen=uitspraken'])::before {
-				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M14.5 8a6.5 6.5 0 1 1-13 0a6.5 6.5 0 1 1 13 0z'/%3E%3C/svg%3E");
-			}
-			#seo:has(> .entrances) .entrance li:has(> a[href*='bronnen=toelichtingen'])::before {
-				mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 1h6.5l3 3v11H3.5z'/%3E%3C/svg%3E");
-			}
-			/* The note of the bundel in italics, its label small. */
-			#seo:has(> .entrances) .entrance .note {
-				font-style: italic;
-			}
-			#seo:has(> .entrances) .entrance .note-label {
-				font-size: var(--t-micro);
-				font-style: normal;
-				color: var(--ink-3);
-			}
-			/* The outcome and the sides of the vote, each with its box (Uitkomst, Stem): Voor
-			   filled in moss, Tegen and Verworpen open in the accent. */
-			#seo:has(> .entrances) .entrance .outcome {
-				display: flex;
-				align-items: center;
-				gap: var(--s-2);
-				font-size: var(--t-meta);
-			}
-			#seo:has(> .entrances) .entrance .uitkomst,
-			#seo:has(> .entrances) .entrance dt {
-				display: flex;
-				align-items: baseline;
-				gap: var(--s-2);
-				font-weight: 600;
-				color: var(--uitkomst-nee);
-			}
-			#seo:has(> .entrances) .entrance .uitkomst::before,
-			#seo:has(> .entrances) .entrance dt::before {
-				content: '';
-				flex: none;
-				width: 10px;
-				height: 10px;
-				border: 2px solid var(--uitkomst-nee);
-			}
-			#seo:has(> .entrances) .entrance .sides {
-				display: grid;
-				grid-template-columns: max-content minmax(0, 1fr);
-				gap: var(--s-1) var(--s-3);
-				margin: 0;
-				font-size: var(--t-meta);
-				line-height: var(--lh-snug);
-			}
-			#seo:has(> .entrances) .entrance .uitkomst::before,
-			#seo:has(> .entrances) .entrance dt::before {
-				transform: translateY(1px);
-			}
-			#seo:has(> .entrances) .entrance dt:first-of-type {
-				color: var(--uitkomst-ja);
-			}
-			#seo:has(> .entrances) .entrance dt:first-of-type::before {
-				border: 0;
-				background: var(--uitkomst-ja);
-			}
-			#seo:has(> .entrances) .entrance dd {
-				margin: 0;
-				color: var(--ink-2);
-			}
-			@media (max-width: 1024px) {
-				#seo:has(> .entrances) > .entrances {
+			@media (max-width: 768px) {
+				#seo:has(> .vragen) .vragen__lijst,
+				.scripts #seo:has(> .vragen) .vragen__lijst {
 					grid-template-columns: minmax(0, 1fr);
-					gap: var(--s-4);
+				}
+				.scripts #seo:has(> .vragen) .vragen__lijst::before {
+					grid-column: 1;
+					grid-row: auto;
+					order: 1;
 				}
 			}
 			@media (max-width: 640px) {
-				.scripts #seo:has(> .entrances) > .search::after {
-					min-height: 264px;
+				.scripts #seo:has(> .vragen) .vragen__lijst::before {
+					min-height: 380px;
 				}
-				#seo:has(> .entrances) input {
+				#seo:has(> .vragen) input {
 					font-size: var(--t-body);
 				}
 			}
@@ -518,7 +450,7 @@
 			}
 			.ev {
 				position: fixed;
-				inset: var(--topbar-h) 0 0;
+				inset: var(--balk-h) 0 0;
 				z-index: var(--z-float);
 				background: var(--paper);
 			}
@@ -540,6 +472,15 @@
 			.ev .part__number {
 				text-align: inherit;
 			}
+			/* And its size, as the button's (basis.css .plaats-marker), so the app finds the text
+			   where the paint put it. */
+			.ev .lid__no,
+			.ev .part__number {
+				box-sizing: border-box;
+				min-width: calc(var(--s-6) + var(--s-1));
+				min-height: calc(var(--s-5) + var(--s-1));
+				white-space: nowrap;
+			}
 			.ev .ev-formula {
 				display: inline-block;
 			}
@@ -550,8 +491,7 @@
 				background: none;
 			}
 			.ev--app .col:not(.col--reader),
-			.ev--app .mobile-tabs,
-			.ev--app .resize-handle {
+			.ev--app .mobile-tabs {
 				visibility: hidden;
 			}
 			.ev--app .col--reader {

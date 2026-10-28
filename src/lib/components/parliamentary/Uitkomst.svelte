@@ -8,9 +8,9 @@
 		title = null
 	}: {
 		tone: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
-		/** Het woord naast het vakje; zonder woord alleen het vakje (met een title). */
+		/** Het woord naast het vakje; zonder woord alleen het vakje, met zijn naam voor een schermlezer en als title. */
 		woord?: string | null;
-		/** The title of a box without a word, where the general one does not fit. */
+		/** The name of a box without a word, where the general one does not fit; empty where the words beside it say it. */
 		title?: string | null;
 	} = $props();
 	const TITLE = {
@@ -20,10 +20,13 @@
 		open: 'nog niet',
 		klaar: 'afgerond'
 	};
+	/** Without a word the box is named for a screen reader; an empty title leaves it unnamed. */
+	const label = $derived(woord ? null : (title ?? TITLE[tone]));
 </script>
 
-<span class="uk uk--{tone}" title={woord ? undefined : (title ?? TITLE[tone])}
-	><span class="vak" aria-hidden="true"></span>{#if woord}<span class="w">{woord}</span>{/if}</span
+<span class="uk uk--{tone}" title={label || undefined}
+	><span class="vak" aria-hidden="true"></span>{#if woord}<span class="w">{woord}</span
+		>{:else if label}<span class="sr-only">{label}:&nbsp;</span>{/if}</span
 >
 
 <style>

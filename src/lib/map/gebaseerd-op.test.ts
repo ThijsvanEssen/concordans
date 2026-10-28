@@ -16,6 +16,10 @@ let fake: ReturnType<typeof fakeApi>;
 const paths = () => fake.requests.map((r) => r.path);
 
 const instrument = (key: string, title: string): Schema<'InstrumentSummaryDTO'> => ({
+	series_id: null,
+	series_position: null,
+	series_size: null,
+	series_basis: null,
 	judgment_count: null,
 	outbound_citation_count: null,
 	celex: null,

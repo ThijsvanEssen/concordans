@@ -23,6 +23,7 @@
 	import Aantekening from '$lib/map/Aantekening.svelte';
 	import Bewaar from '$lib/map/Bewaar.svelte';
 	import { bewaarItem } from '$lib/map/map';
+	import OpenChanges from '$lib/proposals/OpenChanges.svelte';
 
 	let {
 		node,
@@ -37,6 +38,9 @@
 		onVerder,
 		onBack,
 		notities = [],
+		openCount = 0,
+		chosen = new Set<string>(),
+		onAdd,
 		el = $bindable(null)
 	}: {
 		node: GraphNode;
@@ -59,6 +63,12 @@
 		onBack?: () => void;
 		/** The reader's notes on this bron in every bundel, under the card's lines. */
 		notities?: readonly NodeNotitie[];
+		/** The open changes of this bron that a lopend dossier proposes (in flux). */
+		openCount?: number;
+		/** The bronnen of the netwerk, by id. */
+		chosen?: ReadonlySet<string>;
+		/** A voorstel of a dossier added to the netwerk, by its id. */
+		onAdd?: (id: string, name?: string) => void;
 		el?: HTMLElement | null;
 	} = $props();
 
@@ -100,6 +110,7 @@
 			case 'document':
 				return textOf(nodeProps?.['dossier_number']);
 			case 'committee':
+			case 'cabinet':
 			case 'faction':
 				return textOf(nodeProps?.['abbreviation']);
 			default:
@@ -118,6 +129,7 @@
 			case 'document':
 				return textOf(nodeProps?.['title']) ?? textOf(nodeProps?.['subject']);
 			case 'committee':
+			case 'cabinet':
 			case 'faction':
 				return textOf(nodeProps?.['name']);
 			default:
@@ -176,6 +188,31 @@
 
 	<h2 class="title {node.stub ? 'title--stub' : ''}">{naam}</h2>
 
+	<!-- The actions stand under the title, before what is still loading: the text coming in
+	     moves nothing under a finger. -->
+	<div class="foot">
+		{#if !node.stub}
+			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
+			<a
+				class="btn is-primary"
+				href={openHref(ref)}
+				data-sveltekit-noscroll
+				onclick={(e) => {
+					if (onLezen && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+						e.preventDefault();
+						onLezen(node);
+					} else onOpen(node);
+				}}>Lees</a
+			>
+		{/if}
+		{#if onToggleChosen && !node.stub}
+			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
+				>{isChosen ? 'Weghalen' : 'Toevoegen'}</button
+			>
+		{/if}
+		{#if bewaar}<Bewaar item={bewaar} />{/if}
+	</div>
+
 	{#if node.stub}
 		<p class="snippet stub-note">{capitalize(NOT_IN_DATA)}.</p>
 	{:else if identity && article.state.status !== 'ready'}
@@ -197,33 +234,14 @@
 		</dl>
 	{/if}
 
+	{#if openCount > 0 && !node.stub}
+		<OpenChanges id={node.id} {chosen} {onAdd} />
+	{/if}
+
 	<!-- The reader's notes, as on Bundels (Aantekening), read only: changed there. -->
 	{#each notities as n, i (i)}
 		<Aantekening tekst={n.tekst} bij={n.waar ?? 'deze bron'} waar={n.waar} compact />
 	{/each}
-
-	<div class="foot">
-		{#if !node.stub}
-			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
-			<a
-				class="btn is-primary"
-				href={openHref(ref)}
-				data-sveltekit-noscroll
-				onclick={(e) => {
-					if (onLezen && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
-						e.preventDefault();
-						onLezen(node);
-					} else onOpen(node);
-				}}>Lees</a
-			>
-		{/if}
-		{#if onToggleChosen && !node.stub}
-			<button type="button" class="btn" aria-pressed={isChosen} onclick={() => onToggleChosen(node)}
-				>{isChosen ? 'Uit het netwerk' : 'Toevoegen'}</button
-			>
-		{/if}
-		{#if bewaar}<Bewaar item={bewaar} />{/if}
-	</div>
 
 	{#if ties.length > 0}
 		<section class="ties" aria-label={tiesHeading}>
@@ -269,7 +287,7 @@
 	/* Datum and its kind's line, as the mockup's: a column of terms, 96 px. */
 	.facts {
 		display: grid;
-		grid-template-columns: 96px minmax(0, 1fr);
+		grid-template-columns: calc(var(--s-8) + var(--s-6)) minmax(0, 1fr);
 		gap: var(--s-2) var(--s-3);
 		margin: var(--s-2) 0 0;
 	}

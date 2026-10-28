@@ -12,13 +12,13 @@
 	import { formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag, yearsOf } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
+	import { setDateColumn } from '$lib/components/tijdlijn/date-column';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
@@ -32,10 +32,10 @@
 		careerOf,
 		currentTitle,
 		inYears,
-		seatWord,
 		type CareerEntry,
 		type Signature
 	} from '$lib/components/parliamentary/career';
+	import { seatWord } from '$lib/text/seat';
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
@@ -54,6 +54,8 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 
 	let { node }: { node: GraphNode } = $props();
+	// One date column down the page: Loopbaan, Commissies and Toezeggingen share a left edge.
+	setDateColumn('term');
 
 	const today = vandaag();
 
@@ -410,7 +412,7 @@
 				<!-- The committees they sat on (API 0.75, BE-30), those they sit on now first: the
 				     seat that stands for them, its role where it is more than a seat, and the other
 				     periods beside it, as Loopbaan names a role. -->
-				<Sectie title="Commissies" collection="committees" aantal={m.committees?.length}>
+				<Sectie title="Commissies" aantal={m.committees?.length}>
 					<Tijdlijn
 						perioden
 						groepen={[
@@ -458,11 +460,7 @@
 				     (`in_office`); the rest are what they voted as a Kamerlid alone. Null-safe
 				     without it: a vote with no post in `in_office` is a Kamerlid's. -->
 				{#if ambt.length > 0}
-					<Sectie
-						title="Als bewindspersoon"
-						collection="decisions"
-						aantal={atLeast(ambt.length, meer)}
-					>
+					<Sectie title="Als bewindspersoon" aantal={atLeast(ambt.length, meer)}>
 						{@render voteGroups(groupVotes(shown(ambt), ambt, meer))}
 						{#if !showAllVotes && ambt.length > VOTES_PREVIEW}
 							<!-- No number while more pages follow: the heading says "200+" (FE1, live 0.79.44). -->
@@ -475,9 +473,7 @@
 							</p>
 						{:else if showAllVotes && meer}
 							<p class="alle">
-								<TekstLink onclick={meerInOffice}
-									>{inOffice!.laden ? 'Laden…' : 'Meer stemmen als bewindspersoon'}</TekstLink
-								>
+								<AlleN volgende noun="stemmen" laden={inOffice!.laden} onclick={meerInOffice} />
 							</p>
 						{/if}
 					</Sectie>
@@ -487,7 +483,6 @@
 				{#if eigen.length > 0 || ambt.length === 0}
 					<Sectie
 						title={apart ? 'Als Kamerlid' : 'Stemgeschiedenis'}
-						collection="decisions"
 						aantal={apart ? eigen.length : atLeast(stemmen.count, stemmen.next_offset != null)}
 					>
 						{@render voteGroups(groupVotes(shown(eigen), eigen))}

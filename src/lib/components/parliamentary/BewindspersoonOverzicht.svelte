@@ -51,18 +51,21 @@
 	const lower = (s: string) => s.toLowerCase();
 </script>
 
-{#if counts.state.status === 'error'}
-	<Sectie title="Toezeggingen" collection="commitments" id="toezeggingen">
+<!-- The heading stands from the first paint, loading or failed, so the sections under it do
+     not drop when the answer comes. -->
+{#if counts.state.status !== 'ready'}
+	<Sectie title="Toezeggingen" id="toezeggingen">
 		<LoadState state={counts.state} what="De toezeggingen" retry={counts.retry} />
 	</Sectie>
 {:else if commitments && commitments.total > 0}
-	<Sectie title="Toezeggingen" collection="commitments" id="toezeggingen">
+	<Sectie title="Toezeggingen" id="toezeggingen">
 		<div class="ov" class:ruim>
 			<p class="zin">
-				<a href={href()}>{commitments.total} toezeggingen</a>:
+				<a class="raak-rij" href={href()}>{commitments.total} toezeggingen</a>:
 				{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1
 							? ' en '
-							: ', '}{/if}<a href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
+							: ', '}{/if}<a class="raak-rij" href={href(s.value ?? undefined)}
+						>{s.count} {lower(s.value ?? '')}</a
 					>{/each}.
 			</p>
 			{#if openCommitments.state.status === 'error'}
@@ -115,18 +118,13 @@
 	</Sectie>
 {/if}
 
-{#if memberDossiers.state.status === 'error'}
-	<Sectie title="Dossiers met ondertekende stukken" collection="dossiers" id="dossiers">
+{#if memberDossiers.state.status !== 'ready'}
+	<Sectie title="Dossiers met ondertekende stukken" id="dossiers">
 		<LoadState state={memberDossiers.state} what="De dossiers" retry={memberDossiers.retry} />
 	</Sectie>
 {:else if dossiers && dossiers.total > 0}
 	<!-- The heading says what is listed, the count beside it (Thijs, 10 Oct: no sentence). -->
-	<Sectie
-		title="Dossiers met ondertekende stukken"
-		collection="dossiers"
-		aantal={dossiers.total}
-		id="dossiers"
-	>
+	<Sectie title="Dossiers met ondertekende stukken" aantal={dossiers.total} id="dossiers">
 		<div class="ov" class:ruim>
 			<ol class="items">
 				{#each dossierItems as d (d.key)}
@@ -191,6 +189,7 @@
 		line-height: var(--lh-snug);
 	}
 	.items li > :global(a) {
+		min-height: var(--veld-h-raak);
 		text-decoration: none;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;

@@ -215,13 +215,13 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.IndexView?.category).toBe('judgments');
 	});
 
-	it('draws two steps around an ordinary bron, ?diepte between 1 and 3, ?alles=1 one step', async () => {
+	it('draws two steps around an ordinary bron, ?diepte between 1 and 3 (0 is for a netwerk), ?alles=1 one step', async () => {
 		const cases: [string, number][] = [
 			['', 2],
 			['&diepte=1', 1],
 			['&diepte=3', 3],
 			['&diepte=9', 3],
-			['&diepte=0', 2],
+			['&diepte=0', 1],
 			['&diepte=x', 2],
 			['&alles=1&diepte=3', 1]
 		];
@@ -237,9 +237,8 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.GraphView.depth).toBe(1);
 	});
 
-	it('hands the overlay and the bronfilter of the address to the network', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&overlay=open&lid=2`);
-		expect(seen.GraphView.overlay).toEqual({ kind: 'open' });
+	it('hands the bronfilter of the address to the network', async () => {
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&lid=2`);
 		expect((seen.GraphView.filter as { lid: string | null }).lid).toBe('2');
 	});
 
@@ -279,27 +278,15 @@ describe('the Verkenner writes its state to the address', () => {
 		expect(history().entries).toHaveLength(1);
 	});
 
-	it('writes the depth, the overlay and the filter in place: no step', async () => {
+	it('writes the depth and the filter in place: no step', async () => {
 		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const props = seen.GraphView as {
 			onDepth: (d: number) => void;
-			onToggleMutatie: () => void;
-			onToggleHeat: () => void;
-			onHeatPeriodChange: (m: number) => void;
 		};
 		props.onDepth(3);
 		await settle();
 		expect(param('diepte')).toBe('3');
 		expect(seen.GraphView.depth).toBe(3);
-		props.onToggleMutatie();
-		await settle();
-		expect(param('overlay')).toBe('open');
-		(seen.GraphView as typeof props).onToggleHeat();
-		await settle();
-		expect(param('overlay')).toMatch(/^heat/);
-		(seen.GraphView as typeof props).onToggleHeat();
-		await settle();
-		expect(param('overlay')).toBeNull();
 		expect(history().entries).toHaveLength(1);
 		expect(steps.every((s) => !s.step)).toBe(true);
 	});
@@ -454,11 +441,12 @@ describe('the werkplek (besluit 39)', () => {
 });
 
 describe('the columns', () => {
-	it('keep the widths that were dragged', async () => {
+	it('stand at their own width: no handle to drag, a width kept earlier is not read', async () => {
 		localStorage.setItem('concordans:panel-widths', JSON.stringify({ panelW: 300 }));
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
 		const grid = container.querySelector<HTMLElement>('.explore-read')!;
-		expect(grid.style.getPropertyValue('--panel-w')).toBe('300px');
+		expect(grid.style.getPropertyValue('--panel-w')).toBe('');
+		expect(container.querySelector('.resize-handle')).toBeNull();
 	});
 });
 
@@ -470,7 +458,7 @@ describe('the Verkenner on a phone', () => {
 	it('reads the text and Verbonden as two tabs, the text first (A197-a, R3-L F4)', async () => {
 		const { container } = await openAt(`/explore?focus=${MEMBER}`);
 		expect(view(container)).toBe('read');
-		const tabs = [...container.querySelectorAll('.lees-tabs [role="tab"]')];
+		const tabs = [...container.querySelectorAll('.lees-tabs button')];
 		expect(tabs.map((t) => t.textContent)).toEqual(['Tekst', 'Verbonden']);
 		expect(container.querySelector('.col--reader.mobile-hidden')).toBeNull();
 		expect(container.querySelector('.col--panel.mobile-hidden')).not.toBeNull();

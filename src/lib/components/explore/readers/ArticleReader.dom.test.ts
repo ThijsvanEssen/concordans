@@ -94,7 +94,7 @@ describe('ArticleReader, an article of the EU', () => {
 		await settle();
 		expect(container.textContent).not.toContain('Geldend recht');
 		expect(container.querySelector('.dekking')?.textContent).toBe(
-			'Tekst zoals vastgesteld, latere wijzigingen niet verwerkt, EUR-Lex ↗'
+			'Tekst zoals vastgesteld, latere wijzigingen niet verwerkt, EUR-Lex'
 		);
 		await fireEvent.click(screen.getByRole('button', { name: /^Citeer/ }));
 		const bron = screen.getByRole('menuitem', { name: /eur-lex\.europa\.eu/ });

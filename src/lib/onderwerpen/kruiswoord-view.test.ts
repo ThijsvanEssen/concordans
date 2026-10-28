@@ -37,7 +37,7 @@ describe('the Kruiswoord with a column that could not be counted', () => {
 		expect(cells(body, '>2026<')).toEqual(['', '', '1']);
 		expect(body.match(/aria-label="Niet geteld"/g)).toHaveLength(4);
 		expect(body).toContain('role="alert"');
-		expect(body).toContain('Moties en brieven konden niet worden geteld.');
+		expect(body).toContain('Moties en brieven konden niet worden geladen.');
 	});
 
 	it('counts as before where every column came', () => {

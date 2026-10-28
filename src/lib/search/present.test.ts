@@ -252,9 +252,9 @@ describe('the Kamer of a hit', () => {
 		expect(chamberOfHit(given)).toBe('EK');
 	});
 
-	it('marks nothing but stukken, and heads the members as Leden', () => {
+	it('marks nothing but stukken, and heads the members as Kamerleden and bewindspersonen', () => {
 		expect(chamberOfHit(hit({ collection: 'members', key: 'ek_a_kanis_d66' }))).toBeUndefined();
-		expect(groupLabel('members')).toBe('Leden');
+		expect(groupLabel('members')).toBe('Kamerleden en bewindspersonen');
 		expect(groupLabel('dossiers')).toBe('Dossiers');
 	});
 });
@@ -508,9 +508,20 @@ describe('a hit that has expired (besluit 30)', () => {
 			extra
 		}) as unknown as Parameters<typeof presentHit>[0];
 
-	it('says vervallen once its day has passed', () => {
+	it('says ingetrokken of a law once its day has passed', () => {
 		const shown = presentHit(law({ expired_on: '2020-01-01' }), 'wet', [], new Date(2026, 9, 22));
-		expect(shown.expired).toBe('Vervallen per 1\u00a0januari\u00a02020');
+		expect(shown.expired).toBe('Ingetrokken per 1\u00a0januari\u00a02020');
+	});
+	it('says vervallen of an article', () => {
+		const article = {
+			id: 'articles/bwbr0001_1',
+			collection: 'articles',
+			display_name: 'Art. 1',
+			extra: { expired_on: '2020-01-01' }
+		} as unknown as Parameters<typeof presentHit>[0];
+		expect(presentHit(article, 'wet', [], new Date(2026, 9, 22)).expired).toBe(
+			'Vervallen per 1\u00a0januari\u00a02020'
+		);
 	});
 	it('says nothing of a law that holds, or lapses later', () => {
 		expect(presentHit(law({}), 'wet', [], new Date(2026, 9, 22)).expired).toBeUndefined();

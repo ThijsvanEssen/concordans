@@ -30,6 +30,7 @@ export type DrawClass =
 	| 'document'
 	| 'activity'
 	| 'committee'
+	| 'cabinet'
 	| 'member'
 	| 'faction'
 	| 'other';
@@ -125,7 +126,7 @@ export const EDGE_WEIGHT: Record<Relation, number> = {
 	AMENDS: 1.0,
 	INTRODUCES: 1.0,
 	REPEALS: 1.0,
-	COMMENCES: 0.8,
+	COMMENCES: 1.0,
 	TRANSPOSED_TO: 0.8,
 	BASED_ON: 0.8,
 	IMPLEMENTS: 0.8,
@@ -140,16 +141,16 @@ export const EDGE_WEIGHT: Record<Relation, number> = {
 	REFERRED_BY: 0.6,
 	SAME_AS: 0.6,
 	SCOPED_BY: 0.6,
-	ABOUT: 0.7,
-	LED_BY: 0.7,
+	ABOUT: 0.6,
+	LED_BY: 0.6,
 	MADE_IN: 0.7,
 	MEMBER_OF: 0.6,
 	AUTHORED: 0.8,
 	VOTED: 0.6,
 	REVISES: 1.0,
-	ACCOMPANIES: 0.7,
+	ACCOMPANIES: 0.6,
 	RELATED_TO: 0.6,
-	SECOND_READING_OF: 1.0,
+	SECOND_READING_OF: 0.8,
 	SERVED_IN: 0.6
 };
 
@@ -260,7 +261,8 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 			collection: node.collection,
 			key: node.key,
 			display_name: node.display_name,
-			props
+			props,
+			title: node.title
 		});
 	switch (drawClass) {
 		case 'dossier': {
@@ -270,6 +272,7 @@ export function buildNodeLabel(node: BaseNode, drawClass: DrawClass): string {
 			return naam ? `${officialNumber(d.number)}, ${naam}` : officialNumber(d.number);
 		}
 		case 'committee':
+		case 'cabinet':
 		case 'faction':
 			return textOf(props.abbreviation) ?? textOf(props.name) ?? mens();
 		case 'member': {

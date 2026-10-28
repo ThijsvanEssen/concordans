@@ -11,12 +11,13 @@ import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
 import { writable, type Readable } from 'svelte/store';
 import { COLLECTION_ROLE } from './collection-role';
 
-export type ContainerKind = 'instrument' | 'faction' | 'committee' | 'dossier';
+export type ContainerKind = 'instrument' | 'faction' | 'committee' | 'cabinet' | 'dossier';
 
 const CONTAINER_KINDS: ReadonlySet<string> = new Set<ContainerKind>([
 	'instrument',
 	'faction',
 	'committee',
+	'cabinet',
 	'dossier'
 ]);
 
@@ -28,6 +29,16 @@ export function isContainerKind(kind: string): kind is ContainerKind {
 /** The container kind a collection is drawn as a hull for, or null for an ordinary bron. */
 export function containerKindOf(collection: string): ContainerKind | null {
 	return isCollection(collection) ? COLLECTION_ROLE[collection].hull : null;
+}
+
+/**
+ * The container kind of a bron in focus or chosen: its hull, or the hull it has only then (a
+ * ministerie around its bewindspersonen, `focusHull`).
+ */
+export function focusKindOf(collection: string): ContainerKind | null {
+	if (!isCollection(collection)) return null;
+	const role = COLLECTION_ROLE[collection];
+	return role.hull ?? role.focusHull ?? null;
 }
 
 /**
@@ -74,8 +85,6 @@ export type ContainerGroup = {
 	parts: Set<string>;
 	/** When a member belonged to it (a lid's seat on a commissie or in a fractie), where the edge says. */
 	periods: Map<string, Period>;
-	/** Drawn around one member too: the dossier of a stuk on a path between chosen bronnen. */
-	lone?: boolean;
 };
 
 /** A stretch of time as ISO dates, open where null. */
@@ -203,14 +212,6 @@ export function createContainerGroups() {
 			flush();
 		},
 
-		/** Lets a container's hull stand around a single member (a stuk on a path, BE-49). */
-		markLone(id: string | null): void {
-			const group = id ? groups.get(id) : undefined;
-			if (!group || group.lone) return;
-			group.lone = true;
-			flush();
-		},
-
 		/** The current group for a container id, if any bron has been recorded into it. */
 		get(id: string): ContainerGroup | undefined {
 			return groups.get(id);
@@ -239,11 +240,32 @@ export function createContainerGroups() {
 			if (changed) flush();
 		},
 
-		/** Forgets every hull, its names and `lone` included: the canvas starts afresh. */
+		/** Forgets every hull and its names: the canvas starts afresh. */
 		clear(): void {
 			if (groups.size === 0) return;
 			groups.clear();
 			flush();
 		}
 	};
+}
+
+/**
+ * The members of a group who left before it ended, with the day they left: drawn as an
+ * outline without a name, a current member filled and named (the one marking, N13). A cabinet
+ * that has ended does not make all its bewindspersonen former ones, only those who left before.
+ */
+export function formerMembers(
+	group: Pick<ContainerGroup, 'periods'> | undefined,
+	today: string
+): Map<string, string> {
+	const seats = [...(group?.periods ?? [])];
+	const end = seats.some(([, p]) => p.to === null)
+		? today
+		: (seats
+				.map(([, p]) => p.to as string)
+				.sort()
+				.at(-1) ?? '');
+	return new Map(
+		seats.filter(([, p]) => p.to !== null && p.to < end).map(([id, p]) => [id, p.to as string])
+	);
 }

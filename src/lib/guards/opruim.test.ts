@@ -105,6 +105,12 @@ const AS_VALUE: Uitzondering[] = [
 	{
 		pad: 'lib/components/explore/IndexView.svelte',
 		reden: 'loaded lazily by the explore page, rendered as <IndexViewC>'
+	},
+	{
+		pad: 'lib/components/ui/Periode.svelte',
+		regel: /^(distribution|counts)$/,
+		reden:
+			'the distribution per year, which the API does not give yet: given by no list until it does'
 	}
 ];
 
@@ -234,7 +240,6 @@ describe('nothing left over', () => {
 		// name renamed to what it is comes off the list.
 		const NOG = [
 			'Box',
-			'Bucket',
 			'Deel',
 			'End',
 			'PAGE_SIZE',
@@ -246,7 +251,6 @@ describe('nothing left over', () => {
 			'Row',
 			'Stuk',
 			'Uitkomst',
-			'countLine',
 			'feedQuery',
 			'kolomVan',
 			'matches',

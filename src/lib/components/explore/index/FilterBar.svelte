@@ -6,14 +6,14 @@
 	// dimensions of a list have a button of their own, the rest stand under Meer. Under the row
 	// one head line: the count, and every filter chosen as a chip that takes it off; it is one
 	// control high, so nothing moves when the counts come. On a phone the row is one button,
-	// Verfijnen (n), that opens the filters as a sheet, its groups folded (A192), ending in Toon.
+	// Filter (n), that opens the filters as a sheet, its groups folded (A192), ending in Toon.
 	// The Kamer is a choice, not a filter: the first of the row, on a phone its own line over it, never a chip.
 	import type { Snippet } from 'svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import type { Option } from '$lib/components/ui/option';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import Blad from '$lib/components/ui/Blad.svelte';
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import { afterTick } from '$lib/util/after-tick';
@@ -75,13 +75,8 @@
 
 	// ── The sheet of a phone ────────────────────────────────────────────
 	let open = $state(false);
-	let sheet = $state<HTMLElement | null>(null);
 	let opener = $state<HTMLElement | null>(null);
-	$effect(() => {
-		if (!open) return;
-		afterTick(() => sheet?.querySelector<HTMLElement>('.sluit')?.focus());
-	});
-	/** Closed: the focus back on Verfijnen, or with Toon on the list, brought into view. */
+	/** Closed: the focus back on Filter, or with Toon on the list, brought into view. */
 	function close(toList = false) {
 		open = false;
 		afterTick(() => {
@@ -92,28 +87,6 @@
 			if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
 			el.focus({ preventScroll: true });
 		});
-	}
-	const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled])';
-	function onKey(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			e.stopPropagation();
-			close();
-			return;
-		}
-		// Tab and Shift+Tab go round inside the sheet.
-		if (e.key !== 'Tab' || !sheet) return;
-		const els = [...sheet.querySelectorAll<HTMLElement>(FOCUSABLE)];
-		const [first, last] = [els[0], els.at(-1)];
-		if (!first || !last) return;
-		const at = document.activeElement;
-		if (e.shiftKey && at === first) {
-			e.preventDefault();
-			last.focus();
-		} else if (!e.shiftKey && at === last) {
-			e.preventDefault();
-			first.focus();
-		}
 	}
 	/** A fold of the sheet stands open as in A192: the first, one with a choice, or as left. */
 	const standsOpen = (b: FacetButton, n: number) =>
@@ -179,7 +152,7 @@
 					aria-haspopup="dialog"
 					aria-expanded={open}
 					bind:this={opener}
-					onclick={() => (open = true)}>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
+					onclick={() => (open = true)}>Filter{chips.length ? ` (${chips.length})` : ''}</button
 				>
 			{/if}
 			{#if end}<span class="end">{@render end()}</span>{/if}
@@ -196,26 +169,14 @@
 					>{c.label}<span class="x" aria-hidden="true">×</span></button
 				>
 			{/each}
-			{#if chips.length > 1}<TekstLink onclick={onClear}>Wissen</TekstLink>{/if}
+			{#if chips.length > 1}<TekstLink onclick={onClear}>Wis alles</TekstLink>{/if}
 			{#if countEnd}<span class="head-end">{@render countEnd()}</span>{/if}
 		</div>
 	{/if}
 </div>
 
 {#if open}
-	<div
-		class="sheet"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="{uid}-title"
-		tabindex="-1"
-		bind:this={sheet}
-		onkeydown={onKey}
-	>
-		<div class="sheet-head">
-			<h2 class="sheet-title" id="{uid}-title">Verfijnen</h2>
-			<IconButton class="sluit" label="Sluiten" onclick={() => close()}>×</IconButton>
-		</div>
+	<Blad title="Filter" tall opener={() => opener} onClose={() => close()}>
 		<div class="sheet-body">
 			{#each all as b, n (b.id)}
 				{@const unfolded = standsOpen(b, n)}
@@ -234,11 +195,11 @@
 				</section>
 			{/each}
 		</div>
-		<div class="sheet-foot">
-			{#if chips.length}<TekstLink onclick={onClear}>Wissen</TekstLink>{/if}
+		{#snippet foot()}
+			{#if chips.length}<TekstLink onclick={onClear}>Wis alles</TekstLink>{/if}
 			<button type="button" class="btn is-primary show" onclick={() => close(true)}>{show}</button>
-		</div>
-	</div>
+		{/snippet}
+	</Blad>
 {/if}
 
 <style>
@@ -331,7 +292,7 @@
 		background: var(--paper);
 	}
 
-	/* A phone: Verfijnen (n) in place of the row, a finger's 44 px for every control. */
+	/* A phone: Filter (n) in place of the row, a finger's 44 px for every control. */
 	@media (max-width: 768px) {
 		.wide {
 			display: none;
@@ -340,7 +301,9 @@
 			display: inline-flex;
 		}
 		/* On a phone the Kamer stands on its own line, the width of the page; the row under it
-		   stays at the top while the list scrolls. */
+		   stays at the top while the list scrolls. Without a box of the bar's own, the row's
+		   sticky reaches as far as the box of the list, not the bar's 200 px. */
+		.filterbar,
 		.line {
 			display: contents;
 		}
@@ -348,14 +311,16 @@
 			display: block;
 			margin-bottom: var(--s-3);
 		}
-		/* The width of the page, every option as wide; a finger's 44 px, as Verfijnen. */
+		/* The width of the page, every option as wide and a step closer, so Tweede Kamer stays
+		   on one line (Keuze vol). */
 		.chamber :global(.keuze) {
 			display: flex;
-			height: var(--veld-h-raak);
 		}
 		.chamber :global(.keuze button) {
 			flex: 1 1 0;
+			min-width: max-content;
 			justify-content: center;
+			padding: 0 var(--s-1);
 		}
 		.row {
 			display: flex;
@@ -363,7 +328,7 @@
 			align-items: center;
 			gap: var(--s-2);
 			position: sticky;
-			top: var(--filterbar-top, var(--topbar-h));
+			top: var(--filterbar-top, var(--balk-h));
 			z-index: var(--z-raised);
 			margin: 0 calc(-1 * var(--s-4)) var(--s-3);
 			padding: var(--s-2) var(--s-4);
@@ -375,32 +340,8 @@
 		}
 	}
 
-	/* The sheet of a phone: the whole screen, its head and foot fixed, the folds between. */
-	.sheet {
-		position: fixed;
-		inset: 0;
-		z-index: var(--z-modal);
-		display: flex;
-		flex-direction: column;
-		background: var(--paper);
-	}
-	.sheet-head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: var(--s-2) var(--s-4);
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.sheet-title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 600;
-	}
+	/* The sheet of a phone (Blad): the folds between its head and foot. */
 	.sheet-body {
-		flex: 1;
-		overflow-y: auto;
-		overscroll-behavior: contain;
 		padding: 0 var(--s-4);
 	}
 	.fold {
@@ -426,13 +367,6 @@
 	}
 	.fold-body {
 		padding: 0 0 var(--s-3);
-	}
-	.sheet-foot {
-		display: flex;
-		align-items: center;
-		gap: var(--s-4);
-		padding: var(--s-3) var(--s-4);
-		border-top: 1px solid var(--rule);
 	}
 	.show {
 		flex: 1;

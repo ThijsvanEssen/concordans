@@ -10,11 +10,21 @@ import { korteDatum } from '$lib/text/datum';
 import { ownKind, shortKind } from '$lib/text/document-kind';
 import { kindName } from '$lib/text/law-kind';
 import { formatCount } from '$lib/text/getal';
-import { lowerFirst, plural } from '$lib/text/words';
+import { plural } from '$lib/text/words';
 import type { Bucket } from '$lib/api/nodes';
-import { BRON_LABEL, type Collection } from '$lib/vocabulary';
+import type { Collection } from '$lib/vocabulary';
+import {
+	sortsFrom,
+	isMinister,
+	rubriekOfSort,
+	sortLabel,
+	sortOf,
+	sortOne,
+	type Sort
+} from '$lib/bron/rubrieken';
 import { bucketsRead, groupCount, type Group } from './groups';
 import { byImportance } from './importance';
+import { referenceLine } from './hoe';
 import type { Row } from './rows';
 
 type KindId =
@@ -33,7 +43,9 @@ type KindId =
 	| 'members'
 	| 'factions'
 	| 'committees'
-	| 'cabinets';
+	| 'cabinets'
+	| 'ministries'
+	| 'ministers';
 
 const KIND_OF: Partial<Record<Collection, KindId>> = {
 	judgments: 'judgments',
@@ -49,32 +61,38 @@ const KIND_OF: Partial<Record<Collection, KindId>> = {
 	members: 'members',
 	factions: 'factions',
 	committees: 'committees',
-	cabinets: 'cabinets'
+	cabinets: 'cabinets',
+	ministries: 'ministries'
 };
 
-/**
- * What a soort is called, as a heading and as the plural of "Alle N …": read from BRON_LABEL,
- * the one list of names. Only the laws differ (a soort of wetten and artikelen); a Kamerzaak
- * keeps its capital.
- */
-const KIND_LABELS = Object.fromEntries(
-	(Object.entries(KIND_OF) as [Collection, KindId][]).map(([collection, id]) => {
-		const [one, many] = BRON_LABEL[collection];
-		return id === 'laws'
-			? [id, { label: 'Wetten', one: 'wet', many: 'wetten' }]
-			: [
-					id,
-					{
-						label: many,
-						one: collection === 'cases' ? one : lowerFirst(one),
-						many: lowerFirst(many)
-					}
-				];
-	})
-) as Record<
-	Exclude<KindId, 'regelingen' | 'lawArticles' | 'europees' | 'publicaties'>,
-	{ label: string; one: string; many: string }
->;
+/** The soort (indeling.ts) of each kind of Verbonden: its name, its rubriek and its order. */
+const SORT_OF_KIND: Record<KindId, Sort> = {
+	laws: 'wetten',
+	['regelingen']: 'wetten',
+	lawArticles: 'artikelen',
+	europees: 'internationaal',
+	publicaties: 'publicaties',
+	judgments: 'uitspraken',
+	dossiers: 'dossiers',
+	documents: 'stukken',
+	decisions: 'stemmingen',
+	activities: 'activiteiten',
+	commitments: 'toezeggingen',
+	cases: 'kamerzaken',
+	members: 'kamerleden',
+	factions: 'fracties',
+	committees: 'commissies',
+	cabinets: 'kabinetten',
+	ministries: 'ministeries',
+	ministers: 'bewindspersonen'
+};
+
+/** The kind of Verbonden a soort is: the inverse of SORT_OF_KIND (the regulations are a verband). */
+const KIND_OF_SORT = Object.fromEntries(
+	(Object.entries(SORT_OF_KIND) as [KindId, Sort][])
+		.filter(([id]) => id !== 'regelingen')
+		.map(([id, sort]) => [sort, id])
+) as Record<Sort, KindId>;
 
 /**
  * The regulations whose Gelet op names the bron (group `based-on`) are a soort of their own,
@@ -83,23 +101,27 @@ const KIND_LABELS = Object.fromEntries(
  */
 const REGULATIONS: KindId = 'regelingen';
 
-export const SOORT_LABEL: Record<KindId, { label: string; one: string; many: string }> = {
-	...KIND_LABELS,
-	['regelingen']: {
-		label: 'Uitvoeringsregelingen',
-		one: 'uitvoeringsregeling',
-		many: 'uitvoeringsregelingen'
-	},
-	// What the laws of a bron are, each a soort of its own (T11: one group held Staatsbladen,
-	// regulations, acts of the EU and articles alike).
-	lawArticles: { label: 'Artikelen', one: 'artikel', many: 'artikelen' },
-	europees: {
-		label: 'Europees en internationaal',
-		one: 'Europese of internationale bron',
-		many: 'Europese en internationale bronnen'
-	},
-	publicaties: { label: 'Publicaties', one: 'publicatie', many: 'publicaties' }
-};
+/** What a soort is called, as a heading and as the plural of "Alle N …": the name of its soort. */
+export const SOORT_LABEL: Record<KindId, { label: string; one: string; many: string }> =
+	Object.fromEntries(
+		(Object.entries(SORT_OF_KIND) as [KindId, Sort][]).map(([id, sort]) => [
+			id,
+			id === 'regelingen'
+				? {
+						label: 'Uitvoeringsregelingen',
+						one: 'uitvoeringsregeling',
+						many: 'uitvoeringsregelingen'
+					}
+				: {
+						label: sortLabel(sort),
+						one: sortOne(sort),
+						many:
+							sort === 'internationaal'
+								? 'Europese en internationale bronnen'
+								: sortLabel(sort).toLowerCase()
+					}
+		])
+	) as Record<KindId, { label: string; one: string; many: string }>;
 
 /** What the persons of a bron are: its Leden in a fractie or commissie, its Bewindspersonen in a kabinet. */
 function membersLabel(selection: Collection): { label: string; one: string; many: string } {
@@ -112,37 +134,22 @@ function membersLabel(selection: Collection): { label: string; one: string; many
 
 /**
  * A soort called otherwise on the page of a kind of bron: a commissie's reader counts its leden
- * now ("Huidige leden"), Verbonden every lid it has had.
+ * now ("Leden", "Plaatsvervangers"), Verbonden every lid it has had.
  */
 const LABEL_ON: Partial<Record<Collection, Partial<Record<KindId, string>>>> = {
 	committees: { members: 'Leden ooit' },
-	ministries: { dossiers: 'Lopende dossiers', commitments: 'Open toezeggingen' }
+	ministries: { dossiers: 'Openstaande dossiers', commitments: 'Open toezeggingen' }
 };
 
-/** The order of the soorten: the mockups of the article, the dossier and the Kamerlid. */
-const ORDER: KindId[] = [
-	'judgments',
-	'documents',
-	'regelingen',
-	'laws',
-	'lawArticles',
-	'europees',
-	'publicaties',
-	'dossiers',
-	'decisions',
-	'activities',
-	'commitments',
-	'cases',
-	'members',
-	'factions',
-	'committees',
-	'cabinets'
-];
-const ORDER_OF: Partial<Record<Collection, KindId[]>> = {
-	dossiers: ['laws', 'documents', 'decisions', 'activities', 'commitments', 'dossiers'],
-	members: ['documents', 'dossiers', 'decisions', 'commitments', 'laws'],
-	factions: ['members', 'documents', 'dossiers', 'decisions', 'laws']
-};
+/**
+ * The order of the soorten: that of the rubrieken (Wetten, Rechtspraak, Kamerstukken, Parlement,
+ * Regering), each with its soorten as rubrieken.ts lists them, the rubriek of the bron itself first.
+ * The regulations that follow from the bron stand right before the laws.
+ */
+const orderOf = (selection: Collection): KindId[] =>
+	sortsFrom(rubriekOfSort(SORT_OF_KIND[KIND_OF[selection] ?? 'laws'])).flatMap((sort) =>
+		sort === 'wetten' ? [REGULATIONS, KIND_OF_SORT[sort]] : [KIND_OF_SORT[sort]]
+	);
 
 /** Collections of a bucket that are no soort of their own here: a version of the bron. */
 const NOT_COUNTED: ReadonlySet<string> = new Set(['article_versions', 'instrument_versions']);
@@ -252,8 +259,7 @@ export function kindsOf(
 		inBuckets(key, regulationBuckets as Bucket[])
 			? REGULATIONS
 			: KIND_OF[key.split('/')[1] as Collection];
-	const order = ORDER_OF[selection] ?? ORDER;
-	const ranked = [...order, ...ORDER.filter((k) => !order.includes(k))];
+	const ranked = orderOf(selection);
 	const kinds = ranked.flatMap((id): Kind[] => {
 		const gs = byKind.get(id);
 		if (!gs) return [];
@@ -290,21 +296,43 @@ export function kindsOf(
 			}
 		];
 	});
-	const split = kinds.flatMap((k) => (k.id === 'laws' ? splitLaws(k) : [k]));
+	const split = kinds.flatMap((k) =>
+		k.id === 'laws' ? splitLaws(k) : k.id === 'members' ? splitMembers(k, selection) : [k]
+	);
 	return ranked.flatMap((id) => split.filter((k) => k.id === id));
 }
 
 /** The soort of the laws a row is: an article, an act of the EU or a treaty, a publication
  *  of the Staatsblad or Staatscourant, else a law or a regulation. */
-function lawClass(row: Row): KindId {
-	const c = row.ref.collection;
-	if (c === 'articles' || c === 'annexes') return 'lawArticles';
-	const p = (row.props ?? {}) as Record<string, unknown>;
-	if (p.publication_kind || /^(stb|stcrt|trb)[_-]/i.test(row.ref.key)) return 'publicaties';
-	if (p.celex || p.jurisdiction === 'eu' || /^celex|^\d{5}[a-z]\d{4}/i.test(row.ref.key))
-		return 'europees';
-	if (typeof p.kind === 'string' && /verdrag/i.test(p.kind)) return 'europees';
-	return 'laws';
+const lawClass = (row: Row): KindId => lawClassOf(row.ref.collection, row.ref.key, row.props);
+
+function lawClassOf(c: string, key: string, props: Record<string, unknown> | undefined): KindId {
+	const kind = KIND_OF_SORT[sortOf(c, key, props)];
+	return kind === 'lawArticles' || kind === 'europees' || kind === 'publicaties' ? kind : 'laws';
+}
+
+/**
+ * The soort of one bron, as Verbonden would list it: by its collection, the laws by what they
+ * are (Artikelen, Europees en internationaal, Publicaties). The legend of the werkplek names a
+ * bron Verbonden does not list (one step further, a soort Verbonden has no group for) by it.
+ */
+export function kindOfBron(
+	collection: string,
+	key: string,
+	props?: Record<string, unknown>
+): KindId | null {
+	const k = KIND_OF[collection as Collection];
+	if (k === 'laws') return lawClassOf(collection, key, props);
+	if (k === 'members') return isMinister(props) ? 'ministers' : 'members';
+	return k ?? null;
+}
+
+/** What a soort is called on the page of `selection`: as its heading in Verbonden. */
+export function kindLabelOn(id: KindId, selection: Collection): string {
+	return (
+		LABEL_ON[selection]?.[id] ??
+		(id === 'members' ? membersLabel(selection) : SOORT_LABEL[id]).label
+	);
 }
 
 /** The soort a group of laws holds mostly: its own (Europees en internationaal, the
@@ -371,6 +399,38 @@ function splitLaws(k: Kind): Kind[] {
 	});
 }
 
+/**
+ * The persons of a bron by their role (Kamerlid in Parlement, bewindspersoon in Regering): on a
+ * kabinet or a ministerie they are all bewindspersonen, on a fractie or commissie all leden; else
+ * each row by its posts (`isMinister`), what the groups hold beyond their rows counting with
+ * the Kamerleden.
+ */
+function splitMembers(k: Kind, selection: Collection): Kind[] {
+	const as = (id: 'members' | 'ministers', rows: Row[], count: number): Kind => {
+		const label = SOORT_LABEL[id];
+		return {
+			...k,
+			id,
+			label: id === 'ministers' ? label.label : k.label,
+			count,
+			noun: plural(count, label.one, label.many),
+			rows,
+			partial: rows.length < count || k.groups.some((g) => g.capped)
+		};
+	};
+	if (selection === 'cabinets' || selection === 'ministries')
+		return [as('ministers', k.rows, k.count)];
+	if (selection === 'factions' || selection === 'committees') return [k];
+	const ministers = k.rows.filter((r) => isMinister(r.props, r.relation));
+	if (ministers.length === 0) return [k];
+	const others = k.rows.filter((r) => !ministers.includes(r));
+	const beyond = Math.max(0, k.count - k.rows.length);
+	return [
+		...(others.length + beyond > 0 ? [as('members', others, others.length + beyond)] : []),
+		as('ministers', ministers, ministers.length)
+	];
+}
+
 /** The sum of the soorten: the heading of Verbonden and the total of the network's legend. */
 export const kindsTotal = (kinds: readonly Kind[]): number =>
 	kinds.reduce((sum, k) => sum + k.count, 0);
@@ -381,6 +441,9 @@ export const kindsTotal = (kinds: readonly Kind[]): number =>
  * itself and its day. The passage, the ECLI and the source come when the row is opened.
  */
 export function shortLine(row: Row): string {
+	// An article of this law that refers to another: the target, as the open row says it.
+	const refers = referenceLine(row);
+	if (refers) return refers;
 	const props = (row.props ?? {}) as Record<string, unknown>;
 	const cited = typeof props.inbound_citation_count === 'number' ? props.inbound_citation_count : 0;
 	const day = row.date ? korteDatum(row.date) : null;
@@ -410,4 +473,38 @@ const titleSays = (title: string, kind: unknown): boolean =>
 function lawOf(title: string, props: Record<string, unknown>): string | null {
 	const law = props.instrument_citation_title;
 	return typeof law === 'string' && law && !title.includes(law) ? law : null;
+}
+
+type Preview = {
+	id: string;
+	label: string;
+	count: number | null;
+	noun?: string;
+	section?: string;
+	ordered?: boolean;
+	kind?: string;
+	kindLabel?: string;
+};
+
+/**
+ * The groups to come as the overview will show them: one head per soort, in the soort's own
+ * name, so the head that stands while loading is the head that stays (UX-toets N14a).
+ */
+export function previewPerKind<T extends Preview>(preview: readonly T[]): T[] {
+	const out: T[] = [];
+	for (const p of preview) {
+		const had = p.kind ? out.find((o) => o.kind === p.kind) : undefined;
+		if (!had) {
+			out.push({
+				...p,
+				id: p.kind ? p.kind : p.id,
+				label: p.kindLabel ?? p.label,
+				section: undefined
+			});
+			continue;
+		}
+		had.count = had.count != null && p.count != null ? had.count + p.count : null;
+		had.ordered = had.ordered || p.ordered;
+	}
+	return out;
 }

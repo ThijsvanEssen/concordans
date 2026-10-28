@@ -1,10 +1,10 @@
 <script lang="ts">
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ToezeggingInhoud from '$lib/components/open/ToezeggingInhoud.svelte';
-	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import IndexRow from '../IndexRow.svelte';
 	import { OPEN_STATUS, commitmentStatusLabel } from '../government';
@@ -28,7 +28,7 @@
 			onToggle={() => ctx.toggleOpen(bron)}
 		>
 			{#snippet lead()}
-				<span class="row-id-main"><Waarde value={korteDatum(t.date)} /></span>
+				<span class="row-id-main"><DateTime iso={t.date} /></span>
 				{#if t.status}
 					<span class="row-id-sub">{commitmentStatusLabel(t.status)}</span>
 				{/if}

@@ -3,7 +3,7 @@
 // passed bill with its law, and a memorie van toelichting beside the article it explains.
 import { patchApi } from '../support/api';
 import { expect, test } from '../support/test';
-import { openFilter } from '../support/filters';
+import { chip, openFilter } from '../support/filters';
 import { naarVerbonden } from '../support/navigation';
 
 test('a dossier shows where it stands and opens a stuk of its procedure in place', async ({
@@ -26,11 +26,11 @@ test('a dossier shows where it stands and opens a stuk of its procedure in place
 	).toHaveAttribute('aria-expanded', 'true');
 	await expect(page).toHaveURL(/\/dossiers\/36496$/);
 
-	await page.getByRole('button', { name: /^Amendementen( \d+)?$/ }).click();
-	await expect(page.getByRole('button', { name: /^Amendementen( \d+)?$/ })).toHaveAttribute(
-		'aria-expanded',
-		'true'
-	);
+	// Every section stands open until the reader closes it; the heading closes it.
+	const amendementen = page.getByRole('button', { name: /^Amendementen( \d+)?$/ });
+	await expect(amendementen).toHaveAttribute('aria-expanded', 'true');
+	await amendementen.click();
+	await expect(amendementen).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('a Kamerstuk names its indiener and its dossier, and folds out its vote', async ({ page }) => {
@@ -42,7 +42,6 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 		page.getByRole('navigation', { name: 'Behoort bij' }).getByRole('link', { name: /36799/ })
 	).toHaveAttribute('href', /\/dossiers\/36799/);
 	const vote = page.getByRole('button', { name: 'Stemming', exact: true });
-	await vote.click();
 	await expect(vote).toHaveAttribute('aria-expanded', 'true');
 	// The vote the head already says is not said again: the section has the earlier one.
 	const sectie = page
@@ -54,12 +53,22 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 
 test('a motie says at rest how the Kamer voted on it, and which fracties', async ({ page }) => {
 	await page.goto('/kamerstukken/36799/31');
-	await expect(page.getByText('Aangenomen op 29 september 2026, 120 voor, 30 tegen')).toBeVisible();
+	// The tally is in the bar once, not also in the line above it.
+	await expect(page.getByText('Aangenomen op 29 september 2026', { exact: true })).toBeVisible();
+	await expect(page.locator('.vote-line .outcome').first()).not.toContainText('voor');
+	await expect(page.locator('.stembalk')).toHaveCount(1);
 	// The bar above the names: one sentence for a screen reader, the majority marked.
 	await expect(page.getByRole('img', { name: 'Aangenomen, 120 voor, 30 tegen' })).toBeVisible();
 	await expect(page.getByText('meerderheid 76')).toBeVisible();
 	await expect(page.getByText(/^D66.26, VVD.22, PVV.19/)).toBeVisible();
 	await expect(page.getByText(/^PRO.\d+, Groep Markuszower.\d+, PvdD.\d+/)).toBeVisible();
+	// Voor and Tegen begin their names at one x, at 1440 and at 375 (Stemregel).
+	const namen = page.locator('dl.sides dd');
+	await expect(namen).toHaveCount(2);
+	const [voor, tegen] = await namen.evaluateAll((els) =>
+		els.map((el) => Math.round(el.getBoundingClientRect().x))
+	);
+	expect(voor).toBe(tegen);
 	// The stemming itself is one step further, by its day.
 	await expect(page.getByRole('link', { name: '29 september 2026' })).toHaveAttribute(
 		'href',
@@ -76,7 +85,7 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 			'Vastgesteld als Wet betaalbare huur, Stb. 2024, 193; inwerkingtreding bij Stb. 2024, 197.'
 		)
 	).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Stb. 2024, 193' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Stb. 2024, 193' }).first()).toHaveAttribute(
 		'href',
 		'/stb/2024/193'
 	);
@@ -91,7 +100,7 @@ test('a passed bill names the law it made, its Staatsblad and the day it came in
 	// A link in the line runs with it, as the ministerie's does: at 375 it stays a sentence.
 	expect((await indiener.boundingBox())!.height).toBeLessThan(80);
 	await expect(page.getByText('Afgerond: in werking sinds 1 juli 2024.')).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Stb. 2024, 197' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Stb. 2024, 197' }).first()).toHaveAttribute(
 		'href',
 		'/stb/2024/197'
 	);
@@ -130,22 +139,60 @@ test('a motion of censure is named so in its head', async ({ page }) => {
 	await expect(page.getByRole('button', { name: /^Motie van afkeuring/ })).toBeVisible();
 });
 
-test('the Stemmingen narrow to the motions of no confidence and say when the Kamer meets', async ({
+test('the Stemmingen narrow to the motions of no confidence, chosen under Stemmingsoort', async ({
 	page,
 	touch
 }) => {
-	await page.goto('/explore?mode=index&kind=decisions&motie=wantrouwen');
-	await expect(
-		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
-	).toBeVisible();
+	const motion = page.waitForRequest(
+		(r) => r.url().includes('/api/decisions') && r.url().includes('motion_kind=no_confidence')
+	);
+	await page.goto('/explore?mode=index&kind=decisions');
+	const option = await openFilter(page, touch, 'Stemmingsoort');
+	await option(/^Motie van wantrouwen/).click();
+	await expect(page).toHaveURL(/motie=wantrouwen/);
+	await motion;
+	// The rows say the same word as the filter.
 	await expect(
 		page.getByText('Motie van wantrouwen', { exact: true }).filter({ visible: true }).first()
 	).toBeVisible();
-	const option = await openFilter(page, touch, 'Motie', touch ? 'Motie' : 'Meer');
-	const kind = option(/^Motie van wantrouwen/);
-	await expect(kind).toHaveAttribute(touch ? 'aria-pressed' : 'aria-checked', 'true');
-	await kind.click();
+	// On a phone the sheet is still open: the option undoes itself; on a wide screen the chip.
+	await (
+		touch ? option(/^Motie van wantrouwen/) : chip(page, /Motie van wantrouwen wissen/)
+	).click();
 	await expect(page).not.toHaveURL(/motie=/);
+});
+
+test('the Stemmingen say when the Kamer meets', async ({ page }) => {
+	await page.goto('/explore?mode=index&kind=decisions');
+	await expect(
+		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
+	).toBeVisible();
+});
+
+test('an open row of the Stemmingen draws its bar once, large, and shows a dossier by number', async ({
+	page
+}) => {
+	await page.goto('/explore?mode=index&kind=decisions');
+	const rij = page
+		.locator('li.row-wrap')
+		.filter({ has: page.locator('.stembalk') })
+		.first();
+	await expect(rij.locator('.stembalk.compact')).toHaveCount(1);
+	// The dossier's number stands in the lead; its name is not cut there.
+	await expect(rij.locator('.row-id')).not.toContainText('…');
+	// The toggle lies under the row's content: its corner is free.
+	await rij.getByRole('button', { name: /^Details van/ }).click({ position: { x: 2, y: 2 } });
+	await expect(rij.locator('.stembalk')).toHaveCount(1);
+	await expect(rij.locator('.stembalk.compact')).toHaveCount(0);
+});
+
+test('a search of several words goes to the API as one q', async ({ page }) => {
+	const asked = page.waitForRequest(
+		(r) => r.url().includes('/api/decisions') && r.url().includes('q=')
+	);
+	await page.goto('/explore?mode=index&kind=decisions&q=vertrouwen+opzeggen');
+	const url = new URL((await asked).url());
+	expect(url.searchParams.getAll('q')).toEqual(['vertrouwen opzeggen']);
 });
 
 test('a vote gives its outcome and the vote of each fractie', async ({ page }) => {
@@ -155,7 +202,6 @@ test('a vote gives its outcome and the vote of each fractie', async ({ page }) =
 	);
 	await expect(page.getByText('Aangenomen, Motie')).toBeVisible();
 	await expect(page.getByText('105 voor, 45 tegen')).toBeVisible();
-	await page.getByRole('button', { name: 'Stemverdeling per fractie' }).click();
 	const fracties = page
 		.getByRole('listitem')
 		.filter({ has: page.getByRole('link', { name: 'D66', exact: true }) });
@@ -184,7 +230,7 @@ test('a memorie van toelichting opens beside its article and closes again', asyn
 	await expect(mvt).toBeFocused();
 	await mvt.click();
 	await expect(page).toHaveURL(/naast=documents\//);
-	await page.getByRole('link', { name: 'Sluiten' }).click();
+	await page.getByRole('button', { name: 'Sluiten' }).click();
 	await expect(page).not.toHaveURL(/naast=/);
 	await expect(page.getByText('Kamerstukken II 2016/17, 34702, nr. 3.')).toHaveCount(0);
 });

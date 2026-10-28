@@ -64,8 +64,12 @@
 					>
 				{/if}
 				{#if bron}
-					<a role="menuitem" class="tekstmenu__item" href={bron.href} target="_blank" rel="noopener"
-						>{bron.label} ↗</a
+					<a
+						role="menuitem"
+						class="tekstmenu__item"
+						href={bron.href}
+						target="_blank"
+						rel="external noopener">{bron.label}</a
 					>
 				{/if}
 			{/snippet}

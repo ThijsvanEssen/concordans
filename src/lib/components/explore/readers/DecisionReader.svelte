@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { lacks } from '$lib/text/coverage';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { shortKind } from '$lib/text/document-kind';
 	import { motionKindLabel } from '$lib/text/motion-kind';
@@ -15,6 +16,8 @@
 	import { coalitionFactionsOf } from '$lib/components/parliamentary/coalitie';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
+	import { fromDocument } from '$lib/bron/submitters';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import Uitkomst from '$lib/components/parliamentary/Uitkomst.svelte';
 	import { outcomeTone } from '$lib/votes/vote-line';
@@ -51,8 +54,12 @@
 	const zonderDictum = $derived(
 		!!loaded && !loaded.dictum?.trim() && !isAdvicePaper(loaded.primary_document)
 	);
+	// A motie also asks it, for its indieners (`submitters` of the stuk).
+	const vraagtStuk = $derived(
+		zonderDictum || (!!loaded?.motion_kind && !isAdvicePaper(loaded.primary_document))
+	);
 	const tekst = load(
-		() => (zonderDictum ? node.key : null),
+		() => (vraagtStuk ? node.key : null),
 		(key) => (key ? getDecisionDocument(key) : Promise.resolve(null)),
 		'Stemmingstekst'
 	);
@@ -71,6 +78,8 @@
 		loaded && (loaded.chamber ?? 'TK') !== 'EK' ? (loaded.coalition ?? null) : null
 	);
 	/** The hall of the day of the vote: which fractie is of the coalition, by its key. */
+	/** The dossiers past the first two, shown whole. */
+	let allDossiers = $state(false);
 	let zaal = $state<Map<string, boolean | null> | null>(null);
 	$effect(() => {
 		const c = coalitie;
@@ -124,8 +133,9 @@
 		)}
 
 		{@const uitkomst = decisionOutcome(d)}
-		{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
-		{@const verder = eigen.slice(1)}
+		{@const eigen = uniqueBy(dossiers, (x) => x.number)}
+		<!-- Two more by name; the rest behind "Alle N dossiers". -->
+		{@const verder = allDossiers ? eigen.slice(1) : eigen.slice(1, 3)}
 		{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
 		<div class="r-decision">
 			<ReaderHead
@@ -155,6 +165,14 @@
 								><DossierNaam {dossier} /></BronLink
 							>{/each}
 					</p>
+					{#if eigen.length > 3}
+						<AlleN
+							aantal={eigen.length}
+							noun="dossiers"
+							open={allDossiers}
+							onclick={() => (allDossiers = !allDossiers)}
+						/>
+					{/if}
 				{/snippet}
 			</ReaderHead>
 
@@ -166,6 +184,9 @@
 					<p class="over__regel">
 						Over: <BronLink ref={{ collection: 'documents', key: p.key }}>{stukNaam(p)}</BronLink>
 					</p>
+					{#if doc?.submitters?.length}
+						<p class="over__regel"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
+					{/if}
 					{#if d.dictum?.trim()}
 						<p class="over__dictum">{d.dictum}</p>
 					{:else}
@@ -180,7 +201,7 @@
 				<LoadState state={tekst.state} what="De tekst" retry={tekst.retry}>
 					{#snippet children(doc)}
 						{#if doc?.text}
-							<Sectie title={doc.kind ?? 'Document'} collection="documents">
+							<Sectie title={doc.kind ?? 'Document'}>
 								<p class="document-text">{doc.text}</p>
 							</Sectie>
 						{:else if chamber !== 'EK'}
@@ -207,7 +228,7 @@
 			{#if chamber === 'EK'}
 				{@const groups = ekFactionGroups(d)}
 				{#if groups.length > 0}
-					<Sectie title="Fracties" collection="factions">
+					<Sectie title="Stemverdeling per fractie">
 						<dl class="ek-factions">
 							{#each groups as g (g.label)}
 								<dt>{g.label}</dt>
@@ -364,7 +385,7 @@
 	}
 	.voter-row {
 		display: grid;
-		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto;
+		grid-template-columns: max(calc(var(--voorkolom) - var(--s-2)), 50px) 1fr auto;
 		gap: var(--s-2);
 		padding: var(--s-1) var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));
@@ -393,7 +414,7 @@
 	}
 	/* Coalitie or oppositie: a column of its own, as quiet as the seats beside it. */
 	.met-kabinet .voter-row {
-		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto 3.5em;
+		grid-template-columns: max(calc(var(--voorkolom) - var(--s-2)), 50px) 1fr auto 3.5em;
 	}
 	.voter-kabinet {
 		font-family: var(--font-serif);

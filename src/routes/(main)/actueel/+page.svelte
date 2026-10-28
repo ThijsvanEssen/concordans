@@ -33,7 +33,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import Follow from '$lib/components/ui/Follow.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import {
@@ -68,7 +68,7 @@
 	} from '$lib/components/explore/index/facets';
 	// The filters as on every list page (FilterBar, besluit 40): the field on one line, the bar
 	// of filters over the list with the Kamer first, the filters chosen as chips by the count; on
-	// a phone behind Verfijnen (N), the Kamer over it.
+	// a phone behind Filter (N), the Kamer over it.
 	import { type Cabinet } from '$lib/components/explore/index/government';
 	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
@@ -639,9 +639,9 @@
 <!-- Under the last day, in the text column of the timeline. -->
 <!-- Earlier days that did not come: Opnieuw under the days takes the link's place, as in Bladeren. -->
 {#snippet volgende()}
-	{#if loadingMore}<span class="stil">Laden…</span>{:else if error?.retry !== loadMore}<TekstLink
-			onclick={loadMore}>Eerdere dagen</TekstLink
-		>{/if}
+	{#if loadingMore || error?.retry !== loadMore}
+		<AlleN volgende woord="Eerdere" noun="dagen" laden={loadingMore} onclick={loadMore} />
+	{/if}
 {/snippet}
 {#snippet verder()}
 	{#if doorzocht}

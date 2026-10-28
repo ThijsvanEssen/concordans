@@ -11,10 +11,12 @@
 	import type { Snippet } from 'svelte';
 	import { sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
 	import { dagMaand, yearsOf } from '$lib/text/datum';
+	import { dateColumn } from './date-column';
+	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import Markering from '$lib/components/ui/Markering.svelte';
-	import { isOpen, subKey } from '$lib/components/ui/dicht.svelte';
-	import FoldButton from '$lib/components/ui/FoldButton.svelte';
+	import { subKey } from '$lib/components/ui/dicht.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 	import { openHref } from '$lib/bron/href';
 	import { rowClick, terPlekke } from '$lib/actions/klik';
@@ -63,7 +65,6 @@
 	} = $props();
 
 	/** Het jaar onder de dag, tenzij de kop het al noemt. */
-	const metJaar = (g: TijdGroep<B>, iso: string) => iso.slice(0, 4) !== g.jaar;
 
 	// One line open at a time.
 	let eigen = $state<string | null>(null);
@@ -87,109 +88,119 @@
 	const uid = $props.id();
 </script>
 
-<div class="tl" class:zonder={!datums} class:perioden class:met-acties={bewaar}>
+<!-- The day of a line: day and month, the year under it where the group does not name it. -->
+{#snippet dayOn(year: string | null | undefined, datum: string)}
+	<DateTime iso={datum} form="dayMonth"
+		>{dagMaand(datum)}{#if datum.slice(0, 4) !== year}<span class="j">{datum.slice(0, 4)}</span
+			>{/if}</DateTime
+	>
+{/snippet}
+
+<div
+	class="tl"
+	class:zonder={!datums}
+	class:perioden
+	class:kolom-voor={dateColumn() === 'term'}
+	class:met-acties={bewaar}
+>
 	{#each groepen as g (g.id)}
-		{@const sleutel = subKey(g.titel)}
-		{@const groepOpen = !inklapbaar || isOpen(sleutel, true)}
-		<section class="groep">
-			{#if g.titel}
-				<svelte:element this={niveau === 2 ? 'h2' : 'h3'} class="kop kop--{niveau}">
-					{#if inklapbaar}
-						<FoldButton {sleutel} open={groepOpen}
-							>{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}</FoldButton
+		{#snippet groep()}
+			<ol class="regels">
+				{#each regelsVan(g) as r (r.id)}
+					{@const v = vormVan(r)}
+					{@const isHet = open === r.id}
+					{@const kept = bewaar ? bewaarVan(r) : null}
+					{@const doel = r.inhoud ? bronVan(r) : null}
+					<li
+						class="regel regel--{r.teken}"
+						class:groot={r.groot}
+						class:kan-open={!!r.inhoud}
+						class:is-open={isHet}
+						class:is-dim={r.gedimd}
+						data-rij
+					>
+						<span class="datum"
+							>{#if r.periode}{yearsOf(
+									r.periode.van,
+									r.periode.tot
+								)}{:else if r.datum && r.datumKnop}<button
+									type="button"
+									class="datum-knop"
+									title={r.datumKnop.titel}
+									onclick={r.datumKnop.actie}>{@render dayOn(g.jaar, r.datum)}</button
+								>{:else if r.datum}{@render dayOn(g.jaar, r.datum)}{/if}</span
 						>
-					{:else}
-						{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}
-					{/if}
-				</svelte:element>
-			{/if}
-			{#if groepOpen}
-				<ol class="regels">
-					{#each regelsVan(g) as r (r.id)}
-						{@const v = vormVan(r)}
-						{@const isHet = open === r.id}
-						{@const kept = bewaar ? bewaarVan(r) : null}
-						{@const doel = r.inhoud ? bronVan(r) : null}
-						<li
-							class="regel regel--{r.teken}"
-							class:groot={r.groot}
-							class:kan-open={!!r.inhoud}
-							class:is-open={isHet}
-							class:is-dim={r.gedimd}
-							data-rij
-						>
-							<span class="datum"
-								>{#if r.periode}{yearsOf(
-										r.periode.van,
-										r.periode.tot
-									)}{:else if r.datum && r.datumKnop}<button
-										type="button"
-										class="datum-knop"
-										title={r.datumKnop.titel}
-										onclick={r.datumKnop.actie}
-										>{dagMaand(r.datum)}{#if metJaar(g, r.datum)}<span class="j"
-												>{r.datum.slice(0, 4)}</span
-											>{/if}</button
-									>{:else if r.datum}{dagMaand(r.datum)}{#if metJaar(g, r.datum)}<span class="j"
-											>{r.datum.slice(0, 4)}</span
-										>{/if}{/if}</span
+						{#if !perioden}
+							<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
+								><path
+									d={v.d}
+									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+									class:vol={v.wijze !== 'lijn' &&
+										(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
+								/></svg
 							>
-							{#if !perioden}
-								<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
-									><path
-										d={v.d}
-										fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
-										class:vol={v.wijze !== 'lijn' &&
-											(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
-									/></svg
-								>
+						{/if}
+						<!-- The button below is the keyboard's way in; this only widens its target. -->
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<div class="tekst" title={r.hint ?? undefined} onclick={(e) => opRegel(e, r)}>
+							{#if r.inhoud}
+								<button
+									type="button"
+									class="regel-toggle"
+									aria-expanded={isHet}
+									aria-controls={isHet ? `${uid}-${r.id}` : undefined}
+									aria-label="Inhoud van {r.zin}"
+									onclick={() => wissel(r.id)}
+								></button>
 							{/if}
-							<!-- The button below is the keyboard's way in; this only widens its target. -->
-							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-							<div class="tekst" title={r.hint ?? undefined} onclick={(e) => opRegel(e, r)}>
-								{#if r.inhoud}
-									<button
-										type="button"
-										class="regel-toggle"
-										aria-expanded={isHet}
-										aria-controls={isHet ? `${uid}-${r.id}` : undefined}
-										aria-label="Inhoud van {r.zin}"
-										onclick={() => wissel(r.id)}
-									></button>
-								{/if}
-								{#if r.label}<span class="label">{r.label}</span>{/if}
-								{#if r.inhoud && doel}<a
-										class="zin"
-										href={doel}
-										data-sveltekit-noscroll
-										onclick={(e) => terPlekke(e, () => wissel(r.id))}>{@render zinVan(r)}</a
-									>{:else if r.inhoud}<span class="zin">{@render zinVan(r)}</span
-									>{:else if r.ref}<BronLink ref={r.ref} class="zin">{@render zinVan(r)}</BronLink
-									>{:else if r.href}<a
-										href={r.href}
-										rel={/^https?:/.test(r.href) ? 'external' : undefined}
-										class="zin">{@render zinVan(r)}</a
-									>{:else if r.actie}<button
-										type="button"
-										class="zin zin--actie raakvlak"
-										onclick={r.actie}>{@render zinVan(r)}</button
-									>{:else}<span class="zin">{@render zinVan(r)}</span>{/if}
-								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
-								{#if r.onder}<span class="meta">{@render r.onder(r.id)}</span>{/if}
-								{#if r.bij && onderRegel}{@render onderRegel(r.bij)}{/if}
-								{#if isHet && r.inhoud}<div class="inhoud" id="{uid}-{r.id}">
-										{@render r.inhoud(r.id)}
-									</div>{/if}
-							</div>
-							{#if bewaar}<span class="acties"
-									>{#if kept}<RijActies naam={r.zin} item={kept} />{/if}</span
-								>{/if}
-						</li>
-					{/each}
-				</ol>
-				{#if g.noot}<p class="noot">{g.noot}</p>{/if}
-			{/if}
-		</section>
+							{#if r.label}<span class="label">{r.label}</span>{/if}
+							{#if r.inhoud && doel}<a
+									class="zin"
+									href={doel}
+									data-sveltekit-noscroll
+									onclick={(e) => terPlekke(e, () => wissel(r.id))}>{@render zinVan(r)}</a
+								>{:else if r.inhoud}<span class="zin">{@render zinVan(r)}</span
+								>{:else if r.ref}<BronLink ref={r.ref} class="zin">{@render zinVan(r)}</BronLink
+								>{:else if r.href}<a
+									href={r.href}
+									rel={/^https?:/.test(r.href) ? 'external' : undefined}
+									class="zin">{@render zinVan(r)}</a
+								>{:else if r.actie}<button
+									type="button"
+									class="zin zin--actie raakvlak"
+									onclick={r.actie}>{@render zinVan(r)}</button
+								>{:else}<span class="zin">{@render zinVan(r)}</span>{/if}
+							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
+							{#if r.onder}<span class="meta">{@render r.onder(r.id)}</span>{/if}
+							{#if r.bij && onderRegel}{@render onderRegel(r.bij)}{/if}
+							{#if isHet && r.inhoud}<div class="inhoud" id="{uid}-{r.id}">
+									{@render r.inhoud(r.id)}
+								</div>{/if}
+						</div>
+						{#if bewaar}<span class="acties"
+								>{#if kept}<RijActies naam={r.zin} item={kept} />{/if}</span
+							>{/if}
+					</li>
+				{/each}
+			</ol>
+			{#if g.noot}<p class="noot">{g.noot}</p>{/if}
+		{/snippet}
+		{#if g.titel}
+			<!-- The group is a Sectie a level down (3 in a section, 2 where the timeline is the page);
+			     its state is kept per heading, as it always was (subKey). -->
+			<Sectie
+				{niveau}
+				title={g.titel}
+				datum={g.datum}
+				aantal={g.sub}
+				sleutel={subKey(g.titel)}
+				{inklapbaar}
+			>
+				{@render groep()}
+			</Sectie>
+		{:else}
+			<section class="groep">{@render groep()}</section>
+		{/if}
 	{:else}
 		{#if leeg}<p class="leeg">{leeg}</p>{/if}
 	{/each}
@@ -206,10 +217,17 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-5);
+		/* Sectie makes up the rest of its step between two pages' heads (the days of Actueel). */
+		--lezer-stap: var(--s-5);
 		/* The two columns before the text, shared by the lines, the note and Meer. */
 		--tl-datum: var(--s-8);
 		--tl-teken: 20px;
 		--tl-voor: calc(var(--tl-datum) + var(--tl-teken) + 2 * var(--s-2));
+	}
+	/* A page whose date column is the term column (Kamerlid). */
+	.kolom-voor {
+		/* On a phone the term column is 0: the date is then as wide as its day and month. */
+		--tl-datum: max(var(--voorkolom), calc(var(--s-8) + var(--s-2)));
 	}
 	/* A line that leads to a list on the page: read as the other lines, underlined as a link. */
 	.zin--actie,
@@ -231,40 +249,6 @@
 	.zin--actie:hover,
 	.datum-knop:hover {
 		text-decoration-color: currentColor;
-	}
-	.kop {
-		margin: 0;
-		padding-bottom: var(--s-2);
-		border-bottom: 2px solid var(--ink);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-2);
-		align-items: baseline;
-	}
-	/* Rung 2 where the timeline is the page (a day of Actueel). */
-	/* The target of a folding heading (.raakvlak) stays above its rule, off the first row. */
-	@media (pointer: coarse), (max-width: 768px) {
-		.kop {
-			padding-bottom: var(--s-3);
-		}
-	}
-	.kop--2 {
-		padding-top: var(--s-5);
-		font-size: var(--t-h3);
-		font-weight: 600;
-		border-bottom-width: 1px;
-		border-bottom-color: var(--rule-strong);
-	}
-	.sub {
-		font-weight: 400;
-		color: var(--ink-3);
-	}
-	.kop--2 .sub {
-		font-size: var(--t-micro);
 	}
 	.regels {
 		list-style: none;
@@ -366,12 +350,22 @@
 	.kan-open .tekst {
 		cursor: pointer;
 	}
-	/* On a phone a row that opens or acts is a finger's target high (48 px, the scale's step above 44). */
+	/* On a phone a row that opens or acts is a finger's target high (48 px, the scale's step above
+	   44). */
 	@media (pointer: coarse), (max-width: 768px) {
 		.kan-open .tekst,
 		.tekst:has(.zin--actie) {
 			min-height: var(--s-7);
 			justify-content: center;
+		}
+	}
+	/* A line that leads somewhere without opening: its link is a finger's 44 px high itself, so
+	   the label above it and the meta under it are not in its way. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.regel:not(.kan-open) .tekst :global(a.zin) {
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 	.kan-open .tekst:hover .zin {
@@ -466,9 +460,6 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.noot {
-		margin-top: var(--s-2);
-	}
 	.verder {
 		font-size: var(--t-meta);
 		color: var(--ink);
@@ -479,9 +470,9 @@
 	.zonder .datum {
 		visibility: hidden;
 	}
-	/* Perioden: the years in the reader's term column (96px; on a phone as wide as "2023–2026"), no line, no teken. */
+	/* Perioden: the years in the reader's term column (the term column; on a phone as wide as "2023–2026"), no line, no teken. */
 	.perioden {
-		--tl-datum: max(var(--reader-term, 0px), calc(var(--s-8) + var(--s-2)));
+		--tl-datum: max(var(--voorkolom), calc(var(--s-8) + var(--s-2)));
 		--tl-teken: 0px;
 		--tl-voor: calc(var(--tl-datum) + var(--s-4));
 	}

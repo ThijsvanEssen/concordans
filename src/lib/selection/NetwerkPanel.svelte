@@ -1,7 +1,7 @@
 <script lang="ts">
-	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	// The netwerk of chosen bronnen, in the strip at the left of the werkplek, in three blocks:
 	// Gekozen (each bron on or off, or taken out), Aangeklikt op het canvas (the selected bron,
 	// added with Toevoegen) and the button Bron toevoegen, which opens the search. The context
@@ -9,27 +9,39 @@
 	// (one werkplek, one panel).
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import BronToevoegen from './BronToevoegen.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import { GROUP_LABEL } from '$lib/graph/collection-role';
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
 	import { bronLabel } from '$lib/vocabulary';
+	import { bronKind } from '$lib/components/graph/bron-kind';
+
+	/** What a chosen bron is, in a word: a publication is no wet. */
+	const soortVan = (e: NetwerkEntry) =>
+		(e.node?.raw?.props?.kind === 'publicatie'
+			? bronKind(e.collection, e.node.raw.props)
+			: bronLabel(e.collection)
+		).toLowerCase();
 
 	let {
 		entries,
 		loading = false,
+		expected = 0,
 		selection = null,
 		onSelect,
 		onToggle,
 		onRemove,
 		onGroepAan,
 		onAdd,
-		onClearContext,
 		onClear,
-		telefoon = false
+		telefoon = false,
+		searching = $bindable(false)
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
+		/** The bronnen of the netwerk asked and not yet in: their rows hold their place. */
+		expected?: number;
 		/** The selected bron when it is not chosen yet. */
 		selection?: { label: string } | null;
 		/** Adds a bron found by the search, by the name a link uses. */
@@ -39,14 +51,12 @@
 		/** A chip greyed with its grouping: switch that grouping on again. */
 		onGroepAan?: (kind: NonNullable<NetwerkEntry['verborgenMet']>) => void;
 		onAdd: () => void;
-		onClearContext: () => void;
 		onClear: () => void;
-		/** A phone: Gekozen folds after two, Wissen and Meer stand under the list. */
+		/** A phone: Gekozen folds after two, Wis alles stands under the list. */
 		telefoon?: boolean;
+		/** The search for a bron to add is open; the page opens it too, from the empty canvas. */
+		searching?: boolean;
 	} = $props();
-
-	let searching = $state(false);
-	const shownCount = $derived(entries.filter((e) => e.on && !e.missing).length);
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
 	// does not cover the canvas.
@@ -55,50 +65,31 @@
 	let showAll = $state(false);
 	const folded = $derived(!showAll && entries.length > FOLD_AT + 1);
 	const shown = $derived(folded ? entries.slice(0, FOLD_AT) : entries);
-
-	/** What a group's members are called: a wet's artikelen, a fractie's leden. */
-	const membersOf = (c: NetwerkEntry['collection']) =>
-		c === 'instruments'
-			? 'artikelen'
-			: c === 'dossiers'
-				? 'stukken'
-				: c === 'cabinets' || c === 'ministries'
-					? 'bewindspersonen'
-					: 'leden';
+	/** Rows of bronnen still on their way, so Weergave under them does not drop when they arrive. */
+	const pending = $derived(
+		entries.length < expected ? Math.min(expected, FOLD_AT) - Math.min(entries.length, FOLD_AT) : 0
+	);
 </script>
 
 <!-- Three blocks under a rule, one task each (NetwerkPaneel in the design system): Gekozen,
-	     Aangeklikt op het canvas, Bron toevoegen. Wissen is one click, and Terug sets it back. -->
+	     Aangeklikt op het canvas, Bron toevoegen. Wis alles is one click, and Terug sets it back. -->
 <CanvasKaart title="Bronnen" label="Netwerk" class="netwerk">
 	{#snippet samenvatting()}
-		{#if entries.length > 0}<span class="tel">{entries.length}, {shownCount} getoond</span>{/if}
+		{#if folded}<span class="tel"
+				>{formatCount(shown.length)} van {formatCount(entries.length)}</span
+			>{/if}
 		{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
 			></span>{/if}
 	{/snippet}
 	{#snippet actie()}
 		{#if entries.length > 0 && !telefoon}
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
-				>Wissen</TekstLink
+				>Wis alles</TekstLink
 			>
-			<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
-			<TekstMenu rechts label="Meer" tekst="Meer">
-				{#snippet onder(sluit)}
-					<button
-						type="button"
-						role="menuitem"
-						class="tekstmenu__item"
-						onclick={() => {
-							sluit();
-							onClearContext();
-						}}>Alleen de gekozen bronnen tonen</button
-					>
-				{/snippet}
-			</TekstMenu>
 		{/if}
 	{/snippet}
-	{#if entries.length > 0}
-		<section class="blok" aria-labelledby="netwerk-gekozen">
-			<h3 class="blok__label" id="netwerk-gekozen">Gekozen</h3>
+	{#if entries.length > 0 || pending > 0}
+		<Sectie title="Gekozen" niveau={3} inklapbaar={false}>
 			<ul class="rijen">
 				{#each shown as e (e.id)}
 					<li class="rij" class:uit={!e.on} class:mist={e.missing} class:is-dim={!!e.verborgenMet}>
@@ -124,31 +115,20 @@
 								<span class="rij__label">{e.label}</span>
 								{#if e.alone}
 									<span class="rij__staat" title="Geen verbinding met de andere gekozen bronnen"
-										>{bronLabel(e.collection).toLowerCase()}, zonder verbinding</span
-									>
-								{:else if e.via}
-									<span
-										class="rij__staat"
-										title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {membersOf(
-											e.collection
-										)}"
-										>{bronLabel(e.collection).toLowerCase()}, via {formatCount(e.via.used)} van {formatCount(
-											e.via.total
-										)}
-										{membersOf(e.collection)}</span
+										>{soortVan(e)}, zonder verbinding</span
 									>
 								{:else}
-									<span class="rij__staat">{bronLabel(e.collection).toLowerCase()}</span>
+									<span class="rij__staat">{soortVan(e)}</span>
 								{/if}
 							</span>
 						</button>
-						<button
-							type="button"
-							class="rij__weg"
-							onclick={() => onRemove(e.id)}
-							aria-label="Haal {e.label} uit netwerk">×</button
+						<IconButton label="{e.label} uit het netwerk weghalen" onclick={() => onRemove(e.id)}
+							>×</IconButton
 						>
 					</li>
+				{/each}
+				{#each { length: pending } as _, i (i)}
+					<li class="rij rij--wacht" aria-hidden="true"></li>
 				{/each}
 			</ul>
 			{#if folded}
@@ -160,21 +140,20 @@
 			{:else if entries.length > FOLD_AT + 1}
 				<p class="verder"><TekstLink onclick={() => (showAll = false)}>minder</TekstLink></p>
 			{/if}
-		</section>
+		</Sectie>
 	{/if}
 	{#if selection}
-		<section class="blok" aria-labelledby="netwerk-aangeklikt">
-			<h3 class="blok__label" id="netwerk-aangeklikt">Aangeklikt op het canvas</h3>
+		<Sectie title="Aangeklikt op het canvas" niveau={3} inklapbaar={false}>
 			<div class="aangeklikt">
 				<span class="aangeklikt__naam">{selection.label}</span>
 				<button
 					type="button"
 					class="btn"
 					onclick={onAdd}
-					aria-label="Voeg {selection.label} toe aan netwerk">Toevoegen</button
+					aria-label="{selection.label} toevoegen aan het netwerk">Toevoegen</button
 				>
 			</div>
-		</section>
+		</Sectie>
 	{/if}
 	<section class="blok blok--toevoegen">
 		<button type="button" class="btn toevoegen" onclick={() => (searching = true)}
@@ -182,12 +161,11 @@
 		>
 	</section>
 	{#if telefoon && entries.length > 0}
-		<!-- On a phone under Filter, with the netwerk's own filters (GraphView). -->
+		<!-- On a phone under the list, as the Design System has it (NetwerkPaneel, Telefoon). -->
 		<p class="netwerk-acties">
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
-				>Wissen</TekstLink
+				>Wis alles</TekstLink
 			>
-			<TekstLink onclick={onClearContext}>Alleen de gekozen bronnen tonen</TekstLink>
 		</p>
 	{/if}
 </CanvasKaart>
@@ -236,24 +214,6 @@
 		}
 	}
 
-	/* Blocks under a rule, each with a label in the sans. */
-	.blok {
-		padding: var(--s-2) 0 var(--s-3);
-		border-top: 1px solid var(--rule);
-	}
-	.blok:first-child {
-		border-top: 0;
-		padding-top: 0;
-	}
-	.blok:last-child {
-		padding-bottom: 0;
-	}
-	.blok__label {
-		margin: 0 0 var(--s-2);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	.rijen {
 		list-style: none;
 		margin: 0;
@@ -269,6 +229,9 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
+	}
+	.rij--wacht {
+		min-height: calc(var(--s-5) + var(--s-4) + 2 * var(--s-1));
 	}
 	.rij + .rij {
 		border-top: 1px solid var(--paper-2);
@@ -325,20 +288,6 @@
 	.rij.is-dim .rij__glyph {
 		opacity: 0.5;
 	}
-	.rij__weg {
-		flex: none;
-		width: var(--s-6);
-		height: var(--s-6);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.rij__weg:hover {
-		color: var(--ink);
-	}
 	.verder {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
@@ -368,11 +317,6 @@
 	@media (pointer: coarse), (max-width: 768px) {
 		.rij__naam {
 			min-height: var(--veld-h-raak);
-		}
-		.rij__weg {
-			align-self: stretch;
-			width: var(--veld-h-raak);
-			height: auto;
 		}
 		.btn {
 			min-height: var(--veld-h-raak);

@@ -1,9 +1,9 @@
 <script lang="ts">
 	// A row of Verbonden: one verbinding with one bron. Its glyph and title, its line of the
 	// verbinding (hoe.ts) with the place a passage stands at, the passage, and the meta line. A
-	// click anywhere on it opens its bron as its title does; a Kamerstuk and a connected law
-	// open in place under it, the bron one step further.
-	import { goto } from '$app/navigation';
+	// click anywhere on it opens it in place, as its title does: a Kamerstuk its core text, a
+	// connected law the references between the two, any other bron its glance. The bron is one
+	// step further (Lees verder, or the title with a modifier).
 	import { page } from '$app/state';
 	import { textOf } from '$lib/text/words';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
@@ -18,13 +18,19 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import RowGlance from './RowGlance.svelte';
 	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
 	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import type { GraphNode } from '$lib/graph/types';
 	import Aanhaling from './Aanhaling.svelte';
+	import ConfidenceDot from './ConfidenceDot.svelte';
+	import { betrouwbaarheid } from './verbinding';
 	import WetVerwijzingen from './WetVerwijzingen.svelte';
+	import TierSwatch from './TierSwatch.svelte';
+	import { shapeOfTier } from './tiers';
 	import { hoeVan, kleineLetter } from './hoe';
 	import { ankerVanRij, dossierVanRij, metaParts, type Row } from './rows';
+	import { vormVanBron } from '$lib/bron/vormen';
 
 	let {
 		row,
@@ -112,11 +118,18 @@
 			? { van, naar, dit: typeof row.edge?.dit === 'string' ? row.edge.dit : undefined }
 			: null;
 	});
-	const opentTerPlekke = $derived(
-		(row.ref.collection === 'documents' || !!wetVerband) && !row.missing
+
+	// A judgment carries the vlak of its tierShape where the soortteken would stand (Design System,
+	// VerbondenGroep): the strook above the group and its rows read as one.
+	const tierShape = $derived(
+		row.ref.collection === 'judgments' && typeof row.props?.tier === 'string'
+			? shapeOfTier(row.props.tier)
+			: null
 	);
 
 	const hoe = $derived(hoeVan(row, selection.collection));
+	// A derived verbinding says how sure it is (Design System, Zekerheid).
+	const zekerheid = $derived(betrouwbaarheid(row.confidence, true, null));
 	// Where the passage stands under the line, it shows the verbinding is in the text: the
 	// words "staat letterlijk in de tekst" say it twice (A208c).
 	const herkomst = $derived(
@@ -128,8 +141,25 @@
 	// A motie or amendement says how the Kamer decided, on every list (StukUitslag); the day of
 	// the vote then stands for the stuk's own.
 	const uitslag = $derived(row.ref.collection === 'documents' ? stukUitslag(row.props) : null);
+	// An open row of another bron shows the passage in its glance until the glance's own text has
+	// come, which then stands in its place: the passage is never shown twice (RowGlance).
+	const glimpInGlance = $derived(open && !wetVerband && row.ref.collection !== 'documents');
 	const delen = $derived(metaParts(uitslag?.datum ? { ...row, date: null } : row, !!hoe));
+
+	/** An article by the abbreviation of its law ("Artikel 3.34 Ar"): the law's full title at hover. */
+	const fullTitle = $derived(
+		row.ref.collection === 'articles' && typeof row.props?.instrument_citation_title === 'string'
+			? row.props.instrument_citation_title
+			: undefined
+	);
 </script>
+
+{#snippet glimp(opened: boolean)}
+	{#if hoe?.citaat}
+		<span class="row__citaat" class:is-open={opened}><Aanhaling passage={hoe.citaat} /></span>
+	{/if}
+{/snippet}
+{#snippet glimpOpen()}{@render glimp(true)}{/snippet}
 
 <li class="row" class:row--onder={!!row.onder} style:--row-glyph="{ROW_GLYPH}px">
 	<!-- The row is the way to its bron: a click anywhere on it opens the bron in Netwerk, as its
@@ -138,21 +168,18 @@
 		class="row__main"
 		data-rij
 		class:is-open={open}
-		use:blockClick={row.missing
-			? null
-			: () => {
-					if (opentTerPlekke) onToggle();
-					else {
-						zetMarkering(rijMarkering);
-						goto(href, { noScroll: true });
-					}
-				}}
+		use:blockClick={row.missing ? null : onToggle}
 	>
-		<KindGlyph
-			collection={row.ref.collection}
-			vorm={row.filterGroup === 'wetsvoorstellen' ? 'voorstel' : undefined}
-			size={ROW_GLYPH}
-		/>
+		{#if tierShape}
+			<span class="row__vlak"><TierSwatch shape={tierShape} /></span>
+		{:else}
+			<KindGlyph
+				vorm={row.stuksoort === 'wetsvoorstellen'
+					? 'voorstel'
+					: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
+				size={ROW_GLYPH}
+			/>
+		{/if}
 		<span class="row__text">
 			{#if row.missing}
 				<span class="row__title row__title--missing">{row.title}</span>
@@ -160,12 +187,10 @@
 				<a
 					class="row__title"
 					{href}
+					title={fullTitle}
 					data-sveltekit-noscroll
-					aria-expanded={opentTerPlekke ? open : undefined}
-					onclick={(e) => {
-						if (!opentTerPlekke) zetMarkering(rijMarkering);
-						return opentTerPlekke && terPlekke(e, onToggle);
-					}}
+					aria-expanded={open}
+					onclick={(e) => terPlekke(e, onToggle)}
 					>{#if dossier}<DossierNaam
 							{dossier}
 							vorm="naam"
@@ -190,11 +215,13 @@
 								class="row__plaats">{hoe.plaats.text}</BronLink
 							>{hoe.rest.slice(
 								i + hoe.plaats.text.length
-							)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, naam herkend{/if}</span
+							)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, naam herkend <ConfidenceDot
+							word={zekerheid.word}
+						/>{/if}</span
 				>
 			{/if}
-			{#if hoe?.citaat}
-				<span class="row__citaat"><Aanhaling passage={hoe.citaat} /></span>
+			{#if hoe?.citaat && !glimpInGlance}
+				{@render glimp(open)}
 			{/if}
 			<span class="row__meta">
 				<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct: the box
@@ -203,7 +230,8 @@
 					{#if k > 0}<span class="row__sep">,</span>{/if}
 					<span
 						class="row__part row__part--{part.kind}"
-						class:is-proposed={part.kind === 'proposed'}>{part.text}</span
+						class:is-proposed={part.kind === 'proposed'}
+						title={part.title ?? undefined}>{part.text}</span
 					>
 				{/each}{#if uitslag}{#if delen.length}<span class="row__sep">,</span>{/if}<span
 						class="row__part"><StukUitslag {uitslag} /></span
@@ -229,6 +257,14 @@
 		<div class="row__inhoud">
 			{#if wetVerband}
 				<WetVerwijzingen {...wetVerband} />
+			{:else if row.ref.collection !== 'documents'}
+				<RowGlance
+					bron={row.ref}
+					at={row.at ?? null}
+					{href}
+					onRead={() => zetMarkering(rijMarkering)}
+					glimp={hoe?.citaat ? glimpOpen : undefined}
+				/>
 			{:else}
 				<RijInhoud
 					item={{
@@ -254,6 +290,14 @@
 	}
 	.row__main :global(.kind-glyph) {
 		margin-top: var(--s-1);
+	}
+	/* The vlak stands on the first line of the title, in the width of a soortteken. */
+	.row__vlak {
+		flex: none;
+		display: flex;
+		justify-content: center;
+		width: var(--row-glyph);
+		margin-top: var(--s-2);
 	}
 	.row__main:hover,
 	.row__main:focus-within,
@@ -294,6 +338,11 @@
 	}
 	.row__part--lid {
 		font-weight: 400;
+		color: var(--ink-2);
+	}
+	/* How the judgment ended, where the data says it: in the ink of the lid; where it does not,
+	   in the meta ink, as the rest of the line. */
+	.row__part--uitkomst {
 		color: var(--ink-2);
 	}
 	.row__part--derived {
@@ -338,6 +387,26 @@
 		text-decoration-color: currentColor;
 	}
 
+	/* On a touch screen the place is a line of a finger's 44 px of its own, under the title and
+	   not over it. */
+	@media (pointer: coarse), (max-width: 768px) {
+		/* The title as high as the closed row's (KindSummary): opening moves nothing under the
+		   finger. */
+		a.row__title {
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
+		.row__hoe :global(a.row__plaats) {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
+		.row__hoe :global(a.row__plaats)::after {
+			display: none;
+		}
+	}
+
 	/* The passage that carries the verbinding, the words that name the bron marked. */
 	.row__citaat {
 		margin-top: var(--s-1);
@@ -352,5 +421,12 @@
 		line-clamp: 3;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+	}
+	/* Opened, the passage stands whole. */
+	.row__citaat.is-open {
+		display: block;
+		-webkit-line-clamp: none;
+		line-clamp: none;
+		overflow: visible;
 	}
 </style>

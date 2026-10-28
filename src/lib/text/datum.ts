@@ -74,6 +74,15 @@ export const splitDates = (text: string): { text: string; date: boolean }[] => {
 	return parts;
 };
 
+/** A text with its long dates written short: `HR 20 december 2019` becomes `HR 20 dec. 2019`.
+ *  For a name in a list, on the canvas and in the keten (besluit 7); a heading or a sentence
+ *  keeps its long date. */
+export const shortDatesIn = (text: string): string =>
+	text.replace(DATE_IN_TEXT, (_all, d: string, month: string, year?: string) => {
+		const abbr = MAAND_KORT[MONTHS.indexOf(month.toLowerCase())];
+		return `${d}${NBSP}${abbr}${year ? NBSP + year : ''}`;
+	});
+
 type Dag = { j: number; m: number; d: number };
 
 /** The day an ISO date or moment names, or null when it names none. */
@@ -167,6 +176,13 @@ const AMSTERDAM = new Intl.DateTimeFormat('en-CA', {
 
 /** Today as an ISO day, in Europe/Amsterdam: the day the page, a citation and a peildatum say. */
 export const vandaag = (now = new Date()): string => AMSTERDAM.format(now);
+
+/** The Monday of the week of an ISO day, as an ISO day. */
+export function maandagVan(dag: string): string {
+	const d = new Date(`${dag}T12:00:00Z`);
+	d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+	return d.toISOString().slice(0, 10);
+}
 
 /** Whether the ISO day has come: today or before (in Europe/Amsterdam). */
 export const hasPassed = (iso: string, now = new Date()): boolean => iso <= vandaag(now);

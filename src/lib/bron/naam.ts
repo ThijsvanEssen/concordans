@@ -3,13 +3,26 @@
 import { textOf } from '$lib/text/words';
 import type { InstrumentMeta } from '$lib/text/instrument-meta';
 import { instrumentLawId, lawIdOf, type GraphNode } from '$lib/graph/types';
-import { describeBron, UNNAMED } from '$lib/bron/describe';
+import { describeBronShort, UNNAMED } from '$lib/bron/describe';
 import { decisionOutcome } from '$lib/votes/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
 import { dossierOwnName, dossierUitProps, kamerstukNummer } from './dossier-naam';
+
+/** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
+export function bronFullName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+	if (n.drawClass !== 'instrument') return bronNaam(n, meta);
+	const p = n.raw?.props ?? undefined;
+	const m = meta.get(instrumentLawId(p, n.key));
+	return (
+		m?.citationTitle ??
+		(p?.['citation_title'] as string | undefined) ??
+		(p?.['title'] as string | undefined) ??
+		bronNaam(n, meta)
+	);
+}
 
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
@@ -32,7 +45,7 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	// Anything else by the title Verbonden gives it: "Rechtbank Rotterdam, 2 juni 2022".
 	if (n.drawClass !== 'article') {
 		// The source's own name, not the short label of the canvas ("2026-09, Brief").
-		const title = describeBron(
+		const title = describeBronShort(
 			n.collection,
 			n.key,
 			n.raw?.display_name ?? n.label,

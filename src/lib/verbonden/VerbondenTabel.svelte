@@ -6,7 +6,6 @@
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
 	// bron, verbinding, plaats in de bron, plaats in dit artikel, aard, status,
 	// betrouwbaarheid, datum. Fifty rows per page.
-	import { menu } from '$lib/actions/menu';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { page } from '$app/state';
 	import { bronHref } from '$lib/bron/href';
@@ -40,6 +39,7 @@
 		onOpenFilter,
 		onRow,
 		backHref,
+		backLabel = 'Terug naar de tekst',
 		onRetry
 	}: {
 		verbonden: VerbondenState;
@@ -49,6 +49,8 @@
 		/** A row opens the card Verbinding. */
 		onRow: (row: Row) => void;
 		backHref: string;
+		/** Where the table was opened from: the text, or the netwerk (its Tonen). */
+		backLabel?: string;
 		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
 		onRetry?: () => void;
 	} = $props();
@@ -149,7 +151,7 @@
 			>{countLine(verbonden.groups, filter)}{#if mentions}; {mentions}{/if}</span
 		>
 		<span class="toolbar__space"></span>
-		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← Terug naar de tekst</a>
+		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← {backLabel}</a>
 		<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
 		<!-- The order: one TekstMenu, the columns as its options and the direction under the
 		     rule (Thijs, 10 Oct); choosing the same column again changes nothing. -->
@@ -181,30 +183,22 @@
 				{/each}
 			{/snippet}
 		</TekstMenu>
-		<div class="menu" use:menu={{ open: columnsOpen, close: () => (columnsOpen = false) }}>
-			<button
-				type="button"
-				class="btn"
-				aria-haspopup="menu"
-				aria-expanded={columnsOpen}
-				onclick={() => (columnsOpen = !columnsOpen)}>Kolommen<Caret open={columnsOpen} /></button
-			>
-			{#if columnsOpen}
-				<div class="menu__list" role="menu">
-					{#each TABLE_COLUMNS as c (c.id)}
-						{@const on = !hiddenColumns.has(c.id)}
-						<button
-							type="button"
-							role="menuitemcheckbox"
-							aria-checked={on}
-							class="tekstmenu__item menu__vink"
-							onclick={() => toggleColumn(c.id)}
-							><Vinkje aan={on} />{columnLabel(c, selection.collection)}</button
-						>
-					{/each}
-				</div>
-			{/if}
-		</div>
+		<!-- The columns: a list of checks inside the one TekstMenu, which stays open while they are set. -->
+		<TekstMenu label="Kolommen" tekst="Kolommen" rechts bind:open={columnsOpen}>
+			{#snippet inhoud()}
+				{#each TABLE_COLUMNS as c (c.id)}
+					{@const on = !hiddenColumns.has(c.id)}
+					<button
+						type="button"
+						role="menuitemcheckbox"
+						aria-checked={on}
+						class="tekstmenu__item menu__vink"
+						onclick={() => toggleColumn(c.id)}
+						><Vinkje aan={on} />{columnLabel(c, selection.collection)}</button
+					>
+				{/each}
+			{/snippet}
+		</TekstMenu>
 		<button type="button" class="btn" onclick={exportCsv}
 			>{exportLabel(verbonden.groups, filter)}</button
 		>
@@ -353,21 +347,6 @@
 	}
 	.toolbar__space {
 		flex: 1;
-	}
-	.menu {
-		position: relative;
-	}
-	.menu__list {
-		position: absolute;
-		top: calc(100% + var(--s-1));
-		right: 0;
-		z-index: var(--z-float);
-		min-width: 200px;
-		padding: var(--s-1) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
 	}
 	.menu__vink {
 		display: flex;
