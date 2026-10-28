@@ -125,6 +125,8 @@ type SketchHull = {
 
 /** What the layout draws as a hull besides the groups: the bron in the middle, its law. */
 type SketchContext = {
+	/** The bron in the middle, for its vorm (default: a square). */
+	centre?: { collection: Collection; key: string; props?: Record<string, unknown> };
 	/** The kind of hull the bron in the middle is, where it is a container (wet, dossier, fractie, commissie, kabinet). */
 	centreKind?: ContainerKind | null;
 	/** The short name of the law an article stands in (`BW`): the article is drawn in its hull. */
@@ -132,6 +134,8 @@ type SketchContext = {
 };
 
 export type Sketch = {
+	/** The vorm of the bron in the middle. */
+	shape: ReturnType<typeof vormVanBron>;
 	singles: Single[];
 	clusters: Circle[];
 	hulls: SketchHull[];
@@ -616,6 +620,9 @@ export function sketch(
 		h.pill.y += dy;
 	}
 	return {
+		shape: context.centre
+			? vormVanBron(context.centre.collection, context.centre.props, context.centre.key)
+			: 'regel',
 		singles,
 		clusters,
 		hulls,
