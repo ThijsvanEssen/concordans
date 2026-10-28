@@ -6,7 +6,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { START } from '$lib/components/home/start';
 
-const SENTENCE = 'Het artikel, en de uitspraken en Kamerstukken die ernaar verwijzen.';
+const SENTENCE = 'Zie hoe wetten, rechtspraak en parlement samenhangen.';
+const DESCRIPTION = `${SENTENCE.slice(0, -1)}: zoek een wet, uitspraak, Kamerstuk of dossier en volg de verbindingen.`;
 const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8');
 
 function files(dir: string): string[] {
@@ -18,15 +19,15 @@ function files(dir: string): string[] {
 }
 
 describe('the positioning of Concordans', () => {
-	it('is one sentence in the title and description of the start page and the shared-link text', () => {
-		expect(read('src/app.html')).toContain(`content="${SENTENCE}"`);
+	it('is one promise in the title and description of the start page and the shared-link text', () => {
+		expect(read('src/app.html')).toContain(`content="${DESCRIPTION}"`);
 		// The heading of the start page promises; the footer describes, in other words.
 		expect(read('src/lib/components/layout/SiteFooter.svelte')).not.toContain(SENTENCE);
 		expect(read('src/lib/components/layout/SiteFooter.svelte')).not.toContain(START.heading);
 		const home = JSON.parse(read('src/lib/seo/spa-routes.json')).find(
 			(r: { path: string }) => r.path === '/'
 		);
-		expect(home.description).toBe(SENTENCE);
+		expect(home.description).toBe(DESCRIPTION);
 		expect(home.title).toBe(`${SENTENCE.slice(0, -1)}, Concordans`);
 	});
 
