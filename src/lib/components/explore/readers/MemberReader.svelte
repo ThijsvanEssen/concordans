@@ -35,7 +35,7 @@
 		type CareerEntry,
 		type Signature
 	} from '$lib/components/parliamentary/career';
-	import { seatWord } from '$lib/text/zetel';
+	import { seatWord } from '$lib/text/seat';
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';

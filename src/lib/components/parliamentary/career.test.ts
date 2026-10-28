@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { seatWord } from '$lib/text/zetel';
+import { seatWord } from '$lib/text/seat';
 import { careerOf, currentTitle, foldPremier, inYears, type CareerEntry } from './career';
 import { yearsOf } from '$lib/text/datum';
 

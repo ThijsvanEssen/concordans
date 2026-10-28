@@ -11,7 +11,7 @@
 	import { getCommittee } from '$lib/api/committees';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/votes/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
-	import { seatWord } from '$lib/text/zetel';
+	import { seatWord } from '$lib/text/seat';
 	import { load } from '$lib/util/load.svelte';
 
 	let { node }: { node: GraphNode } = $props();

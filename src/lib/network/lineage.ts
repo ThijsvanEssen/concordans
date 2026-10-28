@@ -9,7 +9,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { isMinister } from '$lib/bron/rubrieken';
 import { capitalize, lowerFirst, textOf } from '$lib/text/words';
-import { seatWord } from '$lib/text/zetel';
+import { seatWord } from '$lib/text/seat';
 import { shortDatesIn } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
