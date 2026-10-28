@@ -118,12 +118,27 @@ test('the whole of a soort cut off is its list, in the row of its count (A314)',
 	await expect(alle).toHaveText(/^[\d.]+$/);
 	// No step under the row: the canvas keeps its cap.
 	await expect(legend.getByRole('button', { name: /^Alle [\d.]+/ })).toHaveCount(0);
+	// To a screen reader the row says its whole count, not "67 van".
+	await expect(
+		legend.getByRole('button', { name: /^Uitspraken [\d.]+ van [\d.]+$/ })
+	).toBeVisible();
 	await alle.click();
 	await expect(page).toHaveURL(/tabel=1/);
-	await expect(page).toHaveURL(/bronnen=uitspraken/);
-	await expect(page).not.toHaveURL(/mode=/);
+	await expect(page).toHaveURL(/soort=uitspraken/);
+	await expect(page).not.toHaveURL(/bronnen=/);
 	await expect(page.getByRole('heading', { name: 'Verbindingen van Art. 6:162 BW' })).toBeVisible();
-	await expect(page.getByRole('table').getByRole('row').nth(1)).toBeVisible();
+	const rows = page.getByRole('table').getByRole('row');
+	await expect(rows.nth(1)).toBeVisible();
+	// Of that kind only: every row a judgment.
+	expect(await rows.locator('td:first-child').allInnerTexts()).not.toContainEqual(
+		expect.stringMatching(/^Art\./)
+	);
+	// Terug leads to the netwerk as it was, the bronfilter untouched.
+	await page.getByRole('link', { name: '← Terug naar het netwerk' }).click();
+	await expect(page).toHaveURL(/mode=netwerk/);
+	await expect(page).not.toHaveURL(/tabel=|soort=/);
+	const terug = await legenda(page);
+	await expect(terug.getByRole('link', { name: /^Alle [\d.]+ uitspraken$/ })).toBeVisible();
 });
 
 test('the head of Verbonden counts once, when every group is in (F5)', async ({ page }) => {

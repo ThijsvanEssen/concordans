@@ -21,6 +21,7 @@
 		gedimd = false,
 		inline = false,
 		menu = false,
+		naam,
 		title
 	}: {
 		label: string;
@@ -46,6 +47,8 @@
 		inline?: boolean;
 		/** An item of a menu (FilterBar): checked as a menu item, not pressed as a button. */
 		menu?: boolean;
+		/** Its name to a screen reader where the count it shows is not whole: "Uitspraken 67 van 10.386". */
+		naam?: string;
 		title?: string;
 	} = $props();
 </script>
@@ -61,6 +64,7 @@
 	role={menu ? 'menuitemcheckbox' : undefined}
 	aria-pressed={menu ? undefined : on}
 	aria-checked={menu ? on : undefined}
+	aria-label={naam}
 	title={title ?? label}
 	onclick={onToggle}
 >
