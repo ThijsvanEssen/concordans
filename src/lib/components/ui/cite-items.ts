@@ -1,6 +1,21 @@
 // The items of a Citeer menu, always in one order: kort, voluit, met datum, link.
 
-export type CiteItem = { kind: 'kort' | 'voluit' | 'met datum' | 'link'; text: string };
+export type CiteItem = {
+	kind: 'kort' | 'voluit' | 'met datum' | 'link';
+	/** What is copied. */
+	text: string;
+	/** What the menu shows where that differs: a link without the parameter that only opens the text. */
+	shown?: string;
+};
+
+/**
+ * The address as the menu shows it, without `lezen=1`. The copied link keeps it on purpose: it
+ * opens the text, not the network (ArticleReader `readLink`); a reader sees only the address.
+ */
+const withoutLezen = (link: string) =>
+	link
+		.replace(/\?lezen=1(&|(?=#|$))/, (_, rest) => (rest ? '?' : ''))
+		.replace(/&lezen=1(?=&|#|$)/, '');
 
 type Forms = { kort?: string | null; voluit?: string | null; metDatum?: string | null };
 /** A bron's citation record (citation-record.ts), or its parts. */
@@ -15,7 +30,7 @@ export function citeItems(given: Forms | RecordForms | null, link?: string | nul
 	if (forms?.kort) items.push({ kind: 'kort', text: forms.kort });
 	if (forms?.voluit) items.push({ kind: 'voluit', text: forms.voluit });
 	if (forms?.metDatum) items.push({ kind: 'met datum', text: forms.metDatum });
-	if (link) items.push({ kind: 'link', text: link });
+	if (link) items.push({ kind: 'link', text: link, shown: withoutLezen(link) });
 	return items;
 }
 

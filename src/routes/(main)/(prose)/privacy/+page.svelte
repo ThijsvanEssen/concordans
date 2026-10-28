@@ -42,6 +42,10 @@
 				</li>
 				<li>De gevolgde onderwerpen, met de dag van het vorige bezoek.</li>
 				<li>De bundels, met hun aantekeningen.</li>
+				<li>
+					Per sessie: of de melding bij de eerste Bewaar al is getoond. Dit verdwijnt als het
+					tabblad sluit.
+				</li>
 			</ul>
 			<p>
 				Dit blijft in de browser en gaat niet naar een server. Er is geen back-up van; zie

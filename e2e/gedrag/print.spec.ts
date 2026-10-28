@@ -16,7 +16,7 @@ test('a printed bundel is its title, its groups and the text of its rows', async
 	await expect(page.getByText(/Als onrechtmatige daad worden aangemerkt/).first()).toBeVisible();
 
 	await page.emulateMedia({ media: 'print' });
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Losse markeringen');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mijn markeringen');
 	await expect(page.getByRole('heading', { level: 3, name: 'Rechtspraak' })).toBeVisible();
 	await expect(page.getByText(/Als onrechtmatige daad worden aangemerkt/).first()).toBeVisible();
 	await expect(page.getByRole('banner')).toBeHidden();

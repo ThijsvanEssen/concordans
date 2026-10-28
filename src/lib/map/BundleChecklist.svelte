@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The bundels a bron is in, as a menu's items, the one form wherever a bron is kept: the
 	// caret and Bewaard of a reader's Bewaar, the bookmark of a row, a place's menu (decision
-	// 20A, UX-toets A14). Every bundel in its own order, Losse markeringen first, a tick at
+	// 20A, UX-toets A14). Every bundel in its own order, Mijn markeringen first, a tick at
 	// each that holds the bron: a click puts it in or takes it out of that one bundel, so
 	// nothing is taken out of all at once. Nieuwe bundel asks its name in place.
 	import Picto from '$lib/components/ui/Picto.svelte';

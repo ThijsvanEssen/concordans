@@ -15,8 +15,16 @@
 	import { TIERS, TIER_LABEL } from '$lib/vocabulary';
 	import { COVERAGE, PUBLISHERS, SOURCE_LABEL } from '$lib/bron/herkomst';
 
-	const stats = load(() => 'stats', getStats, 'Bronnen');
-	const coverage = load(() => 'coverage', getCoverage, 'Bronnen dekking');
+	const stats = load(
+		() => 'stats',
+		(_, signal) => getStats(signal),
+		'Bronnen'
+	);
+	const coverage = load(
+		() => 'coverage',
+		(_, signal) => getCoverage(signal),
+		'Bronnen dekking'
+	);
 
 	/** How current each source is (`data_as_of`): the last date in its data, and when it was fetched. */
 	const asOfIn = (stats: Stats) =>
@@ -66,6 +74,7 @@
 				Het netwerk bevat een selectie uit deze bronnen; wat erbuiten valt, staat bij de
 				<a href="/docs/methode#grenzen" class="cite">grenzen</a>.
 			</p>
+			<!-- Each block stands on its own answer: the colleges appear when /stats/coverage is there. -->
 			<LoadState state={stats.state} what="De dekking" retry={stats.retry}>
 				{#snippet children(stats)}
 					<KeyList>
@@ -73,39 +82,38 @@
 							<KeyRow key={c.label}>{formatCount(stats.nodes[c.collection] ?? 0)}</KeyRow>
 						{/each}
 					</KeyList>
-					<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
-						{#snippet children(coverage)}
-							<KeyList>
-								{#each tiersIn(coverage) as t (t.tier)}
-									<KeyRow key={TIER_LABEL[t.tier]}
-										>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
-												0,
-												4
-											)}
-											{untilDate(t.last_date)}{/if}</KeyRow
-									>
-								{/each}
-							</KeyList>
-						{/snippet}
-					</LoadState>
-					{@const asOf = asOfIn(stats)}
-					{#if asOf.length}
-						<p class="list-note">Stand per bron</p>
-						<KeyList>
-							{#each asOf as a (a.source)}
-								<!-- A source the runs no longer fetch from says so, with the day it reached. -->
-								<KeyRow key={a.source}
-									>{#if coverageLine(a.completeness)}<CoverageLine
-											coverage={a.completeness}
-										/>{:else}{a.newest ? `${throughDate(a.newest)}, ` : ''}opgehaald {onDate(
-											a.fetched
-										)}{/if}</KeyRow
-								>
-							{/each}
-						</KeyList>
-					{/if}
 				{/snippet}
 			</LoadState>
+			<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
+				{#snippet children(coverage)}
+					<KeyList>
+						{#each tiersIn(coverage) as t (t.tier)}
+							<KeyRow key={TIER_LABEL[t.tier]}
+								>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(0, 4)}
+									{untilDate(t.last_date)}{/if}</KeyRow
+							>
+						{/each}
+					</KeyList>
+				{/snippet}
+			</LoadState>
+			{#if stats.state.status === 'ready'}
+				{@const asOf = asOfIn(stats.state.data)}
+				{#if asOf.length}
+					<p class="list-note">Stand per bron</p>
+					<KeyList>
+						{#each asOf as a (a.source)}
+							<!-- A source the runs no longer fetch from says so, with the day it reached. -->
+							<KeyRow key={a.source}
+								>{#if coverageLine(a.completeness)}<CoverageLine
+										coverage={a.completeness}
+									/>{:else}{a.newest ? `${throughDate(a.newest)}, ` : ''}opgehaald {onDate(
+										a.fetched
+									)}{/if}</KeyRow
+							>
+						{/each}
+					</KeyList>
+				{/if}
+			{/if}
 		</Sectie>
 
 		<Sectie title="Hergebruik en aanhalen" niveau={2} inklapbaar={false} id="hergebruik">

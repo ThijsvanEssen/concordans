@@ -3,8 +3,9 @@
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 
-const PUBLISHER_TERMS = 'Voorwaarden van de uitgever';
-const CC0 = 'CC0 1.0';
+// A link text names its publisher, so that two of the same terms are not the same link text.
+const terms = (site: string) => `Voorwaarden van ${site}`;
+const cc0 = (site: string) => `CC0 1.0 van ${site}`;
 
 type Publisher = {
 	name: string;
@@ -22,50 +23,56 @@ export const PUBLISHERS: readonly Publisher[] = [
 	{
 		name: 'Wetgeving',
 		gives: 'wetten.overheid.nl (Basiswettenbestand), op BWB-id',
-		licence: { name: CC0, url: 'https://data.overheid.nl/dataset/basis-wetten-bestand' },
+		licence: {
+			name: cc0('wetten.overheid.nl'),
+			url: 'https://data.overheid.nl/dataset/basis-wetten-bestand'
+		},
 		sources: { bwb: 'wetten.overheid.nl' }
 	},
 	{
 		name: 'Rechtspraak',
 		gives: 'rechtspraak.nl, op ECLI',
-		licence: { name: PUBLISHER_TERMS, url: 'https://www.rechtspraak.nl/colofon' },
+		licence: { name: terms('rechtspraak.nl'), url: 'https://www.rechtspraak.nl/colofon' },
 		sources: { rechtspraak: 'rechtspraak.nl' }
 	},
 	{
 		name: 'EHRM',
 		gives: 'HUDOC, op ECLI of zaaknummer',
-		licence: { name: PUBLISHER_TERMS, url: 'https://www.echr.coe.int/copyright-and-disclaimer' },
+		licence: { name: terms('HUDOC'), url: 'https://www.echr.coe.int/copyright-and-disclaimer' },
 		sources: { echr: 'HUDOC' }
 	},
 	{
 		name: CHAMBER_NAME.TK,
 		gives: 'De open data van de Tweede Kamer; Kamerstukken op dossier- en ondernummer',
-		licence: { name: CC0, url: 'https://opendata.tweedekamer.nl/disclaimer' },
+		licence: { name: cc0('de Tweede Kamer'), url: 'https://opendata.tweedekamer.nl/disclaimer' },
 		sources: { tk: CHAMBER_NAME.TK }
 	},
 	{
 		name: CHAMBER_NAME.EK,
 		gives: 'eerstekamer.nl; Kamerstukken op dossiernummer en letter',
-		licence: { name: PUBLISHER_TERMS, url: 'https://www.eerstekamer.nl/begrip/colofon' },
+		licence: { name: terms('eerstekamer.nl'), url: 'https://www.eerstekamer.nl/begrip/colofon' },
 		sources: { eerstekamer: CHAMBER_NAME.EK }
 	},
 	{
 		name: 'Publicaties',
 		gives: 'Staatsblad, Staatscourant en Tractatenblad, van officielebekendmakingen.nl',
-		licence: { name: CC0, url: 'https://data.overheid.nl/dataset/officiele-bekendmakingen' },
+		licence: {
+			name: cc0('officielebekendmakingen.nl'),
+			url: 'https://data.overheid.nl/dataset/officiele-bekendmakingen'
+		},
 		sources: { staatsblad: 'Staatsblad', staatscourant: 'Staatscourant' }
 	},
 	{
 		name: 'Regering',
 		gives: 'Kabinetten, hun periodes en bewindspersonen van rijksoverheid.nl',
-		licence: { name: CC0, url: 'https://www.rijksoverheid.nl/copyright' },
+		licence: { name: cc0('rijksoverheid.nl'), url: 'https://www.rijksoverheid.nl/copyright' },
 		sources: { rijksoverheid: 'rijksoverheid.nl' }
 	},
 	{
 		name: 'Europees recht',
 		gives: 'EUR-Lex: handelingen op CELEX-nummer, uitspraken van het Hof en het Gerecht op ECLI',
 		licence: {
-			name: PUBLISHER_TERMS,
+			name: terms('EUR-Lex'),
 			url: 'https://eur-lex.europa.eu/content/legal-notice/legal-notice.html'
 		},
 		sources: { eurlex: 'EUR-Lex' }
@@ -73,13 +80,13 @@ export const PUBLISHERS: readonly Publisher[] = [
 	{
 		name: 'Verdragen',
 		gives: 'De Verdragenbank van de Rijksoverheid',
-		licence: { name: PUBLISHER_TERMS, url: 'https://verdragenbank.overheid.nl' },
+		licence: { name: terms('de Verdragenbank'), url: 'https://verdragenbank.overheid.nl' },
 		sources: { verdragenbank: 'Verdragenbank' }
 	},
 	{
 		name: 'Organisaties',
 		gives: 'Ministeries en rechtsgebieden uit de waardelijsten van de overheid (TOOI)',
-		licence: { name: PUBLISHER_TERMS, url: 'https://standaarden.overheid.nl/tooi' },
+		licence: { name: terms('TOOI'), url: 'https://standaarden.overheid.nl/tooi' },
 		sources: { tooi: 'TOOI' }
 	}
 ];

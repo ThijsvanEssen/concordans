@@ -3,7 +3,7 @@
 	// kader"). Its glyph is the bookmark of RijActies, open or filled: an action, not a box.
 	// "Bewaar lid 3" where it names a place; "Bewaard in <bundel>" (or "in 3 bundels") as soon as
 	// any bundel holds it (DS Bewaar). Bewaar
-	// keeps in Losse markeringen. A reader opened from a bundel (Andere bron toevoegen) keeps
+	// keeps in Mijn markeringen. A reader opened from a bundel (Andere bron toevoegen) keeps
 	// in that bundel for the session and says so: "Bewaar in <bundel>", with the way back to
 	// it and Klaar beside it, until the reader ends it (UX-toets A21 #1). Bewaard takes nothing out: it opens the caret's menu, the bundels with a tick at each
 	// that holds it, where a click puts it in or takes it out of that one (BundleChecklist,

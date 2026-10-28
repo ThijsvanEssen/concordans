@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { COVERAGE, PUBLISHERS, SOURCE_LABEL } from './herkomst';
 
 describe('the sources of Bronnen en hergebruik', () => {
+	it('gives each publisher its own link text for its terms', () => {
+		const names = PUBLISHERS.map((p) => p.licence.name);
+		expect(new Set(names).size).toBe(names.length);
+	});
+
 	it('names the collections of the coverage as the page did', () => {
 		expect(COVERAGE.map((c) => [c.collection, c.label])).toEqual([
 			['instruments', 'Wetten en regelingen'],

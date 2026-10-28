@@ -4,17 +4,28 @@ import {
 	announce,
 	confirmation,
 	keptIn,
+	notice,
 	followedAt,
 	sign,
 	removedFrom
 } from './bevestig.svelte';
 
 const storage = new Map<string, string>();
+const session = new Map<string, string>();
 
 describe('the ritual of Bewaar, Volg and Kopieer', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		storage.clear();
+		session.clear();
+		vi.stubGlobal('sessionStorage', {
+			getItem: (k: string) => session.get(k) ?? null,
+			setItem: (k: string, v: string) => void session.set(k, v)
+		});
+		// The first Bewaar of the session gives the notice; the tests below start after it.
+		keptIn('Eerste', '/bundels/eerste');
+		notice.close();
+		vi.advanceTimersByTime(BEVESTIG_MS);
 		vi.stubGlobal('localStorage', {
 			getItem: (k: string) => storage.get(k) ?? null,
 			setItem: (k: string, v: string) => void storage.set(k, v),
@@ -73,5 +84,43 @@ describe('the ritual of Bewaar, Volg and Kopieer', () => {
 		announce('Gekopieerd');
 		announce('Gekopieerd: link');
 		expect(confirmation.now?.text).toBe('Gekopieerd: link');
+	});
+
+	it('gives the first Bewaar of a session a notice that stays, the next ones the line', () => {
+		vi.resetModules();
+		return import('./bevestig.svelte').then((m) => {
+			session.clear();
+			m.keptIn('Mijn markeringen', '/bundels/losse-markeringen');
+			expect(m.notice.now).toEqual({
+				bundle: 'Mijn markeringen',
+				href: '/bundels/losse-markeringen'
+			});
+			expect(m.confirmation.now).toBeNull();
+			vi.advanceTimersByTime(60_000);
+			expect(m.notice.now).not.toBeNull();
+			m.notice.close();
+			m.keptIn('B', '/bundels/b');
+			expect(m.notice.now).toBeNull();
+			expect(m.confirmation.now?.text).toBe('Bewaard in');
+		});
+	});
+
+	it('works where the session keeps nothing: once per page load', () => {
+		vi.resetModules();
+		vi.stubGlobal('sessionStorage', {
+			getItem: () => {
+				throw new Error('refused');
+			},
+			setItem: () => {
+				throw new Error('refused');
+			}
+		});
+		return import('./bevestig.svelte').then((m) => {
+			m.keptIn('A', '/bundels/a');
+			expect(m.notice.now?.bundle).toBe('A');
+			m.notice.close();
+			m.keptIn('B', '/bundels/b');
+			expect(m.notice.now).toBeNull();
+		});
 	});
 });

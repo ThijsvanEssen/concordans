@@ -130,6 +130,15 @@ a:hover {
    (a phone, a window zoomed to 200%); a desktop keeps its density.
    A place's number (.plaats-marker, 9 px wide in a conclusion, UX-toets 14 Oct #60) shows
    its ▾ after it, so its border goes before it, as wide as it is high. */
+/* The number of a place is a button of 36 × 28 px at least, whatever it prints ("1" or
+   "10.12.3", which does not break): a pointer finds it, and below, a finger's 44 px around it
+   (PlaceNumber, the article's lid and onderdeel). lezers.test.ts keeps both. */
+.plaats-marker {
+	box-sizing: border-box;
+	min-width: calc(var(--s-6) + var(--s-1));
+	min-height: calc(var(--s-5) + var(--s-1));
+	white-space: nowrap;
+}
 @media (pointer: coarse), (max-width: 768px) {
 	.raakvlak,
 	.plaats-marker {

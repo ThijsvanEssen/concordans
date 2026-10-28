@@ -763,9 +763,8 @@
 		align-items: flex-end;
 		gap: var(--s-1);
 		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
+		font-size: var(--t-body);
 		color: var(--ink-3);
-		padding-top: 0.25em;
 		text-align: right;
 		line-height: var(--lh-body);
 		user-select: none;
