@@ -14,11 +14,13 @@ import { limitMaxima } from './src/lib/api/limit-maxima';
 // pages of the app with their title and description ($lib/seo/routes.ts), which it reads for
 // a page's head and to tell a page from a 404; the addresses that moved ($lib/seo/moved.ts),
 // which it answers with a 301; and the fixed text of the start page
-// ($lib/components/home/start.ts), the one source of its HTML of `/`.
+// ($lib/components/home/start.ts), the one source of its HTML of `/`; and the text of the
+// prose pages ($lib/seo/spa-texts.json), for the main#seo the server puts in their HTML.
 const BESIDE_INDEX = {
 	'spa-routes.json': 'src/lib/seo/spa-routes.json',
 	'moved.json': 'src/lib/seo/moved.json',
-	'start.json': 'src/lib/components/home/start.json'
+	'start.json': 'src/lib/components/home/start.json',
+	'spa-texts.json': 'src/lib/seo/spa-texts.json'
 };
 // And the script of the first paint of a reader's address ($lib/first-paint), on its own:
 // the server inlines it after the bron it puts in the page, so it runs before the browser

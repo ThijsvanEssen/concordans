@@ -32,7 +32,7 @@ Eenmalig zag ik op `/over`, `/zoeken` en een onbekend pad een 502 van Caddy, lat
 
 - `src/lib/seo/robots.test.ts`: guard dat `robots.txt` de sitemap absoluut op `https://concordans.nl/sitemap.xml` noemt, `/api/` blokkeert en de pagina's niet, en dat deze build geen eigen `sitemap.xml` heeft (die zou de API-index verbergen).
 
-Voorstel voor bevinding 1: [`seo-prozapaginas-voorstel.md`](seo-prozapaginas-voorstel.md).
+Bevinding 1, front-end-deel: `src/lib/seo/spa-texts.json` (gemaakt uit de pagina's zelf, `npm run sync:seo-tekst`, test houdt het gelijk) staat naast `index.html` in de build. Voorstel en besluit: [`seo-prozapaginas-voorstel.md`](seo-prozapaginas-voorstel.md).
 
 Er is verder niets in de paginakoppen veranderd: de gemeten koppen waren al goed.
 
@@ -42,6 +42,6 @@ Er is verder niets in de paginakoppen veranderd: de gemeten koppen waren al goed
 
 ## Open
 
-- Punt 1 en 2 hierboven, met ruggespraak (API en Caddy).
+- Back end: `main#seo` uit `spa-texts.json` serveren en `Organization`-JSON-LD (naam Concordans) op `/` en `/over`. Prompt in de notitiemap (`seo-backend-prompt.md`). Tot dan is er niets veranderd voor een crawler.
 - Lighthouse en Search Console (dekking, "gevonden maar niet geïndexeerd") zijn niet gemeten; Search Console kan alleen Thijs.
 - Caddy: geen wijziging voorgesteld; de huidige routing van `/sitemap*.xml` naar de API werkt.

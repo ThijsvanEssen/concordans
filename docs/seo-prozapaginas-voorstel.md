@@ -1,6 +1,6 @@
 # Voorstel: tekst in de serverHTML van de prozapagina's
 
-Status: voorstel, niets gebouwd. Bij `docs/seo-toets.md`, bevinding 1.
+Status: gekozen (A, alle zes pagina's, Thijs 28 okt). Front end gebouwd in dezelfde PR (`spa-texts.json`); de back end moet het bestand nog serveren. Bij `docs/seo-toets.md`, bevinding 1.
 
 ## Probleem
 
