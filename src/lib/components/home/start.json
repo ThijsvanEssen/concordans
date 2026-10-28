@@ -2,11 +2,6 @@
 	"heading": "Zie hoe wetten, rechtspraak en parlement samenhangen.",
 	"lede": "Zoek een wet, uitspraak, Kamerstuk of dossier en zie wat ermee verbonden is.",
 	"placeholder": "Wet, uitspraak, Kamerstuk, dossier of motie",
-	"features": [
-		{ "visual": "zoek", "text": "Eén zoekbalk voor alles" },
-		{ "visual": "lees", "text": "Elk artikel met wie het aanhaalt" },
-		{ "visual": "volg", "text": "Bewaar en volg wat je vindt" }
-	],
 	"questions": {
 		"heading": "Begin met een vraag",
 		"items": [

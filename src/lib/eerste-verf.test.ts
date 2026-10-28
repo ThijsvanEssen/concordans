@@ -106,7 +106,7 @@ describe('the start page: the server HTML as the first paint', () => {
 		const top = [...server.matchAll(/<(\w+) class="([^"]+)"[^>]*>/g)][0];
 		expect(top[2]).toBe('blad__kop intro');
 		expect(server).toMatch(
-			/<\/header><p class="lede">.*<\/p><form [^>]*class="search"[^>]*>.*<\/form><ul class="kenmerken">.*<\/ul><section class="vragen"/s
+			/<\/header><p class="lede">.*<\/p><form [^>]*class="search"[^>]*>.*<\/form><section class="vragen"/s
 		);
 		expect(server.trim().endsWith('</section>')).toBe(true);
 		expect(style).toContain('.js #seo:not(:has(> .vragen))');

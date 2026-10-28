@@ -35,16 +35,6 @@ describe('the start page of the server and of the app', () => {
 		expect(SERVER).toMatch(/<form action="\/" method="get"[^>]*><input type="search" name="q"/);
 	});
 
-	it('has the three features, each a picture and its line, in the same order', () => {
-		const items = all(SERVER, 'li');
-		expect(
-			items.slice(0, START.features.length).map((li) => text(all(li, 'span', 'onderschrift')[0]))
-		).toEqual(START.features.map((x) => x.text));
-		expect(items.map((li) => /class="beeld beeld--(\w+)"/.exec(li)?.[1])).toEqual(
-			START.features.map((x) => x.visual)
-		);
-	});
-
 	it('has the three questions, each with its sentence and its way in', () => {
 		const { questions } = START;
 		expect(all(SERVER, 'h2').map(text)).toEqual([questions.heading]);

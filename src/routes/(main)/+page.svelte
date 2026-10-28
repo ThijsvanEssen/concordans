@@ -22,7 +22,6 @@
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
-	import Kenmerken from '$lib/components/home/Kenmerken.svelte';
 	import Vragen from '$lib/components/home/Vragen.svelte';
 	import { START } from '$lib/components/home/start';
 	import { takeServerField } from '$lib/seo/server-text';
@@ -244,7 +243,6 @@
 				/>
 			</div>
 		</div>
-		<Kenmerken />
 		<Vragen>
 			{#snippet voorbeeld()}
 				{#if lawNetwork || networkLoading}

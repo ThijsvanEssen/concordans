@@ -62,12 +62,9 @@ test('the start page promises, shows what it does and answers three questions', 
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
 		'Zie hoe wetten, rechtspraak en parlement samenhangen.'
 	);
-	// What it does: three small pictures with a line each.
-	await expect(main.locator('ul.kenmerken li')).toHaveCount(3);
-	// Typing lays the results over the page as a menu: the features and questions stay where they are.
+	// Typing lays the results over the page as a menu: the questions stay where they are.
 	await page.getByRole('combobox', { name: 'Zoeken' }).fill('onrechtmatige daad');
 	await expect(page.getByRole('listbox', { name: 'Resultaten' })).toBeVisible();
-	await expect(main.locator('ul.kenmerken')).toHaveCount(1);
 	await expect(main.getByRole('heading', { level: 2, name: 'Begin met een vraag' })).toBeVisible();
 });
 
