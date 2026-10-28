@@ -28,7 +28,7 @@
 	import OverviewCourse from '$lib/onderwerpen/OverviewCourse.svelte';
 	import OverviewList from '$lib/onderwerpen/OverviewList.svelte';
 	import { isDay, maandNaam, fromDate, vandaag } from '$lib/text/datum';
-	import { download, safeFileName } from '$lib/verbonden/export';
+	import { download, safeFileName } from '$lib/util/save-file';
 	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';

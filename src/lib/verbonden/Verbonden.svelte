@@ -24,7 +24,8 @@
 	} from './filter';
 	import { formatCount, isAtLeast } from '$lib/text/getal';
 	import { countLabel, groupCount, type Group } from './groups';
-	import { csvName, download, exportLabel, exportRows, rowsToCsv } from './export';
+	import { csvName, exportLabel, exportRows, rowsToCsv } from './export';
+	import { download } from '$lib/util/save-file';
 	import { caseNumberOf, repeatedTitles, rowKey, type Row } from './rows';
 	import { LOAD_FAILED, type VerbondenState } from './data-source';
 	import PendingRows, { pendingKind } from './PendingRows.svelte';
@@ -38,6 +39,7 @@
 	import { groupFor, groupRequest } from './open-group';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import NetworkSketch from './NetworkSketch.svelte';
+	import { focusKindOf } from '$lib/graph/container-membership';
 	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
 	import { panel } from './panel-groups.svelte';
@@ -412,7 +414,12 @@
 					sketchGroups,
 					centerName,
 					phone ? PHONE_SKETCH_LIMIT : undefined,
-					selection.drawClass
+					selection.drawClass,
+					{
+						centreKind: focusKindOf(selection.collection),
+						home: homeLaw,
+						centre: selection
+					}
 				)
 			: null
 	);
@@ -507,17 +514,18 @@
 			<span class="head__count"
 				>{!settled
 					? ''
-					: overview && kinds.length
+					: overview
 						? // The sum of the soorten shown under it, so the head and the soorten agree (R3-L
-							// F7); a group that waits on its rows says its own count.
-							`${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+							// F7), once every group is in: the buckets count otherwise, and the head
+							// would change as the groups come (B3). A group that waits says its own count.
+							kinds.length && !verbonden.loading
+							? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
+							: ''
 						: alleVerbindingen != null
 							? `${formatCount(alleVerbindingen)} ${plural(alleVerbindingen, 'verbinding', 'verbindingen')}`
-							: vast && (!overview || kinds.length)
+							: vast
 								? countLine(vast, filter, wachtSet)
-								: overview && kinds.length
-									? `${formatCount(kindsTotal(kinds))} ${plural(kindsTotal(kinds), 'verbinding', 'verbindingen')}`
-									: ''}</span
+								: ''}</span
 			>
 		{/if}
 	</div>
@@ -533,7 +541,6 @@
 			<NetworkSketch
 				sketch={sketched}
 				name={centerName}
-				home={homeLaw}
 				open={schetsOpen?.id ?? null}
 				onSingle={(id) => (schetsId = schetsId === id ? null : id)}
 				onGroup={openKind}

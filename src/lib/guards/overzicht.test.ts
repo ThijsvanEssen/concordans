@@ -23,7 +23,7 @@ describe('the overview of a topic', () => {
 
 	it('makes a name fit for a file in one place (safeFileName)', () => {
 		expect(
-			overtreders((t) => t.includes('[\\\\/:*?"<>|'), [plek('lib/verbonden/export.ts')])
+			overtreders((t) => t.includes('[\\\\/:*?"<>|'), [plek('lib/util/save-file.ts')])
 		).toEqual([]);
 	});
 });

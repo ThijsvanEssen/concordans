@@ -61,6 +61,19 @@ export function isContainerMembership(kind: ContainerKind, relation: Relation): 
 }
 
 /**
+ * Whether the other side of an edge from the container (`direction` as the container reads it)
+ * stands in its hull: the edge points to the container and is a membership. The sketch asks it of
+ * the rows of Verbonden, as the canvas asks the same of the edges of its graph.
+ */
+export function holdsInHull(
+	kind: ContainerKind,
+	relation: Relation | null | undefined,
+	direction: string | null | undefined
+): boolean {
+	return !!relation && direction === 'inbound' && isContainerMembership(kind, relation);
+}
+
+/**
  * Whether an edge between a bron and a container is containment: the bron stands in the
  * container's hull and no line is drawn, wherever the edge comes from (a focus, a
  * neighbourhood, the paths or a netwerk between chosen bronnen, a row put on the canvas).

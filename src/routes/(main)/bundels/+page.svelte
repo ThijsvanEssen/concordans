@@ -15,7 +15,7 @@
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
-	import { download } from '$lib/verbonden/export';
+	import { download } from '$lib/util/save-file';
 	import { ignore } from '$lib/api/errors';
 	import type { SharedMap } from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';

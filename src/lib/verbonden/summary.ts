@@ -280,13 +280,7 @@ export function kindsOf(
 		const failed = gs.find((g) => g.failed && g.rows.length === 0);
 		if (count === 0 && rows.length === 0 && !failed) return [];
 		const label = id === 'members' ? membersLabel(selection) : SOORT_LABEL[id];
-		const allArticles = id === 'laws' && rows.every((r) => r.ref.collection === 'articles');
-		const onlyLaws = id === 'laws' && rows.every((r) => r.ref.collection !== 'articles');
-		const noun = allArticles
-			? plural(count, 'artikel', 'artikelen')
-			: onlyLaws
-				? plural(count, 'wet', 'wetten')
-				: plural(count, label.one, label.many);
+		const noun = plural(count, label.one, label.many);
 		return [
 			{
 				id,

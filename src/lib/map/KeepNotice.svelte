@@ -7,7 +7,7 @@
 	import { kaart } from './map.svelte';
 	import { mapFile, mapFileName } from './file';
 	import { bundlePageHref } from './page';
-	import { download } from '$lib/verbonden/export';
+	import { download } from '$lib/util/save-file';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 

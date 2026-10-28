@@ -194,3 +194,90 @@ describe('wrap, a word longer than a line', () => {
 		expect(lines.join('').replaceAll('-', '')).toBe('OndermandaatbesluitRijkswaterstaat');
 	});
 });
+
+describe('the hulls of the canvas, drawn small', () => {
+	const lid = (key: string): Row => ({
+		...row('documents', key),
+		relation: 'PART_OF',
+		direction: 'inbound'
+	});
+
+	it('draws a dossier as the hull of its members, the lines of the members as one', () => {
+		const dossier: Row = {
+			ref: { collection: 'dossiers', key: '36496', number: '36496' },
+			title: 'Wet betaalbare huur',
+			context: null,
+			filterGroup: 'artikelen'
+		};
+		const stuk: Row = {
+			...row('documents', 'st1'),
+			relation: 'AMENDS',
+			direction: 'inbound',
+			props: { dossier_number: '36496' }
+		};
+		const s = sketch(
+			[
+				{ ...group('dossiers', 1, 'documents'), rows: [dossier] },
+				{ ...group('stukken', 1, 'documents'), rows: [stuk] }
+			],
+			'Art. 7:248'
+		);
+		expect(s.hulls.map((h) => [h.id, h.kind, h.label])).toEqual([
+			['dossier:36496', 'dossier', 'Wet betaalbare huur']
+		]);
+		// The dossier is no bron of its own; its member stands in the hull and has no line.
+		expect(s.singles.map((l) => [l.id, l.hull, l.joined])).toEqual([
+			['documents/st1', 'dossier:36496', true]
+		]);
+		expect(s.hulls[0].line).toMatchObject({ relation: 'AMENDS', direction: 'inbound' });
+		const d = s.singles[0];
+		expect(Math.hypot(d.x - s.hulls[0].x, d.y - s.hulls[0].y)).toBeLessThan(s.hulls[0].r);
+	});
+
+	it('draws the bron in the middle as a hull where it is a container with members', () => {
+		const s = sketch(
+			[{ ...group('stukken', 3, 'documents'), rows: ['a', 'b', 'c'].map(lid) }],
+			'Wet betaalbare huur',
+			SKETCH_LIMIT,
+			'dossier',
+			{ centreKind: 'dossier' }
+		);
+		expect(s.hulls).toHaveLength(1);
+		expect(s.hulls[0]).toMatchObject({
+			kind: 'dossier',
+			centre: true,
+			label: 'Wet betaalbare huur'
+		});
+		expect(s.singles.every((l) => l.hull === 'centre' && l.joined)).toBe(true);
+		for (const l of s.singles)
+			expect(Math.hypot(l.x - s.hulls[0].x, l.y - s.hulls[0].y)).toBeLessThan(s.hulls[0].r);
+	});
+
+	it('keeps the middle a bron where no member is there, and a law round an article', () => {
+		const alone = sketch([group('a', 2, 'articles')], 'Wet', SKETCH_LIMIT, 'dossier', {
+			centreKind: 'dossier'
+		});
+		expect(alone.hulls).toEqual([]);
+		const art = sketch([group('a', 2, 'articles')], 'Art. 7:248', SKETCH_LIMIT, 'article', {
+			home: 'BW'
+		});
+		expect(art.hulls.map((h) => [h.id, h.kind, h.label])).toEqual([['home', 'instrument', 'BW']]);
+	});
+
+	it('puts a soort of more than a hull holds inside it as one cluster', () => {
+		const s = sketch(
+			[
+				{
+					...group('stukken', 30, 'documents'),
+					rows: Array.from({ length: 30 }, (_, i) => lid(`d${i}`))
+				}
+			],
+			'Dossier',
+			SKETCH_LIMIT,
+			'dossier',
+			{ centreKind: 'dossier' }
+		);
+		expect(s.singles).toHaveLength(0);
+		expect(s.clusters.map((b) => [b.count, b.hull])).toEqual([[30, 'centre']]);
+	});
+});

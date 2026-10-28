@@ -270,7 +270,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						kindLabel: kindOfGroup(g) ? kindLabelOn(kindOfGroup(g)!, collection) : undefined,
 						onvoorspelbaar: !!g.load && !g.bakken && !g.section,
 						count: g.load
-							? g.bakken
+							? g.bakken && !g.countsOpenOnly
 								? g.bakken.reduce(
 										(som, b) =>
 											som + (tel.get(bucketKey(b.relation, b.collection, b.direction)) ?? 0),
@@ -355,8 +355,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				// What a waiting group will hold, where its buckets are counted (UX-toets 0.79.43, #1).
 				const verwacht = Object.fromEntries(
 					[...pending].flatMap((id) => {
-						const bakken = (GROUPS[collection] ?? []).find((d) => d.id === id)?.bakken;
-						if (!bakken) return [];
+						const def = (GROUPS[collection] ?? []).find((d) => d.id === id);
+						const bakken = def?.bakken;
+						// Buckets that count more than the group lists foretell nothing of it.
+						if (!bakken || def?.countsOpenOnly) return [];
 						const n = bakken.reduce(
 							(som, b) => som + (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 0),
 							0

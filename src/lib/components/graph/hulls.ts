@@ -24,13 +24,12 @@ import {
 import { EDGE_WEIGHT } from '$lib/graph/types';
 import { curvedLine, AIR } from '$lib/graph/line-shape';
 import { hasArrow } from '$lib/graph/line-kind';
+import { HULL } from '$lib/graph/draw-spec';
 
-/** Between a hull and its members. */
-export const HULL_MARGIN = 16;
-/** Between a hull's top and its name. */
-export const LABEL_GAP = 6;
-/** The height of a hull's name, one line. */
-export const LABEL_HEIGHT = 22;
+/** Between a hull and its members, between its top and its name, the height of its name. */
+export const HULL_MARGIN = HULL.margin;
+export const LABEL_GAP = HULL.labelGap;
+export const LABEL_HEIGHT = HULL.labelHeight;
 /** Between a hull's name and the edge of the canvas or a panel over it. */
 export const EDGE_GAP = 10;
 /** The places a hull's name tries: its own, and three steps down into its hull. */
