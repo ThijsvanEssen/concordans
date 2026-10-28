@@ -80,7 +80,9 @@ const fonts = `
 // streep komen uit de code van het canvas. Getekend in pixels van het DS en als geheel vergroot
 // (SCHAAL): lijnen licht gebogen tot de rand van de knoop, pijlpunten van netwerk-pijl diktes,
 // omhullingen als schijf met de naam in een papieren pil erboven.
-const SCHAAL = 1.75;
+const SCHAAL = 2;
+/** Het vak voor de tekening: tegen de rechtermarge (1120), tussen merk en lijn. */
+const TEKENVAK = { x: 700, y: 120, w: 420, h: 400 };
 const VAK = { w: 240, h: 266 };
 /** Een bron 14 px, een artikel 13 px, de focus 24 px (Netwerkcanvas, Soortteken). */
 const MAAT = { bron: 14, artikel: 13, focus: 24 };
@@ -247,31 +249,52 @@ const ONDER = [
 	[192, 194],
 	[194, 230]
 ];
-// Zonder omhulling: de bron en zijn drie dichter bij elkaar, zoals de Netwerkschets.
-const LOS = [120, 112];
-const LOS_RIJ = [
-	[54, 208],
-	[120, 230],
-	[186, 208]
-];
+// Het algemene beeld: de focus links, de wet eronder, uitspraken erboven, het dossier rechts.
+const AL = {
+	focus: [92, 118],
+	wet: [56, 214],
+	uitspraken: [
+		[44, 52],
+		[128, 34],
+		[18, 138]
+	],
+	stukken: [
+		[176, 112],
+		[216, 148],
+		[178, 184]
+	],
+	kamerlid: [136, 246]
+};
 const metFocus = (leden) => [...leden.map((p) => [...p, RAND]), [...F, RAND_FOCUS]];
 
 const SCHETS = {
-	// Een artikel: deel van een wet, aangehaald door een uitspraak, toegelicht in een Kamerstuk.
-	concordans: () =>
-		schets({
+	// Het algemene beeld: een artikel als focus, deel van een wet, aangehaald door uitspraken,
+	// toegelicht door stukken in een dossier, waarvan een stuk is ingediend door een Kamerlid.
+	concordans: () => {
+		const dossier = omhulling(
+			AL.stukken.map((p) => [...p, RAND]),
+			'dossier',
+			'Dossier'
+		);
+		return schets({
+			hullen: [dossier],
 			lijnen: [
-				lijn(LOS, LOS_RIJ[0], 'part', { ra: RAND_FOCUS }),
-				lijn(LOS_RIJ[1], LOS, 'citation', { rb: RAND_FOCUS }),
-				lijn(LOS_RIJ[2], LOS, 'explanation', { rb: RAND_FOCUS })
+				lijn(AL.focus, AL.wet, 'part', { ra: RAND_FOCUS, buig: -1 }),
+				lijn(AL.uitspraken[0], AL.focus, 'citation', { rb: RAND_FOCUS, buig: 1 }),
+				lijn(AL.uitspraken[1], AL.focus, 'citation', { rb: RAND_FOCUS, buig: -1 }),
+				lijn(AL.uitspraken[2], AL.focus, 'citation', { rb: RAND_FOCUS, buig: 1 }),
+				lijn(AL.stukken[0], AL.focus, 'explanation', { rb: RAND_FOCUS, buig: 1 }),
+				lijn(AL.kamerlid, AL.stukken[2], 'submitter', { buig: 1 })
 			],
 			bronnen: [
-				teken('regel', LOS_RIJ[0], C.wet),
-				teken('uitspraak', LOS_RIJ[1], C.recht),
-				teken('stuk', LOS_RIJ[2], C.kst),
-				focus('regel-o', LOS)
+				teken('regel', AL.wet, C.wet),
+				...AL.uitspraken.map((p) => teken('uitspraak', p, C.recht)),
+				...AL.stukken.map((p) => teken('stuk', p, C.kst)),
+				teken('persoon', AL.kamerlid, C.parl),
+				focus('regel-o', AL.focus)
 			]
-		}),
+		});
+	},
 	// De wet in zijn omhulling met zijn artikelen; drie uitspraken halen hem en zijn artikelen aan.
 	wet: () =>
 		schets({
@@ -425,8 +448,8 @@ body{margin:0;width:1200px;height:630px;background:${C.paper};font-family:Newsre
 h1{margin:0 0 18px;font-size:104px;line-height:1;font-weight:600;letter-spacing:-.01em}
 p{margin:0;font-size:${kop ? 32 : 44}px;line-height:1.35;color:${C.ink2}}
 .voet{position:absolute;left:80px;right:80px;top:540px;border-top:1px solid ${C.rule};padding-top:18px;font-size:24px;color:${C.ink3}}
-.schets{position:absolute;right:64px;top:62px;width:${VAK.w}px;height:${VAK.h}px;transform:scale(${SCHAAL});transform-origin:top right}
-.schets--keten{width:${KETEN.w}px;height:${KETEN.h}px;transform:scale(${(VAK.w * SCHAAL) / KETEN.w})}
+.schets{position:absolute;left:0;top:0;width:${VAK.w}px;height:${VAK.h}px;transform-origin:0 0}
+.schets--keten{width:${KETEN.w}px;height:${KETEN.h}px}
 svg{display:block;overflow:visible}
 .pl{font-size:13px;font-weight:600;fill:${C.ink}}
 .lab{font-family:Schibsted;font-size:11px;font-weight:600;letter-spacing:.06em;fill:${C.ink3}}
@@ -459,6 +482,23 @@ for (const naam of Object.keys(KAART)) {
 			rect.setAttribute('width', String(w));
 		}
 	});
+	// Plaatsing: de tekening zoals getekend (SCHAAL, de keten kleiner), begrensd tot het vak en
+	// met het optische midden (rand van bron tot pil) in het midden van het vak.
+	await page.evaluate(
+		({ schaal, vak }) => {
+			const el = document.querySelector('.schets');
+			const kinderen = [...el.querySelectorAll('svg > *')].map((n) => n.getBoundingClientRect());
+			const l = Math.min(...kinderen.map((r) => r.left));
+			const t = Math.min(...kinderen.map((r) => r.top));
+			const w = Math.max(...kinderen.map((r) => r.right)) - l;
+			const h = Math.max(...kinderen.map((r) => r.bottom)) - t;
+			const s = Math.min(schaal, vak.w / w, vak.h / h);
+			const x = vak.x + (vak.w - w * s) / 2 - l * s;
+			const y = vak.y + (vak.h - h * s) / 2 - t * s;
+			el.style.transform = `translate(${x}px,${y}px) scale(${s})`;
+		},
+		{ schaal: SCHAAL, vak: TEKENVAK }
+	);
 	await page.screenshot({ path: `${STATIC}/og/${naam}.png` });
 	await page.close();
 }
