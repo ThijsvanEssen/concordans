@@ -1,8 +1,7 @@
 // Where a verbinding lands on the canvas, for every loader that puts one there: in a hull, on
 // a line (to an anchor or not), or nowhere. Each bron kind against each other kind, by each
-// relation the rules look at and both directions, through the node response (a focus, a
-// netwerk with what joins its chosen bronnen), a neighbourhood, the paths between chosen
-// bronnen and the rows Verbonden puts on the canvas; then the real bronnen of the fixtures
+// relation the rules look at and both directions, through the node response (a focus), a neighbourhood
+// and the rows Verbonden puts on the canvas; then the real bronnen of the fixtures
 // as Verbonden (kern, inhoud, verbonden) and the netwerk show them. What a change to the
 // placement rules must leave as it is (code-eenvoud F93).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -146,7 +145,7 @@ function describeCanvas(
 			})
 			.sort();
 		hulls.push(
-			`${alias(id)} ${g.kind}${labels && g.label ? ` "${g.label}"` : ''}${g.lone ? ' lone' : ''} [${members.join(', ')}]`
+			`${alias(id)} ${g.kind}${labels && g.label ? ` "${g.label}"` : ''} [${members.join(', ')}]`
 		);
 	}
 	return [
@@ -240,7 +239,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 /** The neighbourhood the fake API answers next. */
 let neighbourhood: Schema<'NodeNeighborhoodResponse'> | null = null;
 
-type Mode = 'node' | 'joins' | 'neighbourhood' | 'path' | 'rows';
+type Mode = 'node' | 'neighbourhood' | 'rows';
 
 const MODES: Record<
 	Mode,
@@ -249,33 +248,9 @@ const MODES: Record<
 	node: async ({ ctx }, centre, other, r, d) => {
 		ctx.mergeResponse(responseWith(centre, other, r, d));
 	},
-	joins: async ({ ctx }, centre, other, r, d) => {
-		ctx.mergeInto(
-			responseWith(centre, other, r, d),
-			Number.POSITIVE_INFINITY,
-			undefined,
-			() => true
-		);
-		ctx.emit();
-	},
 	neighbourhood: async (c, centre, other, r, d) => {
 		neighbourhood = { focal_id: centre.id, ...subgraphWith(centre, other, r, d) } as never;
 		await c.expandNeighborhood(centre.collection as Collection, centre.key);
-	},
-	path: async (c, centre, other, r, d) => {
-		const sub = subgraphWith(centre, other, r, d);
-		await c.mergePaths({
-			ids: [centre.id, other.id],
-			paths: [
-				{
-					source: centre.id,
-					target: other.id,
-					node_ids: [centre.id, other.id],
-					edge_ids: ['e1']
-				}
-			],
-			...sub
-		} as never);
 	},
 	rows: async (c, centre, other, r, d) => {
 		c.ctx.mergeResponse(withoutNeighbours(centre));
@@ -356,33 +331,16 @@ describe.each(BRONNEN)('the $name in the netwerk', ({ name }) => {
 		};
 	};
 
-	it('as the focus, with what joins it, around it and on paths', async () => {
+	it('as the focus and around it', async () => {
 		const focus = canvas();
 		focus.ctx.mergeResponse(response());
-		const joins = canvas();
-		joins.ctx.mergeInto(response(), Number.POSITIVE_INFINITY, undefined, () => true);
-		joins.ctx.emit();
 		const around = canvas();
 		neighbourhood = { focal_id: response().node.id, ...asSubgraph() } as never;
 		await around.expandNeighborhood(response().node.collection as Collection, response().node.key);
-		const paths = canvas();
-		const sub = asSubgraph();
-		await paths.mergePaths({
-			ids: [response().node.id],
-			paths: sub.edges.map((e) => ({
-				source: e.source,
-				target: e.target,
-				node_ids: [e.source, e.target],
-				edge_ids: [e.id]
-			})),
-			...sub
-		} as never);
 		await settle();
 		expect({
 			focus: describeCanvas(focus.ctx).split(' | '),
-			joins: describeCanvas(joins.ctx).split(' | '),
-			neighbourhood: describeCanvas(around.ctx).split(' | '),
-			paths: describeCanvas(paths.ctx).split(' | ')
+			neighbourhood: describeCanvas(around.ctx).split(' | ')
 		}).toMatchSnapshot();
 	});
 });
@@ -402,7 +360,6 @@ describe('two fixture bronnen marked in one netwerk', () => {
 		const c = canvas();
 		c.compose({
 			participants: [{ response: RESPONSES[a] }, { response: RESPONSES[b] }],
-			withJoining: true,
 			fresh: true
 		});
 		await settle();

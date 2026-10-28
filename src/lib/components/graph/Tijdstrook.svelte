@@ -198,7 +198,7 @@
 				class="btn is-text"
 				aria-pressed={pressed.change}
 				onclick={() => onPeriode(changeYear, null)}
-				>Sinds {@render ruit()}de wijziging van {changeYear}</button
+				>Sinds {@render ruit()}de publicatie van {changeYear}</button
 			>
 		{/if}
 		<button

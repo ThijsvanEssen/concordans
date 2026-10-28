@@ -208,7 +208,15 @@ export async function lineage(
 	const startId = `${start.node.collection}/${start.node.key}`;
 	const nodes = new Map<string, { node: ChainNode; at: number; layer: string }>();
 	nodes.set(startId, {
-		node: chainNode({ ...start.node, id: startId }, []),
+		node: {
+			...chainNode({ ...start.node, id: startId }, []),
+			...(start.node.collection === 'members' && {
+				roles: {
+					government_functions: start.node.props?.government_functions,
+					faction_memberships: start.node.props?.faction_memberships
+				}
+			})
+		},
 		at: 0,
 		layer: layerName(start.node)
 	});

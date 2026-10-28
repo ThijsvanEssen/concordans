@@ -50,14 +50,7 @@ export function createCompose(
 		return seen;
 	};
 
-	const compose: GraphStore['compose'] = ({
-		participants,
-		withJoining,
-		fresh,
-		onPaths = [],
-		tiedByPaths = [],
-		surroundings = false
-	}) => {
+	const compose: GraphStore['compose'] = ({ participants, fresh, surroundings = false }) => {
 		const selectedId = get(selectionStore)?.id ?? null;
 		const on: string[] = participants.map((p) => nodeIdOf(p.response));
 		const result: Between = between(
@@ -70,19 +63,11 @@ export function createCompose(
 				neighbors: neighborsOf(p.response)
 			})),
 			(n) => (n.collection === 'articles' ? lawIdOf(n.props) : null),
-			withJoining,
 			surroundings
 		);
 
 		const wanted = new Set<string>(on);
 		for (const kept of result.keep.values()) for (const id of kept) wanted.add(id);
-		// What lies on a path between two chosen bronnen, further than one shared neighbour
-		// (member → stuk → wet → artikel, BE-38): joining too, when the joining are drawn.
-		const onPath = withJoining ? onPaths.filter((id) => !on.includes(id)) : [];
-		for (const id of onPath) {
-			wanted.add(id);
-			result.joining.add(id);
-		}
 
 		// What the last composition drew and this one does not: a bron switched off or
 		// removed, and what only tied it.
@@ -91,12 +76,7 @@ export function createCompose(
 
 		participants.forEach((p, i) => {
 			const kept = result.keep.get(on[i])!;
-			mergeInto(
-				p.response,
-				Number.POSITIVE_INFINITY,
-				(id) => kept.has(id),
-				(id) => result.joining.has(id)
-			);
+			mergeInto(p.response, Number.POSITIVE_INFINITY, (id) => kept.has(id));
 			anchorContainer(p.response.node);
 		});
 
@@ -111,8 +91,7 @@ export function createCompose(
 		trimToCap();
 		coreStore.set(core);
 		emit();
-		const alone = new Set([...result.alone].filter((id) => !tiedByPaths.includes(id)));
-		return { alone, joining: [...result.joining].filter((id) => nodes.has(id)) };
+		return { alone: result.alone };
 	};
 
 	return {

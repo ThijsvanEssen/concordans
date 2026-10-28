@@ -115,8 +115,6 @@ export type Between = {
 	/** Per participant, the neighbours to draw: another participant, an article of a
 	 *  chosen wet, or a bron it shares with another participant. */
 	keep: Map<string, Set<string>>;
-	/** Bronnen that are no participant but join two or more of them. */
-	joining: Set<string>;
 	/** Participants that are tied to no other participant. */
 	alone: Set<string>;
 };
@@ -131,7 +129,6 @@ const idOf = (n: Pick<Neighbor, 'collection' | 'key'>) => nodeId(n.collection, n
 export function between(
 	participants: Participant[],
 	lawOf: (n: Neighbor) => string | null,
-	withJoining: boolean,
 	/** Keep every neighbour of each participant (the weergave Omgeving), shared or not. */
 	surroundings = false
 ): Between {
@@ -152,7 +149,6 @@ export function between(
 	}
 
 	const keep = new Map<string, Set<string>>();
-	const joining = new Set<string>();
 	const tied = new Set<string>();
 	const tie = (a: string, b: string) => {
 		if (a === b) return;
@@ -182,13 +178,10 @@ export function between(
 				continue;
 			}
 			for (const other of by) tie(p.id, other);
-			if (!withJoining) continue;
-			kept.add(id);
-			joining.add(id);
 		}
 		keep.set(p.id, kept);
 	}
 
 	const alone = new Set(participants.map((p) => p.id).filter((id) => !tied.has(id)));
-	return { keep, joining, alone };
+	return { keep, alone };
 }

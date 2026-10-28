@@ -314,9 +314,8 @@ function drawHulls(s: HullScene): {
 			if (own) alone.set(anchor, own);
 			continue;
 		}
-		// One member is a hull when the dossier of a stuk on a path between chosen bronnen
-		// (`lone`), or an article: an article always stands in its wet (Thijs, 9 Oct).
-		if (points.length < (group.lone || group.kind === 'instrument' ? 1 : 2)) continue;
+		// One member is a hull only for an article: an article always stands in its wet (Thijs, 9 Oct).
+		if (points.length < (group.kind === 'instrument' ? 1 : 2)) continue;
 		const names = s.namesOf(group);
 		const label =
 			names.short ||

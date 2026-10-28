@@ -149,7 +149,7 @@ describe('the Tijdstrook', () => {
 			onPeriode: vi.fn()
 		});
 		const knoppen = [...container.querySelectorAll('.snel .btn')].map((b) => b.textContent!.trim());
-		expect(knoppen).toEqual(['Alle jaren', '5 jaar', 'Sinds de wijziging van 2015', 'Sinds…']);
+		expect(knoppen).toEqual(['Alle jaren', '5 jaar', 'Sinds de publicatie van 2015', 'Sinds…']);
 	});
 
 	it('dims the bronnen outside the period chosen', () => {

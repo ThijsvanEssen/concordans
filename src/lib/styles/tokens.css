@@ -130,7 +130,7 @@
 	--safe-right: env(safe-area-inset-right, 0px);
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
-	--zijkolom: 280px; /* a card over the network (Netwerk, Legenda, a cluster) stands this wide, s-3 off the canvas's edge */
+	--zijkolom: 280px; /* the strip of the werkplek (Bronnen, Weergave, a cluster's card) is this wide */
 	--regel: 66ch;
 	/* The column before the content: the number and date of a list row (IndexRow), where the
 	   titles of every list start; the term in a reader (Behoort bij, partijen, Voor and Tegen). */

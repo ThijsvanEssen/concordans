@@ -56,9 +56,9 @@ const composed = () => {
 	store.compose({
 		participants: [
 			{ response: referring('a', ['x', 'y']) },
-			{ response: referring('b', ['y', 'z']) }
+			{ response: referring('b', ['z']) }
 		],
-		withJoining: true,
+		surroundings: true,
 		fresh: true
 	});
 	return store;
@@ -91,8 +91,8 @@ describe('taking bronnen off the canvas', () => {
 	it('a second netwerk leaves no line without an end', () => {
 		const store = composed();
 		store.compose({
-			participants: [{ response: referring('b', ['y', 'z']) }],
-			withJoining: true,
+			participants: [{ response: referring('b', ['z']) }],
+			surroundings: true,
 			fresh: true
 		});
 		expect(ids(store)).not.toContain('judgments/a');

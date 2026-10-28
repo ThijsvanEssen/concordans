@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	axisYears,
 	busiest,
+	countedAs,
 	countParts,
 	sumPeriod,
 	kindOf,
@@ -53,6 +54,16 @@ describe('the strip numbers', () => {
 	it('puts every collection of the canvas in one kind or none', () => {
 		expect(kindOf('articles')).toBe('wetten');
 		expect(kindOf('judgments')).toBe('rechtspraak');
+		expect(kindOf('members')).toBe('parlement');
+		expect(kindOf('ministries')).toBe('regering');
+	});
+	it('counts a bewindspersoon as Regering and a Kamerlid as Parlement', () => {
+		const post = { government_functions: [{ from_date: '2020-01-01', to_date: null }] };
+		expect(countedAs('members', post)).toBe('ministries');
+		expect(countedAs('members', {})).toBe('members');
+		expect(undatedText(['ministries', 'cabinets', 'members'])).toBe(
+			'1 parlementsbron en 2 regeringsbronnen zonder datum'
+		);
 	});
 	it('names the first and last year always and never two names touching', () => {
 		for (const width of [200, 343, 900, 1100]) {

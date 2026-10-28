@@ -24,7 +24,7 @@
 	import { lazeKernIds } from '$lib/bron/behoort';
 	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
-	import { kindOf, stripDate, type Stip } from '$lib/bron/strook';
+	import { countedAs, kindOf, stripDate, type Stip } from '$lib/bron/strook';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { LineKind } from '$lib/graph/line-kind';
@@ -1196,7 +1196,12 @@
 	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
 	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
 	let sheetOpen = $state(false);
-	provideWeergaveBlad(() => (sheetOpen = true));
+	provideWeergaveBlad({
+		open: () => (sheetOpen = true),
+		get isOpen() {
+			return sheetOpen;
+		}
+	});
 	let sheetOpener = $state<HTMLButtonElement | null>(null);
 	/** The card of a bron marked is a sheet at the foot on a phone: the button stands above it. */
 	let cardHeight = $state(0);
@@ -1212,10 +1217,11 @@
 	let stippen = $state<Stip[]>([]);
 	let undated = $state.raw<Collection[]>([]);
 	let stippenSleutel = '';
-	/** A publication of the Staatsblad or the Trb. with a date: a wetswijziging, named by its key. */
+	const CITE: Record<string, string> = { stb: 'Stb.', trb: 'Trb.', stcrt: 'Stcrt.' };
+	/** A publication (Staatsblad, Trb., Staatscourant) with a date, named by its key. */
 	const changeName = (id: string) => {
-		const m = /^instruments\/(stb|trb)_(\d{4})_(\d+)/.exec(id);
-		return m ? `${m[1] === 'stb' ? 'Stb.' : 'Trb.'} ${m[2]}, ${m[3]}` : undefined;
+		const m = /^instruments\/(stb|trb|stcrt)_(\d{4})_(\d+)/.exec(id);
+		return m ? `${CITE[m[1]]} ${m[2]}, ${m[3]}` : undefined;
 	};
 	/** The day of a member of a group: its own, or a publication's day of publication. */
 	const memberDate = (id: string, collection: Collection) => {
@@ -1225,7 +1231,8 @@
 	function telJaren() {
 		const nieuw: Stip[] = [];
 		const zonder: Collection[] = [];
-		const add = (date: string | null, collection: Collection, id: string) => {
+		const add = (date: string | null, from: Collection, id: string) => {
+			const collection = countedAs(from, store.getNodeById(id)?.raw?.props);
 			if (date === null) {
 				if (kindOf(collection) || collection === 'articles' || collection === 'annexes')
 					zonder.push(collection);
@@ -1694,14 +1701,6 @@
 		border-left: 1px solid var(--rule);
 	}
 	/* The card of a cluster stands in the strip on its paper, as the card of a bron does. */
-	.strook--kaart :global(.canvas-kaart) {
-		position: static;
-		width: auto;
-		max-width: none;
-		border: 0;
-		box-shadow: none;
-		background: none;
-	}
 	.strook--kaart :global(.canvas-kaart__kop),
 	.strook--kaart :global(.canvas-kaart__inhoud) {
 		padding-left: 0;
@@ -1718,16 +1717,8 @@
 	}
 	/* The panel Netwerk and its start stand in the strip, on its paper: no card of their own. */
 	.strook--links :global(.canvas-kaart) {
-		position: static;
-		transform: none;
-		width: auto;
-		max-width: none;
-		max-height: none;
 		margin: 0 0 var(--s-4);
 		padding: 0;
-		border: 0;
-		box-shadow: none;
-		background: none;
 	}
 	/* The two blocks of the strip, Bronnen and Weergave, are headed as a section of a page
 	   (Sectie, niveau 2); what is in them, Gekozen, Tonen, Relatie, a level lower (niveau 3). */

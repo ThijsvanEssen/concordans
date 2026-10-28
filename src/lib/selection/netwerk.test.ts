@@ -71,23 +71,15 @@ describe('what joins the chosen bronnen', () => {
 	};
 	const sr: Participant = { id: SR, lawId: 'BWBR0001854', neighbors: [] };
 
-	it('keeps a shared bron, a chosen bron and an article of a chosen wet', () => {
-		const b = between([jetten, buma, sr], lawOf, true);
-		expect([...b.keep.get(JETTEN)!]).toEqual(['documents/samen', 'articles/bwbr0001854_138ab']);
-		expect([...b.keep.get(BUMA)!]).toEqual(['documents/samen', JETTEN]);
-		expect([...b.joining]).toEqual(['documents/samen']);
-		expect(b.alone.size).toBe(0);
-	});
-
-	it('leaves the shared bronnen out when joining is off, and still knows they are tied', () => {
-		const b = between([jetten, buma], lawOf, false);
-		expect([...b.keep.get(JETTEN)!]).toEqual([]);
-		expect(b.joining.size).toBe(0);
+	it('keeps a chosen bron and an article of a chosen wet, not a bron two share', () => {
+		const b = between([jetten, buma, sr], lawOf);
+		expect([...b.keep.get(JETTEN)!]).toEqual(['articles/bwbr0001854_138ab']);
+		expect([...b.keep.get(BUMA)!]).toEqual([JETTEN]);
 		expect(b.alone.size).toBe(0);
 	});
 
 	it('names a bron that nothing ties to the rest', () => {
-		const b = between([buma, sr], lawOf, true);
+		const b = between([buma, sr], lawOf);
 		expect([...b.alone]).toEqual([BUMA, SR]);
 	});
 });

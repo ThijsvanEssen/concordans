@@ -273,16 +273,11 @@ export function createGraphContext() {
 	/**
 	 * `mergeResponse` without the trim and the emit, and limited to the neighbours
 	 * `keep` accepts by node id: a composed netwerk draws only what ties its bronnen.
-	 * A container `joins` accepts is drawn as a point with a verbinding to the centre,
-	 * not as a hull around it: a commissie two chosen bronnen share ties them, and a
-	 * hull around both would pull them onto each other. A bron "onderdeel van" it (a stuk
-	 * of a dossier two chosen stukken share) is in its hull all the same (`placeConnection`).
 	 */
 	const mergeInto = (
 		response: Schema<'NodeGraphResponse'>,
 		draw = Number.POSITIVE_INFINITY,
-		keep?: (id: string) => boolean,
-		joins?: (id: string) => boolean
+		keep?: (id: string) => boolean
 	): string | null => {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
@@ -308,7 +303,7 @@ export function createGraphContext() {
 			const relation = relationOf(neighbor.relation);
 			if (!relation) continue;
 			const other = drawable(neighbor);
-			const far = { ...endOf(neighbor.collection, other, neighbor.props), ties: !!joins?.(id) };
+			const far = endOf(neighbor.collection, other, neighbor.props);
 			const outbound = neighbor.direction === 'outbound';
 			const placement = placeConnection({
 				relation,
