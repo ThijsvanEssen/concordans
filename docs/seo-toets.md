@@ -32,6 +32,8 @@ Eenmalig zag ik op `/over`, `/zoeken` en een onbekend pad een 502 van Caddy, lat
 
 - `src/lib/seo/robots.test.ts`: guard dat `robots.txt` de sitemap absoluut op `https://concordans.nl/sitemap.xml` noemt, `/api/` blokkeert en de pagina's niet, en dat deze build geen eigen `sitemap.xml` heeft (die zou de API-index verbergen).
 
+Voorstel voor bevinding 1: [`seo-prozapaginas-voorstel.md`](seo-prozapaginas-voorstel.md).
+
 Er is verder niets in de paginakoppen veranderd: de gemeten koppen waren al goed.
 
 ## Skills
