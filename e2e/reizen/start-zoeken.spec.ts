@@ -77,7 +77,7 @@ test('the first question of the start page opens an article with what refers to 
 }) => {
 	await page.goto('/');
 	const vragen = page.getByRole('region', { name: 'Wat kun je ermee?' });
-	await expect(vragen.getByRole('heading', { level: 3 })).toHaveText([
+	await expect(vragen.locator('.vragen__lijst').getByRole('heading', { level: 3 })).toHaveText([
 		'Wie haalt dit artikel aan?',
 		'Hoe stemde de Kamer?',
 		'Wat onderzoek ik?'
