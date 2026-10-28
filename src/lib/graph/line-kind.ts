@@ -90,7 +90,7 @@ export type Tone = 'donker' | 'middel' | 'licht';
 export type Stroke = 'solid' | 'kort' | 'lang' | 'punten' | 'puntenPijl' | 'puntenIndiener';
 
 /** A colour token of the canvas (nodeSprites, Tokens). */
-export type LineColour = 'moss' | 'rubriekWetten' | 'slate' | 'plum' | 'ink3';
+type LineColour = 'moss' | 'rubriekWetten' | 'slate' | 'plum' | 'ink3';
 
 type KindStyle = { colour: LineColour; tone: Tone; stroke: Stroke };
 

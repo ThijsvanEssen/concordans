@@ -211,7 +211,7 @@ export function hullDashFor(kind: ContainerKind): string | undefined {
  * names the other (an Aanhaling, a Toelichting); `punten` belongs to, without an arrow (`puntenPijl` with one: a version);
  * `puntenIndiener` the same with a dot at the one who submits.
  */
-export type EdgeStyle = Stroke;
+type EdgeStyle = Stroke;
 
 /** The stroke of a line by its soort, from the table of line-kind.ts. */
 export function edgeStyleFor(
