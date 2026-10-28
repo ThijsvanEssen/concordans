@@ -404,6 +404,11 @@
 				font-size: var(--t-micro);
 				color: var(--ink-3);
 			}
+			/* With scripts the room of the picture the app puts under the number (Stappen.svelte,
+			   .beeld: 64 px and its margin). */
+			.scripts #seo:has(> .vragen) > .stappen li::before {
+				margin-bottom: calc(var(--s-1) + 76px);
+			}
 			#seo:has(> .vragen) > .stappen b {
 				display: block;
 				margin-bottom: var(--s-1);

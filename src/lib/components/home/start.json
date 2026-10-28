@@ -10,15 +10,18 @@
 	"steps": [
 		{
 			"title": "Zoek",
+			"visual": "zoek",
 			"text": "Op nummer, citaat of naam. Je komt in de tekst."
 		},
 		{
 			"title": "Lees",
+			"visual": "lees",
 			"text": "Rechts staat Verbonden: wie het artikel aanhaalt, met de passage."
 		},
 		{
 			"title": "Volg",
-			"text": "Open het netwerk en ga van artikel naar uitspraak naar Kamerstuk."
+			"visual": "volg",
+			"text": "Volg een onderwerp en bewaar wat je vindt in een bundel."
 		}
 	],
 	"questions": {
