@@ -50,24 +50,27 @@ for (const url of KETENS) {
 		// No corner: every line is eased by curves.
 		for (const l of lines) expect(l.d).toMatch(/^M[\d. -]+(?:[LQC][\d. -]+)+$/);
 		// No line through a name.
-		for (const l of lines)
-			for (const q of l.pts)
-				for (const n of names)
-					expect(q.x > n.x0 && q.x < n.x1 && q.y > n.y0 && q.y < n.y1).toBe(false);
+		const through = lines.flatMap((l) =>
+			l.pts.filter((q) => names.some((n) => q.x > n.x0 && q.x < n.x1 && q.y > n.y0 && q.y < n.y1))
+		);
+		expect(through).toHaveLength(0);
 		// No crossing between lines of different parents.
 		const ccw = (p: { x: number; y: number }, q: typeof p, r: typeof p) =>
 			(q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+		let crossings = 0;
 		for (let i = 0; i < lines.length; i++)
 			for (let j = i + 1; j < lines.length; j++) {
 				if (lines[i].parent === lines[j].parent) continue;
 				const [a, b] = [lines[i].pts, lines[j].pts];
 				for (let x = 1; x < a.length; x++)
 					for (let y = 1; y < b.length; y++)
-						expect(
+						if (
 							ccw(a[x - 1], a[x], b[y - 1]) * ccw(a[x - 1], a[x], b[y]) < -1e-6 &&
-								ccw(b[y - 1], b[y], a[x - 1]) * ccw(b[y - 1], b[y], a[x]) < -1e-6
-						).toBe(false);
+							ccw(b[y - 1], b[y], a[x - 1]) * ccw(b[y - 1], b[y], a[x]) < -1e-6
+						)
+							crossings++;
 			}
+		expect(crossings).toBe(0);
 	});
 }
 
@@ -121,4 +124,16 @@ test('the keten of a Kamerlid names each layer once: Ministerie is no Kamerlid',
 		t.trim().toLowerCase()
 	);
 	expect(new Set(labels).size).toBe(labels.length);
+});
+
+test('a ministerie of a bewindspersoon hangs under its kabinet, not under the person', async ({
+	page
+}) => {
+	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	const { lines } = await drawn(page);
+	const ministry = lines.filter((l) => l.parent.startsWith('cabinets/'));
+	expect(ministry).toHaveLength(3);
+	const labels = await page.locator('.chain .layer-label').allTextContents();
+	expect(labels.map((t) => t.trim().toLowerCase())).toContain('ministerie');
 });

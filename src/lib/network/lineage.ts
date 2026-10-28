@@ -84,6 +84,34 @@ const chainNode = (
 });
 
 /**
+ * The kabinetten of a bewindspersoon in which it held a post at each ministerie, from its
+ * `government_functions`: `ministries/fin` becomes `['cabinets/rutte_iv']`. A post without
+ * ministerie or cabinet_key says nothing; pure.
+ */
+export function cabinetsOfMinistries(props: Record<string, unknown> | null | undefined) {
+	const out = new Map<string, Set<string>>();
+	const posts = props?.government_functions;
+	for (const post of Array.isArray(posts) ? posts : []) {
+		const ministry = textOf(post?.ministry);
+		const cabinet = textOf(post?.cabinet_key);
+		if (!ministry || !cabinet) continue;
+		const set = out.get(`ministries/${ministry}`) ?? new Set<string>();
+		out.set(`ministries/${ministry}`, set.add(`cabinets/${cabinet}`));
+	}
+	return out;
+}
+
+/** A ministerie hangs under the kabinetten of its posts that stand in the keten, else the person. */
+function ministriesUnderCabinets(start: NodeResponse, nodes: Map<string, { node: ChainNode }>) {
+	const cabinets = cabinetsOfMinistries(start.node.props);
+	for (const [id, { node }] of nodes) {
+		const under = [...(cabinets.get(id) ?? [])].filter((c) => nodes.has(c));
+		if (!id.startsWith('ministries/') || !under.length) continue;
+		node.parents = under.map((c) => ({ id: c, way: 'delegates', relation: 'SERVED_IN' }));
+	}
+}
+
+/**
  * The lineage of `start` along `relations`: every node reached from it in at most `depth` steps
  * (asked with `ask`), in layers by where it stands, the earliest on top; each tied to the one it
  * came from. A Kamerlid stands on top, its fracties, kabinetten and commissies in layers under it.
@@ -116,6 +144,7 @@ export async function lineage(
 						layer: layerName(item)
 					});
 		}
+		ministriesUnderCabinets(start, nodes);
 	} else {
 		let edge: { id: string; response: NodeResponse; at: number }[] = [
 			{ id: startId, response: start, at: 0 }
