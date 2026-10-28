@@ -62,7 +62,7 @@ export function kandidaten(items: readonly FeedItem[]): Kandidaat[] {
 	return [...out.values()];
 }
 
-export type SchetsBron = {
+type SchetsBron = {
 	id: string;
 	vorm: Vorm;
 	label: string;
@@ -281,13 +281,13 @@ const lawHref = (l: ChangedLaw) =>
 	buildBronHref(null, { collection: 'instruments', key: lawKey(l) });
 
 /** A knoop of the small sketch: one bron on the chain, with the collection that gives its colour. */
-export type SchetsKnoop = SchetsBron & {
+type SchetsKnoop = SchetsBron & {
 	collection: Collection;
 	/** The ring it stands in, as the canvas draws a dossier and the articles of a law. */
 	ring: 'dossier' | 'wet' | null;
 };
 /** A line between two knopen, as the canvas draws its relation. */
-export type SchetsLijn = {
+type SchetsLijn = {
 	van: string;
 	naar: string;
 	relation: Relation;
