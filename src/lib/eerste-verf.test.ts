@@ -68,7 +68,7 @@ describe('the server HTML before the app', () => {
 		// Before the first style, so nothing paints the text first.
 		expect(script).toBeLessThan(head.indexOf('<style>'));
 		expect(head).toMatch(/setTimeout\([\s\S]*?classList\.remove\('js'\)/);
-		expect(head).toMatch(/\.js #seo:not\(:has\(> \.entrances\)\) \{\s*display: none;/);
+		expect(head).toMatch(/\.js #seo:not\(:has\(> \.vragen\)\) \{\s*display: none;/);
 		expect(read('routes/+layout.svelte')).toContain('clearTimeout(window.__seoTerug)');
 		expect(read('routes/+layout.svelte')).toContain('removeServerText(document)');
 	});
@@ -101,48 +101,40 @@ describe('the start page: the server HTML as the first paint', () => {
 		return css.slice(at, css.indexOf('}', at));
 	};
 
-	it('is shown with scripts only where the server writes the three ways in: the start page', () => {
-		// The top level of the server's page: the head, the search form, the ways in.
+	it('is shown with scripts only where the server writes the questions: the start page', () => {
+		// The top level of the server's page: the head, the lede, the search form, the features and the questions.
 		const top = [...server.matchAll(/<(\w+) class="([^"]+)"[^>]*>/g)][0];
 		expect(top[2]).toBe('blad__kop intro');
 		expect(server).toMatch(
-			/<\/header><form [^>]*class="search"[^>]*>.*<\/form><div class="entrances">/s
+			/<\/header><p class="lede">.*<\/p><form [^>]*class="search"[^>]*>.*<\/form><ul class="kenmerken">.*<\/ul><section class="vragen"/s
 		);
-		expect(server.trim().endsWith('</div>')).toBe(true);
-		expect(style).toContain('.js #seo:not(:has(> .entrances))');
+		expect(server.trim().endsWith('</section>')).toBe(true);
+		expect(style).toContain('.js #seo:not(:has(> .vragen))');
 	});
 
 	it('keeps the room of what the app adds, with scripts only: the scopes and the law network', () => {
 		// Keuze is one height, on a phone too (besluit 33): no smaller step in +page.svelte.
 		expect(home).not.toMatch(/\.scopes :global\(\.keuze\) \{\s*height:/);
-		expect(rule('#seo:has(> .entrances) > .search')).not.toContain('padding-top');
+		expect(rule('#seo:has(> .vragen) > .search')).not.toContain('padding-top');
 		// Not js, which goes when the app is 4 s late: the room would close under the reader.
 		expect(read('app.html')).toContain("classList.add('js', 'scripts')");
-		expect(rule('.scripts #seo:has(> .entrances) > .search')).toContain(
+		expect(rule('.scripts #seo:has(> .vragen) > .search')).toContain(
 			'padding-top: calc(var(--veld-h) + var(--s-3))'
 		);
 		expect(style).not.toMatch(/@media \(width <= 600px\) \{\s*\.scripts #seo/);
-		// The band of the law network while it is asked: the same heights.
-		const plek = [...home.matchAll(/\.wetsnetwerk-plek \{[^}]*?min-height: (\d+px);/g)].map(
-			(m) => m[1]
-		);
+		// The example of the day (the law network) while it is asked: the same heights.
+		const plek = [...home.matchAll(/\.voorbeeld \{[^}]*?min-height: (\d+px);/g)].map((m) => m[1]);
 		const band = [
 			...style.matchAll(
-				/\.scripts #seo:has\(> \.entrances\) > \.search::after \{[^}]*?min-height: (\d+px);/g
+				/\.scripts #seo:has\(> \.vragen\) \.vragen__lijst::before \{[^}]*?min-height: (\d+px);/g
 			)
 		].map((m) => m[1]);
 		expect(plek.length).toBe(2);
 		expect(band).toEqual(plek);
-		expect(home).toMatch(/@media \(max-width: 640px\) \{\s*\.wetsnetwerk-plek/);
+		expect(home).toMatch(/@media \(max-width: 640px\) \{\s*\.voorbeeld/);
 		expect(style).toMatch(
-			/@media \(max-width: 640px\) \{\s*\.scripts #seo:has\(> \.entrances\) > \.search::after/
+			/@media \(max-width: 640px\) \{[^@]*\.scripts #seo:has\(> \.vragen\) \.vragen__lijst::before/
 		);
-	});
-
-	it('marks each line with the glyph of its kind (vormen.ts)', async () => {
-		const { VORMEN } = await import('$lib/bron/vormen');
-		for (const vorm of ['regel-o', 'uitspraak', 'stuk'] as const)
-			expect(style).toContain(`path d='${VORMEN[vorm].d}'`);
 	});
 
 	it('keeps the letter of the first paint: the stack of the app without Newsreader', () => {
@@ -150,7 +142,7 @@ describe('the start page: the server HTML as the first paint', () => {
 		const app = stack(vooraf.get('--font-serif') ?? '');
 		expect(app.startsWith("'Newsreader', ")).toBe(true);
 		const vast = /--font-serif:([^;]+);/.exec(rule('.vaste-letter .home'))?.[1] ?? '';
-		expect(style).toContain('.vaste-letter #seo:has(> .entrances),\n\t\t\t.vaste-letter .home {');
+		expect(style).toContain('.vaste-letter #seo:has(> .vragen),\n\t\t\t.vaste-letter .home {');
 		// Until the reader leaves the start page.
 		expect(read('routes/+layout.svelte')).toContain("classList.remove('vaste-letter')");
 		expect(stack(vast)).toBe(app.replace("'Newsreader', ", ''));
@@ -159,7 +151,7 @@ describe('the start page: the server HTML as the first paint', () => {
 			/requestAnimationFrame\([\s\S]*?document\.fonts\.check\("16px 'Newsreader'"\)[\s\S]*?'vaste-letter'/
 		);
 		// A stylesheet of the app that names a face for the title does not change it.
-		expect(rule('#seo:has(> .entrances) h1')).toContain('font-family: inherit');
+		expect(rule('#seo:has(> .vragen) h1')).toContain('font-family: inherit');
 	});
 });
 

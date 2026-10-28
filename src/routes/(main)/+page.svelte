@@ -22,8 +22,8 @@
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
-	import Entrances from '$lib/components/home/Entrances.svelte';
-	import NetworkEntry from '$lib/components/home/NetworkEntry.svelte';
+	import Kenmerken from '$lib/components/home/Kenmerken.svelte';
+	import Vragen from '$lib/components/home/Vragen.svelte';
 	import { START } from '$lib/components/home/start';
 	import { takeServerField } from '$lib/seo/server-text';
 	import { SEARCH_FRAGMENT } from '$lib/seo/moved';
@@ -71,7 +71,8 @@
 	/** The query in the field from ?q=: a shared search, the SearchAction of the server's page;
 	 *  or what was typed in the server's field before the app came, with its focus. */
 	const typed = takeServerField();
-	const query = page.url.searchParams.get('q') || typed.query;
+	const first = page.url.searchParams.get('q') || typed.query;
+	let query = $state(first);
 	// After the first navigation, which sets the focus on the page itself: on the field, or
 	// on the link the reader had reached in the server's page; on the field too for `/#zoeken`
 	// (where /zoeken goes, $lib/seo/moved.ts).
@@ -100,8 +101,6 @@
 
 	const today = vandaag();
 
-	/** Something stands in the search field: the results come before the band of the law network. */
-	let typing = $state(!!query);
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
 	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
@@ -208,50 +207,61 @@
 		<h1 class="blad__titel">{START.heading}</h1>
 	</header>
 	<div class="main">
-		<div class="search">
-			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
-			     bronnen searches all of it, with a mark of each. As wide as the field under it. -->
-			<div class="scopes">
-				<Keuze
-					label="Zoek in"
-					vol
-					opties={[
-						// Its words in `voor`: Alles where the row is too narrow (CSS, from the first paint).
-						{ waarde: 'alles', label: '' },
-						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
-					]}
-					waarde={scope ?? 'alles'}
-					onSelect={(w) => (scope = w === 'alles' ? null : w)}
-				>
-					{#snippet voor(w)}
-						{@const marks = w === 'alles' ? ALL_MARKS : SCOPES.find((x) => x.id === w)?.marks}
-						{#if marks}<span class="glyphs"
-								>{#each marks as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
-							>{/if}{#if w === 'alles'}<span class="lang">Alle bronnen</span><span class="kort"
-								>Alles</span
-							>{/if}
-					{/snippet}
-				</Keuze>
+		<div class="zoek">
+			<p class="lede">{START.lede}</p>
+			<div class="search">
+				<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
+				     bronnen searches all of it, with a mark of each. As wide as the field under it. -->
+				<div class="scopes">
+					<Keuze
+						label="Zoek in"
+						vol
+						opties={[
+							// Its words in `voor`: Alles where the row is too narrow (CSS, from the first paint).
+							{ waarde: 'alles', label: '' },
+							...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
+						]}
+						waarde={scope ?? 'alles'}
+						onSelect={(w) => (scope = w === 'alles' ? null : w)}
+					>
+						{#snippet voor(w)}
+							{@const marks = w === 'alles' ? ALL_MARKS : SCOPES.find((x) => x.id === w)?.marks}
+							{#if marks}<span class="glyphs"
+									>{#each marks as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+								>{/if}{#if w === 'alles'}<span class="lang">Alle bronnen</span><span class="kort"
+									>Alles</span
+								>{/if}
+						{/snippet}
+					</Keuze>
+				</div>
+				<!-- One field for every scope: a scope chosen asks the typed query again. -->
+				<Search
+					scope={chosen?.kinds ?? null}
+					onWiden={() => (scope = null)}
+					initial={query}
+					dropdown
+					placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
+				/>
 			</div>
-			<!-- One field for every scope: a scope chosen asks the typed query again. -->
-			<Search
-				scope={chosen?.kinds ?? null}
-				onWiden={() => (scope = null)}
-				initial={query}
-				onQuery={(q) => (typing = q.length > 0)}
-				placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
-			/>
 		</div>
-		<!-- Under typing the results are the page: no band, and no grey place held for one. -->
-		{#if typing}{:else if lawNetwork}<Wetsnetwerk
-				schets={lawNetwork}
-			/>{:else if networkLoading}<div class="wetsnetwerk-plek" aria-hidden="true"></div>{/if}
-		<Entrances />
-		<NetworkEntry />
+		<Kenmerken />
+		<Vragen>
+			{#snippet voorbeeld()}
+				{#if lawNetwork || networkLoading}
+					<div class="voorbeeld">
+						<h3>Een wetsvoorstel als netwerk</h3>
+						{#if lawNetwork}<Wetsnetwerk schets={lawNetwork} />{:else}<div
+								class="wetsnetwerk-plek"
+								aria-hidden="true"
+							></div>{/if}
+					</div>
+				{/if}
+			{/snippet}
+		</Vragen>
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a class="raakvlak" href="/actueel">Actueel</a></h2>
-				<p class="volger">Wat de Kamer en de rechter met de wet doen</p>
+				<p class="volger">Wat de Kamers en de rechter de afgelopen dagen met de wet deden.</p>
 			</header>
 			{#if feedState === 'laden'}
 				<div class="laden" aria-hidden="true">
@@ -280,15 +290,29 @@
 </div>
 
 <style>
-	/* The band's height while it is asked (1440: 366 px; a phone: 264 px), its frame quiet. */
+	/* The sheet beside the tiles (Vragen.svelte): as high as they are, its room while the
+	   network is asked at least the sketch's (1440: 224 px; a phone: 380 px). */
+	.voorbeeld {
+		display: flex;
+		flex-direction: column;
+		min-height: 224px;
+	}
+	.voorbeeld:has(:global(.wetsnetwerk)) {
+		padding: var(--s-4);
+		border: 1px solid var(--rule);
+		border-radius: var(--r-1);
+	}
+	.voorbeeld :global(.wetsnetwerk),
 	.wetsnetwerk-plek {
-		min-height: 366px;
+		flex: 1;
+	}
+	.wetsnetwerk-plek {
 		border-radius: var(--r-1);
 		background: var(--paper-2);
 	}
 	@media (max-width: 640px) {
-		.wetsnetwerk-plek {
-			min-height: 264px;
+		.voorbeeld {
+			min-height: 380px;
 		}
 	}
 	/* The frame of Bladeren (lib/styles/frame.css), one column the full width. */
@@ -335,19 +359,36 @@
 			display: inline;
 		}
 	}
+	/* The promise, the field and the trial searches under it: one block, close together. */
+	.zoek {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-4);
+	}
+	.lede {
+		max-width: var(--blad-tekst);
+		margin: 0;
+		font-size: var(--t-body-2);
+		line-height: var(--lh-body);
+		color: var(--ink-2);
+	}
+	.voorbeeld h3 {
+		margin: 0 0 var(--s-3);
+		font-size: var(--t-body-2);
+		font-weight: 600;
+		line-height: var(--lh-snug);
+	}
 	.main {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-6);
 		min-width: 0;
 	}
-	/* The heading and how far the data goes; on a narrow screen the line under the heading. */
+	/* The heading and, under it, what Actueel is. */
 	.actueel header {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--s-1) var(--s-3);
+		flex-direction: column;
+		gap: var(--s-1);
 		margin-bottom: var(--s-3);
 	}
 	.actueel h2 {

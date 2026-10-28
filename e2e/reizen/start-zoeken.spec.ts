@@ -54,13 +54,34 @@ test('a scope narrows the search to its kind', async ({ page }) => {
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
-test('the start page leads into Samenhang, an article and a vote', async ({ page }) => {
+test('the start page promises, shows what it does and answers three questions', async ({
+	page
+}) => {
 	await page.goto('/');
-	await expect(
-		page.getByRole('region', { name: 'Artikel' }).getByRole('link').first()
-	).toHaveAttribute('href', /\/wetten\//);
-	await expect(page.getByRole('region', { name: 'Stemming' })).toContainText(/voor.*tegen/);
-	await page.getByRole('region', { name: 'Artikel' }).getByRole('link').first().click();
+	const main = page.getByRole('main');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+		'Zie hoe wetten, rechtspraak en parlement samenhangen.'
+	);
+	// What it does: three small pictures with a line each.
+	await expect(main.locator('ul.kenmerken li')).toHaveCount(3);
+	// Typing lays the results over the page as a menu: the features and questions stay where they are.
+	await page.getByRole('combobox', { name: 'Zoeken' }).fill('onrechtmatige daad');
+	await expect(page.getByRole('listbox', { name: 'Resultaten' })).toBeVisible();
+	await expect(main.locator('ul.kenmerken')).toHaveCount(1);
+	await expect(main.getByRole('heading', { level: 2, name: 'Begin met een vraag' })).toBeVisible();
+});
+
+test('the first question of the start page opens an article with what refers to it', async ({
+	page
+}) => {
+	await page.goto('/');
+	const vragen = page.getByRole('region', { name: 'Begin met een vraag' });
+	await expect(vragen.locator('.vraag').getByRole('heading', { level: 3 })).toHaveText([
+		'Wie haalt dit artikel aan?',
+		'Hoe stemde de Kamer?',
+		'Hoe houd ik bij wat ik vind?'
+	]);
+	await vragen.getByRole('link', { name: /art\. 6:162 BW/ }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
 });
 

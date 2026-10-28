@@ -3,7 +3,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isCollection } from '$lib/vocabulary';
 import { START } from './start';
 
 const SERVER = readFileSync(
@@ -26,64 +25,34 @@ const links = (html: string) =>
 		href: text(m[1]),
 		label: text(m[2])
 	}));
-const section = (key: string) =>
-	new RegExp(`<section[^>]*aria-labelledby="entrance-${key}"[^>]*>([\\s\\S]*?)</section>`).exec(
-		SERVER
-	)?.[1] ?? '';
 
 describe('the start page of the server and of the app', () => {
-	it('has the heading and the search field of start.json', () => {
+	it('has the heading, the lede and the search field of start.json', () => {
 		expect(text(all(SERVER, 'h1')[0])).toBe(START.heading);
+		expect(text(all(SERVER, 'p', 'lede')[0])).toBe(START.lede);
 		expect(SERVER).toContain(`placeholder="${START.placeholder}"`);
 		// A form that works without scripts: /?q=, which the app reads into its field.
 		expect(SERVER).toMatch(/<form action="\/" method="get"[^>]*><input type="search" name="q"/);
 	});
 
-	it('has the three ways in, in the same order and under the same names', () => {
-		const names = all(SERVER, 'h2').map(text);
-		expect(names).toEqual([START.article.heading, START.vote.heading, START.bundle.heading]);
-	});
-
-	it('links the article and its parts as the card does', () => {
-		const { article } = START;
-		expect(links(section('article'))).toEqual([
-			{ href: article.href, label: article.title },
-			...article.parts.map((p) => ({
-				href: `${article.href}?bronnen=${p.bronnen}`,
-				label: p.label
-			}))
-		]);
-	});
-
-	it('shows the vote as the card does: title, date, outcome and the parties per side', () => {
-		const { vote } = START;
-		const html = section('vote');
-		expect(links(html)).toEqual([{ href: vote.href, label: vote.title }]);
-		expect(text(all(html, 'p', 'meta')[0])).toBe(vote.date);
-		// As Entrances: the outcome word apart (app.html marks it), then the tally.
-		expect(all(html, 'p', 'outcome')[0]).toBe(
-			`<span class="uitkomst">${vote.outcome}</span> <span>${vote.tally}</span>`
-		);
-		// Voor first, then Tegen: app.html marks the sides in that order.
-		expect(all(html, 'dt').map(text)).toEqual(['Voor', 'Tegen']);
-		expect(all(html, 'dt').map(text)).toEqual(vote.sides.map((s) => s.choice));
-		expect(all(html, 'dd').map(text)).toEqual(vote.sides.map((s) => s.parties));
-	});
-
-	it('links the bundel and its lines to their readable addresses, with its note', () => {
-		const { bundle } = START;
-		const html = section('bundle');
-		expect(links(html)).toEqual([
-			{ href: bundle.href, label: bundle.title },
-			...bundle.lines.map(({ href, label }) => ({ href, label }))
-		]);
-		expect(html).toContain(
-			`<li class="note"><span class="note-label">${bundle.noteLabel}</span> ${bundle.note}</li>`
+	it('has the three features, each a picture and its line, in the same order', () => {
+		const items = all(SERVER, 'li');
+		expect(
+			items.slice(0, START.features.length).map((li) => text(all(li, 'span', 'onderschrift')[0]))
+		).toEqual(START.features.map((x) => x.text));
+		expect(items.map((li) => /class="beeld beeld--(\w+)"/.exec(li)?.[1])).toEqual(
+			START.features.map((x) => x.visual)
 		);
 	});
 
-	it('marks each line with the kind of what it opens', () => {
-		const kinds = [...START.article.parts, ...START.bundle.lines].map((l) => l.collection);
-		expect(kinds.every(isCollection)).toBe(true);
+	it('has the three questions, each with its sentence and its way in', () => {
+		const { questions } = START;
+		expect(all(SERVER, 'h2').map(text)).toEqual([questions.heading]);
+		const tiles = all(SERVER, 'section', 'vraag');
+		expect(tiles.map((t) => text(all(t, 'h3')[0]))).toEqual(questions.items.map((q) => q.title));
+		expect(tiles.map((t) => text(all(t, 'p')[0]))).toEqual(questions.items.map((q) => q.text));
+		expect(tiles.flatMap(links)).toEqual(
+			questions.items.map((q) => ({ href: q.href, label: q.linkLabel }))
+		);
 	});
 });

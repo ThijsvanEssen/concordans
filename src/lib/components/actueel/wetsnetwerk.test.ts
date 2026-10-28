@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kandidaten, schetsVan, type CitedBy } from './wetsnetwerk';
+import { kandidaten, schetsVan, kaartVan, type CitedBy } from './wetsnetwerk';
 import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 
 const vote = (number: string, date: string, chamber: 'TK' | 'EK', subkind: string, passed = true) =>
@@ -123,7 +123,13 @@ const citedBy = {
 	items: [judgment('A', 264), judgment('A', 264), judgment('B', 167), judgment('C', 3)]
 } as unknown as CitedBy;
 
-const k = { number: '36547', naam: 'Wet mensenhandel', datum: '2026-09-29', kamer: 'EK' as const };
+const k = {
+	number: '36547',
+	naam: 'Wet mensenhandel',
+	titel: 'Wet mensenhandel',
+	datum: '2026-09-29',
+	kamer: 'EK' as const
+};
 
 describe('schetsVan', () => {
 	const s = schetsVan(k, changes, citedBy)!;
@@ -177,5 +183,16 @@ describe('schetsVan', () => {
 	it('leaves the judgments out when none cites the article', () => {
 		const zonder = schetsVan(k, changes, { ...citedBy, judgment_total: 0, items: [] })!;
 		expect(zonder.kolommen).toHaveLength(3);
+	});
+});
+
+describe('kaartVan', () => {
+	it('draws the article with its proposal, its dossier and its judgments', () => {
+		const groepen = kaartVan(schetsVan(k, changes, citedBy)!);
+		expect(groepen.map((g) => g.id)).toEqual(['stukken', 'dossiers', 'uitspraken']);
+		expect(groepen[0].rows[0].title).toBeTruthy();
+		expect(groepen[1].rows[0].title).toBe('Dossier 36547');
+		expect(groepen[2].count).toBe(39);
+		expect(groepen[2].capped).toBe(true);
 	});
 });

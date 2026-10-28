@@ -45,13 +45,3 @@ test('the start page says Actueel takes longer instead of failing (F6)', async (
 	release();
 	await expect(page.getByText(SLOW)).toHaveCount(0);
 });
-
-test('typing on the start page leaves no empty place for the law network (F6)', async ({
-	page
-}) => {
-	await hold(page, /\/api\/feed\/summary/);
-	await page.goto('/');
-	await expect(page.locator('.wetsnetwerk-plek')).toBeVisible();
-	await page.getByRole('combobox').or(page.locator('[data-search-field]')).first().fill('huur');
-	await expect(page.locator('.wetsnetwerk-plek')).toHaveCount(0);
-});

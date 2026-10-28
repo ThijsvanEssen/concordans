@@ -1,362 +1,122 @@
 <script lang="ts">
-	// The network of the last passed bill, in fixed columns: no force layout, no movement.
-	// Lines are drawn between the measured places. A click on a bron chooses it here (its
-	// verbindingen dark, the rest faint); the line under the sketch opens it. On a phone the
-	// chain stands one step a line, and the sketch is the Verkenner's.
-	import { formatCount } from '$lib/text/getal';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	// The network of the last passed bill as the small network of Verbonden draws it (Netwerk
+	// tonen): the changed article in the middle, around it the proposal, the dossier and the
+	// judgments. Read only: a bron opens the real network with it. The drawing is a chunk of
+	// its own, asked after the first paint of the page; if it does not come, the line under it
+	// is still the way in.
+	import { goto } from '$app/navigation';
+	import { onMount, type Component } from 'svelte';
+	import { report } from '$lib/api/errors';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { exploreHref } from '$lib/bron/address';
 	import { langeDatum } from '$lib/text/datum';
-	import { onMount } from 'svelte';
-	import { afterTick } from '$lib/util/after-tick';
-	import type { Schets, SchetsBron } from './wetsnetwerk';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
+	import type { Sketch } from '$lib/verbonden/sketch';
+	import { kaartVan, type Schets } from './wetsnetwerk';
 
+	type TekeningProps = {
+		sketch: Sketch;
+		name: string;
+		onSingle: (id: string) => void;
+		onGroup: (id: string) => void;
+	};
 	let { schets }: { schets: Schets } = $props();
 
 	const k = $derived(schets.kandidaat);
-	const keten = $derived(schets.keten);
-	const telwoord = (n: number, een: string, meer: string) =>
-		`${formatCount(n)} ${n === 1 ? een : meer}`;
-
-	/** The chain in counts, one step a line: what a phone shows before the sketch. */
-	const stappen = $derived(
-		[
-			{ vorm: 'stuk' as const, tekst: telwoord(keten.stukken, 'stuk', 'stukken') },
-			{
-				vorm: 'regel-o' as const,
-				tekst: `${telwoord(keten.artikelen, 'artikel', 'artikelen')} in ${keten.wet}`
-			},
-			keten.uitspraken
-				? {
-						vorm: 'uitspraak' as const,
-						tekst: `${telwoord(keten.uitspraken, 'uitspraak', 'uitspraken')} over ${keten.artikel.toLowerCase()}`
-					}
-				: null
-		].filter((x) => x !== null)
+	let kaart = $state.raw<{ Tekening: Component<TekeningProps>; sketch: Sketch } | 'fout' | null>(
+		null
 	);
 
-	let root = $state<HTMLElement>();
-	let paden = $state<{ id: string; d: string; aan: boolean }[]>([]);
-	let gekozen = $state<SchetsBron | null>(null);
-
-	const buren = $derived.by(() => {
-		const id = gekozen?.id;
-		if (!id) return null;
-		return new Set(schets.lijnen.flatMap(([a, b]) => (a === id ? [b] : b === id ? [a] : [])));
-	});
-
-	function meet() {
-		if (!root) return;
-		const o = root.getBoundingClientRect();
-		const rect = (id: string, sel: string) =>
-			root!
-				.querySelector<HTMLElement>(`[data-bron="${CSS.escape(id)}"] ${sel}`)
-				?.getBoundingClientRect();
-		paden = schets.lijnen.flatMap(([a, b]) => {
-			// From the end of the name to the sign of the next bron.
-			const p = rect(a, 'button');
-			const t = rect(a, '.teken');
-			const q = rect(b, '.teken');
-			if (!p || !t || !q) return [];
-			const x1 = p.right - o.left + 4;
-			const y1 = t.top + t.height / 2 - o.top;
-			const x2 = q.left - o.left - 4;
-			const y2 = q.top + q.height / 2 - o.top;
-			const mx = (x1 + x2) / 2;
-			const aan = !!gekozen && (gekozen.id === a || gekozen.id === b);
-			return [{ id: `${a}>${b}`, d: `M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`, aan }];
-		});
+	let weg = false;
+	let fout = $state.raw<unknown>(null);
+	function laad() {
+		kaart = null;
+		Promise.all([import('$lib/verbonden/NetworkSketch.svelte'), import('$lib/verbonden/sketch')])
+			.then(([ns, sk]) => {
+				if (weg) return;
+				kaart = {
+					Tekening: ns.default,
+					sketch: sk.sketch(kaartVan(schets), schets.centrum.naam, undefined, 'article')
+				};
+			})
+			.catch((e) => {
+				report('Wetsnetwerk', e);
+				if (weg) return;
+				fout = e;
+				kaart = 'fout';
+			});
 	}
-
 	onMount(() => {
-		const ro = new ResizeObserver(() => meet());
-		if (root) ro.observe(root);
-		return () => ro.disconnect();
+		laad();
+		return () => (weg = true);
 	});
-	$effect(() => {
-		void gekozen;
-		void schets;
-		afterTick(meet);
-	});
+
+	/** A bron of the drawing opens in the real network, with the article it hangs on. */
+	function open(id: string) {
+		goto(exploreHref(new URLSearchParams({ netwerk: `${schets.centrum.id},${id}` })));
+	}
+	const alles = () => goto(schets.exploreHref);
 </script>
 
-<section class="wetsnetwerk" aria-labelledby="wetsnetwerk-heading">
-	<p class="waarom">
-		<KindGlyph vorm="voorstel" size={12} />Laatst aangenomen wetsvoorstel: {CHAMBER_NAME[k.kamer]},
-		{langeDatum(k.datum)}
-	</p>
-	<h2 id="wetsnetwerk-heading">{k.naam}</h2>
-
-	<ol class="keten">
-		{#each stappen as st (st.vorm)}
-			<li><span class="kteken"><KindGlyph vorm={st.vorm} size={12} /></span>{st.tekst}</li>
-		{/each}
-	</ol>
-	<a class="toon" href={schets.exploreHref}>Open in netwerk</a>
-
-	<figure class="schets">
-		<div class="veld" bind:this={root} style:--kolommen={schets.kolommen.length}>
-			<svg class="lijnen" aria-hidden="true">
-				{#each paden as p (p.id)}<path d={p.d} class:is-active={p.aan} />{/each}
-			</svg>
-			{#each schets.kolommen as kol (kol.titel)}
-				<div class="kolom">
-					<div class="kop">{kol.titel}</div>
-					<div class:kader={!!kol.kader}>
-						{#if kol.kader}<a class="wet" href={kol.kader.href}
-								><KindGlyph vorm="regel" size={10} /> {kol.kader.label}</a
-							>{/if}
-						<ul>
-							{#each kol.bronnen as b (b.id)}
-								<li
-									data-bron={b.id}
-									class:is-dim={!!buren && gekozen?.id !== b.id && !buren.has(b.id)}
-								>
-									<button
-										type="button"
-										aria-pressed={gekozen?.id === b.id}
-										onclick={() => (gekozen = gekozen?.id === b.id ? null : b)}
-									>
-										<span class="teken"><KindGlyph vorm={b.vorm} size={14} /></span>
-										<span class="naam" class:groep={b.groep}>{b.label}</span>
-										{#if b.sub}<span class="sub">{b.sub}</span>{/if}
-									</button>
-								</li>
-							{/each}
-						</ul>
-					</div>
-					{#if kol.na}<a class="na" href={kol.na.href}>{kol.na.label}</a>{/if}
-				</div>
-			{/each}
-		</div>
-		<figcaption>
-			{#if gekozen}
-				<span class="keuze"
-					><KindGlyph vorm={gekozen.vorm} size={12} />
-					{gekozen.label}{gekozen.sub ? `, ${gekozen.sub}` : ''}</span
-				>
-				<a href={gekozen.href}>{gekozen.groep ? 'Open de lijst' : 'Open de bron'} →</a>
-			{/if}
-			<a class="verkenner" href={schets.exploreHref}>Open in netwerk</a>
-		</figcaption>
-	</figure>
-</section>
+<figure class="wetsnetwerk">
+	<div class="kaart">
+		{#if kaart && kaart !== 'fout'}
+			{@const Tekening = kaart.Tekening}
+			<Tekening sketch={kaart.sketch} name={schets.centrum.naam} onSingle={open} onGroup={alles} />
+		{:else if kaart === 'fout'}
+			<LoadState state={{ status: 'error', error: fout }} what="Het netwerk" retry={laad} />
+		{/if}
+	</div>
+	<figcaption>
+		<span>Aangenomen door de {CHAMBER_NAME[k.kamer]}, {langeDatum(k.datum)}</span>
+		<a class="verkenner" href={schets.exploreHref}>Open in netwerk</a>
+	</figcaption>
+</figure>
 
 <style>
-	.waarom {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		margin: 0 0 var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	h2 {
-		margin: 0 0 var(--s-3);
-		font-size: var(--t-h3);
-		font-weight: 600;
-		line-height: var(--lh-snug);
-	}
-	.keten,
-	.toon {
-		display: none;
-	}
-	.schets {
-		margin: 0;
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		padding: var(--s-4);
-	}
-	.veld {
-		position: relative;
-		display: grid;
-		grid-template-columns: repeat(var(--kolommen), minmax(0, 1fr));
-		column-gap: var(--s-8);
-	}
-	.lijnen {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		overflow: visible;
-	}
-	.lijnen path {
-		fill: none;
-		stroke: var(--rule-strong);
-		stroke-width: 1;
-	}
-	.lijnen path.is-active {
-		stroke: var(--ink);
-	}
-	.kolom {
-		position: relative;
-		min-width: 0;
-	}
-	.kop {
-		margin-bottom: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.kader {
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		padding: var(--s-2);
-		background: var(--paper);
-	}
-	.wet,
-	.na {
-		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.wet {
-		margin-bottom: var(--s-1);
-		font-weight: 600;
-	}
-	.na {
-		margin-top: var(--s-2);
-		color: var(--ink-2);
-	}
-	ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
+	.wetsnetwerk {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-1);
+		margin: 0;
 	}
-	li.is-dim {
-		opacity: 0.35;
+	/* The room of the drawing while its chunk comes, so nothing under it drops. */
+	.kaart {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: center;
+		min-height: 300px;
 	}
-	li button {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		column-gap: var(--s-2);
-		align-items: baseline;
-		width: fit-content;
-		max-width: 100%;
-		padding: var(--s-1) 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		text-align: left;
-		color: var(--ink);
-		cursor: pointer;
+	.kaart :global(.sketch) {
+		margin: 0;
 	}
-	.teken {
-		position: relative;
-		top: 2px;
-		display: inline-flex;
-	}
-	.naam {
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		overflow-wrap: anywhere;
-	}
-	.naam.groep {
-		color: var(--ink-2);
-	}
-	li button[aria-pressed='true'] .naam {
-		box-shadow: inset 0 -2px 0 var(--ink);
-	}
-	.sub {
-		grid-column: 2;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+	/* The count of the legend is for Verbonden; here the drawing speaks for itself. */
+	.kaart :global(.caption) {
+		display: none;
 	}
 	figcaption {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
+		justify-content: space-between;
 		gap: var(--s-2) var(--s-4);
 		margin-top: var(--s-4);
 		padding-top: var(--s-3);
 		border-top: 1px solid var(--rule);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-	}
-	figcaption a {
-		color: var(--ink);
+		color: var(--ink-3);
 	}
 	.verkenner {
-		margin-left: auto;
 		font-weight: 600;
+		color: var(--ink);
 	}
-
-	/* A phone: the chain one step a line, and a link to the same network in the Verkenner. */
-	@media (max-width: 640px) {
-		/* On a phone the band stands apart from the list under it: on the second paper, in a
-		   block of its own, its title a step larger (Thijs, 9 Oct). */
-		.wetsnetwerk {
-			padding: var(--s-4);
-			border-radius: var(--r-1);
-			background: var(--paper-2);
-		}
-		.waarom {
-			color: var(--ink-2);
-		}
-		h2 {
-			margin-bottom: var(--s-3);
-			font-size: var(--t-h2);
-		}
-		/* One step a line, the signs joined by a rule, as on the timeline. */
-		.keten {
-			display: flex;
-			flex-direction: column;
-			gap: var(--s-1);
-			margin: 0 0 var(--s-3);
-			padding: 0;
-			list-style: none;
-			font-family: var(--font-serif);
-			font-size: var(--t-meta);
-			color: var(--ink-2);
-		}
-		/* A line of 20px with the sign centred in it: 4px above and below the sign, 4px
-		   between the lines, so the rule between two signs is 8px with 2px clear. */
-		.keten li {
-			position: relative;
-			display: grid;
-			grid-template-columns: 12px minmax(0, 1fr);
-			column-gap: var(--s-2);
-			align-items: start;
-			line-height: 20px;
-		}
-		.kteken {
-			display: flex;
-			align-items: center;
-			height: 20px;
-		}
-		.keten li + li::before {
-			content: '';
-			position: absolute;
-			/* Under the middle of a 12px sign. */
-			left: 5.5px;
-			top: -6px;
-			height: var(--s-2);
-			width: 1px;
-			background: var(--rule-strong);
-		}
-		.toon {
+	/* A finger: the link as high as a Knop. */
+	@media (pointer: coarse), (max-width: 768px) {
+		.verkenner {
 			display: inline-flex;
 			align-items: center;
 			min-height: var(--veld-h-raak);
-			padding: 0 var(--s-3);
-			border: 1px solid var(--rule-strong);
-			border-radius: var(--r-1);
-			background: var(--paper);
-			font-family: var(--font-serif);
-			font-size: var(--t-meta);
-			color: var(--ink);
-			text-decoration: none;
-		}
-		.schets {
-			display: none;
 		}
 	}
 </style>
