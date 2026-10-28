@@ -24,6 +24,7 @@ import { naastHetStuk, stukkenInDezelfdeZaak } from './zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { rowsOfCitedBy } from './cited-by';
+import { isStrafGroep } from './cited-outcome';
 import { CITED_BY_PAGE, LAW_JUDGMENTS } from '$lib/api/first-pages';
 import { getArticleDetail, getDelegated, getLawBasis, getLawDelegated } from '$lib/api/articles';
 import {
@@ -728,9 +729,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						}
 					}
 				: undefined;
+		const straf = isStrafGroep(options.area, data.facets?.subject_area, data.judgment_total);
 		// One row per judgment; each overweging that cites the article is a mention.
 		const loaded = (items: typeof data.items): Loaded => ({
-			rows: rowsOfCitedBy(items, options.order === 'cited'),
+			rows: rowsOfCitedBy(items, options.order === 'cited', straf),
 			total: data.judgment_total,
 			mentions: data.total,
 			judgmentsOf,

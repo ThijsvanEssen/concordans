@@ -28,6 +28,7 @@ import { relationWords } from './relation-words';
 import { periodLabel } from './lines';
 import type { Bereik } from '$lib/text/voetnoten';
 import type { Cite } from '$lib/text/judgment-heading';
+import type { CitedOutcome } from './cited-outcome';
 
 import type { Neighbor } from '$lib/api/nodes';
 
@@ -83,6 +84,8 @@ export type Row = {
 	court?: string | null;
 	/** A judgment as the API cites it. */
 	cite?: Cite | null;
+	/** How a judgment that cites the selected article ended: the meta line says it, or says it is not known. */
+	uitkomst?: CitedOutcome | null;
 	/** How often the judgment itself is cited (`inbound_citation_count`), where the order asks for it. */
 	cited?: number | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
@@ -280,15 +283,19 @@ export function uniqueRows(rows: Row[]): Row[] {
 	});
 }
 
+type MetaPart = {
+	text: string;
+	kind: 'lid' | 'proposed' | 'derived' | 'plain' | 'uitkomst' | 'onbekend';
+	/** At hover: the clause of the decision that says the outcome. */
+	title?: string | null;
+};
+
 /**
  * The meta line of a row, as separate words; the panel joins them. With `verbinding`, the row
  * has its line of the verbinding (`hoe.ts`), which says the lid, the place, the aard and
  * whether it is derived: the meta line leaves them out, and a vote's outcome.
  */
-export function metaParts(
-	row: Row,
-	verbinding = false
-): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
+export function metaParts(row: Row, verbinding = false): MetaPart[] {
 	return zonderNaam(row.title, metaPartsVan(row, verbinding));
 }
 
@@ -296,7 +303,7 @@ export function metaParts(
  * The meta line does not say the name again: "D66" under "D66-fractie" (UX-toets 10 Oct,
  * #16). A plain part the title already holds, as a word, is left out.
  */
-function zonderNaam<P extends { text: string; kind: string }>(title: string, parts: P[]): P[] {
+function zonderNaam<P extends MetaPart>(title: string, parts: P[]): P[] {
 	const t = title.toLowerCase();
 	return parts.filter((p) => {
 		if (p.kind !== 'plain') return true;
@@ -307,11 +314,14 @@ function zonderNaam<P extends { text: string; kind: string }>(title: string, par
 	});
 }
 
-function metaPartsVan(
-	row: Row,
-	verbinding: boolean
-): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
-	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
+function metaPartsVan(row: Row, verbinding: boolean): MetaPart[] {
+	const parts: MetaPart[] = [];
+	if (row.uitkomst)
+		parts.push({
+			text: row.uitkomst.text,
+			kind: row.uitkomst.vastgesteld ? 'uitkomst' : 'onbekend',
+			title: row.uitkomst.title
+		});
 	if (verbinding) {
 		if (row.missing) parts.push({ text: NOT_IN_DATA, kind: 'plain' });
 		if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });

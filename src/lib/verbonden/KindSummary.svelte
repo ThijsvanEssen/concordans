@@ -160,6 +160,7 @@
 					</li>
 				{:else}
 					{@const shape = tierShapeOf(row)}
+					{@const line = shortLine(row)}
 					<li class="kind__row" class:kind__onder={isNested(row)}>
 						<div class="kind__kop">
 							<span class="kind__vlak"
@@ -184,8 +185,17 @@
 									)}{/if}</a
 							>
 						</div>
-						{#if shortLine(row)}<span class="kind__line kind__line--vlak">{shortLine(row)}</span
-							>{/if}
+						{#if row.uitkomst}
+							<!-- How the judgment ended, or that the data does not say: never left out. -->
+							<span class="kind__line kind__line--vlak"
+								><span
+									class="kind__uitkomst kind__uitkomst--{row.uitkomst.vastgesteld
+										? 'bekend'
+										: 'onbekend'}"
+									title={row.uitkomst.title ?? undefined}>{row.uitkomst.text}</span
+								>{#if line}, {line}{/if}</span
+							>
+						{:else if line}<span class="kind__line kind__line--vlak">{line}</span>{/if}
 					</li>
 				{/if}
 			{:else}
@@ -309,6 +319,9 @@
 		font-size: var(--t-micro);
 		line-height: 20px;
 		color: var(--ink-3);
+	}
+	.kind__uitkomst--bekend {
+		color: var(--ink-2);
 	}
 	.kind__all {
 		margin: var(--s-2) 0 0;
