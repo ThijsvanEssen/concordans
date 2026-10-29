@@ -1,5 +1,5 @@
 // The keten of the Grondwet: Noemt is on from the start, a wet that only names the law in its
-// text (Kieswet, Wet op de Raad van State) in its own layer, with a dashed line; switched off, a
+// text (Kieswet, Wet op de Raad van State) beside it in the layer Wet, with a dashed line; switched off, a
 // regulation under a regulation that only names the law goes with it, and a missing basis_kind
 // is no grondslag (the Proclamatie).
 import type { Page } from '@playwright/test';
@@ -32,11 +32,10 @@ test('without Noemt the Grondwet keten holds no regulation that hangs only under
 	await page.goto(GRONDWET);
 	await expect(page.getByText('Koninklijk besluit', { exact: true }).first()).toBeAttached();
 	await noemt(page);
-	await expect(page.getByText(/Wet, noemt/i)).toHaveCount(0);
+	await expect(page.getByText('Kieswet')).toHaveCount(0);
 	const text = await ketenText(page);
 	expect(text).not.toContain('Defensieregeling');
 	expect(text).not.toContain('Proclamatie houdende');
-	expect(text).not.toContain('Wet, noemt');
 	expect(text).not.toContain('Kieswet');
 });
 
@@ -46,7 +45,6 @@ test('Noemt, on from the start, draws the wetten that only name the Grondwet in 
 	await page.goto(GRONDWET);
 	await expect(page.getByText('Koninklijk besluit', { exact: true }).first()).toBeAttached();
 	// on from the start
-	await expect(page.getByText(/Wet, noemt/i).first()).toBeAttached();
 	await expect(page.getByText('Kieswet').first()).toBeAttached();
 	await expect(page.getByText('Wet op de Raad van State').first()).toBeAttached();
 	// Its lines are dashed (a mention), on the drawing.

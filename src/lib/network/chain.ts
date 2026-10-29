@@ -26,7 +26,6 @@ export type LayerId =
 	| 'law'
 	| 'implementation'
 	| 'statute'
-	| 'named'
 	| 'amvb'
 	| 'kb'
 	| 'ministerial'
@@ -39,7 +38,6 @@ const LAYER_LABEL: Record<LayerId, string> = {
 	law: 'Wet',
 	implementation: 'Implementatie',
 	statute: 'Wet',
-	named: 'Wet, noemt',
 	kb: 'Koninklijk besluit',
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
@@ -496,15 +494,17 @@ export function chain(
 		return at.length ? Math.min(...at) : Number.POSITIVE_INFINITY;
 	};
 	const perLayer = new Map<LayerId, ChainNode[]>();
-	// A wet issued under the law stands beside it in its layer (no line between them); one that
-	// only names it, or whose basis the data lacks, in a layer of its own under it, with the
-	// dashed line and its label. The regulations under either hang from it.
-	const bucketOf = (n: ChainNode): LayerId => {
+	// A wet stands beside the law in its layer: one issued under it without a line between them;
+	// one that only names it, or whose basis the data lacks, with its dashed line and its label
+	// (Thijs, 29 Oct: the dashed line says it names, no layer of its own). The regulations under
+	// either hang from it.
+	const bucketOf = (n: ChainNode): LayerId | 'named' => {
 		const id = layerOf(n.kind);
 		return id === 'statute' && n.parents.every(isMention) ? 'named' : id;
 	};
 	const cited = (n: ChainNode) => Math.max(0, ...n.parents.map((p) => p.cite?.count ?? 0));
 	const statutes: ChainNode[] = [];
+	const naming: ChainNode[] = [];
 	for (const id of ['statute' as const, 'named' as const, ...REGULATION_LAYERS]) {
 		const all = nodes
 			.filter((n) => bucketOf(n) === id)
@@ -518,7 +518,7 @@ export function chain(
 		const drawn: ChainNode[] = [];
 		for (const n of all) {
 			if (drawn.length >= max && n.id !== keep) {
-				const slot = id === 'statute' ? 'law' : id;
+				const slot = id === 'statute' || id === 'named' ? 'law' : id;
 				rest[slot] = (rest[slot] ?? 0) + 1;
 				(more[slot] ??= []).push(n);
 				continue;
@@ -526,10 +526,11 @@ export function chain(
 			drawn.push(n);
 		}
 		if (id === 'statute') statutes.push(...drawn);
+		else if (id === 'named') naming.push(...drawn);
 		else if (drawn.length) perLayer.set(id, drawn);
 	}
 	for (const n of statutes) n.parents = [];
-	lawLayer.nodes.push(...statutes);
+	lawLayer.nodes.push(...statutes, ...naming);
 	if (eu?.implementedBy.length)
 		layers.push({
 			id: 'implementation',
@@ -539,7 +540,7 @@ export function chain(
 				eu.implementedBy.map((i) => euNode(i, [{ id: law.id, way: 'delegates' }]))
 			)
 		});
-	for (const id of ['named' as const, ...REGULATION_LAYERS]) {
+	for (const id of REGULATION_LAYERS) {
 		const list = perLayer.get(id);
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}

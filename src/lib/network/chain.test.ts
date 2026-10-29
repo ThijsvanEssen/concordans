@@ -482,7 +482,9 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		expect(n.grondslag).toBeNull();
 		expect(n.mentions).toBeNull();
 		expect(n.unknown).toBe('art. 218 Gw');
-		expect(on.layers.find((l) => l.id === 'named')?.nodes.map((x) => x.id)).toEqual([
+		// beside the law in its layer, with its dashed line: no layer of its own
+		expect(on.layers.find((l) => l.id === 'law')?.nodes.map((x) => x.id)).toEqual([
+			'instruments/bwbr0001840',
 			'instruments/procl'
 		]);
 	});
@@ -512,9 +514,10 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		}
 	] as never;
 
-	it('draws a wet that only names the law in its text as Noemt, with the number of its articles', () => {
+	it('draws a wet that only names the law in its text beside it, with the number of its articles', () => {
 		const k = chain(gw, delegated, null, { mentions: true, refers });
-		const named = k.layers.find((l) => l.id === 'named')!;
+		const named = { nodes: k.layers.find((l) => l.id === 'law')!.nodes.slice(1) };
+		expect(k.layers.some((l) => (l.id as string) === 'named')).toBe(false);
 		expect(named.nodes.map((n) => n.name)).toEqual(['Kieswet']);
 		expect(named.nodes[0].parents).toEqual([
 			{
@@ -539,14 +542,16 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			mentions: true,
 			refers: [advocaten, ...(refers as never as [])] as never
 		});
-		expect(k.layers.find((l) => l.id === 'named')!.nodes.map((n) => n.name)).toEqual([
-			'Kieswet',
-			'Advocatenwet'
-		]);
+		expect(
+			k.layers
+				.find((l) => l.id === 'law')!
+				.nodes.slice(1)
+				.map((n) => n.name)
+		).toEqual(['Kieswet', 'Advocatenwet']);
 	});
 
 	it('leaves them out while Noemt is off', () => {
 		const k = chain(gw, delegated, null, { mentions: false, refers });
-		expect(k.layers.some((l) => l.id === 'named')).toBe(false);
+		expect(k.layers.find((l) => l.id === 'law')!.nodes.map((n) => n.name)).toEqual([gw.name]);
 	});
 });

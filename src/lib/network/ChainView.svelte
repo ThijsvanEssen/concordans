@@ -335,6 +335,21 @@
 			{ rails, boxes }
 		);
 		const byId = new Map(routed.map((r) => [r.id, r]));
+		// A label stands on the line's own piece, by the regulation it holds for: under the parent
+		// only where the line is the parent's one line down; never on a stem it shares (Thijs, 29
+		// Oct: "onder de Cbw lijkt het alsof het voor alles geldt"). Two at one regulation stack.
+		const out = new Map<string, number>();
+		for (const e of edges)
+			if (!byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`)?.beside)
+				out.set(e.o.id, (out.get(e.o.id) ?? 0) + 1);
+		const stacked = new Map<string, number>();
+		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
+			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y };
+			if (e.many && out.get(e.o.id) === 1) return { x: r.tip.x, y: r.tip.y + 17 };
+			const i = stacked.get(e.k.id) ?? 0;
+			if (e.o.cite) stacked.set(e.k.id, i + 1);
+			return { x: r.end.x, y: r.end.y - 20 - 24 * i };
+		};
 		return edges.flatMap((e) => {
 			const r = byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`);
 			if (!r) return [];
@@ -366,9 +381,7 @@
 					citeLaw: nameOf.get(e.o.id) ?? '',
 					mentioned: isMention(e.o),
 					unknown: e.o.way === 'unknown',
-					// On the line close above the card of the child; with several laws above it,
-					// under each law instead, so the labels never stand on each other.
-					citeAt: e.many ? { x: r.tip.x, y: r.tip.y + 17 } : { x: r.end.x, y: r.end.y - 20 },
+					citeAt: citeAtOf(e, r),
 					colour: toneColour(
 						edgeColorFor(e.relation, e.from),
 						edgeToneFor(e.relation, null, e.from)
