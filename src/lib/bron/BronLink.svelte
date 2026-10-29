@@ -26,8 +26,8 @@
 	import { isOverwegingRef } from '$lib/text/anchor';
 	import { zetMarkering, type Markering } from './markering.svelte';
 	import { plainClick } from '$lib/actions/klik';
-	import { READ_PARAM, parseRead } from '$lib/reading/param';
-	import { PANEL_ID, openInPanel, opensPanel } from '$lib/reading/panel.svelte';
+	import type { ReadRef } from '$lib/reading/param';
+	import { PANEL_ID, isRead, openInPanel, opensPanel } from '$lib/reading/panel.svelte';
 
 	let {
 		ref,
@@ -41,6 +41,7 @@
 		markering = null,
 		href: naar = null,
 		panel = opensPanel(),
+		stack = null,
 		class: className = '',
 		title,
 		children
@@ -66,6 +67,8 @@
 		href?: string | null;
 		/** A click on a reference to an article opens the Leespaneel; by default where readHere. */
 		panel?: boolean;
+		/** The articles it stands with (a law's in the head): the panel opens on all, at this one. */
+		stack?: readonly ReadRef[] | null;
 		class?: string;
 		title?: string;
 		children: Snippet;
@@ -86,12 +89,8 @@
 			? { key: id.slice('articles/'.length), at: at ?? null }
 			: null
 	);
-	// Landed: the panel shows what this reference names.
-	const landed = $derived.by(() => {
-		if (!readRef) return false;
-		const open = parseRead(page.url.searchParams.get(READ_PARAM))[0];
-		return open?.key === readRef.key && open.at === readRef.at;
-	});
+	// Landed: the panel shows what this reference names, alone or among others.
+	const landed = $derived(!!readRef && isRead(readRef));
 
 	// The card of an r.o.: the overweging, a card to read rather than a glance.
 	const ro = $derived(preview && !voorbeeld && isOverwegingRef(id, at));
@@ -132,7 +131,7 @@
 		if (readRef && plainClick(e)) {
 			e.preventDefault();
 			hover.close();
-			openInPanel(readRef);
+			openInPanel(stack?.length ? stack : readRef, { focus: readRef.key });
 			return;
 		}
 		if (markering) zetMarkering(markering);

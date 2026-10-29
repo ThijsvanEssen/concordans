@@ -35,6 +35,8 @@
 	import { sideScroll } from '$lib/actions/side-scroll';
 	import { HoverCard } from '$lib/actions/hover-card.svelte';
 	import BasisGlance from '$lib/network/BasisGlance.svelte';
+	import { plainClick } from '$lib/actions/klik';
+	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import {
 		isMention,
@@ -354,9 +356,10 @@
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
 					cite: e.o.cite ? citeText(e.o.cite) : null,
-					// What the label opens: the first of its articles, at the lid it names; the glance
-					// names them all.
+					// What the label opens: its articles in the Leespaneel, under each other; its link
+					// is the first, at the lid it names. The glance names them all.
 					citeLines: e.o.cite ? citeLines(e.o.cite) : [],
+					citeArticles: articles.map(({ key, at }) => ({ key, at })),
 					citeHref: articles[0]
 						? openHref({ collection: 'articles', key: articles[0].key }, { at: articles[0].at })
 						: null,
@@ -438,13 +441,24 @@
 	const citeGlance = (l: (typeof lines)[number], anchor: Element) => {
 		target = {
 			anchor: anchor as HTMLElement,
-			kicker: l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag',
+			kicker: `${l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag'}, opent in het paneel`,
 			title: l.citeLaw,
 			lines: l.citeLines
 		};
 		hover.enter();
 	};
 	const card = $derived(hover.open ? target : null);
+	/** A label whose article the Leespaneel shows: landed, every label of it, not only the one clicked. */
+	const readKeys = $derived(new Set(readOpen().map((r) => r.key)));
+	const landed = (l: (typeof lines)[number]) => l.citeArticles.some((a) => readKeys.has(a.key));
+	/** A click on a label: its articles in the panel; the drawing does not move, the choice stays. */
+	function openCite(e: MouseEvent, l: (typeof lines)[number]) {
+		if (!l.citeArticles.length || !plainClick(e)) return;
+		e.preventDefault();
+		e.stopPropagation();
+		hover.close();
+		openInPanel(l.citeArticles);
+	}
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
 	let pan = $state<HTMLElement | null>(null);
 	let centredFor = '';
@@ -617,10 +631,15 @@
 			<!-- The articles on a line, on a rim of paper over the lines. -->
 			{#each lines.filter((l) => l.cite) as l (l.id)}
 				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
+				{@const on = landed(l)}
 				<a
 					class="cite"
 					href={l.citeHref ?? undefined}
+					class:is-open={on}
 					aria-label={l.citeLines.join(', ')}
+					aria-expanded={l.citeArticles.length ? on : undefined}
+					aria-controls={on ? PANEL_ID : undefined}
+					onclick={(e) => openCite(e, l)}
 					onpointerenter={(e) => {
 						hover.pointer(e.pointerType);
 						citeGlance(l, e.currentTarget);
@@ -957,6 +976,15 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
 		fill: var(--ink-2);
+	}
+	/* Landed: the Leespaneel shows its article; the wash and an ink rim. */
+	.cite.is-open .frame {
+		fill: var(--wassing);
+		stroke: var(--ink);
+		stroke-width: 2;
+	}
+	.cite.is-open text {
+		fill: var(--ink);
 	}
 	/* Outside the period of the strip: faint, not gone. */
 	.node.is-dim {
