@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import type { Collection } from '$lib/vocabulary';
 import {
+	expiredTitle,
 	bestEarly,
 	bestHit,
 	around,
@@ -594,6 +595,14 @@ describe('a hit that has expired (besluit 30)', () => {
 		expect(
 			presentHit(law({ expired_on: '2027-01-01' }), 'wet', [], new Date(2026, 9, 22)).expired
 		).toBeUndefined();
+	});
+	it('says the same of a resolved citation, and nothing of another kind', () => {
+		const now = new Date(2026, 9, 22);
+		expect(expiredTitle('articles', '2024-01-01', now)).toBe(
+			'Vervallen per 1\u00a0januari\u00a02024'
+		);
+		expect(expiredTitle('dossiers', '2024-01-01', now)).toBeNull();
+		expect(expiredTitle('articles', null, now)).toBeNull();
 	});
 });
 

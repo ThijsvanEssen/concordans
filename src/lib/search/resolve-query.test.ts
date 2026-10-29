@@ -61,7 +61,8 @@ describe('resolvedOf', () => {
 		).toEqual({
 			ref: { collection: 'articles', key: 'bwbr0005289_162' },
 			at: null,
-			label: 'Artikel 6:162 BW'
+			label: 'Artikel 6:162 BW',
+			expiredOn: null
 		});
 		const dossier = answer(
 			'dossier',
@@ -73,9 +74,21 @@ describe('resolvedOf', () => {
 		expect(resolvedOf(dossier)).toEqual({
 			ref: { collection: 'dossiers', key: '21501_31', number: '21501-31' },
 			at: null,
-			label: null
+			label: null,
+			expiredOn: null
 		});
 		expect(resolvedOf(null)).toBeNull();
+	});
+
+	it('carries the day an article no longer holds', () => {
+		const data = answer(
+			'article',
+			'articles',
+			'bwbr0037552_2.8',
+			'Artikel 2.8 Wet natuurbescherming'
+		);
+		data!.match!.expired_on = '2024-01-01';
+		expect(resolvedOf(data)?.expiredOn).toBe('2024-01-01');
 	});
 });
 
@@ -103,12 +116,14 @@ describe('choicesOf', () => {
 				{
 					ref: { collection: 'articles', key: 'bwbr0002656_3' },
 					at: 'lid-2',
-					label: 'Artikel 1:3 BW'
+					label: 'Artikel 1:3 BW',
+					expiredOn: null
 				},
 				{
 					ref: { collection: 'articles', key: 'bwbr0005291_3' },
 					at: 'lid-2',
-					label: 'Artikel 3:3 BW'
+					label: 'Artikel 3:3 BW',
+					expiredOn: null
 				}
 			],
 			total: 2

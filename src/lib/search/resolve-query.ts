@@ -16,6 +16,8 @@ export type Resolved = {
 	at: string | null;
 	/** How the API names the bron ("Artikel 55 Grondwet"), when it says. */
 	label?: string | null;
+	/** Of a law or an article: the first day it no longer holds (`match.expired_on`). */
+	expiredOn?: string | null;
 };
 
 // "AVG", "Awb", "UAVG": one word of up to ten letters with a capital, as a law is abbreviated.
@@ -86,7 +88,8 @@ function resolvedMatch(
 				? (match.title ?? null)
 				: match.display_name && ref.collection !== 'dossiers'
 					? withBook(match.display_name)
-					: null
+					: null,
+		expiredOn: match.expired_on ?? null
 	};
 }
 

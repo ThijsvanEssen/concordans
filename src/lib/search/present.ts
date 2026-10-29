@@ -223,15 +223,23 @@ export function presentHit(
 	now = new Date()
 ): Presented {
 	const shown = presentBase(hit, query, neighbours);
-	const day = extra(hit, 'expired_on').slice(0, 10);
-	return day &&
-		hasPassed(day, now) &&
-		(hit.collection === 'instruments' || hit.collection === 'articles')
-		? {
-				...shown,
-				expired: `${hit.collection === 'instruments' ? 'Ingetrokken' : 'Vervallen'} ${asOfDate(day)}`
-			}
-		: shown;
+	const expired = expiredTitle(hit.collection, extra(hit, 'expired_on'), now);
+	return expired ? { ...shown, expired } : shown;
+}
+
+/**
+ * "Ingetrokken per 1 januari 2024" of a law, "Vervallen per …" of an article, once `expiredOn`
+ * has passed; null otherwise and for every other kind. A hit and a resolved citation alike.
+ */
+export function expiredTitle(
+	collection: Collection,
+	expiredOn: string | null | undefined,
+	now = new Date()
+): string | null {
+	const day = (expiredOn ?? '').slice(0, 10);
+	if (!day || !hasPassed(day, now)) return null;
+	if (collection !== 'instruments' && collection !== 'articles') return null;
+	return `${collection === 'instruments' ? 'Ingetrokken' : 'Vervallen'} ${asOfDate(day)}`;
 }
 
 function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Presented {
