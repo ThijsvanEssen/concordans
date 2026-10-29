@@ -125,3 +125,23 @@ describe('a publication of the Staatsblad (Netwerkcanvas, Staatsblad-publicatie)
 		});
 	});
 });
+
+describe('a wet in its dossier (Netwerkcanvas, Maten)', () => {
+	it('does not put it in the dossier’s outline: the dossier is a line to it, aangenomen als', () => {
+		expect(at(hull('instrument', true), 'LEGISLATED_IN', hull('dossier', true))).toEqual({
+			place: 'line',
+			meta: true
+		});
+		expect(at(hull('instrument', true), 'LEGISLATED_IN', hull('dossier'))).toEqual({
+			place: 'line',
+			meta: true,
+			anchor: 'target'
+		});
+		expect(at(hull('instrument'), 'LEGISLATED_IN', hull('dossier', true))).toEqual({
+			place: 'line',
+			meta: true,
+			anchor: 'source'
+		});
+		expect(at(hull('instrument'), 'LEGISLATED_IN', hull('dossier'))).toEqual({ place: 'none' });
+	});
+});
