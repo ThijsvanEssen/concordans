@@ -201,7 +201,7 @@ describe('the keten of a law', () => {
 
 	it('hangs a regeling under the articles of the AMvB it rests on, with the abbreviation of each law', () => {
 		const cbb = item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', [article('3')]);
-		cbb.instrument.abbreviation = 'Cbb';
+		(cbb.instrument as { abbreviation: string | null }).abbreviation = 'Cbb';
 		cbb.sub_delegated = [
 			{
 				instrument: law('instruments/reg', 'Regeling cyberbeveiliging EZK'),
