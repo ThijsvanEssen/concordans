@@ -3,7 +3,7 @@
 // each, and switches them off; no relation draws a line that is in none of them.
 // The stroke gives the family (solid: the law itself; dashed: names it; round dots: belongs to,
 // without an arrow), the tone the kind within it (dark, middle, light), the table below both.
-import { isAmendingRelation, type Relation } from '$lib/vocabulary';
+import { isAmendingRelation, RELATIONS, type Relation } from '$lib/vocabulary';
 import type { DrawClass } from './types';
 
 export const LINE_KINDS = [
@@ -28,45 +28,14 @@ export const LINE_KIND_LABEL: Record<LineKind, string> = {
 	member: 'Lid van'
 };
 
-/** The kind of each relation; REFERS_TO is Aanhaling, but Structureel from an article. */
-const KIND_OF: Record<Relation, LineKind> = {
-	BASED_ON: 'structural',
-	IMPLEMENTS: 'structural',
-	LEGISLATED_IN: 'structural',
-	SCOPED_BY: 'structural',
-	TRANSPOSED_TO: 'structural',
-	SECOND_READING_OF: 'structural',
-	PART_OF: 'part',
-	VERSION_OF: 'part',
-	ABOUT: 'part',
-	ACCOMPANIES: 'part',
-	ESTABLISHES: 'change',
-	AMENDS: 'change',
-	INTRODUCES: 'change',
-	REPEALS: 'change',
-	COMMENCES: 'change',
-	REVISES: 'change',
-	REFERS_TO: 'citation',
-	APPEAL_OF: 'citation',
-	ADVISES_ON: 'citation',
-	ANSWERS: 'citation',
-	CONTINUES: 'citation',
-	REFERRED_BY: 'citation',
-	SAME_AS: 'citation',
-	MADE_IN: 'citation',
-	PUBLISHED_IN: 'citation',
-	RELATED_TO: 'citation',
-	EXPLAINS: 'explanation',
-	AUTHORED: 'submitter',
-	MEMBER_OF: 'member',
-	LED_BY: 'member',
-	SERVED_IN: 'member',
-	VOTED: 'member'
-};
-
-/** The kind of a line: a citation by an article is the text of the law itself (Structureel). */
+/**
+ * The kind of a line, from RELATIONS: REFERS_TO is Aanhaling, but a citation by an article is the
+ * text of the law itself (Structureel).
+ */
 export function lineKindOf(relation: Relation, from: DrawClass = 'article'): LineKind {
-	return relation === 'REFERS_TO' && from === 'article' ? 'structural' : KIND_OF[relation];
+	return relation === 'REFERS_TO' && from === 'article'
+		? 'structural'
+		: RELATIONS[relation].lineKind;
 }
 
 /** A relation and the kind it comes from that draw a kind, for its sample in Relatie. */

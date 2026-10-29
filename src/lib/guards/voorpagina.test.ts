@@ -62,7 +62,7 @@ describe('the documentation', () => {
 	});
 
 	it('lists every relation, from the vocabulary, without asking the API', () => {
-		expect(docs).toContain('{#each RELATIONS as relation');
+		expect(docs).toContain('{#each RELATION_NAMES as relation');
 		expect(docs).not.toContain('getStats');
 	});
 });

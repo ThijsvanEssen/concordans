@@ -19,6 +19,7 @@ npm run dev             # http://localhost:5173
 | `npm run lint:changed` | Prettier and ESLint (cached) over the files changed against `origin/main`                                    |
 | `npm run test:related` | The tests that import a file under `src/` changed against `origin/main`                                      |
 | `npm run gates`        | Every gate before a merge, stopping at the first that fails                                                  |
+| `npm run eenvoud`      | The simplicity budget (below); `-- --write` lowers it after a fall                                           |
 | `npm test`             | Vitest                                                                                                       |
 | `npm run e2e`          | The browser suite (below)                                                                                    |
 | `npm run e2e:record`   | Record the API fixtures of the browser suite anew from the live API                                          |
@@ -27,6 +28,8 @@ npm run dev             # http://localhost:5173
 | `npm run sync:api`     | Dump the schema with `lawgraph openapi` (in `$LAWGRAPH_DIR`, default `../lawgraph`) and regenerate the types |
 | `npm run types:api`    | Regenerate `src/lib/api/generated/openapi-types.ts` from the committed schema                                |
 | `npm run check:api`    | `sync:api`, then fail when the committed schema or types differ                                              |
+
+`eenvoud-budget.json` is a ratchet: `scripts/eenvoud.sh` (a gate and a CI job) counts the tables per relation (`Record<Relation,`), the files that spell a relation name, the files of `lib/first-paint`, the lines of a file over 800, the `$effect`s (over 8) and imports (over 40) of a component, and per file the highest complexity (over 15) and the longest function (over 80 lines) that ESLint reports. A value may not rise; one that fell is written down with `--write`. ESLint holds every function to 15 and 80, and a file in the budget to its ceiling there (`eslint.config.js`). Raising a budget is a hand edit of the file, which the diff then shows.
 
 The test database holds every relation of the model. Run the API on it and point `.env` at it:
 

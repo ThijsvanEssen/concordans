@@ -1,9 +1,9 @@
 # Every pull request and every push to main runs the checks. The deploy of a commit waits for
-# a green run of this workflow on it (deploy.yml): the run is green only when all four jobs
+# a green run of this workflow on it (deploy.yml): the run is green only when all five jobs
 # are, and deploy runs none of them again.
-# Four jobs side by side, each on node_modules from one shared cache (.github/actions/setup):
-# lint (prettier --check over the whole repository, Markdown included, and ESLint), types and
-# build, the tests, and the browser suite (e2e/).
+# Five jobs side by side, each on node_modules from one shared cache (.github/actions/setup):
+# lint (prettier --check over the whole repository, Markdown included, and ESLint), the
+# simplicity budget, types and build, the tests, and the browser suite (e2e/).
 name: ci
 
 on:
@@ -31,6 +31,21 @@ jobs:
         run: npm run types:api && git diff --exit-code -- src/lib/api/generated
       - name: Lint (prettier --check, eslint)
         run: npm run lint
+
+  # The simplicity budget (scripts/eenvoud.sh, eenvoud-budget.json): red when a measure rose
+  # above its budget or fell without the budget following it. A raise of the budget since the
+  # commit before (a push) or the base (a pull request) is a warning, eenvoud-toets.
+  eenvoud:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Budget
+        run: scripts/eenvoud.sh
+      - name: Raises of the budget
+        run: scripts/eenvoud.sh --raised "${{ github.event.before || format('origin/{0}', github.base_ref) }}"
 
   check:
     runs-on: ubuntu-24.04
