@@ -169,6 +169,21 @@ export function lidCountsByCollection(
 	return per;
 }
 
+/**
+ * The judgments a judgment is connected to per tier, over every bucket of judgments as a whole
+ * (`tier_counts`; "" for one without a tier); null where the API gives none.
+ */
+export function tierCountsOf(response: NodeGraph): Map<string, number> | null {
+	let counts: Map<string, number> | null = null;
+	for (const b of response.neighbors.buckets ?? []) {
+		if (!b.tier_counts) continue;
+		counts ??= new Map();
+		for (const [tier, n] of Object.entries(b.tier_counts))
+			counts.set(tier, (counts.get(tier) ?? 0) + n);
+	}
+	return counts;
+}
+
 /** The counts per lid of these collections together (all of them without `keep`). */
 export function sumLidCounts(
 	per: Map<string, Map<string, number>>,
