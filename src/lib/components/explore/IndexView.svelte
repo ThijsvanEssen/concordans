@@ -494,7 +494,7 @@
 		void category;
 		if (!catbar) return;
 		centerActive();
-		void document.fonts?.ready.then(centerActive);
+		document.fonts?.ready.then(centerActive).catch(() => {});
 	});
 
 	// ── Open row, Esc ───────────────────────────────────────────────────────
