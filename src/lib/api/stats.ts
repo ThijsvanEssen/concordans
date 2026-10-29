@@ -1,13 +1,14 @@
-import { api, isTimeout, unwrap } from './client';
+import { api, unwrap } from './client';
 import type { Schema } from './types';
-import { isAborted } from './errors';
+import { isAborted, isSlow } from './errors';
 import { onForget } from '$lib/util/forget';
 
 /**
  * One answer for the page load, asked at most once at a time. The caller that starts it gives
  * its `signal` to the request, so leaving the page ends it; a caller that finds it under way
  * waits for it. A failure clears it (the next ask is a new request), and a request that gave
- * up on its time, or that the starter ended, is asked once more before it counts as failed.
+ * up on its time or the API's (503, 504), or that the starter ended, is asked once more before
+ * it counts as failed.
  */
 function sharedOnce<T>(get: (signal?: AbortSignal) => Promise<T>) {
 	let request: Promise<T> | null = null;
@@ -22,8 +23,7 @@ function sharedOnce<T>(get: (signal?: AbortSignal) => Promise<T>) {
 		try {
 			return await (request ?? start(signal));
 		} catch (err) {
-			if (again && !signal?.aborted && (isTimeout(err) || isAborted(err)))
-				return ask(signal, false);
+			if (again && !signal?.aborted && (isSlow(err) || isAborted(err))) return ask(signal, false);
 			throw err;
 		}
 	};

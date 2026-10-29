@@ -85,6 +85,22 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 		]);
 	});
 
+	it('after the vote names only what follows it: a hamerstuk leaves the earlier steps empty', () => {
+		const steps = [
+			{ phase: 'Schriftelijke voorbereiding', state: 'leeg', papers: [] },
+			{ phase: 'Plenair', state: 'leeg', papers: [] },
+			{ phase: 'Afkondiging', state: 'leeg', papers: [] }
+		];
+		const decided = (outcome: string) => ({
+			...base,
+			ek_outcome: { outcome, date: '2026-10-27', method: 'Hamerstuk' },
+			senate: senate(steps)
+		});
+		const last = (d: unknown) => ekGroup(d)?.regels.at(-1)?.zin ?? null;
+		expect(last(decided('Aangenomen'))).toBe('Volgende stappen: afkondiging.');
+		expect(last(decided('Verworpen'))).toBeNull();
+	});
+
 	it('links the publication of the wet to its Staatsblad page, the other to eerstekamer.nl', () => {
 		const d = {
 			...base,
