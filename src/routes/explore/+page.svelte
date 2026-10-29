@@ -144,7 +144,14 @@
 		type Netwerk,
 		type NetwerkEntry
 	} from '$lib/selection/netwerk';
-	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
+	import {
+		navigate,
+		navigateDone,
+		patchParams,
+		queryHref,
+		withParams,
+		type ParamPatch
+	} from '$lib/util/address';
 	import {
 		besideJudgment,
 		depthFor as depthOfClass,
@@ -156,6 +163,9 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { panelOfKey, verbondenInView, type Panel } from './panels';
+	import { LINKED_ROW } from '$lib/verbonden/row';
+	import { mayShortcut } from '$lib/actions/keys';
+	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
 	import { NetwerkComposer } from './netwerk-compose.svelte';
@@ -1697,12 +1707,12 @@
 
 	// Tekst, or the werkplek with the bron: each a step of its own, the netwerk staying in the
 	// werkplek's address.
-	function setReading(on: boolean) {
+	function setReading(on: boolean): Promise<void> | void {
 		const node = selectedNode;
 		if (!node || node.id.startsWith('synth:')) return;
 		const ref = refOf(node.collection, node.key, node.raw?.props);
 		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
-		navigate(on ? openHref(ref, { at }) : werkplekHref(ref, at), { step: true });
+		return navigateDone(on ? openHref(ref, { at }) : werkplekHref(ref, at), { step: true });
 	}
 	/** The werkplek with the bron: as the button Netwerk of the top bar opens it. */
 	const werkplekHref = (ref: BronRef, at: string | null = null) =>
@@ -1912,9 +1922,7 @@
 			tocOpen = false;
 			return;
 		}
-		if (e.metaKey || e.ctrlKey || e.altKey) return;
-		const el = document.activeElement as HTMLElement | null;
-		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
+		if (!mayShortcut(e)) return;
 		if (e.key === 'Escape' && beside && !e.defaultPrevented) {
 			e.preventDefault();
 			goto(closeBesideHref, { noScroll: true, keepFocus: true }).catch((err) =>
@@ -1930,13 +1938,25 @@
 			readTab = panel;
 			if (panel === 'verbonden')
 				requestAnimationFrame(() =>
-					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
+					document.querySelector<HTMLElement>(`.verbonden :is(${LINKED_ROW})`)?.focus()
 				);
 			return;
 		}
 		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		e.preventDefault();
-		setReading(readAction === 'read');
+		// The element that had the focus goes with the view: it lands on the new one's anchor.
+		Promise.resolve(setReading(readAction === 'read'))
+			.then(() => afterTick(keepFocus))
+			.catch((err) => report('Wisselen', err));
+	}
+	/** The focus on a stop of the view just drawn, where it fell to the body. */
+	function keepFocus() {
+		const at = document.activeElement;
+		if (at && at !== document.body && at.isConnected) return;
+		(
+			(mode === 'graph' && document.querySelector<HTMLElement>('.graph-canvas-wrap')) ||
+			document.getElementById('main-content')
+		)?.focus({ preventScroll: true });
 	}
 
 	/** What the key L does: read the bron, or open the werkplek with it. */

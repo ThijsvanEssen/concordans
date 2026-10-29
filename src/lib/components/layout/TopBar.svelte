@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/util/platform';
+	import { mayShortcut } from '$lib/actions/keys';
+	import { onMount } from 'svelte';
 	import Wordmark from './Wordmark.svelte';
 	import MineMenu from './MineMenu.svelte';
 	import NetworkButton from './NetworkButton.svelte';
@@ -21,19 +23,15 @@
 	// ritual of Bewaar and Volg, bevestig.svelte.ts).
 	$effect(() => sign.visited($page.url.pathname));
 
+	let platformKnown = $state(false);
+	onMount(() => (platformKnown = true));
+
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
 			onSearchOpen?.();
 		}
-		if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-			const tag = (document.activeElement as HTMLElement | null)?.tagName;
-			if (
-				tag === 'INPUT' ||
-				tag === 'TEXTAREA' ||
-				(document.activeElement as HTMLElement | null)?.isContentEditable
-			)
-				return;
+		if (e.key === '?' && mayShortcut(e)) {
 			e.preventDefault();
 			goto('/docs/sneltoetsen');
 		}
@@ -71,7 +69,8 @@
 			<button
 				class="search-trigger raakvlak-knop"
 				onclick={() => onSearchOpen?.()}
-				aria-label="Zoeken ({modKey} K)"
+				aria-label="Zoek een wet, uitspraak of dossier"
+				aria-keyshortcuts="Control+K Meta+K"
 			>
 				<svg
 					width="13"
@@ -86,7 +85,10 @@
 					<path d="M8.5 8.5l3 3" />
 				</svg>
 				<span class="search-trigger-label">Zoek een wet, uitspraak of dossier</span>
-				<span class="kbd">{modKey}K</span>
+				<!-- The server cannot know the platform: hidden, at the width of the widest, until mounted. -->
+				<span class="kbd" style:visibility={platformKnown ? 'visible' : 'hidden'}
+					>{platformKnown ? modKey : 'Ctrl'} K</span
+				>
 			</button>
 		{/if}
 		<div class="netwerk-slot"><NetworkButton /></div>
