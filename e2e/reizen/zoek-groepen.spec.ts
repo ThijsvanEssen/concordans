@@ -1,6 +1,8 @@
 // The groups of a search: the Beste treffer on top, under it the groups in their order, but a
 // group with a whole name or an identifier (score 0.75 or more) goes up on that score. The order
 // stands once the fast lane is in; the slow lanes (text, judgments) come in under their places.
+// The Beste treffer stands as the fast lane is in; a slow text lane (here 2 s) neither delays it
+// nor replaces it, and only where the fast lane names none does it still deliver it.
 // The API's answers are made here: a Kamerlid found by the whole name needs API R2.
 import type { Page } from '@playwright/test';
 import { apiPath, CORS } from '../support/api';
@@ -41,8 +43,19 @@ const RESULTS: Record<string, unknown[]> = {
 	]
 };
 
+/** The `best` a lane names: that of its first kind in `bests` (null names none), else the Kamerlid. */
+const best = (types: string[], bests: Record<string, string | null>) => {
+	const own = types.find((t) => t in bests);
+	return own ? bests[own] : 'members/dilan_yesilgoz';
+};
+
 /** Answers /api/search per type asked; a lane in `slow` waits that long (ms). */
-async function answer(page: Page, slow: Record<string, number> = {}) {
+async function answer(
+	page: Page,
+	slow: Record<string, number> = {},
+	bests: Record<string, string | null> = {},
+	empty: string[] = []
+) {
 	await page.route(apiPath(/\/api\/search/), async (route) => {
 		const types = new URL(route.request().url()).searchParams.getAll('types');
 		const wait = Math.max(0, ...types.map((t) => slow[t] ?? 0));
@@ -54,14 +67,16 @@ async function answer(page: Page, slow: Record<string, number> = {}) {
 				q: '',
 				types,
 				total: 0,
-				results: Object.fromEntries(types.map((t) => [t, RESULTS[t] ?? []])),
+				results: Object.fromEntries(
+					types.map((t) => [t, empty.includes(t) ? [] : (RESULTS[t] ?? [])])
+				),
 				partial: {},
 				searched: {},
 				resolved: null,
 				words: [],
 				left_out: [],
 				matched: 'all',
-				best: 'members/dilan_yesilgoz'
+				best: best(types, bests)
 			})
 		});
 	});
@@ -112,4 +127,46 @@ test('the typeahead has the same order', async ({ page }) => {
 	expect(names[0]).toMatch(/^Beste treffer/);
 	expect(first(names, /Kamerleden|Leden/)).toBe(1);
 	expect(first(names, /Kamerleden|Leden/)).toBeLessThan(first(names, /Artikelen/));
+});
+
+test('/zoeken: the Beste treffer stands with the fast lane, the slow text lane replaces nothing', async ({
+	page
+}) => {
+	await answer(page, { articles: 2000, judgments: 2000 }, { articles: 'articles/bwbr0005289_74' });
+	await page.goto('/zoeken?q=Yesilgoz');
+	const beste = page.getByRole('heading', { level: 2, name: /Beste treffer, / });
+	await expect(beste).toBeVisible({ timeout: 1500 });
+	await expect(page.getByRole('heading', { level: 2, name: /Artikelen/ })).toBeVisible();
+	const names = async () => (await headings(page)).map((t) => t.replace(/\d+$/, ''));
+	const before = await names();
+	await expect(page.getByText('Art. 6:74 BW')).toBeVisible({ timeout: 10_000 });
+	const after = await names();
+	// Nothing that stood moves: the groups before are still there, in their order.
+	expect(after.filter((t) => before.includes(t))).toEqual(before.filter((t) => after.includes(t)));
+	expect(after[0]).toBe(before[0]);
+	await expect(page.locator('#beste-treffer')).toContainText('Yeşilgöz');
+});
+
+test('/zoeken: where the fast lane names none, the place is held and the text lane fills it', async ({
+	page
+}) => {
+	await answer(page, { articles: 1500 }, { members: null, articles: 'articles/bwbr0005289_74' }, [
+		'members',
+		'dossiers'
+	]);
+	await page.goto('/zoeken?q=Yesilgoz');
+	await expect(page.locator('#beste-treffer-laden')).toBeVisible({ timeout: 1400 });
+	await expect(page.locator('#beste-treffer')).toContainText('6:74', { timeout: 10_000 });
+	await expect(page.locator('#beste-treffer-laden')).toHaveCount(0);
+});
+
+test('the typeahead names the Beste treffer before the slow lanes are in', async ({ page }) => {
+	await answer(page, { articles: 4000, judgments: 4000 });
+	await page.goto('/');
+	await page.getByRole('combobox', { name: 'Zoeken' }).fill('Yesilgoz');
+	const results = page.getByRole('listbox', { name: 'Resultaten' });
+	await expect(results.getByRole('group', { name: /^Beste treffer/ })).toBeVisible({
+		timeout: 2500
+	});
+	await expect(results.getByRole('group', { name: /laden…$/ }).first()).toBeVisible();
 });

@@ -19,7 +19,7 @@ import {
 	type Lane,
 	type SearchKind
 } from './lanes';
-import { bestIdOf, bySection, groupOrder, hitName, pickBest, slots } from './present';
+import { bestEarly, bestIdOf, bySection, groupOrder, hitName, slots } from './present';
 import { narrowerWords } from './results';
 import {
 	choicesOf,
@@ -140,8 +140,9 @@ export class SearchSession {
 	outside = $state('');
 	/** What the search of each kind reads, as the answers say it (`searched`, API 0.79.67). */
 	searched = $state<Partial<Record<SearchKind, Schema<'SearchedDTO'>>>>({});
-	/** The one hit above the groups, set once every answer is in (#52). With an API that names
-	 * the `best`, only that hit; else the best by score. */
+	/** The one hit above the groups, set once the lead lane (the fast one) is in and kept when
+	 * a slower lane comes (#52). With an API that names the `best`, only that hit; else the
+	 * best by score. Only where the lead lane names none does a slower lane still deliver it. */
 	best = $state<{ kind: SearchKind; hit: Hit } | null>(null);
 
 	readonly q = $derived(this.query.trim());
@@ -200,7 +201,20 @@ export class SearchSession {
 	);
 	/** Words of the query to try alone where it found nothing: the longer ones, at most three. */
 	readonly narrower = $derived(narrowerWords(this.q));
-	readonly bestComing = $derived(!this.best && !this.allIn && this.groups.length > 0);
+	/** The first lane in scope: its answer brings the Beste treffer. */
+	readonly lead = $derived(
+		this.inScope.find((l) => !!l.kinds.length) ?? { ...LANES[0], kinds: [] as SearchKind[] }
+	);
+	/** The lead lane has answered this query. */
+	readonly leadIn = $derived(
+		this.answered === this.q &&
+			this.lanes[this.lead.id].answer.term === this.q &&
+			!this.waiting[this.lead.id]
+	);
+	/** The place of the Beste treffer is held while it is still to come. */
+	readonly bestComing = $derived(
+		!this.best && !this.allIn && (this.groups.length > 0 || this.leadIn) && this.q.length >= 2
+	);
 	/** The kinds whose group says "laden…" while their lane waits. */
 	readonly loadingKinds = $derived(
 		new Set(
@@ -358,10 +372,10 @@ export class SearchSession {
 			untrack(() => this.ask(request));
 		});
 		// The one before stands while the next query is under way; a query too short for any
-		// answer clears it. Only once every answer is in, so the top does not change under the
-		// pointer.
+		// answer clears it. Set once the lead lane is in and kept when a slower lane comes, so the
+		// top does not change under the pointer.
 		$effect(() => {
-			if (this.allIn) this.best = this.#bestOf(this.groups);
+			if (this.leadIn) this.best = this.#bestOf(this.groups);
 			else if (this.groups.length === 0) this.best = null;
 		});
 		$effect(() => {
@@ -417,7 +431,12 @@ export class SearchSession {
 
 	/** The Beste treffer: the hit the API names, else (an older API) the best by score. */
 	#bestOf(groups: { kind: SearchKind; hits: Hit[] }[]): { kind: SearchKind; hit: Hit } | null {
-		return pickBest(groups, this.answers);
+		return bestEarly(
+			{ kinds: this.lead.kinds, answer: this.lanes[this.lead.id].answer },
+			groups,
+			this.answers,
+			this.allIn
+		);
 	}
 
 	/** Is the row the one a key now acts on? Not before a key, where nothing is preselected. */

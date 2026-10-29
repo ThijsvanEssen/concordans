@@ -14,14 +14,22 @@ async function search(page: Page, q: string) {
 	return results;
 }
 
-test('search lists its lanes and Enter opens the best result: art. 6:162 BW', async ({ page }) => {
+test('search lists its lanes and chooses the best result of the fast lane: the Wet conflictenrecht', async ({
+	page
+}) => {
 	const results = await search(page, 'onrechtmatige daad');
 	for (const lane of ['Wetten', 'Dossiers', 'Stemmingen'])
 		await expect(results.getByRole('group', { name: lane })).toBeVisible();
-	await expect(results.getByRole('option', { selected: true })).toContainText('6:162');
-	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
+	// The Beste treffer stands with the fast lane (names), the article of the slow text lane
+	// that comes later stands in its own group and does not take its place.
+	await expect(results.getByRole('option', { selected: true })).toContainText(
+		'Wet conflictenrecht onrechtmatige daad'
+	);
+	await expect(results.getByRole('option', { name: /6:162/ }).first()).toBeVisible();
+	await expect(results.getByRole('option', { selected: true })).toHaveAttribute(
+		'href',
+		'/wetten/BWBR0012408'
+	);
 });
 
 test('the period stands under the field before typing, as wide as it: nothing moves', async ({

@@ -489,7 +489,7 @@ export function bestIdOf(
 }
 
 /** The Beste treffer: the hit the API names, else (an older API) the best by score. */
-export function pickBest<G extends { kind: Collection; hits: Hit[] }>(
+function pickBest<G extends { kind: Collection; hits: Hit[] }>(
 	groups: G[],
 	answers: readonly BestAnswer[]
 ): { kind: G['kind']; hit: Hit } | null {
@@ -500,6 +500,26 @@ export function pickBest<G extends { kind: Collection; hits: Hit[] }>(
 		if (hit) return { kind: g.kind, hit };
 	}
 	return null;
+}
+
+/**
+ * The Beste treffer as soon as the lead lane (the fast one, or the first in scope) is in: its
+ * own pick, which a slower lane never replaces or moves. Only where the lead lane names none
+ * does a slower lane still deliver it, once every lane is in (`allIn`); until then none, and
+ * the place stays held. Pass the groups of every lane; the lead lane's are taken from them.
+ */
+export function bestEarly<G extends { kind: Collection; hits: Hit[] }>(
+	lead: { kinds: readonly Collection[]; answer: BestAnswer },
+	groups: G[],
+	answers: readonly BestAnswer[],
+	allIn: boolean
+): { kind: G['kind']; hit: Hit } | null {
+	const own = pickBest(
+		groups.filter((g) => lead.kinds.includes(g.kind)),
+		[lead.answer]
+	);
+	if (own) return own;
+	return allIn ? pickBest(groups, answers) : null;
 }
 
 /** The score from which a hit is the identifier asked for (an ECLI, a BWB id, a number). */
