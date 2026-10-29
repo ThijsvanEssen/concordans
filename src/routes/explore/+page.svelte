@@ -472,6 +472,13 @@
 					...(chainBasedOff ? (['structural'] as const) : [])
 				])
 	);
+	/**
+	 * What the drawing hides: with Noemt off the keten (chain.ts) already leaves out what only
+	 * names the law, so a line that names stays between two that are drawn anyway.
+	 */
+	const chainDrawHidden = $derived<ReadonlySet<LineKind>>(
+		lineageStart ? lineageOff : new Set([...chainHidden].filter((l) => l !== 'citation'))
+	);
 	let chainData = $state.raw<{
 		bwb: string;
 		validity: 'in_force' | 'all';
@@ -2260,7 +2267,7 @@
 				chosen={marked}
 				gap={chainGap}
 				{hiddenKinds}
-				hiddenLines={chainHidden}
+				hiddenLines={chainDrawHidden}
 				amending={chainModel?.amending.length ?? 0}
 				expired={chainData?.delegated?.expired_total
 					? {
