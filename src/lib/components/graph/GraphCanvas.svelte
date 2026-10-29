@@ -527,6 +527,7 @@
 			glyphs: glyphRects,
 			markedIds: new Set([markedId, focusContainerId].filter((id): id is string => !!id))
 		});
+		(window as any).__b41layout = layout; // B41-PROTO
 		const was = [...aloneAnchors].join();
 		aloneAnchors = layout.alone;
 		// An anchor without a hull is a bron now (or no longer): its name and its lines follow.
@@ -597,6 +598,7 @@
 	// to a bron that is hidden (the co-signers of a stuk outside the chosen years).
 	let strays = new Set<string>();
 	function recomputeStrays() {
+		(window as any).__b41 = { graph, latestContainerGroups, nodeGroupIds, renderer, latestFilters }; // B41-PROTO
 		const next = new Set<string>();
 		const endsOf = (id: string) => {
 			const ends: string[] = [];

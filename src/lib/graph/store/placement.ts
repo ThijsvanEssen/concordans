@@ -83,6 +83,14 @@ export function placeConnection(c: Connection): Placement {
 		if (target.drawn) return { place: 'line', meta: true, anchor: 'source' };
 		return { place: 'none' };
 	}
+	// A commissie leads a dossier (LED_BY, derived): a point with a line "geleid door", not a
+	// hull around the dossier's hull; three commissies would stack three rings around it (B41).
+	if (relation === 'LED_BY' && source.hull === 'dossier' && target.hull === 'committee') {
+		if (source.drawn && target.drawn) return { place: 'line', meta: true };
+		if (source.drawn) return { place: 'line', meta: true, anchor: 'target' };
+		if (target.drawn) return { place: 'line', meta: true, anchor: 'source' };
+		return { place: 'none' };
+	}
 	/** The first side, target before source, for which `test` holds with the other end drawn. */
 	const sideWhere = (test: (side: Side) => boolean) =>
 		SIDES.find((side) => end(other(side)).drawn && test(side));

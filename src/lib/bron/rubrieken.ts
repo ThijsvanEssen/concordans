@@ -35,7 +35,7 @@ const SORT_ROWS = [
 	['dossiers', 'kamerstukken', 'Dossiers', 'dossier'],
 	['stukken', 'kamerstukken', 'Stukken', 'stuk'],
 	['stemmingen', 'kamerstukken', 'Stemmingen', 'stemming'],
-	['activiteiten', 'kamerstukken', 'Activiteiten', 'activiteit'],
+	['activiteiten', 'parlement', 'Activiteiten', 'activiteit'], // B41-VARIANT
 	['toezeggingen', 'kamerstukken', 'Toezeggingen', 'toezegging'],
 	['kamerzaken', 'kamerstukken', 'Kamerzaken', 'Kamerzaak'],
 	['kamerleden', 'parlement', 'Kamerleden', 'kamerlid'],
