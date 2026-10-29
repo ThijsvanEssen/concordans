@@ -1,7 +1,7 @@
 import { votesSentence } from '$lib/votes/stemming';
 import { motionKindLabel } from '$lib/text/motion-kind';
 import { capitalize, joinAnd, truncate } from '$lib/text/words';
-import { decidedDate, holdDatesTogether, langeDatum } from '$lib/text/datum';
+import { decidedDate, holdDatesTogether } from '$lib/text/datum';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/ref';
 import type { Vorm } from '$lib/bron/vormen';
@@ -555,10 +555,9 @@ export function headlineOf(i: FeedItem): Headline {
 
 /** A judgment's day said as its decision day: "Hof Den Haag, beslist 13 juni 2024" (Thijs, 29 Oct). */
 function decidedOn(title: string, decided: string | null | undefined): string {
-	const day = langeDatum(decided);
-	return day && title.includes(` ${day}`)
-		? title.replace(` ${day}`, `, ${decidedDate(decided)}`)
-		: title;
+	const said = decidedDate(decided);
+	const day = said.slice(said.indexOf(' ') + 1);
+	return day && title.includes(` ${day}`) ? title.replace(` ${day}`, `, ${said}`) : title;
 }
 
 /** The line of one event alone, as a day of Actueel and the homepage write it. */
