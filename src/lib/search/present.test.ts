@@ -363,6 +363,28 @@ describe('a cabinet', () => {
 	});
 });
 
+describe('a ministry (API 0.80.22)', () => {
+	it('is named with its abbreviation, a former one with its last day', () => {
+		const jenv = hit({
+			collection: 'ministries',
+			key: 'jenv',
+			display_name: 'Ministerie van Justitie en Veiligheid',
+			extra: { abbreviation: 'JenV', to_date: null }
+		});
+		expect(presentHit(jenv, 'jenv')).toMatchObject({
+			title: 'Ministerie van Justitie en Veiligheid',
+			context: 'JenV'
+		});
+		const venj = hit({
+			collection: 'ministries',
+			key: 'venj',
+			display_name: 'Ministerie van Veiligheid en Justitie',
+			extra: { abbreviation: 'VenJ', to_date: '2017-10-25' }
+		});
+		expect(presentHit(venj, 'justitie').context).toBe('VenJ, tot 25\u00a0okt.\u00a02017');
+	});
+});
+
 describe('a toezegging', () => {
 	it('is named by its text, with its number and day', () => {
 		const tz = hit({

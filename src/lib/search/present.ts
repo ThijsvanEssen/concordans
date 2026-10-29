@@ -402,6 +402,15 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 				snippet: null
 			};
 		}
+		case 'ministries': {
+			// "Ministerie van Justitie en Veiligheid", "JenV"; a former one with its last day.
+			const to = korteDatum(extra(hit, 'to_date'));
+			return {
+				title: nameOf(hit),
+				context: [extra(hit, 'abbreviation'), to ? `tot ${to}` : ''].filter(Boolean).join(', '),
+				snippet: null
+			};
+		}
 	}
 	return { title: nameOf(hit), context: '', snippet: null };
 }
@@ -440,6 +449,7 @@ export function bySection(hits: Hit[]): Hit[] {
  */
 const TIE_ORDER: readonly Collection[] = [
 	'cabinets',
+	'ministries',
 	'commitments',
 	'factions',
 	'members',
