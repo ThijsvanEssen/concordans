@@ -14,6 +14,7 @@
 	import { getArticleText } from '$lib/api/articles';
 	import { ifExists } from '$lib/api/errors';
 	import { openHref } from '$lib/bron/href';
+	import { notHeld } from '$lib/text/coverage';
 	import { answer } from '$lib/keys/dispatch.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { afterTick } from '$lib/util/after-tick';
@@ -164,7 +165,7 @@
 	{/if}
 	<div class="lp-tekst" bind:this={body}>
 		<LoadState state={article.state} what="Het artikel" retry={article.retry} form="block">
-			{#snippet empty()}<p class="lp-leeg">Dit artikel staat niet in de gegevens.</p>{/snippet}
+			{#snippet empty()}<p class="lp-leeg">{notHeld('Dit artikel')}.</p>{/snippet}
 			{#snippet children(a)}
 				{#each a?.blocks ?? [] as b, i (i)}
 					{#if b.kind === 'kop'}
