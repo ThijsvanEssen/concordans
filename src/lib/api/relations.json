@@ -221,7 +221,8 @@
 				["instruments", "ministries"],
 				["dossiers", "ministries"],
 				["commitments", "ministries"]
-			]
+			],
+			"derived": [["dossiers", "committees"]]
 		},
 		{
 			"name": "MADE_IN",
