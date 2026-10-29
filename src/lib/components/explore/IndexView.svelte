@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sideScroll } from '$lib/actions/side-scroll';
+	import { centerChild, sideScroll } from '$lib/actions/side-scroll';
 	import { tick, untrack } from 'svelte';
 	// Index: browse one category at a time. Over the list a bar of filters (FilterBar), each
 	// option with the number of bronnen it holds under the other filters. A row says what
@@ -482,14 +482,19 @@
 		return source ? ekListSource(source) : null;
 	});
 
-	// On a phone the tab strip scrolls (wider, it wraps): the category on screen is scrolled into it,
-	// and an edge that hides tabs fades out (use:sideScroll).
+	// On a phone the tab strip scrolls (wider, it wraps): the category on screen is brought to the
+	// middle of it, on load and when it changes, and an edge that hides tabs fades out
+	// (use:sideScroll). Once the fonts are in the tabs are wider, so it centres again then.
 	let catbar = $state<HTMLElement | null>(null);
+	function centerActive() {
+		const on = catbar?.querySelector<HTMLElement>('.cat--on');
+		if (catbar && on) centerChild(catbar, on);
+	}
 	$effect(() => {
 		void category;
-		catbar
-			?.querySelector('.cat--on')
-			?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+		if (!catbar) return;
+		centerActive();
+		void document.fonts?.ready.then(centerActive);
 	});
 
 	// ── Open row, Esc ───────────────────────────────────────────────────────
@@ -800,6 +805,15 @@
 		flex-shrink: 0;
 		overflow-x: auto;
 		scrollbar-width: thin;
+		/* A tab reached with the keyboard comes clear of the fade, not under it. */
+		scroll-padding-inline: var(--s-7);
+	}
+	/* The fade is wide here: a tab that is half in view reads as one that goes on. */
+	.catbar[data-more-left] {
+		--fade-left: var(--s-7);
+	}
+	.catbar[data-more-right] {
+		--fade-right: var(--s-7);
 	}
 	.cat {
 		display: inline-flex;
