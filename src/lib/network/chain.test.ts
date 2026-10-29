@@ -224,7 +224,7 @@ describe('the keten of a law', () => {
 			'law',
 			'article',
 			'amvb',
-			'besluitArticle',
+			'decreeArticle',
 			'ministerial'
 		]);
 		expect(k.layers[1].nodes.map((a) => a.short)).toEqual(['art. 3 Cbw']);

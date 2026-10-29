@@ -26,7 +26,7 @@ export type LayerId =
 	| 'basis'
 	| 'law'
 	| 'article'
-	| 'besluitArticle'
+	| 'decreeArticle'
 	| 'implementation'
 	| 'statute'
 	| 'amvb'
@@ -43,7 +43,7 @@ const LAYER_LABEL: Record<LayerId, string> = {
 	statute: 'Wet',
 	kb: 'Koninklijk besluit',
 	article: 'Artikel',
-	besluitArticle: 'Artikel besluit',
+	decreeArticle: 'Artikel besluit',
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
 	policy: 'Beleidsregel',
@@ -348,7 +348,7 @@ export function chain(
 	// under the Cyberbeveiligingsbesluit), each tied to what it is issued under.
 	const byId = new Map<string, { node: ChainNode; articles: BasisArticle[]; home: string }>();
 	/** The regulations (AMvB, KB) whose own articles a regulation under them names. */
-	const besluitHomes = new Set<string>();
+	const decreeHomes = new Set<string>();
 	/** How an article of `home` is cited: its law's abbreviation behind it. */
 	const abbreviationOf = (home: string) =>
 		home === law.id
@@ -410,7 +410,7 @@ export function chain(
 			// Under a wet that stands beside the law, a regulation hangs from the article of that
 			// wet that carries it, where the data says so; else from the wet itself.
 			const carried = sub.articles;
-			if (layerOf(item.kind) !== 'statute' && carried.length) besluitHomes.add(item.instrument.id);
+			if (layerOf(item.kind) !== 'statute' && carried.length) decreeHomes.add(item.instrument.id);
 			take(
 				sub,
 				carried.length
@@ -444,7 +444,7 @@ export function chain(
 	const perLayer = new Map<LayerId, ChainNode[]>();
 	const articles = new Map<string, ChainNode>();
 	/** The articles of an AMvB that a regulation under it rests on: a layer of their own. */
-	const besluitArticles = new Map<string, ChainNode>();
+	const decreeArticles = new Map<string, ChainNode>();
 	let place = articleIds.length;
 	const statutes: ChainNode[] = [];
 	for (const id of ['statute' as const, ...REGULATION_LAYERS]) {
@@ -465,7 +465,7 @@ export function chain(
 			for (const a of mine) {
 				// A wet beside the law names an article of the law: a line from the wet to it.
 				const noted = id === 'statute' ? n.parents.filter((p) => p.id === a.id) : [];
-				const target = besluitHomes.has(home) ? besluitArticles : articles;
+				const target = decreeHomes.has(home) ? decreeArticles : articles;
 				const known = target.get(a.id);
 				if (known) known.parents.push(...noted.map((p) => ({ ...p, id: n.id })));
 				else
@@ -512,23 +512,23 @@ export function chain(
 			)
 		});
 	// The articles of an AMvB stand between it and the regulations that rest on them.
-	let besluitDone = !besluitArticles.size;
-	const pushBesluitArticles = () => {
-		if (besluitDone) return;
-		besluitDone = true;
+	let decreeDone = !decreeArticles.size;
+	const pushDecreeArticles = () => {
+		if (decreeDone) return;
+		decreeDone = true;
 		layers.push({
-			id: 'besluitArticle',
-			label: LAYER_LABEL.besluitArticle,
-			nodes: [...besluitArticles.values()].sort(
+			id: 'decreeArticle',
+			label: LAYER_LABEL.decreeArticle,
+			nodes: [...decreeArticles.values()].sort(
 				(a, b) => NL.compare(a.home ?? '', b.home ?? '') || NL.compare(a.short, b.short)
 			)
 		});
 	};
 	for (const id of REGULATION_LAYERS) {
-		if (id === 'ministerial' || id === 'policy' || id === 'other') pushBesluitArticles();
+		if (id === 'ministerial' || id === 'policy' || id === 'other') pushDecreeArticles();
 		const list = perLayer.get(id);
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}
-	pushBesluitArticles();
+	pushDecreeArticles();
 	return { layers, rest, more, total: nodes.length, amending, missing };
 }

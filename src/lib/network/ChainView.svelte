@@ -31,8 +31,8 @@
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import { sideScroll } from '$lib/actions/side-scroll';
-	import { HOVER_MS, LEAVE_MS } from '$lib/actions/top-layer';
-	import GrondslagKaart from '$lib/network/GrondslagKaart.svelte';
+	import { HoverCard } from '$lib/actions/hover-card.svelte';
+	import BasisGlance from '$lib/network/BasisGlance.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
@@ -101,7 +101,7 @@
 			if (l.id === 'law' || l.nodes.some((n) => n.id === start)) return true;
 			const c = l.nodes[0]?.collection;
 			const kind =
-				l.id === 'article' || l.id === 'besluitArticle'
+				l.id === 'article' || l.id === 'decreeArticle'
 					? 'artikelen'
 					: c
 						? sortOf(c, '', null)
@@ -390,32 +390,22 @@
 		if (names.length) out.push(`Noemt ${names.join(', ')}`);
 		return out;
 	};
-	let card = $state<{
+	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
+	const hover = new HoverCard(() => false);
+	let target = $state<{
 		anchor: HTMLElement;
 		kicker: string;
 		title: string;
 		lines: string[];
 	} | null>(null);
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	/** The glance of a regulation: after a rest of the pointer, at once on the keyboard. */
-	const glance = (k: ChainNode, layer: ChainLayer, anchor: Element, delay = HOVER_MS) => {
-		clearTimeout(timer);
-		if (k.collection === 'articles' || layer.id === 'law') return;
-		const lines = grondslagOf(k);
-		if (!lines.length) return;
-		const show = () =>
-			(card = { anchor: anchor as HTMLElement, kicker: layer.label, title: k.name, lines });
-		if (delay) timer = setTimeout(show, delay);
-		else show();
+	/** The glance of a regulation: after a rest of the pointer or the focus, never for a finger. */
+	const glance = (k: ChainNode, layer: ChainLayer, anchor: Element) => {
+		const lines = k.collection === 'articles' || layer.id === 'law' ? [] : grondslagOf(k);
+		if (!lines.length) return hover.close();
+		target = { anchor: anchor as HTMLElement, kicker: layer.label, title: k.name, lines };
+		hover.enter();
 	};
-	const leave = () => {
-		clearTimeout(timer);
-		card = null;
-	};
-	const leaveSoon = () => {
-		clearTimeout(timer);
-		timer = setTimeout(leave, LEAVE_MS);
-	};
+	const card = $derived(hover.open ? target : null);
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
 	const panned = (el: HTMLElement) => {
 		const set = () => el.style.setProperty('--sx', `${el.scrollLeft}px`);
@@ -456,7 +446,7 @@
 				l.id !== 'basis' &&
 				l.id !== 'eu' &&
 				l.id !== 'article' &&
-				l.id !== 'besluitArticle'
+				l.id !== 'decreeArticle'
 		)
 	);
 </script>
@@ -581,11 +571,17 @@
 						aria-label={k.name}
 						aria-pressed={chosen === k.id}
 						onclick={() => onChoose(k)}
-						onkeydown={(e) => press(e, () => onChoose(k))}
-						onpointerenter={(e) => e.pointerType === 'mouse' && glance(k, layer, e.currentTarget)}
-						onpointerleave={() => leaveSoon()}
-						onfocus={(e) => glance(k, layer, e.currentTarget, 0)}
-						onblur={() => leave()}
+						onkeydown={(e) => {
+							hover.keys();
+							press(e, () => onChoose(k));
+						}}
+						onpointerenter={(e) => {
+							hover.pointer(e.pointerType);
+							glance(k, layer, e.currentTarget);
+						}}
+						onpointerleave={() => hover.leave()}
+						onfocus={(e) => glance(k, layer, e.currentTarget)}
+						onblur={() => hover.leave()}
 					>
 						{#if k.expired || isArticle || layer.id === 'law'}<title
 								>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title
@@ -689,13 +685,13 @@
 		</svg>
 	</div>
 	{#if card}
-		<GrondslagKaart
+		<BasisGlance
 			anchor={card.anchor}
 			id="keten-kaart"
 			kicker={card.kicker}
 			title={card.title}
 			lines={card.lines}
-			onclose={leave}
+			onclose={() => hover.close()}
 		/>
 	{/if}
 	<!-- On a wide screen the regulations a layer does not draw, listed under the drawing once

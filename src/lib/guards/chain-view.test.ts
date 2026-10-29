@@ -19,7 +19,7 @@ describe('Keten', () => {
 	});
 	it('lets the keyboard go layer by layer, each layer’s Alle after its bronnen', () => {
 		const svg = chain.slice(chain.indexOf('<svg'), chain.indexOf('</svg>'));
-		expect(svg.indexOf('class="others"')).toBeGreaterThan(svg.lastIndexOf('class="node"'));
+		expect(svg.indexOf('class="others')).toBeGreaterThan(svg.lastIndexOf('class="node"'));
 	});
 	it('shows Alle on a phone as a framed button, a finger’s height', () => {
 		expect(chain).toMatch(/class="btn alle"/);
