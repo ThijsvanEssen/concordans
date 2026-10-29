@@ -38,6 +38,7 @@
 		clusterLabel,
 		clustersOf,
 		tussenClustersOf,
+		edgesToClusters,
 		clusterBinding,
 		isClusterId,
 		type Cluster
@@ -824,6 +825,17 @@
 		drawNodes(toDraw);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
+			// A line to a bron in a folded cluster ends at the cluster: one line, rand to rand.
+			...edgesToClusters(
+				rawEdges.filter((e) => isDrawn(e.relation)),
+				clusters,
+				new Map(clusters.map((c) => [c.id, focus ? [focus] : []]))
+			).map((e) => ({
+				...e,
+				relation: e.relation as Relation,
+				label: '',
+				directed: true as const
+			})),
 			// What belongs to a wet stands in its disc: no Deel van-line from its articles' cluster.
 			...clusters.flatMap((c) =>
 				c.id.startsWith('cluster:articles@')

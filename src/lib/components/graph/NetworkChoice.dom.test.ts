@@ -51,6 +51,7 @@ describe('NetworkChoice', () => {
 		const { container } = render(NetworkChoice, {
 			...base,
 			view: 'omgeving',
+			depth: 2,
 			reach: { depth: 2, capped: true, cap: 150 } as never
 		});
 		expect(screen.getByRole('note').textContent).toBe('Maximaal 150 bronnen getoond.');
@@ -61,6 +62,15 @@ describe('NetworkChoice', () => {
 		expect((screen.getByRole('button', { name: '2 stappen' }) as HTMLButtonElement).disabled).toBe(
 			false
 		);
+	});
+	it('keeps the line away at one step, where the cap is no reason to see', () => {
+		render(NetworkChoice, {
+			...base,
+			view: 'omgeving',
+			depth: 1,
+			reach: { depth: 1, capped: true, cap: 150 } as never
+		});
+		expect(screen.queryByRole('note')).toBeNull();
 	});
 	it('says nothing when the steps are free', () => {
 		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true });

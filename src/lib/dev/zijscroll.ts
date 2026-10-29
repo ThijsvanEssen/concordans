@@ -1,10 +1,7 @@
-// While developing: what scrolls sideways on a narrow screen, as a warning in the console.
-// Nothing may, on a phone: a list, a reader and a page fit their width. What pans on purpose
+// While developing: what scrolls sideways, as a warning in the console.
+// Nothing may, on a phone or beside a column of a netwerk: a list, a reader and a page fit their width. What pans on purpose
 // (the categories of Bladeren, the cabinets in time, the line of tekstversies) says so with
 // `data-zijscroll`.
-
-/** Up to this width a screen counts as narrow. */
-const SMAL = 640;
 
 /**
  * The page, a scroll area wider than it is, or an element that reaches past the right edge of
@@ -18,7 +15,8 @@ export function zijscroll(root: Document = document): string[] {
 	const page = root.documentElement.scrollWidth - width;
 	if (page > 1) out.push(`pagina +${page}px`);
 	for (const e of root.body.querySelectorAll<HTMLElement>('*')) {
-		if (e.closest('[data-zijscroll]')) continue;
+		// Visually hidden for a screen reader (the keyboard's list of the canvas) is not seen to reach.
+		if (e.closest('[data-zijscroll], .sr-only')) continue;
 		const { overflowX } = getComputedStyle(e);
 		if (
 			e.clientWidth > 0 &&
@@ -46,10 +44,9 @@ export function teHoog(root: Document = document): number {
 	return over > 1 ? over : 0;
 }
 
-/** After a page has loaded its data: a warning when something on a narrow screen scrolls sideways. */
+/** After a page has loaded its data: a warning when something scrolls sideways, at any width. */
 export function meldZijscroll(path: string, wait = 4000) {
 	setTimeout(() => {
-		if (window.innerWidth > SMAL) return;
 		const found = zijscroll();
 		if (found.length)
 			console.warn(`Zijscroll op ${window.innerWidth}px (${path}): ${found.join(', ')}`);

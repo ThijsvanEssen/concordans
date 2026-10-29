@@ -5,6 +5,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { openSheet } from '../support/sheet';
 import { netwerkKnop } from '../support/navigation';
+import { overflowX } from '../support/rules';
 
 const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
 /** The filters of the strip, behind Filter on a narrow screen. */
@@ -200,4 +201,16 @@ test('Verband of four in any order shows the same, and a bron added keeps its ve
 	expect(omgekeerd).toEqual(vier);
 	const vijf = await verband(page, [...VIER, R], touch);
 	for (const t of vier) expect(vijf).toContain(t);
+});
+
+// Two chosen wetten: the left column fits its width at 1440 and at 375 (Aantal stappen was 6 px
+// too wide), and the lines to a folded cluster of articles are drawn (Cbb to Cbw).
+test('a netwerk of two wetten reaches past neither column nor screen', async ({ page }) => {
+	await page.goto(
+		'/wetten/BWBR0052872?mode=netwerk&netwerk=instruments/bwbr0052875,instruments/bwbr0052872'
+	);
+	await openSheet(page);
+	await expect(page.getByRole('group', { name: 'Aantal stappen' })).toBeVisible();
+	await page.waitForLoadState('networkidle');
+	expect(await overflowX(page), 'reaches past its width').toEqual([]);
 });

@@ -5,6 +5,7 @@ import {
 	clustersOf,
 	clusterBinding,
 	clusterHeading,
+	edgesToClusters,
 	TUSSEN_MAX_LOOSE,
 	tussenClustersOf
 } from './cluster';
@@ -139,5 +140,39 @@ describe('tussenClustersOf', () => {
 		expect(clusterBinding(c, ['Art. 273f Sr', 'HR 24\u00a0november\u00a02015'])).toBe(
 			'Verbonden met Art. 273f Sr en HR 24\u00a0november\u00a02015'
 		);
+	});
+});
+
+describe('edgesToClusters', () => {
+	const cl = { id: 'cluster:articles@cbw', members: ['articles/a1', 'articles/a2'] };
+	const e = (source: string, target: string, relation = 'BASED_ON') => ({
+		id: `${source}>${target}`,
+		source,
+		target,
+		relation
+	});
+
+	it('leads a line to a bron in a cluster to the cluster, once', () => {
+		const out = edgesToClusters(
+			[e('instruments/cbb', 'articles/a1'), e('instruments/cbb', 'articles/a2'), e('x', 'y')],
+			[cl]
+		);
+		expect(out).toEqual([
+			{
+				id: 'via:instruments/cbb~cluster:articles@cbw',
+				source: 'instruments/cbb',
+				target: cl.id,
+				relation: 'BASED_ON'
+			}
+		]);
+	});
+
+	it('drops a line inside the cluster and one to the bron it hangs on', () => {
+		const out = edgesToClusters(
+			[e('articles/a1', 'articles/a2'), e('articles/a1', 'instruments/cbw', 'PART_OF')],
+			[cl],
+			new Map([[cl.id, ['instruments/cbw']]])
+		);
+		expect(out).toEqual([]);
 	});
 });
