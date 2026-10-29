@@ -43,7 +43,7 @@ The API's names are the code's names: collections, relations, fields. Dutch appe
 
 | View     | URL                  | Shows                                                                                                                     |
 | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Tekst    | a bron's address     | The reader of any bron, Verbonden beside it; Netwerk tonen draws its network in Verbonden (`?toon=netwerk`)               |
+| Tekst    | a bron's address     | The reader of any bron, Verbonden beside it; Verbonden draws its network above its soorten                                |
 | Netwerk  | `?mode=netwerk`      | The werkplek (button Netwerk): the canvas without a reader; without a bron always; `?kies` the bron marked, its card open |
 | Bladeren | `?mode=index&kind=…` | `IndexView`: one category with filters, defined in `index/lists`; without `kind`, `IndexOverzicht` lists them all         |
 

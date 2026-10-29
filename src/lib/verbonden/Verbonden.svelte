@@ -77,8 +77,7 @@
 		onReloadGroup,
 		onMeer,
 		onAlles,
-		showNetwork,
-		onShowNetwork,
+		tekst = false,
 		networkHref,
 		networkName
 	}: {
@@ -102,11 +101,10 @@
 		onMeer?: (groupId: string) => void | Promise<void>;
 		/** Every row, before a copy or an export. */
 		onAlles?: () => Promise<void>;
-		/** In Tekst: whether the network is drawn above the groups (Netwerk tonen, besluit 32). */
-		showNetwork?: boolean;
-		/** Netwerk tonen or verbergen; without it the panel has no such button (on the canvas). */
-		onShowNetwork?: (on: boolean) => void;
-		/** The werkplek with this bron: Open in netwerk, under the drawing. */
+		/** In Tekst: a column of the page that opens on the soorten, with the network drawn above
+		 *  them (Thijs, 29 Oct: open from the start, no Netwerk tonen). */
+		tekst?: boolean;
+		/** The werkplek with this bron: Open in netwerk, a button in the head beside Filter. */
 		networkHref?: string;
 		/** The name of the bron in the middle of the network, its citeertitel. */
 		networkName?: string;
@@ -136,7 +134,7 @@
 	// reader scrolls for themselves.
 	let announced = false;
 	$effect(() => {
-		if (announced || !onShowNetwork || !root || groepen.length === 0) return;
+		if (announced || !tekst || !root || groepen.length === 0) return;
 		announced = true;
 		if (!page.url.searchParams.get('bronnen') || !matchMedia('(max-width: 768px)').matches) return;
 		const toVerbonden = () => root?.scrollIntoView({ block: 'start' });
@@ -155,7 +153,7 @@
 	/** A group opened and in view: from the network, or "Bekijk in Verbonden". */
 	function showGroup(id: string) {
 		const kind = kinds.find((k) => k.groups.some((g) => g.id === id))?.id;
-		if (onShowNetwork && kind) openKind(kind);
+		if (tekst && kind) openKind(kind);
 		expanded = new Set([...expanded, id]);
 		// Once its rows are drawn: a smooth scroll is cut off while they render.
 		afterTick(() =>
@@ -259,7 +257,7 @@
 	 *  say it alike (T8: 4.700 over Alle 4.701). Null where a filter or a cut-off group says otherwise. */
 	const alleVerbindingen = $derived.by(() => {
 		// The drawn network counts what is drawn (its legend), so its heading does too.
-		if (showNetwork || !vast || !verbonden.buckets || filtering || isAtLeast(total)) return null;
+		if (tekst || !vast || !verbonden.buckets || filtering || isAtLeast(total)) return null;
 		const api = [...verbonden.buckets.values()].reduce((sum, n) => sum + n, 0);
 		return Math.max(api, totalCount(vast));
 	});
@@ -276,7 +274,7 @@
 		openKinds = new Set();
 	});
 	const filtering = $derived(Object.values(filterParams(filter)).some((v) => v !== null));
-	const overview = $derived(!!onShowNetwork && !filtering);
+	const overview = $derived(tekst && !filtering);
 	/** The heads to come: per soort in the overview, as they stay once the rows are in. */
 	const pendingHeads = $derived(
 		overview ? previewPerKind(verbonden.preview ?? []) : (verbonden.preview ?? [])
@@ -373,10 +371,10 @@
 		return !!citingTotal && (isLaw ? bwb : bwb && number) && !parts;
 	});
 
-	// The network on request: the soorten as the summary shows them, each with its count, so
-	// the legend's total and the heading's are one sum.
+	// The network above the soorten: the soorten as the summary shows them, each with its count,
+	// so the legend's total and the heading's are one sum.
 	const sketchGroups = $derived<SketchGroup[]>(
-		showNetwork
+		tekst
 			? kinds.map((k) => ({
 					id: k.id,
 					name: k.label,
@@ -409,7 +407,7 @@
 		return () => query.removeEventListener('change', update);
 	});
 	const sketched = $derived(
-		showNetwork
+		tekst
 			? drawSketch(
 					sketchGroups,
 					centerName,
@@ -487,24 +485,19 @@
 	{/if}
 {/snippet}
 
-<aside
-	class="verbonden"
-	class:verbonden--tekst={!!onShowNetwork}
-	aria-label="Verbonden"
-	bind:this={root}
->
+<aside class="verbonden" class:verbonden--tekst={tekst} aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
-		{#if onShowNetwork && !empty}
-			<button
-				type="button"
-				class="btn head__netwerk"
-				aria-pressed={!!showNetwork}
-				onclick={() => onShowNetwork(!showNetwork)}
-				><Picto naam="netwerk-o" size={13} />{showNetwork
-					? 'Netwerk verbergen'
-					: 'Netwerk tonen'}</button
-			>
+		<!-- At the right of the heading: Filter, and the werkplek with this bron (Thijs, 29 Oct). -->
+		{#if !empty}
+			<span class="head__acties">
+				<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
+				{#if tekst}
+					<a class="btn" href={networkHref ?? '/explore'}
+						><Picto naam="netwerk-o" size={13} />Open in netwerk</a
+					>
+				{/if}
+			</span>
 		{/if}
 		<!-- A bron without verbindingen has no count: its one line says so below (A53), not a
 		     sentence of explanation (R7, UX-toets 0.79.43). -->
@@ -529,12 +522,6 @@
 			>
 		{/if}
 	</div>
-	<!-- The choose-line of the panel (docs/bediening.md): how grouped, the filter. No menu of
-	     the bronnen: the groups below are the kinds chosen, and the presets and kinds are in
-	     the filter (Thijs, 11 Oct). -->
-	{#if !empty}<div class="regel">
-			<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
-		</div>{/if}
 
 	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
 		{#if sketched && (sketched.singles.length > 0 || sketched.clusters.length > 0)}
@@ -549,8 +536,6 @@
 			{#if schetsOpen}
 				<SchetsKaart row={schetsOpen.row} {selection} {onAddToNetwerk} {inNetwerk} />
 			{/if}
-			<!-- The werkplek with this bron: what the Netwerk button of the bar does from here. -->
-			<p class="groot"><TekstLink href={networkHref ?? '/explore'}>Open in netwerk</TekstLink></p>
 		{/if}
 		<!-- The soorten once their set is in, each in its place in their order: before, the heads
 		     to come as blank rows, so no soort comes in above another and pushes it (UX-toets
@@ -752,45 +737,21 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
+	/* The heading, Filter and Open in netwerk at its right, the count on the line under it;
+	   a rule under all of it (docs/bediening.md). */
 	.head {
 		display: flex;
 		align-items: baseline;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-2);
-		padding: var(--s-4) var(--s-4) 0;
-	}
-	/* The choose-line: one height (24 px), one baseline, under the heading. */
-	.regel {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0 var(--s-4);
-		padding: var(--s-1) var(--s-4) var(--s-2);
+		padding: var(--s-4) var(--s-4) var(--s-2);
 		border-bottom: 1px solid var(--rule);
 	}
-	/* Under the sketch, at the right, as Alles in Actueel. */
-	@media (max-width: 768px) {
-		.groot :global(.tekstlink) {
-			display: inline-flex;
-			align-items: center;
-			min-height: var(--veld-h-raak);
-		}
-	}
-	.groot {
+	.head__acties {
 		display: flex;
-		justify-content: flex-end;
-		margin: 0 0 var(--s-3);
-		font-size: var(--t-meta);
-	}
-	/* Netwerk tonen at the right of the heading; the count on the line under it. */
-	.head__netwerk {
+		flex-wrap: wrap;
+		gap: var(--s-2);
 		margin-left: auto;
-	}
-	/* A finger's 44 px on a touch screen and below 768. */
-	@media (pointer: coarse), (max-width: 768px) {
-		.head__netwerk {
-			min-height: var(--veld-h-raak);
-		}
 	}
 	/* In Tekst Verbonden is a column of the page, as the mockups V1 lay it out: a rule at its left
 	   as long as what it holds, 32 px to its words, its heading at the size of a section, and
@@ -801,14 +762,13 @@
 		border-left: 1px solid var(--rule);
 	}
 	.verbonden--tekst .head {
-		padding: 0;
+		padding: 0 0 var(--s-2);
 		margin-bottom: var(--s-4);
 	}
 	.verbonden--tekst .head__title {
 		font-size: var(--t-h3);
 		line-height: var(--lh-snug);
 	}
-	.verbonden--tekst .regel,
 	.verbonden--tekst .note,
 	.verbonden--tekst .hidden {
 		padding-inline: 0;

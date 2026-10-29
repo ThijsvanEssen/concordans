@@ -1,9 +1,9 @@
 <script lang="ts">
-	// The network of the bron in Verbonden, on request (Netwerk tonen, besluit 32): the bron in
+	// The network of the bron in Verbonden, above its soorten (besluit 32): the bron in
 	// the middle, each verbinding a line. A bron on its own opens in place under the drawing, its
 	// row of Verbonden, the bron one step further (besluit 39); a group (a count in a circle)
 	// opens its group in the panel below. The legend is one line that counts what is drawn
-	// (besluit 29.3). The way to the werkplek is the link Open in netwerk under it.
+	// (besluit 29.3). The way to the werkplek is Open in netwerk in the head of Verbonden.
 	import { VORMEN } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';

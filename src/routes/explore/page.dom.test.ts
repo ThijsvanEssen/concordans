@@ -183,21 +183,11 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.GraphView.compact).toBeUndefined();
 	});
 
-	it('draws the network in Verbonden with ?toon=netwerk; Netwerk tonen and verbergen are steps', async () => {
+	it('gives Verbonden in Tekst its network from the start, without a step in the address', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
-		expect(seen.Verbonden.showNetwork).toBe(false);
-		(seen.Verbonden.onShowNetwork as (on: boolean) => void)(true);
-		await settle();
-		expect(param('toon')).toBe('netwerk');
-		expect(seen.Verbonden.showNetwork).toBe(true);
+		expect(seen.Verbonden.tekst).toBe(true);
+		expect(seen.Verbonden.onShowNetwork).toBeUndefined();
 		expect(view(container)).toBe('read');
-		(seen.Verbonden.onShowNetwork as (on: boolean) => void)(false);
-		await settle();
-		expect(param('toon')).toBeNull();
-		expect(history().entries).toHaveLength(3);
-		back();
-		await settle();
-		expect(seen.Verbonden.showNetwork).toBe(true);
 	});
 
 	it('shows all verbindingen as a table with ?tabel=1, also for a bron without a text', async () => {

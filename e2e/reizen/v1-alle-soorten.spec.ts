@@ -1,6 +1,6 @@
 // Besluit 32 for every kind of bron with a page (A159): it opens in Tekst at its bare address,
 // Verbonden is the summary per soort (the count, at most three rows a group), the network is
-// drawn on request (Netwerk tonen), and on a phone the text and Verbonden are two tabs.
+// drawn in Verbonden from the start, and on a phone the text and Verbonden are two tabs.
 import { SOORTEN } from '../support/soorten';
 import { expect, test } from '../support/test';
 import { naarVerbonden } from '../support/navigation';
@@ -41,9 +41,7 @@ for (const [soort, pad] of SOORTEN) {
 			expect(paneel!.x, 'Verbonden beside the text').toBeGreaterThan(titel!.x);
 		}
 
-		// On request: Netwerk tonen draws it in Verbonden, one step.
-		await verbonden.getByRole('button', { name: 'Netwerk tonen' }).click();
-		await expect(page).toHaveURL(/toon=netwerk/);
+		// Verbonden draws the network from the start, no step.
 		await expect(page.getByTestId('network-sketch')).toBeVisible();
 		await expect(page.locator('canvas')).toHaveCount(0);
 	});

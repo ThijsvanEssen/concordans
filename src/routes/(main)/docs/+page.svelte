@@ -46,7 +46,7 @@
 						uitspraak onder het artikel, bij de overweging die ernaar verwijst.
 					</li>
 					<li>
-						Kies <strong>Netwerk tonen</strong> in Verbonden: dezelfde verbindingen staan als kaart.
+						Verbonden toont dezelfde verbindingen ook als kaart.
 						<strong>Open in netwerk</strong> maakt de kaart groot; klik een bron om haar te markeren en
 						ga daarna verder.
 					</li>

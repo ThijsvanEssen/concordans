@@ -1,4 +1,4 @@
-// The network of one bron as Verbonden draws it on request (Netwerk tonen, besluit 32): the
+// The network of one bron as Verbonden draws it above its soorten (besluit 32): the
 // bron in the middle, its verbindingen around it. Up to SKETCH_LIMIT bronnen each stands on
 // its own; beyond that a group stands as one bron with its count, per instantie where the
 // API counts them (a judgment's court), so the drawing stays readable. Pure: the layout in
