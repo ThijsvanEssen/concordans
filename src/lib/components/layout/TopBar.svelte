@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { modKey } from '$lib/util/platform';
 	import { answer } from '$lib/keys/dispatch.svelte';
+	import { TOUCH_ONLY } from '$lib/util/touch';
 	import { onMount } from 'svelte';
 	import Wordmark from './Wordmark.svelte';
 	import MineMenu from './MineMenu.svelte';
@@ -23,7 +24,16 @@
 	$effect(() => sign.visited($page.url.pathname));
 
 	let platformKnown = $state(false);
-	onMount(() => (platformKnown = true));
+	// No key hint on a device without a keyboard.
+	let touch = $state(false);
+	onMount(() => {
+		platformKnown = true;
+		const mq = window.matchMedia(TOUCH_ONLY);
+		const sync = () => (touch = mq.matches);
+		sync();
+		mq.addEventListener('change', sync);
+		return () => mq.removeEventListener('change', sync);
+	});
 
 	// Ctrl K and Alt / (the register, lib/keys): the search from any page.
 	onMount(() => answer('search', () => onSearchOpen?.()));
@@ -75,9 +85,11 @@
 				</svg>
 				<span class="search-trigger-label">Zoek een wet, uitspraak of dossier</span>
 				<!-- The server cannot know the platform: hidden, at the width of the widest, until mounted. -->
-				<span class="kbd" style:visibility={platformKnown ? 'visible' : 'hidden'}
-					>{platformKnown ? modKey : 'Ctrl'} K</span
-				>
+				{#if !touch}
+					<span class="kbd" style:visibility={platformKnown ? 'visible' : 'hidden'}
+						>{platformKnown ? modKey : 'Ctrl'} K</span
+					>
+				{/if}
 			</button>
 		{/if}
 		<div class="netwerk-slot"><NetworkButton /></div>

@@ -1,15 +1,11 @@
-// The two layers of a bron in the read view, in one list: the tabs on a phone and the keys
-// 1 and 2.
+// The two layers of a bron in the read view, in one list: the tabs on a phone.
 
 export const PANELS = [
-	{ id: 'tekst', label: 'Tekst', key: '1' },
-	{ id: 'verbonden', label: 'Verbonden', key: '2' }
+	{ id: 'tekst', label: 'Tekst' },
+	{ id: 'verbonden', label: 'Verbonden' }
 ] as const;
 
 export type Panel = (typeof PANELS)[number]['id'];
-
-/** The panel a key takes; undefined for any other key. */
-export const panelOfKey = (key: string): Panel | undefined => PANELS.find((p) => p.key === key)?.id;
 
 /**
  * Whether Verbonden is in view and so loads (Thijs, 9 Oct: "alles zo lazy mogelijk"): beside

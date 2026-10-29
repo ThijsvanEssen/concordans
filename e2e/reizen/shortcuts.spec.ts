@@ -1,4 +1,4 @@
-// Shortcuts (research 29 Oct): Alt L, Alt 1, Alt 2, Alt J and Alt K do nothing while a Blad is
+// Shortcuts (research 29 Oct): Alt L, Alt J and Alt K do nothing while a Blad is
 // open (the plain L in a field or a list box is only a letter), J and K also go through Verbonden's overview, and after L
 // the focus is on something, not on the body.
 import { expect, test } from '../support/test';
@@ -20,7 +20,6 @@ test('L with a Blad open leaves the Blad standing', async ({ page }) => {
 	await dialog.getByRole('button', { name: 'Sluiten' }).focus();
 	const url = page.url();
 	await page.keyboard.press('Alt+KeyL');
-	await page.keyboard.press('Alt+Digit1');
 	await page.keyboard.press('Alt+KeyJ');
 	await expect(dialog).toBeVisible();
 	expect(page.url()).toBe(url);

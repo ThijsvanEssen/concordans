@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PANELS, panelOfKey, verbondenInView, type Panel } from './panels';
+import { PANELS, verbondenInView, type Panel } from './panels';
 
 describe('the panels', () => {
-	it('are Tekst and Verbonden, under the keys 1 and 2', () => {
-		expect(PANELS.map((p) => [p.key, p.label])).toEqual([
-			['1', 'Tekst'],
-			['2', 'Verbonden']
-		]);
-		expect(PANELS.map((p) => panelOfKey(p.key))).toEqual(PANELS.map((p) => p.id));
-		expect(panelOfKey('3')).toBeUndefined();
+	it('are Tekst and Verbonden', () => {
+		expect(PANELS.map((p) => p.label)).toEqual(['Tekst', 'Verbonden']);
 	});
 });
 
