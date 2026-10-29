@@ -196,6 +196,28 @@ test('BW 7: a line to a layer further down runs no long U through the layer betw
 	for (const l of lines) {
 		const dx = l.pts.slice(1).reduce((sum, q, i) => sum + Math.abs(q.x - l.pts[i].x), 0);
 		const net = Math.abs(l.pts.at(-1)!.x - l.pts[0].x);
-		expect(dx - net, l.d).toBeLessThan(100);
+		// A layer packed with names between forces a stem beside it (no line through a name comes
+		// first), the wider the more the drawing shows: up to 220.
+		expect(dx - net, l.d).toBeLessThan(220);
 	}
+});
+
+test('Cbw: a regeling rests on the articles of the Cyberbeveiligingsbesluit, shown on hover; the rows pan sideways', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0052872?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	// An article carries the abbreviation of its law, and the AMvB has a layer of articles.
+	await expect(page.locator('.chain .name', { hasText: 'art. 17 Cbw' })).toBeVisible();
+	await expect(page.locator('.chain .layer-label', { hasText: 'ARTIKEL BESLUIT' })).toBeVisible();
+	await expect(page.locator('.chain .name', { hasText: /art\. 19 Cbb/ })).toBeVisible();
+	// The row is wider than the screen and pans in itself.
+	await expect(page.locator('.pan[data-zijscroll]')).toHaveAttribute('data-more-right', '');
+	// The grondslag on hover, with the abbreviation.
+	await page
+		.locator('.chain .node', { hasText: /EZK/, hasNotText: /aanwijzing/ })
+		.first()
+		.hover();
+	await expect(page.getByRole('tooltip')).toContainText('Grondslag art. 19 Cbb, art. 23 Cbb, art. 28 Cbb');
 });

@@ -568,7 +568,9 @@
 			chainData.delegated,
 			chainData.basis,
 			{
-				max: 24,
+				// The drawing pans sideways past its width; a phone's list stays short.
+				// The drawing pans sideways past its width; a phone's list stays short.
+				max: telefoon ? 4 : 12,
 				keep: marked,
 				kind: chainKind,
 				article: chainArticle,
