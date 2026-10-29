@@ -113,7 +113,7 @@ test('the first question of the start page opens an article with what refers to 
 test('Ctrl K opens search from any page', async ({ page, touch }) => {
 	test.skip(touch, 'a keyboard shortcut');
 	await page.goto('/docs');
-	await expect(page.getByRole('button', { name: /Zoeken/ })).toBeVisible();
+	await expect(page.getByRole('button', { name: /Zoek een wet/ })).toBeVisible();
 	await page.keyboard.press('ControlOrMeta+k');
 	const field = page.getByRole('dialog').getByRole('combobox');
 	await expect(field).toBeFocused();
