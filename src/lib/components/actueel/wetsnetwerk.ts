@@ -4,6 +4,7 @@
 // Its links are made as from outside the Verkenner, where the band stands.
 import { isBill, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { count } from '$lib/text/words';
+import { bwCode } from '$lib/text/bw';
 import { citationRecord } from '$lib/text/citation-record';
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
@@ -89,7 +90,7 @@ export type Schets = {
 	lijnen: [string, string][];
 	exploreHref: string;
 	/** The changed article the small network draws in the middle. */
-	centrum: { id: string; naam: string };
+	centrum: { id: string; naam: string; law: string | null };
 	/** The chain in counts, for a narrow screen: stukken, articles, the law, judgments. */
 	keten: {
 		stukken: number;
@@ -271,7 +272,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		kolommen,
 		lijnen,
 		exploreHref: exploreHref(params),
-		centrum: { id: art.id, naam: artLabel },
+		centrum: { id: art.id, naam: artLabel, law: bwCode(law.law.bwb_id) },
 		keten: {
 			stukken: stukken.size + amendementen.size,
 			artikelen: tel.size,
@@ -319,7 +320,14 @@ export function kaartVan(s: Schets): SketchGroup[] {
 			name: 'Stukken',
 			collection: 'documents',
 			count: 1,
-			rows: [rij(stuk, 'stukken', { relation: 'AMENDS', direction: 'inbound' })]
+			rows: [
+				rij(stuk, 'stukken', {
+					relation: 'AMENDS',
+					direction: 'inbound',
+					// It stands in its dossier's hull, as on the canvas.
+					props: dossier?.ref ? { dossier_number: dossier.ref.key } : undefined
+				})
+			]
 		});
 	if (dossier?.ref)
 		groepen.push({

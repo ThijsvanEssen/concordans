@@ -8,9 +8,9 @@ import {
 	csvName,
 	exportLabel,
 	exportRows,
-	rowsToCsv,
-	safeFileName
+	rowsToCsv
 } from './export';
+import { safeFileName } from '$lib/util/save-file';
 import { EMPTY_FILTER } from './filter';
 import type { Group } from './groups';
 import type { Row } from './rows';

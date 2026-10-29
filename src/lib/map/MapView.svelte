@@ -13,7 +13,7 @@
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { focusFirstItem } from '$lib/actions/menu';
-	import { download, safeFileName } from '$lib/verbonden/export';
+	import { download, safeFileName } from '$lib/util/save-file';
 	import { formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { afterTick } from '$lib/util/after-tick';
