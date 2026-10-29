@@ -176,7 +176,7 @@
 	const place = $derived.by(() => {
 		const m = new Map<string, { x: number; y: number }>();
 		const left = LEFT;
-		const right = Math.max(LEFT + 200, width - 24);
+		const end = Math.max(LEFT + 200, width - 24);
 		// A lone bron that a line passes over (the conclusie between the hof and the Hoge Raad) steps
 		// aside, so the line does not run through its name.
 		const rowOf = new Map<string, number>();
@@ -187,6 +187,8 @@
 				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
+			// "N andere" stands a slot past the last: its room is kept.
+			const right = rest[layer.id] ? end - SLOT : end;
 			// Apart by a slot at most; a layer without a place above it is centred on the drawing.
 			const sep = Math.min((right - left) / n, SLOT);
 			const wish = layer.nodes.map((k, j) => {
@@ -225,7 +227,7 @@
 			// A name stays within the drawing, whichever side its node stands on.
 			wish.forEach((w, j) => {
 				const half = halfOf(w.k, n);
-				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, width - half));
+				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, right + 24 - half));
 				m.set(w.k.id, { x, y: tops[i] + DROP });
 			});
 		});
@@ -471,7 +473,10 @@
 			if (n > 0 && citeWidths.get(t) !== n) citeWidths.set(t, n);
 		};
 		take(text);
-		document.fonts?.ready.then(() => take(text));
+		document.fonts?.ready.then(
+			() => take(text),
+			() => {}
+		);
 		return { update: take };
 	};
 	/** A label whose article the Leespaneel shows: landed, every label of it, not only the one clicked. */
