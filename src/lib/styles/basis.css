@@ -319,8 +319,8 @@ a:hover {
 	);
 }
 [data-zijscroll][data-more-left] {
-	--fade-left: var(--s-6);
+	--fade-left: var(--fade-width, var(--s-6));
 }
 [data-zijscroll][data-more-right] {
-	--fade-right: var(--s-6);
+	--fade-right: var(--fade-width, var(--s-6));
 }

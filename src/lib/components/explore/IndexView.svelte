@@ -810,11 +810,8 @@
 		scroll-padding-inline: var(--s-7);
 	}
 	/* The fade is wide here: a tab that is half in view reads as one that goes on. */
-	.catbar[data-more-left] {
-		--fade-left: var(--s-7);
-	}
-	.catbar[data-more-right] {
-		--fade-right: var(--s-7);
+	.catbar {
+		--fade-width: var(--s-7);
 	}
 	.cat {
 		display: inline-flex;
