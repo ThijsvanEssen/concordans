@@ -109,6 +109,7 @@
 		exploreHref,
 		exploreUrl
 	} from '$lib/bron/address';
+	import { bwCode } from '$lib/text/bw';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { lawName } from '$lib/text/instrument-meta';
 	import { keyEcli } from '$lib/text/ecli';
@@ -562,19 +563,24 @@
 				? (lawName($instrumentMetaStore.get(bwb), null) ?? bronNaam(start, $instrumentMetaStore))
 				: lawName($instrumentMetaStore.get(bwb), bwb);
 		const eu = chainData.eu;
-		return chain({ id, name }, chainData.delegated, chainData.basis, {
-			max: 4,
-			keep: marked,
-			kind: chainKind,
-			article: chainArticle,
-			mentions,
-			eu: eu
-				? {
-						implements: eu.implements.map((l) => l.instrument),
-						implementedBy: eu.implemented_by.map((l) => l.instrument)
-					}
-				: null
-		});
+		return chain(
+			{ id, name, abbreviation: bwCode(bwb) ?? $instrumentMetaStore.get(bwb)?.shortTitle ?? null },
+			chainData.delegated,
+			chainData.basis,
+			{
+				max: 24,
+				keep: marked,
+				kind: chainKind,
+				article: chainArticle,
+				mentions,
+				eu: eu
+					? {
+							implements: eu.implements.map((l) => l.instrument),
+							implementedBy: eu.implemented_by.map((l) => l.instrument)
+						}
+					: null
+			}
+		);
 	};
 	const chainModel = $derived(
 		lineageStart

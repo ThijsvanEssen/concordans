@@ -199,6 +199,44 @@ describe('the keten of a law', () => {
 		]);
 	});
 
+	it('hangs a regeling under the articles of the AMvB it rests on, with the abbreviation of each law', () => {
+		const cbb = item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', [article('3')]);
+		cbb.instrument.abbreviation = 'Cbb';
+		cbb.sub_delegated = [
+			{
+				instrument: law('instruments/reg', 'Regeling cyberbeveiliging EZK'),
+				kind: 'ministeriele-regeling',
+				date_in_force: '2025-01-01',
+				expired_on: null,
+				basis_kind: 'delegates',
+				articles: [
+					{ ...article('19'), id: 'articles/cbb_19', key: 'cbb_19' },
+					{ ...article('28'), id: 'articles/cbb_28', key: 'cbb_28' }
+				]
+			}
+		] as never;
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{ bwb_id: 'BWBR0010346', total: 1, items: [cbb] } as never,
+			null
+		);
+		expect(k.layers.map((l) => l.id)).toEqual([
+			'law',
+			'article',
+			'amvb',
+			'besluitArticle',
+			'ministerial'
+		]);
+		expect(k.layers[1].nodes.map((a) => a.short)).toEqual(['art. 3 Cbw']);
+		expect(k.layers[3].nodes.map((a) => a.short)).toEqual(['art. 19 Cbb', 'art. 28 Cbb']);
+		expect(k.layers[3].nodes[0].parents).toEqual([{ id: 'instruments/cbb', way: 'delegates' }]);
+		expect(k.layers[4].nodes[0].parents.map((p) => p.id)).toEqual([
+			'articles/cbb_19',
+			'articles/cbb_28'
+		]);
+		expect(k.layers[4].nodes[0].grondslag).toBe('art. 19, 28 Cbb');
+	});
+
 	it('puts a wet that hangs under an article in the one layer Wet, with its articles and regelingen under it', () => {
 		const uhw = item('instruments/uhw', 'Uitvoeringswet huurprijzen woonruimte', 'wet', [
 			article('248', 'mentioned')

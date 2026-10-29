@@ -26,6 +26,7 @@ export type LayerId =
 	| 'basis'
 	| 'law'
 	| 'article'
+	| 'besluitArticle'
 	| 'implementation'
 	| 'statute'
 	| 'amvb'
@@ -42,6 +43,7 @@ const LAYER_LABEL: Record<LayerId, string> = {
 	statute: 'Wet',
 	kb: 'Koninklijk besluit',
 	article: 'Artikel',
+	besluitArticle: 'Artikel besluit',
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
 	policy: 'Beleidsregel',
@@ -143,8 +145,9 @@ const layerOf = (kind: string | null | undefined): LayerId =>
 	LAYER_OF[(kind ?? '').toLowerCase()] ?? 'other';
 
 /** `art. 16` of an article as its law numbers it. */
-const articleShort = (a: BasisArticle) =>
-	a.article_number ? articleRef(null, a.article_number) : 'aanhef';
+const articleShort = (a: BasisArticle, abbreviation: string | null = null) =>
+	(a.article_number ? articleRef(null, a.article_number) : 'aanhef') +
+	(abbreviation ? ` ${abbreviation}` : '');
 
 /** The articles it rests on, or only names: `art. 16 lid 1 en 2, 20` (delegaties.ts). */
 const basisLine = (articles: readonly BasisArticle[], way: 'delegates' | 'mentioned') =>
@@ -224,7 +227,7 @@ const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
  * drawn.
  */
 export function chain(
-	law: { id: string; name: string; instrument?: Summary },
+	law: { id: string; name: string; instrument?: Summary; abbreviation?: string | null },
 	delegated: Delegated | null,
 	basis: Basis | null,
 	{
@@ -344,8 +347,20 @@ export function chain(
 	// those under a regulation of it in turn (sub_delegated: the Cyberbeveiligingsregelingen
 	// under the Cyberbeveiligingsbesluit), each tied to what it is issued under.
 	const byId = new Map<string, { node: ChainNode; articles: BasisArticle[]; home: string }>();
+	/** The regulations (AMvB, KB) whose own articles a regulation under them names. */
+	const besluitHomes = new Set<string>();
+	/** How an article of `home` is cited: its law's abbreviation behind it. */
+	const abbreviationOf = (home: string) =>
+		home === law.id
+			? (law.abbreviation ?? law.instrument?.abbreviation ?? null)
+			: (own.find((i) => i.instrument.id === home)?.instrument.abbreviation ?? null);
 	const wayOf = (kind: string | null | undefined): 'delegates' | 'mentioned' =>
 		kind === 'mentioned' ? 'mentioned' : 'delegates';
+	/** A line of articles with the abbreviation of their law behind it: `art. 19, 23 Cbb`. */
+	const withLaw = (line: string | null, home: string) => {
+		const abbreviation = abbreviationOf(home);
+		return line && abbreviation ? `${line} ${abbreviation}` : line;
+	};
 	const take = (
 		r: Pick<
 			Item,
@@ -375,8 +390,8 @@ export function chain(
 				kind: r.kind ?? null,
 				since: r.date_in_force ?? null,
 				expired: r.expired_on ?? null,
-				grondslag: ownArticles.length ? basisLine(ownArticles, 'delegates') : null,
-				mentions: ownArticles.length ? basisLine(ownArticles, 'mentioned') : null,
+				grondslag: ownArticles.length ? withLaw(basisLine(ownArticles, 'delegates'), home) : null,
+				mentions: ownArticles.length ? withLaw(basisLine(ownArticles, 'mentioned'), home) : null,
 				parents,
 				further: (r.sub_delegated ?? []).map((sub) => nameOf(sub.instrument))
 			}
@@ -394,7 +409,8 @@ export function chain(
 		for (const sub of item.sub_delegated ?? []) {
 			// Under a wet that stands beside the law, a regulation hangs from the article of that
 			// wet that carries it, where the data says so; else from the wet itself.
-			const carried = layerOf(item.kind) === 'statute' ? sub.articles : [];
+			const carried = sub.articles;
+			if (layerOf(item.kind) !== 'statute' && carried.length) besluitHomes.add(item.instrument.id);
 			take(
 				sub,
 				carried.length
@@ -427,6 +443,8 @@ export function chain(
 	articleIds.forEach((id, i) => placeOf.set(id, i));
 	const perLayer = new Map<LayerId, ChainNode[]>();
 	const articles = new Map<string, ChainNode>();
+	/** The articles of an AMvB that a regulation under it rests on: a layer of their own. */
+	const besluitArticles = new Map<string, ChainNode>();
 	let place = articleIds.length;
 	const statutes: ChainNode[] = [];
 	for (const id of ['statute' as const, ...REGULATION_LAYERS]) {
@@ -447,13 +465,14 @@ export function chain(
 			for (const a of mine) {
 				// A wet beside the law names an article of the law: a line from the wet to it.
 				const noted = id === 'statute' ? n.parents.filter((p) => p.id === a.id) : [];
-				const known = articles.get(a.id);
+				const target = besluitHomes.has(home) ? besluitArticles : articles;
+				const known = target.get(a.id);
 				if (known) known.parents.push(...noted.map((p) => ({ ...p, id: n.id })));
 				else
-					articles.set(a.id, {
+					target.set(a.id, {
 						id: a.id,
 						name: a.display_name ?? articleShort(a),
-						short: articleShort(a),
+						short: articleShort(a, abbreviationOf(home)),
 						collection: 'articles',
 						kind: null,
 						since: null,
@@ -492,9 +511,24 @@ export function chain(
 				eu.implementedBy.map((i) => euNode(i, [{ id: law.id, way: 'delegates' }]))
 			)
 		});
+	// The articles of an AMvB stand between it and the regulations that rest on them.
+	let besluitDone = !besluitArticles.size;
+	const pushBesluitArticles = () => {
+		if (besluitDone) return;
+		besluitDone = true;
+		layers.push({
+			id: 'besluitArticle',
+			label: LAYER_LABEL.besluitArticle,
+			nodes: [...besluitArticles.values()].sort(
+				(a, b) => NL.compare(a.home ?? '', b.home ?? '') || NL.compare(a.short, b.short)
+			)
+		});
+	};
 	for (const id of REGULATION_LAYERS) {
+		if (id === 'ministerial' || id === 'policy' || id === 'other') pushBesluitArticles();
 		const list = perLayer.get(id);
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}
+	pushBesluitArticles();
 	return { layers, rest, more, total: nodes.length, amending, missing };
 }
