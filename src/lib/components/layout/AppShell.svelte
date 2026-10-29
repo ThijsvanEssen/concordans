@@ -30,15 +30,15 @@
 
 	// The Leespaneel, in a chunk of its own: asked when the address names an article to read.
 	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Leespaneel');
-	const read = $derived(parseRead(page.url.searchParams.get(READ_PARAM))[0] ?? null);
+	const reads = $derived(parseRead(page.url.searchParams.get(READ_PARAM)));
 	$effect(() => {
-		if (read) readingPanel.load();
+		if (reads.length) readingPanel.load();
 	});
 </script>
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="app-shell">
+<div class="app-shell" class:has-panel={reads.length > 0}>
 	<a href="#main-content" class="skip-link">Naar inhoud</a>
 	{#if $lijstSprong}<a href="#{$lijstSprong}" class="skip-link">Naar de lijst</a>{/if}
 	{#each $paneelSprongen as s (s.id)}<a href="#{s.id}" class="skip-link">{s.label}</a>{/each}
@@ -50,9 +50,8 @@
 </div>
 
 <HelpDialog />
-{#if read && readingPanel.component}{@const ReadingPanel = readingPanel.component}<ReadingPanel
-		{read}
-	/>{/if}
+{#if reads.length && readingPanel.component}{@const ReadingPanel =
+		readingPanel.component}<ReadingPanel {reads} />{/if}
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>
@@ -90,5 +89,11 @@
 		width: 100%;
 		/* Under the tab bar of a phone. */
 		padding-bottom: var(--tabbar-h);
+	}
+	/* From 1800 px the Leespaneel stands in the flow: the page gives it its width at the right. */
+	@media (min-width: 1800px) {
+		.app-shell.has-panel .app-shell__content {
+			padding-right: var(--paneel-breed);
+		}
 	}
 </style>

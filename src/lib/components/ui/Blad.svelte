@@ -13,7 +13,8 @@
 	// (Wis alles, Toon N). Opened inside another Blad, only the last one answers Escape and Tab.
 	// Not modal (`modaal={false}`, the Leespaneel): no scherm, no lock, Tab is not held and the
 	// page stays a page; Escape still closes it, and on a phone a tap beside it. From below it
-	// stands at 60 % of the screen, its grip takes it to 88 %.
+	// stands at 60 % of the screen, its grip takes it to 88 %. From 1800 px a panel at the right is
+	// 560 px wide and stands in the page's flow: the page makes room for it (AppShell).
 	import { onMount, type Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { lockScroll } from '$lib/actions/scroll-lock';
@@ -35,6 +36,7 @@
 		modaal = true,
 		head,
 		actions,
+		under,
 		id
 	}: {
 		/** The name of the dialog: its head, and for a screen reader. */
@@ -65,6 +67,8 @@
 		head?: Snippet;
 		/** Buttons in the head, before Sluiten. */
 		actions?: Snippet;
+		/** Under the head, outside what scrolls: the row before and after, a jump menu. */
+		under?: Snippet;
 		id?: string;
 	} = $props();
 
@@ -190,6 +194,7 @@
 				>
 			</div>
 		</div>
+		{@render under?.()}
 		<div class="inhoud">{@render children()}</div>
 		{#if foot}<div class="foot">{@render foot()}</div>{/if}
 	</div>
@@ -242,6 +247,13 @@
 	/* Not modal: part of the page, under the top bar's menus and a card of the text beside it. */
 	.sheet[data-los] {
 		z-index: calc(var(--z-topbar) - 1);
+	}
+	/* Wide: in the margin beside the page, which makes room for it; nothing under it. */
+	@media (min-width: 1800px) {
+		.sheet[data-los][data-place='rechts'] {
+			width: var(--paneel-breed);
+			box-shadow: none;
+		}
 	}
 
 	/* From below: the sheet of a phone (Netwerkkeuze, Telefoon). */
