@@ -7,14 +7,16 @@
 
 	let {
 		title = '',
-		label = 'Volledige titel',
+		label,
 		open = $bindable(false),
 		children
 	}: { title?: string; label?: string; open?: boolean; children?: Snippet } = $props();
 </script>
 
 <details class="full-title" bind:open>
-	<summary class="raakvlak">{label}</summary>
+	{#if label}<summary class="raakvlak">{label}</summary>{:else}<summary class="raakvlak"
+			>Volledige titel</summary
+		>{/if}
 	{#if children}{@render children()}{:else}<p>{title}</p>{/if}
 </details>
 

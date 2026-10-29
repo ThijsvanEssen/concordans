@@ -57,7 +57,7 @@ test('the aanhef opens in the head in place of the line of its grondslag', async
 	await toggle.click();
 	const aanhef = page.locator('#kop-aanhef');
 	await expect(aanhef).toContainText('De Staatssecretaris van Economische Zaken en Klimaat');
-	await expect(aanhef.locator('.besluit')).toHaveText(BESLUIT);
+	await expect(aanhef.locator('.enacting')).toHaveText(BESLUIT);
 	await expect(aanhef.getByRole('link', { name: 'artikel 19' })).toHaveAttribute(
 		'href',
 		/bwbr0052875_19|BWBR0052875\/artikel\/19/

@@ -7,12 +7,12 @@ import type { Span } from './segments';
 
 export type Preamble = Schema<'InstrumentPreambleDTO'>;
 
-export type AanhefAlinea = {
+type PreambleParagraph = {
 	text: string;
 	/** Its references, offsets relative to `text`. */
 	citations: Span[];
 	/** The afkondiging, "Besluit:". */
-	besluit: boolean;
+	enacting: boolean;
 };
 
 /** The reference as a span of CitedText, where it names a bron the data holds. */
@@ -20,12 +20,9 @@ function spanOf(ref: Preamble['references'][number], shift: number): Span | null
 	const t = ref.target;
 	if (!t || !t.exists) return null;
 	return {
-		leden: ref.leden,
-		onderdelen: ref.onderdelen,
-		aanhef: ref.aanhef,
+		...ref,
 		start: ref.start - shift,
 		end: ref.end - shift,
-		text: ref.text,
 		target: {
 			id: t.id,
 			key: t.key,
@@ -43,11 +40,11 @@ function spanOf(ref: Preamble['references'][number], shift: number): Span | null
 }
 
 /** The paragraphs of the aanhef; none for an empty one. */
-export function aanhefAlineas(preamble: Preamble | null | undefined): AanhefAlinea[] {
+export function preambleParagraphs(preamble: Preamble | null | undefined): PreambleParagraph[] {
 	const text = preamble?.text ?? '';
 	if (!text.trim()) return [];
-	const besluit = preamble!.parts.filter((p) => p.kind === 'afkondiging');
-	const out: AanhefAlinea[] = [];
+	const enacting = preamble!.parts.filter((p) => p.kind === 'afkondiging');
+	const out: PreambleParagraph[] = [];
 	let start = 0;
 	for (const line of text.split('\n')) {
 		const end = start + line.length;
@@ -57,7 +54,7 @@ export function aanhefAlineas(preamble: Preamble | null | undefined): AanhefAlin
 				citations: preamble!.references
 					.filter((r) => r.start >= start && r.end <= end)
 					.flatMap((r) => spanOf(r, start) ?? []),
-				besluit: besluit.some((p) => p.start <= start && end <= p.end)
+				enacting: enacting.some((p) => p.start <= start && end <= p.end)
 			});
 		start = end + 1;
 	}
@@ -65,5 +62,5 @@ export function aanhefAlineas(preamble: Preamble | null | undefined): AanhefAlin
 }
 
 /** "Aanhef en considerans" of a law, whose aanhef weighs; "Aanhef" of every other regulation. */
-export const aanhefLabel = (kind: string | null | undefined): string =>
+export const preambleLabel = (kind: string | null | undefined): string =>
 	kind === 'wet' ? 'Aanhef en considerans' : 'Aanhef';
