@@ -189,7 +189,7 @@ export function edgesToClusters<E extends Edge & { id: string }>(
 	edges: readonly E[],
 	clusters: readonly Pick<Cluster, 'id' | 'members' | 'ends'>[],
 	anchors: ReadonlyMap<string, readonly string[]> = new Map()
-): Edge[] {
+): (Edge & { id: string })[] {
 	const home = new Map<string, string>();
 	for (const c of clusters) for (const m of c.members) home.set(m, c.id);
 	const anchorsOf = (c: string) =>
