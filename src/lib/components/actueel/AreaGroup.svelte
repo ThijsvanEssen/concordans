@@ -87,7 +87,6 @@
 						{#each items as i (i.id)}
 							{@const h = headlineOf(i)}
 							<li>
-								{#if i.judgment?.court}<span class="court">{i.judgment.court}</span>{/if}
 								<BronLink ref={refOf(i)} class="title">{h.title}</BronLink>
 								{#if i.judgment?.outcome || i.judgment?.procedure}
 									<span class="meta"
@@ -186,12 +185,6 @@
 	}
 	.judgments li:first-child {
 		border-top: 0;
-	}
-	.court {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-2);
 	}
 	.judgments :global(a.title) {
 		font-family: var(--font-serif);
