@@ -830,7 +830,12 @@
 				rawEdges.filter((e) => isDrawn(e.relation)),
 				clusters,
 				new Map(clusters.map((c) => [c.id, focus ? [focus] : []]))
-			).map((e) => ({ ...e, relation: e.relation as Relation, label: '', directed: true })),
+			).map((e) => ({
+				...e,
+				relation: e.relation as Relation,
+				label: '',
+				directed: true as const
+			})),
 			// What belongs to a wet stands in its disc: no Deel van-line from its articles' cluster.
 			...clusters.flatMap((c) =>
 				c.id.startsWith('cluster:articles@')
