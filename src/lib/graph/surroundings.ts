@@ -19,7 +19,13 @@ export const SURROUNDED: ReadonlySet<Collection> = new Set([
 	'activities'
 ]);
 
-const rowOf = (node: Node, relation: string, direction: string, proposed = false): CanvasRow[] =>
+/** A neighbour as a row the canvas draws beside the focus; none of a collection it does not know. */
+export const rowOf = (
+	node: Node,
+	relation: string,
+	direction: string,
+	proposed = false
+): CanvasRow[] =>
 	isCollection(node.collection)
 		? [
 				{

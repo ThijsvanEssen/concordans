@@ -31,13 +31,17 @@ const source = (id: SourceId, holds: string, lists: readonly string[]): Source =
 export const SOURCES: readonly Source[] = [
 	source('wetten', 'wetten, regelingen, artikelen', ['instruments']),
 	source('rechtspraak', 'rechtbank tot Hoge Raad', ['judgments']),
-	source('kamerstukken', 'dossiers, stukken, stemmingen, activiteiten, toezeggingen', [
+	source('kamerstukken', 'dossiers, stukken, stemmingen, toezeggingen', [
 		'dossiers',
 		'documents',
 		'decisions',
 		'commitments'
 	]),
-	source('parlement', 'Kamerleden, fracties, commissies', ['members', 'factions', 'committees']),
+	source('parlement', 'Kamerleden, fracties, commissies, activiteiten', [
+		'members',
+		'factions',
+		'committees'
+	]),
 	source('regering', 'kabinetten, ministeries, bewindspersonen', [
 		'cabinets',
 		'ministries',
@@ -69,7 +73,7 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
 	kamerstukken: 'kamerstukken',
 	dossiers: 'kamerstukken',
 	zaken: 'kamerstukken',
-	activiteiten: 'kamerstukken',
+	activiteiten: 'parlement',
 	stemmingen: 'kamerstukken',
 	leden: 'parlement',
 	fracties: 'parlement',

@@ -27,7 +27,8 @@ export type ClusterInput = {
 	/** The nodes the canvas draws (`isCanvasNode`). */
 	nodes: readonly GraphNode[];
 	/** The lines the canvas draws (`isDrawn`). */
-	edges: readonly Pick<GraphEdge, 'source' | 'target' | 'relation'>[];
+	edges: readonly (Pick<GraphEdge, 'source' | 'target' | 'relation'> &
+		Pick<Partial<GraphEdge>, 'meta'>)[];
 	focus: string | null;
 	/** The chosen bronnen of a netwerk. */
 	pinned: ReadonlySet<string>;
@@ -41,6 +42,8 @@ export type ClusterInput = {
 	looseMax: number;
 	/** A chosen bron by its id, for its hull. */
 	nodeOf: (id: string) => GraphNode | undefined;
+	/** The dossiers a commissie in focus leads, all of them (Tonen's count): the cluster's whole. */
+	ledTotal?: number | null;
 };
 
 /**
@@ -59,7 +62,7 @@ export function canvasClusters(input: ClusterInput, expanded: ReadonlySet<string
 	const chosen = new Set<string>(pinned);
 	if (focus) chosen.add(focus);
 	const centres = surroundings && pinned.size > 0 ? [...pinned] : focus ? [focus] : [];
-	const led = centres.length === 1 ? ledFolded(edges, centres[0], expanded) : null;
+	const led = centres.length === 1 ? ledFolded(edges, centres[0], expanded, input.ledTotal) : null;
 
 	const ownArticles: Cluster[] = !surroundings
 		? []
@@ -97,27 +100,43 @@ export function canvasClusters(input: ClusterInput, expanded: ReadonlySet<string
 	];
 }
 
-/** The dossiers a commissie leads that stand as a bron: the most active first (B41). */
-export const LED_SHOWN = 12;
+/** The dossiers a commissie leads that stand as a bron: the latest first (B41). */
+const LED_SHOWN = 12;
+
+type LedEdge = ClusterInput['edges'][number];
 
 /**
- * Around a commissie, the dossiers it leads past the LED_SHOWN it held the most activities
- * about (`meta.activities` of LED_BY), as one cluster with one line "leidt" (B41).
+ * The order of a commissie's dossiers: the latest activity about it she leads first
+ * (`meta.latest`, undated last), then the most activities, then the id. As the API sorts
+ * them (`sort=importance`); an API without `latest` sorts by the activities alone.
+ */
+function byLatest(a: LedEdge, b: LedEdge): number {
+	const latest = (e: LedEdge) => String(e.meta?.latest ?? '');
+	const activities = (e: LedEdge) => Number(e.meta?.activities ?? 0);
+	return (
+		latest(b).localeCompare(latest(a)) ||
+		activities(b) - activities(a) ||
+		a.source.localeCompare(b.source)
+	);
+}
+
+/**
+ * Around a commissie, the dossiers it leads past the LED_SHOWN latest (`byLatest`), as one
+ * cluster "overige" with one line "Onder leiding van" (B41).
  */
 function ledFolded(
 	edges: ClusterInput['edges'],
 	focus: string | null,
-	expanded: ReadonlySet<string>
+	expanded: ReadonlySet<string>,
+	total?: number | null
 ): Cluster | null {
 	const id = 'cluster:dossiers';
 	if (!focus?.startsWith('committees/') || expanded.has(id)) return null;
-	const activities = (e: ClusterInput['edges'][number]) =>
-		Number(((e as { meta?: Record<string, unknown> }).meta ?? {}).activities ?? 0);
 	const led = edges
 		.filter(
 			(e) => e.relation === 'LED_BY' && e.target === focus && e.source.startsWith('dossiers/')
 		)
-		.sort((a, b) => activities(b) - activities(a));
+		.sort(byLatest);
 	const members = led.slice(LED_SHOWN).map((e) => e.source);
 	if (!members.length) return null;
 	return {
@@ -127,6 +146,7 @@ function ledFolded(
 		relation: 'LED_BY',
 		toFocus: true,
 		neighbours: led.length,
-		ends: [{ id: focus, relation: 'LED_BY', toEnd: true }]
+		ends: [{ id: focus, relation: 'LED_BY', toEnd: true }],
+		...(total && total > led.length ? { total: total - LED_SHOWN } : {})
 	};
 }

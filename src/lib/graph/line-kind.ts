@@ -107,7 +107,7 @@ export const LINE_KIND_STYLE: Record<LineKind, KindStyle> = {
 	submitter: { colour: 'plum', tone: 'donker', stroke: 'puntenIndiener' },
 	member: { colour: 'ink3', tone: 'licht', stroke: 'punten' },
 	// A commissie's voortouw: the dots of belongs to, in the colour of the parlement (B41).
-	led: { colour: 'plum', tone: 'middel', stroke: 'punten' }
+	led: { colour: 'plum', tone: 'donker', stroke: 'punten' }
 };
 
 /** A line of the family hoort bij has no arrowhead: the omhulling or the nodes say the direction. */

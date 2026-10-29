@@ -129,6 +129,15 @@ export function placeConnection(c: Connection): Placement {
 }
 
 /**
+ * The end of a dossier a bron is about, of a bron about `dossiers` of them: about more than
+ * one (a wetgevingsoverleg on 36764 and 36765, a procedurevergadering on six), it stands in
+ * none of their rings; each dossier ties, a point with a line "over". A ring holds only what
+ * is its own (B41, Thijs 29 Oct).
+ */
+export const aboutEnd = (relation: Relation, end: End, dossiers: number): End =>
+	relation === 'ABOUT' && end.hull === 'dossier' && dossiers > 1 ? { ...end, ties: true } : end;
+
+/**
  * The seat an edge records (`meta.from_date`, `meta.to_date`), or null when it records none:
  * of a neighbour's edge, a neighbourhood's or a path's alike. A bewindspersoon's SERVED_IN
  * lists the posts in the cabinet (`meta.posts`): the seat runs from the first post to the end

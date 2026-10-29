@@ -238,7 +238,7 @@
 				w,
 				h,
 				rank: rankOf(id, cluster),
-				always: id === focusedId
+				always: id === focusedId || isCommittee(id)
 			});
 		});
 		glyphRects = glyphs;
@@ -249,6 +249,8 @@
 		const rims = hullHitAreas.map((a) => a.polygon);
 		return planLabels(candidates, room, hullNames, glyphs, max, rims);
 	}
+	/** A commissie's point keeps its short name (J&V), on a phone too: they are few (B41). */
+	const isCommittee = (id: string) => graph.getNodeAttribute(id, 'collection') === 'committees';
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
 	let renderer: SigmaType | null = null;
@@ -527,7 +529,6 @@
 			glyphs: glyphRects,
 			markedIds: new Set([markedId, focusContainerId].filter((id): id is string => !!id))
 		});
-		(window as any).__b41layout = layout; // B41-PROTO
 		const was = [...aloneAnchors].join();
 		aloneAnchors = layout.alone;
 		// An anchor without a hull is a bron now (or no longer): its name and its lines follow.
@@ -598,7 +599,6 @@
 	// to a bron that is hidden (the co-signers of a stuk outside the chosen years).
 	let strays = new Set<string>();
 	function recomputeStrays() {
-		(window as any).__b41 = { graph, latestContainerGroups, nodeGroupIds, renderer, latestFilters }; // B41-PROTO
 		const next = new Set<string>();
 		const endsOf = (id: string) => {
 			const ends: string[] = [];
@@ -1082,7 +1082,7 @@
 				const label =
 					cluster && id !== hoveredId
 						? ''
-						: forceLabel || !narrow?.matches
+						: forceLabel || !narrow?.matches || isCommittee(id)
 							? (data.label as string)
 							: '';
 

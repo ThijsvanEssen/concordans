@@ -15,8 +15,9 @@ import { NODE_TYPES, nodeId, type Collection } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import { lawIdOf, nodeToGraphNode, relationOf } from '../types';
 import { COLLECTION_ROLE } from '../collection-role';
+import { withLatestFirst } from '../led-by';
 import type { GraphContext } from './context';
-import { isPublication, periodOf, placeConnection, type End } from './placement';
+import { aboutEnd, isPublication, periodOf, placeConnection, type End } from './placement';
 import {
 	NEIGHBORHOOD_CAP,
 	NEIGHBORHOOD_DEPTH,
@@ -73,10 +74,13 @@ export function createExpansion(
 		// getNode shares one request between all who ask (once); a reader that wants a bucket of
 		// the same node (a lid's AUTHORED) gets it too. A reset of the canvas drops this answer,
 		// not the request.
-		return abortable(getNode(collection, key), signal()).then((response) => {
-			cache.set(id, response);
-			return response;
-		});
+		// A committee's dossiers the latest first: the canvas keeps those as a bron (B41).
+		return abortable(withLatestFirst(collection, key, getNode(collection, key)), signal()).then(
+			(response) => {
+				cache.set(id, response);
+				return response;
+			}
+		);
 	};
 
 	type SubNode = Schema<'NodeNeighborhoodResponse'>['nodes'][number];
@@ -120,6 +124,11 @@ export function createExpansion(
 			drawn: drawn.has(id),
 			drawClass: nodes.get(id)?.drawClass ?? 'other'
 		});
+		// Per bron, the dossiers it is about: more than one, and each is a point (`aboutEnd`).
+		const about = new Map<string, number>();
+		for (const e of edgesIn)
+			if (e.relation === 'ABOUT' && byId.get(e.target)?.collection === 'dossiers')
+				about.set(e.source, (about.get(e.source) ?? 0) + 1);
 		for (const e of edgesIn) {
 			const relation = relationOf(e.relation);
 			if (!relation) continue;
@@ -127,7 +136,7 @@ export function createExpansion(
 			const placement = placeConnection({
 				relation,
 				source: endOf(e.source, ends.source),
-				target: endOf(e.target, ends.target),
+				target: aboutEnd(relation, endOf(e.target, ends.target), about.get(e.source) ?? 0),
 				confidence: e.confidence,
 				threshold: threshold()
 			});

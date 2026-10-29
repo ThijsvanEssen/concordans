@@ -204,6 +204,10 @@ describe('the lines to an anchor', () => {
 		expect(hullLinkOf('j', 'wet', h())).toBeNull();
 		expect(hullLinkOf('s1', 's2', h())).toBeNull();
 	});
+	it('draws the line of an anchor standing alone as a line, from either end (B41)', () => {
+		expect(hullLinkOf('s1', 'wet', { ...h(), alone: new Map([['wet', 'Awb']]) })).toBeNull();
+		expect(hullLinkOf('s1', 'wet', { ...h(), alone: new Map([['s1', '36764']]) })).toBeNull();
+	});
 	it('says an anchor is drawn as its hull while that hull is drawn', () => {
 		expect(anchorWithHull('wet', h())).toBe(true);
 		expect(anchorWithHull('wet', { ...h(), hiddenKinds: new Set(['instrument']) })).toBe(false);

@@ -205,7 +205,7 @@ const BRONNEN_TABEL: Bron[] = [
 		naam: 'activiteit',
 		collection: 'activities',
 		key: '2026A03119',
-		rubriek: 'kamerstukken',
+		rubriek: 'parlement',
 		sort: 'activiteiten',
 		label: 'Activiteiten',
 		vorm: 'activiteit',
@@ -597,9 +597,9 @@ describe('the order of the rubrieken', () => {
 		expect(sortsFrom('wetten')[0]).toBe('wetten');
 		expect(rubriekOf('instruments', '')).toBe('wetten');
 		const own = sortsFrom('parlement');
-		expect(own.slice(0, 3)).toEqual(['kamerleden', 'fracties', 'commissies']);
-		expect(inOrder(own.slice(3))).toBe(true);
-		expect(own.slice(3, 4)).toEqual(['wetten']);
+		expect(own.slice(0, 4)).toEqual(['kamerleden', 'fracties', 'commissies', 'activiteiten']);
+		expect(inOrder(own.slice(4))).toBe(true);
+		expect(own.slice(4, 5)).toEqual(['wetten']);
 
 		const groupOf = (collection: Collection, key: string, props: Record<string, unknown> = {}) =>
 			({

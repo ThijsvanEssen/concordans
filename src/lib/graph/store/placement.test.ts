@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ContainerKind } from '../container-membership';
 import type { DrawClass } from '../types';
 import type { Relation } from '$lib/vocabulary';
-import { placeConnection, type End, type Placement } from './placement';
+import { aboutEnd, placeConnection, type End, type Placement } from './placement';
 
 const bron = (drawClass: DrawClass, drawn = true): End => ({ hull: null, drawn, drawClass });
 const hull = (h: ContainerKind, drawn = false): End => ({ hull: h, drawn, drawClass: h });
@@ -93,6 +93,26 @@ describe('where a verbinding lands', () => {
 			'a neighbour the canvas does not draw (a zaak): off the canvas',
 			at(bron('document'), 'PART_OF', bron('activity', false)),
 			{ place: 'none' }
+		],
+		[
+			'a commissie that leads a dossier: a point with a line, never a ring around it (B41)',
+			at(hull('dossier', true), 'LED_BY', hull('committee')),
+			{ place: 'line', meta: true, anchor: 'target' }
+		],
+		[
+			'an activiteit about one dossier: in its ring',
+			at(bron('activity'), 'ABOUT', aboutEnd('ABOUT', hull('dossier'), 1)),
+			{ place: 'member', hull: 'target', seat: true }
+		],
+		[
+			'an activiteit about two dossiers: in neither ring, a line "over" to each (B41)',
+			at(bron('activity'), 'ABOUT', aboutEnd('ABOUT', hull('dossier'), 2)),
+			{ place: 'line', meta: true, anchor: 'target' }
+		],
+		[
+			'a stuk stays in the ring of its one dossier, whatever else it is about',
+			at(bron('document'), 'PART_OF', aboutEnd('PART_OF', hull('dossier'), 2)),
+			{ place: 'member', hull: 'target', seat: true }
 		]
 	])('%s', (_, placement, expected) => expect(placement).toEqual(expected));
 });

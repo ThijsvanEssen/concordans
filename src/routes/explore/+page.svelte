@@ -1246,9 +1246,11 @@
 			});
 			if (epoch !== focusEpoch) return;
 		}
-		// A dossier's committees, a committee's dossiers: derived, in the node response alone.
+		// A dossier's committees, a committee's dossiers: derived, in a bucket of the node alone.
 		if (LED_BY_FOCUS.has(node.collection)) {
-			const response = await store.nodeResponse(node.collection, node.key).catch(() => null);
+			const response = await store
+				.nodeResponse(node.collection, node.key)
+				.catch(ignore('Verkenner leiding'));
 			if (epoch !== focusEpoch) return;
 			if (response) store.showRows(node.id, ledByRows(node.collection, response));
 		}
