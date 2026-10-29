@@ -16,18 +16,18 @@
 		"src/lib/components/articles/VersionCompare.svelte": 972,
 		"src/lib/components/explore/IndexView.svelte": 1063,
 		"src/lib/components/explore/readers/ArticleReader.svelte": 1210,
-		"src/lib/components/explore/readers/DocumentReader.svelte": 852,
+		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1607,
 		"src/lib/components/graph/GraphView.svelte": 2050,
-		"src/lib/network/ChainView.svelte": 1095,
+		"src/lib/network/ChainView.svelte": 1137,
 		"src/lib/text/judgment-text.ts": 1108,
 		"src/lib/verbonden/Verbonden.svelte": 874,
 		"src/lib/verbonden/groups.ts": 1217,
 		"src/lib/verbonden/loaders.ts": 1511,
 		"src/routes/(main)/actueel/+page.svelte": 855,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2928
+		"src/routes/explore/+page.svelte": 2933
 	},
 	"effects_per_svelte": {
 		"src/lib/components/explore/IndexView.svelte": 9,
@@ -45,7 +45,7 @@
 		"src/lib/components/graph/GraphView.svelte": 64,
 		"src/lib/verbonden/Verbonden.svelte": 41,
 		"src/routes/(main)/actueel/+page.svelte": 42,
-		"src/routes/explore/+page.svelte": 103
+		"src/routes/explore/+page.svelte": 104
 	},
 	"complexity": {
 		"src/lib/bron/describe.ts": 46,
@@ -96,7 +96,7 @@
 		"src/lib/map/MapInhoud.svelte": 31,
 		"src/lib/map/csl.ts": 25,
 		"src/lib/map/map.ts": 22,
-		"src/lib/network/chain.ts": 61,
+		"src/lib/network/chain.ts": 63,
 		"src/lib/network/lineage.ts": 34,
 		"src/lib/network/shared.ts": 16,
 		"src/lib/network/tree-lines.ts": 17,
@@ -160,9 +160,10 @@
 		"src/lib/graph/store/context.ts": 308,
 		"src/lib/graph/store/expansion.ts": 190,
 		"src/lib/graph/store/view-actions.ts": 116,
-		"src/lib/network/ChainView.svelte": 91,
-		"src/lib/network/chain.ts": 272,
+		"src/lib/network/ChainView.svelte": 105,
+		"src/lib/network/chain.ts": 274,
 		"src/lib/network/lineage.ts": 116,
+		"src/lib/network/tree-lines.ts": 82,
 		"src/lib/search/present.ts": 152,
 		"src/lib/text/judgment-text.ts": 95,
 		"src/lib/verbonden/data-source.ts": 418,
