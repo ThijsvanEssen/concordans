@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chain, chainTally } from './chain';
+import { citeText } from './cite-label';
 
 const law = (id: string, title: string) => ({
 	id,
@@ -257,6 +258,62 @@ describe('the keten of a law', () => {
 			'instruments/uhw'
 		]);
 		expect(k.layers[1].nodes[0].parents.map((p) => p.id)).toEqual(['instruments/uhw']);
+	});
+});
+
+describe('the keten of a law and of its AMvB', () => {
+	it('gives both the same kinds of layer: a row per kind of document', () => {
+		const cbw = chain(
+			{ id: 'instruments/cbw', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{
+				bwb_id: 'CBW',
+				total: 1,
+				items: [item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', [article('3')])]
+			} as never,
+			null
+		);
+		const cbb = chain({ id: 'instruments/cbb', name: 'Cyberbeveiligingsbesluit' }, null, {
+			bwb_id: 'CBB',
+			total: 1,
+			items: [
+				{
+					instrument: law('instruments/cbw', 'Cyberbeveiligingswet'),
+					kind: 'wet',
+					basis_kind: 'delegates',
+					articles: [article('3')]
+				}
+			]
+		} as never);
+		const rows = new Set(['basis', 'law', 'amvb', 'kb', 'ministerial', 'policy', 'other']);
+		for (const k of [cbw, cbb])
+			for (const l of k.layers) expect(rows.has(l.id as string)).toBe(true);
+	});
+
+	it('says "N art. Cbb" on a line past 27 characters, all of them on the card', () => {
+		const many = [article('3'), article('16'), article('17'), article('21'), article('24')];
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{
+				bwb_id: 'B',
+				total: 1,
+				items: [item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', many)]
+			} as never,
+			null
+		);
+		const cite = k.layers[1].nodes[0].parents[0].cite!;
+		expect(cite.full).toBe('art. 3, 16, 17, 21, 24 Cbw');
+		expect(citeText(cite)).toBe('art. 3, 16, 17, 21, 24 Cbw');
+		const longer = [...many, article('35'), article('44')];
+		const k2 = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{
+				bwb_id: 'B',
+				total: 1,
+				items: [item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', longer)]
+			} as never,
+			null
+		);
+		expect(citeText(k2.layers[1].nodes[0].parents[0].cite!)).toBe('7 art. Cbw');
 	});
 });
 
