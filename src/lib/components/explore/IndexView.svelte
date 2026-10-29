@@ -494,7 +494,8 @@
 		void category;
 		if (!catbar) return;
 		centerActive();
-		document.fonts?.ready.then(centerActive).catch(() => {});
+		document.fonts?.addEventListener('loadingdone', centerActive);
+		return () => document.fonts?.removeEventListener('loadingdone', centerActive);
 	});
 
 	// ── Open row, Esc ───────────────────────────────────────────────────────
