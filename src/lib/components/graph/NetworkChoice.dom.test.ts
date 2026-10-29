@@ -38,8 +38,14 @@ describe('NetworkChoice', () => {
 		expect(screen.queryByRole('button', { name: 'Alleen gekozen' })).toBeNull();
 		unmount();
 		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true });
-		const buttons = screen.getAllByRole('button').map((b) => b.textContent);
-		expect(buttons).toEqual(['Alleen gekozen', '1 stap', '2 stappen', '3 stappen']);
+		const buttons = screen.getAllByRole('button');
+		expect(buttons.map((b) => b.textContent)).toEqual(['Gekozen', '1', '2', '3']);
+		expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+			'Alleen gekozen',
+			'1 stap',
+			'2 stappen',
+			'3 stappen'
+		]);
 	});
 	it('marks the step shown, with a netwerk too', () => {
 		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true, depth: 0 });

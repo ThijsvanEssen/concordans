@@ -152,3 +152,16 @@ export const getCitedByTop = (bwb: string, number: string, signal?: AbortSignal)
 		),
 		signal
 	);
+
+/**
+ * The narrow form of an article, to read it beside something else (the Leespaneel): its
+ * heading, its text as blocks per part and its neighbours in the law; once per session.
+ */
+export const getArticleText = (bwbId: string, articleNumber: string) =>
+	once(`articles/${bwbId}/${articleNumber}/text`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/text', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+			})
+		)
+	);

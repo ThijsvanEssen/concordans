@@ -13,7 +13,10 @@ declare global {
 		}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/** The Leespaneel was opened by a click on this page: closing it is a step back. */
+			readOpened?: boolean;
+		}
 		// interface Platform {}
 	}
 }

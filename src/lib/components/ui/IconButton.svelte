@@ -7,6 +7,7 @@
 		label,
 		onclick,
 		disabled = false,
+		keys = null,
 		class: className = '',
 		children
 	}: {
@@ -14,6 +15,8 @@
 		label: string;
 		onclick?: (e: MouseEvent) => void;
 		disabled?: boolean;
+		/** Its key, as the page shows it and as aria-keyshortcuts names it: `['Esc', 'Escape']`. */
+		keys?: readonly [cap: string, aria: string] | null;
 		class?: string;
 		children: Snippet;
 	} = $props();
@@ -23,7 +26,8 @@
 	type="button"
 	class="iconknop {className}"
 	aria-label={label}
-	title={label}
+	aria-keyshortcuts={keys?.[1]}
+	title={keys ? `${label} (${keys[0]})` : label}
 	{disabled}
 	{onclick}>{@render children()}</button
 >

@@ -14,6 +14,7 @@ const STATES = [
 	'is-dicht',
 	'is-dim',
 	'is-docked',
+	'is-geciteerd',
 	'is-herladen',
 	'is-hier',
 	'is-hollow',

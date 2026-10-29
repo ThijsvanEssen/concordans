@@ -19,6 +19,7 @@
 	/** The group of keys of the page the reader is on. */
 	function contextOf(url: URL): KeyContext | undefined {
 		const mode = url.searchParams.get('mode');
+		if (url.searchParams.has('lees')) return 'paneel';
 		if (url.pathname === '/' || url.searchParams.has('q')) return 'zoeken';
 		if (mode === 'netwerk' || mode === 'graph') return 'netwerk';
 		if (mode === 'index') return 'bladeren';

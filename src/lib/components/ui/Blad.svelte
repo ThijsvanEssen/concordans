@@ -11,6 +11,9 @@
 	// close it, the page behind it stands still (lockScroll), the focus goes into it and comes back
 	// to what opened it. The content is a snippet, an optional `foot` has what ends the sheet
 	// (Wis alles, Toon N). Opened inside another Blad, only the last one answers Escape and Tab.
+	// Not modal (`modaal={false}`, the Leespaneel): no scherm, no lock, Tab is not held and the
+	// page stays a page; Escape still closes it, and on a phone a tap beside it. From below it
+	// stands at 60 % of the screen, its grip takes it to 88 %.
 	import { onMount, type Snippet } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { lockScroll } from '$lib/actions/scroll-lock';
@@ -28,7 +31,11 @@
 		aboveTabbar = false,
 		tall = false,
 		full = false,
-		showTitle = true
+		showTitle = true,
+		modaal = true,
+		head,
+		actions,
+		id
 	}: {
 		/** The name of the dialog: its head, and for a screen reader. */
 		title: string;
@@ -52,12 +59,21 @@
 		full?: boolean;
 		/** The head names it; false where the content's own first heading does. */
 		showTitle?: boolean;
+		/** False: a panel beside the page, which stays usable (no scherm, no lock, Tab free). */
+		modaal?: boolean;
+		/** The head in place of the title: a kicker, the title, a line under it. */
+		head?: Snippet;
+		/** Buttons in the head, before Sluiten. */
+		actions?: Snippet;
+		id?: string;
 	} = $props();
 
 	const uid = $props.id();
 	const telefoon = new MediaQuery('max-width: 768px');
 	const tablet = new MediaQuery('max-width: 1100px');
 	const bottom = $derived(upTo === 'tablet' ? tablet.current : telefoon.current);
+	/** Not modal from below: up to 88 % by the grip, else 60 %. */
+	let large = $state(false);
 
 	// Held before the content mounts: a field in it may take the focus first.
 	const was = typeof document === 'undefined' ? null : document.activeElement;
@@ -66,7 +82,7 @@
 
 	onMount(() => {
 		open.push(me);
-		const release = lockScroll();
+		const release = modaal ? lockScroll() : () => {};
 		const target = (focus && el?.querySelector<HTMLElement>(focus)) || el?.querySelector('.sluit');
 		(target as HTMLElement | null)?.focus({ preventScroll: true });
 		return () => {
@@ -92,8 +108,8 @@
 			onClose();
 			return;
 		}
-		// Tab and Shift+Tab go round inside the sheet.
-		if (e.key !== 'Tab' || !el) return;
+		// Tab and Shift+Tab go round inside a modal sheet.
+		if (e.key !== 'Tab' || !el || !modaal) return;
 		const els = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((n) => n.offsetParent);
 		const [first, last] = [els[0], els.at(-1)];
 		if (!first || !last) return;
@@ -106,6 +122,20 @@
 			first.focus();
 		}
 	}
+
+	/** Not modal on a phone: a tap beside the sheet closes it, a tap on a reference replaces it. */
+	function onPointerDown(e: PointerEvent) {
+		if (modaal || !bottom || !(e.target instanceof Element) || el?.contains(e.target)) return;
+		if (!e.target.closest('a.raakvlak')) onClose();
+	}
+
+	/** The grip: a tap or a pull up takes the sheet to 88 %, a pull down back, or closes it. */
+	let gripFrom = 0;
+	function gripUp(e: PointerEvent) {
+		const dy = e.clientY - gripFrom;
+		if (dy > 24 && !large) onClose();
+		else large = dy < -24 ? true : dy > 24 ? false : !large;
+	}
 </script>
 
 <!-- The keyboard with the focus outside the sheet (a row that went away under it). -->
@@ -115,26 +145,50 @@
 	}}
 />
 
+<svelte:document onpointerdowncapture={onPointerDown} />
+
 <div class="blad" style:--blad-below={aboveTabbar ? 'var(--tabbar-h)' : '0px'}>
-	<div class="scrim" role="presentation" onclick={onClose}></div>
+	{#if modaal}<div class="scrim" role="presentation" onclick={onClose}></div>{/if}
 	<div
 		class="sheet"
 		class:is-bottom={bottom}
-		class:is-tall={tall}
+		class:is-tall={tall || large}
+		data-los={!modaal || undefined}
 		data-full={full || undefined}
 		data-place={place}
-		role="dialog"
-		aria-modal="true"
-		aria-label={showTitle ? undefined : title}
-		aria-labelledby={showTitle ? `${uid}-title` : undefined}
+		{id}
+		role={modaal || bottom ? 'dialog' : 'complementary'}
+		aria-modal={modaal ? 'true' : undefined}
+		aria-label={showTitle && !head ? undefined : title}
+		aria-labelledby={showTitle && !head ? `${uid}-title` : undefined}
 		tabindex="-1"
 		bind:this={el}
 		onkeydown={onKey}
 	>
-		{#if bottom}<span class="greep" aria-hidden="true"></span>{/if}
-		<div class="kop" class:kaal={!showTitle}>
-			{#if showTitle}<h2 class="title" id="{uid}-title">{title}</h2>{:else}<span></span>{/if}
-			<IconButton class="sluit" label="Sluiten" onclick={onClose}>×</IconButton>
+		{#if bottom && modaal}<span class="greep" aria-hidden="true"></span>{:else if bottom}<button
+				type="button"
+				class="greep-raak"
+				aria-label={large ? 'Kleiner' : 'Groter'}
+				aria-expanded={large}
+				onpointerdown={(e) => (gripFrom = e.clientY)}
+				onpointerup={gripUp}
+				onkeydown={(e) => e.key === 'Enter' && (large = !large)}><span class="greep"></span></button
+			>{/if}
+		<div class="kop" class:kaal={!showTitle} class:has-head={!!head}>
+			{#if head}<div class="kop-tekst">{@render head()}</div>{:else if showTitle}<h2
+					class="title"
+					id="{uid}-title"
+				>
+					{title}
+				</h2>{:else}<span></span>{/if}
+			<div class="kop-acties">
+				{@render actions?.()}<IconButton
+					class="sluit"
+					label="Sluiten"
+					keys={['Esc', 'Escape']}
+					onclick={onClose}>×</IconButton
+				>
+			</div>
 		</div>
 		<div class="inhoud">{@render children()}</div>
 		{#if foot}<div class="foot">{@render foot()}</div>{/if}
@@ -185,6 +239,11 @@
 		max-width: 100vw;
 	}
 
+	/* Not modal: part of the page, under the top bar's menus and a card of the text beside it. */
+	.sheet[data-los] {
+		z-index: calc(var(--z-topbar) - 1);
+	}
+
 	/* From below: the sheet of a phone (Netwerkkeuze, Telefoon). */
 	.sheet.is-bottom {
 		inset: auto 0 var(--blad-below) 0;
@@ -198,6 +257,10 @@
 	}
 	.sheet.is-bottom.is-tall {
 		height: calc(88dvh - var(--blad-below));
+	}
+	/* Not modal from below: the cited lid in view and the reference above it still seen. */
+	.sheet.is-bottom[data-los]:not(.is-tall) {
+		height: calc(60dvh - var(--blad-below));
 	}
 	.sheet.is-bottom[data-full] {
 		height: calc(100dvh - var(--balk-h) - var(--blad-below));
@@ -222,6 +285,31 @@
 		background: var(--rule);
 	}
 
+	/* The grip as a button: a finger's 44 px around the line of 36 × 4. */
+	.greep-raak {
+		position: absolute;
+		top: 0;
+		left: 50%;
+		width: var(--s-8);
+		height: var(--tik-h);
+		padding: 0;
+		border: 0;
+		background: none;
+		transform: translateX(-50%);
+		cursor: grab;
+		z-index: 1;
+		touch-action: none;
+	}
+	.greep-raak::after {
+		content: '';
+		position: absolute;
+		inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
+	}
+	.greep-raak:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: -2px;
+	}
+
 	.kop {
 		flex: none;
 		display: flex;
@@ -236,6 +324,22 @@
 	.kop.kaal {
 		justify-content: flex-end;
 		padding: var(--s-2) var(--s-2) 0;
+	}
+	/* A head of its own: kicker, title and line at the left, the buttons at its top right. */
+	.kop.has-head {
+		align-items: flex-start;
+	}
+	.is-bottom .kop.has-head {
+		padding-top: var(--s-5);
+	}
+	.kop-tekst {
+		min-width: 0;
+	}
+	.kop-acties {
+		flex: none;
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
 	}
 	.title {
 		margin: 0;

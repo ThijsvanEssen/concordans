@@ -41,6 +41,8 @@
 	} = $props();
 
 	const stepsWord = (n: number) => (n === 0 ? 'Alleen gekozen' : count(n, 'stap', 'stappen'));
+	// Under the heading Aantal stappen the buttons say only the number; their name keeps the word.
+	const stepsLabel = (n: number) => (n === 0 ? 'Gekozen' : String(n));
 	const steps = $derived(withNetwerk ? [0, 1, 2, 3] : [1, 2, 3]);
 	const withDepth = $derived(view !== 'keten');
 
@@ -69,7 +71,8 @@
 				waarde={String(depth)}
 				opties={steps.map((d) => ({
 					waarde: String(d),
-					label: stepsWord(d),
+					label: stepsLabel(d),
+					name: stepsWord(d),
 					titel: titles(d)
 				}))}
 				onSelect={(d) => onDepth(Number(d))}
