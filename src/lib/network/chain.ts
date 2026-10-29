@@ -478,8 +478,8 @@ export function chain(
 		// A law that names it in its text: the law it names, no count.
 		const said = (way: ParentWay) =>
 			node.parents
-				.flatMap((p) =>
-					p.way !== way ? [] : p.cite ? [p.cite.full] : p.relation === 'REFERS_TO' ? [lawAbbr] : []
+				.flatMap(({ way: w, cite: c, relation }) =>
+					w !== way ? [] : c ? [c.full] : relation === 'REFERS_TO' ? [lawAbbr] : []
 				)
 				.join(', ') || null;
 		node.grondslag = said('delegates');
