@@ -111,8 +111,10 @@
 	/** What the keten has room for, and what the drawing needs: it pans sideways past that. */
 	let avail = $state(760);
 	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
-	const SLOT = 176;
-	const need = $derived(Math.max(0, ...shown.map((l) => LEFT + 24 + l.nodes.length * SLOT)));
+	const SLOT = 192;
+	const need = $derived(
+		Math.max(0, ...shown.map((l) => LEFT + 24 + (l.nodes.length + (rest[l.id] ? 1 : 0)) * SLOT))
+	);
 	const width = $derived(Math.max(avail, need));
 	$effect(() => {
 		room = avail;
@@ -120,7 +122,7 @@
 	/** A layer is 104 px high (Keten, Maten). */
 	const ROW = 104;
 	/** From a layer's label to its bronnen, and the line height of a name. */
-	const DROP = 34;
+	const DROP = 58;
 	const LINE = 14;
 	/** A sign of 14 px on a rim of paper of 2; the bron of the keten 18 px on a halo of 4,5 and an edge of 2. */
 	const SIGN = 14;
@@ -138,7 +140,7 @@
 	const rowHeights = $derived(
 		shown.map((l) => {
 			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 36);
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58);
 		})
 	);
 	/** Where each layer begins. */
@@ -270,7 +272,8 @@
 	 * style of the line is this one place.
 	 */
 	const lines = $derived.by(() => {
-		const rails = tops.map((t) => t - 14.5);
+		// A tak runs in the middle of the gutter, never on the line between two rows.
+		const rails = tops.map((t) => t + 8);
 		const nodes = new Map<string, TreeNode>();
 		const rows = new Map<string, number>();
 		shown.forEach((l, i) =>
@@ -342,9 +345,10 @@
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
 					cite: e.o.cite ? citeText(e.o.cite) : null,
-					citeAt: e.many
-						? { x: r.tip.x + 8, y: r.tip.y + 16 }
-						: { x: r.end.x + 8, y: r.end.y - 10 },
+					mentioned: e.o.way === 'mentioned',
+					// On the line close above the card of the child; with several laws above it,
+					// under each law instead, so the labels never stand on each other.
+					citeAt: e.many ? { x: r.tip.x, y: r.tip.y + 17 } : { x: r.end.x, y: r.end.y - 20 },
 					colour: toneColour(
 						edgeColorFor(e.relation, e.from),
 						edgeToneFor(e.relation, null, e.from)
@@ -440,8 +444,25 @@
 		if (!next.delete(id)) next.add(id);
 		open = next;
 	};
-	/** How many a layer holds, drawn and listed: the number of its "Alle". */
-	const allOf = (l: ChainLayer) => l.nodes.length + (rest[l.id] ?? 0);
+	/** The kind of what a layer holds, for its card of the others: "4 andere wetten". */
+	const KIND_WORDS: Record<string, [string, string]> = {
+		basis: ['wet', 'wetten'],
+		law: ['wet', 'wetten'],
+		implementation: ['wet', 'wetten'],
+		eu: ['EU-akte', 'EU-akten'],
+		amvb: ['AMvB', 'AMvB’s'],
+		kb: ['koninklijk besluit', 'koninklijke besluiten'],
+		ministerial: ['regeling', 'regelingen'],
+		policy: ['beleidsregel', 'beleidsregels'],
+		other: ['regeling', 'regelingen']
+	};
+	/** The card of the others: what a click shows or hides. */
+	const otherText = (l: ChainLayer) => {
+		if (open.has(l.id)) return 'Minder';
+		const n = rest[l.id] ?? 0;
+		const [one, many] = KIND_WORDS[l.id] ?? ['bron', 'bronnen'];
+		return `${formatCount(n)} andere ${n === 1 ? one : many}`;
+	};
 	/** Dated outside the period of the strip: faint, not gone (Thijs, 23 Oct). */
 	const outside = (k: ChainNode) =>
 		!!period &&
@@ -490,7 +511,6 @@
 	/>
 	{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
 	{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}
-	{#if l.cite}<text class="line-cite" x={l.citeAt.x} y={l.citeAt.y}>{l.cite}</text>{/if}
 	{#if l.word}<text class="line-word" x={l.wordAt.x} y={l.wordAt.y}>{l.word}</text>{/if}
 {/snippet}
 
@@ -499,8 +519,7 @@
 		type="button"
 		class="btn alle"
 		aria-expanded={open.has(layer.id)}
-		onclick={() => toggle(layer.id)}
-		>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</button
+		onclick={() => toggle(layer.id)}>{otherText(layer)}</button
 	>
 {/snippet}
 
@@ -544,7 +563,7 @@
 			aria-label="Keten"
 		>
 			{#each shown as layer, i (layer.id)}
-				<text class="layer-label pin" x="24" y={tops[i] + 4}>{layer.label.toUpperCase()}</text>
+				<text class="layer-label pin" x="24" y={tops[i] - 2}>{layer.label.toUpperCase()}</text>
 				<line
 					class="rail"
 					x1="20"
@@ -562,6 +581,21 @@
 			</g>
 			{#each lines.filter((l) => l.lit) as l (l.id)}
 				<g>{@render stroke(l)}</g>
+			{/each}
+			<!-- The articles on a line, on a rim of paper over the lines. -->
+			{#each lines.filter((l) => l.cite) as l (l.id)}
+				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
+				<g class="chip">
+					<rect
+						x={l.citeAt.x - w / 2}
+						y={l.citeAt.y - 10}
+						width={w}
+						height="20"
+						rx="2"
+						stroke-dasharray={l.mentioned ? '2 2' : undefined}
+					/>
+					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle">{l.cite}</text>
+				</g>
 			{/each}
 			{#each shown as layer, i (layer.id)}
 				{#each layer.nodes as k (k.id)}
@@ -669,19 +703,33 @@
 						>
 					</g>
 				{/each}
-				<!-- After the bronnen of its layer: the keyboard goes layer by layer, Alle last. -->
+				<!-- After the bronnen of its layer: the keyboard goes layer by layer, the card of the
+				     others last (Variant C: two squares, "4 andere wetten"). -->
 				{#if rest[layer.id]}
+					{@const x = Math.max(...layer.nodes.map((k) => place.get(k.id)?.x ?? 0)) + SLOT}
+					{@const y = tops[i] + DROP}
+					{@const words = linesOf(otherText(layer), 22)}
 					<g
-						class="others pin"
+						class="others"
 						role="button"
 						tabindex="0"
 						aria-expanded={open.has(layer.id)}
 						onclick={() => toggle(layer.id)}
 						onkeydown={(e) => press(e, () => toggle(layer.id))}
 					>
-						<rect class="hit" x={avail - 124} y={tops[i] - 18} width="104" height="32" />
-						<text x={avail - 24} y={tops[i] + 4} text-anchor="end"
-							>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
+						<circle cx={x} cy={y} r="22" class="hit" />
+						<rect
+							x={x - 4}
+							y={y - 3}
+							width={SIGN}
+							height={SIGN}
+							fill="var(--paper)"
+							stroke={colour(layer.nodes[0])}
+							stroke-width="1.5"
+						/>
+						<rect x={x - 10} y={y - 9} width={SIGN} height={SIGN} fill={colour(layer.nodes[0])} />
+						<text class="name" {x} y={y + 24} text-anchor="middle"
+							>{#each words as r, j (j)}<tspan {x} dy={j ? LINE : 0}>{r}</tspan>{/each}</text
 						>
 					</g>
 				{/if}
@@ -798,15 +846,9 @@
 	.others {
 		cursor: pointer;
 	}
-	.others text {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		fill: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-	}
-	.others:hover text {
+	.others:hover .name {
 		fill: var(--ink);
+		text-decoration: underline;
 	}
 	.rest {
 		margin: 0 var(--s-5) var(--s-4);
@@ -827,7 +869,6 @@
 		opacity: 0.7;
 	}
 	/* The words on a line, italic, on an edge of paper like a name. */
-	.line-cite,
 	.line-word {
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
@@ -838,8 +879,16 @@
 		stroke-width: 4px;
 		stroke-linejoin: round;
 	}
-	.line-cite {
-		font-style: normal;
+	/* The articles on a line (Keten, Referentielabel): sans on a framed rim of paper; a dotted frame
+	   where the line only names them. */
+	.chip rect {
+		fill: var(--paper);
+		stroke: var(--rule-strong);
+		stroke-width: 1;
+	}
+	.chip text {
+		font-family: var(--font-ui);
+		font-size: var(--t-note);
 		fill: var(--ink-2);
 	}
 	/* Outside the period of the strip: faint, not gone. */

@@ -19,9 +19,9 @@ test('a row says how it hangs, with the sign of the drawing', async ({ page }) =
 	await expect(list.locator('.mark:not(:has(svg))')).toHaveCount(0);
 });
 
-test('Alle N is a framed button of a finger’s height', async ({ page }) => {
+test('The card of the others is a framed button of a finger’s height', async ({ page }) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
-	const alle = page.locator('.chain .list').getByRole('button', { name: /^Alle \d+/ });
+	const alle = page.locator('.chain .list').getByRole('button', { name: /^\d+ andere / });
 	await expect(alle.first()).toBeVisible();
 	const box = (await alle.first().boundingBox())!;
 	expect(box.height).toBeGreaterThanOrEqual(44);
