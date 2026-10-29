@@ -8,7 +8,7 @@ test('the card of an article names the open dossier and adds its voorstel to the
 }) => {
 	await page.goto('/wetten/BWBR0001827/artikel/17?mode=netwerk&kies=articles/bwbr0001827_17');
 	const kaart = page.locator('.strook--kaart.is-open');
-	const open = kaart.getByRole('region', { name: 'Openstaand' });
+	const open = kaart.getByRole('region', { name: 'Lopend wetsvoorstel' });
 	await expect(open).toBeVisible();
 	await expect(open.getByText(/^Dossier 33723 /)).toBeVisible();
 	await expect(open.getByRole('link', { name: 'Voorstel van wet', exact: true })).toBeVisible();
@@ -26,8 +26,10 @@ test('the vinkje Voorstellen draws the voorstellen of a wet and takes them off a
 	await page.goto('/explore?mode=netwerk&netwerk=instruments/bwbr0005416');
 	const list = page.locator('.canvas-node-list');
 	await expect(list.getByText('Gemw, Wet')).toBeAttached();
-	const vinkje = page.getByRole('button', { name: 'Voorstellen', exact: true });
+	const vinkje = page.getByRole('button', { name: /^Voorstellen\b/ });
 	await expect(vinkje).toHaveAttribute('aria-pressed', 'false');
+	// It says how many voorstellen it draws before it is on (live-toets B3).
+	await expect(vinkje).toHaveText(/Voorstellen\s*\d+/);
 	const voorstel = list.getByText(/^Voorstel van wet, Dossier \d+/);
 	const eerst = await voorstel.count();
 

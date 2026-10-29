@@ -208,6 +208,8 @@
 	let coreIds = $state<ReadonlySet<string> | null>(null);
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
+	/** No bron chosen and none on its way: the canvas says so, the strip offers + Bron toevoegen. */
+	const nothingChosen = $derived(!hasNodes && !midden && !selection && expecting === 0);
 	let canvasCounts = $state<CanvasCounts>(NO_COUNTS);
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
@@ -1359,22 +1361,22 @@
 	<ViewSheet open={sheetOpen} onClose={closeSheet} opener={() => sheetOpener}>
 		<aside class="strook strook--links" aria-label="Bronnen en filters">
 			{@render canvasOverlay?.()}
-			<NetworkChoice
-				{view}
-				viewSlot={viewChoice}
-				depth={view === 'verband' ? pairSteps : depth}
-				{onDepth}
-				withNetwerk={netwerkActive && view === 'omgeving'}
-				reach={externCounts ? null : reach}
-				empty={!hasNodes && !midden && !selection && expecting === 0}
-			>
-				<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
-				{#if (hasNodes || midden) && !legend.counting}
-					<section class="legenda-inhoud" aria-label="Filters">
-						{@render sidebar()}
-					</section>
-				{/if}
-			</NetworkChoice>
+			<!-- No bron chosen: the strip has + Bron toevoegen alone, the canvas says why (live-toets B8). -->
+			{#if !nothingChosen}<NetworkChoice
+					{view}
+					viewSlot={viewChoice}
+					depth={view === 'verband' ? pairSteps : depth}
+					{onDepth}
+					withNetwerk={netwerkActive && view === 'omgeving'}
+					reach={externCounts ? null : reach}
+				>
+					<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
+					{#if (hasNodes || midden) && !legend.counting}
+						<section class="legenda-inhoud" aria-label="Filters">
+							{@render sidebar()}
+						</section>
+					{/if}
+				</NetworkChoice>{/if}
 		</aside>
 	</ViewSheet>
 	<div class="graph-main">
