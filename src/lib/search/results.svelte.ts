@@ -13,6 +13,9 @@ type LaneId = Lane['id'];
 type ResultsLane = {
 	status: 'loading' | 'done' | 'failed';
 	hits: Partial<Record<SearchKind, Hit[]>>;
+	/** Whether the API names a best hit (`best`), and which. */
+	named: boolean;
+	best: string | null;
 	/** `any`: no hit held every word. */
 	matched: 'all' | 'any';
 	leftOut: string[];
@@ -23,6 +26,8 @@ type ResultsLane = {
 const fresh = (status: ResultsLane['status']): ResultsLane => ({
 	status,
 	hits: {},
+	named: false,
+	best: null,
 	matched: 'all',
 	leftOut: [],
 	searched: {}
@@ -47,6 +52,9 @@ export class SearchResults {
 		const lane = LANES.find((l) => l.kinds.includes(kind))!;
 		return this.lanes[lane.id].hits[kind] ?? [];
 	}
+
+	/** What the lanes say about the best hit, the fast lane first. */
+	readonly answers = $derived(LANES.map((l) => this.lanes[l.id]));
 
 	/** The lane that answered for a kind: whether its hits hold only some of the words. */
 	laneOf(kind: SearchKind): ResultsLane {
@@ -98,6 +106,8 @@ export class SearchResults {
 				this.lanes[lane.id] = {
 					status: 'done',
 					hits: r.results as ResultsLane['hits'],
+					named: 'best' in r,
+					best: r.best ?? null,
 					matched: r.matched ?? 'all',
 					leftOut: r.left_out ?? [],
 					searched: r.searched as ResultsLane['searched']

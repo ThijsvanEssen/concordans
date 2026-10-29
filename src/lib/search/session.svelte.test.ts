@@ -114,7 +114,8 @@ describe('the lanes of a search', () => {
 			[['articles', 'documents'], undefined],
 			[['judgments'], undefined]
 		]);
-		expect(asked.every((a) => a.query.mode === 'live')).toBe(true);
+		// The fast lane asks live; the text and the judgments ask in full at once.
+		expect(asked.map((a) => a.query.mode)).toEqual(['live', 'live', 'full', 'full']);
 		stop();
 	});
 
@@ -217,23 +218,26 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
-	it('offers "Meer uitspraken" where the live mode left judgments out, and asks every lane in full', async () => {
+	it('offers "Meer dossiers" where the live mode left them out, and asks the fast lane in full, no other', async () => {
 		const { asked, of } = api();
 		const { s, stop } = session();
 		await type(s, 'huur');
-		of('instruments').answer(answer({ instruments: [] }));
-		of('articles').answer(answer({ articles: [] }));
-		of('judgments').answer(
-			answer({ judgments: [hit('judgments', 'a')] }, { partial: { judgments: true } })
+		of('instruments').answer(
+			answer({ dossiers: [hit('dossiers', 'a')] }, { partial: { dossiers: true } })
 		);
+		of('articles').answer(answer({ articles: [] }));
+		of('judgments').answer(answer({ judgments: [] }, { partial: { judgments: true } }));
 		await settle();
-		expect([...s.moreKinds]).toEqual(['judgments']);
+		// The judgments were asked in full: there is no more to ask for.
+		expect([...s.moreKinds]).toEqual(['dossiers']);
 		expect(s.empty).toBe(false);
 		const before = asked.length;
 		s.askInFull();
 		flushSync();
 		await vi.advanceTimersByTimeAsync(150);
-		expect(asked.slice(before).map((a) => a.query.mode)).toEqual(['full', 'full', 'full']);
+		expect(asked.slice(before).map((a) => [a.query.types[0], a.query.mode])).toEqual([
+			['instruments', 'full']
+		]);
 		expect(s.moreKinds.size).toBe(0);
 		stop();
 	});
@@ -242,16 +246,17 @@ describe('the lanes of a search', () => {
 		const { asked, of } = api();
 		const { s, stop } = session();
 		await type(s, 'huur');
-		of('judgments').answer(answer({ judgments: [] }, { partial: { judgments: true } }));
+		of('instruments').answer(answer({ instruments: [] }, { partial: { instruments: true } }));
 		await settle();
 		expect(s.fullFor).toBe('huur');
 		await vi.advanceTimersByTimeAsync(150);
 		expect(asked.at(-1)?.query.mode).toBe('full');
+		expect(asked.at(-1)?.query.types).toContain('instruments');
 		stop();
 	});
 
 	it('names the Beste treffer once, after the answers in full, where it asks in full by itself (#118)', async () => {
-		const { of } = api();
+		const { asked, of } = api();
 		const { s, opened, stop } = session();
 		const named: (string | undefined)[] = [];
 		const watch = $effect.root(() => {
@@ -268,7 +273,8 @@ describe('the lanes of a search', () => {
 		);
 		await settle();
 		expect(s.fullFor).toBe('huur');
-		// Asked again, in full: the lanes are not in until that answer is, also while it waits.
+		// The fast lane asked again, in full: the lanes are not in until that answer is, also
+		// while it waits. The text and the judgments, asked in full at once, are not asked twice.
 		expect(s.allIn).toBe(false);
 		expect(s.best).toBe(null);
 		s.pressEnter();
@@ -277,14 +283,10 @@ describe('the lanes of a search', () => {
 		await vi.advanceTimersByTimeAsync(150);
 		flushSync();
 		expect(s.allIn).toBe(false);
+		expect(asked.filter((a) => a.query.types.includes('articles'))).toHaveLength(1);
 		of('instruments').answer(
 			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { resolved: null })
 		);
-		of('articles').answer(answer({ articles: [hit('articles', 'live', 1)] }));
-		await settle();
-		expect(s.best).toBe(null);
-		expect(opened).toEqual([]);
-		of('judgments').answer(answer({ judgments: [] }));
 		await settle();
 		expect(named).toEqual(['instruments/huurwet']);
 		expect(opened).toEqual(['instruments/huurwet']);
@@ -683,6 +685,32 @@ describe('Enter and the best the API names (besluit 30)', () => {
 		await answerAll(of, {}, { best: null });
 		expect(s.empty).toBe(true);
 		expect(s.narrower).toEqual(['pensioenen', 'verzamelwoord']);
+		stop();
+	});
+});
+
+describe('the order of the groups', () => {
+	it('lifts a group with a whole name on its score once the fast lane is in, and the slow groups move none', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'yesilgoz');
+		of('instruments').answer(
+			answer({
+				dossiers: [hit('dossiers', 'd', 0.1)],
+				members: [hit('members', 'yesilgoz', 0.75)]
+			})
+		);
+		await settle();
+		const order = () => s.shown.map((x) => (x.best ? 'beste' : x.kind));
+		expect(order().slice(0, 3)).toEqual(['members', 'articles', 'judgments']);
+		const before = order();
+		of('articles').answer(answer({ articles: [hit('articles', 'a', 0.1)] }));
+		await settle();
+		// A slow group comes in under its place: the groups before it stand as they stood.
+		expect(order().filter((k) => before.includes(k))).toEqual(
+			before.filter((k) => order().includes(k))
+		);
+		expect(order()[0]).toBe('members');
 		stop();
 	});
 });

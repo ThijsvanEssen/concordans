@@ -16,8 +16,16 @@
 	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
 	import { selectOptions, type FacetGroup } from '$lib/components/explore/index/facets';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { SEARCH_KINDS, type SearchKind } from '$lib/search/lanes';
-	import { bySection, groupLabel, sectionOf } from '$lib/search/present';
+	import { LANES, SEARCH_KINDS, type SearchKind } from '$lib/search/lanes';
+	import {
+		bySection,
+		groupLabel,
+		groupOrder,
+		pickBest,
+		sectionOf,
+		slots
+	} from '$lib/search/present';
+	import { bronLabel } from '$lib/vocabulary';
 	import {
 		courtLabel,
 		judgmentFacets,
@@ -90,18 +98,36 @@
 	/** The kinds with hits, in the order of the groups; the judgments narrowed by instantie and jaar. */
 	const hitsOf = (kind: SearchKind) =>
 		kind === 'judgments' ? onlyJudgments(results.hitsOf(kind), court, year) : results.hitsOf(kind);
+	const kinds = $derived(SEARCH_KINDS.filter((k) => !chosen || k === chosen));
 	const groups = $derived(
-		SEARCH_KINDS.filter((k) => !chosen || k === chosen)
+		kinds
 			.map((kind) => ({ kind, hits: uniqueBy(bySection(hitsOf(kind)), (h) => h.id) }))
 			.filter((g) => g.hits.length > 0)
 	);
 	const all = $derived(SEARCH_KINDS.map((kind) => ({ kind, hits: results.hitsOf(kind) })));
 	const total = $derived(groups.reduce((n, g) => n + g.hits.length, 0));
 	const judgments = $derived(judgmentFacets(results.hitsOf('judgments')));
-	/** The judgments are still on their way: their group holds its place. */
-	const waitingJudgments = $derived(
-		results.lanes.judgments.status === 'loading' && (!chosen || chosen === 'judgments')
+	// The groups stand in the order of the typeahead (groupOrder): by the fast lane alone, so
+	// the slow ones (the text, the judgments) come in under their places, each holding its
+	// place with "Laden…", and move none. The Beste treffer stands above once every lane is in.
+	const order = $derived(
+		groupOrder(
+			kinds,
+			LANES[0].kinds.map((kind) => ({ kind, hits: hitsOf(kind) }))
+		)
 	);
+	const best = $derived(!chosen && results.done ? pickBest(groups, results.answers) : null);
+	const bestComing = $derived(
+		!chosen && !results.done && !best && groups.length > 0 && q.length >= 2
+	);
+	const waiting = $derived(
+		new Set(
+			LANES.filter((l) => l.showsLoading && results.lanes[l.id].status === 'loading').flatMap((l) =>
+				l.kinds.filter((k) => kinds.includes(k))
+			)
+		)
+	);
+	const shown = $derived(slots(order, groups, best, (kind) => q.length >= 2 && waiting.has(kind)));
 
 	const groupsOfFacets = $derived.by((): FacetGroup[] => {
 		const out: FacetGroup[] = [
@@ -223,66 +249,84 @@
 			<p class="stil weggelaten">Weggelaten: {leftOut.join(', ')}</p>
 		{/if}
 
-		{#each groups as group (group.kind)}
-			{@const paged = chosen ? pageOf(group.hits, pageNumber) : null}
-			{@const rows = paged ? paged.rows : group.hits.slice(0, OVERVIEW_ROWS)}
-			{@const lane = results.laneOf(group.kind)}
-			<!-- The API gave its limit: there may be more than it gave, which the count says. -->
-			{@const capped = group.hits.length >= RESULT_LIMIT}
-			<Sectie
-				id="groep-{group.kind}"
-				title={groupLabel(group.kind)}
-				aantal={atLeast(group.hits.length, capped)}
-				inklapbaar={false}
-			>
-				{#snippet naast()}{#if lane.matched === 'any'}<span class="deel"
-							>treffers met een deel van de woorden</span
-						>{/if}{/snippet}
-				{#if lane.searched[group.kind]}
-					<p class="gezocht"><Coverage searched={lane.searched[group.kind]} /></p>
-				{/if}
-				<div class="rijen">
-					{#each rows as hit, n (hit.id)}
-						{@const section = sectionOf(hit)}
-						{#if section && (n === 0 || section !== sectionOf(rows[n - 1]))}
-							<div class="sectie">{section}</div>
-						{/if}
-						<ResultRow {hit} {q} neighbours={group.hits} />
-					{/each}
-				</div>
-				{#if paged && paged.pages > 1}
-					<nav class="bladeren" aria-label="Pagina's">
-						{#if paged.page > 1}
-							<TextLink
-								href={withParams(page.url, {
-									[P.page]: paged.page > 2 ? String(paged.page - 1) : null
-								})}>Vorige</TextLink
-							>
-						{/if}
-						<span class="stil">Pagina {paged.page} van {paged.pages}</span>
-						{#if paged.page < paged.pages}
-							<TextLink href={withParams(page.url, { [P.page]: String(paged.page + 1) })}
-								>Volgende</TextLink
-							>
-						{/if}
-					</nav>
-				{:else if !chosen && group.hits.length > OVERVIEW_ROWS}
-					<p class="alle">
-						<AllN
-							aantal={capped ? null : group.hits.length}
-							noun={groupLabel(group.kind).toLowerCase()}
-							href={hrefWith({ [P.kind]: group.kind })}
-						/>
-					</p>
-				{/if}
-			</Sectie>
-		{/each}
-
-		{#if waitingJudgments && q.length >= 2}
-			<Sectie id="groep-judgments-laden" title={groupLabel('judgments')} inklapbaar={false}>
+		{#if bestComing}
+			<Sectie id="beste-treffer-laden" title="Beste treffer" inklapbaar={false}>
 				<SlowLoad label="Laden…" visible />
 			</Sectie>
 		{/if}
+
+		{#each shown as slot (slot.best ? 'beste' : slot.kind)}
+			{#if slot.best}
+				<Sectie id="beste-treffer" title="Beste treffer, {bronLabel(slot.kind)}" inklapbaar={false}>
+					<div class="rijen">
+						<ResultRow
+							hit={slot.hits[0]}
+							{q}
+							neighbours={groups.find((g) => g.kind === slot.kind)?.hits ?? slot.hits}
+						/>
+					</div>
+				</Sectie>
+			{:else if slot.pending}
+				<Sectie id="groep-{slot.kind}-laden" title={groupLabel(slot.kind)} inklapbaar={false}>
+					<SlowLoad label="Laden…" visible />
+				</Sectie>
+			{:else}
+				{@const group = slot}
+				{@const whole = groups.find((g) => g.kind === slot.kind)?.hits ?? slot.hits}
+				{@const paged = chosen ? pageOf(group.hits, pageNumber) : null}
+				{@const rows = paged ? paged.rows : group.hits.slice(0, OVERVIEW_ROWS)}
+				{@const lane = results.laneOf(group.kind)}
+				<!-- The API gave its limit: there may be more than it gave, which the count says. -->
+				{@const capped = whole.length >= RESULT_LIMIT}
+				<Sectie
+					id="groep-{group.kind}"
+					title={groupLabel(group.kind)}
+					aantal={atLeast(whole.length, capped)}
+					inklapbaar={false}
+				>
+					{#snippet naast()}{#if lane.matched === 'any'}<span class="deel"
+								>treffers met een deel van de woorden</span
+							>{/if}{/snippet}
+					{#if lane.searched[group.kind]}
+						<p class="gezocht"><Coverage searched={lane.searched[group.kind]} /></p>
+					{/if}
+					<div class="rijen">
+						{#each rows as hit, n (hit.id)}
+							{@const section = sectionOf(hit)}
+							{#if section && (n === 0 || section !== sectionOf(rows[n - 1]))}
+								<div class="sectie">{section}</div>
+							{/if}
+							<ResultRow {hit} {q} neighbours={whole} />
+						{/each}
+					</div>
+					{#if paged && paged.pages > 1}
+						<nav class="bladeren" aria-label="Pagina's">
+							{#if paged.page > 1}
+								<TextLink
+									href={withParams(page.url, {
+										[P.page]: paged.page > 2 ? String(paged.page - 1) : null
+									})}>Vorige</TextLink
+								>
+							{/if}
+							<span class="stil">Pagina {paged.page} van {paged.pages}</span>
+							{#if paged.page < paged.pages}
+								<TextLink href={withParams(page.url, { [P.page]: String(paged.page + 1) })}
+									>Volgende</TextLink
+								>
+							{/if}
+						</nav>
+					{:else if !chosen && whole.length > OVERVIEW_ROWS}
+						<p class="alle">
+							<AllN
+								aantal={capped ? null : whole.length}
+								noun={groupLabel(group.kind).toLowerCase()}
+								href={hrefWith({ [P.kind]: group.kind })}
+							/>
+						</p>
+					{/if}
+				</Sectie>
+			{/if}
+		{/each}
 
 		{#each failedNames as lane (lane.id)}
 			<div class="staat">

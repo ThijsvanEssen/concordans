@@ -7,6 +7,7 @@ import {
 	bySection,
 	chamberOfHit,
 	groupLabel,
+	groupOrder,
 	marked,
 	orderGroups,
 	presentHit,
@@ -305,6 +306,43 @@ describe('orderGroups', () => {
 	it('puts a name first on a tie', () => {
 		const order = orderGroups([g('documents', 0.25), g('dossiers', 0.25), g('members', 0.25)]);
 		expect(order.map((x) => x.kind)).toEqual(['members', 'dossiers', 'documents']);
+	});
+});
+
+describe('groupOrder', () => {
+	const g = (kind: Hit['collection'], ...scores: number[]) => ({
+		kind: kind as never,
+		hits: scores.map((score, i) => hit({ collection: kind, key: `${kind}${i}`, score }))
+	});
+	const kinds = ['instruments', 'dossiers', 'members', 'factions', 'decisions'] as never[];
+
+	it('keeps the order of the kinds where no hit is a whole name', () => {
+		expect(
+			groupOrder(kinds, [g('dossiers', 0.5), g('members', 0.25), g('decisions', 0.1)])
+		).toEqual(kinds);
+	});
+
+	it('lifts a group with a whole name over the rest, on its score', () => {
+		expect(
+			groupOrder(kinds, [g('dossiers', 0.1), g('members', 0.75), g('decisions', 0.1)])
+		).toEqual(['members', 'instruments', 'dossiers', 'factions', 'decisions']);
+	});
+
+	it('puts an identifier before a whole name, and the rest in their places', () => {
+		expect(groupOrder(kinds, [g('members', 0.75), g('dossiers', 1)])).toEqual([
+			'dossiers',
+			'members',
+			'instruments',
+			'factions',
+			'decisions'
+		]);
+	});
+
+	it('takes only the kinds it is given', () => {
+		expect(groupOrder(['dossiers', 'members'] as never[], [g('factions', 1)])).toEqual([
+			'dossiers',
+			'members'
+		]);
 	});
 });
 

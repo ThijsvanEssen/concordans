@@ -19,7 +19,7 @@ import {
 	type Lane,
 	type SearchKind
 } from './lanes';
-import { bestHit, bySection, hitName, slots } from './present';
+import { bestIdOf, bySection, groupOrder, hitName, pickBest, slots } from './present';
 import { narrowerWords } from './results';
 import {
 	choicesOf,
@@ -100,6 +100,8 @@ type Run = {
 	next: (() => void) | null;
 	/** The request asked last: only its answer brings the lane in. */
 	asked: number;
+	/** What a lane that asks in full at once last asked, so the same is not asked twice. */
+	key?: string;
 };
 
 export class SearchSession {
@@ -180,11 +182,7 @@ export class SearchSession {
 	readonly bestId = $derived.by((): string | null => {
 		const lane = LANES.find((l) => l.kinds.some((k) => this.kinds.includes(k)));
 		const own = lane ? this.lanes[lane.id].answer : null;
-		if (own?.term === this.q && own.best) return own.best;
-		const other = this.answers.find((a) => a.best);
-		if (other?.best) return other.best;
-		const exact = this.groups.flatMap((g) => g.hits).filter((h) => h.exact);
-		return exact.length === 1 ? exact[0].id : null;
+		return bestIdOf(own?.term === this.q ? [own, ...this.answers] : this.answers, this.groups);
 	});
 	/** The kinds whose hits hold only some of the words. */
 	readonly partialKinds = $derived(
@@ -211,9 +209,20 @@ export class SearchSession {
 				.flatMap((l) => l.kinds)
 		)
 	);
+	/**
+	 * The kinds in the order of their groups: the order of `kinds`, except the groups with a
+	 * whole name or an identifier, which go up on their score. Set by the fast lane alone, so
+	 * once it is in the slow groups come in under their places and move none.
+	 */
+	readonly order = $derived(
+		groupOrder(
+			this.kinds,
+			LANES[0].kinds.map((kind) => ({ kind, hits: this.hitsOf(kind) }))
+		)
+	);
 	/** The groups in the one order, with the places of those still coming (#52). */
 	readonly shown = $derived(
-		slots(this.kinds, this.groups, this.best, (kind) => !!this.q && this.loadingKinds.has(kind))
+		slots(this.order, this.groups, this.best, (kind) => !!this.q && this.loadingKinds.has(kind))
 	);
 	readonly hits = $derived(this.shown.flatMap((g) => g.hits));
 	readonly rowOfHit = $derived(new Map(this.hits.map((hit, i) => [hit.id, this.offset + i])));
@@ -382,13 +391,13 @@ export class SearchSession {
 
 	/** Opnieuw in a lane's group: that lane is asked again, the rest not. */
 	retry(id: LaneId) {
-		this.#schedule(LANES.find((l) => l.id === id)!);
+		this.#schedule(LANES.find((l) => l.id === id)!, true);
 	}
 
 	/** Opnieuw under the search: the fast kinds, what the query cites, and every lane that failed. */
 	retrySearch() {
 		for (const lane of LANES)
-			if (!lane.failsAlone || failed(this.lanes[lane.id].status)) this.#schedule(lane);
+			if (!lane.failsAlone || failed(this.lanes[lane.id].status)) this.#schedule(lane, true);
 	}
 
 	/** "Meer …": the whole query again, in full. */
@@ -408,13 +417,7 @@ export class SearchSession {
 
 	/** The Beste treffer: the hit the API names, else (an older API) the best by score. */
 	#bestOf(groups: { kind: SearchKind; hits: Hit[] }[]): { kind: SearchKind; hit: Hit } | null {
-		if (!this.names) return bestHit(groups);
-		const id = this.bestId;
-		for (const g of groups) {
-			const hit = g.hits.find((h) => h.id === id);
-			if (hit) return { kind: g.kind, hit };
-		}
-		return null;
+		return pickBest(groups, this.answers);
 	}
 
 	/** Is the row the one a key now acts on? Not before a key, where nothing is preselected. */
@@ -496,9 +499,13 @@ export class SearchSession {
 	}
 
 	/** The lane asked for the request, once the typing pauses. */
-	#schedule(lane: Lane) {
+	#schedule(lane: Lane, again = false) {
 		const run = this.#runs[lane.id];
 		const { term, kinds, from, to, fullFor } = this.#asked;
+		// A lane that asks in full at once has nothing new to ask when only "Meer …" changed.
+		const key = JSON.stringify([term, kinds, from, to]);
+		if (lane.full && !again && run.key === key && !failed(this.lanes[lane.id].status)) return;
+		run.key = lane.full ? key : undefined;
 		clearTimeout(run.timer);
 		run.next = null;
 		if (lane.abortsOnRetype) {
@@ -519,7 +526,7 @@ export class SearchSession {
 			types,
 			limit: LIMIT,
 			resolve: resolves || undefined,
-			mode: searchMode(term, fullFor),
+			mode: searchMode(term, fullFor, lane),
 			from: from || undefined,
 			to: to || undefined
 		};
@@ -555,8 +562,9 @@ export class SearchSession {
 				if (!current()) return;
 				const hits = r.results as Hits;
 				this.searched = { ...this.searched, ...r.searched };
-				// The live mode names the kinds it cut off at its time: more on "Meer …".
-				const cut = query.types.filter((k) => r.partial?.[k]);
+				// The live mode names the kinds it cut off at its time: more on "Meer …". A lane that
+				// asks in full has no more to ask for.
+				const cut = lane.full ? [] : query.types.filter((k) => r.partial?.[k]);
 				const answer: Answer = {
 					term,
 					named: 'best' in r,
