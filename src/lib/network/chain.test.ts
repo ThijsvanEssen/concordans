@@ -336,20 +336,16 @@ describe('the keten of a law and of its AMvB', () => {
 				}
 			]
 		};
-		// also with Noemt off: both ends are drawn anyway
-		for (const mentions of [true, false]) {
-			const k = chain(
-				{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
-				{ bwb_id: 'B', total: 2, items: [cbb, zorg] } as never,
-				null,
-				{ mentions }
-			);
-			const node = k.layers.flatMap((l) => l.nodes).find((n) => n.id === 'instruments/zorg')!;
-			expect(node.parents.map((p) => [p.id, p.way, p.cite && citeText(p.cite)])).toEqual([
-				['instruments/bwbr0010346', 'delegates', 'art. 68 Cbw'],
-				['instruments/cbb', 'mentioned', 'art. 20, 29 Cbb']
-			]);
-		}
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{ bwb_id: 'B', total: 2, items: [cbb, zorg] } as never,
+			null
+		);
+		const node = k.layers.flatMap((l) => l.nodes).find((n) => n.id === 'instruments/zorg')!;
+		expect(node.parents.map((p) => [p.id, p.way, p.cite && citeText(p.cite)])).toEqual([
+			['instruments/bwbr0010346', 'delegates', 'art. 68 Cbw'],
+			['instruments/cbb', 'mentioned', 'art. 20, 29 Cbb']
+		]);
 	});
 	it('shortens a label of leden to the articles that fit, the glance naming them all', () => {
 		const ienw = [

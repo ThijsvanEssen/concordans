@@ -454,13 +454,14 @@
 	);
 	/**
 	 * The keten with the regulations no longer in force (drawn faint), or without; and with the
-	 * regulations that only name the law, or only those issued under it (the default: a
-	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
+	 * regulations that only name the law, dashed (the default: Thijs 29 Oct, "noemen mag ook
+	 * standaard aanstaan" while the line tells them apart), or only those issued under it.
+	 * Relatie's Noemt is that switch.
 	 */
 	/** The search for a bron to add, open (the panel's and the empty canvas's button). */
 	let toevoegenOpen = $state(false);
 	let chainExpired = $state(false);
-	let chainMentions = $state(false);
+	let chainMentions = $state(true);
 	let chainBasedOff = $state(false);
 	/** The kinds of line a lineage keten (a judgment's appeals, a fractie's continuations) switched off. */
 	let lineageOff = $state.raw<ReadonlySet<LineKind>>(new Set());
@@ -471,13 +472,6 @@
 					...(chainMentions ? [] : (['citation'] as const)),
 					...(chainBasedOff ? (['structural'] as const) : [])
 				])
-	);
-	/**
-	 * What the drawing hides: with Noemt off the keten (chain.ts) already leaves out what only
-	 * names the law, so a line that names stays between two that are drawn anyway.
-	 */
-	const chainDrawHidden = $derived<ReadonlySet<LineKind>>(
-		lineageStart ? lineageOff : new Set([...chainHidden].filter((l) => l !== 'citation'))
 	);
 	let chainData = $state.raw<{
 		bwb: string;
@@ -2267,7 +2261,7 @@
 				chosen={marked}
 				gap={chainGap}
 				{hiddenKinds}
-				hiddenLines={chainDrawHidden}
+				hiddenLines={chainHidden}
 				amending={chainModel?.amending.length ?? 0}
 				expired={chainData?.delegated?.expired_total
 					? {

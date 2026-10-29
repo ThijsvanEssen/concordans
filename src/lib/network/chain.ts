@@ -472,11 +472,10 @@ export function chain(
 					grown = true;
 				}
 		}
-	// A line that only names stays between two that are drawn anyway: the Cyberbeveiligingsregeling
-	// voor de zorg under the Cbw and, named, under the Cbb (Thijs, 29 Oct: two lines to it).
 	const nodes = [...byId.values()].filter((node) => alive.has(node.id));
 	if (!mentions)
-		for (const node of nodes) node.parents = node.parents.filter((p) => alive.has(p.id));
+		for (const node of nodes)
+			node.parents = node.parents.filter((p) => p.way === 'delegates' && alive.has(p.id));
 	// What it rests on, said on a phone's row: the articles of each law with its abbreviation.
 	for (const node of nodes) {
 		const said = (way: ParentWay) =>
