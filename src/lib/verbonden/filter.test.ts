@@ -56,6 +56,8 @@ describe('parseFilter', () => {
 		expect(parseFilter(new URLSearchParams('')).bronnen).toBeNull();
 		expect(parseFilter(new URLSearchParams('bronnen=x')).bronnen).toBeNull();
 		expect(filterParams(EMPTY_FILTER).bronnen).toBeNull();
+		// Every soort is the default: no list of sixteen in the address (live-toets B1).
+		expect(filterParams({ ...EMPTY_FILTER, bronnen: new Set(FILTER_GROUPS) }).bronnen).toBeNull();
 	});
 });
 

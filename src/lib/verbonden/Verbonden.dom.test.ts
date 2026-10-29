@@ -190,17 +190,17 @@ describe('Verbonden', () => {
 		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
 	});
 
-	it('has Netwerk tonen in Tekst, and draws the network above the groups with a legend of one line', async () => {
-		const onShowNetwork = vi.fn();
-		paneel(ROWS, { onShowNetwork, showNetwork: false });
-		await fireEvent.click(screen.getByRole('button', { name: 'Netwerk tonen' }));
-		expect(onShowNetwork).toHaveBeenCalledWith(true);
-		expect(screen.queryByTestId('network-sketch')).toBeNull();
+	it('draws the network in Tekst from the start, with Filter and Open in netwerk in the head', () => {
+		paneel(ROWS, { tekst: true, networkHref: '/x?mode=netwerk' });
+		expect(screen.getByTestId('network-sketch')).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /Netwerk (tonen|verbergen)/ })).toBeNull();
+		const kop = screen.getByRole('heading', { name: 'Verbonden' }).parentElement!;
+		expect(kop.querySelector('button.btn')?.textContent).toBe('Filter');
+		expect(kop.querySelector('a.btn')?.getAttribute('href')).toBe('/x?mode=netwerk');
 	});
 
 	it('draws each bron on its own up to forty, counted under the drawing', () => {
-		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x' });
-		expect(screen.getByRole('button', { name: 'Netwerk verbergen' })).toBeTruthy();
+		paneel(ROWS, { tekst: true, networkHref: '/x' });
 		const figuur = screen.getByTestId('network-sketch');
 		expect(figuur.querySelector('figcaption')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
 			'2 bronnen'
@@ -214,8 +214,8 @@ describe('Verbonden', () => {
 		expect(figuur.querySelectorAll('a')).toHaveLength(0);
 	});
 
-	it('opens a bron of the drawing in place under it, its card; the werkplek is a link below', async () => {
-		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x?mode=netwerk' });
+	it('opens a bron of the drawing in place under it, its card', async () => {
+		paneel(ROWS, { tekst: true, networkHref: '/x?mode=netwerk' });
 		const figuur = screen.getByTestId('network-sketch');
 		const hr = figuur.querySelector<SVGElement>(
 			'.single[aria-label="Hoge Raad, 20 december 2019"]'
@@ -225,9 +225,6 @@ describe('Verbonden', () => {
 		expect(hr.getAttribute('aria-expanded')).toBe('true');
 		const kaart = screen.getByRole('region', { name: 'Hoge Raad, 20 december 2019' });
 		expect(kaart.querySelector('a.btn')?.textContent).toBe('Lees');
-		expect(screen.getByRole('link', { name: 'Open in netwerk' }).getAttribute('href')).toBe(
-			'/x?mode=netwerk'
-		);
 		await klik(hr);
 		expect(screen.queryByRole('region', { name: 'Hoge Raad, 20 december 2019' })).toBeNull();
 	});
@@ -247,7 +244,7 @@ describe('Verbonden', () => {
 			ref: { collection: 'judgments' as const, key: `ecli_${i}` },
 			title: `Uitspraak ${i}`
 		}));
-		paneel({ judgments: veel }, { onShowNetwork: () => {}, showNetwork: true, networkHref: '/x' });
+		paneel({ judgments: veel }, { tekst: true, networkHref: '/x' });
 		const namen = () => screen.getByTestId('network-sketch').querySelectorAll('.single').length;
 		expect(namen()).toBe(14);
 		matches = true;
@@ -257,13 +254,14 @@ describe('Verbonden', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('has no Netwerk tonen beside the canvas', () => {
+	it('draws no network and has no Open in netwerk beside the canvas', () => {
 		paneel();
-		expect(screen.queryByRole('button', { name: /Netwerk tonen/ })).toBeNull();
+		expect(screen.queryByTestId('network-sketch')).toBeNull();
+		expect(screen.queryByRole('link', { name: 'Open in netwerk' })).toBeNull();
 	});
 
 	it('opens in Tekst on the soorten: a heading with its count, three titles with one line, Alle N', async () => {
-		paneel(ROWS, { onShowNetwork: () => {}, showNetwork: false });
+		paneel(ROWS, { tekst: true });
 		const koppen = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
 		expect(koppen).toEqual(['Uitspraken1', 'Stukken1']);
 		// The passage and the ECLI wait for the row to open; no order at a glance, one Filter.
@@ -286,7 +284,7 @@ describe('Verbonden', () => {
 					{ ...uitspraak, ref: { collection: 'judgments', key: 'z' } }
 				]
 			},
-			{ onShowNetwork: () => {}, showNetwork: false }
+			{ tekst: true }
 		);
 		const kop = () =>
 			screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());

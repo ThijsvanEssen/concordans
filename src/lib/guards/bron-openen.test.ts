@@ -41,7 +41,8 @@ describe('opening a bron', () => {
 				(t) => /\/>Lees<\/a|>Open in netwerk<\/a/.test(t),
 				[
 					plek('lib/components/open/OpenRij.svelte', 'In het netwerk of an opened row'),
-					plek('lib/components/actueel/Wetsnetwerk.svelte', 'Open in netwerk of the drawing')
+					plek('lib/components/actueel/Wetsnetwerk.svelte', 'Open in netwerk of the drawing'),
+					plek('lib/verbonden/Verbonden.svelte', 'Open in netwerk in the head of Verbonden')
 				]
 			)
 		).toEqual([]);

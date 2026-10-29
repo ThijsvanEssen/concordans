@@ -402,12 +402,17 @@
 		text-decoration: underline;
 	}
 	/* The links in a line's meta are a line of a finger's 44 px of their own (.raak-rij,
-	   lib/styles/basis.css), on a touch screen and below 768. */
+	   lib/styles/basis.css), on a touch screen and below 768; a name in the sentence of the
+	   indieners keeps the line of the sentence (.raakvlak), so the sentence stays one. */
 	@media (pointer: coarse), (max-width: 768px) {
 		.meta :global(a) {
 			display: inline-flex;
 			align-items: center;
 			min-height: var(--veld-h-raak);
+		}
+		.meta :global(.submitters a) {
+			display: inline;
+			min-height: 0;
 		}
 	}
 	/* Why the row is in a followed topic, where its line does not show the words: a line

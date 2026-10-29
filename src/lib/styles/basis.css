@@ -40,9 +40,11 @@ a {
 	text-decoration: none;
 	transition: color var(--dur-1) var(--ease);
 }
-/* A link out of Concordans says so: the one arrow, for every a[rel~='external']. */
+/* A link out of Concordans says so: the one arrow, for every a[rel~='external']. As text,
+   never the emoji iOS draws for ↗ where the font lacks it (U+FE0E, font-variant-emoji). */
 a[rel~='external']::after {
-	content: '\00a0\2197';
+	content: '\00a0\2197\FE0E';
+	font-variant-emoji: text;
 	text-decoration: none;
 	display: inline-block;
 }

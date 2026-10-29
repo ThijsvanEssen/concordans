@@ -35,7 +35,7 @@
 		type CareerEntry,
 		type Signature
 	} from '$lib/components/parliamentary/career';
-	import { seatWord } from '$lib/text/seat';
+	import { seatAndOthers, seatWord } from '$lib/text/seat';
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
@@ -419,23 +419,28 @@
 							{
 								id: 'commissies',
 								titel: '',
-								regels: (m.committees ?? []).map((c) => ({
-									id: c.key,
-									datum: null,
-									periode: { van: c.from_date ?? null, tot: c.to_date ?? null },
-									teken: 'stuk' as const,
-									gedimd: !inYears(c.from_date ?? null, c.to_date ?? null, years.van, years.tot),
-									zin: `${c.name ?? naamVan('committees', c)}${seatWord(c.role, c.substitute) ? `, ${seatWord(c.role, c.substitute)}` : ''}${c.chamber === 'EK' ? ', Eerste Kamer' : ''}`,
-									ref: { collection: 'committees' as const, key: c.key },
-									meta:
-										(c.periods ?? [])
-											.filter((p) => p.from_date !== c.from_date || p.to_date !== c.to_date)
-											.map(
-												(p) =>
-													`${seatWord(p.role, p.substitute) ?? 'lid'} ${yearsOf(p.from_date ?? null, p.to_date ?? null)}`
-											)
-											.join(', ') || null
-								}))
+								regels: (m.committees ?? []).map((c) => {
+									// A seat the Kamer only renewed (after an election) is one period.
+									const { seat, others } = seatAndOthers(c, c.periods);
+									const van = seat.from_date ?? null;
+									const tot = seat.to_date ?? null;
+									return {
+										id: c.key,
+										datum: null,
+										periode: { van, tot },
+										teken: 'stuk' as const,
+										gedimd: !inYears(van, tot, years.van, years.tot),
+										zin: `${c.name ?? naamVan('committees', c)}${seatWord(c.role, c.substitute) ? `, ${seatWord(c.role, c.substitute)}` : ''}${c.chamber === 'EK' ? ', Eerste Kamer' : ''}`,
+										ref: { collection: 'committees' as const, key: c.key },
+										meta:
+											others
+												.map(
+													(p) =>
+														`${seatWord(p.role, !!p.substitute) ?? 'lid'} ${yearsOf(p.from_date ?? null, p.to_date ?? null)}`
+												)
+												.join(', ') || null
+									};
+								})
 							}
 						]}
 					/>
