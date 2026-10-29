@@ -138,21 +138,27 @@ test('a ministerie of a bewindspersoon hangs under its kabinet, not under the pe
 	expect(labels.map((t) => t.trim().toLowerCase())).toContain('ministerie');
 });
 
-test('Tonen counts what the layer says: Commissies and Alle 20 are one number', async ({
+test('Tonen counts what the layer says: the bronnen drawn and "N andere" are one number', async ({
 	page
 }) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
 	const alle = page
 		.getByRole('group', { name: 'Keten' })
-		.getByRole('button', { name: /^Alle \d+/ });
-	const n = (await alle.first().textContent())!.replace(/\D/g, '');
+		.getByRole('button', { name: /^\d+ andere / });
+	const others = Number((await alle.first().textContent())!.replace(/\D/g, ''));
+	// The bronnen drawn in the layer of that card.
+	const drawn = await page.locator('svg.drawing').evaluate((svg) => {
+		const cy = svg.querySelector('.others circle.hit')!.getAttribute('cy');
+		return [...svg.querySelectorAll('.node circle.hit')].filter((c) => c.getAttribute('cy') === cy)
+			.length;
+	});
 	await expect(
 		page.locator('.legend .optie', { hasText: 'Commissies' }).locator('.aantal')
-	).toHaveText(n);
+	).toHaveText(String(others + drawn));
 });
 
-test('the keyboard goes layer by layer: a layer’s Alle comes after its bronnen', async ({
+test('the keyboard goes layer by layer: a layer’s card of the others comes after its bronnen', async ({
 	page
 }) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
@@ -167,7 +173,9 @@ test('the keyboard goes layer by layer: a layer’s Alle comes after its bronnen
 	for (const [i, s] of stops.entries()) if (s === 'alle') expect(stops[i - 1]).toBe('bron');
 });
 
-test('the label of a layer and its Alle stand clear of the Deel button', async ({ page }) => {
+test('the label of a layer and its card of the others stand clear of the Deel button', async ({
+	page
+}) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
 	const chain = page.getByRole('group', { name: 'Keten' });
 	await expect(chain).toBeVisible();
@@ -196,6 +204,53 @@ test('BW 7: a line to a layer further down runs no long U through the layer betw
 	for (const l of lines) {
 		const dx = l.pts.slice(1).reduce((sum, q, i) => sum + Math.abs(q.x - l.pts[i].x), 0);
 		const net = Math.abs(l.pts.at(-1)!.x - l.pts[0].x);
-		expect(dx - net, l.d).toBeLessThan(100);
+		// A layer packed with names between forces a stem beside it (no line through a name comes
+		// first), the wider the more the drawing shows: up to 220.
+		expect(dx - net, l.d).toBeLessThan(220);
 	}
+});
+
+test('Cbw: a regeling stands in the row of its kind, its line labelled with the articles and the law; the row pans sideways', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0052872?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	// No layer of articles: the layers are the kinds of document.
+	await expect(page.locator('.chain .layer-label')).toHaveText([
+		'RICHTLIJN',
+		'WET',
+		'AMVB',
+		'MINISTERIËLE REGELING'
+	]);
+	// A line says which articles of which law it rests on.
+	await expect(
+		page.locator('.chain .cite text', { hasText: 'art. 68 Cbw' }).first()
+	).toBeAttached();
+	await expect(
+		page.locator('.chain .cite text', { hasText: 'art. 19, 23 lid 1, 28 Cbb' }).first()
+	).toBeAttached();
+	// The row is wider than the screen and pans in itself.
+	const pan = page.locator('.pan[data-zijscroll]');
+	expect(await pan.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
+	// The grondslag on hover, with the abbreviation.
+	await page
+		.locator('.chain .node', { hasText: /EZK/, hasNotText: /aanwijzing/ })
+		.first()
+		.hover({ force: true });
+	await expect(page.getByRole('tooltip')).toContainText('Grondslag art. 19, 23 lid 1, 28 Cbb');
+});
+
+test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn above an AMvB', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0052875?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	await expect(page.locator('.chain .layer-label')).toHaveText([
+		'WET',
+		'AMVB',
+		'MINISTERIËLE REGELING'
+	]);
+	await expect(page.locator('.chain .cite text', { hasText: '11 art. Cbw' })).toBeAttached();
 });

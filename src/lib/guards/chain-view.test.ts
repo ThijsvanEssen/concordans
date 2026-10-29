@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 const chain = readFileSync('src/lib/network/ChainView.svelte', 'utf8');
 
 // Besluit 39 (A306): in the keten the layer is the group. No omhulling and no pill of its own;
-// a wet's articles stand under a small subkop; the lines are one stamboom, drawn in one place.
+// the articles a regeling rests on stand as a label on its line; the lines are one stamboom, drawn in one place.
 describe('Keten', () => {
 	it('has no omhulling and no pill with a name', () => {
 		expect(chain).not.toMatch(/hullDashFor|class="hull"|class="pil"|hullHeight/);
@@ -19,7 +19,7 @@ describe('Keten', () => {
 	});
 	it('lets the keyboard go layer by layer, each layer’s Alle after its bronnen', () => {
 		const svg = chain.slice(chain.indexOf('<svg'), chain.indexOf('</svg>'));
-		expect(svg.indexOf('class="others"')).toBeGreaterThan(svg.lastIndexOf('class="node"'));
+		expect(svg.indexOf('class="others')).toBeGreaterThan(svg.lastIndexOf('class="node"'));
 	});
 	it('shows Alle on a phone as a framed button, a finger’s height', () => {
 		expect(chain).toMatch(/class="btn alle"/);
@@ -31,5 +31,13 @@ describe('Keten', () => {
 	});
 	it('leaves room under the list for the floating Weergave button', () => {
 		expect(chain).toMatch(/calc\(var\(--s-8\) \+ var\(--s-4\)\)/);
+	});
+	it('says the articles on a line through cite-label.ts only: the drawing and the glance read one label', () => {
+		expect(chain).toMatch(/citeText\(/);
+		expect(chain).not.toMatch(/art\. \$\{|' art\. '/);
+		expect(chain).not.toMatch(/id === 'article'/);
+		const chainTs = readFileSync('src/lib/network/chain.ts', 'utf8');
+		expect(chainTs).toMatch(/citeOf\(/);
+		expect(chainTs).not.toMatch(/id: 'article'/);
 	});
 });

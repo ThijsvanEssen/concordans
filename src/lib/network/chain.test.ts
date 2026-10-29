@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chain, chainTally } from './chain';
+import { citeText } from './cite-label';
 
 const law = (id: string, title: string) => ({
 	id,
@@ -57,25 +58,20 @@ const delegated = {
 } as never;
 
 describe('the keten of a law', () => {
-	it('stands in layers: the law, its articles, the regulations per kind', () => {
+	it('stands in layers of one kind each: the law, the regulations per kind, no layer of articles', () => {
 		const k = chain({ id: 'instruments/bwbr0010346', name: 'Arbowet' }, delegated, null);
-		expect(k.layers.map((l) => l.id)).toEqual(['law', 'article', 'amvb', 'kb', 'ministerial']);
-		expect(k.layers[1].nodes.map((a) => a.short)).toEqual([
-			'art. 3',
-			'art. 16',
-			'art. 20',
-			'art. 22',
-			'art. 24',
-			'art. 33'
-		]);
+		expect(k.layers.map((l) => l.id)).toEqual(['law', 'amvb', 'kb', 'ministerial']);
 	});
 
 	it('says how a regulation hangs under the law: a power, or only named', () => {
 		const k = chain({ id: 'instruments/bwbr0010346', name: 'Arbowet' }, delegated, null);
 		const asbest = k.layers.find((l) => l.id === 'amvb')!.nodes[0];
-		expect(asbest.grondslag).toBe('art. 16, 20');
-		expect(asbest.mentions).toBe('art. 22');
-		expect(asbest.parents.find((o) => o.id.endsWith('_22'))?.way).toBe('mentioned');
+		expect(asbest.grondslag).toBe('art. 16, 20 Arbowet');
+		expect(asbest.mentions).toBe('art. 22 Arbowet');
+		expect(asbest.parents.map((o) => [o.id, o.way, o.cite?.full])).toEqual([
+			['instruments/bwbr0010346', 'delegates', 'art. 16, 20 Arbowet'],
+			['instruments/bwbr0010346', 'mentioned', 'art. 22 Arbowet']
+		]);
 	});
 
 	it('draws up to a number a layer and counts the rest, the one marked always', () => {
@@ -89,11 +85,8 @@ describe('the keten of a law', () => {
 		]);
 		const uncapped = chain({ id: 'w', name: 'Arbowet' }, delegated, null, { max: 1 });
 		expect(uncapped.rest.amvb).toBe(1);
-		// The rest listed, for "Alle 2", not drawn and adding no article (R3-K F4).
+		// The rest listed, for "Alle 2", not drawn (R3-K F4).
 		expect(uncapped.more.amvb?.map((n) => n.id)).toEqual(['instruments/b']);
-		expect(
-			uncapped.layers.find((l) => l.id === 'article')!.nodes.map((a) => a.short)
-		).not.toContain('art. 33');
 	});
 
 	it('puts the laws a regulation is issued under above it', () => {
@@ -112,7 +105,11 @@ describe('the keten of a law', () => {
 		const k = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis);
 		expect(k.layers.map((l) => l.id)).toEqual(['basis', 'law']);
 		expect(k.layers[1].nodes[0].parents).toEqual([
-			{ id: 'instruments/bwbr0010346', way: 'delegates' }
+			{
+				id: 'instruments/bwbr0010346',
+				way: 'delegates',
+				cite: expect.objectContaining({ full: 'art. 16 Arbowet' })
+			}
 		]);
 		expect(k.total).toBe(0);
 	});
@@ -164,9 +161,9 @@ describe('the keten of a law', () => {
 			'instruments/a',
 			'instruments/b'
 		]);
-		expect(k.layers.find((l) => l.id === 'article')!.nodes.map((a) => a.short)).toEqual([
-			'art. 16'
-		]);
+		expect(k.layers.find((l) => l.id === 'amvb')!.nodes[0].parents[0].cite?.full).toBe(
+			'art. 16 Arbowet'
+		);
 		expect(k.total).toBe(2);
 	});
 
@@ -199,7 +196,43 @@ describe('the keten of a law', () => {
 		]);
 	});
 
-	it('puts a wet that hangs under an article in the one layer Wet, with its articles and regelingen under it', () => {
+	it('hangs a regeling under the AMvB, its line labelled with the articles and the abbreviation of each law', () => {
+		const cbb = item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', [article('3')]);
+		(cbb.instrument as { abbreviation: string | null }).abbreviation = 'Cbb';
+		cbb.sub_delegated = [
+			{
+				instrument: law('instruments/reg', 'Regeling cyberbeveiliging EZK'),
+				kind: 'ministeriele-regeling',
+				date_in_force: '2025-01-01',
+				expired_on: null,
+				basis_kind: 'delegates',
+				articles: [article('19'), article('28')]
+			}
+		] as never;
+		const direct = item('instruments/aanw', 'Besluit aanwijzing', 'ministeriele-regeling', [
+			article('68')
+		]);
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{ bwb_id: 'BWBR0010346', total: 2, items: [cbb, direct] } as never,
+			null
+		);
+		// A regeling stands in the layer of its kind, whatever it rests on.
+		expect(k.layers.map((l) => l.id)).toEqual(['law', 'amvb', 'ministerial']);
+		const ministerial = k.layers[2].nodes;
+		const ezk = ministerial.find((n) => n.id === 'instruments/reg')!;
+		expect(ezk.parents.map((p) => [p.id, p.cite?.full])).toEqual([
+			['instruments/cbb', 'art. 19, 28 Cbb']
+		]);
+		expect(ezk.grondslag).toBe('art. 19, 28 Cbb');
+		// A regeling on the law itself: its line runs past the AMvB layer, labelled with its article.
+		const aanw = ministerial.find((n) => n.id === 'instruments/aanw')!;
+		expect(aanw.parents.map((p) => [p.id, p.cite?.full])).toEqual([
+			['instruments/bwbr0010346', 'art. 68 Cbw']
+		]);
+	});
+
+	it('draws a wet beside the law in the layer Wet, the regelingen under it hanging from it', () => {
 		const uhw = item('instruments/uhw', 'Uitvoeringswet huurprijzen woonruimte', 'wet', [
 			article('248', 'mentioned')
 		]);
@@ -210,7 +243,7 @@ describe('the keten of a law', () => {
 				date_in_force: '2006-03-01',
 				expired_on: null,
 				basis_kind: 'delegates',
-				articles: [{ ...article('10'), id: 'articles/uhw_10', key: 'uhw_10' }]
+				articles: [article('10')]
 			}
 		] as never;
 		const k = chain(
@@ -218,19 +251,69 @@ describe('the keten of a law', () => {
 			{ bwb_id: 'BWBR0010346', total: 1, items: [uhw] } as never,
 			null
 		);
-		expect(k.layers.map((l) => l.id)).toEqual(['law', 'article', 'amvb']);
+		expect(k.layers.map((l) => l.id)).toEqual(['law', 'amvb']);
 		expect(k.layers.filter((l) => l.label === 'Wet')).toHaveLength(1);
 		expect(k.layers[0].nodes.map((n) => n.id)).toEqual([
 			'instruments/bwbr0010346',
 			'instruments/uhw'
 		]);
-		const [bw, ownArt] = k.layers[1].nodes;
-		expect(bw.parents).toEqual([
-			{ id: 'instruments/bwbr0010346', way: 'delegates' },
-			{ id: 'instruments/uhw', way: 'mentioned' }
-		]);
-		expect(ownArt.parents).toEqual([{ id: 'instruments/uhw', way: 'delegates' }]);
-		expect(k.layers[2].nodes[0].parents.map((p) => p.id)).toEqual(['articles/uhw_10']);
+		expect(k.layers[1].nodes[0].parents.map((p) => p.id)).toEqual(['instruments/uhw']);
+	});
+});
+
+describe('the keten of a law and of its AMvB', () => {
+	it('gives both the same kinds of layer: a row per kind of document', () => {
+		const cbw = chain(
+			{ id: 'instruments/cbw', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{
+				bwb_id: 'CBW',
+				total: 1,
+				items: [item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', [article('3')])]
+			} as never,
+			null
+		);
+		const cbb = chain({ id: 'instruments/cbb', name: 'Cyberbeveiligingsbesluit' }, null, {
+			bwb_id: 'CBB',
+			total: 1,
+			items: [
+				{
+					instrument: law('instruments/cbw', 'Cyberbeveiligingswet'),
+					kind: 'wet',
+					basis_kind: 'delegates',
+					articles: [article('3')]
+				}
+			]
+		} as never);
+		const rows = new Set(['basis', 'law', 'amvb', 'kb', 'ministerial', 'policy', 'other']);
+		for (const k of [cbw, cbb])
+			for (const l of k.layers) expect(rows.has(l.id as string)).toBe(true);
+	});
+
+	it('says "N art. Cbb" on a line past 27 characters, all of them on the card', () => {
+		const many = [article('3'), article('16'), article('17'), article('21'), article('24')];
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{
+				bwb_id: 'B',
+				total: 1,
+				items: [item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', many)]
+			} as never,
+			null
+		);
+		const cite = k.layers[1].nodes[0].parents[0].cite!;
+		expect(cite.full).toBe('art. 3, 16, 17, 21, 24 Cbw');
+		expect(citeText(cite)).toBe('art. 3, 16, 17, 21, 24 Cbw');
+		const longer = [...many, article('35'), article('44')];
+		const k2 = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{
+				bwb_id: 'B',
+				total: 1,
+				items: [item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', longer)]
+			} as never,
+			null
+		);
+		expect(citeText(k2.layers[1].nodes[0].parents[0].cite!)).toBe('7 art. Cbw');
 	});
 });
 
