@@ -109,6 +109,7 @@
 		exploreHref,
 		exploreUrl
 	} from '$lib/bron/address';
+	import { bwCode } from '$lib/text/bw';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { lawName } from '$lib/text/instrument-meta';
 	import { keyEcli } from '$lib/text/ecli';
@@ -551,6 +552,9 @@
 		if (chainArticle) ensureInstrumentName(chainLaw);
 	});
 	/** The keten with or without its mentions: drawn, and counted for Relatie. */
+	/** The room the keten measured, and the bronnen of a layer that fit in it (160 px each, 144 for the labels). */
+	let chainRoom = $state(0);
+	const chainFit = $derived(Math.max(0, Math.floor((chainRoom - 144) / 176)));
 	const chainOf = (mentions: boolean) => {
 		const bwb = chainLaw;
 		if (!bwb || chainData?.bwb !== bwb) return null;
@@ -562,19 +566,26 @@
 				? (lawName($instrumentMetaStore.get(bwb), null) ?? bronNaam(start, $instrumentMetaStore))
 				: lawName($instrumentMetaStore.get(bwb), bwb);
 		const eu = chainData.eu;
-		return chain({ id, name }, chainData.delegated, chainData.basis, {
-			max: 4,
-			keep: marked,
-			kind: chainKind,
-			article: chainArticle,
-			mentions,
-			eu: eu
-				? {
-						implements: eu.implements.map((l) => l.instrument),
-						implementedBy: eu.implemented_by.map((l) => l.instrument)
-					}
-				: null
-		});
+		return chain(
+			{ id, name, abbreviation: bwCode(bwb) ?? $instrumentMetaStore.get(bwb)?.shortTitle ?? null },
+			chainData.delegated,
+			chainData.basis,
+			{
+				// The drawing pans sideways past its width; what shows without panning follows the room
+				// the keten measured, at least 12. A phone's list stays short.
+				max: telefoon ? 4 : Math.max(12, chainFit),
+				keep: marked,
+				kind: chainKind,
+				article: chainArticle,
+				mentions,
+				eu: eu
+					? {
+							implements: eu.implements.map((l) => l.instrument),
+							implementedBy: eu.implemented_by.map((l) => l.instrument)
+						}
+					: null
+			}
+		);
 	};
 	const chainModel = $derived(
 		lineageStart
@@ -589,10 +600,6 @@
 			: chainOf(chainMentions)
 	);
 	const chainAll = $derived(chainMentions || lineageStart ? chainModel : chainOf(true));
-	/** The article the keten starts from, as the drawing names it: marked until another is. */
-	const chainArticleId = $derived(
-		chainArticle ? (chainModel?.layers.find((l) => l.id === 'article')?.nodes[0]?.id ?? null) : null
-	);
 	const chainGap = $derived.by(() => {
 		if (view !== 'keten' || chainLoading) return null;
 		if (lineageStart) {
@@ -2129,11 +2136,12 @@
 	{#if view === 'keten'}
 		{#if chainView.component}{@const ChainViewC = chainView.component}<ChainViewC
 				{scale}
+				bind:room={chainRoom}
 				layers={chainModel?.layers ?? []}
 				rest={chainModel?.rest}
 				more={chainModel?.more}
 				loading={chainLoading}
-				chosen={marked ?? chainArticleId}
+				chosen={marked}
 				gap={chainGap}
 				{hiddenKinds}
 				hiddenLines={chainHidden}

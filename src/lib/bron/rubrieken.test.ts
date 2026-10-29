@@ -129,8 +129,7 @@ const BRONNEN_TABEL: Bron[] = [
 		label: 'Artikelen',
 		vorm: 'regel-o',
 		lijst: null,
-		bevat: true,
-		laag: 'Artikel'
+		bevat: true
 	},
 	{
 		naam: 'bijlage',
@@ -446,7 +445,7 @@ const lawOf = (id: string) => ({
 	path: null
 });
 
-/** A law with an AMvB under its article 16: the layers Wet, Artikel and AMvB. */
+/** A law with an AMvB under its article 16: the layers Wet and AMvB. */
 const KETEN = chain(
 	{ id: 'instruments/bwbr0005289', name: 'Burgerlijk Wetboek' },
 	{
@@ -482,9 +481,7 @@ const KETEN = chain(
 
 /** The label of the layer a bron stands in, from the keten or the lineage the code builds. */
 async function layerOf(b: Bron): Promise<string | undefined> {
-	if (b.collection === 'instruments' || b.collection === 'articles')
-		return KETEN.layers.find((l) => l.id === (b.collection === 'articles' ? 'article' : 'law'))
-			?.label;
+	if (b.collection === 'instruments') return KETEN.layers.find((l) => l.id === 'law')?.label;
 	const id = `${b.collection}/${b.key}`;
 	const start = {
 		node: {

@@ -27,9 +27,13 @@
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { hasArrow } from '$lib/graph/line-kind';
+	import { citeText } from '$lib/network/cite-label';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
+	import { sideScroll } from '$lib/actions/side-scroll';
+	import { HoverCard } from '$lib/actions/hover-card.svelte';
+	import BasisGlance from '$lib/network/BasisGlance.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
@@ -40,6 +44,7 @@
 		chosen = null,
 		gap = null,
 		scale = 1,
+		room = $bindable(0),
 		hiddenKinds = new Set(),
 		hiddenLines = new Set(),
 		more = {},
@@ -52,6 +57,8 @@
 		others = [],
 		onChoose
 	}: {
+		/** The room of the drawing, as the keten measures it (ResizeObserver): how many bronnen a layer shows without panning follows it. */
+		room?: number;
 		/** The bron the keten starts from, which no filter hides. */
 		start?: string | null;
 		/** The period of the strip: a bron dated outside it is drawn faint, and counted. */
@@ -97,15 +104,25 @@
 			// The start's own layer stays; another goes with the kind of what it holds.
 			if (l.id === 'law' || l.nodes.some((n) => n.id === start)) return true;
 			const c = l.nodes[0]?.collection;
-			const kind = l.id === 'article' ? 'artikelen' : c ? sortOf(c, '', null) : 'wetten';
+			const kind = c ? sortOf(c, '', null) : 'wetten';
 			return !hiddenKinds.has(kind);
 		})
 	);
-	let width = $state(760);
+	/** What the keten has room for, and what the drawing needs: it pans sideways past that. */
+	let avail = $state(760);
+	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
+	const SLOT = 192;
+	const need = $derived(
+		Math.max(0, ...shown.map((l) => LEFT + 24 + (l.nodes.length + (rest[l.id] ? 1 : 0)) * SLOT))
+	);
+	const width = $derived(Math.max(avail, need));
+	$effect(() => {
+		room = avail;
+	});
 	/** A layer is 104 px high (Keten, Maten). */
 	const ROW = 104;
 	/** From a layer's label to its bronnen, and the line height of a name. */
-	const DROP = 34;
+	const DROP = 58;
 	const LINE = 14;
 	/** A sign of 14 px on a rim of paper of 2; the bron of the keten 18 px on a halo of 4,5 and an edge of 2. */
 	const SIGN = 14;
@@ -115,8 +132,6 @@
 	const INK_EDGE = 2;
 	/** Room above the first layer: its label and Alle stand clear of the Deel button at the top right. */
 	const TOP = 64;
-	/** The room a subhead takes before the first article of a wet. */
-	const HEAD = 36;
 	const LEFT = 120;
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
@@ -125,7 +140,7 @@
 	const rowHeights = $derived(
 		shown.map((l) => {
 			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 36);
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58);
 		})
 	);
 	/** Where each layer begins. */
@@ -140,13 +155,7 @@
 	const CHAR = 6;
 	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
 	const halfOf = (k: ChainNode, n: number) =>
-		Math.ceil(
-			(Math.max(
-				...linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(n)).map((r) => r.length)
-			) *
-				CHAR) /
-				2
-		) + 8;
+		Math.ceil((Math.max(...linesOf(k.name, charsFor(n)).map((r) => r.length)) * CHAR) / 2) + 8;
 	/**
 	 * Where each node stands: its layer's row; across, under what it hangs from (the mean of its
 	 * parents' places), kept apart by a node's room and within the width, so the lines run down
@@ -167,35 +176,41 @@
 				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
-			const gap = (right - left) / n;
+			// Apart by a slot at most; a layer without a place above it is centred on the drawing.
+			const sep = Math.min((right - left) / n, SLOT);
 			const wish = layer.nodes.map((k, j) => {
 				const at = k.parents.map((p) => m.get(p.id)?.x).filter((x): x is number => x !== undefined);
 				return {
 					k,
-					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
+					x: at.length
+						? at.reduce((a, b) => a + b, 0) / at.length
+						: (left + right) / 2 + (j - (n - 1) / 2) * sep
 				};
 			});
-			// The articles of one wet stay together, under a subhead of its own; within it, by place.
-			const rank = (k: ChainNode) => layer.nodes.findIndex((q) => q.home === k.home);
-			wish.sort((a, b) => rank(a.k) - rank(b.k) || a.x - b.x);
-			// Apart by a gap from the left, then back within the right edge.
-			// A wet's articles start after room for its subhead, left of its first sign.
-			const many = new Set(wish.map((w) => w.k.home)).size > 1 && layer.id === 'article';
-			const sep = (j: number) => gap + (many && wish[j].k.home !== wish[j - 1]?.k.home ? HEAD : 0);
-			const xs: number[] = [];
-			wish.forEach((w, j) =>
-				xs.push(Math.max(w.x, j ? xs[j - 1] + sep(j) : left + sep(0) / 2 + (many ? HEAD : 0)))
+			wish.sort((a, b) => a.x - b.x);
+			// As near its wish as the room allows (pooled blocks, so a group stands centred under
+			// what it hangs from), then within the drawing.
+			const blocks: { sum: number; count: number; at: number }[] = [];
+			wish.forEach((w, j) => {
+				blocks.push({ sum: w.x - j * sep, count: 1, at: j });
+				while (
+					blocks.length > 1 &&
+					blocks[blocks.length - 2].sum / blocks[blocks.length - 2].count >
+						blocks[blocks.length - 1].sum / blocks[blocks.length - 1].count
+				) {
+					const last = blocks.pop()!;
+					blocks[blocks.length - 1].sum += last.sum;
+					blocks[blocks.length - 1].count += last.count;
+				}
+			});
+			const xs = blocks.flatMap((b) =>
+				Array.from({ length: b.count }, (_, i) => b.sum / b.count + (b.at + i) * sep)
 			);
-			for (let j = xs.length - 1; j >= 0; j--)
-				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - sep(j + 1));
+			const shift = Math.max(0, left + sep / 2 - xs[0]) || Math.min(0, right - sep / 2 - xs[n - 1]);
+			for (let j = 0; j < n; j++) xs[j] += shift;
 			// Half its name and some air, to the side that has room.
 			const room = (layer.nodes[0] ? halfOf(layer.nodes[0], n) : 0) + 48;
-			const aside =
-				n === 1 && layer.id !== 'article' && bypassed(i)
-					? xs[0] + room <= right - 40
-						? room
-						: -room
-					: 0;
+			const aside = n === 1 && bypassed(i) ? (xs[0] + room <= right - 40 ? room : -room) : 0;
 			// A name stays within the drawing, whichever side its node stands on.
 			wish.forEach((w, j) => {
 				const half = halfOf(w.k, n);
@@ -205,39 +220,13 @@
 		});
 		return m;
 	});
-	/**
-	 * Where a layer holds the articles of more than one wet, each wet's abbreviation as a small
-	 * subhead left of its first article (BW 7, UHW).
-	 */
-	const subheads = $derived.by(() => {
-		const out: { id: string; label: string; x: number; y: number }[] = [];
-		const row = shown.findIndex((l) => l.id === 'article');
-		const nodes = row < 0 ? [] : shown[row].nodes;
-		const homes = [...new Set(nodes.map((k) => k.home))];
-		if (homes.length < 2) return out;
-		for (const h of homes) {
-			const first = nodes
-				.filter((k) => k.home === h)
-				.flatMap((k) => place.get(k.id) ?? [])
-				.sort((a, b) => a.x - b.x)[0];
-			const wet = shown.flatMap((l) => l.nodes).find((k) => k.id === h);
-			if (!first || !wet) continue;
-			out.push({
-				id: h ?? '',
-				label: wet.instrument?.abbreviation ?? wet.short,
-				x: first.x - 14,
-				y: first.y + 4
-			});
-		}
-		return out;
-	});
 	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
 	const infoOf = $derived.by(() => {
 		const m = new Map<string, { lines: string[] }>();
 		for (const l of shown)
 			for (const k of l.nodes)
 				m.set(k.id, {
-					lines: linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(l.nodes.length))
+					lines: linesOf(k.name, charsFor(l.nodes.length))
 				});
 		return m;
 	});
@@ -265,8 +254,7 @@
 				const p = place.get(k.id);
 				if (!p) continue;
 				const half = halfOf(k, l.nodes.length);
-				const article = k.collection === 'articles';
-				const at = article ? p.x - 6 : p.x - half;
+				const at = p.x - half;
 				out.push({
 					id: k.id,
 					x0: at - 2,
@@ -275,14 +263,6 @@
 					y1: p.y + 24 + LINE * ((infoOf.get(k.id)?.lines.length ?? 1) - 1) + 4
 				});
 			}
-		for (const t of subheads)
-			out.push({
-				id: `kop:${t.id}`,
-				x0: t.x - t.label.length * 7,
-				x1: t.x,
-				y0: t.y - 12,
-				y1: t.y + 4
-			});
 		return out;
 	});
 	/**
@@ -292,7 +272,8 @@
 	 * style of the line is this one place.
 	 */
 	const lines = $derived.by(() => {
-		const rails = tops.map((t) => t - 14.5);
+		// A tak runs in the middle of the gutter, never on the line between two rows.
+		const rails = tops.map((t) => t + 8);
 		const nodes = new Map<string, TreeNode>();
 		const rows = new Map<string, number>();
 		shown.forEach((l, i) =>
@@ -315,7 +296,20 @@
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
 					const head = hasArrow(style) ? headLength(width, arrowLength()) : 0;
-					return [{ relation, from, style, lit, width, head, o, k, label: l.label }];
+					return [
+						{
+							relation,
+							from,
+							style,
+							lit,
+							width,
+							head,
+							o,
+							k,
+							many: k.parents.filter((q) => q.cite).length > 1,
+							label: l.label
+						}
+					];
 				})
 			)
 		);
@@ -350,6 +344,11 @@
 					dot: e.style === 'puntenIndiener' ? r.end : null,
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
+					cite: e.o.cite ? citeText(e.o.cite) : null,
+					mentioned: e.o.way === 'mentioned',
+					// On the line close above the card of the child; with several laws above it,
+					// under each law instead, so the labels never stand on each other.
+					citeAt: e.many ? { x: r.tip.x, y: r.tip.y + 17 } : { x: r.end.x, y: r.end.y - 20 },
 					colour: toneColour(
 						edgeColorFor(e.relation, e.from),
 						edgeToneFor(e.relation, null, e.from)
@@ -390,6 +389,48 @@
 				.join(', ')
 		) ||
 		null;
+	/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
+	const grondslagOf = (k: ChainNode): string[] => {
+		const said = (way: 'delegates' | 'mentioned') =>
+			k.parents.filter((p) => p.way === way && p.cite).map((p) => p.cite!.full);
+		const out: string[] = [];
+		if (said('delegates').length) out.push(`Grondslag ${said('delegates').join(', ')}`);
+		if (said('mentioned').length) out.push(`Noemt ${said('mentioned').join(', ')}`);
+		return out;
+	};
+	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
+	const hover = new HoverCard(() => false);
+	let target = $state<{
+		anchor: HTMLElement;
+		kicker: string;
+		title: string;
+		lines: string[];
+	} | null>(null);
+	/** The glance of a regulation: after a rest of the pointer or the focus, never for a finger. */
+	const glance = (k: ChainNode, layer: ChainLayer, anchor: Element) => {
+		const lines = layer.id === 'law' ? [] : grondslagOf(k);
+		if (!lines.length) return hover.close();
+		target = { anchor: anchor as HTMLElement, kicker: layer.label, title: k.name, lines };
+		hover.enter();
+	};
+	const card = $derived(hover.open ? target : null);
+	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
+	let pan = $state<HTMLElement | null>(null);
+	let centredFor = '';
+	// A drawing wider than the screen opens on the bron it is about, not on its left edge.
+	$effect(() => {
+		const root = start ?? shown.find((l) => l.id === 'law')?.nodes[0]?.id;
+		const at = root ? place.get(root)?.x : undefined;
+		const key = `${root}:${shown.length}:${Math.round(width)}`;
+		if (!pan || at === undefined || key === centredFor || width <= avail) return;
+		centredFor = key;
+		pan.scrollTo({ left: Math.max(0, at * scale - avail / 2), behavior: 'instant' });
+	});
+	const panned = (el: HTMLElement) => {
+		const set = () => el.style.setProperty('--sx', `${el.scrollLeft}px`);
+		el.addEventListener('scroll', set, { passive: true });
+		return { destroy: () => el.removeEventListener('scroll', set) };
+	};
 	const press = (e: KeyboardEvent, act: () => void) => {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
@@ -403,8 +444,25 @@
 		if (!next.delete(id)) next.add(id);
 		open = next;
 	};
-	/** How many a layer holds, drawn and listed: the number of its "Alle". */
-	const allOf = (l: ChainLayer) => l.nodes.length + (rest[l.id] ?? 0);
+	/** The kind of what a layer holds, for its card of the others: "4 andere wetten". */
+	const KIND_WORDS: Record<string, [string, string]> = {
+		basis: ['wet', 'wetten'],
+		law: ['wet', 'wetten'],
+		implementation: ['wet', 'wetten'],
+		eu: ['EU-akte', 'EU-akten'],
+		amvb: ['AMvB', 'AMvB’s'],
+		kb: ['koninklijk besluit', 'koninklijke besluiten'],
+		ministerial: ['regeling', 'regelingen'],
+		policy: ['beleidsregel', 'beleidsregels'],
+		other: ['regeling', 'regelingen']
+	};
+	/** The card of the others: what a click shows or hides. */
+	const otherText = (l: ChainLayer) => {
+		if (open.has(l.id)) return 'Minder';
+		const n = rest[l.id] ?? 0;
+		const [one, many] = KIND_WORDS[l.id] ?? ['bron', 'bronnen'];
+		return `${formatCount(n)} andere ${n === 1 ? one : many}`;
+	};
 	/** Dated outside the period of the strip: faint, not gone (Thijs, 23 Oct). */
 	const outside = (k: ChainNode) =>
 		!!period &&
@@ -417,9 +475,7 @@
 	);
 	/** The layers of the list (a phone): the start and what stands above it as the list's head (F12). */
 	const head = $derived(shown.filter((l) => l.id === 'law' || l.id === 'basis' || l.id === 'eu'));
-	const listed = $derived(
-		shown.filter((l) => l.id !== 'law' && l.id !== 'basis' && l.id !== 'eu' && l.id !== 'article')
-	);
+	const listed = $derived(shown.filter((l) => l.id !== 'law' && l.id !== 'basis' && l.id !== 'eu'));
 </script>
 
 {#snippet row(k: ChainNode)}
@@ -463,12 +519,11 @@
 		type="button"
 		class="btn alle"
 		aria-expanded={open.has(layer.id)}
-		onclick={() => toggle(layer.id)}
-		>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</button
+		onclick={() => toggle(layer.id)}>{otherText(layer)}</button
 	>
 {/snippet}
 
-<div class="chain" bind:clientWidth={width}>
+<div class="chain" bind:clientWidth={avail}>
 	{#if failure}
 		<div class="failure">
 			<LoadState
@@ -498,151 +553,199 @@
 				>{/if}
 		</div>
 	{/if}
-	<svg
-		class="drawing"
-		style:width="{scale * 100}%"
-		viewBox="0 0 {width} {height}"
-		role="group"
-		aria-label="Keten"
-	>
-		{#each shown as layer, i (layer.id)}
-			<text class="layer-label" x="24" y={tops[i] + 4}>{layer.label.toUpperCase()}</text>
-			<line
-				class="rail"
-				x1="20"
-				x2={width - 20}
-				y1={tops[i] + rowHeights[i] - 14.5}
-				y2={tops[i] + rowHeights[i] - 14.5}
-			/>
-		{/each}
-		<!-- The lines as one layer, so where they share a stem they do not darken; the marked
-		     ones over it, whole. -->
-		<g class="lines">
-			{#each lines.filter((l) => !l.lit) as l (l.id)}
-				{@render stroke(l)}
+	<div class="pan" data-zijscroll bind:this={pan} use:sideScroll use:panned>
+		<svg
+			class="drawing"
+			style:width="{width * scale}px"
+			style:--sc={scale}
+			viewBox="0 0 {width} {height}"
+			role="group"
+			aria-label="Keten"
+		>
+			{#each shown as layer, i (layer.id)}
+				<text class="layer-label pin" x="24" y={tops[i] - 2}>{layer.label.toUpperCase()}</text>
+				<line
+					class="rail"
+					x1="20"
+					x2={width - 20}
+					y1={tops[i] + rowHeights[i] - 14.5}
+					y2={tops[i] + rowHeights[i] - 14.5}
+				/>
 			{/each}
-		</g>
-		{#each lines.filter((l) => l.lit) as l (l.id)}
-			<g>{@render stroke(l)}</g>
-		{/each}
-		{#each subheads as t (t.id)}
-			<text class="subhead" x={t.x} y={t.y} text-anchor="end">{t.label}</text>
-		{/each}
-		{#each shown as layer, i (layer.id)}
-			{#each layer.nodes as k (k.id)}
-				{@const p = place.get(k.id)!}
-				{@const isArticle = k.collection === 'articles'}
-				{@const v = vormOf(k)}
-				{@const info = infoOf.get(k.id)}
-				<g
-					class="node"
-					class:is-active={chosen === k.id}
-					class:is-dim={outside(k)}
-					role="button"
-					tabindex="0"
-					aria-label={k.name}
-					aria-pressed={chosen === k.id}
-					onclick={() => onChoose(k)}
-					onkeydown={(e) => press(e, () => onChoose(k))}
-				>
-					<title>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title>
-					<circle cx={p.x} cy={p.y} r="22" class="hit" />
-					{#if otherIds.has(k.id) && chosen !== k.id && k.id !== start}<rect
-							class="sel sel--ander"
-							x={p.x - 12}
-							y={p.y - 12}
-							width="24"
-							height="24"
-							rx="2"
-						/>{/if}
-					{#if chosen === k.id && k.id !== start}<rect
-							class="sel"
-							x={p.x - 12}
-							y={p.y - 12}
-							width="24"
-							height="24"
-							rx="2"
-						/>{/if}
-					{#if k.id === start}
-						<!-- The bron of the keten: its sign in ink, with an edge of ink on a halo of paper
-						     (Netwerkcanvas, Focus). -->
-						{@const sc = FOCUS / 16}
-						{@const at = `translate(${p.x - FOCUS / 2} ${p.y - FOCUS / 2}) scale(${sc})`}
-						<path
-							d={v.d}
-							transform={at}
-							fill="none"
-							stroke="var(--paper)"
-							stroke-width={(2 * HALO) / sc}
-							stroke-linejoin="round"
-						/>
-						<path
-							d={v.d}
-							transform={at}
-							fill={v.wijze === 'lijn' ? 'var(--paper)' : 'none'}
-							stroke="var(--ink)"
-							stroke-width={(2 * INK_EDGE) / sc}
-							stroke-linejoin="round"
-						/>
-						{#if v.wijze !== 'lijn'}<path
-								d={v.d}
-								transform={at}
-								fill="var(--ink)"
-								fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+			<!-- The lines as one layer, so where they share a stem they do not darken; the marked
+		     ones over it, whole. -->
+			<g class="lines">
+				{#each lines.filter((l) => !l.lit) as l (l.id)}
+					{@render stroke(l)}
+				{/each}
+			</g>
+			{#each lines.filter((l) => l.lit) as l (l.id)}
+				<g>{@render stroke(l)}</g>
+			{/each}
+			<!-- The articles on a line, on a rim of paper over the lines. -->
+			{#each lines.filter((l) => l.cite) as l (l.id)}
+				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
+				<g class="cite">
+					<rect
+						x={l.citeAt.x - w / 2}
+						y={l.citeAt.y - 10}
+						width={w}
+						height="20"
+						rx="2"
+						stroke-dasharray={l.mentioned ? '2 2' : undefined}
+					/>
+					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle">{l.cite}</text>
+				</g>
+			{/each}
+			{#each shown as layer, i (layer.id)}
+				{#each layer.nodes as k (k.id)}
+					{@const p = place.get(k.id)!}
+					{@const v = vormOf(k)}
+					{@const info = infoOf.get(k.id)}
+					<g
+						class="node"
+						class:is-active={chosen === k.id}
+						class:is-dim={outside(k)}
+						role="button"
+						tabindex="0"
+						aria-label={k.name}
+						aria-pressed={chosen === k.id}
+						onclick={() => onChoose(k)}
+						onkeydown={(e) => {
+							hover.keys();
+							press(e, () => onChoose(k));
+						}}
+						onpointerenter={(e) => {
+							hover.pointer(e.pointerType);
+							glance(k, layer, e.currentTarget);
+						}}
+						onpointerleave={() => hover.leave()}
+						onfocus={(e) => glance(k, layer, e.currentTarget)}
+						onblur={() => hover.leave()}
+					>
+						{#if k.expired || layer.id === 'law'}<title
+								>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title
+							>{/if}
+						<circle cx={p.x} cy={p.y} r="22" class="hit" />
+						{#if otherIds.has(k.id) && chosen !== k.id && k.id !== start}<rect
+								class="sel sel--ander"
+								x={p.x - 12}
+								y={p.y - 12}
+								width="24"
+								height="24"
+								rx="2"
 							/>{/if}
-					{:else}
-						{@const sc = SIGN / 16}
-						{@const at = `translate(${p.x - SIGN / 2} ${p.y - SIGN / 2}) scale(${sc})`}
-						<g class:vervallen={!!k.expired}>
+						{#if chosen === k.id && k.id !== start}<rect
+								class="sel"
+								x={p.x - 12}
+								y={p.y - 12}
+								width="24"
+								height="24"
+								rx="2"
+							/>{/if}
+						{#if k.id === start}
+							<!-- The bron of the keten: its sign in ink, with an edge of ink on a halo of paper
+						     (Netwerkcanvas, Focus). -->
+							{@const sc = FOCUS / 16}
+							{@const at = `translate(${p.x - FOCUS / 2} ${p.y - FOCUS / 2}) scale(${sc})`}
 							<path
 								d={v.d}
 								transform={at}
-								fill="var(--paper)"
+								fill="none"
 								stroke="var(--paper)"
-								stroke-width={(2 * RIM) / sc}
+								stroke-width={(2 * HALO) / sc}
 								stroke-linejoin="round"
 							/>
 							<path
 								d={v.d}
 								transform={at}
-								fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(k)}
-								fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
-								stroke={v.wijze === 'lijn' ? colour(k) : 'none'}
-								stroke-width={1.7 / sc}
+								fill={v.wijze === 'lijn' ? 'var(--paper)' : 'none'}
+								stroke="var(--ink)"
+								stroke-width={(2 * INK_EDGE) / sc}
+								stroke-linejoin="round"
 							/>
-						</g>
-					{/if}
-					<text
-						class="name {otherIds.has(k.id) ? 'name--ander' : ''}"
-						class:name--law={layer.id === 'law' || k.id === start}
-						x={isArticle ? p.x - 6 : p.x}
-						y={p.y + 24}
-						text-anchor={isArticle ? 'start' : 'middle'}
-						>{#each info?.lines ?? [] as r, j (j)}<tspan
-								x={isArticle ? p.x - 6 : p.x}
-								dy={j ? LINE : 0}>{r}</tspan
-							>{/each}</text
+							{#if v.wijze !== 'lijn'}<path
+									d={v.d}
+									transform={at}
+									fill="var(--ink)"
+									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+								/>{/if}
+						{:else}
+							{@const sc = SIGN / 16}
+							{@const at = `translate(${p.x - SIGN / 2} ${p.y - SIGN / 2}) scale(${sc})`}
+							<g class:vervallen={!!k.expired}>
+								<path
+									d={v.d}
+									transform={at}
+									fill="var(--paper)"
+									stroke="var(--paper)"
+									stroke-width={(2 * RIM) / sc}
+									stroke-linejoin="round"
+								/>
+								<path
+									d={v.d}
+									transform={at}
+									fill={v.wijze === 'lijn' ? 'var(--paper)' : colour(k)}
+									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+									stroke={v.wijze === 'lijn' ? colour(k) : 'none'}
+									stroke-width={1.7 / sc}
+								/>
+							</g>
+						{/if}
+						<text
+							class="name {otherIds.has(k.id) ? 'name--ander' : ''}"
+							class:name--law={layer.id === 'law' || k.id === start}
+							x={p.x}
+							y={p.y + 24}
+							text-anchor="middle"
+							>{#each info?.lines ?? [] as r, j (j)}<tspan x={p.x} dy={j ? LINE : 0}>{r}</tspan
+								>{/each}</text
+						>
+					</g>
+				{/each}
+				<!-- After the bronnen of its layer: the keyboard goes layer by layer, the card of the
+				     others last (Variant C: two squares, "4 andere wetten"). -->
+				{#if rest[layer.id]}
+					{@const x = Math.max(...layer.nodes.map((k) => place.get(k.id)?.x ?? 0)) + SLOT}
+					{@const y = tops[i] + DROP}
+					{@const words = linesOf(otherText(layer), 22)}
+					<g
+						class="others"
+						role="button"
+						tabindex="0"
+						aria-expanded={open.has(layer.id)}
+						onclick={() => toggle(layer.id)}
+						onkeydown={(e) => press(e, () => toggle(layer.id))}
 					>
-				</g>
+						<circle cx={x} cy={y} r="22" class="hit" />
+						<rect
+							x={x - 4}
+							y={y - 3}
+							width={SIGN}
+							height={SIGN}
+							fill="var(--paper)"
+							stroke={colour(layer.nodes[0])}
+							stroke-width="1.5"
+						/>
+						<rect x={x - 10} y={y - 9} width={SIGN} height={SIGN} fill={colour(layer.nodes[0])} />
+						<text class="name" {x} y={y + 24} text-anchor="middle"
+							>{#each words as r, j (j)}<tspan {x} dy={j ? LINE : 0}>{r}</tspan>{/each}</text
+						>
+					</g>
+				{/if}
 			{/each}
-			<!-- After the bronnen of its layer: the keyboard goes layer by layer, Alle last. -->
-			{#if rest[layer.id]}
-				<g
-					class="others"
-					role="button"
-					tabindex="0"
-					aria-expanded={open.has(layer.id)}
-					onclick={() => toggle(layer.id)}
-					onkeydown={(e) => press(e, () => toggle(layer.id))}
-				>
-					<rect class="hit" x={width - 124} y={tops[i] - 18} width="104" height="32" />
-					<text x={width - 24} y={tops[i] + 4} text-anchor="end"
-						>{open.has(layer.id) ? 'Minder' : `Alle ${formatCount(allOf(layer))}`}</text
-					>
-				</g>
-			{/if}
-		{/each}
-	</svg>
+		</svg>
+	</div>
+	{#if card}
+		<BasisGlance
+			anchor={card.anchor}
+			id="keten-kaart"
+			kicker={card.kicker}
+			title={card.title}
+			lines={card.lines}
+			onclose={() => hover.close()}
+		/>
+	{/if}
 	<!-- On a wide screen the regulations a layer does not draw, listed under the drawing once
 	     its Alle is pressed. -->
 	{#each shown.filter((l) => open.has(l.id) && more[l.id]?.length) as layer (layer.id)}
@@ -685,13 +788,6 @@
 </div>
 
 <style>
-	/* The wet of a group of articles, small, left of the first (BW 7, UHW). */
-	.subhead {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		fill: var(--ink-3);
-	}
 	.chain {
 		position: relative;
 		flex: 1;
@@ -722,10 +818,18 @@
 	.node:focus:not(:focus-visible) {
 		outline: none;
 	}
+	.pan {
+		overflow-x: auto;
+		scroll-padding-inline: var(--s-8);
+		scrollbar-width: none;
+	}
 	.drawing {
 		display: block;
-		width: 100%;
+		max-width: none;
 		height: auto;
+	}
+	.pin {
+		transform: translateX(calc(var(--sx, 0px) / var(--sc, 1)));
 	}
 	/* A label of a layer is a control label (sans 11 px 600, spaced), not a name. */
 	.layer-label {
@@ -734,19 +838,17 @@
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		fill: var(--ink-3);
+		paint-order: stroke;
+		stroke: var(--paper);
+		stroke-width: 6px;
+		stroke-linejoin: round;
 	}
 	.others {
 		cursor: pointer;
 	}
-	.others text {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		fill: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-	}
-	.others:hover text {
+	.others:hover .name {
 		fill: var(--ink);
+		text-decoration: underline;
 	}
 	.rest {
 		margin: 0 var(--s-5) var(--s-4);
@@ -776,6 +878,18 @@
 		stroke: var(--paper);
 		stroke-width: 4px;
 		stroke-linejoin: round;
+	}
+	/* The articles on a line (Keten, Referentielabel): serif on a framed rim of paper; a dotted frame
+	   where the line only names them. */
+	.cite rect {
+		fill: var(--paper);
+		stroke: var(--rule-strong);
+		stroke-width: 1;
+	}
+	.cite text {
+		font-family: var(--font-serif);
+		font-size: var(--t-note);
+		fill: var(--ink-2);
 	}
 	/* Outside the period of the strip: faint, not gone. */
 	.node.is-dim {
@@ -840,7 +954,7 @@
 		display: none;
 	}
 	@media (max-width: 768px) {
-		.drawing {
+		.pan {
 			display: none;
 		}
 		.kop {

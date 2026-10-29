@@ -149,13 +149,16 @@ test('the keten names a publication by its citation, its layer by its kind (R3-K
 	await expect(page.getByText(/STB_2018_101/)).toHaveCount(0);
 });
 
-test('Alle N lists the regulations a layer does not draw (R3-K F4)', async ({ page, touch }) => {
+test('"N andere" lists the regulations a layer does not draw (R3-K F4)', async ({
+	page,
+	touch
+}) => {
 	await page.goto('/wetten/BWBR0010346?mode=netwerk&weergave=keten');
 	const alle = touch
-		? page.getByRole('region', { name: 'AMvB' }).getByRole('button', { name: /^Alle \d+/ })
+		? page.getByRole('region', { name: 'AMvB' }).getByRole('button', { name: /^\d+ andere / })
 		: page
 				.getByRole('group', { name: 'Keten' })
-				.getByRole('button', { name: /^Alle \d+/ })
+				.getByRole('button', { name: /^\d+ andere / })
 				.first();
 	await expect(alle).toBeVisible();
 	await alle.click();
