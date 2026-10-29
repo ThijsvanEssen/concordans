@@ -110,7 +110,9 @@ export function sortOf(
 	props: Record<string, unknown> | null | undefined,
 	relation?: string | null
 ): Sort {
-	if (isInternational({ key, props: props ?? undefined })) return 'internationaal';
+	// A judgment is rechtspraak, also of the Hof van Justitie or the EHRM (ECLI:EU, ECLI:CE).
+	if (collection !== 'judgments' && isInternational({ key, props: props ?? undefined }))
+		return 'internationaal';
 	switch (collection) {
 		case 'articles':
 		case 'article_versions':

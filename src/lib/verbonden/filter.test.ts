@@ -92,12 +92,11 @@ describe('filterGroupOf', () => {
 		expect(filterGroupOf('documents', 'd', { kind: 'Voorstel van wet' })).toBe('stukken');
 		expect(filterGroupOf('documents', 'd', { kind: 'Brief regering' }, 'AMENDS')).toBe('stukken');
 		expect(filterGroupOf('articles', 'bwbv0001000_6', {})).toBe('internationaal');
-		expect(filterGroupOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
-			'internationaal'
-		);
-		// The courts of the EU as the EHRM: by the key, or by the source of a node.
-		expect(filterGroupOf('judgments', 'ecli_eu_c_2023_494', {})).toBe('internationaal');
-		expect(filterGroupOf('judgments', 'x', { source: 'cjeu' })).toBe('internationaal');
+		// A judgment of a European court is rechtspraak (Thijs, 29 Oct): by the key, or by the
+		// source of a node.
+		expect(filterGroupOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe('uitspraken');
+		expect(filterGroupOf('judgments', 'ecli_eu_c_2023_494', {})).toBe('uitspraken');
+		expect(filterGroupOf('judgments', 'x', { source: 'cjeu' })).toBe('uitspraken');
 		expect(filterGroupOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 
