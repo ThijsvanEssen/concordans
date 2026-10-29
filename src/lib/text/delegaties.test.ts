@@ -187,9 +187,9 @@ describe('the grondslag of a regulation', () => {
 			{ ...wet('bwbr0052872', 'Cyberbeveiligingswet', 'delegates'), articles: [art('3')] }
 		]);
 		expect(deel.wetten[0].articles).toEqual([
-			{ label: '19', key: 'bwbr0052875_19' },
-			{ label: '23 lid 1', key: 'bwbr0052875_23' },
-			{ label: '28', key: 'bwbr0052875_28' }
+			{ label: '19', key: 'bwbr0052875_19', at: null },
+			{ label: '23 lid 1', key: 'bwbr0052875_23', at: 'lid-1' },
+			{ label: '28', key: 'bwbr0052875_28', at: null }
 		]);
 		expect(deel.wetten.map((w) => w.determiner)).toEqual(['het', 'de']);
 		// A law only named has no articles in the head.
