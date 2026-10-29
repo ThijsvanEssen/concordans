@@ -24,7 +24,6 @@
 		onDepth,
 		withNetwerk = false,
 		reach = null,
-		empty = false,
 		children
 	}: {
 		view: View;
@@ -36,15 +35,13 @@
 		withNetwerk?: boolean;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
-		/** No bron chosen yet. */
-		empty?: boolean;
 		/** What belongs to the weergave: Tonen, Relatie, Periode, Meer. */
 		children?: Snippet;
 	} = $props();
 
 	const stepsWord = (n: number) => (n === 0 ? 'Alleen gekozen' : count(n, 'stap', 'stappen'));
 	const steps = $derived(withNetwerk ? [0, 1, 2, 3] : [1, 2, 3]);
-	const withDepth = $derived(view !== 'keten' && !empty);
+	const withDepth = $derived(view !== 'keten');
 
 	// Steps that add nothing, as the API cut the neighbourhood off at its cap.
 	const cap = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
@@ -57,27 +54,23 @@
 </script>
 
 <CanvasKaart title="Weergave" class="netwerkkeuze">
-	{#if empty}
-		<p class="stil">Nog geen bron gekozen</p>
-	{:else}
-		<div class="view-slot">{@render viewSlot?.()}</div>
-		{#if withDepth}
-			<Sectie title="Aantal stappen" niveau={3} inklapbaar={false}>
-				<Keuze
-					label="Aantal stappen"
-					vol
-					waarde={String(depth)}
-					opties={steps.map((d) => ({
-						waarde: String(d),
-						label: stepsWord(d),
-						uit: !!reason(d),
-						titel: reason(d) ?? titles(d)
-					}))}
-					onSelect={(d) => onDepth(Number(d))}
-				/>
-				{#if stepReason}<p class="stil why" role="note">{stepReason}</p>{/if}
-			</Sectie>
-		{/if}
+	<div class="view-slot">{@render viewSlot?.()}</div>
+	{#if withDepth}
+		<Sectie title="Aantal stappen" niveau={3} inklapbaar={false}>
+			<Keuze
+				label="Aantal stappen"
+				vol
+				waarde={String(depth)}
+				opties={steps.map((d) => ({
+					waarde: String(d),
+					label: stepsWord(d),
+					uit: !!reason(d),
+					titel: reason(d) ?? titles(d)
+				}))}
+				onSelect={(d) => onDepth(Number(d))}
+			/>
+			{#if stepReason}<p class="stil why" role="note">{stepReason}</p>{/if}
+		</Sectie>
 	{/if}
 	{@render children?.()}
 </CanvasKaart>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ProposalDot from '$lib/proposals/ProposalDot.svelte';
 	import { fallbackLawName } from '$lib/text/enacted-law';
 	import { lineStrength } from '$lib/graph/line-strength';
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
@@ -384,8 +385,8 @@
 	});
 
 	/** A bron a lopend wetsvoorstel wil wijzigen (Netwerkcanvas, Openstaand): a dot at its top right. */
-	type OpenstaandStip = { id: string; vx: number; vy: number };
-	let openstaand = $state<OpenstaandStip[]>([]);
+	type ProposalDotAt = { id: string; vx: number; vy: number };
+	let proposalDots = $state<ProposalDotAt[]>([]);
 	/** A bron with a note of the reader's: its mark, in ink while it is open or in focus. */
 	type NotitieMerk = { id: string; vx: number; vy: number; open: boolean; dim: boolean };
 	let notitieMerken = $state<NotitieMerk[]>([]);
@@ -540,7 +541,7 @@
 			: 1;
 
 		if (renderer && latestInFluxMap.size > 0) {
-			const stippen: OpenstaandStip[] = [];
+			const dots: ProposalDotAt[] = [];
 			graph.forEachNode((id, attrs) => {
 				if (attrs.hidden || isHiddenNode(id, attrs)) return;
 				if ((latestInFluxMap.get(id) ?? 0) <= 0) return;
@@ -551,11 +552,11 @@
 				const vp = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
 				// Beside the sign, on its edge at the top right, not over it.
 				const offset = baseR * badgeAxisOffset(attrs.vorm as Vorm) + 3;
-				stippen.push({ id, vx: vp.x + offset, vy: vp.y - offset });
+				dots.push({ id, vx: vp.x + offset, vy: vp.y - offset });
 			});
-			openstaand = stippen;
-		} else if (openstaand.length) {
-			openstaand = [];
+			proposalDots = dots;
+		} else if (proposalDots.length) {
+			proposalDots = [];
 		}
 
 		const merken: NotitieMerk[] = [];
@@ -1444,15 +1445,15 @@
 			{/each}
 		</div>
 	{/if}
-	{#if openstaand.length > 0}
+	{#if proposalDots.length > 0}
 		<div class="openstaand-overlay" aria-hidden="true">
-			{#each openstaand as b (b.id)}
+			{#each proposalDots as b (b.id)}
 				<span
 					class="openstaand-stip"
 					data-openstaand={b.id}
 					title="Lopend wetsvoorstel"
-					style="left:{b.vx}px; top:{b.vy}px"
-				></span>
+					style="left:{b.vx}px; top:{b.vy}px"><ProposalDot /></span
+				>
 			{/each}
 		</div>
 	{/if}
@@ -1599,12 +1600,7 @@
 	}
 	.openstaand-stip {
 		position: absolute;
+		display: flex;
 		transform: translate(-50%, -50%);
-		width: 6px;
-		height: 6px;
-		border-radius: var(--r-rond);
-		background: var(--rubriek-kamerstukken);
-		border: 1.5px solid var(--paper);
-		box-sizing: content-box;
 	}
 </style>
