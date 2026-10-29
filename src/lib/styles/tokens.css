@@ -131,6 +131,8 @@
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
 	--zijkolom: 280px; /* the strip of the werkplek (Bronnen, Weergave, a cluster's card) is this wide */
+	/* The Leespaneel from 1800 px: in the margin beside the page, in its flow (Blad, AppShell). */
+	--paneel-breed: 560px;
 	--regel: 66ch;
 	/* The column before the content: the number and date of a list row (IndexRow), where the
 	   titles of every list start; the term in a reader (Behoort bij, partijen, Voor and Tegen). */
