@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/util/platform';
-	import { mayShortcut } from '$lib/actions/keys';
+	import { answer } from '$lib/keys/dispatch.svelte';
 	import { onMount } from 'svelte';
 	import Wordmark from './Wordmark.svelte';
 	import MineMenu from './MineMenu.svelte';
@@ -26,19 +25,9 @@
 	let platformKnown = $state(false);
 	onMount(() => (platformKnown = true));
 
-	function handleKeydown(e: KeyboardEvent) {
-		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-			e.preventDefault();
-			onSearchOpen?.();
-		}
-		if (e.key === '?' && mayShortcut(e)) {
-			e.preventDefault();
-			goto('/docs/sneltoetsen');
-		}
-	}
+	// Ctrl K and Alt / (the register, lib/keys): the search from any page.
+	onMount(() => answer('search', () => onSearchOpen?.()));
 </script>
-
-<svelte:window onkeydown={handleKeydown} />
 
 <header class="topbar">
 	<a href="/" class="logo raakvlak" aria-label="Concordans">
@@ -70,7 +59,7 @@
 				class="search-trigger raakvlak-knop"
 				onclick={() => onSearchOpen?.()}
 				aria-label="Zoek een wet, uitspraak of dossier"
-				aria-keyshortcuts="Control+K Meta+K"
+				aria-keyshortcuts="Control+K Meta+K Alt+/"
 			>
 				<svg
 					width="13"

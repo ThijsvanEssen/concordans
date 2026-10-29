@@ -33,11 +33,12 @@ describe('J and K while typing', () => {
 		};
 		const node = {
 			querySelectorAll: () => [row],
-			contains: () => false,
+			contains: () => true,
 			offsetParent: {},
 			getClientRects: () => [{}]
 		} as unknown as HTMLElement;
-		vi.stubGlobal('document', { activeElement: null, querySelector: () => null });
+		// The focus is in the list: a J alone is only the list's.
+		vi.stubGlobal('document', { activeElement: row, querySelector: () => null });
 		const action = rijen(node, 'a');
 		const field = { closest: (s: string) => (s.includes('input') ? {} : null) };
 		const press = (target: unknown) => {

@@ -29,6 +29,7 @@ const KEEPS = /^(?:const|let) \w+(?::[^=]+)? = new (?:Svelte)?Map\b|^let \w+: [^
 /** Module state that is no cache of the API, each with its reason. */
 const NOT_A_CACHE: Record<string, string> = {
 	'src/lib/components/graph/nodeSprites.ts': 'drawings by token values: the same for every test',
+	'src/lib/keys/dispatch.svelte.ts': 'the answers of the components that stand now, not data',
 	'src/lib/components/explore/readers.ts': 'the chunks of the readers: the same for every test'
 };
 

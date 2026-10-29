@@ -1,7 +1,8 @@
 // The Verkenner's address and its state, both ways: what a URL opens (Netwerk, Tekst, the
 // table, Bladeren; the focus, the overlay, the depth, the filter, a toelichting beside it),
 // what a key or a control writes back, and which writes Back undoes.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { onKeydown } from '$lib/keys/dispatch.svelte';
 import { fireEvent, render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { fakeApi } from '$lib/test/fakeApi';
@@ -155,8 +156,16 @@ function view(container: HTMLElement) {
 	return null;
 }
 
+// The keys with Alt are the register's (lib/keys): the dispatcher stands on the window as the
+// layout puts it.
+beforeAll(() => window.addEventListener('keydown', onKeydown));
+afterAll(() => window.removeEventListener('keydown', onKeydown));
 const key = async (k: string) => {
-	await fireEvent.keyDown(window, { key: k });
+	await fireEvent.keyDown(window, {
+		key: k.toLowerCase(),
+		code: `Key${k.toUpperCase()}`,
+		altKey: true
+	});
 	await settle();
 };
 
@@ -240,7 +249,7 @@ describe('the Verkenner reads its state from the address', () => {
 });
 
 describe('the Verkenner writes its state to the address', () => {
-	it('goes to the canvas with L and back to Tekst with L, each a step Back undoes', async () => {
+	it('goes to the canvas with Alt L and back to Tekst with Alt L, each a step Back undoes', async () => {
 		const { container } = await openAt(`/explore?focus=${ARTICLE}`);
 		await key('l');
 		expect(param('mode')).toBe('netwerk');
