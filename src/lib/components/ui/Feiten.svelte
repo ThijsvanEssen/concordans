@@ -58,6 +58,16 @@
 	.klein :global(dd) {
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
+		overflow-wrap: anywhere;
+	}
+	/* On a phone a long label (a function) would take the column from its value: label over value. */
+	@media (max-width: 640px) {
+		.klein {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.klein :global(.field + .field dt) {
+			margin-top: var(--s-2);
+		}
 	}
 	/* In the list a field is its label and its value, no box of its own. */
 	.feiten :global(.field) {

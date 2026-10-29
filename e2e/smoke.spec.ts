@@ -69,7 +69,7 @@ for (const path of pages) {
 		expect(await middots(page), 'a "·" as separator').toEqual([]);
 		expect(await strayRed(page), 'red that says neither no nor an error').toEqual([]);
 		if (touch) {
-			expect(await overflowX(page), 'scrolls sideways at 375').toBeLessThanOrEqual(0);
+			expect(await overflowX(page), 'reaches past the screen at 375').toEqual([]);
 			const small = await smallTargets(page);
 			const known = KNOWN_SMALL_TARGETS[path] ?? [];
 			if (process.env.E2E_WRITE_KNOWN)
