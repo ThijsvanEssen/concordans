@@ -163,7 +163,7 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { panelOfKey, verbondenInView, type Panel } from './panels';
-	import { VERBONDEN_RIJ } from '$lib/verbonden/rij';
+	import { VERBONDEN_ROW } from '$lib/verbonden/row';
 	import { mayShortcut } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
@@ -1918,7 +1918,7 @@
 			readTab = panel;
 			if (panel === 'verbonden')
 				requestAnimationFrame(() =>
-					document.querySelector<HTMLElement>(`.verbonden :is(${VERBONDEN_RIJ})`)?.focus()
+					document.querySelector<HTMLElement>(`.verbonden :is(${VERBONDEN_ROW})`)?.focus()
 				);
 			return;
 		}

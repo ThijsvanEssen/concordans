@@ -4,7 +4,7 @@
 	import { capitalize, joinAnd, plural, textOf } from '$lib/text/words';
 	import { report } from '$lib/api/errors';
 	import { rijen } from '$lib/actions/rijen';
-	import { VERBONDEN_RIJ } from './rij';
+	import { VERBONDEN_ROW } from './row';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -533,7 +533,7 @@
 		{/if}
 	</div>
 
-	<div class="body" use:rijen={VERBONDEN_RIJ} aria-busy={verbonden.loading}>
+	<div class="body" use:rijen={VERBONDEN_ROW} aria-busy={verbonden.loading}>
 		{#if sketched && (sketched.singles.length > 0 || sketched.clusters.length > 0)}
 			<NetworkSketch
 				sketch={sketched}
