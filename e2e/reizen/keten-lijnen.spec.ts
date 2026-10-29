@@ -219,5 +219,7 @@ test('Cbw: a regeling rests on the articles of the Cyberbeveiligingsbesluit, sho
 		.locator('.chain .node', { hasText: /EZK/, hasNotText: /aanwijzing/ })
 		.first()
 		.hover();
-	await expect(page.getByRole('tooltip')).toContainText('Grondslag art. 19 Cbb, art. 23 Cbb, art. 28 Cbb');
+	await expect(page.getByRole('tooltip')).toContainText(
+		'Grondslag art. 19 Cbb, art. 23 Cbb, art. 28 Cbb'
+	);
 });
