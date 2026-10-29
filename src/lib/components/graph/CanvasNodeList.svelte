@@ -4,6 +4,7 @@
 	// more (WCAG 3.2.1, R9): Enter chooses it as a click does, its card open and the address
 	// marking it; Enter again reads it. N adds it to the netwerk or takes it out. The
 	// canvas itself draws; this list is how it is reached without one.
+	import { mayShortcut } from '$lib/actions/keys';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import { refOf } from '$lib/bron/ref';
@@ -154,8 +155,7 @@
 			!isClusterId(n.id) &&
 			onToggleChosen &&
 			(e.key === 'n' || e.key === 'N') &&
-			!e.metaKey &&
-			!e.ctrlKey
+			mayShortcut(e)
 		) {
 			e.preventDefault();
 			const was = isChosen(n.id);

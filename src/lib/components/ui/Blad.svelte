@@ -73,8 +73,10 @@
 			open.splice(open.indexOf(me), 1);
 			release();
 			const back = opener?.() ?? was;
+			// A place that went with the Blad leaves the focus on the page, not on the body.
 			if (back instanceof HTMLElement && back !== document.body && back.isConnected)
 				back.focus({ preventScroll: true });
+			else document.getElementById('main-content')?.focus({ preventScroll: true });
 		};
 	});
 
