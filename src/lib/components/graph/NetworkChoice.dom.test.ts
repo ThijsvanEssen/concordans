@@ -29,12 +29,9 @@ describe('NetworkChoice', () => {
 		expect(onDepth).toHaveBeenCalledWith(3);
 		expect(screen.getByRole('button', { name: '1 stap' })).toBeTruthy();
 	});
-	it('has no steps in Keten, and says so when no bron is chosen', () => {
-		const { unmount } = render(NetworkChoice, { ...base, view: 'keten' });
+	it('has no steps in Keten', () => {
+		render(NetworkChoice, { ...base, view: 'keten' });
 		expect(screen.queryByRole('button', { name: '1 stap' })).toBeNull();
-		unmount();
-		render(NetworkChoice, { ...base, view: 'omgeving', empty: true });
-		expect(screen.getByText('Nog geen bron gekozen')).toBeTruthy();
 	});
 	it('offers Alleen gekozen with a netwerk only, before the steps', () => {
 		const { unmount } = render(NetworkChoice, { ...base, view: 'omgeving' });

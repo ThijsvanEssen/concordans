@@ -2283,7 +2283,9 @@
 								proposals={view === 'omgeving'
 									? {
 											on: proposalsOn,
-											count: proposals.available,
+											available: proposals.available,
+											count: proposals.count,
+											loading: proposals.loading,
 											onToggle: () => setUrl({ [PROPOSALS]: proposalsOn ? null : 'ja' })
 										}
 									: undefined}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Stip from '$lib/proposals/Stip.svelte';
 	import { fallbackLawName } from '$lib/text/enacted-law';
 	import { lineStrength } from '$lib/graph/line-strength';
 	import { redundantAnchors } from '$lib/graph/redundant-anchors';
@@ -1451,8 +1452,8 @@
 					class="openstaand-stip"
 					data-openstaand={b.id}
 					title="Lopend wetsvoorstel"
-					style="left:{b.vx}px; top:{b.vy}px"
-				></span>
+					style="left:{b.vx}px; top:{b.vy}px"><Stip /></span
+				>
 			{/each}
 		</div>
 	{/if}
@@ -1599,12 +1600,7 @@
 	}
 	.openstaand-stip {
 		position: absolute;
+		display: flex;
 		transform: translate(-50%, -50%);
-		width: 6px;
-		height: 6px;
-		border-radius: var(--r-rond);
-		background: var(--rubriek-kamerstukken);
-		border: 1.5px solid var(--paper);
-		box-sizing: content-box;
 	}
 </style>

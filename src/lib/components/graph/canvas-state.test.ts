@@ -3,11 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 const canvas = readFileSync(new URL('./GraphCanvas.svelte', import.meta.url), 'utf8');
 const view = readFileSync(new URL('./GraphView.svelte', import.meta.url), 'utf8');
+const stip = readFileSync(new URL('../../proposals/Stip.svelte', import.meta.url), 'utf8');
 
 describe('the states of a bron on the canvas (Netwerkcanvas)', () => {
 	it('carries Openstaand always: a small dot in the colour of Kamerstukken, outside the sign', () => {
 		expect(canvas).toContain('data-openstaand');
-		expect(canvas).toMatch(/\.openstaand-stip \{[^}]*background: var\(--rubriek-kamerstukken\)/s);
+		// The one dot (proposals/Stip.svelte), also in Tonen and the card.
+		expect(canvas).toMatch(/class="openstaand-stip"[\s\S]{0,160}<Stip \/>/);
+		expect(stip).toMatch(/\.stip \{[^}]*background: var\(--rubriek-kamerstukken\)/s);
 		expect(canvas).not.toMatch(/mutatieActive|latestMutatieActive/);
 		expect(canvas).not.toContain('Overlay');
 	});

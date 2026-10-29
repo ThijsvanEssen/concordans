@@ -11,6 +11,7 @@
 	import { count } from '$lib/text/words';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { openDossierName, billIdOf } from './proposals';
+	import Stip from './Stip.svelte';
 
 	let {
 		id,
@@ -41,7 +42,7 @@
 </script>
 
 <section class="open" aria-labelledby="open-kop">
-	<h3 class="head" id="open-kop">Openstaand</h3>
+	<h3 class="head" id="open-kop"><Stip />Lopend wetsvoorstel</h3>
 	{#if answer.state.status !== 'ready'}
 		<LoadState state={answer.state} what="De lopende voorstellen" retry={answer.retry} />
 	{:else}
@@ -83,6 +84,9 @@
 		margin-top: var(--s-4);
 	}
 	.head {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
 		margin: 0 0 var(--s-2);
 		font-size: var(--t-micro);
 		font-weight: 400;
