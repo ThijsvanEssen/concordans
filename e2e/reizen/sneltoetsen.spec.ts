@@ -238,6 +238,20 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(regel(page)).toHaveText(/(toegevoegd aan|uit) het netwerk/);
 		}
 	},
+	'panel-toggle': {
+		run: async (page) => {
+			await page.goto('/wetten/BWBR0052884?lees=articles/bwbr0052875_23.lid-1');
+			const titel = page.locator('#leespaneel').getByRole('heading', { level: 2 });
+			await expect(titel).toBeFocused();
+			await page.keyboard.press('Alt+KeyW');
+			await expect(titel).not.toBeFocused();
+			await page.keyboard.press('Alt+KeyW');
+			await expect(titel).toBeFocused();
+			// Without Alt the key is a letterKey and nothing else.
+			await page.keyboard.press('w');
+			await expect(titel).toBeFocused();
+		}
+	},
 	compare: {
 		run: async (page) => {
 			await page.goto('/wetten/BWBR0001840/artikel/23');
@@ -263,18 +277,9 @@ for (const t of TE_TESTEN) {
 	});
 }
 
-test('every key of the register has its case, and the reserved Alt W is bound to nothing', async ({
-	page,
-	touch
-}) => {
+test('every key of the register has its case', async ({ touch }) => {
 	test.skip(touch, 'once is enough');
 	expect(Object.keys(GEVALLEN).sort()).toEqual(TE_TESTEN.map((t) => t.id).sort());
-	await page.goto(LEZER);
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
-	const url = page.url();
-	await page.keyboard.press('Alt+KeyW');
-	expect(page.url()).toBe(url);
-	await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 // The pictures for the review (SNELTOETSEN_PNG=<directory>): the window on Ctrl / and the line

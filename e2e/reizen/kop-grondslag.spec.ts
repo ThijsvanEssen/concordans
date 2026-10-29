@@ -27,9 +27,11 @@ test('an article of the head opens at its lid, marked, and shows a glance on hov
 		expect(box.h).toBeGreaterThanOrEqual(44);
 	} else {
 		await lid.hover();
-		await expect(page.getByRole('tooltip')).toBeVisible();
+		await expect(page.getByRole('tooltip')).toContainText('opent in het paneel');
 	}
+	// A click opens the Leespaneel (leespaneel.spec.ts); its Open artikel is the page, at the lid.
 	await lid.click();
+	await page.locator('#leespaneel').getByRole('link', { name: 'Open artikel' }).click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0052875\/artikel\/23#lid-1$/);
 	// The text of the regulation holds more articles with a lid 1: one is marked.
 	await expect(page.locator('#lid-1.is-landed')).toHaveCount(1);

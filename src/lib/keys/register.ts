@@ -8,7 +8,7 @@
 //   alone). Matched on `event.code`, because Alt plus a key gives another character on macOS.
 // - `focus`: a plain key that only works while the focus is in the list, field or canvas it
 //   belongs to (J and K in a row, the arrows in the canvas). 2.1.4 allows that.
-// - `gereserveerd`: held for what is not built yet (Alt W, between the reader and the panel).
+// - `gereserveerd`: held for what is not built yet.
 //
 // Free of the browsers: Alt D, Alt F, Alt E and Alt Home are Chrome's and Edge's, the letters of
 // the menus (Alt F, E, V, S, B, T, H) are Firefox's on Windows, and Alt 1 to 8 switch tabs in
@@ -16,13 +16,21 @@
 // slash, and Ctrl/⌘ with K and the slash. A phone has no keyboard and gets no keys of its own
 // (Thijs, 29 Oct); a tablet with one keeps these. Ctrl+Alt is AltGr on Windows and gives a character: it is never a key of ours.
 
-export type KeyContext = 'overal' | 'zoeken' | 'lezer' | 'netwerk' | 'bladeren' | 'vergelijken';
+export type KeyContext =
+	| 'overal'
+	| 'zoeken'
+	| 'lezer'
+	| 'paneel'
+	| 'netwerk'
+	| 'bladeren'
+	| 'vergelijken';
 
 /** The order and the names under which docs and the window on Ctrl / set the keys. */
 export const CONTEXTS: readonly { id: KeyContext; name: string }[] = [
 	{ id: 'overal', name: 'Overal' },
 	{ id: 'zoeken', name: 'Zoeken' },
 	{ id: 'lezer', name: 'In de lezer' },
+	{ id: 'paneel', name: 'Bij het Leespaneel' },
 	{ id: 'netwerk', name: 'In het netwerk' },
 	{ id: 'bladeren', name: 'Bij een lijst' },
 	{ id: 'vergelijken', name: 'Bij Vergelijken' }
@@ -132,7 +140,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'lezer',
 		keys: [{ code: 'BracketLeft', key: '[', cap: '[', alt: true }],
 		join: 'together',
-		description: 'Het vorige artikel van de wet',
+		description: 'Het vorige artikel van de wet; in het Leespaneel het vorige daar',
 		handler: 'article-prev'
 	},
 	{
@@ -141,16 +149,16 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'lezer',
 		keys: [{ code: 'BracketRight', key: ']', cap: ']', alt: true }],
 		join: 'together',
-		description: 'Het volgende artikel van de wet',
+		description: 'Het volgende artikel van de wet; in het Leespaneel het volgende daar',
 		handler: 'article-next'
 	},
 	{
 		id: 'panel-toggle',
-		kind: 'reserved',
-		context: 'lezer',
+		kind: 'page',
+		context: 'paneel',
 		keys: [letterKey('W', ALT)],
 		join: 'together',
-		description: 'Wisselen tussen de lezer en het paneel',
+		description: 'Wisselen tussen de lezer en het Leespaneel',
 		handler: 'panel-toggle'
 	},
 	{

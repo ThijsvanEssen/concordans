@@ -340,7 +340,7 @@
 	{#if w.articles.length}art. {#each w.articles as a, i (a.key)}{#if i > 0}{i ===
 				w.articles.length - 1
 					? ' en '
-					: ', '}{/if}<BronLink ref={{ collection: 'articles', key: a.key }} at={a.at}
+					: ', '}{/if}<BronLink ref={{ collection: 'articles', key: a.key }} at={a.at} panel
 				>{a.label}</BronLink
 			>{/each}{` van ${w.determiner} `}{/if}<a
 		href={bronHref({ collection: 'instruments', key: w.key })}

@@ -66,6 +66,10 @@
 		wordsUp,
 		type TextSelection
 	} from '$lib/actions/selection';
+	import { readHere } from '$lib/reading/panel.svelte';
+
+	// A reference to an article in the text opens the Leespaneel beside it (BronLink).
+	readHere();
 
 	let {
 		text,

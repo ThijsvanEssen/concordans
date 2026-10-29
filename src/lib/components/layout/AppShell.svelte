@@ -7,6 +7,9 @@
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
 	import HelpDialog from '$lib/keys/HelpDialog.svelte';
 	import { onKeydown } from '$lib/keys/dispatch.svelte';
+	import { page } from '$app/state';
+	import { Lazy } from '$lib/util/lazy.svelte';
+	import { READ_PARAM, parseRead } from '$lib/reading/param';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -24,6 +27,13 @@
 		}
 	}
 	provideSearchOpener(openSearch);
+
+	// The Leespaneel, in a chunk of its own: asked when the address names an article to read.
+	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Leespaneel');
+	const read = $derived(parseRead(page.url.searchParams.get(READ_PARAM))[0] ?? null);
+	$effect(() => {
+		if (read) readingPanel.load();
+	});
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -40,6 +50,9 @@
 </div>
 
 <HelpDialog />
+{#if read && readingPanel.component}{@const ReadingPanel = readingPanel.component}<ReadingPanel
+		{read}
+	/>{/if}
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>

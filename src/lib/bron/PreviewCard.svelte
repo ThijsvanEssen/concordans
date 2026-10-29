@@ -16,6 +16,7 @@
 		anchor,
 		id,
 		href = null,
+		panel = false,
 		readLabel = null,
 		onpointerenter,
 		onpointerleave,
@@ -33,6 +34,8 @@
 		/** With `readLabel`: where the card's link goes (a defined term: its article). */
 		href?: string | null;
 		readLabel?: string | null;
+		/** A click opens the Leespaneel, not the reader. */
+		panel?: boolean;
 		onpointerenter?: () => void;
 		onpointerleave?: () => void;
 		onclose: () => void;
@@ -67,7 +70,9 @@
 		><span class="kicker"
 			>{card.kicker}{card.date ? `, ${card.date}` : ''}{readLabel
 				? ''
-				: ', opent in de lezer'}</span
+				: panel
+					? ', opent in het paneel'
+					: ', opent in de lezer'}</span
 		><span class="title">{card.title}</span>{#if card.dossier}<span class="line"
 				>{card.dossier}</span
 			>{/if}{#if card.wie}<span class="line">{card.wie}</span>{/if}{#if card.uitslag}<span

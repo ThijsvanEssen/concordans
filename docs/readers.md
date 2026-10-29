@@ -90,6 +90,12 @@ Where the API has no rank, the front end does not invent one: the first rows are
 
 **Landing.** `src/lib/bron/landing.ts`: `anchorOfHash` reads the fragment, `landOn` scrolls the element into view and marks it until the next click, `permalink` builds the address of a position.
 
+## Leespaneel
+
+A reference to an article in a text read (`ArticleText` and the panel itself call `readHere`; the head "Op grond van" passes `panel` to its BronLink) opens the Leespaneel instead of the page: `?lees=articles/{key}.{part}` (`src/lib/reading/param.ts`), drawn by `ReadingPanel` from the narrow form `/api/articles/{bwb_id}/{article_number}/text`. The link stays the page (`href`), for ⌘/Ctrl-click, the middle button and a crawler; its glance says "opent in het paneel" and it is marked (`is-open`, `aria-expanded`) while the panel shows it.
+
+The panel is a Blad that is not modal (`modaal={false}`): 400 px at the right under the top bar, on a phone from below at 60 % with a grip to 88 %; no scherm, no lock, Tab is free and the page stays usable. Its head has the kicker, the article, its law and Open artikel; under it the article before and after; then its text per lid, the cited lid or onderdeel washed with ink at its left (`aria-current="location"`) and scrolled into view. One article at a time; a new reference, Vorig or Volgend replaces it in the history. A click opens one step, so Back closes it; × and Escape are that step back, or for a shared link only the parameter taken away (`src/lib/reading/panel.svelte.ts`). The focus goes to its title on opening and back to the reference on closing. Alt W goes between the reader and the panel, Alt [ and ] in the panel go to its article before and after (`register.ts`, context `paneel`). On a phone a tap beside it closes it, a tap on another reference replaces it.
+
 ## Navigation
 
 Links inside a reader are `bronHref` (see [`routes.md`](routes.md#links-to-a-bron)); a reader has no navigation callback. A reader never stands beside the canvas: the network is a werkplek of its own (`?mode=netwerk`, besluit 39), and in Tekst the network is drawn in Verbonden. A new reader needs no change for either. There is no bar under the TopBar.

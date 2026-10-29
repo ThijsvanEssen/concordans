@@ -30,7 +30,7 @@ describe('the register of the keys', () => {
 			for (const c of t.keys) expect(c.alt || c.mod, `${t.id} ${c.cap}`).toBe(true);
 	});
 
-	it('gives no two keys of the page the same combination, and leaves Alt W reserved', () => {
+	it('gives no two keys of the page the same combination; Alt W goes to the Leespaneel', () => {
 		const seen = new Set<string>();
 		for (const t of SHORTCUTS.filter((x) => x.kind !== 'focus'))
 			for (const c of t.keys) {
@@ -39,7 +39,7 @@ describe('the register of the keys', () => {
 				seen.add(k);
 			}
 		const w = SHORTCUTS.find((t) => t.id === 'panel-toggle')!;
-		expect(w.kind).toBe('reserved');
+		expect(w).toMatchObject({ kind: 'page', context: 'paneel' });
 		expect(w.keys[0]).toMatchObject({ code: 'KeyW', alt: true });
 	});
 
@@ -65,13 +65,12 @@ describe('the register of the keys', () => {
 			expect(alles, t.handler).toMatch(new RegExp(`answer\\('${t.handler}'`));
 	});
 
-	it('draws docs and the window from it: each key once, the reserved one not at all', () => {
+	it('draws docs and the window from it: each key once', () => {
 		const html = render(ShortcutList, { props: {} }).body;
 		for (const t of geboden) {
 			expect(html.match(new RegExp(`data-shortcut="${t.id}"`, 'g')), t.id).toHaveLength(1);
 			expect(html, t.id).toContain(t.description);
 		}
-		expect(html).not.toContain('data-shortcut="paneel-wissel"');
 		expect(html).toContain(MOUSE.description);
 		expect(html.match(/<kbd/g)!.length).toBeGreaterThan(geboden.length);
 	});

@@ -7,7 +7,8 @@ describe('the Blad', () => {
 		// A dialog with its own markup, close button, scrim and lock once had five forms. Left out:
 		// the Zoekdialoog (its own, over the whole site) and the floating cards (no scrim, no lock).
 		const dialoog = (t: string) =>
-			/role="dialog"|<dialog\b/.test(t) && /--scherm|scrim|scrollLock|lockScroll|showModal/.test(t);
+			/role="dialog"|role=\{[^}]*'dialog'|<dialog\b/.test(t) &&
+			/--scherm|scrim|scrollLock|lockScroll|showModal/.test(t);
 		expect(
 			overtreders(dialoog, [
 				plek('lib/components/ui/Blad.svelte'),
