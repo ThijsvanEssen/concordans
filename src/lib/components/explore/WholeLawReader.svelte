@@ -5,7 +5,12 @@
 	import { getContext, untrack } from 'svelte';
 	import { WAIT_KEY, type FrameWait } from './search-state.svelte';
 	import { getArticleDetail, getLawBasis } from '$lib/api/articles';
-	import { basisHeadLines, type BasisPart } from '$lib/text/delegaties';
+	import {
+		basisHeadLines,
+		wettenGetoond,
+		type BasisPart,
+		type BasisWet
+	} from '$lib/text/delegaties';
 	import {
 		getInstrumentDetail,
 		instrumentMetaStore,
@@ -158,8 +163,6 @@
 	// once its detail says it is no wet (a wet has no Gelet op); the articles stand in its
 	// group Grondslag in Verbonden, from the same answer.
 	let grondslag = $state<BasisPart[]>([]);
-	/** The laws of a Gelet op named first; the rest opens in place. */
-	const GROUNDS_SHOWN = 3;
 	let allGrounds = $state(new Set<string>());
 	$effect(() => {
 		grondslag = [];
@@ -337,6 +340,18 @@
 	</div>
 {/snippet}
 
+{#snippet grondWet(w: BasisWet)}
+	{#if w.artikelen.length}art. {#each w.artikelen as a, i (a.key)}{#if i > 0}{i ===
+				w.artikelen.length - 1
+					? ' en '
+					: ', '}{/if}<a
+				href={bronHref({ collection: 'articles', key: a.key })}
+				data-sveltekit-noscroll>{a.label}</a
+			>{/each}{` van ${w.lidwoord} `}{/if}<a
+		href={bronHref({ collection: 'instruments', key: w.key })}
+		data-sveltekit-noscroll>{w.naam}</a
+	>{/snippet}
+
 <!-- What the head says besides its facts: whether the law holds, what of it is read, a
      failure, its grondslag, a treaty. Only where it says something: no empty line (A190). -->
 {#snippet lawStatus()}
@@ -374,16 +389,13 @@
 	     F8): its head is no wall of links above its facts. -->
 	{#each grondslag as deel (deel.werkwoord)}
 		{@const all = allGrounds.has(deel.werkwoord)}
-		{@const shown = all ? deel.wetten : deel.wetten.slice(0, GROUNDS_SHOWN)}
+		{@const shown = deel.wetten.slice(0, wettenGetoond(deel, all))}
 		{@const rest = deel.wetten.length - shown.length}
 		<p class="whole-count">
 			{deel.werkwoord}
 			{#each shown as w, i (w.key)}{#if i > 0}{i === shown.length - 1 && !rest
 						? ' en '
-						: ', '}{/if}<a
-					href={bronHref({ collection: 'instruments', key: w.key })}
-					data-sveltekit-noscroll>{w.naam}</a
-				>{/each}{rest > 0 ? ' en ' : ''}{#if rest > 0}<TekstLink
+						: ', '}{/if}{@render grondWet(w)}{/each}{rest > 0 ? ' en ' : ''}{#if rest > 0}<TekstLink
 					onclick={() => (allGrounds = new Set([...allGrounds, deel.werkwoord]))}
 					>{rest} andere</TekstLink
 				>{/if}.

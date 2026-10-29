@@ -180,27 +180,68 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 	return `uitgewerkt in art. ${joinAnd(xs)}`;
 }
 
+/** An article the head names: its number as cited (`23 lid 1`), the article it opens. */
+export type GrondslagArtikel = { label: string; key: string };
+
+/** One law of the head's sentence: its name, and the articles of it the regulation rests on. */
+export type BasisWet = {
+	key: string;
+	naam: string;
+	/** `het` or `de`, for `art. 19 van het Cyberbeveiligingsbesluit`. */
+	lidwoord: string;
+	/** Empty where the regulation only names the law, or names no article by number. */
+	artikelen: GrondslagArtikel[];
+};
+
 /** One sentence of the head of a regulation: `Op grond van` and the laws. */
-export type BasisPart = { werkwoord: string; wetten: { key: string; naam: string }[] };
+export type BasisPart = { werkwoord: string; wetten: BasisWet[] };
+
+/** `het` for what is a besluit, a wetboek, a verdrag; `de` for the rest (wet, regeling). */
+export const lidwoordVan = (naam: string): string =>
+	/(besluit|boek|wetboek|verdrag|reglement|statuut|handvest|protocol|akkoord)$/i.test(
+		naam.trim().replace(/\s+\d+$/, '')
+	)
+		? 'het'
+		: 'de';
+
+/** The articles of a law a regulation rests on, each with the article it opens, in the
+ *  order of artikelDelen (`19`, `23 lid 1`, `28`). */
+export function grondslagArtikelLinks(
+	articles: readonly (Deel & { key?: string | null })[],
+	bwb?: string | null
+): GrondslagArtikel[] {
+	const keys = new Map<string, string>();
+	for (const a of articles) {
+		const nr = a.article_number?.trim();
+		if (nr && a.key && !keys.has(nr)) keys.set(nr, a.key);
+	}
+	const labels = artikelDelen(articles, bwb);
+	return [...keys.values()].flatMap((key, i) => (labels[i] ? [{ label: labels[i], key }] : []));
+}
 
 /**
- * The head of a regulation, from its `/basis`: the laws its Gelet op names, those that give
- * the power it is made under first (`Op grond van Cyberbeveiligingswet en Drinkwaterwet`),
- * then those it only names (`Noemt in de aanhef Algemene wet bestuursrecht`). The articles
- * stand in its group Grondslag.
+ * The head of a regulation, from its `/basis`: the laws whose articles give the power it is
+ * made under first, with those articles (`Op grond van art. 19, 23 lid 1 en 28 van het
+ * Cyberbeveiligingsbesluit`), then the laws it only names (`Noemt in de aanhef Algemene wet
+ * bestuursrecht`, without articles). The same sentence for the app and the first paint.
  */
 export function basisHeadLines(
-	items: readonly Pick<Schema<'InstrumentBasisItem'>, 'instrument' | 'basis_kind'>[]
+	items: readonly Pick<Schema<'InstrumentBasisItem'>, 'instrument' | 'basis_kind' | 'articles'>[]
 ): BasisPart[] {
-	const wet = (i: (typeof items)[number]) => ({
-		key: i.instrument.key,
-		naam: i.instrument.citation_title ?? naamVan('instruments', i.instrument)
-	});
+	const wet = (i: (typeof items)[number], metArtikelen: boolean): BasisWet => {
+		const naam = i.instrument.citation_title ?? naamVan('instruments', i.instrument);
+		return {
+			key: i.instrument.key,
+			naam,
+			lidwoord: lidwoordVan(naam),
+			artikelen: metArtikelen ? grondslagArtikelLinks(i.articles ?? [], i.instrument.key) : []
+		};
+	};
 	const genoemd = items.filter((i) => i.basis_kind === 'mentioned');
 	const grond = items.filter((i) => i.basis_kind !== 'mentioned');
 	return [
-		{ werkwoord: grondslagWerkwoord(null), wetten: grond.map(wet) },
-		{ werkwoord: grondslagWerkwoord(null, 'mentioned'), wetten: genoemd.map(wet) }
+		{ werkwoord: grondslagWerkwoord(null), wetten: grond.map((i) => wet(i, true)) },
+		{ werkwoord: grondslagWerkwoord(null, 'mentioned'), wetten: genoemd.map((i) => wet(i, false)) }
 	].filter((d) => d.wetten.length > 0);
 }
 
@@ -217,3 +258,10 @@ export function medeOpGrondVan(
 	const namen = wetten.map((w) => w.citation_title ?? naamVan('instruments', w));
 	return namen.length ? `mede ${grondslagWerkwoord(null).toLowerCase()} ${joinAnd(namen)}` : null;
 }
+
+/**
+ * How many laws of a sentence of the head stand before "N andere": the first, where it names
+ * its articles (a sentence long enough), three where the laws are only named.
+ */
+export const wettenGetoond = (deel: BasisPart, alle: boolean): number =>
+	alle ? deel.wetten.length : deel.wetten[0]?.artikelen.length ? 1 : 3;
