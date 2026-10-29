@@ -14,7 +14,8 @@
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import type { Collection } from '$lib/vocabulary';
+	import type { Collection, Relation } from '$lib/vocabulary';
+	import type { NeighborhoodAnswer } from '$lib/graph/store/types';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
 	import { PHONE, READ_BESIDE } from '$lib/util/breakpoints';
@@ -62,7 +63,6 @@
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
 	import type IndexView from '$lib/components/explore/IndexView.svelte';
-	import IndexOverzicht from '$lib/components/explore/index/IndexOverzicht.svelte';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
 	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
 	import {
@@ -112,12 +112,9 @@
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { lawName } from '$lib/text/instrument-meta';
 	import { keyEcli } from '$lib/text/ecli';
-	import NetwerkPanel from '$lib/selection/NetwerkPanel.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import type { Option } from '$lib/components/ui/option';
-	import ChainView from '$lib/network/ChainView.svelte';
-	import SharedView from '$lib/network/SharedView.svelte';
 	import { chain, isRegulation, type ChainLayer, type ChainNode } from '$lib/network/chain';
 	import { LINEAGE, lineage } from '$lib/network/lineage';
 	import { chainTally } from '$lib/network/chain';
@@ -1129,35 +1126,74 @@
 	// The most bronnen a neighbourhood brings: fewer on a phone.
 	const omgevingGrens = NEIGHBORHOOD_CAP;
 
-	async function expandAround(node: GraphNode, epoch: number) {
+	/** The requests around a focus, asked ahead of drawing them: `depth` is what they were asked for. */
+	type Around = {
+		depth: number;
+		surroundings?: ReturnType<typeof getSurroundings>;
+		neighborhood?: NeighborhoodAnswer;
+		/** A dossier's stukken change wetten two steps away; the one step of a container leaves those out. */
+		amending?: NeighborhoodAnswer;
+	};
+	const aroundOptions = (depth: number) => ({
+		depth,
+		cap: alles ? ALLES_GRENS : omgevingGrens
+	});
+	const amendingOptions = {
+		depth: 2,
+		cap: omgevingGrens,
+		relations: ['PART_OF', ...AMENDING_RELATIONS] as Relation[],
+		nodeTypes: ['document', 'instrument', 'dossier']
+	};
+	/**
+	 * Asks what a focus draws around itself, all at once: the neighbourhood and a dossier's
+	 * amendments do not hang on each other, and a stuk's surroundings come from the one route.
+	 */
+	function askAround(collection: Collection, key: string, drawClass: DrawClass): Around {
+		const depth = depthFor(drawClass);
+		if (SURROUNDED.has(collection) && explicitDepth === null && !alles)
+			return {
+				depth,
+				surroundings: getSurroundings(collection, key).catch((e) => {
+					report('Verkenner omgeving', e);
+					return null;
+				})
+			};
+		return {
+			depth,
+			neighborhood: store.askNeighborhood(collection, key, aroundOptions(depth)),
+			amending:
+				collection === 'dossiers'
+					? store.askNeighborhood(collection, key, amendingOptions)
+					: undefined
+		};
+	}
+
+	async function expandAround(node: GraphNode, epoch: number, ahead?: Around | null) {
 		if (node.id.startsWith('synth:')) return;
 		// A stuk, a zaak, a stemming, a toezegging, an activiteit: its own neighbours, the dossier
 		// one bron, not the dossier's members around it (R3-N B13, API 0.80.8 surroundings). An
 		// explicit depth, or Alle laden, still draws the neighbourhood.
-		if (SURROUNDED.has(node.collection) && explicitDepth === null && !alles) {
-			const around = await getSurroundings(node.collection, node.key).catch((e) => {
-				report('Verkenner omgeving', e);
-				return null;
-			});
+		const depth = depthFor(node.drawClass);
+		const around =
+			ahead?.depth === depth ? ahead : askAround(node.collection, node.key, node.drawClass);
+		if (around.surroundings) {
+			const rows = await around.surroundings;
 			if (epoch !== focusEpoch) return;
-			if (around && store.showRows(node.id, surroundingRows(around))) {
+			if (rows && store.showRows(node.id, surroundingRows(rows))) {
 				store.sweepOrphans();
 				return;
 			}
 		}
+		const options = aroundOptions(depth);
 		await store.expandNeighborhood(node.collection, node.key, {
-			depth: depthFor(node.drawClass),
-			cap: alles ? ALLES_GRENS : omgevingGrens
+			...options,
+			asked: around.neighborhood ?? store.askNeighborhood(node.collection, node.key, options)
 		});
 		if (epoch !== focusEpoch) return;
-		// A dossier's stukken change wetten two steps away (dossier, stuk, wet): the one
-		// step of a container leaves those changes out, so they are asked for on their own.
 		if (node.collection === 'dossiers') {
 			await store.expandNeighborhood(node.collection, node.key, {
-				depth: 2,
-				cap: omgevingGrens,
-				relations: ['PART_OF', ...AMENDING_RELATIONS],
-				nodeTypes: ['document', 'instrument', 'dossier']
+				...amendingOptions,
+				asked: around.amending ?? store.askNeighborhood(node.collection, node.key, amendingOptions)
 			});
 			if (epoch !== focusEpoch) return;
 		}
@@ -1309,6 +1345,11 @@
 				? getNodeCanvas(target.collection, target.key)
 				: getNodeHull(target.collection, target.key);
 			canvasNode.catch(ignore('Verkenner canvas'));
+			// Its surroundings go out with them, as far as they are known without the node: the
+			// canvas waits for the neighbourhood, not for the light node and the full one first.
+			const ahead = inGraph
+				? askAround(target.collection, target.key, drawClassOf(target.collection))
+				: null;
 			// The light node only makes the start quicker: expandNode asks the whole one.
 			const first = await store
 				.peekNode(target.collection, target.key)
@@ -1325,7 +1366,7 @@
 				return;
 			}
 			store.focusNode(node.id);
-			if (inGraph) await deepen(node, replace);
+			if (inGraph) await deepen(node, replace, ahead);
 		} catch (err) {
 			if (isNotFound(err)) missing(id);
 			else showFocusError(err, target.key);
@@ -1372,7 +1413,7 @@
 	}
 
 	// Expand around `node` once per depth, or again when `force`d.
-	async function deepen(node: GraphNode, force = false) {
+	async function deepen(node: GraphNode, force = false, ahead?: Around | null) {
 		const d = depthFor(node.drawClass);
 		if (!force && deepenedId === node.id && deepenedDepth === d && deepenedAlles === alles) return;
 		deepenedId = node.id;
@@ -1384,7 +1425,7 @@
 		// the focus on, and the reader stays on the new bron (#48).
 		const voor = loadedFocus;
 		const epoch = ++focusEpoch;
-		await expandAround(node, epoch);
+		await expandAround(node, epoch, ahead);
 		if (epoch !== focusEpoch) return;
 		if (loadedFocus === voor) store.focusNode(node.id);
 		graphView?.reseatAround(node.id);
@@ -1688,9 +1729,43 @@
 		() => import('$lib/components/explore/IndexView.svelte'),
 		'Verkenner onderdeel'
 	);
-	$effect(() => graphChunk.load());
+	// The werkplek's own parts, and its weergaven: chunks of their own, asked with the canvas.
+	const panelChunk = new Lazy(
+		() => import('$lib/selection/NetwerkPanel.svelte'),
+		'Verkenner onderdeel'
+	);
+	const chainView = new Lazy(() => import('$lib/network/ChainView.svelte'), 'Verkenner onderdeel');
+	const sharedView = new Lazy(
+		() => import('$lib/network/SharedView.svelte'),
+		'Verkenner onderdeel'
+	);
+	const indexOverview = new Lazy(
+		() => import('$lib/components/explore/index/IndexOverzicht.svelte'),
+		'Verkenner onderdeel'
+	);
+	// Reading needs none of them: the canvas comes with the Netwerk, and while the page is idle
+	// ahead of that, so the switch finds it in.
 	$effect(() => {
-		if (mode === 'index') indexChunk.load();
+		if (mode === 'graph') {
+			graphChunk.load();
+			panelChunk.load();
+			if (view === 'keten') chainView.load();
+			else if (view === 'verband') sharedView.load();
+			return;
+		}
+		const ask = () => {
+			graphChunk.load();
+			panelChunk.load();
+		};
+		if (typeof requestIdleCallback !== 'function') return void setTimeout(ask, 3000);
+		const idle = requestIdleCallback(ask, { timeout: 5000 });
+		return () => cancelIdleCallback(idle);
+	});
+	$effect(() => {
+		if (mode === 'index') {
+			indexChunk.load();
+			indexOverview.load();
+		}
 	});
 
 	// The table of all verbindingen, the filter sheet and a reader beside the article come
@@ -2054,55 +2129,61 @@
 
 {#snippet viewMiddle(scale: number)}
 	{#if view === 'keten'}
-		<ChainView
-			{scale}
-			layers={chainModel?.layers ?? []}
-			rest={chainModel?.rest}
-			more={chainModel?.more}
-			loading={chainLoading}
-			chosen={marked ?? chainArticleId}
-			gap={chainGap}
-			{hiddenKinds}
-			hiddenLines={chainHidden}
-			amending={chainModel?.amending.length ?? 0}
-			expired={chainData?.delegated?.expired_total
-				? {
-						total: chainData.delegated.expired_total,
-						shown: chainExpired,
-						onToggle: () => (chainExpired = !chainExpired)
-					}
-				: null}
-			failure={chainFailure}
-			start={chainStart?.id ?? null}
-			period={{ van: filter.van, tot: filter.tot }}
-			others={chainChosen
-				.filter((n) => n.id !== chainStart?.id)
-				.map((n) => ({
-					id: n.id,
-					name: bronNaam(n, $instrumentMetaStore),
-					collection: n.collection,
-					onOpen: withChain(n) ? () => (chainFrom = n.id) : null
-				}))}
-			onChoose={(k) => setUrl({ [MARK_PARAM]: k.id })}
-		/>
+		{#if chainView.component}{@const ChainViewC = chainView.component}<ChainViewC
+				{scale}
+				layers={chainModel?.layers ?? []}
+				rest={chainModel?.rest}
+				more={chainModel?.more}
+				loading={chainLoading}
+				chosen={marked ?? chainArticleId}
+				gap={chainGap}
+				{hiddenKinds}
+				hiddenLines={chainHidden}
+				amending={chainModel?.amending.length ?? 0}
+				expired={chainData?.delegated?.expired_total
+					? {
+							total: chainData.delegated.expired_total,
+							shown: chainExpired,
+							onToggle: () => (chainExpired = !chainExpired)
+						}
+					: null}
+				failure={chainFailure}
+				start={chainStart?.id ?? null}
+				period={{ van: filter.van, tot: filter.tot }}
+				others={chainChosen
+					.filter((n) => n.id !== chainStart?.id)
+					.map((n) => ({
+						id: n.id,
+						name: bronNaam(n, $instrumentMetaStore),
+						collection: n.collection,
+						onOpen: withChain(n) ? () => (chainFrom = n.id) : null
+					}))}
+				onChoose={(k) => setUrl({ [MARK_PARAM]: k.id })}
+			/>{:else if chainView.error}{@render chunkMissing(chainView, 'De keten')}{:else}<LoadState
+				state={{ status: 'loading' }}
+				what="De keten"
+			/>{/if}
 	{:else if view === 'verband'}
-		<SharedView
-			{scale}
-			ends={sharedDrawn}
-			model={sharedState}
-			choice={pairChoice}
-			onChoice={(c) => setUrl({ [PAIR_PARAM]: c, [MARK_PARAM]: null })}
-			chosen={marked}
-			gap={sharedGap}
-			{hiddenKinds}
-			{hiddenLines}
-			failure={sharedFailure}
-			loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
-			steps={pairSteps}
-			chains={vcState}
-			onChoose={(id) => setUrl({ [MARK_PARAM]: id })}
-			onSteps={setDepth}
-		/>
+		{#if sharedView.component}{@const SharedViewC = sharedView.component}<SharedViewC
+				{scale}
+				ends={sharedDrawn}
+				model={sharedState}
+				choice={pairChoice}
+				onChoice={(c) => setUrl({ [PAIR_PARAM]: c, [MARK_PARAM]: null })}
+				chosen={marked}
+				gap={sharedGap}
+				{hiddenKinds}
+				{hiddenLines}
+				failure={sharedFailure}
+				loading={sharedEnds.length > 1 && sharedData?.key !== sharedKey}
+				steps={pairSteps}
+				chains={vcState}
+				onChoose={(id) => setUrl({ [MARK_PARAM]: id })}
+				onSteps={setDepth}
+			/>{:else if sharedView.error}{@render chunkMissing(
+				sharedView,
+				'Het verband'
+			)}{:else}<LoadState state={{ status: 'loading' }} what="Het verband" />{/if}
 	{/if}
 {/snippet}
 
@@ -2111,7 +2192,13 @@
 		{#if mode === 'index'}
 			{#if params.get('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
-				<div class="index-rol"><IndexOverzicht /></div>
+				<div class="index-rol">
+					{#if indexOverview.component}{@const OverviewC = indexOverview.component}<OverviewC
+						/>{:else if indexOverview.error}{@render chunkMissing(
+							indexOverview,
+							'Het overzicht'
+						)}{:else}<LoadState state={{ status: 'loading' }} what="Het overzicht" />{/if}
+				</div>
 			{:else if indexChunk.component}{@const IndexViewC = indexChunk.component}<IndexViewC
 					category={indexKind}
 				/>{:else if indexChunk.error}{@render chunkMissing(indexChunk, 'De lijst')}{:else}<div
@@ -2140,7 +2227,8 @@
 			<h1 class="blad__titel sr-only">Netwerk</h1>
 			<div class="werkplek" data-testid="werkplek">
 				<div class="col col--graph">
-					{#if graphChunk.component}
+					<!-- The canvas stands with its panel: Weergave, Gekozen and Tonen do not come in after it. -->
+					{#if graphChunk.component && panelChunk.component}
 						{@const GraphViewC = graphChunk.component}
 						<PanelBoundary what="Het netwerk" resetOn={focus}>
 							<GraphViewC
@@ -2229,45 +2317,45 @@
 									>
 								{/snippet}
 								{#snippet canvasOverlay()}
-									<NetwerkPanel
-										bind:searching={toevoegenOpen}
-										entries={netwerkActive
-											? composer.entries.map((e) =>
-													e.node
-														? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) }
-														: e
-												)
-											: []}
-										loading={composer.loading}
-										expected={netwerkActive ? netwerk.ids.length : 0}
-										{telefoon}
-										onSelect={addIdToNetwerk}
-										selection={selectedNode &&
-										selectedLinkId &&
-										reach &&
-										selectedNode.id !== reach.focal &&
-										!netwerk.ids.includes(selectedLinkId)
-											? { label: bronNaam(selectedNode, $instrumentMetaStore) }
-											: null}
-										onGroepAan={(kind) => {
-											const uit = new Set(get(store.filters).hiddenGroups);
-											uit.delete(kind);
-											store.setFilters({ hiddenGroups: uit });
-										}}
-										onToggle={(id) => {
-											setNetwerk(withToggled(netwerk, id));
-										}}
-										onRemove={(id) => {
-											setNetwerk(withRemoved(netwerk, id));
-										}}
-										onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-										onClear={wisAlles}
-									/>
+									{#if panelChunk.component}{@const PanelC = panelChunk.component}<PanelC
+											bind:searching={toevoegenOpen}
+											entries={netwerkActive
+												? composer.entries.map((e) =>
+														e.node
+															? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) }
+															: e
+													)
+												: []}
+											loading={composer.loading}
+											expected={netwerkActive ? netwerk.ids.length : 0}
+											{telefoon}
+											onSelect={addIdToNetwerk}
+											selection={selectedNode &&
+											selectedLinkId &&
+											reach &&
+											selectedNode.id !== reach.focal &&
+											!netwerk.ids.includes(selectedLinkId)
+												? { label: bronNaam(selectedNode, $instrumentMetaStore) }
+												: null}
+											onGroepAan={(kind) => {
+												const uit = new Set(get(store.filters).hiddenGroups);
+												uit.delete(kind);
+												store.setFilters({ hiddenGroups: uit });
+											}}
+											onToggle={(id) => {
+												setNetwerk(withToggled(netwerk, id));
+											}}
+											onRemove={(id) => {
+												setNetwerk(withRemoved(netwerk, id));
+											}}
+											onAdd={() => selectedNode && addToNetwerk(selectedNode)}
+											onClear={wisAlles}
+										/>{/if}
 								{/snippet}
 							</GraphViewC>
 						</PanelBoundary>
-					{:else if graphChunk.error}
-						{@render chunkMissing(graphChunk, 'Het netwerk')}
+					{:else if graphChunk.error || panelChunk.error}
+						{@render chunkMissing(graphChunk.error ? graphChunk : panelChunk, 'Het netwerk')}
 					{/if}
 					{#if card}
 						<VerbindingCard

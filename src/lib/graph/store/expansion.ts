@@ -1,4 +1,5 @@
 import { getNodeNeighborhood } from '$lib/api/nodes';
+import { ignore } from '$lib/api/errors';
 import {
 	abortable,
 	CANVAS_BUCKET,
@@ -27,7 +28,12 @@ export function createExpansion(
 	ctx: GraphContext
 ): Pick<
 	GraphStore,
-	'peekNode' | 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'neighborhood'
+	| 'peekNode'
+	| 'expandNode'
+	| 'expandNeighborhood'
+	| 'askNeighborhood'
+	| 'nodeResponse'
+	| 'neighborhood'
 > {
 	const {
 		nodes,
@@ -156,8 +162,27 @@ export function createExpansion(
 		return { byId, drawn };
 	}
 
+	const askNeighborhood: GraphStore['askNeighborhood'] = (collection, key, opts = {}) => {
+		// The canvas draws only its nodes' names and kinds: the light props (CANVAS_PROPS, audited
+		// 10 Oct). The amendments timetable asks the same route with every prop. A full
+		// neighbourhood stops at a lid, fractie, commissie or kabinet: its cap goes to what
+		// the focus itself touches (#871).
+		const asked = getNodeNeighborhood(collection, key, {
+			...opts,
+			nodeTypes: opts.nodeTypes ?? drawnTypes(collection),
+			props: 'canvas',
+			stopAt: opts.relations ? undefined : ACTORS,
+			signal: signal()
+		});
+		// Asked ahead of its merge: a failure is the merge's to report, not an unhandled one.
+		asked.catch(ignore('Verkenner omgeving vooraf'));
+		return asked;
+	};
+
 	return {
 		nodeResponse,
+
+		askNeighborhood,
 
 		// The bron itself before its neighbours: from the light node (`getNodeFirst`), so the
 		// reader and the panels start while the full node is still on its way.
@@ -189,18 +214,8 @@ export function createExpansion(
 		neighborhood: { subscribe: neighborhoodStore.subscribe },
 
 		expandNeighborhood: async (collection, key, opts = {}) => {
-			// The canvas draws only its nodes' names and kinds: the light props (CANVAS_PROPS, audited
-			// 10 Oct). The amendments timetable asks the same route with every prop. A full
-			// neighbourhood stops at a lid, fractie, commissie or kabinet: its cap goes to what
-			// the focus itself touches (#871).
-			const { onCut, ...request } = opts;
-			const response = await getNodeNeighborhood(collection, key, {
-				...request,
-				nodeTypes: opts.nodeTypes ?? drawnTypes(collection),
-				props: 'canvas',
-				stopAt: opts.relations ? undefined : ACTORS,
-				signal: signal()
-			});
+			const { onCut, asked, ...request } = opts;
+			const response = await (asked ?? askNeighborhood(collection, key, request));
 			const additive = !!opts.relations || !!opts.additive;
 			// The API gives one more than the cap when it cut the neighbourhood off: a step
 			// further then gives the same bronnen (art. 3:7 Awb is full at two steps).
