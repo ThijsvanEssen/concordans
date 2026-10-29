@@ -46,7 +46,7 @@ export class Proposals {
 		let answered = $state(0);
 		$effect(() => {
 			const ids = withProposal;
-			untrack(() => this.#ask(ids).then(() => answered++));
+			untrack(() => void this.#ask(ids).then(() => answered++));
 		});
 		$effect(() => {
 			void answered;
