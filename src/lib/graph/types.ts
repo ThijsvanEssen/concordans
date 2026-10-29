@@ -95,7 +95,7 @@ export const EDGE_WEIGHT = Object.fromEntries(
 export function edgeCategory(relation: Relation, sourceClass: DrawClass): RelationLayer {
 	return relation === 'REFERS_TO' && sourceClass !== 'article'
 		? 'semantic'
-		: RELATIONS[relation].layer;
+		: RELATIONS[relation]?.layer;
 }
 
 // Dutch dossier titles are routinely 200+ characters and end with the wet's

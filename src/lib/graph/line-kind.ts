@@ -30,12 +30,12 @@ export const LINE_KIND_LABEL: Record<LineKind, string> = {
 
 /**
  * The kind of a line, from RELATIONS: REFERS_TO is Aanhaling, but a citation by an article is the
- * text of the law itself (Structureel).
+ * text of the law itself (Structureel). A name the API does not have draws no kind.
  */
 export function lineKindOf(relation: Relation, from: DrawClass = 'article'): LineKind {
 	return relation === 'REFERS_TO' && from === 'article'
 		? 'structural'
-		: RELATIONS[relation].lineKind;
+		: RELATIONS[relation]?.lineKind;
 }
 
 /** A relation and the kind it comes from that draw a kind, for its sample in Relatie. */
