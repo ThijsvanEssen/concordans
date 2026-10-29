@@ -10,6 +10,7 @@ import { kindName } from '$lib/text/law-kind';
 import { langeDatum } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
 import { articleRef, bookNumber } from '$lib/text/bw';
+import { lidAnchor, onderdeelAnchor } from '$lib/text/anchor';
 
 export type Delegatie = Schema<'DelegationClauseDTO'>;
 export type Gedelegeerd = Schema<'ArticleDelegatedResponse'>;
@@ -181,7 +182,12 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 }
 
 /** An article the head names: its number as cited (`23 lid 1`), the article it opens. */
-type BasisArticle = { label: string; key: string };
+type BasisArticle = {
+	label: string;
+	key: string;
+	/** The place the head names inside it (`lid-1`, `lid-1-onder-f`), where it names exactly one. */
+	at: string | null;
+};
 
 /** One law of the head's sentence: its name, and the articles of it the regulation rests on. */
 export type BasisLaw = {
@@ -216,7 +222,22 @@ function basisArticles(
 		if (nr && a.key && !keys.has(nr)) keys.set(nr, a.key);
 	}
 	const labels = artikelDelen(articles, bwb);
-	return [...keys.values()].flatMap((key, i) => (labels[i] ? [{ label: labels[i], key }] : []));
+	return [...keys].flatMap(([nr, key], i) =>
+		labels[i] ? [{ label: labels[i], key, at: namedPlace(articles, nr) }] : []
+	);
+}
+
+/** The one lid (and, if the head names exactly one, its onderdeel) a regulation rests on in
+ *  article `nr`: `lid-1`, `lid-1-onder-f`; null where it names the article whole, several
+ *  leden, or an onderdeel without a lid. */
+function namedPlace(articles: readonly Deel[], nr: string): string | null {
+	const same = articles.filter((a) => a.article_number?.trim() === nr);
+	if (same.some((a) => !a.leden?.length)) return null;
+	const leden = new Set(same.flatMap((a) => [...(a.leden ?? [])]));
+	if (leden.size !== 1) return null;
+	const lid = lidAnchor([...leden][0]);
+	const onder = new Set(same.flatMap((a) => [...(a.onderdelen ?? [])]));
+	return onder.size === 1 ? onderdeelAnchor(lid, [...onder][0]) : lid;
 }
 
 /**
