@@ -243,6 +243,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-8);
+		--lezer-stap: var(--s-8);
 	}
 
 	.api-tag-desc {

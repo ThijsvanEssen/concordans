@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import { NOT_IN_DATA, coverageLine, lacks, notHeld } from '$lib/text/coverage';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
@@ -858,11 +858,11 @@
 					<a class="link" href={compareHref(shown.index, current.index)} data-sveltekit-noscroll
 						>Vergelijk met de geldende tekst</a
 					>
-					<TekstLink
+					<TextLink
 						onclick={() => {
 							shownIndex = null;
 							if (peildatum) go({ peildatum: null });
-						}}>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</TekstLink
+						}}>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</TextLink
 					>
 				{/if}
 			</p>
@@ -929,8 +929,8 @@
 			{:else if peildatumEmpty && isDay(peildatum)}
 				<p class="note">
 					{lacks(`Tekst van dit artikel ${onDate(peildatum)}`)}.
-					<TekstLink onclick={() => choosePeildatum('')}
-						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</TekstLink
+					<TextLink onclick={() => choosePeildatum('')}
+						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</TextLink
 					>
 				</p>
 			{:else if shown && shownText.state.status !== 'ready'}
