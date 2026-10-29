@@ -254,3 +254,38 @@ test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn
 	]);
 	await expect(page.locator('.chain .cite text', { hasText: '11 art. Cbw' })).toBeAttached();
 });
+
+test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articles, Enter opens the first at its lid', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0052872?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	const label = page.locator('.chain a.cite', { hasText: 'art. 19, 23 lid 1, 28 Cbb' }).first();
+	await expect(label).toHaveAttribute('href', /focus=articles\/bwbr0052875_19$/);
+	// The glance names every article it holds, on hover.
+	await label.hover({ force: true });
+	const tip = page.getByRole('tooltip');
+	await expect(tip).toContainText('art. 19 Cbb');
+	await expect(tip).toContainText('art. 23 lid 1 Cbb');
+	await expect(tip).toContainText('art. 28 Cbb');
+	// A link of its own, with a ring on the keyboard's focus.
+	await label.focus();
+	await page.keyboard.press('Shift+Tab');
+	await page.keyboard.press('Tab');
+	await expect(label).toBeFocused();
+	await expect(label.locator('.frame')).toHaveCSS('outline-style', 'solid');
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/wetten\/BWBR0052875\/artikel\/19$/);
+});
+
+test('Cbw: a label that names one lid opens its article at that lid, marked', async ({ page }) => {
+	await page.goto('/wetten/BWBR0052872?mode=netwerk&weergave=keten');
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	const lid = page.locator('.chain a.cite[href*="#lid-"]').first();
+	await expect(lid).toBeAttached();
+	await lid.focus();
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/artikel\/[^/]+#lid-\d+$/);
+	await expect(page.locator('.is-landed')).toHaveCount(1);
+});
