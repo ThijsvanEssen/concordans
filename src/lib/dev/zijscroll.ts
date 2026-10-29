@@ -13,9 +13,9 @@ const SMAL = 640;
  */
 export function zijscroll(root: Document = document): string[] {
 	const out: string[] = [];
-	const naam = (e: Element) => `${e.tagName.toLowerCase()}.${[...e.classList].join('.')}`;
-	const breedte = root.documentElement.clientWidth;
-	const page = root.documentElement.scrollWidth - breedte;
+	const label = (e: Element) => `${e.tagName.toLowerCase()}.${[...e.classList].join('.')}`;
+	const width = root.documentElement.clientWidth;
+	const page = root.documentElement.scrollWidth - width;
 	if (page > 1) out.push(`pagina +${page}px`);
 	for (const e of root.body.querySelectorAll<HTMLElement>('*')) {
 		if (e.closest('[data-zijscroll]')) continue;
@@ -25,11 +25,11 @@ export function zijscroll(root: Document = document): string[] {
 			e.scrollWidth > e.clientWidth + 1 &&
 			(overflowX === 'auto' || overflowX === 'scroll')
 		)
-			out.push(`${naam(e)} +${e.scrollWidth - e.clientWidth}px`);
+			out.push(`${label(e)} +${e.scrollWidth - e.clientWidth}px`);
 		// Past the edge: a reader that clips its overflow still shows a part cut off.
 		const { right } = e.getBoundingClientRect();
-		if (right > breedte + 1 && e.checkVisibility())
-			out.push(`${naam(e)} rand +${Math.round(right - breedte)}px`);
+		if (right > width + 1 && e.checkVisibility())
+			out.push(`${label(e)} rand +${Math.round(right - width)}px`);
 	}
 	return out;
 }
