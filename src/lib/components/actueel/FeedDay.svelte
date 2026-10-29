@@ -402,9 +402,10 @@
 		text-decoration: underline;
 	}
 	/* The links in a line's meta are a line of a finger's 44 px of their own (.raak-rij,
-	   lib/styles/basis.css), on a touch screen and below 768. */
+	   lib/styles/basis.css), on a touch screen and below 768; a name in a sentence (the
+	   indieners) has the target that moves nothing (.raakvlak), so the sentence stays one. */
 	@media (pointer: coarse), (max-width: 768px) {
-		.meta :global(a) {
+		.meta :global(a:not(.raakvlak)) {
 			display: inline-flex;
 			align-items: center;
 			min-height: var(--veld-h-raak);
