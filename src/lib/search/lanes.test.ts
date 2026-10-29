@@ -10,6 +10,7 @@ describe('search lanes', () => {
 					'instruments',
 					'dossiers',
 					'cabinets',
+					'ministries',
 					'members',
 					'commitments',
 					'factions',

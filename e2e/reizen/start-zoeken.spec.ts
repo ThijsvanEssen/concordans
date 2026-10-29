@@ -14,22 +14,14 @@ async function search(page: Page, q: string) {
 	return results;
 }
 
-test('search lists its lanes and chooses the best result of the fast lane: the Wet conflictenrecht', async ({
-	page
-}) => {
+test('search lists its lanes; words that name nothing get no Beste treffer', async ({ page }) => {
 	const results = await search(page, 'onrechtmatige daad');
 	for (const lane of ['Wetten', 'Dossiers', 'Stemmingen'])
 		await expect(results.getByRole('group', { name: lane })).toBeVisible();
-	// The Beste treffer stands with the fast lane (names), the article of the slow text lane
-	// that comes later stands in its own group and does not take its place.
-	await expect(results.getByRole('option', { selected: true })).toContainText(
-		'Wet conflictenrecht onrechtmatige daad'
-	);
+	// The article of the slow text lane stands in its own group.
 	await expect(results.getByRole('option', { name: /6:162/ }).first()).toBeVisible();
-	await expect(results.getByRole('option', { selected: true })).toHaveAttribute(
-		'href',
-		'/wetten/BWBR0012408'
-	);
+	// The API names no hit for words, however they match (`best` null): no row above the groups.
+	await expect(results.getByRole('group', { name: /^Beste treffer/ })).toHaveCount(0);
 });
 
 test('the period stands under the field before typing, as wide as it: nothing moves', async ({

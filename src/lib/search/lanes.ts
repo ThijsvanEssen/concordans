@@ -22,7 +22,8 @@ export const SEARCH_KINDS = [
 	'members',
 	'factions',
 	'committees',
-	'cabinets'
+	'cabinets',
+	'ministries'
 ] as const satisfies readonly Collection[];
 export type SearchKind = (typeof SEARCH_KINDS)[number];
 
@@ -62,6 +63,7 @@ export const LANES: readonly Lane[] = [
 			'instruments',
 			'dossiers',
 			'cabinets',
+			'ministries',
 			'members',
 			'commitments',
 			'factions',

@@ -18,7 +18,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { notHeld, searchedLine } from '$lib/text/coverage';
 	import { conceptOf, resultsHref } from './results';
-	import { groupLabel, hitName, presentHit, sectionOf } from './present';
+	import { expiredTitle, groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
 	import { NOTATION_COLLECTION } from './resolve-query';
@@ -243,6 +243,7 @@
 					Artikelen met dit nummer
 				</div>
 				{#each search.choices as choice, i (choice.ref.key)}
+					{@const expired = expiredTitle(choice.ref.collection, choice.expiredOn)}
 					<SearchOption
 						id={rowId(i)}
 						active={search.isActive(i)}
@@ -254,6 +255,9 @@
 						<span class="row-title"
 							>{choice.label ?? naamVanId(nodeId(choice.ref.collection, choice.ref.key))}</span
 						>
+						{#if expired}<span class="row-context"
+								><span class="row-expired" title={expired}>vervallen</span></span
+							>{/if}
 						{#if search.active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
 					</SearchOption>
 				{/each}
@@ -274,6 +278,10 @@
 			{@const name =
 				(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
 				search.q}
+			{@const expired =
+				search.resolvedWith?.term === search.q
+					? expiredTitle(kind, search.resolvedWith.target?.expiredOn)
+					: null}
 			<SearchOption
 				id={rowId(0)}
 				active={search.active === 0}
@@ -286,11 +294,15 @@
 						{bronLabel(kind)}{/if}</span
 				>
 				<span class="row-title">{name}</span>
+				{#if expired}<span class="row-context"
+						><span class="row-expired" title={expired}>vervallen</span></span
+					>{/if}
 				<span class="kbd" aria-hidden="true">↵</span>
 			</SearchOption>
 		{:else if search.bare}
 			{@const bare = search.bare}
 			{@const name = bare.label ?? search.q}
+			{@const expired = expiredTitle(bare.ref.collection, bare.expiredOn)}
 			<!-- A link like the hits: its target is known, so a new tab can open it. -->
 			<SearchOption
 				id={rowId(0)}
@@ -307,6 +319,9 @@
 						{bronLabel(bare.ref.collection)}{/if}</span
 				>
 				<span class="row-title">{name}</span>
+				{#if expired}<span class="row-context"
+						><span class="row-expired" title={expired}>vervallen</span></span
+					>{/if}
 				<span class="kbd" aria-hidden="true">↵</span>
 			</SearchOption>
 		{/if}

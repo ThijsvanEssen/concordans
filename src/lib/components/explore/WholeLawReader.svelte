@@ -52,6 +52,7 @@
 	import Validity from '$lib/components/ui/Validity.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import FullTitle from '$lib/components/ui/FullTitle.svelte';
+	import PreambleFold from './PreambleFold.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import { validityOf } from '$lib/api/validity';
 	import { statusOf } from '$lib/text/validity';
@@ -159,6 +160,7 @@
 	// once its detail says it is no wet (a wet has no Gelet op); the articles stand in its
 	// group Grondslag in Verbonden, from the same answer.
 	let grondslag = $state<BasisPart[]>([]);
+	let preambleOpen = $state(false);
 	let allGrounds = $state(new Set<string>());
 	$effect(() => {
 		grondslag = [];
@@ -220,6 +222,7 @@
 			detail.state.status === 'error' ||
 			versionList.state.status === 'error' ||
 			grondslag.length > 0 ||
+			!!lawDetail?.preamble?.text ||
 			!!lawDetail?.ministry ||
 			!!treaty
 	);
@@ -382,7 +385,8 @@
 	{/if}
 	<!-- A regulation on many laws names the first three, the rest one click away in place (R3-L
 	     F8): its head is no wall of links above its facts. -->
-	{#each grondslag as deel (deel.werkwoord)}
+	<!-- Open, the aanhef holds the grondslag: the line gives way to it (studie-aanhef, B). -->
+	{#each preambleOpen ? [] : grondslag as deel (deel.werkwoord)}
 		{@const all = allGrounds.has(deel.werkwoord)}
 		{@const shown = deel.wetten.slice(0, lawsShown(deel, all))}
 		{@const rest = deel.wetten.length - shown.length}
@@ -398,6 +402,9 @@
 				>{/if}.
 		</p>
 	{/each}
+	{#if lawDetail?.preamble?.text}
+		<PreambleFold preamble={lawDetail.preamble} kind={lawDetail.kind} bind:open={preambleOpen} />
+	{/if}
 	{#if treaty}
 		<p class="whole-count">
 			{#if treaty.target.kind === 'bron'}
