@@ -22,6 +22,8 @@ test('Actueel: the lower courts of a day open to headings per rechtsgebied', asy
 	const first = groups.getByRole('button', { expanded: true }).first();
 	await expect(first).toBeVisible();
 	await expect(page.locator('ul li a[href*="/uitspraken/"]').first()).toBeVisible();
+	// The day of a judgment is its decision day, said so.
+	await expect(page.locator('ul li a[href*="/uitspraken/"]').first()).toHaveText(/, beslist \d/);
 
 	// A heading beyond the first ones opens on its own click.
 	const third = page.getByRole('button', { name: /^Strafrecht/ }).first();
