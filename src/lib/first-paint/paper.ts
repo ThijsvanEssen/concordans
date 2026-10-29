@@ -162,9 +162,9 @@ function head(v: PaperPaint, props: Record<string, unknown>, k: Classes): string
 function submitterLine(list: Submitter[], k: Classes): string {
 	const { by, with: others } = groupSubmitters(list);
 	// A name and its fractie as the template sets them: the bracket closes a text of its own.
-	// A name with its key, and a fractie (found by its name in the app's list), a link of a row's
-	// height (NameLink, .raak-rij).
-	const link = (name: string) => `<a class="raak-rij">${esc(name)}</a>`;
+	// A name with its key, and a fractie (found by its name in the app's list), a link in the
+	// sentence with the target that moves nothing (NameLink inText, .raakvlak).
+	const link = (name: string) => `<a class="raakvlak">${esc(name)}</a>`;
 	const person = (s: Submitter) =>
 		(s.memberKey ? link(s.name) : `<span>${esc(s.name)}</span>`) +
 		(s.faction ? ` (${link(s.faction)})<!---->` : '');

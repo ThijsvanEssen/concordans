@@ -18,10 +18,16 @@
 </script>
 
 {#snippet person(s: Submitter)}
-	<NameLink collection="members" name={s.name} key={s.memberKey} />{#if s.faction}{OPEN}<NameLink
+	<NameLink
+		collection="members"
+		name={s.name}
+		key={s.memberKey}
+		inText
+	/>{#if s.faction}{OPEN}<NameLink
 			collection="factions"
 			name={s.faction}
 			key={s.factionKey}
+			inText
 		/>){/if}
 {/snippet}
 

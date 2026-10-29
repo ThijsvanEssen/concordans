@@ -1,5 +1,5 @@
 <script lang="ts">
-	// A bron on its own opened from the drawing of Netwerk tonen (besluit 39, mockup A197-a): in
+	// A bron on its own opened from the drawing in Verbonden (besluit 39, mockup A197-a): in
 	// place under the drawing, what it is, its line of the verbinding, and Lees, the bron one step
 	// further; Aan het netwerk toevoegen adds it to the netwerk without leaving the page.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';

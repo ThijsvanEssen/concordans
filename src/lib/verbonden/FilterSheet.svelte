@@ -10,7 +10,7 @@
 	import Blad from '$lib/components/ui/Blad.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { SORT_SHAPE } from '$lib/bron/vormen';
-	import { STUKSOORTEN, STUKSOORT_LABEL } from '$lib/bron/rubrieken';
+	import { STUKSOORTEN, STUKSOORT_LABEL, sortColour } from '$lib/bron/rubrieken';
 	// The filter sheet: soort, relatie, lid, rechter, periode, zekerheid and
 	// status, applied with one button. The same sheet opens from the panel and from
 	// the legend of the network. A Blad: the focus goes to the search field on open, stays inside
@@ -223,7 +223,11 @@
 						onToggle={() => (draft = toggleFilterGroup(draft, k))}
 						count={n}
 					>
-						{#snippet voor()}<KindGlyph vorm={SORT_SHAPE[k]} size={11} />{/snippet}
+						{#snippet voor()}<KindGlyph
+								vorm={SORT_SHAPE[k]}
+								size={11}
+								colour={sortColour(k)}
+							/>{/snippet}
 					</FilterOptie>
 				{/each}
 			</div>
@@ -241,6 +245,7 @@
 							{#snippet voor()}<KindGlyph
 									vorm={s === 'wetsvoorstellen' ? 'voorstel' : 'stuk'}
 									size={11}
+									colour={sortColour('stukken')}
 								/>{/snippet}
 						</FilterOptie>
 					{/each}
@@ -336,21 +341,24 @@
 				/>
 			</div>
 
-			<div class="block">
-				<div class="block__label">Status</div>
-				<FilterOptie
-					label="Vastgesteld"
-					count={perStatus.enacted}
-					on={statusAan('vastgesteld')}
-					onToggle={() => toggleStatus('vastgesteld')}
-				/>
-				<FilterOptie
-					label="Voorgesteld"
-					count={perStatus.proposed}
-					on={statusAan('voorgesteld')}
-					onToggle={() => toggleStatus('voorgesteld')}
-				/>
-			</div>
+			<!-- Only where both hold anything, or one is chosen: one always stays on (DS Filterbalk). -->
+			{#if (perStatus.proposed > 0 && perStatus.enacted > 0) || draft.status !== null}
+				<div class="block">
+					<div class="block__label">Status</div>
+					<FilterOptie
+						label="Vastgesteld"
+						count={perStatus.enacted}
+						on={statusAan('vastgesteld')}
+						onToggle={() => toggleStatus('vastgesteld')}
+					/>
+					<FilterOptie
+						label="Voorgesteld"
+						count={perStatus.proposed}
+						on={statusAan('voorgesteld')}
+						onToggle={() => toggleStatus('voorgesteld')}
+					/>
+				</div>
+			{/if}
 		</div>
 		{#snippet foot()}
 			{#if hasChoice(draft)}
