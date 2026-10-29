@@ -38,4 +38,4 @@ export const citeText = (c: ArticleCite): string =>
 
 /** The glance of a label: every article it names on a line of its own (`art. 23 lid 1 Cbb`). */
 export const citeLines = (c: ArticleCite): string[] =>
-	c.articles.map((a) => `art. ${a.label} ${c.abbr}`);
+	c.articles.map((a) => ['art.', a.label, c.abbr].join(' '));

@@ -356,7 +356,6 @@
 					cite: e.o.cite ? citeText(e.o.cite) : null,
 					// What the label opens: the first of its articles, at the lid it names; the glance
 					// names them all.
-					citeFull: e.o.cite?.full ?? '',
 					citeLines: e.o.cite ? citeLines(e.o.cite) : [],
 					citeHref: articles[0]
 						? openHref({ collection: 'articles', key: articles[0].key }, { at: articles[0].at })
@@ -621,7 +620,7 @@
 				<a
 					class="cite"
 					href={l.citeHref ?? undefined}
-					aria-label={l.citeFull}
+					aria-label={l.citeLines.join(', ')}
 					onpointerenter={(e) => {
 						hover.pointer(e.pointerType);
 						citeGlance(l, e.currentTarget);
@@ -937,7 +936,7 @@
 	.cite .hit {
 		fill: transparent;
 	}
-	@media (pointer: coarse) {
+	@media (pointer: coarse), (max-width: 768px) {
 		.cite .hit {
 			height: calc(44px / var(--sc));
 			transform: translateY(calc((20px - 44px / var(--sc)) / 2));
@@ -947,7 +946,7 @@
 		fill: var(--ink);
 		text-decoration: underline;
 	}
-	.cite:focus {
+	.cite:focus:not(:focus-visible) {
 		outline: none;
 	}
 	.cite:focus-visible .frame {
