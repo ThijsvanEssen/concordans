@@ -23,6 +23,7 @@
 	href={state.href}
 	aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : 'Netwerk'}
 	aria-pressed={pressed}
+	aria-keyshortcuts={onBron || pressed ? 'Alt+L' : undefined}
 	role="button"
 	title={pressed
 		? 'Terug naar de tekst'

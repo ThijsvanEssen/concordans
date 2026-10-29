@@ -10,7 +10,10 @@
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
-	import { onDestroy, untrack } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
+	import { answer } from '$lib/keys/dispatch.svelte';
+	import { announce } from '$lib/bevestig/bevestig.svelte';
+	import { scrollerOf } from '$lib/bron/landing';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -1915,8 +1918,7 @@
 	// ── Resizable columns ────────────────────────────────────────────────────
 
 	// ── Keys ─────────────────────────────────────────────────────────────────
-	// L reads the selected bron at full width, or goes back to the network; ignored
-	// while typing or with a modifier.
+	// Escape closes what is on top here; the keys with Alt are answered below.
 	function handleKeydown(e: KeyboardEvent) {
 		if (tocOpen && e.key === 'Escape') {
 			tocOpen = false;
@@ -1930,24 +1932,104 @@
 			);
 			return;
 		}
-		// 1 and 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's
-		// first row, for J and K.
-		const panel = panelOfKey(e.key);
-		if (panel && selectedNode && mode === 'read') {
-			e.preventDefault();
-			readTab = panel;
-			if (panel === 'verbonden')
-				requestAnimationFrame(() =>
-					document.querySelector<HTMLElement>(`.verbonden :is(${LINKED_ROW})`)?.focus()
-				);
-			return;
+	}
+
+	// Alt L, Alt 1, Alt 2, Alt [ and Alt ] (the register, lib/keys): answered while this page
+	// stands; each answers false where it has nothing to do, so the key goes on.
+	onMount(() => {
+		const stop = [
+			answer('wissel', wissel),
+			answer('paneel', (_e, combo) => paneelToets(combo.teken)),
+			answer('artikel-vorig', () => artikelStap(-1)),
+			answer('artikel-volgend', () => artikelStap(1))
+		];
+		return () => stop.forEach((f) => f());
+	});
+
+	/** Alt 1 and Alt 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's first row. */
+	function paneelToets(key: string): boolean {
+		const panel = panelOfKey(key);
+		if (!panel || !selectedNode || mode !== 'read' || !window.matchMedia(PHONE).matches)
+			return false;
+		readTab = panel;
+		if (panel === 'verbonden')
+			requestAnimationFrame(() =>
+				document.querySelector<HTMLElement>(`.verbonden :is(${LINKED_ROW})`)?.focus()
+			);
+		return true;
+	}
+
+	/** The reader's place, kept while the netwerk is up: the bron and how far its text was scrolled. */
+	let leesplek: { id: string; top: number } | null = null;
+	const readerScroller = () => {
+		const kop = document.querySelector<HTMLElement>('.col--reader');
+		return kop ? (kop.querySelector<HTMLElement>('.reader') ?? kop) : null;
+	};
+
+	/** Alt L: from the reader to the netwerk and back, said in words, the focus on a stop. */
+	function wissel(): boolean {
+		const to = readAction;
+		if (!to || !selectedNode) return false;
+		const name = pageName(selectedNode, titelVan(selectedNode.id));
+		if (to === 'network') {
+			const el = readerScroller();
+			const scroller = el && scrollerOf(el);
+			leesplek = { id: selectedNode.id, top: scroller?.scrollTop ?? 0 };
 		}
-		if (e.key.toLowerCase() !== 'l' || !readAction) return;
-		e.preventDefault();
-		// The element that had the focus goes with the view: it lands on the new one's anchor.
-		Promise.resolve(setReading(readAction === 'read'))
-			.then(() => afterTick(keepFocus))
+		Promise.resolve(setReading(to === 'read'))
+			.catch((err) => report('Wisselen', err))
+			.finally(() => {
+				// A step another navigation overtook still lands in the view asked for.
+				if ((mode === 'read') !== (to === 'read')) return;
+				announce(`Naar ${to === 'network' ? 'netwerk' : 'lezer'}: ${name}`);
+				afterTick(() => (to === 'read' ? herstelLeesplek() : keepFocus()));
+			});
+		return true;
+	}
+
+	/**
+	 * The text just drawn, once it is there: its heading holds the focus, and `top` is where its
+	 * scroller stands (null: where it came). `niet` is the heading of the text it replaces.
+	 */
+	function opKop(top: number | null, niet = '') {
+		let tries = 0;
+		const place = () => {
+			const el = readerScroller();
+			const kop = document.querySelector<HTMLElement>('.col--reader h1');
+			if (!el || !kop || kop.textContent === niet) {
+				if (tries++ < 60) requestAnimationFrame(place);
+				return;
+			}
+			const scroller = scrollerOf(el);
+			if (scroller && top !== null) scroller.scrollTop = top;
+			kop.tabIndex = -1;
+			kop.focus({ preventScroll: true });
+		};
+		place();
+	}
+
+	/** Back from the netwerk: the text where it was read, the focus on its heading. */
+	function herstelLeesplek() {
+		const plek = leesplek;
+		opKop(plek && plek.id === selectedNode?.id ? plek.top : null);
+	}
+
+	/** Alt [ and Alt ]: the article before or after, its text asked first; the new one at its top. */
+	function artikelStap(d: 1 | -1): boolean {
+		if (mode !== 'read' || selectedNode?.collection !== 'articles' || articleIndex < 0)
+			return false;
+		const step = articleStep(articleIndex + d);
+		if (!step) {
+			announce(d < 0 ? 'Dit is het eerste artikel' : 'Dit is het laatste artikel');
+			return true;
+		}
+		const was = document.querySelector('.col--reader h1')?.textContent ?? '';
+		step
+			.load()
+			.then(() => goto(step.href))
+			.then(() => opKop(0, was))
 			.catch((err) => report('Wisselen', err));
+		return true;
 	}
 	/** The focus on a stop of the view just drawn, where it fell to the body. */
 	function keepFocus() {

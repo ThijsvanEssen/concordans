@@ -1,5 +1,5 @@
-// One-key shortcuts (research 29 Oct): L, 1, 2, J and K do nothing while a Blad is open or the
-// focus is in a field or a list box, J and K also go through Verbonden's overview, and after L
+// Shortcuts (research 29 Oct): Alt L, Alt 1, Alt 2, Alt J and Alt K do nothing while a Blad is
+// open (the plain L in a field or a list box is only a letter), J and K also go through Verbonden's overview, and after L
 // the focus is on something, not on the body.
 import { expect, test } from '../support/test';
 import { openSheet } from '../support/sheet';
@@ -19,9 +19,9 @@ test('L with a Blad open leaves the Blad standing', async ({ page }) => {
 	// Off the field, onto the Blad itself: the focus is not in a field now.
 	await dialog.getByRole('button', { name: 'Sluiten' }).focus();
 	const url = page.url();
-	await page.keyboard.press('l');
-	await page.keyboard.press('1');
-	await page.keyboard.press('j');
+	await page.keyboard.press('Alt+KeyL');
+	await page.keyboard.press('Alt+Digit1');
+	await page.keyboard.press('Alt+KeyJ');
 	await expect(dialog).toBeVisible();
 	expect(page.url()).toBe(url);
 });
@@ -48,12 +48,12 @@ test('J and K go through the overview of Verbonden', async ({ page, isMobile }) 
 	const titles = page.locator('.verbonden a.kind__title');
 	await expect(titles.first()).toBeVisible({ timeout: 30_000 });
 	await page.locator('body').click({ position: { x: 1, y: 1 } });
-	await page.keyboard.press('j');
+	await page.keyboard.press('Alt+KeyJ');
 	await expect(titles.first()).toBeFocused();
 	if ((await titles.count()) > 1) {
-		await page.keyboard.press('j');
+		await page.keyboard.press('Alt+KeyJ');
 		await expect(titles.nth(1)).toBeFocused();
-		await page.keyboard.press('k');
+		await page.keyboard.press('Alt+KeyK');
 		await expect(titles.first()).toBeFocused();
 	}
 });
@@ -62,12 +62,12 @@ test('after L the focus is on something visible', async ({ page }) => {
 	await page.goto(NETWORK);
 	const canvas = page.getByRole('application', { name: /^Netwerk\./ });
 	await canvas.focus();
-	await page.keyboard.press('l');
+	await page.keyboard.press('Alt+KeyL');
 	await expect(page).not.toHaveURL(/mode=netwerk/);
 	await expect
 		.poll(() => page.evaluate(() => document.activeElement?.tagName ?? 'BODY'))
 		.not.toBe('BODY');
-	await page.keyboard.press('l');
+	await page.keyboard.press('Alt+KeyL');
 	await expect(page).toHaveURL(/mode=netwerk|mode=graph/);
 	await expect
 		.poll(() => page.evaluate(() => document.activeElement?.tagName ?? 'BODY'))

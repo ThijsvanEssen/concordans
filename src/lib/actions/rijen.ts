@@ -1,8 +1,10 @@
 // J and K through the rows of a list (Thijs, 10 Oct, from the UX proposal): J the next row,
-// K the one before, Enter opens it as a click would. One listener for every list on a page:
-// the keys go to the list that holds the focus, or else to the first one on screen. Not while
-// typing, not with a modifier. In docs/sneltoetsen.
+// K the one before, Enter opens it as a click would; plain only while the focus is in the
+// list (WCAG 2.1.4), with Alt from anywhere on the page, to the first list on screen. Not while
+// typing. The register (lib/keys) holds both.
 
+import { answer } from '$lib/keys/dispatch.svelte';
+import type { Combo } from '$lib/keys/register';
 import { hasModifier, mayShortcut } from './keys';
 
 /** The row to go to from `nu` (-1 for none yet), one step `richting`, kept inside the list. */
@@ -17,28 +19,46 @@ const lijsten = new Set<Lijst>();
 
 const zichtbaar = (el: HTMLElement) => el.offsetParent !== null && el.getClientRects().length > 0;
 
+/** Moves the focus one row on in `lijst`, from the row that holds it. */
+function loop(lijst: Lijst, richting: 1 | -1): boolean {
+	const actief = document.activeElement as HTMLElement | null;
+	const rijen = [...lijst.node.querySelectorAll<HTMLElement>(lijst.rij)].filter(zichtbaar);
+	const nu = rijen.findIndex((r) => r === actief || r.contains(actief));
+	const i = stap(nu, rijen.length, richting);
+	if (i < 0) return false;
+	rijen[i].focus({ preventScroll: true });
+	rijen[i].scrollIntoView({ block: 'nearest' });
+	return true;
+}
+
+/** J and K alone: only while the focus is in the list, so a letter is never a key of the page. */
 function opToets(e: KeyboardEvent) {
 	if (hasModifier(e) || !mayShortcut(e)) return;
 	const toets = e.key.toLowerCase();
 	if (toets !== 'j' && toets !== 'k') return;
 	const actief = document.activeElement as HTMLElement | null;
+	const lijst = [...lijsten].find((l) => actief && l.node.contains(actief));
+	if (lijst && loop(lijst, toets === 'j' ? 1 : -1)) e.preventDefault();
+}
+
+/** Alt J and Alt K: from anywhere, to the list that holds the focus or else the first on screen. */
+function opPagina(_e: KeyboardEvent, combo: Combo): boolean {
+	const actief = document.activeElement as HTMLElement | null;
 	const lijst =
 		[...lijsten].find((l) => actief && l.node.contains(actief)) ??
 		[...lijsten].find((l) => zichtbaar(l.node));
-	if (!lijst) return;
-	const rijen = [...lijst.node.querySelectorAll<HTMLElement>(lijst.rij)].filter(zichtbaar);
-	const nu = rijen.findIndex((r) => r === actief || r.contains(actief));
-	const i = stap(nu, rijen.length, toets === 'j' ? 1 : -1);
-	if (i < 0) return;
-	e.preventDefault();
-	rijen[i].focus({ preventScroll: true });
-	rijen[i].scrollIntoView({ block: 'nearest' });
+	return !!lijst && loop(lijst, combo.code === 'KeyJ' ? 1 : -1);
 }
+
+let afmelden: (() => void) | null = null;
 
 /** `use:rijen={'a.row-title'}`: the selector of the focusable element of a row. */
 export function rijen(node: HTMLElement, rij: string) {
 	const lijst: Lijst = { node, rij };
-	if (lijsten.size === 0) window.addEventListener('keydown', opToets);
+	if (lijsten.size === 0) {
+		window.addEventListener('keydown', opToets);
+		afmelden = answer('rijen', opPagina);
+	}
 	lijsten.add(lijst);
 	return {
 		update(nieuw: string) {
@@ -46,7 +66,11 @@ export function rijen(node: HTMLElement, rij: string) {
 		},
 		destroy() {
 			lijsten.delete(lijst);
-			if (lijsten.size === 0) window.removeEventListener('keydown', opToets);
+			if (lijsten.size === 0) {
+				window.removeEventListener('keydown', opToets);
+				afmelden?.();
+				afmelden = null;
+			}
 		}
 	};
 }

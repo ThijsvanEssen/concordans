@@ -24,7 +24,7 @@ export function isEscape(e: KeyLike): boolean {
 }
 
 /**
- * Whether a one-key shortcut (L, 1, 2, J, K, N, ?) may act now: not with a modifier, not when
+ * Whether a one-key shortcut (J, K or N in a list that holds the focus) may act now: not with a modifier, not when
  * something nearer took the key, not while the focus is in a field (input, select, textarea,
  * contenteditable), and not while a Blad, dialog or menu is open: the keys then belong to it.
  */
@@ -33,5 +33,13 @@ export function mayShortcut(e: KeyLike): boolean {
 	if (isTyping(e.target)) return false;
 	if (typeof document === 'undefined') return true;
 	if (isTyping(document.activeElement)) return false;
-	return !document.querySelector('[aria-modal="true"], [role="menu"]');
+	return !modalOpen();
+}
+
+/** Whether a Blad, a dialog or a menu is open: the keys of the page then belong to it. */
+export function modalOpen(): boolean {
+	return (
+		typeof document !== 'undefined' &&
+		!!document.querySelector('[aria-modal="true"], [role="menu"]')
+	);
 }

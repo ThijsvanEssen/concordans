@@ -41,3 +41,9 @@ const isMac: boolean = detectIsMac();
 
 /** Toets-label voor de "command"-toets — `⌘` op Mac, `Ctrl` op andere. */
 export const modKey: '⌘' | 'Ctrl' = isMac ? '⌘' : 'Ctrl';
+
+/** Platform of the reader; null where it is not known (the server's text, a crawler). */
+export const platform: 'mac' | 'pc' | null = browser ? (isMac ? 'mac' : 'pc') : null;
+
+/** Toets-label voor Alt: `⌥` op Mac, `Alt` op andere. */
+export const altKey: '⌥' | 'Alt' = isMac ? '⌥' : 'Alt';

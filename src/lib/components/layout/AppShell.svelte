@@ -5,6 +5,8 @@
 	import TabBar from './TabBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
+	import Hulp from '$lib/keys/Hulp.svelte';
+	import { onKeydown } from '$lib/keys/dispatch.svelte';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -24,6 +26,8 @@
 	provideSearchOpener(openSearch);
 </script>
 
+<svelte:window onkeydown={onKeydown} />
+
 <div class="app-shell">
 	<a href="#main-content" class="skip-link">Naar inhoud</a>
 	{#if $lijstSprong}<a href="#{$lijstSprong}" class="skip-link">Naar de lijst</a>{/if}
@@ -35,6 +39,7 @@
 	<TabBar onSearchOpen={() => openSearch()} />
 </div>
 
+<Hulp />
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>
