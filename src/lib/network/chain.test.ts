@@ -514,20 +514,49 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		}
 	] as never;
 
-	it('draws a wet that only names the law in its text beside it, with the number of its articles', () => {
+	it('draws a wet that only names the law in its text beside it, without a count', () => {
 		const k = chain(gw, delegated, null, { mentions: true, refers });
 		const named = { nodes: k.layers.find((l) => l.id === 'law')!.nodes.slice(1) };
 		expect(k.layers.some((l) => (l.id as string) === 'named')).toBe(false);
 		expect(named.nodes.map((n) => n.name)).toEqual(['Kieswet']);
+		// the API gives how many articles, not which: no label ("2 art." reads as article 2)
 		expect(named.nodes[0].parents).toEqual([
-			{
-				id: 'instruments/bwbr0001840',
-				way: 'mentioned',
-				relation: 'REFERS_TO',
-				cite: { full: '2 art. Gw', count: 2, abbr: 'Gw', articles: [] }
-			}
+			{ id: 'instruments/bwbr0001840', way: 'mentioned', relation: 'REFERS_TO', named: 2 }
 		]);
-		expect(named.nodes[0].mentions).toBe('2 art. Gw');
+		expect(named.nodes[0].mentions).toBe('Gw');
+	});
+
+	it('puts a wet that names an AMvB in the row Wet above it, and not the law it rests on', () => {
+		const cbb = {
+			id: 'instruments/bwbr0052875',
+			name: 'Cyberbeveiligingsbesluit',
+			abbreviation: 'Cbb'
+		};
+		const cbw = law('instruments/bwbr0052872', 'Cyberbeveiligingswet');
+		const basis = {
+			bwb_id: 'BWBR0052875',
+			total: 1,
+			items: [{ instrument: cbw, kind: 'wet', basis_kind: 'delegates', articles: [article('3')] }]
+		} as never;
+		const naming = [
+			{
+				...(refers as never as Record<string, unknown>[])[0],
+				id: cbw.id,
+				display_name: 'Cyberbeveiligingswet',
+				citation_title: 'Cyberbeveiligingswet'
+			},
+			{
+				...(refers as never as Record<string, unknown>[])[0],
+				id: 'instruments/hrw',
+				display_name: 'Handelsregisterwet 2007',
+				citation_title: 'Handelsregisterwet 2007'
+			}
+		] as never;
+		const k = chain(cbb, null, basis, { kind: 'amvb', mentions: true, refers: naming });
+		const ids = (id: string) => k.layers.find((l) => l.id === id)?.nodes.map((n) => n.id);
+		expect(ids('basis')).toEqual([cbw.id, 'instruments/hrw']);
+		expect(ids('law')).toEqual([cbb.id]);
+		expect(k.layers.flatMap((l) => l.nodes).filter((n) => n.id === cbw.id)).toHaveLength(1);
 	});
 
 	it('puts those that name most of its articles first', () => {
