@@ -15,7 +15,7 @@
 </script>
 
 <FullTitle label={aanhefLabel(kind)} bind:open>
-	<div class="aanhef" id="aanhef">
+	<div class="aanhef" id="kop-aanhef">
 		{#each alineas as a, i (i)}
 			<p class:besluit={a.besluit}><CitedText text={a.text} citations={a.citations} /></p>
 		{/each}
