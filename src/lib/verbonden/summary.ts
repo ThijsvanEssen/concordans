@@ -195,7 +195,7 @@ export const kindOfGroup = (g: Group): KindId | null => {
 const asList = <T>(v: T | readonly T[]): readonly T[] => (Array.isArray(v) ? v : [v as T]);
 
 /** Whether a bucket (`relation/collection/direction`) is one of `buckets`. */
-function inBuckets(key: string, buckets: readonly Bucket[]): boolean {
+export function inBuckets(key: string, buckets: readonly Bucket[]): boolean {
 	const [relation, collection, direction] = key.split('/');
 	return buckets.some(
 		(b) =>

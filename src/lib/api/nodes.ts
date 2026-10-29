@@ -170,16 +170,33 @@ export function lidCountsByCollection(
 }
 
 /**
- * The judgments a judgment is connected to per tier, over every bucket of judgments as a whole
- * (`tier_counts`; "" for one without a tier); null where the API gives none.
+ * The judgments a judgment is connected to per tier, per bucket (`relation/collection/direction`)
+ * as a whole (`tier_counts`; "" for one without a tier); null where the API gives none.
  */
-export function tierCountsOf(response: NodeGraph): Map<string, number> | null {
-	let counts: Map<string, number> | null = null;
+export function tierCountsByBucket(
+	response: NodeGraph
+): Map<string, ReadonlyMap<string, number>> | null {
+	let per: Map<string, ReadonlyMap<string, number>> | null = null;
 	for (const b of response.neighbors.buckets ?? []) {
 		if (!b.tier_counts) continue;
-		counts ??= new Map();
-		for (const [tier, n] of Object.entries(b.tier_counts))
-			counts.set(tier, (counts.get(tier) ?? 0) + n);
+		per ??= new Map();
+		per.set(
+			bucketKey(b.relation, b.collection, b.direction),
+			new Map(Object.entries(b.tier_counts))
+		);
+	}
+	return per;
+}
+
+/** The counts per tier of the buckets `keep` takes (all of them without it), added up. */
+export function sumTierCounts(
+	per: ReadonlyMap<string, ReadonlyMap<string, number>>,
+	keep: (key: string) => boolean = () => true
+): Map<string, number> {
+	const counts = new Map<string, number>();
+	for (const [key, of] of per) {
+		if (!keep(key)) continue;
+		for (const [tier, n] of of) counts.set(tier, (counts.get(tier) ?? 0) + n);
 	}
 	return counts;
 }
