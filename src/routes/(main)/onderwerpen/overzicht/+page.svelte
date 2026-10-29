@@ -887,7 +887,7 @@
 <RouteKop title={naam ? siteTitle(`${naam}, overzicht`) : undefined} />
 
 <div class="overzicht blad">
-	<p class="terug"><a href="/onderwerpen">Gevolgd</a></p>
+	<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/onderwerpen">Gevolgd</a></nav>
 	<!-- The heading with its action at the right (docs/bediening.md). -->
 	<header class="blad__kop">
 		<h1 class="blad__titel">{naam || 'Overzicht'}</h1>
@@ -989,15 +989,6 @@
 
 <style>
 	/* The frame and grid of Bladeren (lib/styles/frame.css): .blad, and .blad__indeling below. */
-	.terug {
-		margin: 0 0 var(--s-2);
-		font-size: var(--t-meta);
-	}
-	.terug a {
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-	}
 	.regel {
 		margin-bottom: var(--s-5);
 	}

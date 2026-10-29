@@ -93,11 +93,4 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	kbd {
-		font-family: var(--font-ui);
-		font-size: var(--t-label);
-		padding: 0 var(--s-1);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-	}
 </style>

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import KeyList from '$lib/components/ui/KeyList.svelte';
+	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 </script>
 
 <RouteKop />
@@ -8,116 +10,50 @@
 	<div class="container blad blad--tekst">
 		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/docs">Documentatie</a></nav>
 		<header class="blad__kop"><h1 class="blad__titel">Sneltoetsen</h1></header>
-		<div class="shortcut-table">
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Zoeken</span>
-				<span class="shortcut-keys"><kbd>⌘</kbd><kbd>K</kbd> of <kbd>Ctrl</kbd><kbd>K</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Door de zoekresultaten; Enter opent er een</span>
-				<span class="shortcut-keys"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Zoekveld wissen, of zoeken sluiten</span>
-				<span class="shortcut-keys"><kbd>Esc</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Bij een bron: tekst of netwerk</span>
-				<span class="shortcut-keys"><kbd>L</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Bij een bron: Tekst of Verbonden</span>
-				<span class="shortcut-keys"><kbd>1</kbd> <kbd>2</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">In het netwerk: alleen verbonden bronnen</span>
-				<span class="shortcut-keys"><kbd>O</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc"
-					>Volgende of vorige rij onder Bronnen en in Verbonden; Enter opent haar</span
-				>
-				<span class="shortcut-keys"><kbd>J</kbd> <kbd>K</kbd> <kbd>Enter</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc"
-					>Terug of vooruit naar de vorige bron, als het netwerk de focus heeft</span
-				>
-				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Door de bronnen in de lijst van het netwerk</span>
-				<span class="shortcut-keys"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc"
-					>De bron in die lijst aan het netwerk toevoegen of eruit halen</span
-				>
-				<span class="shortcut-keys"><kbd>N</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Vorige of volgende wijziging, bij Vergelijken</span>
-				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Een verwijzing direct openen, zonder kaart</span>
-				<span class="shortcut-keys"
-					><kbd>⌘</kbd>-klik, <kbd>Ctrl</kbd>-klik of de middelste muisknop</span
-				>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Een kaart, menu of opengeklapte rij sluiten</span>
-				<span class="shortcut-keys"><kbd>Esc</kbd></span>
-			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Deze pagina</span>
-				<span class="shortcut-keys"><kbd>?</kbd></span>
-			</div>
-		</div>
+		<KeyList>
+			<KeyRow
+				>{#snippet key()}<kbd>⌘</kbd><kbd>K</kbd> of <kbd>Ctrl</kbd><kbd>K</kbd
+					>{/snippet}Zoeken</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd>{/snippet}Door de zoekresultaten;
+				Enter opent er een</KeyRow
+			>
+			<KeyRow>{#snippet key()}<kbd>Esc</kbd>{/snippet}Zoekveld wissen, of zoeken sluiten</KeyRow>
+			<KeyRow>{#snippet key()}<kbd>L</kbd>{/snippet}Bij een bron: tekst of netwerk</KeyRow>
+			<KeyRow
+				>{#snippet key()}<kbd>1</kbd> <kbd>2</kbd>{/snippet}Bij een bron: Tekst of Verbonden</KeyRow
+			>
+			<KeyRow>{#snippet key()}<kbd>O</kbd>{/snippet}In het netwerk: alleen verbonden bronnen</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>J</kbd> <kbd>K</kbd> <kbd>Enter</kbd>{/snippet}Volgende of vorige rij
+				onder Bronnen en in Verbonden; Enter opent haar</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>←</kbd> <kbd>→</kbd>{/snippet}Terug of vooruit naar de vorige bron,
+				als het netwerk de focus heeft</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd>{/snippet}Door de
+				bronnen in de lijst van het netwerk</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>N</kbd>{/snippet}De bron in die lijst aan het netwerk toevoegen of
+				eruit halen</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>←</kbd> <kbd>→</kbd>{/snippet}Vorige of volgende wijziging, bij
+				Vergelijken</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>⌘</kbd>-klik, <kbd>Ctrl</kbd>-klik of de middelste muisknop{/snippet}Een
+				verwijzing direct openen, zonder kaart</KeyRow
+			>
+			<KeyRow
+				>{#snippet key()}<kbd>Esc</kbd>{/snippet}Een kaart, menu of opengeklapte rij sluiten</KeyRow
+			>
+			<KeyRow>{#snippet key()}<kbd>?</kbd>{/snippet}Deze pagina</KeyRow>
+		</KeyList>
 	</div>
 </div>
-
-<style>
-	.shortcut-table {
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
-		overflow: hidden;
-	}
-
-	.shortcut-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--s-3) var(--s-5);
-		background: var(--paper);
-	}
-
-	.shortcut-row:hover {
-		background: var(--paper-2);
-	}
-
-	.shortcut-desc {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-	}
-
-	.shortcut-keys {
-		display: flex;
-		gap: var(--s-1);
-		align-items: center;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-
-	kbd {
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink-2);
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-		padding: 2px var(--s-2);
-	}
-</style>

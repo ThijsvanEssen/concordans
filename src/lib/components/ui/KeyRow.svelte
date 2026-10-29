@@ -2,11 +2,13 @@
 	// One row of a KeyList: its key, where it has one, and its value.
 	import type { Snippet } from 'svelte';
 
-	let { key, children }: { key?: string; children: Snippet } = $props();
+	let { key, children }: { key?: string | Snippet; children: Snippet } = $props();
 </script>
 
 <div class="key-row">
-	{#if key}<span class="key">{key}</span>{/if}<span class="value">{@render children()}</span>
+	{#if key}<span class="key"
+			>{#if typeof key === 'string'}{key}{:else}{@render key()}{/if}</span
+		>{/if}<span class="value">{@render children()}</span>
 </div>
 
 <style>

@@ -8,6 +8,15 @@ textarea,
 kbd {
 	font-family: var(--font-ui);
 }
+/* A key on the keyboard, in the text and in lists of shortcuts. */
+kbd {
+	font-size: var(--t-label);
+	color: var(--ink-2);
+	background: var(--paper-2);
+	border: 1px solid var(--rule);
+	border-radius: var(--r-1);
+	padding: 0 var(--s-1);
+}
 html,
 body {
 	height: 100%;

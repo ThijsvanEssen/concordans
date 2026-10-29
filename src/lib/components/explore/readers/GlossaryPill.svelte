@@ -2,7 +2,8 @@
 	// Inline term that shows a popover with the full name and a plain explanation on
 	// hover or focus: the kind of a kamerstuk in the document reader (MvT, Motie). A dotted
 	// underline marks the term.
-	import { clickOutside, placement, topOf } from '$lib/actions/top-layer';
+	import { clickOutside } from '$lib/actions/top-layer';
+	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import { GLOSSARY, type GlossaryTerm } from '$lib/glossary';
 
 	let { term, label }: { term: GlossaryTerm; label?: string } = $props();
@@ -13,33 +14,15 @@
 	/** The last press was a finger's: its tap toggles the card, a mouse's hover has opened it. */
 	let touch = false;
 	let pillEl: HTMLButtonElement | null = $state(null);
-	let popEl: HTMLSpanElement | null = $state(null);
 
-	// The readers scroll inside containers that clip their overflow, so the popover is
-	// placed against the viewport as every card is (placement): below the term, above it only
-	// where there is no room below, so it never covers the title above its own row.
-	let pos = $state({ top: 0, left: 0 });
-	function place() {
-		if (!pillEl || !popEl) return;
-		const r = pillEl.getBoundingClientRect();
-		const box = { width: popEl.offsetWidth, height: popEl.offsetHeight };
-		const { up, left } = placement(r, box, { width: innerWidth, height: innerHeight });
-		pos = { top: topOf(r, up, box.height), left };
-	}
+	// The card floats in the top layer by the term (FloatingCard), as every card does.
 	$effect(() => {
 		if (!open) return;
-		place();
-		// A fixed popover does not follow the term; scrolling closes it.
-		const close = () => (open = false);
-		window.addEventListener('scroll', close, { capture: true, passive: true });
-		window.addEventListener('resize', close);
 		// A tap outside closes it (capture phase, as every card does); a tap on the term is its own.
-		const stop = clickOutside(() => [pillEl], close);
-		return () => {
-			stop();
-			window.removeEventListener('scroll', close, { capture: true });
-			window.removeEventListener('resize', close);
-		};
+		return clickOutside(
+			() => [pillEl],
+			() => (open = false)
+		);
 	});
 
 	// Set after mount so the random suffix never differs between SSR and hydration.
@@ -76,19 +59,19 @@
 		if (e.key === 'Escape') open = false;
 	}}
 	aria-describedby={uid}
-	aria-expanded={open}
-	>{display}<span
+	aria-expanded={open}>{display}</button
+>{#if open && pillEl}<FloatingCard
+		kind="glance"
+		tag="span"
+		detach
+		anchor={pillEl}
+		onclose={() => (open = false)}
 		id={uid}
-		class="glossary-pop"
-		class:is-open={open}
-		bind:this={popEl}
-		style:top="{pos.top}px"
-		style:left="{pos.left}px"
-	>
-		<span class="glossary-pop__full">{entry.full}</span>
-		<span class="glossary-pop__plain">{entry.plain}</span>
-	</span>
-</button>
+		role="tooltip"
+		><span class="glossary-pop__full">{entry.full}</span><span class="glossary-pop__plain"
+			>{entry.plain}</span
+		></FloatingCard
+	>{/if}
 
 <style>
 	.glossary-pill {
@@ -107,40 +90,12 @@
 		color: var(--ink-3);
 	}
 
-	.glossary-pop {
-		position: fixed;
-		z-index: var(--z-float);
-		width: max-content;
-		max-width: 280px;
-		padding: var(--s-2) var(--s-3);
-		background: var(--ink);
-		color: var(--paper);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		line-height: 1.4;
-		box-shadow: var(--shadow-pop);
-		opacity: 0;
-		transform: translateY(2px);
-		pointer-events: none;
-		transition:
-			opacity var(--dur-1) var(--ease),
-			transform var(--dur-1) var(--ease);
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-		text-decoration: none;
-		text-align: left;
-	}
-	.glossary-pop.is-open {
-		opacity: 1;
-		transform: translateY(0);
-	}
 	.glossary-pop__full {
 		font-weight: 600;
 		font-size: var(--t-micro);
 	}
 	.glossary-pop__plain {
-		color: color-mix(in srgb, var(--paper) 80%, transparent);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
 	}
 </style>
