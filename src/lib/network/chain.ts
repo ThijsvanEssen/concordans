@@ -447,7 +447,7 @@ export function chain(
 			{
 				instrument: {
 					...r,
-					title: r.display_name ?? r.citation_title ?? r.id,
+					title: naamVanId(r.id, r.display_name ?? r.citation_title),
 					short_title: null,
 					abbreviation: null
 				} as unknown as Summary,
