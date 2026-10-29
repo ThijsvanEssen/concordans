@@ -2,6 +2,7 @@
 // beziers that cross neither a name nor each other; a judgment's lines counted as Aanhaling.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
+import { noemt } from '../support/noemt';
 
 // The drawing is for a wide screen; on a phone the keten is a list.
 test.skip(({ isMobile }) => isMobile, 'a list on a phone');
@@ -191,6 +192,9 @@ test('BW 7: a line to a layer further down runs no long U through the layer betw
 }) => {
 	await page.goto('/wetten/BWBR0005290?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	// The lines of what rests on the law; a mention to a layer past a full one still runs
+	// through it (open, 30 Oct).
+	await noemt(page);
 	await expect(page.locator('.chain .name').first()).toBeVisible();
 	const { lines, names } = await drawn(page);
 	expect(lines.length).toBeGreaterThan(0);
@@ -252,7 +256,9 @@ test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn
 		'AMVB',
 		'MINISTERIËLE REGELING'
 	]);
-	await expect(page.locator('.chain .cite text', { hasText: '11 art. Cbw' })).toBeAttached();
+	await expect(
+		page.locator('.chain .cite text', { hasText: 'art. 3, 16 lid 1 en 7 +9' })
+	).toBeAttached();
 });
 
 test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articles, Enter opens them in the panel', async ({
