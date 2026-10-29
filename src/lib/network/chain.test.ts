@@ -21,7 +21,7 @@ const law = (id: string, title: string) => ({
 	path: null
 });
 const article = (n: string, basis: 'delegates' | 'mentioned' = 'delegates') => ({
-	leden: [],
+	leden: [] as string[],
 	onderdelen: [],
 	aanhef: false,
 	id: `articles/bwbr0010346_${n}`,
