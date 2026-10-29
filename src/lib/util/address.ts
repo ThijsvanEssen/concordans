@@ -47,6 +47,11 @@ export const withParams = (
  * Follow `href` in place. A step (a filter) takes a history entry; typing or opening replaces
  * it. A navigation that fails is SvelteKit's to show (+error.svelte): nothing waits for it.
  */
-export function navigate(href: string, { step = false } = {}): Promise<void> {
+export function navigate(href: string, opts: { step?: boolean } = {}): void {
+	void navigateDone(href, opts);
+}
+
+/** As `navigate`, for the caller that does something once the page has been drawn. */
+export function navigateDone(href: string, { step = false } = {}): Promise<void> {
 	return goto(href, { replaceState: !step, keepFocus: true, noScroll: true });
 }

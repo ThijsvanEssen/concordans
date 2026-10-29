@@ -144,7 +144,14 @@
 		type Netwerk,
 		type NetwerkEntry
 	} from '$lib/selection/netwerk';
-	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
+	import {
+		navigate,
+		navigateDone,
+		patchParams,
+		queryHref,
+		withParams,
+		type ParamPatch
+	} from '$lib/util/address';
 	import {
 		besideJudgment,
 		depthFor as depthOfClass,
@@ -1685,7 +1692,7 @@
 		if (!node || node.id.startsWith('synth:')) return;
 		const ref = refOf(node.collection, node.key, node.raw?.props);
 		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
-		return navigate(on ? openHref(ref, { at }) : werkplekHref(ref, at), { step: true });
+		return navigateDone(on ? openHref(ref, { at }) : werkplekHref(ref, at), { step: true });
 	}
 	/** The werkplek with the bron: as the button Netwerk of the top bar opens it. */
 	const werkplekHref = (ref: BronRef, at: string | null = null) =>
