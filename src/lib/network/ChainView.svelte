@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SvelteMap } from 'svelte/reactivity';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { FilterGroup } from '$lib/verbonden/filter';
@@ -462,6 +463,17 @@
 		hover.enter();
 	};
 	const card = $derived(hover.open ? target : null);
+	/** The width of a label as drawn, measured: its frame fits it in any font and zoom. */
+	const citeWidths = new SvelteMap<string, number>();
+	const measure = (el: SVGTextElement, text: string) => {
+		const take = (t: string) => {
+			const n = el.getComputedTextLength();
+			if (n > 0 && citeWidths.get(t) !== n) citeWidths.set(t, n);
+		};
+		take(text);
+		document.fonts?.ready.then(() => take(text));
+		return { update: take };
+	};
 	/** A label whose article the Leespaneel shows: landed, every label of it, not only the one clicked. */
 	const readKeys = $derived(new Set(readOpen().map((r) => r.key)));
 	const landed = (l: (typeof lines)[number]) => l.citeArticles.some((a) => readKeys.has(a.key));
@@ -644,7 +656,7 @@
 			{/each}
 			<!-- The articles on a line, on a rim of paper over the lines. -->
 			{#each lines.filter((l) => l.cite) as l (l.id)}
-				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
+				{@const w = Math.ceil(citeWidths.get(l.cite!) ?? l.cite!.length * 6.3) + 16}
 				{@const on = landed(l)}
 				<a
 					class="cite"
@@ -674,7 +686,9 @@
 					/>
 					<!-- A finger's 44 px, unseen. -->
 					<rect class="hit" x={l.citeAt.x - w / 2} y={l.citeAt.y - 10} width={w} height="20" />
-					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle">{l.cite}</text>
+					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle" use:measure={l.cite!}
+						>{l.cite}</text
+					>
 				</a>
 			{/each}
 			{#each shown as layer, i (layer.id)}
@@ -898,7 +912,9 @@
 	.node:focus:not(:focus-visible) {
 		outline: none;
 	}
+	/* The edge that fades as it pans stays clear of the layer labels, pinned at 24 px. */
 	.pan {
+		--fade-width: var(--s-4);
 		overflow-x: auto;
 		scroll-padding-inline: var(--s-8);
 		scrollbar-width: none;
@@ -912,16 +928,14 @@
 		transform: translateX(calc(var(--sx, 0px) / var(--sc, 1)));
 	}
 	/* A label of a layer is a control label (sans 11 px 600, spaced), not a name. */
+	/* No halo: it stands on paper, and a stroke of paper bit into the letters beside it where the
+	   browser paints spaced text glyph by glyph (Thijs, 29 Oct: RICHTLIJN). */
 	.layer-label {
 		font-family: var(--font-ui);
 		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		fill: var(--ink-3);
-		paint-order: stroke;
-		stroke: var(--paper);
-		stroke-width: 6px;
-		stroke-linejoin: round;
 	}
 	.others {
 		cursor: pointer;
