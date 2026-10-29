@@ -453,6 +453,55 @@ export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups:
 	return [...groups].sort((a, b) => best(b) - best(a) || tie(a) - tie(b));
 }
 
+/** The score from which a group stands above its place: a whole name or an identifier. */
+const PROMOTE_SCORE = 0.75;
+
+/**
+ * The kinds of a search in the order their groups stand: each in its place in `kinds`, except
+ * those with a hit of PROMOTE_SCORE or more (a whole name, an identifier), which go up on that
+ * score (`orderGroups`). Under it, words in the text say nothing about the order: it stays as
+ * it is, so "stikstof" does not jump about. Pass the groups of the fast lane only: once it is
+ * in, the order stands, and the slow kinds come in under their places without moving any.
+ */
+export function groupOrder<K extends Collection>(
+	kinds: readonly K[],
+	groups: { kind: K; hits: Hit[] }[]
+): K[] {
+	const strong = groups.filter(
+		(g) => kinds.includes(g.kind) && g.hits.some((h) => (h.score ?? 0) >= PROMOTE_SCORE)
+	);
+	const up = orderGroups(strong).map((g) => g.kind);
+	return [...up, ...kinds.filter((k) => !up.includes(k))];
+}
+
+/** What a lane's answer says about the best hit: whether the API names one, and which. */
+type BestAnswer = { named: boolean; best: string | null };
+
+/** The id the query names: what the API named, else the one hit it names exactly. */
+export function bestIdOf(
+	answers: readonly BestAnswer[],
+	groups: readonly { hits: Hit[] }[]
+): string | null {
+	const named = answers.find((a) => a.best);
+	if (named?.best) return named.best;
+	const exact = groups.flatMap((g) => g.hits).filter((h) => h.exact);
+	return exact.length === 1 ? exact[0].id : null;
+}
+
+/** The Beste treffer: the hit the API names, else (an older API) the best by score. */
+export function pickBest<G extends { kind: Collection; hits: Hit[] }>(
+	groups: G[],
+	answers: readonly BestAnswer[]
+): { kind: G['kind']; hit: Hit } | null {
+	if (!answers.some((a) => a.named)) return bestHit(groups);
+	const id = bestIdOf(answers, groups);
+	for (const g of groups) {
+		const hit = g.hits.find((h) => h.id === id);
+		if (hit) return { kind: g.kind, hit };
+	}
+	return null;
+}
+
 /** The score from which a hit is the identifier asked for (an ECLI, a BWB id, a number). */
 const IDENTIFIER_SCORE = 1;
 

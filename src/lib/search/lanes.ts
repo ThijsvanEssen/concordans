@@ -3,9 +3,11 @@
 // articles and stukken up to 0.6 s, judgments 3–14 s). The first lane in scope also says
 // what the query cites (`resolve`).
 //
-// Every request asks in the API's live mode (`mode=live`): within about 250 ms, by name,
+// The fast lane asks in the API's live mode (`mode=live`): within about 250 ms, by name,
 // ECLI and title, with `partial` where there is more; the full answer (`mode=full`) on
-// "Meer …". The lanes ask with the search client, which waits as long as the API does (30 s).
+// "Meer …". The text and the judgments, which the live mode never reached in time (29 Oct: cut
+// off in 56 of 60 requests, then asked again in full), ask in full at once. The lanes ask with
+// the search client, which waits as long as the API does (30 s).
 import type { Collection } from '$lib/vocabulary';
 
 /** The kinds the search covers, in the order of the rubrieken (indeling.ts) their groups stand in. */
@@ -29,8 +31,10 @@ export type Lane = {
 	kinds: readonly SearchKind[];
 	/** From how many characters it is asked: fewer takes the API seconds and says nothing. */
 	minChars: number;
-	/** Its group says "laden…" while it waits: only the judgments are slow enough. */
+	/** Its groups say "laden…" while it waits: the lanes that ask in full. */
 	showsLoading: boolean;
+	/** Asked in full at once, not in the live mode first. */
+	full: boolean;
 	/**
 	 * A newer query aborts its request, which answers in time. Else one request at a time: the
 	 * API runs an aborted query to its end, so a newer query waits for the running one.
@@ -66,6 +70,7 @@ export const LANES: readonly Lane[] = [
 		],
 		minChars: FAST_MIN_CHARS,
 		showsLoading: false,
+		full: false,
 		abortsOnRetype: true,
 		failsAlone: false,
 		namesLaws: true
@@ -74,7 +79,8 @@ export const LANES: readonly Lane[] = [
 		id: 'text',
 		kinds: ['articles', 'documents'],
 		minChars: LANE_MIN_CHARS,
-		showsLoading: false,
+		showsLoading: true,
+		full: true,
 		abortsOnRetype: false,
 		failsAlone: true,
 		namesLaws: false
@@ -84,12 +90,16 @@ export const LANES: readonly Lane[] = [
 		kinds: ['judgments'],
 		minChars: LANE_MIN_CHARS,
 		showsLoading: true,
+		full: true,
 		abortsOnRetype: false,
 		failsAlone: true,
 		namesLaws: false
 	}
 ];
 
-/** The mode a query is asked in: in full once "Meer …" asked for it, else live. */
-export const searchMode = (term: string, fullFor: string): 'live' | 'full' =>
-	term === fullFor ? 'full' : 'live';
+/** The mode a lane asks a query in: full for a lane that asks so at once, else once "Meer …" asked for it. */
+export const searchMode = (
+	term: string,
+	fullFor: string,
+	lane: Pick<Lane, 'full'> = { full: false }
+): 'live' | 'full' => (lane.full || term === fullFor ? 'full' : 'live');

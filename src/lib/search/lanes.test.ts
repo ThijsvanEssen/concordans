@@ -32,8 +32,9 @@ describe('search lanes', () => {
 		expect(DEBOUNCE_MS).toBe(150);
 	});
 
-	it('shows "Laden…" only for the judgments', () => {
-		expect(LANES.filter((l) => l.showsLoading).map((l) => l.id)).toEqual(['judgments']);
+	it('shows "Laden…" for the lanes that ask in full, the text and the judgments', () => {
+		expect(LANES.filter((l) => l.showsLoading).map((l) => l.id)).toEqual(['text', 'judgments']);
+		expect(LANES.filter((l) => l.full).map((l) => l.id)).toEqual(['text', 'judgments']);
 	});
 
 	it('aborts on typing on, fails as the whole search and names laws: the fast lane only', () => {
@@ -43,9 +44,10 @@ describe('search lanes', () => {
 		expect(LANES.every((l) => l.namesLaws === fast(l))).toBe(true);
 	});
 
-	it('asks in the live mode while typing, in full once "Meer …" asked for the query', () => {
+	it('asks the fast lane live, in full once "Meer …" asked for the query; the others in full', () => {
 		expect(searchMode('huur', '')).toBe('live');
 		expect(searchMode('huur', 'huu')).toBe('live');
 		expect(searchMode('huur', 'huur')).toBe('full');
+		expect(searchMode('huur', '', { full: true })).toBe('full');
 	});
 });
