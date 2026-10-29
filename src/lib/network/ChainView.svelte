@@ -585,7 +585,7 @@
 			<!-- The articles on a line, on a rim of paper over the lines. -->
 			{#each lines.filter((l) => l.cite) as l (l.id)}
 				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
-				<g class="chip">
+				<g class="cite">
 					<rect
 						x={l.citeAt.x - w / 2}
 						y={l.citeAt.y - 10}
@@ -879,15 +879,15 @@
 		stroke-width: 4px;
 		stroke-linejoin: round;
 	}
-	/* The articles on a line (Keten, Referentielabel): sans on a framed rim of paper; a dotted frame
+	/* The articles on a line (Keten, Referentielabel): serif on a framed rim of paper; a dotted frame
 	   where the line only names them. */
-	.chip rect {
+	.cite rect {
 		fill: var(--paper);
 		stroke: var(--rule-strong);
 		stroke-width: 1;
 	}
-	.chip text {
-		font-family: var(--font-ui);
+	.cite text {
+		font-family: var(--font-serif);
 		font-size: var(--t-note);
 		fill: var(--ink-2);
 	}

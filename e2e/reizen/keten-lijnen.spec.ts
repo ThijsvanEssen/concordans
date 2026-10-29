@@ -225,10 +225,10 @@ test('Cbw: a regeling stands in the row of its kind, its line labelled with the 
 	]);
 	// A line says which articles of which law it rests on.
 	await expect(
-		page.locator('.chain .chip text', { hasText: 'art. 68 Cbw' }).first()
+		page.locator('.chain .cite text', { hasText: 'art. 68 Cbw' }).first()
 	).toBeAttached();
 	await expect(
-		page.locator('.chain .chip text', { hasText: 'art. 19, 23 lid 1, 28 Cbb' }).first()
+		page.locator('.chain .cite text', { hasText: 'art. 19, 23 lid 1, 28 Cbb' }).first()
 	).toBeAttached();
 	// The row is wider than the screen and pans in itself.
 	const pan = page.locator('.pan[data-zijscroll]');
@@ -252,5 +252,5 @@ test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn
 		'AMVB',
 		'MINISTERIËLE REGELING'
 	]);
-	await expect(page.locator('.chain .chip text', { hasText: '11 art. Cbw' })).toBeAttached();
+	await expect(page.locator('.chain .cite text', { hasText: '11 art. Cbw' })).toBeAttached();
 });
