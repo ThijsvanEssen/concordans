@@ -6,6 +6,10 @@ import {
 	spansOf,
 	panelTitle,
 	lawLine,
+	citedBlocks,
+	chipName,
+	stackTitle,
+	stackLaw,
 	type ArticleTextData,
 	type TextBlock
 } from './blocks';
@@ -80,5 +84,47 @@ describe('the article of the Leespaneel', () => {
 			]
 		};
 		expect(spansOf(b)[0]).toMatchObject({ start: 29, end: 63, leden: ['2'], kind: 'article' });
+	});
+});
+
+describe('a stapel', () => {
+	const lid = (anchor: string, kind = 'lid', within: string[] = []): TextBlock => ({
+		...block(anchor, within),
+		kind
+	});
+
+	it('shows the cited lid only, and the whole article where it cites none', () => {
+		const blocks = [lid('lid-1'), lid('lid-2'), lid('lid-3')];
+		expect(citedBlocks(blocks, 'lid-2').map((b) => b.anchor)).toEqual(['lid-2']);
+		expect(citedBlocks(blocks, null)).toHaveLength(3);
+		expect(citedBlocks(blocks, 'lid-9')).toHaveLength(3);
+	});
+
+	it('keeps the aanhef of the lid a cited onderdeel stands in', () => {
+		const blocks = [
+			lid('lid-1-aanhef', 'aanhef', ['lid-1']),
+			lid('lid-1-onder-a', 'onderdeel', ['lid-1']),
+			lid('lid-1-onder-b', 'onderdeel', ['lid-1']),
+			lid('lid-2')
+		];
+		expect(citedBlocks(blocks, 'lid-1-onder-b').map((b) => b.anchor)).toEqual([
+			'lid-1-aanhef',
+			'lid-1-onder-b'
+		]);
+		expect(citedBlocks(blocks, 'lid-1')).toHaveLength(3);
+	});
+
+	it('names its articles once with their law', () => {
+		const items = [
+			{ key: 'bwbr0052875_19', at: null },
+			{ key: 'bwbr0052875_23', at: 'lid-1' },
+			{ key: 'bwbr0052875_28', at: null }
+		];
+		const cbb = { ...article, law: { ...article.law, abbreviation: 'Cbb' } } as ArticleTextData;
+		expect(stackTitle(items, [cbb, cbb, cbb])).toBe('Art. 19, 23 lid 1 en 28 Cbb');
+		expect(stackTitle(items.slice(0, 2), [cbb, article])).toBe('Art. 19 Cbb en 23 lid 1 Cbw');
+		expect(chipName('bwbr0052875_23', 'lid-1')).toBe('23 lid 1');
+		expect(stackLaw([cbb, cbb])).toBe('Cyberbeveiligingswet');
+		expect(stackLaw([cbb, null])).toBeNull();
 	});
 });

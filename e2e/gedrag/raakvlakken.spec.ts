@@ -85,11 +85,11 @@ test.describe('on a phone', () => {
 			if (wacht) await expect(page.locator('main').getByText(wacht).first()).toBeVisible();
 			await page.waitForLoadState('networkidle');
 			expect.soft(await kleine(page)).toEqual([]);
-			// The article again with Verbonden to the front: its row open, its places and its
-			// Lees verder.
+			// The article again with Verbonden to the front: a row open, its places and its
+			// Lees verder (a row of an article opens the Leespaneel instead).
 			if (naam === 'an article') {
 				await naarVerbonden(page);
-				await page.locator('a.kind__title[aria-expanded]').first().click();
+				await page.locator('a.kind__title[aria-expanded]:not([href*="/artikel/"])').first().click();
 				await expect(page.getByRole('link', { name: 'Lees verder' })).toBeVisible();
 				expect.soft(await kleine(page)).toEqual([]);
 			}

@@ -22,6 +22,8 @@ type TreeLine = {
 	/** Where the line leaves the parent (the arrowhead's tip), and where it ends above the child. */
 	tip: Pt;
 	end: Pt;
+	/** A line to a node in the parent's own layer: under the layer's names, to under the child's. */
+	beside?: boolean;
 };
 
 /** How far a bend reaches along a tak, and down a stem or drop, at most. */
@@ -171,13 +173,47 @@ function groups(nodes: ReadonlyMap<string, TreeNode>, edges: readonly TreeEdge[]
 	return [...out.values()];
 }
 
+/** How far under the lowest name of a layer a line to a node beside its parent runs. */
+const BESIDE = 24;
+
+/**
+ * A line to a node in the parent's own layer (a wet that only names the law, beside it): down
+ * from under the parent's name, along under the names of the layer, up to under the child's.
+ */
+function besideLine(e: TreeEdge, nodes: ReadonlyMap<string, TreeNode>): TreeLine {
+	const p = nodes.get(e.parent)!;
+	const c = nodes.get(e.child)!;
+	const low = Math.max(...[...nodes.values()].filter((n) => n.row === p.row).map((n) => n.bottom));
+	const y = low + BESIDE;
+	const tip = { x: p.x, y: p.bottom };
+	const end = { x: c.x, y: c.bottom };
+	const points = tidy([{ x: tip.x, y: tip.y + (e.lead ?? 0) }, { x: p.x, y }, { x: c.x, y }, end]);
+	return {
+		id: e.id,
+		parent: e.parent,
+		child: e.child,
+		kind: e.kind,
+		d: easePath(points),
+		points,
+		tip,
+		end,
+		beside: true
+	};
+}
+
 /** The lines of a keten: a path for each edge, none through a box, the taks of a layer apart. */
 export function treeLines(
 	nodes: ReadonlyMap<string, TreeNode>,
 	edges: readonly TreeEdge[],
 	o: { rails: readonly number[]; boxes: readonly Box[] }
 ): TreeLine[] {
-	const all = groups(nodes, edges);
+	const isBeside = (e: TreeEdge) =>
+		nodes.has(e.parent) && nodes.get(e.parent)?.row === nodes.get(e.child)?.row;
+	const beside = edges.filter(isBeside).map((e) => besideLine(e, nodes));
+	const all = groups(
+		nodes,
+		edges.filter((e) => !isBeside(e))
+	);
 	// Straight down the parent's own column where nothing stands in the way, else beside it.
 	for (const g of all) {
 		const ends = new Set(g.edges.flatMap((e) => [e.parent, e.child]));
@@ -252,5 +288,5 @@ export function treeLines(
 			});
 		}
 	}
-	return out;
+	return [...out, ...beside];
 }

@@ -2,8 +2,9 @@
 	// A row of Verbonden: one verbinding with one bron. Its glyph and title, its line of the
 	// verbinding (hoe.ts) with the place a passage stands at, the passage, and the meta line. A
 	// click anywhere on it opens it in place, as its title does: a Kamerstuk its core text, a
-	// connected law the references between the two, any other bron its glance. The bron is one
-	// step further (Lees verder, or the title with a modifier).
+	// connected law the references between the two, any other bron its glance; an article opens
+	// in the Leespaneel, at the lid it names, in one click. The bron is one step further (Lees
+	// verder, Open artikel, or the title with a modifier).
 	import { page } from '$app/state';
 	import { textOf } from '$lib/text/words';
 	import { zetMarkering } from '$lib/bron/markering.svelte';
@@ -31,6 +32,8 @@
 	import { hoeVan, kleineLetter } from './hoe';
 	import { ankerVanRij, dossierVanRij, metaParts, type Row } from './rows';
 	import { vormVanBron } from '$lib/bron/vormen';
+	import { PANEL_ID, isRead, openInPanel } from '$lib/reading/panel.svelte';
+	import { readOfRow } from './read-row';
 
 	let {
 		row,
@@ -127,6 +130,11 @@
 			: null
 	);
 
+	// An article reads in the Leespaneel (read-row.ts); any other bron opens under the row.
+	const readRef = $derived(readOfRow(row, inPlace));
+	const landed = $derived(!!readRef && isRead(readRef));
+	const openRow = () => (readRef ? openInPanel(readRef, { from: 'verbonden' }) : onToggle());
+
 	const hoe = $derived(hoeVan(row, selection.collection));
 	// A derived verbinding says how sure it is (Design System, Zekerheid).
 	const zekerheid = $derived(betrouwbaarheid(row.confidence, true, null));
@@ -168,7 +176,8 @@
 		class="row__main"
 		data-rij
 		class:is-open={open}
-		use:blockClick={row.missing ? null : onToggle}
+		data-read={landed || undefined}
+		use:blockClick={row.missing ? null : openRow}
 	>
 		{#if tierShape}
 			<span class="row__vlak"><TierSwatch shape={tierShape} /></span>
@@ -189,8 +198,9 @@
 					{href}
 					title={fullTitle}
 					data-sveltekit-noscroll
-					aria-expanded={open}
-					onclick={(e) => terPlekke(e, onToggle)}
+					aria-expanded={readRef ? landed : open}
+					aria-controls={landed ? PANEL_ID : undefined}
+					onclick={(e) => terPlekke(e, openRow)}
 					>{#if dossier}<DossierNaam
 							{dossier}
 							vorm="naam"
@@ -303,6 +313,11 @@
 	.row__main:focus-within,
 	.row__main.is-open {
 		background: var(--paper-2);
+	}
+	/* Landed: the Leespaneel shows its article. */
+	.row__main[data-read] {
+		background: var(--paper-2);
+		box-shadow: inset 3px 0 0 var(--ink);
 	}
 	.row__text {
 		flex: 1;

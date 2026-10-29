@@ -16,6 +16,8 @@
 	import { shortLine, type Kind } from './summary';
 	import type { TierCount } from './tiers';
 	import VerbondenRow from './VerbondenRow.svelte';
+	import { readOfRow } from './read-row';
+	import { PANEL_ID, isRead, openInPanel } from '$lib/reading/panel.svelte';
 	import TierBar from './TierBar.svelte';
 	import TierSwatch from './TierSwatch.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -103,6 +105,12 @@
 			? shapeOfTier(row.props.tier)
 			: null;
 	const toggle = (row: Row) => (opened = opened === rowKey(row) ? null : rowKey(row));
+	/** A row's own answer: an article in the Leespaneel (read-row.ts), any other bron opened here. */
+	const openRow = (k: Kind, row: Row) => {
+		const read = readOfRow(row, inPlace(k, row));
+		if (read) openInPanel(read, { from: 'verbonden' });
+		else toggle(row);
+	};
 
 	/**
 	 * The count of a soort as its rows stand once every page of its own buckets is in: the
@@ -161,7 +169,9 @@
 				{:else}
 					{@const shape = tierShapeOf(row)}
 					{@const line = shortLine(row)}
-					<li class="kind__row" class:kind__onder={isNested(row)}>
+					{@const read = readOfRow(row, inPlace(k, row))}
+					{@const landed = !!read && isRead(read)}
+					<li class="kind__row" class:kind__onder={isNested(row)} data-read={landed || undefined}>
 						<div class="kind__kop">
 							<span class="kind__vlak"
 								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
@@ -178,8 +188,9 @@
 									? row.props.instrument_citation_title
 									: undefined}
 								href={openHref(row.ref, { at: ankerVanRij(row) })}
-								aria-expanded="false"
-								onclick={(e) => terPlekke(e, () => toggle(row))}
+								aria-expanded={landed}
+								aria-controls={landed ? PANEL_ID : undefined}
+								onclick={(e) => terPlekke(e, () => openRow(k, row))}
 								>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
 										row
 									)}{/if}</a
@@ -284,6 +295,13 @@
 	.kind__open {
 		margin: 0 calc(-1 * var(--s-4));
 		padding-block: 0;
+	}
+	/* Landed: the Leespaneel shows its article (as a row of a group, VerbondenRow). */
+	.kind__row[data-read] {
+		margin-inline: calc(-1 * var(--s-4));
+		padding-inline: var(--s-4);
+		background: var(--paper-2);
+		box-shadow: inset 3px 0 0 var(--ink);
 	}
 	/* A regulation issued under the one above it. */
 	.kind__onder {

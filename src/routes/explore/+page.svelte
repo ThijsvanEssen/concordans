@@ -46,6 +46,7 @@
 	import { inPool } from '$lib/api/pool';
 	import { kopNode } from '$lib/bron/first-node';
 	import { NETWORK_MODE, bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
+	import { keepRead } from '$lib/reading/panel.svelte';
 	import { refOf, type BronRef } from '$lib/bron/ref';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
@@ -454,13 +455,14 @@
 	);
 	/**
 	 * The keten with the regulations no longer in force (drawn faint), or without; and with the
-	 * regulations that only name the law, or only those issued under it (the default: a
-	 * Grondwet's 171 crossed each other, Thijs 23 Oct). Relatie's Noemt is that switch.
+	 * regulations that only name the law, dashed (the default: Thijs 29 Oct, "noemen mag ook
+	 * standaard aanstaan" while the line tells them apart), or only those issued under it.
+	 * Relatie's Noemt is that switch.
 	 */
 	/** The search for a bron to add, open (the panel's and the empty canvas's button). */
 	let toevoegenOpen = $state(false);
 	let chainExpired = $state(false);
-	let chainMentions = $state(false);
+	let chainMentions = $state(true);
 	let chainBasedOff = $state(false);
 	/** The kinds of line a lineage keten (a judgment's appeals, a fractie's continuations) switched off. */
 	let lineageOff = $state.raw<ReadonlySet<LineKind>>(new Set());
@@ -1723,7 +1725,10 @@
 		if (!node || node.id.startsWith('synth:')) return;
 		const ref = refOf(node.collection, node.key, node.raw?.props);
 		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
-		return navigateDone(on ? openHref(ref, { at }) : werkplekHref(ref, at), { step: true });
+		// The Leespaneel beside it stays: it is not the bron that changes view (live-toets C3).
+		return navigateDone(keepRead(on ? openHref(ref, { at }) : werkplekHref(ref, at)), {
+			step: true
+		});
 	}
 	/** The werkplek with the bron: as the button Netwerk of the top bar opens it. */
 	const werkplekHref = (ref: BronRef, at: string | null = null) =>

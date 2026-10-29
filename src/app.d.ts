@@ -16,6 +16,10 @@ declare global {
 		interface PageState {
 			/** The Leespaneel was opened by a click on this page: closing it is a step back. */
 			readOpened?: boolean;
+			/** Of the articles in the Leespaneel, the one it opens at (its key): the one clicked. */
+			readFocus?: string;
+			/** The panel came from a row of Verbonden, which it stands over: ‹ Verbonden goes back. */
+			readFrom?: 'verbonden';
 		}
 		// interface Platform {}
 	}

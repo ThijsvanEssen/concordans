@@ -1,12 +1,16 @@
 <script lang="ts">
 	// The Leespaneel (Design System, Tekst en lezen): the article a reference names, read beside
-	// the text it stands in. A Blad that is not modal: at the right under the top bar, on a phone
-	// from below; the page beside it stays the page. Its head names the article and its law and
-	// has Open artikel (the page, one step further); under it the article before and after; then
-	// its text per lid, the cited lid or onderdeel marked and in view. One article at a time: a new
-	// reference replaces it (param.ts, panel.svelte.ts).
+	// the text it stands in. A Blad that is not modal: at the right under the top bar (from 1800 px
+	// in the margin, in the page's flow), on a phone from below; the page beside it stays the page.
+	// Its head names the article and its law and has Open artikel (the page, one step further);
+	// under it, outside what scrolls, the article before and after; then its text per lid, the
+	// cited lid or onderdeel marked and in view. A new reference replaces it (panel.svelte.ts).
+	// Several articles (a label of the keten, a law's in the head) stand under each other, the
+	// stapel: each with a head that stays in view and its cited lid only, a jump menu above them
+	// (bare links, the one in view in ink: no chips, besluit bediening).
 	import { onMount } from 'svelte';
 	import { MediaQuery } from 'svelte/reactivity';
+	import { page } from '$app/state';
 	import Blad from '$lib/components/ui/Blad.svelte';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -19,11 +23,24 @@
 	import { load } from '$lib/util/load.svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import { TOUCH_ONLY } from '$lib/util/touch';
-	import { articleRoute, type ReadRef } from './param';
+	import { articleRoute, readValue, type ReadRef } from './param';
 	import { PANEL_ID, closePanel, openInPanel, readHere } from './panel.svelte';
-	import { announcement, panelTitle, isCited, lawLine, neighborName, spansOf } from './blocks';
+	import {
+		announcement,
+		chipName,
+		citedBlocks,
+		panelTitle,
+		isCited,
+		lawLine,
+		neighborName,
+		spansOf,
+		stackLaw,
+		stackTitle,
+		type ArticleTextData,
+		type TextBlock
+	} from './blocks';
 
-	let { read }: { read: ReadRef } = $props();
+	let { reads }: { reads: ReadRef[] } = $props();
 
 	// A reference in the panel's text opens its article here too.
 	readHere();
@@ -32,69 +49,154 @@
 	let said = $state('');
 	let body = $state<HTMLElement | null>(null);
 
-	// The narrow form of the article; null where the data does not hold it.
-	const article = load(
-		() => read.key,
-		(key) => {
-			const route = articleRoute(key);
-			return route
-				? ifExists(getArticleText(route.bwbId, route.articleNumber))
-				: Promise.resolve(null);
+	const read = $derived(reads[0]);
+	const stacked = $derived(reads.length > 1);
+	// The article of the stapel it opens at: the one clicked, else the first.
+	const opensAt = $derived(
+		Math.max(
+			0,
+			reads.findIndex((r) => r.key === page.state.readFocus)
+		)
+	);
+	const fromRelated = $derived(page.state.readFrom === 'verbonden');
+
+	/** The narrow form of an article; null where the data does not hold it. */
+	const textOf = (key: string): Promise<ArticleTextData | null> => {
+		const route = articleRoute(key);
+		return route
+			? ifExists(getArticleText(route.bwbId, route.articleNumber))
+			: Promise.resolve(null);
+	};
+	// All of them at once, in the order of the address; null where the data holds none.
+	const articles = load(
+		() => readValue(reads),
+		async () => {
+			const texts = await Promise.all(reads.map((r) => textOf(r.key)));
+			return texts.some(Boolean) ? texts : null;
 		},
 		'Leespaneel'
 	);
-	const loaded = $derived(article.state.status === 'ready' ? article.state.data : null);
+	const texts = $derived(articles.state.status === 'ready' ? (articles.state.data ?? []) : []);
+	const loaded = $derived(stacked ? null : (texts[0] ?? null));
 
-	const title = $derived(loaded ? panelTitle(loaded) : 'Artikel');
-	// Its page, at the cited part: by its readable address once known.
-	const pageHref = $derived(
-		loaded?.path
-			? `${loaded.path}${read.at ? `#${read.at}` : ''}`
-			: openHref(`articles/${read.key}`, { at: read.at })
+	const title = $derived(
+		stacked
+			? texts.length
+				? stackTitle(reads, texts)
+				: 'Artikelen'
+			: loaded
+				? panelTitle(loaded)
+				: 'Artikel'
 	);
-	const firstCited = $derived(loaded?.blocks.findIndex((b) => isCited(b, read.at)) ?? -1);
+	const lawOf = $derived(stacked ? stackLaw(texts) : loaded ? lawLine(loaded) : null);
+
+	/** An article's page, at the cited part: by its readable address once known. */
+	const pageOf = (r: ReadRef, a: ArticleTextData | null | undefined) =>
+		a?.path ? `${a.path}${r.at ? `#${r.at}` : ''}` : openHref(`articles/${r.key}`, { at: r.at });
+
+	// The stapel: which article is in view (its link in ink), which show whole. One taken to the
+	// top that cannot reach it (the text ends before) stays the one in view until the reader
+	// scrolls away from the end.
+	let current = $state(0);
+	let pinned = -1;
+	let whole = $state<Record<string, boolean>>({});
 
 	const panelEl = () => document.getElementById(PANEL_ID);
+	const scroller = () => body?.closest<HTMLElement>('.inhoud') ?? null;
 	const focusInside = () => !!panelEl()?.contains(document.activeElement);
 	const titleEl = () => panelEl()?.querySelector<HTMLElement>('.lp-titel') ?? null;
+	const pieceEl = (i: number) => body?.querySelector<HTMLElement>(`[data-stuk="${i}"]`) ?? null;
+	/** The reference the panel opened from: it says so (aria-controls). */
+	const reference = () => document.querySelector<HTMLElement>(`[aria-controls="${PANEL_ID}"]`);
 
-	// A new article: the cited part in view with room above it, the focus kept in the panel
-	// (on its title when what had it went with the old text), and said to a screen reader.
+	// New articles: the one it opens at and its cited part in view with room above, the focus
+	// kept in the panel (on its title when what had it went with the old text), and said to a
+	// screen reader.
 	$effect(() => {
-		const a = loaded;
-		if (!a) return;
-		const at = read.at;
+		if (!texts.length) return;
+		const at = stacked ? opensAt : 0;
+		const r = reads[at];
+		const a = texts[at];
 		afterTick(() => {
-			showCited();
+			if (stacked) toPiece(at, false);
+			showCited(stacked ? pieceEl(at) : body);
 			showReference();
 			const active = document.activeElement;
 			if (!active || active === document.body || focusInside())
-				titleEl()?.focus({ preventScroll: true });
-			said = announcement(a, at, !touch.current);
+				(stacked ? pieceEl(at)?.querySelector<HTMLElement>('.lp-stuk-titel') : titleEl())?.focus({
+					preventScroll: true
+				});
+			said = a ? announcement(a, r.at, !touch.current) : '';
 		});
 	});
 
-	/** The cited part in view, 16 px above it, where it is not: the panel opens at its top. */
-	function showCited() {
-		const scroller = body?.closest<HTMLElement>('.inhoud');
-		if (!scroller) return;
-		const cited = body?.querySelector<HTMLElement>('.is-geciteerd');
-		const view = scroller.getBoundingClientRect();
-		const at = cited?.getBoundingClientRect();
-		scroller.scrollTop =
-			at && at.bottom > view.bottom ? at.top - view.top + scroller.scrollTop - 16 : 0;
+	/** The scroller's top over this element: where it stands in the panel's text. */
+	const topIn = (el: HTMLElement, s: HTMLElement) =>
+		el.getBoundingClientRect().top - s.getBoundingClientRect().top + s.scrollTop;
+
+	/**
+	 * The cited part in view, 16 px above it (and under the head of its article in a stapel),
+	 * where it is not: the text opens at its top.
+	 */
+	function showCited(within: HTMLElement | null) {
+		const s = scroller();
+		const cited = within?.querySelector<HTMLElement>('.is-geciteerd');
+		if (!s || !cited) return;
+		const head = within?.querySelector<HTMLElement>('.lp-stuk-kop')?.offsetHeight ?? 0;
+		if (cited.getBoundingClientRect().bottom > s.getBoundingClientRect().bottom)
+			// In a stapel never above its article's own top: that one stays the one in view.
+			s.scrollTop = Math.max(topIn(cited, s) - head - 16, stacked && within ? topIn(within, s) : 0);
 	}
 
 	/** From below, the reference it opened from above it, still seen: the page moves the least. */
 	function showReference() {
 		const sheet = panelEl();
-		const reference = document.querySelector<HTMLElement>('a.raakvlak.is-open');
-		if (!sheet?.classList.contains('is-bottom') || !reference) return;
+		const ref = reference();
+		if (!sheet?.classList.contains('is-bottom') || !ref) return;
 		const top = sheet.getBoundingClientRect().top;
-		if (reference.getBoundingClientRect().bottom < top) return;
-		reference.style.scrollMarginBottom = `${innerHeight - top + 16}px`;
-		reference.scrollIntoView({ block: 'nearest' });
-		reference.style.scrollMarginBottom = '';
+		if (ref.getBoundingClientRect().bottom < top) return;
+		ref.style.scrollMarginBottom = `${innerHeight - top + 16}px`;
+		ref.scrollIntoView({ block: 'nearest' });
+		ref.style.scrollMarginBottom = '';
+	}
+
+	/** An article of the stapel at the top of the panel's text; its head then holds the focus. */
+	function toPiece(i: number, focus = true) {
+		const s = scroller();
+		const el = pieceEl(i);
+		if (!s || !el) return;
+		s.scrollTop = i === 0 ? 0 : topIn(el, s);
+		current = pinned = i;
+		if (focus) el.querySelector<HTMLElement>('.lp-stuk-titel')?.focus({ preventScroll: true });
+	}
+
+	/** Which article of the stapel is in view: the last whose head has reached the top. */
+	function track() {
+		const s = scroller();
+		if (!s) return;
+		const top = s.getBoundingClientRect().top + 8;
+		let at = 0;
+		reads.forEach((_, i) => {
+			const el = pieceEl(i);
+			if (el && el.getBoundingClientRect().top <= top) at = i;
+		});
+		const end = s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
+		if (end && pinned > at) at = pinned;
+		else pinned = -1;
+		current = at;
+	}
+	$effect(() => {
+		const s = stacked && texts.length ? scroller() : null;
+		if (!s) return;
+		s.addEventListener('scroll', track, { passive: true });
+		return () => s.removeEventListener('scroll', track);
+	});
+
+	/** A link of the jump menu: its article at the top; ⌘-click keeps the link's own way. */
+	function toChip(e: MouseEvent, i: number) {
+		if (!plainClick(e)) return;
+		e.preventDefault();
+		toPiece(i);
 	}
 
 	/** A neighbour in the panel; ⌘-click and the middle button open its page. */
@@ -104,29 +206,83 @@
 		openInPanel({ key, at: null });
 	}
 
+	/**
+	 * Back to the reader: where the focus was there (held from before the panel opened), else
+	 * the reference, else the first link it shows; never the page itself, which shows no ring.
+	 */
+	const had = typeof document === 'undefined' ? null : document.activeElement;
+	let lastOutside: Element | null = had === document.body ? null : had;
+	const shows = (el: Element | null): el is HTMLElement =>
+		el instanceof HTMLElement && el.isConnected && el.id !== 'main-content' && el.checkVisibility();
+	function toReader() {
+		const links = document.querySelectorAll('#main-content a[href], #main-content button');
+		const back = [lastOutside, reference(), ...links].find(shows);
+		back?.focus();
+	}
+
+	/** In the panel the article before or after: of the stapel, or the neighbour of the one. */
+	function step(by: -1 | 1): boolean {
+		if (!focusInside()) return false;
+		if (stacked) {
+			const to = current + by;
+			if (to < 0 || to >= reads.length) return false;
+			toPiece(to);
+			return true;
+		}
+		const to = by < 0 ? loaded?.previous : loaded?.next;
+		if (!to) return false;
+		openInPanel({ key: to.key, at: null });
+		return true;
+	}
+
 	onMount(() => {
+		// Where the focus was in the reader, for Alt W back to it.
+		const remember = (e: FocusEvent) => {
+			const t = e.target;
+			if (t instanceof HTMLElement && t !== document.body && !panelEl()?.contains(t))
+				lastOutside = t;
+		};
+		document.addEventListener('focusin', remember);
 		const stop = [
-			// Alt W: between the reader and the panel; back to the reference it opened from.
-			answer('panel-toggle', () => {
-				if (!focusInside()) return titleEl()?.focus();
-				const back =
-					document.querySelector<HTMLElement>('a.raakvlak.is-open') ??
-					document.getElementById('main-content');
-				back?.focus();
-			}),
+			// Alt W: between the reader and the panel.
+			answer('panel-toggle', () => (focusInside() ? toReader() : titleEl()?.focus())),
 			// Alt [ and ]: in the panel its article before and after; elsewhere the reader's.
-			answer('article-prev', () => {
-				if (!focusInside() || !loaded?.previous) return false;
-				openInPanel({ key: loaded.previous.key, at: null });
-			}),
-			answer('article-next', () => {
-				if (!focusInside() || !loaded?.next) return false;
-				openInPanel({ key: loaded.next.key, at: null });
-			})
+			answer('article-prev', () => step(-1)),
+			answer('article-next', () => step(1))
 		];
-		return () => stop.forEach((f) => f());
+		return () => {
+			document.removeEventListener('focusin', remember);
+			stop.forEach((f) => f());
+		};
 	});
 </script>
+
+{#snippet blocks(list: readonly TextBlock[], at: string | null)}
+	{@const first = list.findIndex((b) => isCited(b, at))}
+	{#each list as b, i (i)}
+		{#if b.kind === 'kop'}
+			<svelte:element this={stacked ? 'h4' : 'h3'} class="lp-kop">{b.text}</svelte:element>
+		{:else}
+			<div
+				class="lp-blok"
+				class:is-geciteerd={isCited(b, at)}
+				data-kind={b.kind}
+				style:--depth={b.within.length}
+				aria-current={i === first ? 'location' : undefined}
+			>
+				{#if b.marker}<span class="lp-nr">{b.marker}</span>{/if}
+				<p class="lp-t">
+					{#if i === first}<span class="sr-only">Geciteerd: </span>{/if}<CitedText
+						text={b.text}
+						citations={spansOf(b)}
+					/>
+				</p>
+			</div>
+		{/if}
+	{:else}
+		<p class="lp-leeg">Dit artikel heeft geen tekst.</p>
+	{/each}
+{/snippet}
 
 <Blad
 	{title}
@@ -138,58 +294,83 @@
 	focus=".lp-titel"
 >
 	{#snippet head()}
-		<p class="lp-soort">Artikel</p>
+		{#if fromRelated}<button type="button" class="lp-terug" onclick={closePanel}>‹ Verbonden</button
+			>{/if}
+		<p class="lp-soort">{stacked ? 'Artikelen' : 'Artikel'}</p>
 		<h2 class="lp-titel" tabindex="-1">
-			<a href={pageHref} data-sveltekit-noscroll>{title}</a>
+			{#if stacked}{title}{:else}<a href={pageOf(read, loaded)} data-sveltekit-noscroll>{title}</a
+				>{/if}
 		</h2>
-		{#if loaded}<p class="lp-wet">{lawLine(loaded)}</p>{/if}
+		{#if lawOf}<p class="lp-wet">{lawOf}</p>{/if}
 	{/snippet}
 	{#snippet actions()}
-		<a class="btn is-text" href={pageHref} data-sveltekit-noscroll>Open artikel</a>
+		{#if !stacked}<a class="btn is-text" href={pageOf(read, loaded)} data-sveltekit-noscroll
+				>Open artikel</a
+			>{/if}
 	{/snippet}
-	{#if loaded && (loaded.previous || loaded.next)}
-		<nav class="lp-buren" aria-label="Vorig en volgend artikel">
-			{#if loaded.previous}<a
-					href={loaded.previous.path ?? undefined}
-					rel="prev"
-					aria-keyshortcuts={touch.current ? undefined : 'Alt+BracketLeft'}
-					onclick={(e) => toNeighbor(e, loaded.previous!.key)}>‹ {neighborName(loaded.previous)}</a
-				>{:else}<span></span>{/if}
-			{#if loaded.next}<a
-					href={loaded.next.path ?? undefined}
-					rel="next"
-					aria-keyshortcuts={touch.current ? undefined : 'Alt+BracketRight'}
-					onclick={(e) => toNeighbor(e, loaded.next!.key)}>{neighborName(loaded.next)} ›</a
-				>{/if}
-		</nav>
-	{/if}
+	{#snippet under()}
+		{#if stacked}
+			<nav class="lp-sprong" aria-label="Ga naar artikel">
+				{#each reads as r, i (r.key)}<a
+						href="#lp-{r.key}"
+						aria-current={i === current ? 'true' : undefined}
+						onclick={(e) => toChip(e, i)}>{chipName(r.key, r.at)}</a
+					>{/each}
+			</nav>
+		{:else if loaded && (loaded.previous || loaded.next)}
+			<nav class="lp-buren" aria-label="Vorig en volgend artikel">
+				{#if loaded.previous}<a
+						href={loaded.previous.path ?? undefined}
+						rel="prev"
+						aria-keyshortcuts={touch.current ? undefined : 'Alt+BracketLeft'}
+						onclick={(e) => toNeighbor(e, loaded.previous!.key)}
+						>‹ {neighborName(loaded.previous)}</a
+					>{:else}<span></span>{/if}
+				{#if loaded.next}<a
+						href={loaded.next.path ?? undefined}
+						rel="next"
+						aria-keyshortcuts={touch.current ? undefined : 'Alt+BracketRight'}
+						onclick={(e) => toNeighbor(e, loaded.next!.key)}>{neighborName(loaded.next)} ›</a
+					>{/if}
+			</nav>
+		{/if}
+	{/snippet}
 	<div class="lp-tekst" bind:this={body}>
-		<LoadState state={article.state} what="Het artikel" retry={article.retry} form="block">
-			{#snippet empty()}<p class="lp-leeg">{notHeld('Dit artikel')}.</p>{/snippet}
-			{#snippet children(a)}
-				{#each a?.blocks ?? [] as b, i (i)}
-					{#if b.kind === 'kop'}
-						<h3 class="lp-kop">{b.text}</h3>
-					{:else}
-						<div
-							class="lp-blok"
-							class:is-geciteerd={isCited(b, read.at)}
-							data-kind={b.kind}
-							style:--depth={b.within.length}
-							aria-current={i === firstCited ? 'location' : undefined}
-						>
-							{#if b.marker}<span class="lp-nr">{b.marker}</span>{/if}
-							<p class="lp-t">
-								{#if i === firstCited}<span class="sr-only">Geciteerd: </span>{/if}<CitedText
-									text={b.text}
-									citations={spansOf(b)}
-								/>
-							</p>
-						</div>
-					{/if}
+		<LoadState state={articles.state} what="Het artikel" retry={articles.retry} form="block">
+			{#snippet empty()}<p class="lp-leeg">
+					{notHeld(stacked ? 'Deze artikelen' : 'Dit artikel')}.
+				</p>{/snippet}
+			{#snippet children(list)}
+				{#if !stacked}
+					{@render blocks(list?.[0]?.blocks ?? [], read.at)}
 				{:else}
-					<p class="lp-leeg">Dit artikel heeft geen tekst.</p>
-				{/each}
+					{#each reads as r, i (r.key)}
+						{@const a = list?.[i] ?? null}
+						{@const shown = a ? (whole[r.key] ? a.blocks : citedBlocks(a.blocks, r.at)) : []}
+						<section class="lp-stuk" id="lp-{r.key}" data-stuk={i} aria-labelledby="lp-t-{r.key}">
+							<div class="lp-stuk-kop">
+								<h3 class="lp-stuk-titel" id="lp-t-{r.key}" tabindex="-1">
+									<a href={pageOf(r, a)} data-sveltekit-noscroll
+										>{a ? panelTitle(a) : `Artikel ${chipName(r.key, null)}`}</a
+									>
+								</h3>
+								<a class="btn is-text" href={pageOf(r, a)} data-sveltekit-noscroll>Open artikel</a>
+							</div>
+							{#if a}
+								{@render blocks(shown, r.at)}
+								{#if shown.length < a.blocks.length || whole[r.key]}<button
+										type="button"
+										class="btn is-text lp-heel"
+										aria-expanded={!!whole[r.key]}
+										onclick={() => (whole = { ...whole, [r.key]: !whole[r.key] })}
+										>{whole[r.key] ? 'Alleen het geciteerde' : 'Heel artikel'}</button
+									>{/if}
+							{:else}
+								<p class="lp-leeg">{notHeld('Dit artikel')}.</p>
+							{/if}
+						</section>
+					{/each}
+				{/if}
 			{/snippet}
 		</LoadState>
 	</div>
@@ -197,6 +378,29 @@
 </Blad>
 
 <style>
+	.lp-terug {
+		display: inline-flex;
+		align-items: center;
+		min-height: 28px;
+		margin: 0 0 var(--s-1);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: var(--t-meta) var(--font-serif);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.lp-terug:hover {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	/* Wide, Verbonden stands beside the panel: nothing to go back to. */
+	@media (min-width: 1800px) {
+		.lp-terug {
+			display: none;
+		}
+	}
 	.lp-soort {
 		display: flex;
 		align-items: center;
@@ -216,11 +420,13 @@
 		font: 600 var(--t-h3) / 26px var(--font-serif);
 		color: var(--ink);
 	}
-	.lp-titel a {
+	.lp-titel a,
+	.lp-stuk-titel a {
 		color: inherit;
 		text-decoration: none;
 	}
-	.lp-titel a:hover {
+	.lp-titel a:hover,
+	.lp-stuk-titel a:hover {
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
@@ -229,31 +435,76 @@
 		font: var(--t-meta) / var(--lh-snug) var(--font-serif);
 		color: var(--ink-3);
 	}
-	.lp-buren {
+	/* Outside what scrolls (Blad's under): the way on is always in view (live-toets C1). */
+	.lp-buren,
+	.lp-sprong {
 		flex: none;
 		display: flex;
-		justify-content: space-between;
 		gap: var(--s-2);
 		padding: 0 var(--s-4) var(--s-2);
 		border-bottom: 1px solid var(--rule);
 		font: var(--t-meta) var(--font-serif);
 	}
-	.lp-buren a {
+	.lp-buren {
+		justify-content: space-between;
+	}
+	.lp-buren a,
+	.lp-sprong a {
 		display: inline-flex;
 		align-items: center;
 		min-height: 28px;
 		color: var(--ink-2);
 		text-decoration: none;
 	}
-	.lp-buren a:hover {
+	.lp-buren a:hover,
+	.lp-sprong a:hover {
 		color: var(--ink);
 		text-decoration: underline;
 		text-underline-offset: 3px;
+	}
+	/* The jump menu of the stapel: a link per article, the one in view in ink. */
+	.lp-sprong {
+		flex-wrap: wrap;
+		column-gap: var(--s-4);
+	}
+	.lp-sprong a {
+		white-space: nowrap;
+	}
+	.lp-sprong a[aria-current='true'] {
+		font-weight: 600;
+		color: var(--ink);
 	}
 	.lp-tekst {
 		padding: var(--s-3) var(--s-4) var(--s-5);
 		font: var(--t-body-2) / var(--lh-body) var(--font-serif);
 		color: var(--ink);
+	}
+	/* An article of the stapel: its head stays at the top of the text while it is read. */
+	.lp-stuk + .lp-stuk {
+		margin-top: var(--s-4);
+	}
+	.lp-stuk-kop {
+		position: sticky;
+		top: calc(-1 * var(--s-3));
+		z-index: 1;
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-2);
+		/* The whole width of the panel: the wash of a cited lid goes under it, not beside it. */
+		margin: 0 calc(-1 * var(--s-4)) var(--s-1);
+		padding: var(--s-2) var(--s-4) var(--s-1);
+		background: var(--paper);
+	}
+	.lp-stuk + .lp-stuk .lp-stuk-kop {
+		border-top: 1px solid var(--rule);
+	}
+	.lp-stuk-titel {
+		margin: 0;
+		font: 600 var(--t-body-2) / var(--lh-snug) var(--font-serif);
+	}
+	.lp-heel {
+		margin: var(--s-1) 0 0 var(--s-5);
 	}
 	.lp-kop {
 		margin: var(--s-3) 0 var(--s-1);
@@ -289,7 +540,9 @@
 		color: var(--ink-3);
 	}
 	@media (pointer: coarse), (max-width: 768px) {
-		.lp-buren a {
+		.lp-buren a,
+		.lp-sprong a,
+		.lp-terug {
 			min-height: 44px;
 		}
 	}
