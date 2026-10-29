@@ -78,7 +78,7 @@ test('Omgeving with two bronnen has all the steps, Alleen gekozen first, and no 
 	await page.goto(`/explore?netwerk=${BOEK6},${BOEK7}`);
 	await openSheet(page);
 	const group = steps(page).getByRole('group', { name: 'Aantal stappen' });
-	await expect(group.getByRole('button').first()).toHaveText('Alleen gekozen');
+	await expect(group.getByRole('button').first()).toHaveText('Gekozen');
 	await expect(group.getByRole('button', { name: '2 stappen' })).toBeVisible();
 	await expect(page.getByText('Klik een bron op het canvas.')).toHaveCount(0);
 	await expect(page.getByText('Alleen de gekozen bronnen tonen')).toHaveCount(0);
