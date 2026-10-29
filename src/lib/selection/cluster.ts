@@ -11,6 +11,14 @@ import { edgesByNode, mostCommonRelation, pushTo } from '$lib/graph/adjacency';
 /** More than this many bronnen of one kind make a cluster. */
 export const CLUSTER_MAX_LOOSE = 40;
 
+/**
+ * How many loose bronnen of one kind a netwerk draws before they fold: the room is one, so the
+ * more bronnen and steps share it, the earlier a group becomes one cluster bron (40, then 20 for
+ * more steps or three bronnen, then 13 for both; never under 10).
+ */
+export const looseMaxFor = (bronnen: number, steps: number): number =>
+	Math.max(10, Math.floor(CLUSTER_MAX_LOOSE / (1 + (steps >= 2 ? 1 : 0) + (bronnen >= 3 ? 1 : 0))));
+
 const CLUSTER_PREFIX = 'cluster:';
 const clusterId = (collection: Collection, of = '') => `${CLUSTER_PREFIX}${collection}${of}`;
 export const isClusterId = (id: string) => id.startsWith(CLUSTER_PREFIX);
@@ -68,7 +76,8 @@ export function clustersOf(
 	keep: ReadonlySet<string>,
 	expanded: ReadonlySet<string>,
 	/** Around another chosen bron than the focus: its id, so its clusters are its own. */
-	of = ''
+	of = '',
+	max = CLUSTER_MAX_LOOSE
 ): Cluster[] {
 	if (!focus) return [];
 	const collectionOf = new Map(nodes.map((n) => [n.id, n.collection]));
@@ -92,7 +101,7 @@ export function clustersOf(
 
 	const clusters: Cluster[] = [];
 	for (const [collection, members] of byKind) {
-		if (members.length <= CLUSTER_MAX_LOOSE) continue;
+		if (members.length <= max) continue;
 		const { relation, toEnd } = mostCommonRelation(new Set(members), ties, focus);
 		clusters.push({
 			id: clusterId(collection, of),

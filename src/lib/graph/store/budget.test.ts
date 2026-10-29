@@ -155,4 +155,12 @@ describe('planTrim', () => {
 		});
 		expect(kept).toEqual(expect.arrayContaining(members));
 	});
+
+	it('with room for part, keeps the heavier before the newer', () => {
+		const input = scene([{ id: 'a', n: 600 }]);
+		const kept = left({ ...input, weight: (id) => (id === 'a/n0' ? 5 : 0) });
+		expect(kept).toContain('a/n0');
+		expect(kept).toHaveLength(400);
+		expect(kept).not.toContain('a/n1');
+	});
 });

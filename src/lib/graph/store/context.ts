@@ -26,7 +26,9 @@ import {
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
 import { canvasClusters, hullOfLaw, isCanvasNode } from '../canvas-clusters';
 import { isDrawn } from '../collection-role';
+import { lineKindOf } from '../line-kind';
 import { planTrim } from './budget';
+import { CLUSTER_MAX_LOOSE } from '$lib/selection/cluster';
 import { isPublication, periodOf, placeConnection, type End } from './placement';
 
 /**
@@ -49,6 +51,21 @@ const edgeId = (source: string, target: string, relation: Relation) =>
 	`${source}->${target}:${relation}`;
 
 /**
+ * How much each bron weighs where the canvas has no room for all: one that stands in a
+ * structural line (Structureel: the law itself) before the rest, then by its lines, which are
+ * its citations and ties. The ranking the explorer already draws by (`lineKindOf`).
+ */
+function weightOf(nodes: ReadonlyMap<string, GraphNode>, edges: readonly GraphEdge[]) {
+	const weight = new Map<string, number>();
+	for (const e of edges) {
+		const bonus =
+			lineKindOf(e.relation, nodes.get(e.source)?.drawClass) === 'structural' ? 1000 : 0;
+		for (const id of [e.source, e.target]) weight.set(id, (weight.get(id) ?? 0) + 1 + bonus);
+	}
+	return (id: string) => weight.get(id) ?? 0;
+}
+
+/**
  * Shared mutable state and the primitives every loader builds on: node and
  * edge maps, the writable stores that mirror them, trimming and the
  * derived nodes and edges. Loader modules receive this object and never
@@ -63,9 +80,14 @@ export function createGraphContext() {
 	// On one object because a destructured `let` would freeze its value.
 	const state = { seq: 0 };
 	// What the last composition said of the network, for the budget's clusters.
-	const network: { core: ReadonlySet<string> | null; surroundings: boolean } = {
+	const network: {
+		core: ReadonlySet<string> | null;
+		surroundings: boolean;
+		looseMax: number;
+	} = {
 		core: null,
-		surroundings: false
+		surroundings: false,
+		looseMax: CLUSTER_MAX_LOOSE
 	};
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
@@ -142,6 +164,7 @@ export function createGraphContext() {
 		pinnedStore.set(new Set());
 		network.core = null;
 		network.surroundings = false;
+		network.looseMax = CLUSTER_MAX_LOOSE;
 		selectionStore.set(null);
 		emit();
 	};
@@ -183,6 +206,7 @@ export function createGraphContext() {
 				pinned,
 				core: network.core,
 				surroundings: network.surroundings,
+				looseMax: network.looseMax,
 				groups,
 				nodeOf: (id) => nodes.get(id)
 			},
@@ -204,6 +228,7 @@ export function createGraphContext() {
 				if (e.target === selected.id) protect.add(e.source);
 			}
 		}
+		const weight = weightOf(nodes, drawn);
 		const dropped = planTrim({
 			ids: [...nodes.keys()],
 			edges: drawn,
@@ -213,6 +238,7 @@ export function createGraphContext() {
 			hullOf: (id) => hullOfLaw(nodes.get(id), groups),
 			core: network.core,
 			protect,
+			weight,
 			clusters
 		});
 		if (dropped.length === 0) return;

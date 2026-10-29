@@ -12,7 +12,8 @@
 	import { count } from '$lib/text/words';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
+	import { formatCount } from '$lib/text/getal';
+	import { SOFT_NODE_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
 	import CanvasKaart from './CanvasKaart.svelte';
 
 	type View = 'omgeving' | 'verband' | 'keten';
@@ -43,17 +44,18 @@
 	const steps = $derived(withNetwerk ? [0, 1, 2, 3] : [1, 2, 3]);
 	const withDepth = $derived(view !== 'keten');
 
-	// Steps that add nothing, as the API cut the neighbourhood off at its cap.
-	const cap = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
-	const beyondCap = (d: number) => !!reach?.capped && d > reach.depth;
-	const reason = (d: number) => (beyondCap(d) ? `Maximaal ${cap} bronnen getoond.` : null);
 	const titles = (d: number) =>
 		d === 0 ? 'Alleen de gekozen bronnen en hun onderlinge verbindingen' : undefined;
-	// Why a step is off, said under the buttons where a finger and the keyboard read it (C15b):
-	// only with 2 or 3 steps chosen and the cap really reached, else it reads as the reason
-	// bronnen are drawn bare. The greyed step keeps its reason as a title.
-	const stepReason = $derived(
-		depth >= 2 && reach?.capped ? (steps.map(reason).find((r) => r) ?? null) : null
+	// Every step stays open. Where the netwerk is more than the room (SOFT_NODE_CAP places, a
+	// folded group one), it shows the most important and says so, in a line the keyboard and a
+	// finger read too (C15b); the whole of the direct neighbours, where the API counted them.
+	const total = $derived((reach?.buckets ?? []).reduce((sum, b) => sum + b.total, 0));
+	const incomplete = $derived(
+		depth >= 1 && reach?.capped
+			? `${stepsWord(depth)}: de belangrijkste ${formatCount(SOFT_NODE_CAP)}${
+					total > SOFT_NODE_CAP ? ` van ±${formatCount(total)}` : ''
+				} bronnen. Filter in Tonen voor meer.`
+			: null
 	);
 </script>
 
@@ -68,12 +70,11 @@
 				opties={steps.map((d) => ({
 					waarde: String(d),
 					label: stepsWord(d),
-					uit: !!reason(d),
-					titel: reason(d) ?? titles(d)
+					titel: titles(d)
 				}))}
 				onSelect={(d) => onDepth(Number(d))}
 			/>
-			{#if stepReason}<p class="stil why" role="note">{stepReason}</p>{/if}
+			{#if incomplete}<p class="stil why" role="note">{incomplete}</p>{/if}
 		</Sectie>
 	{/if}
 	{@render children?.()}

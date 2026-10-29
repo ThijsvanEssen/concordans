@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	CLUSTER_MAX_LOOSE,
 	clusterLabel,
+	looseMaxFor,
 	clustersOf,
 	clusterBinding,
 	clusterHeading,
@@ -174,5 +175,21 @@ describe('edgesToClusters', () => {
 			new Map([[cl.id, ['instruments/cbw']]])
 		);
 		expect(out).toEqual([]);
+	});
+});
+
+describe('looseMaxFor', () => {
+	it('folds earlier with more steps and more bronnen, never under ten', () => {
+		expect(looseMaxFor(1, 1)).toBe(CLUSTER_MAX_LOOSE);
+		expect(looseMaxFor(2, 2)).toBe(20);
+		expect(looseMaxFor(3, 1)).toBe(20);
+		expect(looseMaxFor(3, 2)).toBe(13);
+		expect(looseMaxFor(50, 3)).toBeGreaterThanOrEqual(10);
+	});
+	it('clustersOf folds at the given maximum', () => {
+		const js = judgments(21);
+		const all = [{ id: focus, collection: 'articles' as const }, ...js];
+		expect(clustersOf(all, citing(js), focus, new Set(), new Set())).toEqual([]);
+		expect(clustersOf(all, citing(js), focus, new Set(), new Set(), '', 20)).toHaveLength(1);
 	});
 });

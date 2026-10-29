@@ -1,12 +1,7 @@
 // Which bronnen of the canvas stand folded into a cluster bron. One rule for two readers:
 // the canvas draws by it (GraphView), and the budget counts by it (`store/budget.ts`), so a
 // group that is drawn as one costs one place.
-import {
-	CLUSTER_MAX_LOOSE,
-	clustersOf,
-	tussenClustersOf,
-	type Cluster
-} from '$lib/selection/cluster';
+import { clustersOf, tussenClustersOf, type Cluster } from '$lib/selection/cluster';
 import { containerIdFor, isContainerKind, type ContainerGroup } from './container-membership';
 import { isVersionCollection, type GraphEdge, type GraphNode } from './types';
 
@@ -41,6 +36,8 @@ export type ClusterInput = {
 	surroundings: boolean;
 	/** Every hull's members: never folded in. */
 	groups: ReadonlyMap<string, ContainerGroup>;
+	/** More loose bronnen of one kind than this fold (`looseMaxFor`). */
+	looseMax: number;
 	/** A chosen bron by its id, for its hull. */
 	nodeOf: (id: string) => GraphNode | undefined;
 };
@@ -51,7 +48,7 @@ export type ClusterInput = {
  * else what ties the chosen bronnen stays drawn bron by bron.
  */
 export function canvasClusters(input: ClusterInput, expanded: ReadonlySet<string>): Cluster[] {
-	const { nodes, edges, focus, pinned, core, surroundings, groups, nodeOf } = input;
+	const { nodes, edges, focus, pinned, core, surroundings, groups, nodeOf, looseMax } = input;
 	const inHull = new Set<string>();
 	for (const group of groups.values()) for (const id of group.members) inHull.add(id);
 	const keep = new Set<string>([...pinned, ...(surroundings ? [] : (core ?? [])), ...inHull]);
@@ -73,12 +70,12 @@ export function canvasClusters(input: ClusterInput, expanded: ReadonlySet<string
 					neighbours: members.length,
 					ends: [{ id, relation: 'PART_OF', toEnd: true }]
 				};
-				return members.length > CLUSTER_MAX_LOOSE && !expanded.has(cl.id) ? [cl] : [];
+				return members.length > looseMax && !expanded.has(cl.id) ? [cl] : [];
 			});
 	return [
 		...ownArticles,
 		...centres.flatMap((c) =>
-			clustersOf(nodes, edges, c, keep, expanded, c === focus ? '' : `@${c}`).map((cl) =>
+			clustersOf(nodes, edges, c, keep, expanded, c === focus ? '' : `@${c}`, looseMax).map((cl) =>
 				c === focus ? cl : { ...cl, ends: [{ id: c, relation: cl.relation, toEnd: cl.toFocus }] }
 			)
 		),

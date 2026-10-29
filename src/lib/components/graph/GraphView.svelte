@@ -34,6 +34,7 @@
 	import { isDrawn } from '$lib/graph/collection-role';
 	import { canvasClusters, isCanvasNode, type ClusterInput } from '$lib/graph/canvas-clusters';
 	import {
+		CLUSTER_MAX_LOOSE,
 		clusterHeading,
 		clusterLabel,
 		edgesToClusters,
@@ -205,6 +206,7 @@
 	let selection = $state<GraphNode | null>(null);
 	let pinnedIds = $state<Set<string>>(new Set());
 	let coreIds = $state<ReadonlySet<string> | null>(null);
+	let looseMax = $state(CLUSTER_MAX_LOOSE);
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
 	/** No bron chosen and none on its way: the canvas says so, the strip offers + Bron toevoegen. */
@@ -756,6 +758,7 @@
 			pinned: pinnedIds,
 			core: coreIds,
 			surroundings,
+			looseMax,
 			groups: containerGroups,
 			nodeOf: (id) => lookup.get(id) ?? rawNodes.find((r) => r.id === id)
 		};
@@ -1092,6 +1095,11 @@
 			}),
 			store.core.subscribe((c) => {
 				coreIds = c;
+				queueRedraw();
+			}),
+			store.looseMax.subscribe((m) => {
+				looseMax = m;
+				rawChanged = true;
 				queueRedraw();
 			}),
 			store.filters.subscribe((f) => {

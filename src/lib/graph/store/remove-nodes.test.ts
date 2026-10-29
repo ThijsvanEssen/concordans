@@ -109,7 +109,8 @@ describe('taking bronnen off the canvas', () => {
 				direction: 'outbound'
 			}
 		]);
-		const first = [...ctx.nodes.keys()][0];
+		// The focus has the most lines and stays; of the rest the oldest goes.
+		const first = [...ctx.nodes.keys()][1];
 		ctx.trimToCap();
 		expect(ctx.nodes.size).toBe(SOFT_NODE_CAP);
 		expect(ctx.nodes.has(first)).toBe(false);

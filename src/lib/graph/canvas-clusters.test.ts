@@ -17,6 +17,7 @@ describe('canvasClusters', () => {
 		pinned: new Set(),
 		core: null,
 		surroundings: false,
+		looseMax: CLUSTER_MAX_LOOSE,
 		groups: new Map(),
 		nodeOf: () => undefined
 	};

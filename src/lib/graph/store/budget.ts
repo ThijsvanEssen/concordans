@@ -12,6 +12,7 @@ type BudgetSlot = {
 	members: string[];
 	/** Insertion order of the newest member. */
 	order: number;
+	weight: number;
 	protected: boolean;
 	owner: string | null;
 };
@@ -30,6 +31,11 @@ export type BudgetInput = {
 	core: ReadonlySet<string> | null;
 	/** Protected whatever the share (the selection, its lines). */
 	protect: ReadonlySet<string>;
+	/**
+	 * How much a bron weighs where there is no room for all: higher stays. Without, the newest
+	 * stay.
+	 */
+	weight?: (id: string) => number;
 	/** The groups drawn as one: id and members. */
 	clusters: readonly { id: string; members: readonly string[] }[];
 };
@@ -119,6 +125,7 @@ function netwerkProtected(input: BudgetInput, ids: ReadonlySet<string>): Set<str
 
 function unitsOf(input: BudgetInput, ids: ReadonlySet<string>): BudgetSlot[] {
 	const keep = netwerkProtected(input, ids);
+	const weight = input.weight ?? (() => 0);
 	const owner = ownersOf(input, ids);
 	const folded = new Map<string, BudgetSlot>();
 	const units: BudgetSlot[] = [];
@@ -129,6 +136,7 @@ function unitsOf(input: BudgetInput, ids: ReadonlySet<string>): BudgetSlot[] {
 			id: c.id,
 			members,
 			order: Math.max(...members.map(input.order)),
+			weight: Math.max(...members.map(weight)),
 			// A cluster with a protected end stays whole.
 			protected: members.some((m) => keep.has(m)),
 			owner: owner.get(members[0]) ?? null
@@ -142,6 +150,7 @@ function unitsOf(input: BudgetInput, ids: ReadonlySet<string>): BudgetSlot[] {
 			id,
 			members: [id],
 			order: input.order(id),
+			weight: weight(id),
 			protected: keep.has(id),
 			owner: owner.get(id) ?? null
 		});
@@ -179,7 +188,8 @@ export function planTrim(input: BudgetInput): string[] {
 	for (const [key, list] of byParty) {
 		const room = allowed.get(key) ?? 0;
 		const sorted = [...list].sort(
-			(a, b) => Number(b.protected) - Number(a.protected) || b.order - a.order
+			(a, b) =>
+				Number(b.protected) - Number(a.protected) || b.weight - a.weight || b.order - a.order
 		);
 		let kept = 0;
 		for (const u of sorted) {
