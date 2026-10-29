@@ -202,24 +202,47 @@ test('BW 7: a line to a layer further down runs no long U through the layer betw
 	}
 });
 
-test('Cbw: a regeling rests on the articles of the Cyberbeveiligingsbesluit, shown on hover; the rows pan sideways', async ({
+test('Cbw: a regeling stands in the row of its kind, its line labelled with the articles and the law; the row pans sideways', async ({
 	page
 }) => {
 	await page.goto('/wetten/BWBR0052872?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
 	await expect(page.locator('.chain .name').first()).toBeVisible();
-	// An article carries the abbreviation of its law, and the AMvB has a layer of articles.
-	await expect(page.locator('.chain .name', { hasText: 'art. 17 Cbw' })).toBeVisible();
-	await expect(page.locator('.chain .layer-label', { hasText: 'ARTIKEL BESLUIT' })).toBeVisible();
-	await expect(page.locator('.chain .name', { hasText: /art\. 19 Cbb/ })).toBeVisible();
+	// No layer of articles: the layers are the kinds of document.
+	await expect(page.locator('.chain .layer-label')).toHaveText([
+		'RICHTLIJN',
+		'WET',
+		'AMVB',
+		'MINISTERIËLE REGELING'
+	]);
+	// A line says which articles of which law it rests on.
+	await expect(
+		page.locator('.chain .line-cite', { hasText: 'art. 68 Cbw' }).first()
+	).toBeAttached();
+	await expect(
+		page.locator('.chain .line-cite', { hasText: 'art. 19, 23 lid 1, 28 Cbb' }).first()
+	).toBeAttached();
 	// The row is wider than the screen and pans in itself.
-	await expect(page.locator('.pan[data-zijscroll]')).toHaveAttribute('data-more-right', '');
+	const pan = page.locator('.pan[data-zijscroll]');
+	expect(await pan.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
 	// The grondslag on hover, with the abbreviation.
 	await page
 		.locator('.chain .node', { hasText: /EZK/, hasNotText: /aanwijzing/ })
 		.first()
-		.hover();
-	await expect(page.getByRole('tooltip')).toContainText(
-		'Grondslag art. 19 Cbb, art. 23 Cbb, art. 28 Cbb'
-	);
+		.hover({ force: true });
+	await expect(page.getByRole('tooltip')).toContainText('Grondslag art. 19, 23 lid 1, 28 Cbb');
+});
+
+test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn above an AMvB', async ({
+	page
+}) => {
+	await page.goto('/wetten/BWBR0052875?mode=netwerk&weergave=keten');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	await expect(page.locator('.chain .name').first()).toBeVisible();
+	await expect(page.locator('.chain .layer-label')).toHaveText([
+		'WET',
+		'AMVB',
+		'MINISTERIËLE REGELING'
+	]);
+	await expect(page.locator('.chain .line-cite', { hasText: '11 art. Cbw' })).toBeAttached();
 });

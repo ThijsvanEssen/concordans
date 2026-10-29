@@ -597,10 +597,6 @@
 			: chainOf(chainMentions)
 	);
 	const chainAll = $derived(chainMentions || lineageStart ? chainModel : chainOf(true));
-	/** The article the keten starts from, as the drawing names it: marked until another is. */
-	const chainArticleId = $derived(
-		chainArticle ? (chainModel?.layers.find((l) => l.id === 'article')?.nodes[0]?.id ?? null) : null
-	);
 	const chainGap = $derived.by(() => {
 		if (view !== 'keten' || chainLoading) return null;
 		if (lineageStart) {
@@ -2141,7 +2137,7 @@
 				rest={chainModel?.rest}
 				more={chainModel?.more}
 				loading={chainLoading}
-				chosen={marked ?? chainArticleId}
+				chosen={marked}
 				gap={chainGap}
 				{hiddenKinds}
 				hiddenLines={chainHidden}

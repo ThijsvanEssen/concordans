@@ -27,6 +27,7 @@
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { hasArrow } from '$lib/graph/line-kind';
+	import { citeText } from '$lib/network/cite-label';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
@@ -100,29 +101,15 @@
 			// The start's own layer stays; another goes with the kind of what it holds.
 			if (l.id === 'law' || l.nodes.some((n) => n.id === start)) return true;
 			const c = l.nodes[0]?.collection;
-			const kind =
-				l.id === 'article' || l.id === 'decreeArticle'
-					? 'artikelen'
-					: c
-						? sortOf(c, '', null)
-						: 'wetten';
+			const kind = c ? sortOf(c, '', null) : 'wetten';
 			return !hiddenKinds.has(kind);
 		})
 	);
 	/** What the keten has room for, and what the drawing needs: it pans sideways past that. */
 	let avail = $state(760);
-	/** The room of a bron in its layer, across: a name of 17 characters, an article less. */
-	const SLOT = 160;
-	const SLOT_ARTICLE = 88;
-	const need = $derived(
-		Math.max(
-			0,
-			...shown.map(
-				(l) =>
-					LEFT + 24 + l.nodes.length * (l.nodes[0]?.collection === 'articles' ? SLOT_ARTICLE : SLOT)
-			)
-		)
-	);
+	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
+	const SLOT = 176;
+	const need = $derived(Math.max(0, ...shown.map((l) => LEFT + 24 + l.nodes.length * SLOT)));
 	const width = $derived(Math.max(avail, need));
 	/** A layer is 104 px high (Keten, Maten). */
 	const ROW = 104;
@@ -160,13 +147,7 @@
 	const CHAR = 6;
 	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
 	const halfOf = (k: ChainNode, n: number) =>
-		Math.ceil(
-			(Math.max(
-				...linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(n)).map((r) => r.length)
-			) *
-				CHAR) /
-				2
-		) + 8;
+		Math.ceil((Math.max(...linesOf(k.name, charsFor(n)).map((r) => r.length)) * CHAR) / 2) + 8;
 	/**
 	 * Where each node stands: its layer's row; across, under what it hangs from (the mean of its
 	 * parents' places), kept apart by a node's room and within the width, so the lines run down
@@ -187,31 +168,41 @@
 				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
-			const gap = (right - left) / n;
+			// Apart by a slot at most; a layer without a place above it is centred on the drawing.
+			const sep = Math.min((right - left) / n, SLOT);
 			const wish = layer.nodes.map((k, j) => {
 				const at = k.parents.map((p) => m.get(p.id)?.x).filter((x): x is number => x !== undefined);
 				return {
 					k,
-					x: at.length ? at.reduce((a, b) => a + b, 0) / at.length : left + (j + 0.5) * gap
+					x: at.length
+						? at.reduce((a, b) => a + b, 0) / at.length
+						: (left + right) / 2 + (j - (n - 1) / 2) * sep
 				};
 			});
-			// The articles of one wet stay together, under a subhead of its own; within it, by place.
-			const rank = (k: ChainNode) => layer.nodes.findIndex((q) => q.home === k.home);
-			wish.sort((a, b) => rank(a.k) - rank(b.k) || a.x - b.x);
-			// Apart by a gap from the left, then back within the right edge.
-			const sep = () => gap;
-			const xs: number[] = [];
-			wish.forEach((w, j) => xs.push(Math.max(w.x, j ? xs[j - 1] + sep() : left + sep() / 2)));
-			for (let j = xs.length - 1; j >= 0; j--)
-				xs[j] = Math.min(xs[j], j === xs.length - 1 ? right - gap / 2 : xs[j + 1] - sep());
+			wish.sort((a, b) => a.x - b.x);
+			// As near its wish as the room allows (pooled blocks, so a group stands centred under
+			// what it hangs from), then within the drawing.
+			const blocks: { sum: number; count: number; at: number }[] = [];
+			wish.forEach((w, j) => {
+				blocks.push({ sum: w.x - j * sep, count: 1, at: j });
+				while (
+					blocks.length > 1 &&
+					blocks[blocks.length - 2].sum / blocks[blocks.length - 2].count >
+						blocks[blocks.length - 1].sum / blocks[blocks.length - 1].count
+				) {
+					const last = blocks.pop()!;
+					blocks[blocks.length - 1].sum += last.sum;
+					blocks[blocks.length - 1].count += last.count;
+				}
+			});
+			const xs = blocks.flatMap((b) =>
+				Array.from({ length: b.count }, (_, i) => b.sum / b.count + (b.at + i) * sep)
+			);
+			const shift = Math.max(0, left + sep / 2 - xs[0]) || Math.min(0, right - sep / 2 - xs[n - 1]);
+			for (let j = 0; j < n; j++) xs[j] += shift;
 			// Half its name and some air, to the side that has room.
 			const room = (layer.nodes[0] ? halfOf(layer.nodes[0], n) : 0) + 48;
-			const aside =
-				n === 1 && layer.id !== 'article' && bypassed(i)
-					? xs[0] + room <= right - 40
-						? room
-						: -room
-					: 0;
+			const aside = n === 1 && bypassed(i) ? (xs[0] + room <= right - 40 ? room : -room) : 0;
 			// A name stays within the drawing, whichever side its node stands on.
 			wish.forEach((w, j) => {
 				const half = halfOf(w.k, n);
@@ -227,7 +218,7 @@
 		for (const l of shown)
 			for (const k of l.nodes)
 				m.set(k.id, {
-					lines: linesOf(k.collection === 'articles' ? k.short : k.name, charsFor(l.nodes.length))
+					lines: linesOf(k.name, charsFor(l.nodes.length))
 				});
 		return m;
 	});
@@ -255,8 +246,7 @@
 				const p = place.get(k.id);
 				if (!p) continue;
 				const half = halfOf(k, l.nodes.length);
-				const article = k.collection === 'articles';
-				const at = article ? p.x - 6 : p.x - half;
+				const at = p.x - half;
 				out.push({
 					id: k.id,
 					x0: at - 2,
@@ -297,7 +287,20 @@
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
 					const head = hasArrow(style) ? headLength(width, arrowLength()) : 0;
-					return [{ relation, from, style, lit, width, head, o, k, label: l.label }];
+					return [
+						{
+							relation,
+							from,
+							style,
+							lit,
+							width,
+							head,
+							o,
+							k,
+							many: k.parents.filter((q) => q.cite).length > 1,
+							label: l.label
+						}
+					];
 				})
 			)
 		);
@@ -332,6 +335,10 @@
 					dot: e.style === 'puntenIndiener' ? r.end : null,
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
+					cite: e.o.cite ? citeText(e.o.cite) : null,
+					citeAt: e.many
+						? { x: r.tip.x + 8, y: r.tip.y + 16 }
+						: { x: r.end.x + 8, y: r.end.y - 10 },
 					colour: toneColour(
 						edgeColorFor(e.relation, e.from),
 						edgeToneFor(e.relation, null, e.from)
@@ -372,22 +379,13 @@
 				.join(', ')
 		) ||
 		null;
-	/** Where a bron stands among its layers, by id. */
-	const byId = $derived(new Map(shown.flatMap((l) => l.nodes).map((k) => [k.id, k])));
 	/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
 	const grondslagOf = (k: ChainNode): string[] => {
-		const words = (way: 'delegates' | 'mentioned') => {
-			const names = k.parents
-				.filter((p) => p.way === way && p.relation !== 'REFERS_TO')
-				.map((p) => byId.get(p.id)?.short)
-				.filter((n): n is string => !!n);
-			return [...new Set(names)];
-		};
+		const said = (way: 'delegates' | 'mentioned') =>
+			k.parents.filter((p) => p.way === way && p.cite).map((p) => p.cite!.full);
 		const out: string[] = [];
-		const gives = words('delegates');
-		const names = words('mentioned');
-		if (gives.length) out.push(`Grondslag ${gives.join(', ')}`);
-		if (names.length) out.push(`Noemt ${names.join(', ')}`);
+		if (said('delegates').length) out.push(`Grondslag ${said('delegates').join(', ')}`);
+		if (said('mentioned').length) out.push(`Noemt ${said('mentioned').join(', ')}`);
 		return out;
 	};
 	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
@@ -400,13 +398,24 @@
 	} | null>(null);
 	/** The glance of a regulation: after a rest of the pointer or the focus, never for a finger. */
 	const glance = (k: ChainNode, layer: ChainLayer, anchor: Element) => {
-		const lines = k.collection === 'articles' || layer.id === 'law' ? [] : grondslagOf(k);
+		const lines = layer.id === 'law' ? [] : grondslagOf(k);
 		if (!lines.length) return hover.close();
 		target = { anchor: anchor as HTMLElement, kicker: layer.label, title: k.name, lines };
 		hover.enter();
 	};
 	const card = $derived(hover.open ? target : null);
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
+	let pan = $state<HTMLElement | null>(null);
+	let centredFor = '';
+	// A drawing wider than the screen opens on the bron it is about, not on its left edge.
+	$effect(() => {
+		const root = start ?? shown.find((l) => l.id === 'law')?.nodes[0]?.id;
+		const at = root ? place.get(root)?.x : undefined;
+		const key = `${root}:${shown.length}:${Math.round(width)}`;
+		if (!pan || at === undefined || key === centredFor || width <= avail) return;
+		centredFor = key;
+		pan.scrollTo({ left: Math.max(0, at * scale - avail / 2), behavior: 'instant' });
+	});
 	const panned = (el: HTMLElement) => {
 		const set = () => el.style.setProperty('--sx', `${el.scrollLeft}px`);
 		el.addEventListener('scroll', set, { passive: true });
@@ -439,16 +448,7 @@
 	);
 	/** The layers of the list (a phone): the start and what stands above it as the list's head (F12). */
 	const head = $derived(shown.filter((l) => l.id === 'law' || l.id === 'basis' || l.id === 'eu'));
-	const listed = $derived(
-		shown.filter(
-			(l) =>
-				l.id !== 'law' &&
-				l.id !== 'basis' &&
-				l.id !== 'eu' &&
-				l.id !== 'article' &&
-				l.id !== 'decreeArticle'
-		)
-	);
+	const listed = $derived(shown.filter((l) => l.id !== 'law' && l.id !== 'basis' && l.id !== 'eu'));
 </script>
 
 {#snippet row(k: ChainNode)}
@@ -484,6 +484,7 @@
 	/>
 	{#if l.head}<polygon points={l.head} fill={l.colour} />{/if}
 	{#if l.dot}<circle cx={l.dot.x} cy={l.dot.y} r={DOT_RADIUS} fill={l.colour} />{/if}
+	{#if l.cite}<text class="line-cite" x={l.citeAt.x} y={l.citeAt.y}>{l.cite}</text>{/if}
 	{#if l.word}<text class="line-word" x={l.wordAt.x} y={l.wordAt.y}>{l.word}</text>{/if}
 {/snippet}
 
@@ -527,7 +528,7 @@
 				>{/if}
 		</div>
 	{/if}
-	<div class="pan" data-zijscroll use:sideScroll use:panned>
+	<div class="pan" data-zijscroll bind:this={pan} use:sideScroll use:panned>
 		<svg
 			class="drawing"
 			style:width="{width * scale}px"
@@ -559,7 +560,6 @@
 			{#each shown as layer, i (layer.id)}
 				{#each layer.nodes as k (k.id)}
 					{@const p = place.get(k.id)!}
-					{@const isArticle = k.collection === 'articles'}
 					{@const v = vormOf(k)}
 					{@const info = infoOf.get(k.id)}
 					<g
@@ -583,7 +583,7 @@
 						onfocus={(e) => glance(k, layer, e.currentTarget)}
 						onblur={() => hover.leave()}
 					>
-						{#if k.expired || isArticle || layer.id === 'law'}<title
+						{#if k.expired || layer.id === 'law'}<title
 								>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title
 							>{/if}
 						<circle cx={p.x} cy={p.y} r="22" class="hit" />
@@ -655,12 +655,10 @@
 						<text
 							class="name {otherIds.has(k.id) ? 'name--ander' : ''}"
 							class:name--law={layer.id === 'law' || k.id === start}
-							x={isArticle ? p.x - 6 : p.x}
+							x={p.x}
 							y={p.y + 24}
-							text-anchor={isArticle ? 'start' : 'middle'}
-							>{#each info?.lines ?? [] as r, j (j)}<tspan
-									x={isArticle ? p.x - 6 : p.x}
-									dy={j ? LINE : 0}>{r}</tspan
+							text-anchor="middle"
+							>{#each info?.lines ?? [] as r, j (j)}<tspan x={p.x} dy={j ? LINE : 0}>{r}</tspan
 								>{/each}</text
 						>
 					</g>
@@ -823,6 +821,7 @@
 		opacity: 0.7;
 	}
 	/* The words on a line, italic, on an edge of paper like a name. */
+	.line-cite,
 	.line-word {
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
@@ -832,6 +831,10 @@
 		stroke: var(--paper);
 		stroke-width: 4px;
 		stroke-linejoin: round;
+	}
+	.line-cite {
+		font-style: normal;
+		fill: var(--ink-2);
 	}
 	/* Outside the period of the strip: faint, not gone. */
 	.node.is-dim {
