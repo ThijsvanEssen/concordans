@@ -273,10 +273,10 @@
 	});
 	const focus = $derived(params.get('focus') ?? '');
 	// Every bron opens in Tekst, its reader with Verbonden beside it; the canvas is Samenhang
-	// (besluit 32). Netwerk tonen draws the network in Verbonden (?toon=netwerk).
+	// (besluit 32). Verbonden draws the network above its soorten; ?toon=netwerk, of a link of
+	// before, opens Verbonden on a phone.
 	const mode = $derived(exploreMode(params, !!pad));
 	const SHOW = 'toon';
-	const showNetwork = $derived(params.get(SHOW) === 'netwerk');
 	// A toelichting or a citing judgment opened beside the article: the article stays the
 	// selected bron.
 	const besideId = $derived(params.get('naast'));
@@ -1681,7 +1681,6 @@
 	const werkplekHref = (ref: BronRef, at: string | null = null) =>
 		bronHref(ref, { keepMode: false, mode: 'graph', at });
 	// Netwerk tonen and Netwerk verbergen in Verbonden: one step each, so Back undoes it.
-	const setShowNetwork = (on: boolean) => setUrl({ [SHOW]: on ? 'netwerk' : null }, { push: true });
 	// Always explicit: an unset diepte means 1 for a container and 2 for every other bron,
 	// so a plain "2" click does not remove the param. In Omgeving it reaches the chosen bronnen
 	// (the page's bron when none is chosen); in Verband it is the pair's.
@@ -2105,8 +2104,7 @@
 					inNetwerk={(row) => kiesNetwerk.ids.includes(focusOf(row.ref) ?? '')}
 					onProposedText={(row) => (proposedRow = row)}
 					{tableHref}
-					{showNetwork}
-					onShowNetwork={setShowNetwork}
+					tekst
 					networkName={bronNaam(selectedNode, $instrumentMetaStore)}
 					networkHref={werkplekHref(
 						refOf(selectedNode.collection, selectedNode.key, selectedNode.raw?.props)

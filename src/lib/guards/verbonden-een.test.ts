@@ -14,7 +14,7 @@ describe('Verbonden', () => {
 	it('draws the soorten it lists: the drawing and the summary both read `kinds`', () => {
 		const panel = bron('lib/verbonden/Verbonden.svelte');
 		expect(panel).toMatch(
-			/const sketchGroups = \$derived<SketchGroup\[\]>\(\s*showNetwork\s*\?\s*kinds\.map/
+			/const sketchGroups = \$derived<SketchGroup\[\]>\(\s*tekst\s*\?\s*kinds\.map/
 		);
 		expect(panel).toMatch(/<KindSummary\s+\{kinds\}/);
 	});

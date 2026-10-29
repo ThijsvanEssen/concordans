@@ -228,16 +228,12 @@
 		gap: var(--s-3);
 		padding: var(--s-4) var(--s-4) var(--s-3);
 	}
-	/* No title of its own: the × stands in the corner, so the content begins under the grip. */
+	/* No title of its own: the × alone at the right of the grip's row, a row of its own above the
+	   content, so what scrolls goes under it and never under the × (live-toets 29 Oct: the × of a
+	   bron's row met it). */
 	.kop.kaal {
-		position: absolute;
-		top: var(--s-2);
-		right: var(--s-2);
-		z-index: 1;
-		padding: 0;
-	}
-	.sheet:has(.kop.kaal) .inhoud {
-		padding-top: var(--s-5);
+		justify-content: flex-end;
+		padding: var(--s-2) var(--s-2) 0;
 	}
 	.title {
 		margin: 0;

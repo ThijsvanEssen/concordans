@@ -8,6 +8,10 @@ describe('links naar buiten', () => {
 		expect(bron('lib/styles/basis.css')).toContain("a[rel~='external']::after");
 	});
 
+	it('draws it as text, not as the emoji of iOS (U+FE0E)', () => {
+		expect(bron('lib/styles/basis.css')).toMatch(/content: '\\00a0\\2197\\FE0E';/);
+	});
+
 	it('marks every link that opens a new tab as external', () => {
 		expect(
 			overtreders((t) =>

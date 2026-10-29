@@ -112,11 +112,13 @@ test.describe('on a phone', () => {
 		expect(klein(g)).toEqual([]);
 	});
 
+	// Not the names in the sentence of the indieners: running text (WCAG 2.5.8, inline).
 	test('the people in Actueel are 44 px to a finger', async ({ page }) => {
 		await page.goto('/actueel');
-		const persoon = page.locator('main a[href^="/leden/"]');
+		const mensen = 'main a[href^="/leden/"]:not(.submitters a)';
+		const persoon = page.locator(mensen);
 		await expect(persoon.first()).toBeVisible();
-		const g = await links(page, 'main a[href^="/leden/"]');
+		const g = await links(page, mensen);
 		expect(Object.keys(g).length).toBeGreaterThan(0);
 		expect(klein(g)).toEqual([]);
 	});
