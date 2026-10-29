@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { capitalize } from '$lib/text/words';
 	import { atLeast } from '$lib/text/getal';
 	import { twoAtATime } from '$lib/util/two-at-a-time';
@@ -6,6 +7,7 @@
 	import AllN from '$lib/components/ui/AlleN.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -419,16 +421,12 @@
 				</p>
 				<div class="voorbeelden">
 					<span class="stil">Voorbeelden, vullen het veld</span>
-					<span class="voorbeeld-rij">
-						{#each VOORBEELDEN as term (term)}
-							<button
-								type="button"
-								class="btn"
-								aria-pressed={invoer === term}
-								onclick={() => (invoer = term)}>{term}</button
-							>
-						{/each}
-					</span>
+					<Keuze
+						label="Voorbeelden"
+						opties={VOORBEELDEN.map((term) => ({ waarde: term, label: term }))}
+						waarde={VOORBEELDEN.includes(invoer) ? invoer : null}
+						onSelect={(term) => (invoer = term)}
+					/>
 				</div>
 			</section>
 		{/if}
@@ -485,7 +483,7 @@
 					</div>
 				{/if}
 				{#if !s || s.status === 'laden'}
-					<p class="status stil">Laden…</p>
+					<SlowLoad label="Laden…" visible />
 				{:else if s.status === 'fout'}
 					<div class="status">
 						<LoadState
@@ -570,11 +568,6 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		font-size: var(--t-meta);
-	}
-	.voorbeeld-rij {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
 	}
 	.regel {
 		grid-column: 1 / -1;

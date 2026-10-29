@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	// Zoeken: the results of a query on a page of their own (besluit 31). The list under the
 	// field on the start page is for what a query names exactly; words end here, with the hits
 	// in groups per soort, the soort and, for uitspraken, the instantie and the jaar as facets,
@@ -279,7 +280,7 @@
 
 		{#if waitingJudgments && q.length >= 2}
 			<Sectie id="groep-judgments-laden" title={groupLabel('judgments')} inklapbaar={false}>
-				<p class="stil">Laden…</p>
+				<SlowLoad label="Laden…" visible />
 			</Sectie>
 		{/if}
 

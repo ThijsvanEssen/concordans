@@ -8,7 +8,7 @@
 	// before this one has a corner in ink. On a phone the grid pans, its labels stay.
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { failureText } from '$lib/components/ui/LoadState.svelte';
+	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import { maandNaam } from '$lib/text/datum';
 	import { jaarVanVak, type Keuze, type Kolom, type Rij, type Vak } from './kruiswoord';
@@ -230,7 +230,11 @@
 	</div>
 </div>
 {#if failedLine}
-	<p class="stil" role="alert">{failureText(failedLine.what, null, failedLine.many)}</p>
+	<LoadState
+		state={{ status: 'error', error: null }}
+		what={failedLine.what}
+		plural={failedLine.many}
+	/>
 {/if}
 {#if heeftNieuw && nieuwSinds}
 	<p class="legenda">

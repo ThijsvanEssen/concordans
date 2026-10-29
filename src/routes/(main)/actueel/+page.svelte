@@ -24,6 +24,7 @@
 </script>
 
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { articleRef } from '$lib/text/bw';
 	import { BOTH_CHAMBERS, CHAMBER_CHOICES } from '$lib/components/parliamentary/chamber';
 	import { capitalize, plural } from '$lib/text/words';
@@ -730,7 +731,7 @@
 		{#if unfiltered}<OpenMotions />{/if}
 
 		{#if loading && !items.length}
-			<p class="status stil">Laden…</p>
+			<SlowLoad label="Laden…" visible />
 		{:else if error && errorPlace(error.what, items.length) === 'instead'}
 			<div class="status">
 				<LoadState

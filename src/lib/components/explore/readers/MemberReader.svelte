@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { outcomeWord } from '$lib/text/outcome';
 	import { atLeast } from '$lib/text/getal';
 	import { choiceRank } from '$lib/votes/stemming';
@@ -448,7 +449,7 @@
 			{/if}
 
 			{#if votes.state.status === 'loading'}
-				<p class="laden">Stemmen laden…</p>
+				<SlowLoad label="Stemmen laden…" visible />
 			{:else if votes.state.status === 'error'}
 				<LoadState state={votes.state} what="De stemgeschiedenis" retry={votes.retry} />
 			{:else if votes.state.data.votes.length > 0}
@@ -668,12 +669,6 @@
 
 	/* A text button: no border, the hover as a paper-2 field. */
 
-	.laden {
-		margin: var(--s-4) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
 	.alle {
 		margin: var(--s-3) 0 0;
 		font-size: var(--t-meta);

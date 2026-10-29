@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { FilterGroup } from '$lib/verbonden/filter';
 	import { sortOf } from '$lib/bron/rubrieken';
@@ -479,7 +480,7 @@
 			/>
 		</div>
 	{:else if loading}
-		<p class="laden" role="status">Keten laden…</p>
+		<SlowLoad label="Keten laden…" visible />
 	{:else if gap || expired?.total || outsideCount || notHere.length}
 		<div class="kop">
 			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
@@ -746,11 +747,6 @@
 	}
 	.others:hover text {
 		fill: var(--ink);
-	}
-	.laden {
-		margin: var(--s-5);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
 	}
 	.rest {
 		margin: 0 var(--s-5) var(--s-4);

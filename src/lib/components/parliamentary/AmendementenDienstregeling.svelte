@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { FOLD } from '$lib/components/ui/dicht.svelte';
 	// The amendments of a bill as a timetable (amendementen.ts; Thijs, 10 Oct: "schematisch
 	// als spoorboekje wel beter, omdat het info communiceert zonder al die tekst, dus een
@@ -100,7 +101,7 @@
 		{#if timetable.state.status === 'error'}
 			<LoadState state={timetable.state} what="De amendementen" plural retry={timetable.retry} />
 		{:else if !regeling}
-			<p class="stand">Amendementen laden…</p>
+			<SlowLoad label="Amendementen laden…" visible />
 		{:else}
 			<div class="rol" data-zijscroll>
 				<table class="regeling" style:--dagen={regeling.kolommen.length}>

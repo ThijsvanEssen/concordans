@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { formatCount } from '$lib/text/getal';
 	// The list under the Kruiswoord: the decisions with their outcome, the fractie's vote and the
 	// researcher's strekking of a motie; or the amendments of a cell by their chains; or the
@@ -259,7 +260,7 @@
 			what="De lijst"
 			retry={error.retry}
 		/>
-	{:else if loading}<p class="status stil">Laden…</p>{/if}
+	{:else if loading}<SlowLoad label="Laden…" visible />{/if}
 </Section>
 
 <style>
