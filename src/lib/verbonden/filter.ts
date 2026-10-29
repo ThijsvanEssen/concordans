@@ -195,7 +195,11 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 /** The query parameters of a filter; a null value clears the parameter. */
 export function filterParams(f: VerbondenFilter): Record<string, string | null> {
 	return {
-		bronnen: f.bronnen ? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',') : null,
+		// Every soort is no choice: the default stays out of the address (live-toets B1).
+		bronnen:
+			f.bronnen && !allGroups(f.bronnen)
+				? FILTER_GROUPS.filter((k) => f.bronnen!.has(k)).join(',')
+				: null,
 		stuksoort: f.stuksoort ? STUKSOORTEN.filter((k) => f.stuksoort!.has(k)).join(',') : null,
 		['relatie']: f.relations ? [...f.relations].sort().join(',') : null,
 		lid: f.lid,
@@ -264,14 +268,21 @@ export function toggleStuksoort(f: VerbondenFilter, kind: Stuksoort): VerbondenF
 export const stuksoortOn = (f: VerbondenFilter, kind: Stuksoort): boolean =>
 	f.stuksoort === null || f.stuksoort.has(kind);
 
+/** Every soort is in: the same as no bronfilter. */
+const allGroups = (kinds: ReadonlySet<FilterGroup>): boolean =>
+	FILTER_GROUPS.every((k) => kinds.has(k));
+
 export function toggleFilterGroup(f: VerbondenFilter, kind: FilterGroup): VerbondenFilter {
 	const next = new Set(f.bronnen ?? FILTER_GROUPS);
 	if (!next.delete(kind)) next.add(kind);
-	return { ...f, bronnen: next.size === FILTER_GROUPS.length ? null : next };
+	return { ...f, bronnen: allGroups(next) ? null : next };
 }
 
-export const withFilterGroup = (f: VerbondenFilter, kind: FilterGroup): VerbondenFilter =>
-	f.bronnen === null || f.bronnen.has(kind) ? f : { ...f, bronnen: new Set([...f.bronnen, kind]) };
+export function withFilterGroup(f: VerbondenFilter, kind: FilterGroup): VerbondenFilter {
+	if (f.bronnen === null || f.bronnen.has(kind)) return f;
+	const next = new Set([...f.bronnen, kind]);
+	return { ...f, bronnen: allGroups(next) ? null : next };
+}
 
 // ── The kind of a bron ────────────────────────────────────────────────────
 

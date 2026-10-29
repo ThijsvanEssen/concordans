@@ -12,6 +12,8 @@ import { openSheet } from '../support/sheet';
 const INLINE = [
 	// The law's own sentences: a reference or a defined term inside a lid (WCAG 2.5.8, inline).
 	'[data-plaats] a',
+	// The names in the sentence of the indieners, "Ingediend door X (F), mede namens Y (F)".
+	'.submitters a',
 	// The skip link shows for a keyboard only, never under a finger.
 	'a.skip-link',
 	// The canvas's list of bronnen is the keyboard's and a screen reader's, never drawn.

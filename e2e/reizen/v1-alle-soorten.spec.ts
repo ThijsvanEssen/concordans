@@ -6,7 +6,7 @@ import { expect, test } from '../support/test';
 import { naarVerbonden } from '../support/navigation';
 
 for (const [soort, pad] of SOORTEN) {
-	test(`${soort}: Tekst, Verbonden as the summary, the network on request`, async ({
+	test(`${soort}: Tekst, Verbonden as the summary, the network drawn in it`, async ({
 		page,
 		touch
 	}) => {
@@ -18,9 +18,8 @@ for (const [soort, pad] of SOORTEN) {
 		await naarVerbonden(page);
 		await expect(verbonden).toBeVisible();
 
-		// Not the network by default: no canvas, no drawing, the address bare.
+		// Not the werkplek: no canvas, the address bare.
 		await expect(page.locator('canvas')).toHaveCount(0);
-		await expect(page.getByTestId('network-sketch')).toHaveCount(0);
 		expect(new URL(page.url()).pathname + new URL(page.url()).search).toBe(pad);
 
 		await verbonden.scrollIntoViewIfNeeded();
