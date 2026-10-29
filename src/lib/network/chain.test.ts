@@ -234,7 +234,7 @@ describe('the keten of a law', () => {
 
 	it('draws a wet beside the law in the layer Wet, the regelingen under it hanging from it', () => {
 		const uhw = item('instruments/uhw', 'Uitvoeringswet huurprijzen woonruimte', 'wet', [
-			article('248', 'mentioned')
+			article('248')
 		]);
 		uhw.sub_delegated = [
 			{
@@ -360,5 +360,134 @@ describe('what Soort and Relatie count in a keten', () => {
 			bewindspersonen: 1
 		});
 		expect(tally({})).toEqual({ kamerleden: 1 });
+	});
+});
+
+describe('the keten of the Grondwet: what only names the law, and what the data does not know', () => {
+	const gw = { id: 'instruments/bwbr0001840', name: 'Grondwet', abbreviation: 'Gw' };
+	const sub = (id: string, title: string, kind: string, basis: 'delegates' | 'mentioned') => ({
+		instrument: law(id, title),
+		kind,
+		date_in_force: '2006-03-01',
+		expired_on: null,
+		basis_kind: basis,
+		articles: [article('1', basis)]
+	});
+	const amar = item('instruments/amar', 'AMAR', 'ministeriele-regeling', [
+		article('68', 'mentioned')
+	]);
+	amar.basis_kind = 'mentioned' as never;
+	amar.sub_delegated = [
+		sub('instruments/defensie', 'Defensieregeling', 'ministeriele-regeling', 'delegates'),
+		sub('instruments/gedeeld', 'Gedeelde regeling', 'ministeriele-regeling', 'delegates')
+	] as never;
+	const kb = item('instruments/kb', 'Besluit departementale herindeling', 'kb', [article('44')]);
+	kb.sub_delegated = [
+		sub('instruments/gedeeld', 'Gedeelde regeling', 'ministeriele-regeling', 'delegates')
+	] as never;
+	const delegated = { bwb_id: 'BWBR0001840', total: 2, items: [amar, kb] } as never;
+	const ids = (k: ReturnType<typeof chain>) => k.layers.flatMap((l) => l.nodes.map((n) => n.id));
+
+	it('leaves out what hangs only under a regulation that only names the law', () => {
+		const k = chain(gw, delegated, null, { mentions: false });
+		expect(ids(k)).toContain('instruments/kb');
+		expect(ids(k)).not.toContain('instruments/amar');
+		expect(ids(k)).not.toContain('instruments/defensie');
+		// A power given by a regulation that stays leads to it all the same.
+		expect(ids(k)).toContain('instruments/gedeeld');
+		expect(k.total).toBe(2);
+		const gedeeld = k.layers.flatMap((l) => l.nodes).find((n) => n.id === 'instruments/gedeeld')!;
+		expect(gedeeld.parents.map((p) => p.id)).toEqual(['instruments/kb']);
+	});
+
+	it('draws all of them, with the mention as a dashed line, under Noemt', () => {
+		const k = chain(gw, delegated, null, { mentions: true });
+		expect(ids(k)).toEqual(expect.arrayContaining(['instruments/amar', 'instruments/defensie']));
+		const amarNode = k.layers.flatMap((l) => l.nodes).find((n) => n.id === 'instruments/amar')!;
+		expect(amarNode.parents.map((p) => p.way)).toEqual(['mentioned']);
+	});
+
+	it('takes a missing basis_kind for neither a power given nor a mention', () => {
+		const procl = item('instruments/procl', 'Proclamatie', 'rijkswet', [article('218')]);
+		procl.basis_kind = null as never;
+		procl.articles[0].basis_kind = null as never;
+		const off = chain(gw, { bwb_id: 'x', total: 1, items: [procl] } as never, null, {
+			mentions: false
+		});
+		expect(ids(off)).toEqual(['instruments/bwbr0001840']);
+		const on = chain(gw, { bwb_id: 'x', total: 1, items: [procl] } as never, null, {
+			mentions: true
+		});
+		const n = on.layers.flatMap((l) => l.nodes).find((x) => x.id === 'instruments/procl')!;
+		expect(n.parents.map((p) => p.way)).toEqual(['unknown']);
+		expect(n.grondslag).toBeNull();
+		expect(n.mentions).toBeNull();
+		expect(n.unknown).toBe('art. 218 Gw');
+		expect(on.layers.find((l) => l.id === 'named')?.nodes.map((x) => x.id)).toEqual([
+			'instruments/procl'
+		]);
+	});
+
+	const refers = [
+		{
+			id: 'instruments/bwbr0004627',
+			key: 'bwbr0004627',
+			bwb_id: 'BWBR0004627',
+			celex: null,
+			display_name: 'Kieswet',
+			citation_title: 'Kieswet',
+			kind: 'wet',
+			date_in_force: '1989-09-01',
+			inbound_cited_count: 2
+		},
+		{
+			id: 'instruments/bwbr0005730',
+			key: 'bwbr0005730',
+			bwb_id: 'BWBR0005730',
+			celex: null,
+			display_name: 'Aanwijzingen voor de regelgeving',
+			citation_title: 'Aanwijzingen voor de regelgeving',
+			kind: 'ministeriele-regeling',
+			date_in_force: '1993-01-01',
+			inbound_cited_count: 25
+		}
+	] as never;
+
+	it('draws a wet that only names the law in its text as Noemt, with the number of its articles', () => {
+		const k = chain(gw, delegated, null, { mentions: true, refers });
+		const named = k.layers.find((l) => l.id === 'named')!;
+		expect(named.nodes.map((n) => n.name)).toEqual(['Kieswet']);
+		expect(named.nodes[0].parents).toEqual([
+			{
+				id: 'instruments/bwbr0001840',
+				way: 'mentioned',
+				relation: 'REFERS_TO',
+				cite: { full: '2 art. Gw', count: 2, abbr: 'Gw' }
+			}
+		]);
+		expect(named.nodes[0].mentions).toBe('2 art. Gw');
+	});
+
+	it('puts those that name most of its articles first', () => {
+		const advocaten = {
+			...(refers as never as Record<string, unknown>[])[0],
+			id: 'instruments/adv',
+			citation_title: 'Advocatenwet',
+			display_name: 'Advocatenwet',
+			inbound_cited_count: 1
+		};
+		const k = chain(gw, delegated, null, {
+			mentions: true,
+			refers: [advocaten, ...(refers as never as [])] as never
+		});
+		expect(k.layers.find((l) => l.id === 'named')!.nodes.map((n) => n.name)).toEqual([
+			'Kieswet',
+			'Advocatenwet'
+		]);
+	});
+
+	it('leaves them out while Noemt is off', () => {
+		const k = chain(gw, delegated, null, { mentions: false, refers });
+		expect(k.layers.some((l) => l.id === 'named')).toBe(false);
 	});
 });

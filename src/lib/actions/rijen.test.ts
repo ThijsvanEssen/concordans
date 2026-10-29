@@ -37,7 +37,7 @@ describe('J and K while typing', () => {
 			offsetParent: {},
 			getClientRects: () => [{}]
 		} as unknown as HTMLElement;
-		vi.stubGlobal('document', { activeElement: null });
+		vi.stubGlobal('document', { activeElement: null, querySelector: () => null });
 		const action = rijen(node, 'a');
 		const field = { closest: (s: string) => (s.includes('input') ? {} : null) };
 		const press = (target: unknown) => {

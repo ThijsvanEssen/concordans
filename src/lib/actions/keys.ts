@@ -22,3 +22,16 @@ export function isEscape(e: KeyLike): boolean {
 	if (e.key !== 'Escape' || e.defaultPrevented) return false;
 	return !hasModifier(e) && !isTyping(e.target);
 }
+
+/**
+ * Whether a one-key shortcut (L, 1, 2, J, K, N, ?) may act now: not with a modifier, not when
+ * something nearer took the key, not while the focus is in a field (input, select, textarea,
+ * contenteditable), and not while a Blad, dialog or menu is open: the keys then belong to it.
+ */
+export function mayShortcut(e: KeyLike): boolean {
+	if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return false;
+	if (isTyping(e.target)) return false;
+	if (typeof document === 'undefined') return true;
+	if (isTyping(document.activeElement)) return false;
+	return !document.querySelector('[aria-modal="true"], [role="menu"]');
+}

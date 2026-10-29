@@ -18,6 +18,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import { keepInPlace, scrollInReader } from '$lib/bron/landing';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { newSections } from '$lib/text/division';
@@ -339,9 +340,8 @@
 	{#if w.articles.length}art. {#each w.articles as a, i (a.key)}{#if i > 0}{i ===
 				w.articles.length - 1
 					? ' en '
-					: ', '}{/if}<a
-				href={bronHref({ collection: 'articles', key: a.key })}
-				data-sveltekit-noscroll>{a.label}</a
+					: ', '}{/if}<BronLink ref={{ collection: 'articles', key: a.key }} at={a.at}
+				>{a.label}</BronLink
 			>{/each}{` van ${w.determiner} `}{/if}<a
 		href={bronHref({ collection: 'instruments', key: w.key })}
 		data-sveltekit-noscroll>{w.naam}</a

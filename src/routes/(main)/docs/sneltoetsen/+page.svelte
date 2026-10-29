@@ -22,17 +22,16 @@
 			<KeyRow>{#snippet key()}<kbd>Esc</kbd>{/snippet}Zoekveld wissen, of zoeken sluiten</KeyRow>
 			<KeyRow>{#snippet key()}<kbd>L</kbd>{/snippet}Bij een bron: tekst of netwerk</KeyRow>
 			<KeyRow
-				>{#snippet key()}<kbd>1</kbd> <kbd>2</kbd>{/snippet}Bij een bron: Tekst of Verbonden</KeyRow
-			>
-			<KeyRow>{#snippet key()}<kbd>O</kbd>{/snippet}In het netwerk: alleen verbonden bronnen</KeyRow
+				>{#snippet key()}<kbd>1</kbd> <kbd>2</kbd>{/snippet}Bij een bron, alleen op de telefoon: de
+				tab Tekst of Verbonden</KeyRow
 			>
 			<KeyRow
 				>{#snippet key()}<kbd>J</kbd> <kbd>K</kbd> <kbd>Enter</kbd>{/snippet}Volgende of vorige rij
 				onder Bronnen en in Verbonden; Enter opent haar</KeyRow
 			>
 			<KeyRow
-				>{#snippet key()}<kbd>←</kbd> <kbd>→</kbd>{/snippet}Terug of vooruit naar de vorige bron,
-				als het netwerk de focus heeft</KeyRow
+				>{#snippet key()}<kbd>←</kbd> <kbd>→</kbd>{/snippet}Naar de volgende of vorige bron
+				aanwijzen, als het netwerk de focus heeft</KeyRow
 			>
 			<KeyRow
 				>{#snippet key()}<kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd>{/snippet}Door de

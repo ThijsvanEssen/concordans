@@ -234,7 +234,7 @@ function status(v: LawPaint, k: Classes): string | null {
 						(w, i) =>
 							(i > 0 ? (i === shown.length - 1 && !rest ? ' en ' : ', ') : '') +
 							(w.articles.length
-								? `art. ${w.articles.map((a, j) => (j > 0 ? (j === w.articles.length - 1 ? ' en ' : ', ') : '') + `<a>${esc(a.label)}</a>`).join('')} van ${w.determiner} `
+								? `art. ${w.articles.map((a, j) => (j > 0 ? (j === w.articles.length - 1 ? ' en ' : ', ') : '') + `<a class="raakvlak">${esc(a.label)}</a>`).join('')} van ${w.determiner} `
 								: '') +
 							`<a>${esc(w.naam)}</a>`
 					)
