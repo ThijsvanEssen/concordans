@@ -468,6 +468,24 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		expect(named.nodes[0].mentions).toBe('2 art. Gw');
 	});
 
+	it('puts those that name most of its articles first', () => {
+		const advocaten = {
+			...(refers as never as Record<string, unknown>[])[0],
+			id: 'instruments/adv',
+			citation_title: 'Advocatenwet',
+			display_name: 'Advocatenwet',
+			inbound_cited_count: 1
+		};
+		const k = chain(gw, delegated, null, {
+			mentions: true,
+			refers: [advocaten, ...(refers as never as [])] as never
+		});
+		expect(k.layers.find((l) => l.id === 'named')!.nodes.map((n) => n.name)).toEqual([
+			'Kieswet',
+			'Advocatenwet'
+		]);
+	});
+
 	it('leaves them out while Noemt is off', () => {
 		const k = chain(gw, delegated, null, { mentions: false, refers });
 		expect(k.layers.some((l) => l.id === 'named')).toBe(false);
