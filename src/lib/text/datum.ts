@@ -151,6 +151,9 @@ export const untilDate = withWord('tot');
 /** `tot en met 28 september 2026`; empty without a date. */
 export const throughDate = withWord('tot en met');
 
+/** `beslist 28 september 2026`: the day a court decided; empty without a date. */
+export const decidedDate = withWord('beslist');
+
 /** A day as the URL and the API write it, `2015-01-01`, and one the calendar has. */
 export const isDay = (s: string | null | undefined): s is string =>
 	!!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));

@@ -486,7 +486,7 @@ describe('a judgment in the feed', () => {
 			)
 		).toEqual({
 			label: 'Uitspraak',
-			title: 'ABRvS 15\u00a0september\u00a02026',
+			title: 'ABRvS, beslist 15\u00a0september\u00a02026',
 			major: false,
 			teken: 'stuk',
 			vorm: 'uitspraak'
