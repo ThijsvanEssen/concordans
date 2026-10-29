@@ -86,6 +86,8 @@
 			</LoadState>
 			<LoadState state={coverage.state} what="De dekking per college" retry={coverage.retry}>
 				{#snippet children(coverage)}
+					<!-- Its own heading: a line of the block above that still loads is not its. -->
+					<p class="list-note">Uitspraken per college</p>
 					<KeyList>
 						{#each tiersIn(coverage) as t (t.tier)}
 							<KeyRow key={TIER_LABEL[t.tier]}
