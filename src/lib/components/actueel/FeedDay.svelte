@@ -38,6 +38,8 @@
 		type Fold,
 		type FeedItem
 	} from './feed';
+	import LowerCourtsRow from './LowerCourtsRow.svelte';
+	import { areaLine, rowHeadline, rowId } from './lower-courts';
 	import { dossierLabel } from '$lib/bron/dossier-naam';
 	import { headlineOf, voteHow, vormVanFeed } from './home-stream';
 	import { getoondOnder, plekVan, termenVan, type Plek } from './match-place';
@@ -131,8 +133,11 @@
 		)
 	);
 
-	const regels = $derived<TijdRegel<CoalitieBij>[]>(
-		day.entries.map((entry) => {
+	/** The lower courts of the day, one line at the end of the day, where the summary counts any. */
+	const lower = $derived(summary?.lower_courts?.total ? summary.lower_courts : null);
+
+	const regels = $derived<TijdRegel<CoalitieBij>[]>([
+		...day.entries.map((entry): TijdRegel<CoalitieBij> => {
 			if ('fold' in entry) {
 				const f = entry.fold;
 				const zin = foldTitle(f, summary?.votes);
@@ -172,8 +177,23 @@
 				// and its title goes to the bron.
 				inhoud: inhoudVan(i) ? itemInhoud : null
 			};
-		})
-	);
+		}),
+		...(lower
+			? [
+					{
+						id: rowId(day.date),
+						datum: day.date,
+						teken: 'stuk' as const,
+						vorm: 'uitspraak' as const,
+						label: 'Uitspraken, rechtbanken en hoven',
+						zin: rowHeadline(lower),
+						meta: areaLine(lower),
+						caret: true,
+						inhoud: lowerCourtsContent
+					}
+				]
+			: [])
+	]);
 </script>
 
 <Tijdlijn
@@ -192,7 +212,7 @@
 		fracties={c.fracties}
 	/>{/snippet}
 
-<!-- Under an item's headline: where it was published, its dossier, its persons, its ministry,
+<!-- Under an item's rowHeadline: where it was published, its dossier, its persons, its ministry,
      the law it concerns; then the tally of a vote, the state of a toezegging. -->
 {#snippet itemOnder(id: string)}
 	{@const i = items.get(id)}
@@ -203,7 +223,7 @@
 		<span class="meta">
 			{@render plekRegel(id)}
 			{#if via}<span class="plek">{via}</span>{/if}
-			<!-- The citation where the headline is another name; a headline that is it says it once. -->
+			<!-- The citation where the rowHeadline is another name; a rowHeadline that is it says it once. -->
 			{#if cited && cited !== titleOf(i)}<span>{cited}</span>{/if}
 			{#if i.dossier}
 				<BronLink
@@ -295,6 +315,11 @@
 	{#each v.delen as d, n (n)}{#if d.ref}<BronLink ref={d.ref} href={d.href ?? null}
 				>{@render merk(d.tekst, woorden)}</BronLink
 			>{:else}{d.tekst}{/if}{/each}
+{/snippet}
+
+<!-- The lower courts of the day opened: a heading per rechtsgebied, its judgments under it. -->
+{#snippet lowerCourtsContent()}
+	{#if lower}<LowerCourtsRow date={day.date} areas={lower.subject_areas} />{/if}
 {/snippet}
 
 {#snippet itemInhoud(id: string)}
@@ -416,7 +441,7 @@
 		}
 	}
 	/* Why the row is in a followed topic, where its line does not show the words: a line
-	   of its own under the headline. */
+	   of its own under the rowHeadline. */
 	.plek {
 		flex-basis: 100%;
 		color: var(--ink-2);

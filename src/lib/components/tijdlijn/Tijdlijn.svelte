@@ -15,6 +15,7 @@
 	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import Markering from '$lib/components/ui/Markering.svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import { subKey } from '$lib/components/ui/dicht.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
@@ -210,7 +211,7 @@
 <!-- The zin, with the words a reader follows marked where the line has them (Gevolgd). -->
 {#snippet zinVan(r: TijdRegel)}{#if r.zinDelen}<Markering
 			delen={r.zinDelen}
-		/>{:else}{r.zin}{/if}{/snippet}
+		/>{:else}{r.zin}{/if}{#if r.caret}<Caret open={open === r.id} />{/if}{/snippet}
 
 <style>
 	.tl {

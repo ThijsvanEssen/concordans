@@ -339,6 +339,11 @@ describe.each(BRONNEN)('the $name in the netwerk', ({ name }) => {
 		neighbourhood = { focal_id: response().node.id, ...asSubgraph() } as never;
 		await around.expandNeighborhood(response().node.collection as Collection, response().node.key);
 		await settle();
+		// A dossier holds its stukken only: a wet is a line to it, never in its outline.
+		for (const c of [focus, around])
+			for (const g of get(c.ctx.containers.groups).values())
+				if (g.kind === 'dossier')
+					expect([...g.members].filter((m) => m.startsWith('instruments/'))).toEqual([]);
 		expect({
 			focus: describeCanvas(focus.ctx).split(' | '),
 			neighbourhood: describeCanvas(around.ctx).split(' | ')

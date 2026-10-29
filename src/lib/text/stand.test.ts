@@ -4,16 +4,38 @@ import { feedStand, standLine } from './stand';
 describe('feedStand', () => {
 	it('takes the newest record of the Kamers, and says when it was fetched', () => {
 		const stand = feedStand({
-			tk: { retrieved_at: '2026-09-24T20:51:42Z', newest: '2026-09-24', completeness: {} },
-			eerstekamer: { retrieved_at: '2026-09-23T10:07:37Z', newest: '2026-09-21', completeness: {} },
-			rechtspraak: { retrieved_at: '2026-09-29T07:29:57Z', newest: '2026-09-28', completeness: {} }
+			tk: {
+				retrieved_at: '2026-09-24T20:51:42Z',
+				newest: '2026-09-24',
+				commitments_registered: null,
+				completeness: {}
+			},
+			eerstekamer: {
+				retrieved_at: '2026-09-23T10:07:37Z',
+				newest: '2026-09-21',
+				commitments_registered: null,
+				completeness: {}
+			},
+			rechtspraak: {
+				retrieved_at: '2026-09-29T07:29:57Z',
+				newest: '2026-09-28',
+				commitments_registered: null,
+				completeness: {}
+			}
 		});
 		expect(stand).toEqual({ newest: '2026-09-24', retrievedAt: '2026-09-24T20:51:42Z' });
 		expect(standLine(stand!)).toBe(
 			'Stukken van de Kamers tot en met 24\u00a0september\u00a02026, opgehaald op 24\u00a0september\u00a02026'
 		);
 		expect(
-			feedStand({ bwb: { retrieved_at: null, newest: '2026-09-01', completeness: {} } })
+			feedStand({
+				bwb: {
+					retrieved_at: null,
+					newest: '2026-09-01',
+					commitments_registered: null,
+					completeness: {}
+				}
+			})
 		).toBeNull();
 		expect(feedStand(undefined)).toBeNull();
 	});
