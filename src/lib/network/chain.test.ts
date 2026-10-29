@@ -462,7 +462,7 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 				id: 'instruments/bwbr0001840',
 				way: 'mentioned',
 				relation: 'REFERS_TO',
-				cite: { full: '2 art. Gw', count: 2, abbr: 'Gw' }
+				cite: { full: '2 art. Gw', count: 2, abbr: 'Gw', articles: [] }
 			}
 		]);
 		expect(named.nodes[0].mentions).toBe('2 art. Gw');

@@ -441,7 +441,8 @@ export function chain(
 		const cite = {
 			full: `${r.inbound_cited_count} art. ${lawAbbr}`,
 			count: r.inbound_cited_count,
-			abbr: lawAbbr
+			abbr: lawAbbr,
+			articles: []
 		};
 		take(
 			{

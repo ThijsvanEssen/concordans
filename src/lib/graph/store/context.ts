@@ -24,6 +24,11 @@ import {
 	type GraphNode
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
+import { canvasClusters, hullOfLaw, isCanvasNode } from '../canvas-clusters';
+import { isDrawn } from '../collection-role';
+import { lineKindOf } from '../line-kind';
+import { planTrim } from './budget';
+import { CLUSTER_MAX_LOOSE } from '$lib/selection/cluster';
 import { isPublication, periodOf, placeConnection, type End } from './placement';
 
 /**
@@ -46,6 +51,21 @@ const edgeId = (source: string, target: string, relation: Relation) =>
 	`${source}->${target}:${relation}`;
 
 /**
+ * How much each bron weighs where the canvas has no room for all: one that stands in a
+ * structural line (Structureel: the law itself) before the rest, then by its lines, which are
+ * its citations and ties. The ranking the explorer already draws by (`lineKindOf`).
+ */
+function weightOf(nodes: ReadonlyMap<string, GraphNode>, edges: readonly GraphEdge[]) {
+	const weight = new Map<string, number>();
+	for (const e of edges) {
+		const bonus =
+			lineKindOf(e.relation, nodes.get(e.source)?.drawClass) === 'structural' ? 1000 : 0;
+		for (const id of [e.source, e.target]) weight.set(id, (weight.get(id) ?? 0) + 1 + bonus);
+	}
+	return (id: string) => weight.get(id) ?? 0;
+}
+
+/**
  * Shared mutable state and the primitives every loader builds on: node and
  * edge maps, the writable stores that mirror them, trimming and the
  * derived nodes and edges. Loader modules receive this object and never
@@ -59,6 +79,16 @@ export function createGraphContext() {
 	const pinned = new Set<string>();
 	// On one object because a destructured `let` would freeze its value.
 	const state = { seq: 0 };
+	// What the last composition said of the network, for the budget's clusters.
+	const network: {
+		core: ReadonlySet<string> | null;
+		surroundings: boolean;
+		looseMax: number;
+	} = {
+		core: null,
+		surroundings: false,
+		looseMax: CLUSTER_MAX_LOOSE
+	};
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
 	// The hulls around the bronnen a suppressed container holds.
@@ -132,6 +162,9 @@ export function createGraphContext() {
 		containers.clear();
 		pinned.clear();
 		pinnedStore.set(new Set());
+		network.core = null;
+		network.surroundings = false;
+		network.looseMax = CLUSTER_MAX_LOOSE;
 		selectionStore.set(null);
 		emit();
 	};
@@ -153,10 +186,32 @@ export function createGraphContext() {
 		nodes.set(id, node);
 	};
 
-	/** `keep`: the bron a response was just merged for, not yet selected but never the one to go. */
+	/**
+	 * Within the soft cap, by the budget (`budget.ts`): every chosen bron its equal share, a folded
+	 * cluster one place, the oldest first. `keep`: the bron a response was just merged for, not yet
+	 * selected but never the one to go.
+	 */
 	const trimToCap = (keep?: string) => {
+		// A cluster only lowers the cost: no more nodes than the cap is within it already.
 		if (nodes.size <= SOFT_NODE_CAP) return;
 		const selected = get(selectionStore);
+		const groups = containers.current();
+		const view = [...nodes.values()];
+		const drawn = [...edges.values()].filter((e) => isDrawn(e.relation));
+		const clusters = canvasClusters(
+			{
+				nodes: view.filter(isCanvasNode),
+				edges: drawn,
+				focus: selected?.id ?? null,
+				pinned,
+				core: network.core,
+				surroundings: network.surroundings,
+				looseMax: network.looseMax,
+				groups,
+				nodeOf: (id) => nodes.get(id)
+			},
+			new Set()
+		);
 		const protect = new Set(pinned);
 		if (keep) protect.add(keep);
 		if (selected) {
@@ -166,20 +221,29 @@ export function createGraphContext() {
 			const selectedContainerKind = selected.raw && focusKindOf(selected.raw.collection);
 			const selectedContainerId =
 				selected.raw && selectedContainerKind && containerIdFor(selected.raw);
-			const group = selectedContainerId ? containers.get(selectedContainerId) : undefined;
+			const group = selectedContainerId ? groups.get(selectedContainerId) : undefined;
 			if (group) for (const id of group.members) protect.add(id);
 			for (const e of edges.values()) {
 				if (e.source === selected.id) protect.add(e.target);
 				if (e.target === selected.id) protect.add(e.source);
 			}
 		}
-		const drop = nodes.size - SOFT_NODE_CAP;
-		const oldest = [...nodes.keys()]
-			.filter((id) => !protect.has(id))
-			.sort((a, b) => (insertedAt.get(a) ?? 0) - (insertedAt.get(b) ?? 0))
-			.slice(0, drop);
-		removeNodes(oldest);
-		trimmedCountStore.update((n) => n + oldest.length);
+		const weight = weightOf(nodes, drawn);
+		const dropped = planTrim({
+			ids: [...nodes.keys()],
+			edges: drawn,
+			order: (id) => insertedAt.get(id) ?? 0,
+			cap: SOFT_NODE_CAP,
+			chosen: [...pinned],
+			hullOf: (id) => hullOfLaw(nodes.get(id), groups),
+			core: network.core,
+			protect,
+			weight,
+			clusters
+		});
+		if (dropped.length === 0) return;
+		removeNodes(dropped);
+		trimmedCountStore.update((n) => n + dropped.length);
 	};
 
 	// ── Nodes and edges from API responses ────────────────────────────────────
@@ -394,6 +458,7 @@ export function createGraphContext() {
 		pruneToIds,
 		removeNodes,
 		touchNode,
+		network,
 		reset,
 		focusInternal
 	};

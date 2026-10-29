@@ -40,4 +40,10 @@ describe('Keten', () => {
 		expect(chainTs).toMatch(/citeOf\(/);
 		expect(chainTs).not.toMatch(/id: 'article'/);
 	});
+	it('draws the label on a line as a link with a glance, never as dead text', () => {
+		const svg = chain.slice(chain.indexOf('<svg'), chain.indexOf('</svg>'));
+		expect(svg).toMatch(/<a\s+class="cite"\s+href=\{l\.citeHref/);
+		expect(svg).toMatch(/onfocus=\{\(e\) => citeGlance\(/);
+		expect(svg).not.toMatch(/<g class="cite">/);
+	});
 });

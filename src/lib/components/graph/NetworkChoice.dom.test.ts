@@ -47,29 +47,41 @@ describe('NetworkChoice', () => {
 			screen.getByRole('button', { name: 'Alleen gekozen' }).getAttribute('aria-pressed')
 		).toBe('true');
 	});
-	it('greys out the steps beyond the cap and says why in a line under the buttons', () => {
-		const { container } = render(NetworkChoice, {
-			...base,
-			view: 'omgeving',
-			depth: 2,
-			reach: { depth: 2, capped: true, cap: 150 } as never
-		});
-		expect(screen.getByRole('note').textContent).toBe('Maximaal 150 bronnen getoond.');
-		expect(container.querySelector('[title="Maximaal 150 bronnen getoond."]')).toBeTruthy();
-		expect((screen.getByRole('button', { name: '3 stappen' }) as HTMLButtonElement).disabled).toBe(
-			true
-		);
-		expect((screen.getByRole('button', { name: '2 stappen' }) as HTMLButtonElement).disabled).toBe(
-			false
-		);
-	});
-	it('keeps the line away at one step, where the cap is no reason to see', () => {
+	it('keeps every step open and says in a line that a capped netwerk is not complete', () => {
 		render(NetworkChoice, {
 			...base,
 			view: 'omgeving',
-			depth: 1,
-			reach: { depth: 1, capped: true, cap: 150 } as never
+			depth: 2,
+			reach: {
+				depth: 2,
+				capped: true,
+				cap: 150,
+				buckets: [{ collection: 'articles', total: 1200, kept: 200 }]
+			} as never
 		});
+		expect(screen.getByRole('note').textContent).toBe(
+			'2 stappen: de belangrijkste 400 van ±1.200 bronnen. Filter in Tonen voor meer.'
+		);
+		for (const name of ['1 stap', '2 stappen', '3 stappen'])
+			expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(false);
+	});
+	it('names no total where the API gave none', () => {
+		render(NetworkChoice, {
+			...base,
+			view: 'omgeving',
+			depth: 3,
+			reach: { depth: 3, capped: true, cap: 150, buckets: [] } as never
+		});
+		expect(screen.getByRole('note').textContent).toBe(
+			'3 stappen: de belangrijkste 400 bronnen. Filter in Tonen voor meer.'
+		);
+	});
+	it('says it at one step too, and not for Alleen gekozen', () => {
+		const reach = { depth: 1, capped: true, cap: 150, buckets: [] } as never;
+		const { unmount } = render(NetworkChoice, { ...base, view: 'omgeving', depth: 1, reach });
+		expect(screen.getByRole('note').textContent).toMatch(/^1 stap: de belangrijkste 400/);
+		unmount();
+		render(NetworkChoice, { ...base, view: 'omgeving', withNetwerk: true, depth: 0, reach });
 		expect(screen.queryByRole('note')).toBeNull();
 	});
 	it('says nothing when the steps are free', () => {
