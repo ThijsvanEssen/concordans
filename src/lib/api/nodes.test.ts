@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
 import { ApiError } from './client';
-import { getBuckets, lidCountsOf, tierCountsOf } from './nodes';
+import { getBuckets, lidCountsOf, sumTierCounts, tierCountsByBucket } from './nodes';
 
 const response = (buckets: unknown[]) => ({ node: {}, neighbors: { total: 0, buckets } }) as never;
 
@@ -28,30 +28,52 @@ describe('lidCountsOf', () => {
 	});
 });
 
-describe('tierCountsOf', () => {
-	it('adds the judgments per tier of every bucket of judgments, all of them', () => {
-		const counts = tierCountsOf(
-			response([
-				{
-					relation: 'REFERS_TO',
-					direction: 'inbound',
-					tier_counts: { hoge_raad: 60, rechtbank: 900 }
-				},
-				{ relation: 'REFERS_TO', direction: 'outbound', tier_counts: { hoge_raad: 3, '': 1 } },
-				{ relation: 'REFERS_TO', direction: 'outbound', tier_counts: null }
-			])
-		);
-		expect(counts).toEqual(
+describe('tierCountsByBucket', () => {
+	const per = tierCountsByBucket(
+		response([
+			{
+				relation: 'REFERS_TO',
+				collection: 'judgments',
+				direction: 'inbound',
+				tier_counts: { hoge_raad: 74, parket: 310 }
+			},
+			{
+				relation: 'REFERS_TO',
+				collection: 'judgments',
+				direction: 'outbound',
+				tier_counts: { hoge_raad: 52 }
+			},
+			{
+				relation: 'ADVISES_ON',
+				collection: 'judgments',
+				direction: 'inbound',
+				tier_counts: { parket: 1 }
+			},
+			{ relation: 'REFERS_TO', collection: 'articles', direction: 'outbound', tier_counts: null }
+		])
+	)!;
+
+	it('keeps the counts per tier of each bucket', () => {
+		expect([...per.keys()]).toEqual([
+			'REFERS_TO/judgments/inbound',
+			'REFERS_TO/judgments/outbound',
+			'ADVISES_ON/judgments/inbound'
+		]);
+	});
+
+	it('adds up the buckets a soort reads, not the others (the conclusion in the head)', () => {
+		expect(sumTierCounts(per, (key) => key.startsWith('REFERS_TO/'))).toEqual(
 			new Map([
-				['hoge_raad', 63],
-				['rechtbank', 900],
-				['', 1]
+				['hoge_raad', 126],
+				['parket', 310]
 			])
 		);
 	});
 
 	it('gives null where the API counts no tier', () => {
-		expect(tierCountsOf(response([{ relation: 'PART_OF', direction: 'outbound' }]))).toBeNull();
+		expect(
+			tierCountsByBucket(response([{ relation: 'PART_OF', direction: 'outbound' }]))
+		).toBeNull();
 	});
 });
 

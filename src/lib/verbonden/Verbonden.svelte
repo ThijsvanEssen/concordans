@@ -43,7 +43,8 @@
 	import SchetsKaart from './SchetsKaart.svelte';
 	import KindSummary from './KindSummary.svelte';
 	import { panel } from './panel-groups.svelte';
-	import { kindsTotal, kindOfGroup, previewPerKind } from './summary';
+	import { inBuckets, kindsTotal, kindOfGroup, previewPerKind } from './summary';
+	import { sumTierCounts, type Bucket } from '$lib/api/nodes';
 	import { PHONE_SKETCH_LIMIT, sketch as drawSketch, type SketchGroup } from './sketch';
 	import { citingTiers, lawTiers, tierParts, type TierCount } from './tiers';
 	import type { LoaderOptions } from './loaders';
@@ -338,13 +339,16 @@
 	});
 	const partsApi = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
 	// The judgments of a judgment per instantie: all of them as the API counts them
-	// (`tier_counts`, live-toets 29 Oct B7); without it, from the rows that are in, "N van M"
+	// (`tier_counts`, live-toets 29 Oct B7), of the buckets the soort's groups read (not the
+	// conclusion, which stands in the head); without it, from the rows that are in, "N van M"
 	// while there are more (UX-toets C10).
 	const tally = $derived.by(() => {
 		if (selection.collection !== 'judgments') return null;
 		const k = kinds.find((x) => x.id === 'judgments');
 		if (!k || k.rows.length === 0) return null;
-		const counted = verbonden.id === selection.id ? verbonden.tierTellingen : null;
+		const per = verbonden.id === selection.id ? verbonden.tiersPerBucket : null;
+		const read = k.groups.flatMap((g) => [...(g.match ?? []), ...(g.bakken ?? [])]) as Bucket[];
+		const counted = per ? sumTierCounts(per, (key) => inBuckets(key, read)) : null;
 		const facet = new Map<string, number>(counted ?? []);
 		if (!counted)
 			for (const r of k.rows) {
