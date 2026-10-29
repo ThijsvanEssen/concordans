@@ -318,6 +318,9 @@ const STAP: Record<string, string> = {
 	Afkondiging: 'afkondiging'
 };
 const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lowerFirst(s.phase)) : '');
+/** The steps that lead up to the vote: past once the Eerste Kamer has decided, also where
+ *  eerstekamer.nl leaves them empty (a hamerstuk has no plenaire behandeling). */
+const BEFORE_VOTE = new Set(['Schriftelijke voorbereiding', 'Plenair']);
 
 /**
  * De voortgang zoals de pagina van het wetsvoorstel op eerstekamer.nl hem toont (API 0.76):
@@ -364,8 +367,11 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 				href: stb(p) ?? p.url ?? null
 			});
 		}
-	const nu = steps.find((s) => s.state === 'geblokt');
-	const nog = steps.filter((s) => s.state === 'leeg').map(stapNaam);
+	// After the vote only what follows it is to come; after a rejection nothing is.
+	const rejected = uitslagVan({ result: d.ek_outcome?.outcome }) === false;
+	const toCome = (s: EkStep) => !rejected && !(besluit && BEFORE_VOTE.has(s.phase ?? ''));
+	const nu = steps.find((s) => s.state === 'geblokt' && toCome(s));
+	const nog = steps.filter((s) => s.state === 'leeg' && toCome(s)).map(stapNaam);
 	if (nu || nog.length)
 		out.push({
 			id: 'ek-nu',

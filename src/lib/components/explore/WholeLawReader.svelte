@@ -102,7 +102,14 @@
 		const meta = $instrumentMetaStore.get(bwbId);
 		const title = lawName(meta, null);
 		if (!articleNumber || !title) return null;
-		return { articleNumber, heading, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
+		// With the law's id: an article of a book of the BW is cited `art. 6:2 BW`.
+		return {
+			bwbId,
+			articleNumber,
+			heading,
+			shortTitle: meta?.shortTitle ?? null,
+			citationTitle: title
+		};
 	};
 
 	// A record without a BWB id (a treaty of the Verdragenbank) by the title of its detail.

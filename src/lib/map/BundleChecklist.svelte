@@ -3,7 +3,8 @@
 	// caret and Bewaard of a reader's Bewaar, the bookmark of a row, a place's menu (decision
 	// 20A, UX-toets A14). Every bundel in its own order, Mijn markeringen first, a tick at
 	// each that holds the bron: a click puts it in or takes it out of that one bundel, so
-	// nothing is taken out of all at once. Nieuwe bundel asks its name in place.
+	// nothing is taken out of all at once. Nieuwe bundel asks its name in place. The last line
+	// says where it is kept, before the first Bewaar too (F17).
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import { kaart } from './map.svelte';
@@ -54,6 +55,7 @@
 			>Nieuwe bundel</button
 		>
 	{/if}
+	<p class="waar" role="none">Alleen in deze browser, geen back-up.</p>
 </div>
 
 <style>
@@ -61,6 +63,12 @@
 		display: inline-flex;
 		align-items: center;
 		color: var(--ink);
+	}
+	.waar {
+		margin: 0;
+		padding: var(--s-1) var(--s-3);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.naam {
 		margin: 0;
