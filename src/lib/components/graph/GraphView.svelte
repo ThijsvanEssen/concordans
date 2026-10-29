@@ -30,14 +30,12 @@
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { LineKind } from '$lib/graph/line-kind';
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
-	import { isVersionCollection, drawClassOf, kort } from '$lib/graph/types';
+	import { drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
+	import { canvasClusters, isCanvasNode, type ClusterInput } from '$lib/graph/canvas-clusters';
 	import {
-		CLUSTER_MAX_LOOSE,
 		clusterHeading,
 		clusterLabel,
-		clustersOf,
-		tussenClustersOf,
 		edgesToClusters,
 		clusterBinding,
 		isClusterId,
@@ -700,14 +698,6 @@
 		return isRepealed(n) ? `${name}, vervallen` : name;
 	};
 
-	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
-	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
-	// is a version, current-focus reader page or not: the network is about the
-	// current text, and the reader reads a version's own data directly, not this
-	// canvas.
-	const isCanvasNode = (n: GraphNode) =>
-		(n.anchor || !isContainerKind(n.drawClass)) && !isVersionCollection(n.collection);
-
 	// ── clusters ────────────────────────────────────────────────────────────────
 	// What the store holds goes to the canvas through the clusters ($lib/selection/cluster):
 	// past forty loose bronnen of one kind around the focus, one cluster bron stands for
@@ -758,49 +748,18 @@
 			expanded = new Set();
 			clusterCard = null;
 		}
-		// In the weergave Omgeving every chosen bron folds its own loose neighbours past forty a
-		// kind, as the sketch does; else what ties the chosen bronnen stays drawn bron by bron.
-		const keep = new Set<string>([...pinnedIds, ...(surroundings ? [] : (coreIds ?? []))]);
-		for (const group of containerGroups.values()) for (const id of group.members) keep.add(id);
 		const canvasNodes = rawNodes.filter(isCanvasNode);
-		const edges = rawEdges.filter((e) => isDrawn(e.relation));
-		// Between the chosen bronnen of a netwerk: what ties the same ones, as one.
-		const chosen = new Set<string>(pinnedIds);
-		if (focus) chosen.add(focus);
-		const inHull = new Set<string>();
-		for (const group of containerGroups.values()) for (const id of group.members) inHull.add(id);
-		const centres = surroundings && pinnedIds.size > 0 ? [...pinnedIds] : focus ? [focus] : [];
-		// A chosen law in Omgeving: its own articles past forty as one cluster, "203 artikelen",
-		// so its neighbours around it stay readable (UX-toets T10).
-		const ownArticles = (open: ReadonlySet<string>): Cluster[] =>
-			!surroundings
-				? []
-				: [...pinnedIds].flatMap((id) => {
-						const n = lookup.get(id) ?? rawNodes.find((r) => r.id === id);
-						if (!n || n.collection !== 'instruments') return [];
-						const cid = containerIdFor(n.raw ?? { collection: n.collection, key: n.key });
-						const group = cid ? containerGroups.get(cid) : undefined;
-						const members = [...(group?.members ?? [])].filter((m) => !pinnedIds.has(m));
-						const cl: Cluster = {
-							id: `cluster:articles@${id}`,
-							collection: 'articles',
-							members,
-							relation: 'PART_OF',
-							toFocus: true,
-							neighbours: members.length,
-							ends: [{ id, relation: 'PART_OF', toEnd: true }]
-						};
-						return members.length > CLUSTER_MAX_LOOSE && !open.has(cl.id) ? [cl] : [];
-					});
-		const alle = (open: ReadonlySet<string>) => [
-			...ownArticles(open),
-			...centres.flatMap((c) =>
-				clustersOf(canvasNodes, edges, c, keep, open, c === focus ? '' : `@${c}`).map((cl) =>
-					c === focus ? cl : { ...cl, ends: [{ id: c, relation: cl.relation, toEnd: cl.toFocus }] }
-				)
-			),
-			...(pinnedIds.size > 0 ? tussenClustersOf(canvasNodes, edges, chosen, inHull, open) : [])
-		];
+		const input: ClusterInput = {
+			nodes: canvasNodes,
+			edges: rawEdges.filter((e) => isDrawn(e.relation)),
+			focus,
+			pinned: pinnedIds,
+			core: coreIds,
+			surroundings,
+			groups: containerGroups,
+			nodeOf: (id) => lookup.get(id) ?? rawNodes.find((r) => r.id === id)
+		};
+		const alle = (open: ReadonlySet<string>) => canvasClusters(input, open);
 		clusters = alle(expanded);
 		foldable = expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
 		const signature = clusters.map((c) => `${c.id}:${c.members.length}`).join(',');

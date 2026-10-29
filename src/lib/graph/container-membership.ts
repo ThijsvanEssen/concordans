@@ -225,6 +225,11 @@ export function createContainerGroups() {
 			flush();
 		},
 
+		/** Every hull as it stands now (live, not a copy). */
+		current(): ReadonlyMap<string, ContainerGroup> {
+			return groups;
+		},
+
 		/** The current group for a container id, if any bron has been recorded into it. */
 		get(id: string): ContainerGroup | undefined {
 			return groups.get(id);

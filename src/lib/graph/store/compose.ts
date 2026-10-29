@@ -26,6 +26,7 @@ export function createCompose(
 		mergeInto,
 		anchorContainer,
 		trimToCap,
+		netwerk,
 		pruneToIds,
 		removeNodes,
 		emit
@@ -88,6 +89,8 @@ export function createCompose(
 		pinned.clear();
 		for (const id of on) pinned.add(id);
 		pinnedStore.set(new Set(pinned));
+		netwerk.core = core;
+		netwerk.surroundings = surroundings;
 		trimToCap();
 		coreStore.set(core);
 		emit();
@@ -101,6 +104,8 @@ export function createCompose(
 			pinned.clear();
 			pinnedStore.set(new Set());
 			coreStore.set(null);
+			netwerk.core = null;
+			netwerk.surroundings = false;
 		}
 	};
 }
