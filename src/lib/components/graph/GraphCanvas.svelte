@@ -449,9 +449,10 @@
 
 	// Around the nodes on a fit: the hull margin and a little air. Above them, the
 	// label pill of a hull (6 px gap, 22 px pill) and the edge gap on top of that.
-	const STAGE_PADDING = HULL_MARGIN + 6;
-	// STAGE_PADDING already holds the hull margin and 6 px of it.
-	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 6;
+	const STAGE_PADDING = HULL_MARGIN + 8;
+	// STAGE_PADDING already holds the hull margin and 8 px of it: a disc of many members bulges a
+	// little past the box of its members.
+	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 8;
 
 	/** Between what stands over the canvas and the nearest bron's sign. */
 	const EDGE_AIR = 16;
