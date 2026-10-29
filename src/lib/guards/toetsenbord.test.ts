@@ -73,6 +73,11 @@ describe('the keyboard', () => {
 				'a bron of the keten clicked: its frame marks it; :focus-visible keeps the ring'
 			),
 			selector(
+				'lib/network/ChainView.svelte',
+				'.cite:focus:not(:focus-visible)',
+				'a label of a line clicked: its frame is the mark; :focus-visible keeps the ring'
+			),
+			selector(
 				'lib/styles/basis.css',
 				"[tabindex='-1']:focus:not(:focus-visible)",
 				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
