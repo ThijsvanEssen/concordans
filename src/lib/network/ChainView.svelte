@@ -35,7 +35,14 @@
 	import { HoverCard } from '$lib/actions/hover-card.svelte';
 	import BasisGlance from '$lib/network/BasisGlance.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { parentKind, parentRelation, type ChainNode, type ChainLayer } from '$lib/network/chain';
+	import {
+		isMention,
+		parentKind,
+		parentRelation,
+		type ChainNode,
+		type ChainLayer,
+		type ParentWay
+	} from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
 
 	let {
@@ -290,8 +297,7 @@
 					if (hiddenLines.has(parentKind(o)) || !nodes.has(o.id) || !nodes.has(k.id)) return [];
 					const relation = parentRelation(o);
 					// A mention is an Aanhaling, the text of the law itself a grondslag.
-					const from: DrawClass =
-						relation === 'REFERS_TO' || o.way === 'mentioned' ? 'judgment' : 'article';
+					const from: DrawClass = relation === 'REFERS_TO' || isMention(o) ? 'judgment' : 'article';
 					const style = edgeStyleFor(relation, null, from);
 					const lit = chosen === k.id || chosen === o.id;
 					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
@@ -316,7 +322,7 @@
 		const routed = treeLines(
 			nodes,
 			edges.map((e) => ({
-				id: `${e.o.id}~${e.k.id}`,
+				id: `${e.o.id}~${e.k.id}~${e.o.way}`,
 				parent: e.o.id,
 				child: e.k.id,
 				kind: `${e.style}|${e.relation}`,
@@ -326,7 +332,7 @@
 		);
 		const byId = new Map(routed.map((r) => [r.id, r]));
 		return edges.flatMap((e) => {
-			const r = byId.get(`${e.o.id}~${e.k.id}`);
+			const r = byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`);
 			if (!r) return [];
 			// The arrowhead at the parent's end, pointing up into its name.
 			const w = (e.head * ARROW_WIDTH) / 2;
@@ -345,7 +351,7 @@
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
 					cite: e.o.cite ? citeText(e.o.cite) : null,
-					mentioned: e.o.way === 'mentioned',
+					mentioned: isMention(e.o),
 					// On the line close above the card of the child; with several laws above it,
 					// under each law instead, so the labels never stand on each other.
 					citeAt: e.many ? { x: r.tip.x, y: r.tip.y + 17 } : { x: r.end.x, y: r.end.y - 20 },
@@ -384,18 +390,23 @@
 	const howOf = (k: ChainNode) =>
 		k.how ||
 		capitalize(
-			[k.grondslag ? `grondslag ${k.grondslag}` : null, k.mentions ? `noemt ${k.mentions}` : null]
+			[
+				k.grondslag ? `grondslag ${k.grondslag}` : null,
+				k.mentions ? `noemt ${k.mentions}` : null,
+				k.unknown ? `grondslag onbekend ${k.unknown}` : null
+			]
 				.filter(Boolean)
 				.join(', ')
 		) ||
 		null;
 	/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
 	const grondslagOf = (k: ChainNode): string[] => {
-		const said = (way: 'delegates' | 'mentioned') =>
+		const said = (way: ParentWay) =>
 			k.parents.filter((p) => p.way === way && p.cite).map((p) => p.cite!.full);
 		const out: string[] = [];
 		if (said('delegates').length) out.push(`Grondslag ${said('delegates').join(', ')}`);
 		if (said('mentioned').length) out.push(`Noemt ${said('mentioned').join(', ')}`);
+		if (said('unknown').length) out.push(`Grondslag onbekend ${said('unknown').join(', ')}`);
 		return out;
 	};
 	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
@@ -448,6 +459,7 @@
 	const KIND_WORDS: Record<string, [string, string]> = {
 		basis: ['wet', 'wetten'],
 		law: ['wet', 'wetten'],
+		named: ['wet', 'wetten'],
 		implementation: ['wet', 'wetten'],
 		eu: ['EU-akte', 'EU-akten'],
 		amvb: ['AMvB', 'AMvB’s'],
