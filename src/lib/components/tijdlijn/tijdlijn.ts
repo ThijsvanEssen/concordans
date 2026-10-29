@@ -44,6 +44,8 @@ export type TijdRegel<B = unknown> = {
 	 *  staat dan een stap verder, in die inhoud; cmd-klik op de zin opent hem meteen. Het
 	 *  krijgt de id van de regel, zodat één snippet de regels van een lijst kan dienen. */
 	inhoud?: Snippet<[string]> | null;
+	/** A caret after the zin: a line that opens a list of its own, which a touch screen has no hover to show. */
+	caret?: boolean;
 	/** De datum als knop, waar hij iets op de pagina kiest (alleen deze wijziging). */
 	datumKnop?: { titel: string; actie: () => void } | null;
 	/** What Bewaar keeps (`documents/<key>`), where the Tijdlijn has Bewaar. */

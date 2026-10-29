@@ -348,3 +348,6 @@ export const doorzochtVanaf = (
  */
 export const errorPlace = (error: string | null, items: number): 'none' | 'instead' | 'below' =>
 	!error ? 'none' : items ? 'below' : 'instead';
+
+/** The judgments of the lower courts of a day, as the summary counts them (`lower_courts=true`). */
+export type LowerCourts = Schema<'FeedLowerCourtsDTO'>;
