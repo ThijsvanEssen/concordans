@@ -33,7 +33,7 @@ import {
 	paperParagraphCite,
 	paperSectionCite
 } from '$lib/components/parliamentary/paper-cite';
-import { itemVanRij } from './row';
+import { itemVanRij } from './rij';
 import { remember } from '$lib/bron/address';
 import type { Row } from '$lib/verbonden/rows';
 

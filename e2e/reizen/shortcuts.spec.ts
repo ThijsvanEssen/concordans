@@ -4,11 +4,11 @@
 import { expect, test } from '../support/test';
 import { openSheet } from '../support/sheet';
 
-const NETWERK = '/wetten/BWBR0005289/artikel/6:162?mode=netwerk';
-const LEZER = '/wetten/BWBR0005289/artikel/6:162';
+const NETWORK = '/wetten/BWBR0005289/artikel/6:162?mode=netwerk';
+const READER = '/wetten/BWBR0005289/artikel/6:162';
 
 test('L with a Blad open leaves the Blad standing', async ({ page }) => {
-	await page.goto(NETWERK);
+	await page.goto(NETWORK);
 	await openSheet(page);
 	const open = page.getByRole('region', { name: 'Netwerk' }).getByRole('button', {
 		name: 'Bron toevoegen'
@@ -27,7 +27,7 @@ test('L with a Blad open leaves the Blad standing', async ({ page }) => {
 });
 
 test('L in a select does nothing', async ({ page }) => {
-	await page.goto(NETWERK);
+	await page.goto(NETWORK);
 	await expect(page.getByRole('application', { name: /^Netwerk\./ })).toBeVisible();
 	await page.evaluate(() => {
 		const s = document.createElement('select');
@@ -44,22 +44,22 @@ test('L in a select does nothing', async ({ page }) => {
 
 test('J and K go through the overview of Verbonden', async ({ page, isMobile }) => {
 	test.skip(isMobile, 'on a phone Verbonden is a tab of its own');
-	await page.goto(LEZER);
-	const titels = page.locator('.verbonden a.kind__title');
-	await expect(titels.first()).toBeVisible({ timeout: 30_000 });
+	await page.goto(READER);
+	const titles = page.locator('.verbonden a.kind__title');
+	await expect(titles.first()).toBeVisible({ timeout: 30_000 });
 	await page.locator('body').click({ position: { x: 1, y: 1 } });
 	await page.keyboard.press('j');
-	await expect(titels.first()).toBeFocused();
-	if ((await titels.count()) > 1) {
+	await expect(titles.first()).toBeFocused();
+	if ((await titles.count()) > 1) {
 		await page.keyboard.press('j');
-		await expect(titels.nth(1)).toBeFocused();
+		await expect(titles.nth(1)).toBeFocused();
 		await page.keyboard.press('k');
-		await expect(titels.first()).toBeFocused();
+		await expect(titles.first()).toBeFocused();
 	}
 });
 
 test('after L the focus is on something visible', async ({ page }) => {
-	await page.goto(NETWERK);
+	await page.goto(NETWORK);
 	const canvas = page.getByRole('application', { name: /^Netwerk\./ });
 	await canvas.focus();
 	await page.keyboard.press('l');

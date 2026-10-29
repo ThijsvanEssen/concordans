@@ -3,7 +3,7 @@ import type { Schema } from '$lib/api/types';
 import { rowsOfExplanations } from '$lib/verbonden/explanatory-documents';
 import type { Row } from '$lib/verbonden/rows';
 import { bewaarItem } from './map';
-import { itemVanRij } from './row';
+import { itemVanRij } from './rij';
 
 // UX-toets 14 Oct, #48: the amendement under Toelichting of art. 126ffa Sv, as `explained-by`
 // gives it (its dossier as `dossier_number`, not `dossier_numbers`).
