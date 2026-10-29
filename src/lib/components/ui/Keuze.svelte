@@ -72,15 +72,19 @@
 		color: currentColor;
 	}
 	/* Equal where the words fit, a word that needs more takes it: no empty tail, no word
-	   cut (Kwartaal in a 240px column). */
+	   cut (Kwartaal in a 240px column). Where the row is too narrow for all of them in one line
+	   (Aantal stappen in the 260px column of a netwerk), a label breaks between its words
+	   rather than the row reaching past its column. */
 	.vol {
 		display: flex;
 		width: 100%;
 	}
 	.vol button {
-		flex: 1 1 0;
-		min-width: max-content;
+		flex: 1 1 auto;
+		min-width: 0;
 		justify-content: center;
+		text-align: center;
+		line-height: 1.1;
 		padding: 0 var(--s-1);
 	}
 	button + button {

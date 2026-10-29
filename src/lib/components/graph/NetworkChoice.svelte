@@ -49,8 +49,12 @@
 	const reason = (d: number) => (beyondCap(d) ? `Maximaal ${cap} bronnen getoond.` : null);
 	const titles = (d: number) =>
 		d === 0 ? 'Alleen de gekozen bronnen en hun onderlinge verbindingen' : undefined;
-	// Why a step is off, said under the buttons where a finger and the keyboard read it (C15b).
-	const stepReason = $derived(steps.map(reason).find((r) => r) ?? null);
+	// Why a step is off, said under the buttons where a finger and the keyboard read it (C15b):
+	// only with 2 or 3 steps chosen and the cap really reached, else it reads as the reason
+	// bronnen are drawn bare. The greyed step keeps its reason as a title.
+	const stepReason = $derived(
+		depth >= 2 && reach?.capped ? (steps.map(reason).find((r) => r) ?? null) : null
+	);
 </script>
 
 <CanvasKaart title="Weergave" class="netwerkkeuze">

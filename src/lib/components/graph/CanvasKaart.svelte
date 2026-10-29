@@ -86,6 +86,8 @@
 	.canvas-kaart__inhoud {
 		min-height: 0;
 		overflow-y: auto;
+		/* A safety net behind the fit of what is inside, not instead of it. */
+		overflow-x: clip;
 		padding: 0 var(--s-3) var(--s-3);
 	}
 </style>

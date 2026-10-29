@@ -178,3 +178,44 @@ export function clusterBinding(c: Pick<Cluster, 'ends'>, namen: string[] = []): 
 	if (!c.ends) return null;
 	return namen.length > 0 ? `Verbonden met ${joinAnd(namen)}` : 'Verbonden met dezelfde bronnen';
 }
+
+/**
+ * The lines that end in a folded bron, led to its cluster: one line from rand to rand, as
+ * the Netwerkcanvas draws it. Lines between the same pair are one (the verbinding most of
+ * them have); a line inside one cluster, or to the bron the cluster hangs on (which has its
+ * own line already, `anchors`), is dropped.
+ */
+export function edgesToClusters<E extends Edge & { id: string }>(
+	edges: readonly E[],
+	clusters: readonly Pick<Cluster, 'id' | 'members' | 'ends'>[],
+	anchors: ReadonlyMap<string, readonly string[]> = new Map()
+): Edge[] {
+	const home = new Map<string, string>();
+	for (const c of clusters) for (const m of c.members) home.set(m, c.id);
+	const anchorsOf = (c: string) =>
+		new Set([
+			...(anchors.get(c) ?? []),
+			...(clusters.find((x) => x.id === c)?.ends ?? []).map((e) => e.id)
+		]);
+	const pairs = new Map<string, { source: string; target: string; relations: string[] }>();
+	for (const e of edges) {
+		const from = home.get(e.source);
+		const to = home.get(e.target);
+		if (!from && !to) continue;
+		if (from === to) continue;
+		if (from && anchorsOf(from).has(e.target)) continue;
+		if (to && anchorsOf(to).has(e.source)) continue;
+		const source = from ?? e.source;
+		const target = to ?? e.target;
+		const key = `${source}~${target}`;
+		const pair = pairs.get(key) ?? { source, target, relations: [] };
+		pair.relations.push(e.relation);
+		pairs.set(key, pair);
+	}
+	return [...pairs.entries()].map(([key, p]) => {
+		const tally = new Map<string, number>();
+		for (const r of p.relations) tally.set(r, (tally.get(r) ?? 0) + 1);
+		const relation = [...tally.entries()].sort((a, b) => b[1] - a[1])[0][0];
+		return { id: `via:${key}`, source: p.source, target: p.target, relation };
+	});
+}
