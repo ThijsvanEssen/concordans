@@ -62,8 +62,8 @@ export function createGraphContext() {
 	const pinned = new Set<string>();
 	// On one object because a destructured `let` would freeze its value.
 	const state = { seq: 0 };
-	// What the last composition said of the netwerk, for the budget's clusters.
-	const netwerk: { core: ReadonlySet<string> | null; surroundings: boolean } = {
+	// What the last composition said of the network, for the budget's clusters.
+	const network: { core: ReadonlySet<string> | null; surroundings: boolean } = {
 		core: null,
 		surroundings: false
 	};
@@ -140,8 +140,8 @@ export function createGraphContext() {
 		containers.clear();
 		pinned.clear();
 		pinnedStore.set(new Set());
-		netwerk.core = null;
-		netwerk.surroundings = false;
+		network.core = null;
+		network.surroundings = false;
 		selectionStore.set(null);
 		emit();
 	};
@@ -181,8 +181,8 @@ export function createGraphContext() {
 				edges: drawn,
 				focus: selected?.id ?? null,
 				pinned,
-				core: netwerk.core,
-				surroundings: netwerk.surroundings,
+				core: network.core,
+				surroundings: network.surroundings,
 				groups,
 				nodeOf: (id) => nodes.get(id)
 			},
@@ -211,7 +211,7 @@ export function createGraphContext() {
 			cap: SOFT_NODE_CAP,
 			chosen: [...pinned],
 			hullOf: (id) => hullOfLaw(nodes.get(id), groups),
-			core: netwerk.core,
+			core: network.core,
 			protect,
 			clusters
 		});
@@ -432,7 +432,7 @@ export function createGraphContext() {
 		pruneToIds,
 		removeNodes,
 		touchNode,
-		netwerk,
+		network,
 		reset,
 		focusInternal
 	};

@@ -5,7 +5,7 @@
 // about is never dropped: the chosen bronnen, their hulls and the lines between them.
 import { neighbours } from '../adjacency';
 
-export type Unit = {
+type BudgetSlot = {
 	/** Cluster id, or the id of a bron standing alone. */
 	id: string;
 	/** The nodes it stands for: one, or the members of a folded cluster. */
@@ -117,15 +117,15 @@ function netwerkProtected(input: BudgetInput, ids: ReadonlySet<string>): Set<str
 	return keep;
 }
 
-function unitsOf(input: BudgetInput, ids: ReadonlySet<string>): Unit[] {
+function unitsOf(input: BudgetInput, ids: ReadonlySet<string>): BudgetSlot[] {
 	const keep = netwerkProtected(input, ids);
 	const owner = ownersOf(input, ids);
-	const folded = new Map<string, Unit>();
-	const units: Unit[] = [];
+	const folded = new Map<string, BudgetSlot>();
+	const units: BudgetSlot[] = [];
 	for (const c of input.clusters) {
 		const members = c.members.filter((m) => ids.has(m));
 		if (members.length < 2) continue;
-		const unit: Unit = {
+		const unit: BudgetSlot = {
 			id: c.id,
 			members,
 			order: Math.max(...members.map(input.order)),
@@ -159,7 +159,7 @@ export function planTrim(input: BudgetInput): string[] {
 	if (costOf(input.ids, input.clusters) <= input.cap) return [];
 	const units = unitsOf(input, ids);
 	const parties = [...new Set(input.chosen.filter((c) => ids.has(c)))];
-	const byParty = new Map<string | null, Unit[]>();
+	const byParty = new Map<string | null, BudgetSlot[]>();
 	for (const u of units) {
 		const key = u.owner !== null && parties.includes(u.owner) ? u.owner : null;
 		byParty.set(key, [...(byParty.get(key) ?? []), u]);
