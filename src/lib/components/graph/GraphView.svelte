@@ -209,7 +209,7 @@
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
 	/** No bron chosen and none on its way: the canvas says so, the strip offers + Bron toevoegen. */
-	const leeg = $derived(!hasNodes && !midden && !selection && expecting === 0);
+	const nothingChosen = $derived(!hasNodes && !midden && !selection && expecting === 0);
 	let canvasCounts = $state<CanvasCounts>(NO_COUNTS);
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
@@ -1362,7 +1362,7 @@
 		<aside class="strook strook--links" aria-label="Bronnen en filters">
 			{@render canvasOverlay?.()}
 			<!-- No bron chosen: the strip has + Bron toevoegen alone, the canvas says why (live-toets B8). -->
-			{#if !leeg}<NetworkChoice
+			{#if !nothingChosen}<NetworkChoice
 					{view}
 					viewSlot={viewChoice}
 					depth={view === 'verband' ? pairSteps : depth}

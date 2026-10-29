@@ -2,7 +2,7 @@
 	// The vinkje Voorstellen in Tonen (besluit 37): the lopende voorstellen of the bronnen on the
 	// canvas drawn beside them. It stands there only where a bron on the canvas has one.
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
-	import Stip from './Stip.svelte';
+	import ProposalDot from './ProposalDot.svelte';
 
 	let {
 		on,
@@ -36,7 +36,7 @@
 {/if}
 <!-- What the dot on a bron means: in Tonen while one stands on the canvas (live-toets B4). -->
 {#if available > 0}
-	<p class="legenda"><Stip />Lopend wetsvoorstel</p>
+	<p class="legenda"><ProposalDot />Lopend wetsvoorstel</p>
 {/if}
 
 <style>
