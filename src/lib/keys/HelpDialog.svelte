@@ -6,18 +6,18 @@
 	import { page } from '$app/state';
 	import Blad from '$lib/components/ui/Blad.svelte';
 	import { answer } from './dispatch.svelte';
-	import { hulp } from './venster.svelte';
-	import type { Context } from './register';
-	import Toetsen from './Toetsen.svelte';
+	import { help } from './help.svelte';
+	import type { KeyContext } from './register';
+	import ShortcutList from './ShortcutList.svelte';
 
 	onMount(() =>
-		answer('hulp', () => {
-			hulp.open = !hulp.open;
+		answer('help', () => {
+			help.open = !help.open;
 		})
 	);
 
 	/** The group of keys of the page the reader is on. */
-	function hier(url: URL): Context | undefined {
+	function contextOf(url: URL): KeyContext | undefined {
 		const mode = url.searchParams.get('mode');
 		if (url.pathname === '/' || url.searchParams.has('q')) return 'zoeken';
 		if (mode === 'netwerk' || mode === 'graph') return 'netwerk';
@@ -26,17 +26,20 @@
 			return 'lezer';
 		return undefined;
 	}
-	const eerst = $derived(hier(page.url));
+	const first = $derived(contextOf(page.url));
+	function close() {
+		help.open = false;
+	}
 </script>
 
-{#if hulp.open}
-	<Blad title="Sneltoetsen" onClose={() => (hulp.open = false)}>
-		<div class="hulp"><Toetsen {eerst} niveau={3} /></div>
+{#if help.open}
+	<Blad title="Sneltoetsen" onClose={close}>
+		<div class="help"><ShortcutList {first} level={3} /></div>
 	</Blad>
 {/if}
 
 <style>
-	.hulp {
+	.help {
 		padding: 0 var(--s-4) var(--s-4);
 	}
 </style>

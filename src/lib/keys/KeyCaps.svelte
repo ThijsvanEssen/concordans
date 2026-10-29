@@ -8,20 +8,20 @@
 
 	let { combo }: { combo: Combo } = $props();
 
-	const namen = (mac: boolean): string[] => [
+	const labels = (mac: boolean): string[] => [
 		...(combo.mod ? [mac ? '⌘' : 'Ctrl'] : []),
 		...(combo.alt ? [mac ? '⌥' : 'Alt'] : []),
-		combo.teken
+		combo.cap
 	];
-	const heeftModifier = $derived(!!combo.mod || !!combo.alt);
+	const hasModifier = $derived(!!combo.mod || !!combo.alt);
 </script>
 
-{#snippet kappen(namen: string[])}{#each namen as n, i (i)}<kbd>{n}</kbd>{/each}{/snippet}
+{#snippet caps(names: string[])}{#each names as n, i (i)}<kbd>{n}</kbd>{/each}{/snippet}
 
-{#if platform === null && heeftModifier}
-	{@render kappen(namen(true))} of {@render kappen(namen(false))}
+{#if platform === null && hasModifier}
+	{@render caps(labels(true))} of {@render caps(labels(false))}
 {:else}
-	{@render kappen(namen(platform === 'mac'))}
+	{@render caps(labels(platform === 'mac'))}
 {/if}
 
 <style>

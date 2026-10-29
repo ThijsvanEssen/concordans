@@ -1938,16 +1938,16 @@
 	// stands; each answers false where it has nothing to do, so the key goes on.
 	onMount(() => {
 		const stop = [
-			answer('wissel', wissel),
-			answer('paneel', (_e, combo) => paneelToets(combo.teken)),
-			answer('artikel-vorig', () => artikelStap(-1)),
-			answer('artikel-volgend', () => artikelStap(1))
+			answer('toggle-view', toggleView),
+			answer('panel', (_e, combo) => panelKey(combo.cap)),
+			answer('article-prev', () => stepArticle(-1)),
+			answer('article-next', () => stepArticle(1))
 		];
 		return () => stop.forEach((f) => f());
 	});
 
 	/** Alt 1 and Alt 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's first row. */
-	function paneelToets(key: string): boolean {
+	function panelKey(key: string): boolean {
 		const panel = panelOfKey(key);
 		if (!panel || !selectedNode || mode !== 'read' || !window.matchMedia(PHONE).matches)
 			return false;
@@ -1960,21 +1960,21 @@
 	}
 
 	/** The reader's place, kept while the netwerk is up: the bron and how far its text was scrolled. */
-	let leesplek: { id: string; top: number } | null = null;
+	let readingPlace: { id: string; top: number } | null = null;
 	const readerScroller = () => {
-		const kop = document.querySelector<HTMLElement>('.col--reader');
-		return kop ? (kop.querySelector<HTMLElement>('.reader') ?? kop) : null;
+		const column = document.querySelector<HTMLElement>('.col--reader');
+		return column ? (column.querySelector<HTMLElement>('.reader') ?? column) : null;
 	};
 
 	/** Alt L: from the reader to the netwerk and back, said in words, the focus on a stop. */
-	function wissel(): boolean {
+	function toggleView(): boolean {
 		const to = readAction;
 		if (!to || !selectedNode) return false;
 		const name = pageName(selectedNode, titelVan(selectedNode.id));
 		if (to === 'network') {
 			const el = readerScroller();
 			const scroller = el && scrollerOf(el);
-			leesplek = { id: selectedNode.id, top: scroller?.scrollTop ?? 0 };
+			readingPlace = { id: selectedNode.id, top: scroller?.scrollTop ?? 0 };
 		}
 		Promise.resolve(setReading(to === 'read'))
 			.catch((err) => report('Wisselen', err))
@@ -1982,40 +1982,40 @@
 				// A step another navigation overtook still lands in the view asked for.
 				if ((mode === 'read') !== (to === 'read')) return;
 				announce(`Naar ${to === 'network' ? 'netwerk' : 'lezer'}: ${name}`);
-				afterTick(() => (to === 'read' ? herstelLeesplek() : keepFocus()));
+				afterTick(() => (to === 'read' ? restoreReadingPlace() : keepFocus()));
 			});
 		return true;
 	}
 
 	/**
 	 * The text just drawn, once it is there: its heading holds the focus, and `top` is where its
-	 * scroller stands (null: where it came). `niet` is the heading of the text it replaces.
+	 * scroller stands (null: where it came). `replaced` is the heading of the text it replaces.
 	 */
-	function opKop(top: number | null, niet = '') {
+	function landOnHeading(top: number | null, replaced = '') {
 		let tries = 0;
 		const place = () => {
 			const el = readerScroller();
-			const kop = document.querySelector<HTMLElement>('.col--reader h1');
-			if (!el || !kop || kop.textContent === niet) {
+			const heading = document.querySelector<HTMLElement>('.col--reader h1');
+			if (!el || !heading || heading.textContent === replaced) {
 				if (tries++ < 60) requestAnimationFrame(place);
 				return;
 			}
 			const scroller = scrollerOf(el);
 			if (scroller && top !== null) scroller.scrollTop = top;
-			kop.tabIndex = -1;
-			kop.focus({ preventScroll: true });
+			heading.tabIndex = -1;
+			heading.focus({ preventScroll: true });
 		};
 		place();
 	}
 
 	/** Back from the netwerk: the text where it was read, the focus on its heading. */
-	function herstelLeesplek() {
-		const plek = leesplek;
-		opKop(plek && plek.id === selectedNode?.id ? plek.top : null);
+	function restoreReadingPlace() {
+		const kept = readingPlace;
+		landOnHeading(kept && kept.id === selectedNode?.id ? kept.top : null);
 	}
 
 	/** Alt [ and Alt ]: the article before or after, its text asked first; the new one at its top. */
-	function artikelStap(d: 1 | -1): boolean {
+	function stepArticle(d: 1 | -1): boolean {
 		if (mode !== 'read' || selectedNode?.collection !== 'articles' || articleIndex < 0)
 			return false;
 		const step = articleStep(articleIndex + d);
@@ -2027,7 +2027,7 @@
 		step
 			.load()
 			.then(() => goto(step.href))
-			.then(() => opKop(0, was))
+			.then(() => landOnHeading(0, was))
 			.catch((err) => report('Wisselen', err));
 		return true;
 	}

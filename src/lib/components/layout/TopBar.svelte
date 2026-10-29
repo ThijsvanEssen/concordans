@@ -26,7 +26,7 @@
 	onMount(() => (platformKnown = true));
 
 	// Ctrl K and Alt / (the register, lib/keys): the search from any page.
-	onMount(() => answer('zoeken', () => onSearchOpen?.()));
+	onMount(() => answer('search', () => onSearchOpen?.()));
 </script>
 
 <header class="topbar">

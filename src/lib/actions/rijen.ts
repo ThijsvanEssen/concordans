@@ -42,7 +42,7 @@ function opToets(e: KeyboardEvent) {
 }
 
 /** Alt J and Alt K: from anywhere, to the list that holds the focus or else the first on screen. */
-function opPagina(_e: KeyboardEvent, combo: Combo): boolean {
+function onPageKey(_e: KeyboardEvent, combo: Combo): boolean {
 	const actief = document.activeElement as HTMLElement | null;
 	const lijst =
 		[...lijsten].find((l) => actief && l.node.contains(actief)) ??
@@ -57,7 +57,7 @@ export function rijen(node: HTMLElement, rij: string) {
 	const lijst: Lijst = { node, rij };
 	if (lijsten.size === 0) {
 		window.addEventListener('keydown', opToets);
-		afmelden = answer('rijen', opPagina);
+		afmelden = answer('rows', onPageKey);
 	}
 	lijsten.add(lijst);
 	return {

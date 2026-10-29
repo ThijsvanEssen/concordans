@@ -4,7 +4,7 @@
 // key (WCAG 2.1.4), and one that is pressed without Alt does nothing.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
-import { TOETSEN } from '../../src/lib/keys/register';
+import { SHORTCUTS } from '../../src/lib/keys/register';
 
 const LEZER = '/wetten/BWBR0005289/artikel/6:162';
 const NETWERK = `${LEZER}?mode=netwerk`;
@@ -44,7 +44,7 @@ async function zoekveld(page: Page) {
 }
 
 const GEVALLEN: Record<string, Geval> = {
-	zoeken: {
+	search: {
 		run: async (page) => {
 			await page.goto('/docs');
 			await expect(page.getByRole('button', { name: /Zoek een wet/ })).toBeVisible();
@@ -56,7 +56,7 @@ const GEVALLEN: Record<string, Geval> = {
 			}
 		}
 	},
-	hulp: {
+	help: {
 		run: async (page) => {
 			await page.goto('/docs');
 			await expect(page.getByRole('button', { name: /Zoek een wet/ })).toBeVisible();
@@ -67,8 +67,8 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(venster).toBeVisible();
 			await expect(venster).toHaveAttribute('aria-modal', 'true');
 			// Every key of the register is in it, once.
-			for (const t of TOETSEN.filter((x) => x.soort !== 'gereserveerd'))
-				await expect(venster.locator(`[data-toets="${t.id}"]`)).toHaveCount(1);
+			for (const t of SHORTCUTS.filter((x) => x.kind !== 'reserved'))
+				await expect(venster.locator(`[data-shortcut="${t.id}"]`)).toHaveCount(1);
 			// The focus stays in it, and Escape gives it back.
 			for (let i = 0; i < 6; i++) {
 				await page.keyboard.press('Tab');
@@ -84,7 +84,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(venster).toHaveCount(0);
 		}
 	},
-	sluit: {
+	close: {
 		run: async (page) => {
 			await page.goto('/docs');
 			await expect(page.getByRole('button', { name: /Zoek een wet/ })).toBeVisible();
@@ -94,7 +94,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(page.getByRole('dialog')).toHaveCount(0);
 		}
 	},
-	'zoek-resultaten': {
+	'search-results': {
 		run: async (page) => {
 			const { field, results } = await zoekveld(page);
 			await field.focus();
@@ -107,7 +107,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
 		}
 	},
-	'zoek-wis': {
+	'search-clear': {
 		run: async (page) => {
 			const { field } = await zoekveld(page);
 			await field.focus();
@@ -115,7 +115,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(field).toHaveValue('');
 		}
 	},
-	wissel: {
+	'toggle-view': {
 		run: async (page) => {
 			await page.goto(LEZER);
 			await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
@@ -144,12 +144,12 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(page).not.toHaveURL(/mode=netwerk/);
 			await expect.poll(() => gezegd(page)).toMatch(/Naar lezer: .*6:162/);
 			await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
-			// Without Alt the key is a letter and nothing else.
+			// Without Alt the key is a letterKey and nothing else.
 			await page.keyboard.press('l');
 			await expect(page).not.toHaveURL(/mode=netwerk/);
 		}
 	},
-	'tab-tekst': {
+	'panel-tab': {
 		telefoon: true,
 		run: async (page) => {
 			await page.goto(LEZER);
@@ -167,7 +167,7 @@ const GEVALLEN: Record<string, Geval> = {
 			);
 		}
 	},
-	'artikel-vorig': {
+	'article-prev': {
 		run: async (page) => {
 			await page.goto('/wetten/BWBR0005289/artikel/6:163');
 			await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:163 BW');
@@ -176,7 +176,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
 		}
 	},
-	'artikel-volgend': {
+	'article-next': {
 		run: async (page) => {
 			await page.goto(LEZER);
 			await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
@@ -188,12 +188,12 @@ const GEVALLEN: Record<string, Geval> = {
 			expect(new URL(page.url()).hash).toBe('');
 		}
 	},
-	'rij-focus': {
+	'row-focus': {
 		run: async (page) => {
 			await page.goto(LEZER);
 			const titels = page.locator('.verbonden a.kind__title');
 			await expect(titels.nth(1)).toBeVisible({ timeout: 30_000 });
-			// A letter alone does nothing from the body, and goes through the list from within.
+			// A letterKey alone does nothing from the body, and goes through the list from within.
 			await page.locator('body').click({ position: { x: 1, y: 1 } });
 			await page.keyboard.press('j');
 			await expect(titels.first()).not.toBeFocused();
@@ -204,7 +204,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(titels.first()).toBeFocused();
 		}
 	},
-	'rij-pagina': {
+	'row-page': {
 		run: async (page) => {
 			await page.goto(LEZER);
 			const titels = page.locator('.verbonden a.kind__title');
@@ -218,7 +218,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(titels.first()).toBeFocused();
 		}
 	},
-	'netwerk-aanwijzen': {
+	'network-point': {
 		run: async (page) => {
 			await page.goto(NETWERK);
 			await expect(lijst(page).nth(1)).toBeAttached();
@@ -232,7 +232,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(regel(page)).toHaveText(eerste);
 		}
 	},
-	'netwerk-lijst': {
+	'network-list': {
 		run: async (page) => {
 			await page.goto(NETWERK);
 			await expect(lijst(page).nth(1)).toBeAttached();
@@ -247,7 +247,7 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(lijst(page).first()).toBeFocused();
 		}
 	},
-	'netwerk-n': {
+	'network-add': {
 		run: async (page) => {
 			await page.goto(NETWERK);
 			await expect(lijst(page).nth(1)).toBeAttached();
@@ -258,24 +258,24 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(regel(page)).toHaveText(/(toegevoegd aan|uit) het netwerk/);
 		}
 	},
-	vergelijken: {
+	compare: {
 		run: async (page) => {
 			await page.goto('/wetten/BWBR0001840/artikel/23');
 			await page.getByRole('link', { name: 'Vergelijken', exact: true }).click();
 			await expect(page).toHaveURL(/versies=/);
-			const eerst = page.url();
+			const first = page.url();
 			await page.keyboard.press('ArrowLeft');
-			await expect(page).not.toHaveURL(eerst);
+			await expect(page).not.toHaveURL(first);
 			await page.keyboard.press('ArrowRight');
-			await expect(page).toHaveURL(eerst);
+			await expect(page).toHaveURL(first);
 		}
 	}
 };
 
-const TE_TESTEN = TOETSEN.filter((t) => t.soort !== 'gereserveerd');
+const TE_TESTEN = SHORTCUTS.filter((t) => t.kind !== 'reserved');
 
 for (const t of TE_TESTEN) {
-	test(`${t.id}: ${t.omschrijving}`, async ({ page, touch }) => {
+	test(`${t.id}: ${t.description}`, async ({ page, touch }) => {
 		const geval = GEVALLEN[t.id];
 		test.skip(!geval, 'no case: see the last test');
 		test.skip(!!geval?.telefoon !== touch, geval?.telefoon ? 'a phone key' : 'a keyboard key');

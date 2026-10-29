@@ -5,7 +5,7 @@
 	import TabBar from './TabBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
-	import Hulp from '$lib/keys/Hulp.svelte';
+	import HelpDialog from '$lib/keys/HelpDialog.svelte';
 	import { onKeydown } from '$lib/keys/dispatch.svelte';
 
 	let { children }: { children?: Snippet } = $props();
@@ -39,7 +39,7 @@
 	<TabBar onSearchOpen={() => openSearch()} />
 </div>
 
-<Hulp />
+<HelpDialog />
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>

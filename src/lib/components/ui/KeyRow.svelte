@@ -6,7 +6,7 @@
 		key,
 		children,
 		...rest
-	}: { key?: string | Snippet; children: Snippet; 'data-toets'?: string } = $props();
+	}: { key?: string | Snippet; children: Snippet; 'data-shortcut'?: string } = $props();
 </script>
 
 <div class="key-row" {...rest}>

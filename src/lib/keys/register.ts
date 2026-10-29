@@ -1,10 +1,10 @@
 // The one register of the keys of Concordans: what each key is, where it works, what it does
-// and which handler answers it. /docs/sneltoetsen and the window on ? are drawn from it, the
+// and which handler answers it. /docs/sneltoetsen and the window on Ctrl / are drawn from it, the
 // dispatcher (dispatch.svelte.ts) reads it, and the e2e (e2e/reizen/sneltoetsen.spec.ts)
 // presses every key in it. A key that is not here is not promised and not bound.
 //
 // Three kinds of key (WCAG 2.1.4, Character Key Shortcuts; Thijs, 29 Oct: "Met alt"):
-// - `pagina`: works on the page, always with Alt or with Ctrl/⌘ (a combination, never a letter
+// - `pagina`: works on the page, always with Alt or with Ctrl/⌘ (a combination, never a letterKey
 //   alone). Matched on `event.code`, because Alt plus a key gives another character on macOS.
 // - `focus`: a plain key that only works while the focus is in the list, field or canvas it
 //   belongs to (J and K in a row, the arrows in the canvas). 2.1.4 allows that.
@@ -16,22 +16,22 @@
 // slash, and Ctrl/⌘ with K and the slash. Alt 1 and Alt 2 only act on a phone, where the tabs
 // are. Ctrl+Alt is AltGr on Windows and gives a character: it is never a key of ours.
 
-export type Context = 'overal' | 'zoeken' | 'lezer' | 'netwerk' | 'bladeren' | 'vergelijken';
+export type KeyContext = 'overal' | 'zoeken' | 'lezer' | 'netwerk' | 'bladeren' | 'vergelijken';
 
-/** The order and the names under which docs and the window on ? set the keys. */
-export const CONTEXTS: readonly { id: Context; naam: string }[] = [
-	{ id: 'overal', naam: 'Overal' },
-	{ id: 'zoeken', naam: 'Zoeken' },
-	{ id: 'lezer', naam: 'In de lezer' },
-	{ id: 'netwerk', naam: 'In het netwerk' },
-	{ id: 'bladeren', naam: 'Bij een lijst' },
-	{ id: 'vergelijken', naam: 'Bij Vergelijken' }
+/** The order and the names under which docs and the window on Ctrl / set the keys. */
+export const CONTEXTS: readonly { id: KeyContext; name: string }[] = [
+	{ id: 'overal', name: 'Overal' },
+	{ id: 'zoeken', name: 'Zoeken' },
+	{ id: 'lezer', name: 'In de lezer' },
+	{ id: 'netwerk', name: 'In het netwerk' },
+	{ id: 'bladeren', name: 'Bij een lijst' },
+	{ id: 'vergelijken', name: 'Bij Vergelijken' }
 ];
 
-/** One key press: `code` is the physical key, `teken` what the page shows on its cap. */
+/** One key press: `code` is the physical key, `cap` what the page shows on its cap. */
 export type Combo = {
 	code: string;
-	teken: string;
+	cap: string;
 	/** Also matched on this `event.key`, for a punctuation key that moves on other layouts. */
 	key?: string;
 	/** Ctrl, or ⌘ on a Mac. */
@@ -39,211 +39,205 @@ export type Combo = {
 	alt?: boolean;
 };
 
-export type Toets = {
+export type Shortcut = {
 	id: string;
-	soort: 'pagina' | 'focus' | 'gereserveerd';
-	context: Context;
+	kind: 'page' | 'focus' | 'reserved';
+	context: KeyContext;
 	keys: readonly Combo[];
 	/** How the keys of a row stand: together (the arrows) or one or the other (Ctrl K, Alt /). */
-	sep: 'samen' | 'of';
-	omschrijving: string;
+	join: 'together' | 'or';
+	description: string;
 	/** The handler that answers it (dispatch.svelte.ts), or where it lives for a `focus` key. */
 	handler: string;
 	/** For a `focus` key: where the focus must be, as the docs say it. */
-	waar?: string;
+	focusIn?: string;
 	/** Works in a window that holds the page (a Blad, the search): only a key to leave it. */
-	inDialoog?: boolean;
+	inDialog?: boolean;
 };
 
-const letter = (c: string, extra: Partial<Combo> = {}): Combo => ({
+const letterKey = (c: string, extra: Partial<Combo> = {}): Combo => ({
 	code: `Key${c}`,
-	teken: c,
+	cap: c,
 	...extra
 });
-const cijfer = (c: string, extra: Partial<Combo> = {}): Combo => ({
+const digitKey = (c: string, extra: Partial<Combo> = {}): Combo => ({
 	code: `Digit${c}`,
-	teken: c,
+	cap: c,
 	...extra
 });
-const pijl = (naam: 'Left' | 'Right' | 'Up' | 'Down', teken: string): Combo => ({
-	code: `Arrow${naam}`,
-	teken
+const arrow = (name: 'Left' | 'Right' | 'Up' | 'Down', cap: string): Combo => ({
+	code: `Arrow${name}`,
+	cap
 });
 const ALT = { alt: true } as const;
 const MOD = { mod: true } as const;
 
-export const TOETSEN: readonly Toets[] = [
+export const SHORTCUTS: readonly Shortcut[] = [
 	{
-		id: 'zoeken',
-		soort: 'pagina',
+		id: 'search',
+		kind: 'page',
 		context: 'overal',
-		keys: [letter('K', MOD), { code: 'Slash', key: '/', teken: '/', alt: true }],
-		sep: 'of',
-		omschrijving: 'Zoeken',
-		handler: 'zoeken',
-		inDialoog: true
+		keys: [letterKey('K', MOD), { code: 'Slash', key: '/', cap: '/', alt: true }],
+		join: 'or',
+		description: 'Zoeken',
+		handler: 'search',
+		inDialog: true
 	},
 	{
-		id: 'hulp',
-		soort: 'pagina',
+		id: 'help',
+		kind: 'page',
 		context: 'overal',
-		keys: [{ code: 'Slash', key: '/', teken: '/', mod: true }],
-		sep: 'samen',
-		omschrijving: 'Dit overzicht van de sneltoetsen',
-		handler: 'hulp',
-		inDialoog: true
+		keys: [{ code: 'Slash', key: '/', cap: '/', mod: true }],
+		join: 'together',
+		description: 'Dit overzicht van de sneltoetsen',
+		handler: 'help',
+		inDialog: true
 	},
 	{
-		id: 'sluit',
-		soort: 'focus',
+		id: 'close',
+		kind: 'focus',
 		context: 'overal',
-		keys: [{ code: 'Escape', teken: 'Esc' }],
-		sep: 'samen',
-		omschrijving: 'Een venster, kaart, menu of opengeklapte rij sluiten',
-		handler: 'sluiten'
+		keys: [{ code: 'Escape', cap: 'Esc' }],
+		join: 'together',
+		description: 'Een venster, kaart, menu of opengeklapte rij sluiten',
+		handler: 'close'
 	},
 	{
-		id: 'zoek-resultaten',
-		soort: 'focus',
+		id: 'search-results',
+		kind: 'focus',
 		context: 'zoeken',
-		keys: [pijl('Up', '↑'), pijl('Down', '↓'), { code: 'Enter', teken: 'Enter' }],
-		sep: 'samen',
-		omschrijving: 'Door de zoekresultaten; Enter opent er een',
+		keys: [arrow('Up', '↑'), arrow('Down', '↓'), { code: 'Enter', cap: 'Enter' }],
+		join: 'together',
+		description: 'Door de zoekresultaten; Enter opent er een',
 		handler: 'Search',
-		waar: 'in het zoekveld'
+		focusIn: 'in het zoekveld'
 	},
 	{
-		id: 'zoek-wis',
-		soort: 'focus',
+		id: 'search-clear',
+		kind: 'focus',
 		context: 'zoeken',
-		keys: [{ code: 'Escape', teken: 'Esc' }],
-		sep: 'samen',
-		omschrijving: 'Het zoekveld wissen, of het zoeken sluiten',
+		keys: [{ code: 'Escape', cap: 'Esc' }],
+		join: 'together',
+		description: 'Het zoekveld wissen, of het zoeken sluiten',
 		handler: 'Search',
-		waar: 'in het zoekveld'
+		focusIn: 'in het zoekveld'
 	},
 	{
-		id: 'wissel',
-		soort: 'pagina',
+		id: 'toggle-view',
+		kind: 'page',
 		context: 'lezer',
-		keys: [letter('L', ALT)],
-		sep: 'samen',
-		omschrijving: 'Bij een bron: wisselen tussen de lezer en het netwerk',
-		handler: 'wissel'
+		keys: [letterKey('L', ALT)],
+		join: 'together',
+		description: 'Bij een bron: wisselen tussen de lezer en het netwerk',
+		handler: 'toggle-view'
 	},
 	{
-		id: 'tab-tekst',
-		soort: 'pagina',
+		id: 'panel-tab',
+		kind: 'page',
 		context: 'lezer',
-		keys: [cijfer('1', ALT), cijfer('2', ALT)],
-		sep: 'samen',
-		omschrijving: 'Op de telefoon: de tab Tekst of Verbonden',
-		handler: 'paneel'
+		keys: [digitKey('1', ALT), digitKey('2', ALT)],
+		join: 'together',
+		description: 'Op de telefoon: de tab Tekst of Verbonden',
+		handler: 'panel'
 	},
 	{
-		id: 'artikel-vorig',
-		soort: 'pagina',
+		id: 'article-prev',
+		kind: 'page',
 		context: 'lezer',
-		keys: [{ code: 'BracketLeft', key: '[', teken: '[', alt: true }],
-		sep: 'samen',
-		omschrijving: 'Het vorige artikel van de wet',
-		handler: 'artikel-vorig'
+		keys: [{ code: 'BracketLeft', key: '[', cap: '[', alt: true }],
+		join: 'together',
+		description: 'Het vorige artikel van de wet',
+		handler: 'article-prev'
 	},
 	{
-		id: 'artikel-volgend',
-		soort: 'pagina',
+		id: 'article-next',
+		kind: 'page',
 		context: 'lezer',
-		keys: [{ code: 'BracketRight', key: ']', teken: ']', alt: true }],
-		sep: 'samen',
-		omschrijving: 'Het volgende artikel van de wet',
-		handler: 'artikel-volgend'
+		keys: [{ code: 'BracketRight', key: ']', cap: ']', alt: true }],
+		join: 'together',
+		description: 'Het volgende artikel van de wet',
+		handler: 'article-next'
 	},
 	{
-		id: 'paneel-wissel',
-		soort: 'gereserveerd',
+		id: 'panel-toggle',
+		kind: 'reserved',
 		context: 'lezer',
-		keys: [letter('W', ALT)],
-		sep: 'samen',
-		omschrijving: 'Wisselen tussen de lezer en het paneel',
-		handler: 'paneel-wissel'
+		keys: [letterKey('W', ALT)],
+		join: 'together',
+		description: 'Wisselen tussen de lezer en het paneel',
+		handler: 'panel-toggle'
 	},
 	{
-		id: 'rij-focus',
-		soort: 'focus',
+		id: 'row-focus',
+		kind: 'focus',
 		context: 'bladeren',
-		keys: [letter('J'), letter('K'), { code: 'Enter', teken: 'Enter' }],
-		sep: 'samen',
-		omschrijving: 'Volgende of vorige rij onder Bronnen en in Verbonden; Enter opent haar',
-		handler: 'rijen',
-		waar: 'in de lijst'
+		keys: [letterKey('J'), letterKey('K'), { code: 'Enter', cap: 'Enter' }],
+		join: 'together',
+		description: 'Volgende of vorige rij onder Bronnen en in Verbonden; Enter opent haar',
+		handler: 'rows',
+		focusIn: 'in de lijst'
 	},
 	{
-		id: 'rij-pagina',
-		soort: 'pagina',
+		id: 'row-page',
+		kind: 'page',
 		context: 'bladeren',
-		keys: [letter('J', ALT), letter('K', ALT)],
-		sep: 'samen',
-		omschrijving: 'Vanaf elke plek naar de volgende of vorige rij van de lijst op de pagina',
-		handler: 'rijen'
+		keys: [letterKey('J', ALT), letterKey('K', ALT)],
+		join: 'together',
+		description: 'Vanaf elke plek naar de volgende of vorige rij van de lijst op de pagina',
+		handler: 'rows'
 	},
 	{
-		id: 'netwerk-aanwijzen',
-		soort: 'focus',
+		id: 'network-point',
+		kind: 'focus',
 		context: 'netwerk',
-		keys: [pijl('Left', '←'), pijl('Right', '→')],
-		sep: 'samen',
-		omschrijving: 'De volgende of vorige bron aanwijzen; Enter kiest haar',
+		keys: [arrow('Left', '←'), arrow('Right', '→')],
+		join: 'together',
+		description: 'De volgende of vorige bron aanwijzen; Enter kiest haar',
 		handler: 'GraphView',
-		waar: 'op het netwerk'
+		focusIn: 'op het netwerk'
 	},
 	{
-		id: 'netwerk-lijst',
-		soort: 'focus',
+		id: 'network-list',
+		kind: 'focus',
 		context: 'netwerk',
 		keys: [
-			pijl('Up', '↑'),
-			pijl('Down', '↓'),
-			{ code: 'Home', teken: 'Home' },
-			{ code: 'End', teken: 'End' }
+			arrow('Up', '↑'),
+			arrow('Down', '↓'),
+			{ code: 'Home', cap: 'Home' },
+			{ code: 'End', cap: 'End' }
 		],
-		sep: 'samen',
-		omschrijving: 'Door de bronnen in de lijst van het netwerk',
+		join: 'together',
+		description: 'Door de bronnen in de lijst van het netwerk',
 		handler: 'CanvasNodeList',
-		waar: 'in de lijst van het netwerk'
+		focusIn: 'in de lijst van het netwerk'
 	},
 	{
-		id: 'netwerk-n',
-		soort: 'focus',
+		id: 'network-add',
+		kind: 'focus',
 		context: 'netwerk',
-		keys: [letter('N')],
-		sep: 'samen',
-		omschrijving: 'De bron in die lijst aan het netwerk toevoegen of eruit halen',
+		keys: [letterKey('N')],
+		join: 'together',
+		description: 'De bron in die lijst aan het netwerk toevoegen of eruit halen',
 		handler: 'CanvasNodeList',
-		waar: 'in de lijst van het netwerk'
+		focusIn: 'in de lijst van het netwerk'
 	},
 	{
-		id: 'vergelijken',
-		soort: 'focus',
+		id: 'compare',
+		kind: 'focus',
 		context: 'vergelijken',
-		keys: [pijl('Left', '←'), pijl('Right', '→')],
-		sep: 'samen',
-		omschrijving: 'Bij Vergelijken: de vorige of volgende wijziging',
+		keys: [arrow('Left', '←'), arrow('Right', '→')],
+		join: 'together',
+		description: 'Bij Vergelijken: de vorige of volgende wijziging',
 		handler: 'VersionCompare'
 	}
 ];
 
 /** Clicks that are not keys: a link opened at once. In docs and the window, not in the e2e. */
-export const MUIS = {
+export const MOUSE = {
 	id: 'klik',
 	keys: 'klik met ⌘ of Ctrl, of de middelste muisknop',
-	omschrijving: 'Een verwijzing direct openen, zonder kaart'
+	description: 'Een verwijzing direct openen, zonder kaart'
 } as const;
-
-export const toetsVan = (id: string): Toets => {
-	const t = TOETSEN.find((x) => x.id === id);
-	if (!t) throw new Error(`Geen toets ${id} in het register`);
-	return t;
-};
 
 type KeyLike = Pick<KeyboardEvent, 'code' | 'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>;
 
@@ -258,12 +252,12 @@ export function isCombo(e: KeyLike, c: Combo): boolean {
 	return e.code === c.code || (!!c.key && e.key === c.key);
 }
 
-/** The key of `pagina` this press is, if any. */
-export function toetsVanEvent(e: KeyLike): { toets: Toets; combo: Combo } | null {
-	for (const toets of TOETSEN) {
-		if (toets.soort !== 'pagina') continue;
-		const combo = toets.keys.find((c) => isCombo(e, c));
-		if (combo) return { toets, combo };
+/** The key of kind `page` this press is, if any. */
+export function shortcutOfEvent(e: KeyLike): { shortcut: Shortcut; combo: Combo } | null {
+	for (const shortcut of SHORTCUTS) {
+		if (shortcut.kind !== 'page') continue;
+		const combo = shortcut.keys.find((c) => isCombo(e, c));
+		if (combo) return { shortcut, combo };
 	}
 	return null;
 }
