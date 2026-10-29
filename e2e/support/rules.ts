@@ -8,7 +8,7 @@ import { zijscroll } from '../../src/lib/dev/zijscroll';
  * page, a column that scrolls sideways and any element past the right edge, outside what pans
  * on purpose (`data-zijscroll`). The same check as the development warning (lib/dev/zijscroll.ts).
  */
-export const overflowX = (page: Page) => page.evaluate(zijscroll);
+export const overflowX = (page: Page) => page.evaluate(zijscroll as () => string[]);
 
 /** Visible text with a "·" as separator (house rule: a comma). */
 export const middots = (page: Page) =>
