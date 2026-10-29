@@ -362,6 +362,7 @@
 						: null,
 					citeLaw: nameOf.get(e.o.id) ?? '',
 					mentioned: isMention(e.o),
+					unknown: e.o.way === 'unknown',
 					// On the line close above the card of the child; with several laws above it,
 					// under each law instead, so the labels never stand on each other.
 					citeAt: e.many ? { x: r.tip.x, y: r.tip.y + 17 } : { x: r.end.x, y: r.end.y - 20 },
@@ -438,7 +439,7 @@
 	const citeGlance = (l: (typeof lines)[number], anchor: Element) => {
 		target = {
 			anchor: anchor as HTMLElement,
-			kicker: l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag',
+			kicker: l.unknown ? 'Grondslag onbekend' : l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag',
 			title: l.citeLaw,
 			lines: l.citeLines
 		};

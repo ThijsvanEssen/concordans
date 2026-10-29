@@ -1,9 +1,9 @@
 // The label on a line of the keten: the articles a regulation rests on, with the abbreviation
-// of their law behind them (`art. 19, 23 lid 1, 28 Cbb`). Past 27 characters the line says how
-// many (`11 art. Cbw`) and the glance on hover gives them all. One place: the drawing, the list
-// on a phone and the glance read it here.
+// of their law behind them (`art. 19, 23 lid 1, 28 Cbb`). Past 27 characters the line names the
+// first and how many more (`art. 3, 16, 17, 21, 24 +6`), never a count alone: "4 art." read as
+// article 4 (Thijs, 29 Oct). The glance on hover gives them all. One place: the drawing, the
+// list on a phone and the glance read it here.
 import { basisArticles, grondslagArtikelen, type BasisArticle } from '$lib/text/delegaties';
-import { formatCount } from '$lib/text/getal';
 import { NL } from '$lib/text/collator';
 
 type Deel = Parameters<typeof grondslagArtikelen>[0][number];
@@ -32,9 +32,16 @@ export function citeOf(articles: readonly Deel[], abbr: string): ArticleCite | n
 		: null;
 }
 
-/** What stands on the line. */
-export const citeText = (c: ArticleCite): string =>
-	c.full.length <= CITE_MAX ? c.full : `${formatCount(c.count)} art. ${c.abbr}`;
+/** What stands on the line: all of them, else as many as fit and `+N` for the rest. */
+export function citeText(c: ArticleCite): string {
+	const labels = c.articles.map((a) => a.label);
+	if (c.full.length <= CITE_MAX || labels.length < 2) return c.full;
+	for (let n = labels.length - 1; n > 1; n--) {
+		const text = `art. ${labels.slice(0, n).join(', ')} +${labels.length - n}`;
+		if (text.length <= CITE_MAX) return text;
+	}
+	return `art. ${labels[0]} +${labels.length - 1}`;
+}
 
 /** The glance of a label: every article it names on a line of its own (`art. 23 lid 1 Cbb`). */
 export const citeLines = (c: ArticleCite): string[] =>
