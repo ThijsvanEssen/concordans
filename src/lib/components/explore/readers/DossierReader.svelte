@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import FullTitle from '$lib/components/ui/FullTitle.svelte';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, textOf } from '$lib/text/words';
@@ -207,7 +208,7 @@
 			</ReaderHead>
 
 			{#if timeline.state.status === 'loading'}
-				<p class="laden">Procedure laden…</p>
+				<SlowLoad label="Procedure laden…" visible />
 			{:else if timeline.state.status === 'error'}
 				<LoadState state={timeline.state} what="De procedure" retry={timeline.retry} />
 			{:else if timeline.state.data}
@@ -331,10 +332,4 @@
 		text-decoration-color: currentColor;
 	}
 	/* Where the Eerste Kamer's outcome comes from: its site, named as its terms ask. */
-	.laden {
-		margin: var(--s-4) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
 </style>

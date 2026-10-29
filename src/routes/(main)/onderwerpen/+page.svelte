@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { capitalize } from '$lib/text/words';
 	import { atLeast } from '$lib/text/getal';
 	import { twoAtATime } from '$lib/util/two-at-a-time';
@@ -6,6 +7,7 @@
 	import AllN from '$lib/components/ui/AlleN.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
+	import Choice from '$lib/components/ui/Keuze.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { isAborted, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -65,7 +67,7 @@
 	import { addDays, korteDatum, sinceDate, vandaag } from '$lib/text/datum';
 
 	/** Words that give lines in Actueel; an example fills the field, it does not follow. */
-	const VOORBEELDEN = ['Stikstof', 'Jeugdwet', 'Woningbouw'];
+	const EXAMPLES = ['Stikstof', 'Jeugdwet', 'Woningbouw'];
 	/** Lines per topic, as the feed gives at most in one page. */
 	const PER_ONDERWERP = 100;
 	/** Lines shown of a topic before `Alle … tonen`. */
@@ -315,14 +317,14 @@
 		`/onderwerpen/overzicht?${new URLSearchParams({ onderwerp: topicParam(o.termen) })}`;
 
 	// ── Following ───────────────────────────────────────────────────────────
-	let invoer = $state('');
+	let typed = $state('');
 	function voegToe(e?: SubmitEvent) {
 		e?.preventDefault();
-		const termen = splitsTermen(invoer);
+		const termen = splitsTermen(typed);
 		if (!termen.length) return;
 		volg(termen);
 		eigen = lees();
-		invoer = '';
+		typed = '';
 	}
 	// Words of a topic changed in place: the topic loads again under its new words.
 	let bewerkt = $state<string | null>(null);
@@ -395,9 +397,9 @@
 					label: 'Onderwerp',
 					naam: 'Onderwerp volgen',
 					placeholder: 'AI; kunstmatige intelligentie',
-					waarde: invoer,
-					onInput: (v) => (invoer = v),
-					knop: { label: 'Volg', disabled: !normaal(invoer), onSubmit: () => voegToe() }
+					waarde: typed,
+					onInput: (v) => (typed = v),
+					knop: { label: 'Volg', disabled: !normaal(typed), onSubmit: () => voegToe() }
 				}}
 			/>
 		</div>
@@ -419,16 +421,12 @@
 				</p>
 				<div class="voorbeelden">
 					<span class="stil">Voorbeelden, vullen het veld</span>
-					<span class="voorbeeld-rij">
-						{#each VOORBEELDEN as term (term)}
-							<button
-								type="button"
-								class="btn"
-								aria-pressed={invoer === term}
-								onclick={() => (invoer = term)}>{term}</button
-							>
-						{/each}
-					</span>
+					<Choice
+						label="Voorbeelden"
+						opties={EXAMPLES.map((term) => ({ waarde: term, label: term }))}
+						waarde={EXAMPLES.includes(typed) ? typed : null}
+						onSelect={(term) => (typed = term)}
+					/>
 				</div>
 			</section>
 		{/if}
@@ -485,7 +483,7 @@
 					</div>
 				{/if}
 				{#if !s || s.status === 'laden'}
-					<p class="status stil">Laden…</p>
+					<SlowLoad label="Laden…" visible />
 				{:else if s.status === 'fout'}
 					<div class="status">
 						<LoadState
@@ -570,11 +568,6 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		font-size: var(--t-meta);
-	}
-	.voorbeeld-rij {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
 	}
 	.regel {
 		grid-column: 1 / -1;
