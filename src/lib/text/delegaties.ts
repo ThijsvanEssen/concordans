@@ -181,23 +181,23 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 }
 
 /** An article the head names: its number as cited (`23 lid 1`), the article it opens. */
-export type GrondslagArtikel = { label: string; key: string };
+type BasisArticle = { label: string; key: string };
 
 /** One law of the head's sentence: its name, and the articles of it the regulation rests on. */
-export type BasisWet = {
+export type BasisLaw = {
 	key: string;
 	naam: string;
 	/** `het` or `de`, for `art. 19 van het Cyberbeveiligingsbesluit`. */
-	lidwoord: string;
+	determiner: string;
 	/** Empty where the regulation only names the law, or names no article by number. */
-	artikelen: GrondslagArtikel[];
+	articles: BasisArticle[];
 };
 
 /** One sentence of the head of a regulation: `Op grond van` and the laws. */
-export type BasisPart = { werkwoord: string; wetten: BasisWet[] };
+export type BasisPart = { werkwoord: string; wetten: BasisLaw[] };
 
 /** `het` for what is a besluit, a wetboek, a verdrag; `de` for the rest (wet, regeling). */
-export const lidwoordVan = (naam: string): string =>
+const determinerOf = (naam: string): string =>
 	/(besluit|boek|wetboek|verdrag|reglement|statuut|handvest|protocol|akkoord)$/i.test(
 		naam.trim().replace(/\s+\d+$/, '')
 	)
@@ -206,10 +206,10 @@ export const lidwoordVan = (naam: string): string =>
 
 /** The articles of a law a regulation rests on, each with the article it opens, in the
  *  order of artikelDelen (`19`, `23 lid 1`, `28`). */
-export function grondslagArtikelLinks(
+function basisArticles(
 	articles: readonly (Deel & { key?: string | null })[],
 	bwb?: string | null
-): GrondslagArtikel[] {
+): BasisArticle[] {
 	const keys = new Map<string, string>();
 	for (const a of articles) {
 		const nr = a.article_number?.trim();
@@ -228,13 +228,13 @@ export function grondslagArtikelLinks(
 export function basisHeadLines(
 	items: readonly Pick<Schema<'InstrumentBasisItem'>, 'instrument' | 'basis_kind' | 'articles'>[]
 ): BasisPart[] {
-	const wet = (i: (typeof items)[number], metArtikelen: boolean): BasisWet => {
+	const wet = (i: (typeof items)[number], withArticles: boolean): BasisLaw => {
 		const naam = i.instrument.citation_title ?? naamVan('instruments', i.instrument);
 		return {
 			key: i.instrument.key,
 			naam,
-			lidwoord: lidwoordVan(naam),
-			artikelen: metArtikelen ? grondslagArtikelLinks(i.articles ?? [], i.instrument.key) : []
+			determiner: determinerOf(naam),
+			articles: withArticles ? basisArticles(i.articles ?? [], i.instrument.key) : []
 		};
 	};
 	const genoemd = items.filter((i) => i.basis_kind === 'mentioned');
@@ -263,5 +263,5 @@ export function medeOpGrondVan(
  * How many laws of a sentence of the head stand before "N andere": the first, where it names
  * its articles (a sentence long enough), three where the laws are only named.
  */
-export const wettenGetoond = (deel: BasisPart, alle: boolean): number =>
-	alle ? deel.wetten.length : deel.wetten[0]?.artikelen.length ? 1 : 3;
+export const lawsShown = (deel: BasisPart, all: boolean): number =>
+	all ? deel.wetten.length : deel.wetten[0]?.articles.length ? 1 : 3;

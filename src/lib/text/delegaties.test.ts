@@ -175,7 +175,7 @@ describe('the grondslag of a regulation', () => {
 		expect(basisHeadLines([])).toEqual([]);
 	});
 
-	it('names the articles a regulation rests on, each a link, and the law with its lidwoord', () => {
+	it('names the articles a regulation rests on, each a link, and the law with its determiner', () => {
 		const art = (nr: string, leden: string[] = []) =>
 			({ key: `bwbr0052875_${nr}`, article_number: nr, leden, onderdelen: [] }) as never;
 		const besluit = {
@@ -186,18 +186,18 @@ describe('the grondslag of a regulation', () => {
 			besluit,
 			{ ...wet('bwbr0052872', 'Cyberbeveiligingswet', 'delegates'), articles: [art('3')] }
 		]);
-		expect(deel.wetten[0].artikelen).toEqual([
+		expect(deel.wetten[0].articles).toEqual([
 			{ label: '19', key: 'bwbr0052875_19' },
 			{ label: '23 lid 1', key: 'bwbr0052875_23' },
 			{ label: '28', key: 'bwbr0052875_28' }
 		]);
-		expect(deel.wetten.map((w) => w.lidwoord)).toEqual(['het', 'de']);
+		expect(deel.wetten.map((w) => w.determiner)).toEqual(['het', 'de']);
 		// A law only named has no articles in the head.
 		const [, genoemd] = basisHeadLines([
 			besluit,
 			{ ...wet('bwbr0005537', 'Algemene wet bestuursrecht', 'mentioned'), articles: [art('3')] }
 		]);
-		expect(genoemd.wetten[0].artikelen).toEqual([]);
+		expect(genoemd.wetten[0].articles).toEqual([]);
 	});
 
 	it('names the kind of what is issued, and a preamble that only names the article', () => {

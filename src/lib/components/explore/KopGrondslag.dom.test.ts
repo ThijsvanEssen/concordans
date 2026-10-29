@@ -31,7 +31,7 @@ async function settle() {
 	}
 }
 
-const zinnen = (el: Element) =>
+const sentences = (el: Element) =>
 	[...el.querySelectorAll('p.whole-count')].filter((p) =>
 		/^\s*Op grond van\b/.test(p.textContent!)
 	);
@@ -49,7 +49,7 @@ describe('the grondslag in the head of a regulation', () => {
 	});
 	afterEach(() => vi.unstubAllGlobals());
 
-	const toon = async (items: unknown[]) => {
+	const show = async (items: unknown[]) => {
 		fakeApi({
 			'/api/instruments/{identifier}': {
 				...fixture.instrument,
@@ -68,14 +68,14 @@ describe('the grondslag in the head of a regulation', () => {
 	};
 
 	it('says the articles as links, once on the page', async () => {
-		const c = await toon([
+		const c = await show([
 			wet('bwbr0052875', 'Cyberbeveiligingsbesluit', [
 				['19', []],
 				['23', ['1']],
 				['28', []]
 			])
 		]);
-		const zin = zinnen(c);
+		const zin = sentences(c);
 		expect(zin).toHaveLength(1);
 		expect(zin[0].textContent!.replace(/\s+/g, ' ').trim()).toBe(
 			'Op grond van art. 19, 23 lid 1 en 28 van het Cyberbeveiligingsbesluit.'
@@ -89,13 +89,15 @@ describe('the grondslag in the head of a regulation', () => {
 	});
 
 	it('names the first law and opens the rest in place', async () => {
-		const c = await toon([
+		const c = await show([
 			wet('bwbr0052875', 'Cyberbeveiligingsbesluit', [['19', []]]),
 			wet('bwbr0026338', 'Drinkwaterwet', [['3', []]])
 		]);
-		expect(zinnen(c)[0].textContent).not.toContain('Drinkwaterwet');
+		expect(sentences(c)[0].textContent).not.toContain('Drinkwaterwet');
 		await fireEvent.click(c.querySelector('p.whole-count button')!);
-		expect(zinnen(c)).toHaveLength(1);
-		expect(zinnen(c)[0].textContent!.replace(/\s+/g, ' ')).toContain('art. 3 van de Drinkwaterwet');
+		expect(sentences(c)).toHaveLength(1);
+		expect(sentences(c)[0].textContent!.replace(/\s+/g, ' ')).toContain(
+			'art. 3 van de Drinkwaterwet'
+		);
 	});
 });
