@@ -44,8 +44,7 @@
 		parentKind,
 		parentRelation,
 		type ChainNode,
-		type ChainLayer,
-		type ParentWay
+		type ChainLayer
 	} from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
 
@@ -430,15 +429,11 @@
 		) ||
 		null;
 	/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
-	const grondslagOf = (k: ChainNode): string[] => {
-		const said = (way: ParentWay) =>
-			k.parents.filter((p) => p.way === way && p.cite).map((p) => p.cite!.full);
-		const out: string[] = [];
-		if (said('delegates').length) out.push(`Grondslag ${said('delegates').join(', ')}`);
-		if (said('mentioned').length) out.push(`Noemt ${said('mentioned').join(', ')}`);
-		if (said('unknown').length) out.push(`Grondslag onbekend ${said('unknown').join(', ')}`);
-		return out;
-	};
+	const grondslagOf = (k: ChainNode): string[] => [
+		...(k.grondslag ? [`Grondslag ${k.grondslag}`] : []),
+		...(k.mentions ? [`Noemt ${k.mentions}`] : []),
+		...(k.unknown ? [`Grondslag onbekend ${k.unknown}`] : [])
+	];
 	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
 	const hover = new HoverCard(() => false);
 	let target = $state<{

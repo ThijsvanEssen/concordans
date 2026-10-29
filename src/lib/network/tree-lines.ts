@@ -175,19 +175,33 @@ function groups(nodes: ReadonlyMap<string, TreeNode>, edges: readonly TreeEdge[]
 
 /** How far under the lowest name of a layer a line to a node beside its parent runs. */
 const BESIDE = 24;
+/** How far above a layer's rail a line up to the layer above runs: clear of the taks into it. */
+const GUTTER = LEVEL * (MAX_LEVEL + 1) + 2;
 
 /**
  * A line to a node in the parent's own layer (a wet that only names the law, beside it): down
  * from under the parent's name, along under the names of the layer, up to under the child's.
+ * To a node in a layer above (a wet that names an AMvB, in the row Wet): up from the parent's
+ * sign, along the gutter above its layer, up to under the child's name.
  */
-function besideLine(e: TreeEdge, nodes: ReadonlyMap<string, TreeNode>): TreeLine {
+function besideLine(
+	e: TreeEdge,
+	nodes: ReadonlyMap<string, TreeNode>,
+	rails: readonly number[]
+): TreeLine {
 	const p = nodes.get(e.parent)!;
 	const c = nodes.get(e.child)!;
+	const up = c.row < p.row;
 	const low = Math.max(...[...nodes.values()].filter((n) => n.row === p.row).map((n) => n.bottom));
-	const y = low + BESIDE;
-	const tip = { x: p.x, y: p.bottom };
+	const y = up ? rails[p.row] - GUTTER : low + BESIDE;
+	const tip = up ? { x: p.x, y: p.top } : { x: p.x, y: p.bottom };
 	const end = { x: c.x, y: c.bottom };
-	const points = tidy([{ x: tip.x, y: tip.y + (e.lead ?? 0) }, { x: p.x, y }, { x: c.x, y }, end]);
+	const points = tidy([
+		{ x: tip.x, y: up ? tip.y : tip.y + (e.lead ?? 0) },
+		{ x: p.x, y },
+		{ x: c.x, y },
+		end
+	]);
 	return {
 		id: e.id,
 		parent: e.parent,
@@ -207,9 +221,12 @@ export function treeLines(
 	edges: readonly TreeEdge[],
 	o: { rails: readonly number[]; boxes: readonly Box[] }
 ): TreeLine[] {
-	const isBeside = (e: TreeEdge) =>
-		nodes.has(e.parent) && nodes.get(e.parent)?.row === nodes.get(e.child)?.row;
-	const beside = edges.filter(isBeside).map((e) => besideLine(e, nodes));
+	const isBeside = (e: TreeEdge) => {
+		const p = nodes.get(e.parent);
+		const c = nodes.get(e.child);
+		return !!p && !!c && c.row <= p.row;
+	};
+	const beside = edges.filter(isBeside).map((e) => besideLine(e, nodes, o.rails));
 	const all = groups(
 		nodes,
 		edges.filter((e) => !isBeside(e))
