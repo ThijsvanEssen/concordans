@@ -72,7 +72,7 @@ test.describe('on a phone', () => {
 	test.beforeEach(({ touch }) => test.skip(!touch, 'a phone'));
 
 	for (const [naam, pad, wacht] of [
-		['the start', '/', 'Alles in Actueel'],
+		['the start', '/', 'Alle gebeurtenissen'],
 		['an article', ARTICLE, null],
 		['a Kamerlid', '/leden/rob-jetten', 'toezeggingen'],
 		['a Kamerstuk', '/kamerstukken/36799/31', null],

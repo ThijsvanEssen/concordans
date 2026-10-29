@@ -7,6 +7,7 @@
 	// to those days; the visit is then today's (API 0.80.1, #866). Asked after the first paint.
 	import { getFeed } from '$lib/api/feed';
 	import { report } from '$lib/api/errors';
+	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import Follow from '$lib/components/ui/Follow.svelte';
 	import { atomHref } from '$lib/components/actueel/feed';
@@ -76,24 +77,12 @@
 			>
 		{/snippet}
 	</Follow>
-	{#if newSince}<a
-			class="new-since"
+	{#if newSince}<TextLink
 			href="/actueel?{new URLSearchParams([
 				['dossier', number],
 				['van', newSince]
-			])}"><NewMark since={newSince} /></a
+			])}"><NewMark since={newSince} /></TextLink
 		>{/if}
 {:else}
 	<Follow href={atom} onFollow={follow} />
 {/if}
-
-<style>
-	.new-since {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-	}
-</style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import { tableTitle } from './table-title';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
@@ -151,7 +152,7 @@
 			>{countLine(verbonden.groups, filter)}{#if mentions}; {mentions}{/if}</span
 		>
 		<span class="toolbar__space"></span>
-		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← {backLabel}</a>
+		<TextLink href={backHref}>← {backLabel}</TextLink>
 		<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
 		<!-- The order: one TekstMenu, the columns as its options and the direction under the
 		     rule (Thijs, 10 Oct); choosing the same column again changes nothing. -->
@@ -341,8 +342,7 @@
 		font-size: var(--t-h3);
 		font-weight: 600;
 	}
-	.toolbar__count,
-	.toolbar__back {
+	.toolbar__count {
 		color: var(--ink-3);
 	}
 	.toolbar__space {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import { NOT_IN_DATA, coverageLine, lacks, notHeld } from '$lib/text/coverage';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
@@ -857,13 +858,11 @@
 					<a class="link" href={compareHref(shown.index, current.index)} data-sveltekit-noscroll
 						>Vergelijk met de geldende tekst</a
 					>
-					<button
-						type="button"
-						class="note__close"
+					<TextLink
 						onclick={() => {
 							shownIndex = null;
 							if (peildatum) go({ peildatum: null });
-						}}>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</button
+						}}>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</TextLink
 					>
 				{/if}
 			</p>
@@ -930,8 +929,8 @@
 			{:else if peildatumEmpty && isDay(peildatum)}
 				<p class="note">
 					{lacks(`Tekst van dit artikel ${onDate(peildatum)}`)}.
-					<button type="button" class="note__close" onclick={() => choosePeildatum('')}
-						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</button
+					<TextLink onclick={() => choosePeildatum('')}
+						>{expired ? 'Laatste tekst lezen' : 'Geldend recht lezen'}</TextLink
 					>
 				</p>
 			{:else if shown && shownText.state.status !== 'ready'}
@@ -1129,14 +1128,9 @@
 	.note--old .link {
 		margin-left: var(--s-2);
 	}
-	.note__close {
+	.note :global(.tekstlink) {
 		margin-left: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
 		color: var(--ink-2);
-		cursor: pointer;
 	}
 
 	/* The leden hang their own numbers in the frame's margin (ArticleText, ReaderFrame). */

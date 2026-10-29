@@ -62,7 +62,9 @@ test('the API reference lists the routes per kind', async ({ page }) => {
 	await page.goto('/api');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('API-referentie');
 	for (const part of ['Wetten', 'Artikelen', 'Uitspraken', 'Stemmingen'])
-		await expect(page.getByRole('heading', { level: 2, name: part, exact: true })).toBeVisible();
+		await expect(
+			page.getByRole('heading', { level: 2, name: new RegExp(`^${part} \\d+$`) })
+		).toBeVisible();
 	await expect(
 		page.getByText('/api/articles/{bwb_id}/{article_number}', { exact: true }).first()
 	).toBeVisible();

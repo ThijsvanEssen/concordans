@@ -171,9 +171,9 @@
 				{#if dateMode}
 					<div class="period">
 						<span class="muted">tot en met</span>
-						<input
-							class="year"
+						<Tekstveld
 							type="date"
+							label="Geldend tot en met"
 							value={draft.geldendOp ?? ''}
 							onchange={(e) =>
 								(draft = {
@@ -407,18 +407,7 @@
 		flex-wrap: wrap;
 		gap: var(--s-2);
 	}
-	.year {
-		width: 64px;
-		height: var(--veld-h);
-		padding: 0 var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink);
-	}
-	.year[type='date'] {
+	.period :global(.tekstveld) {
 		width: auto;
 	}
 	.muted {

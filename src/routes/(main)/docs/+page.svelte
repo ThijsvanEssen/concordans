@@ -362,8 +362,7 @@
 	.route li {
 		margin-bottom: var(--s-2);
 	}
-	code,
-	kbd {
+	code {
 		font-family: var(--font-serif);
 		font-size: 0.85em;
 		color: var(--ink-2);

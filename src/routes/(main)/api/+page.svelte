@@ -1,5 +1,8 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import type { PageData } from './$types';
 	import { RELATIONS } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
@@ -43,32 +46,18 @@
 			</dl>
 		</div>
 
-		<aside class="toc" aria-label="Inhoudsopgave">
-			<div class="toc-title">Inhoud</div>
-			<ul class="toc-list">
-				{#each data.tags as t, i (i)}
-					<li>
-						<a href="#{t.tag}">
-							<span class="toc-name">{t.label}</span>
-							<span class="toc-count">{t.endpoints.length}</span>
-						</a>
-					</li>
-				{/each}
-				<li>
-					<a href="#relaties">
-						<span class="toc-name">Relatienamen</span>
-						<span class="toc-count">{RELATIONS.length}</span>
-					</a>
-				</li>
-			</ul>
-		</aside>
+		<div class="toc">
+			<Inhoudsopgave
+				items={[
+					...data.tags.map((t) => ({ label: t.label, id: t.tag })),
+					{ label: 'Relatienamen', id: 'relaties' }
+				]}
+			/>
+		</div>
 
 		<div class="api-doc">
 			{#each data.tags as t, i (i)}
-				<section id={t.tag} class="api-tag">
-					<header class="api-tag-head">
-						<h2 class="api-tag-title">{t.label}</h2>
-					</header>
+				<Sectie id={t.tag} title={t.label} aantal={t.endpoints.length} sleutel="api-{t.tag}">
 					{#if t.description}
 						<p class="api-tag-desc">{t.description}</p>
 					{/if}
@@ -88,7 +77,7 @@
 									{#if ep.summary}
 										<span class="api-summary">{ep.summary}</span>
 									{/if}
-									<span class="api-chev" aria-hidden="true" class:is-open={opOpen}>▸</span>
+									<Caret open={opOpen} side />
 								</button>
 
 								{#if opOpen}
@@ -158,12 +147,9 @@
 							</li>
 						{/each}
 					</ul>
-				</section>
+				</Sectie>
 			{/each}
-			<section id="relaties" class="api-tag">
-				<header class="api-tag-head">
-					<h2 class="api-tag-title">Relatienamen</h2>
-				</header>
+			<Sectie id="relaties" title="Relatienamen" aantal={RELATIONS.length} sleutel="api-relaties">
 				<p class="api-tag-desc">
 					De naam van een verbinding in de API (<code>relation</code>) en zoals de site haar noemt.
 				</p>
@@ -177,7 +163,7 @@
 						{/each}
 					</tbody>
 				</table>
-			</section>
+			</Sectie>
 		</div>
 
 		<div class="api-footer">
@@ -249,47 +235,6 @@
 		position: sticky;
 		top: calc(var(--balk-h) + var(--s-6));
 	}
-	.toc-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-2);
-	}
-	.toc-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-	}
-	.toc-list a {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		padding: var(--s-1) 0;
-		color: var(--ink-2);
-		text-decoration: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		border-bottom: 1px dotted transparent;
-	}
-	.toc-list a:hover {
-		color: var(--ink);
-		border-bottom-color: var(--rule);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	.toc-name {
-		flex: 1;
-	}
-	.toc-count {
-		font-family: var(--font-serif);
-		font-variant-numeric: tabular-nums;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		margin-left: var(--s-2);
-	}
 
 	/* ── Endpoint sections ────────────────────────────────────────────────── */
 	.api-doc {
@@ -298,26 +243,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-8);
+		--lezer-stap: var(--s-8);
 	}
 
-	.api-tag {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-3);
-		scroll-margin-top: calc(var(--balk-h) + var(--s-6));
-	}
-	.api-tag-head {
-		display: flex;
-		align-items: baseline;
-		border-bottom: 1px solid var(--rule);
-		padding-bottom: var(--s-2);
-	}
-	.api-tag-title {
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-	}
 	.api-tag-desc {
 		font-size: var(--t-meta);
 		line-height: 1.55;
@@ -380,15 +308,6 @@
 		display: block;
 		color: var(--ink-3);
 		font-size: var(--t-micro);
-	}
-	.api-chev {
-		color: var(--ink-3);
-		font-size: var(--t-micro);
-		transition: transform var(--dur-1);
-		margin-right: var(--s-1);
-	}
-	.api-chev.is-open {
-		transform: rotate(90deg);
 	}
 
 	.api-endpoint-body {

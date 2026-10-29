@@ -457,7 +457,7 @@
 							{/if}
 							<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
 						{/if}
-						{#if isWords(o)}<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>{/if}
+						{#if isWords(o)}<TekstLink href={overzichtHref(o)}>Overzicht</TekstLink>{/if}
 					</span>
 				{/snippet}
 				<p class="sinds">{telRegel(o, s)}</p>
@@ -602,7 +602,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
-	.onderwerp-acties a,
 	.verder a {
 		color: var(--ink-2);
 		text-decoration: underline;
@@ -611,13 +610,6 @@
 	/* The topics as groups of the page; the first on the top line of the facet column. */
 	.inhoud > :global(.sectie + .sectie) {
 		margin-top: var(--s-7);
-	}
-	.naar-overzicht {
-		color: var(--ink-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		text-decoration: underline;
-		text-underline-offset: 2px;
 	}
 	.woorden {
 		margin: 0 0 var(--s-4);

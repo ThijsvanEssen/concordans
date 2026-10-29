@@ -94,6 +94,7 @@ fails on a label of a button that is not in this table.
 | `Alle besluiten`                     | naam      |
 | `Adres van deze onderwerpen`         | naam      |
 | `Gevolgd. Naar de eigen onderwerpen` | naam      |
+| `Overzicht`                          | naam      |
 | `Bron ↗`                             | naam      |
 | `×`                                  | naam      |
 

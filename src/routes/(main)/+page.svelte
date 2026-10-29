@@ -6,7 +6,8 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import { load } from '$lib/util/load.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
@@ -101,51 +102,46 @@
 	const today = vandaag();
 
 	let lines = $state<TimelineLine[]>([]);
-	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
-	let feedState = $state<'laden' | 'klaar' | 'fout'>('laden');
-	/** Why Actueel failed: slow or broken, for LoadState. */
-	let feedError = $state.raw<unknown>(null);
-	/** Opnieuw after a failure: Actueel asked again. */
-	let retries = $state(0);
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
 	let lawNetwork = $state<Schets | null>(null);
 	/** Its place stands while it is asked, so Actueel under it does not drop (0.16 of layout
 	 *  shift live, 10 Oct); it closes only where there is no bill to show. */
 	let networkLoading = $state(true);
 
+	/** The last days in one answer: their counts and the events that stand alone. */
+	const feed = load(
+		() => today,
+		(until, signal) =>
+			getFeedSummary(
+				{
+					until,
+					days: SUMMARY_DAYS,
+					margin: CLOSE_VOTE,
+					few: FEW_VOTES,
+					limit: SUMMARY_ITEMS
+				},
+				signal
+			),
+		'Actueel'
+	);
+
 	$effect(() => {
-		void retries;
+		const answer = feed.state;
+		if (answer.status === 'error') networkLoading = false;
+		if (answer.status !== 'ready') return;
+		const summary = answer.data;
 		const ac = new AbortController();
-		loadLines(ac.signal).catch((e) => {
-			if (!ac.signal.aborted) {
-				report('Actueel', e);
-				feedError = e;
-				feedState = 'fout';
-				networkLoading = false;
-			}
-		});
+		lines = timelineOf(summary, LINES_SHOWN);
+		loadNetwork(summary.items ?? [], ac.signal).catch((e) => report('Wetsnetwerk', e));
 		return () => ac.abort();
 	});
 
-	/** The last days in one answer: their counts and the events that stand alone. */
-	async function loadLines(signal: AbortSignal) {
-		const summary = await getFeedSummary(
-			{
-				until: today,
-				days: SUMMARY_DAYS,
-				margin: CLOSE_VOTE,
-				few: FEW_VOTES,
-				limit: SUMMARY_ITEMS
-			},
-			signal
-		);
-		lines = timelineOf(summary, LINES_SHOWN);
-		feedState = 'klaar';
+	async function loadNetwork(items: Parameters<typeof laadWetsnetwerk>[0], signal: AbortSignal) {
 		// The network waits until Actueel is drawn and the browser is idle.
 		await tick();
 		await idle();
 		if (signal.aborted) return;
-		lawNetwork = await laadWetsnetwerk(summary.items ?? [], today, signal).catch((e) => {
+		lawNetwork = await laadWetsnetwerk(items, today, signal).catch((e) => {
 			report('Wetsnetwerk', e);
 			return null;
 		});
@@ -261,28 +257,9 @@
 				<h2 id="actueel-heading"><a class="raakvlak" href="/actueel">Actueel</a></h2>
 				<p class="volger">Wat de Kamers en de rechter de afgelopen dagen met de wet deden.</p>
 			</header>
-			{#if feedState === 'laden'}
-				<div class="laden" aria-hidden="true">
-					{#each [0, 1, 2] as i (i)}
-						<div class="laden__regel">
-							<span class="balk balk--kort"></span>
-							<span class="balk"></span>
-						</div>
-					{/each}
-				</div>
-				<SlowLoad label="Actueel laden" />
-			{:else if feedState === 'fout'}
-				<LoadState
-					state={{ status: 'error', error: feedError }}
-					what="Actueel"
-					retry={() => {
-						feedState = 'laden';
-						retries++;
-					}}
-				/>
-			{/if}
+			<LoadState state={feed.state} what="Actueel" retry={feed.retry} form="block" />
 			<Tijdlijn groepen={groups} datums={false} />
-			<p class="all"><a class="raakvlak" href="/actueel">Alles in Actueel →</a></p>
+			<p class="all"><AlleN noun="gebeurtenissen" href="/actueel" /></p>
 		</section>
 	</div>
 </div>
@@ -403,43 +380,9 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	/* On a line of its own under the timeline, at the right, as Open in Samenhang. */
+	/* On a line of its own under the timeline, at the left, as AlleN under every list. */
 	.all {
-		display: flex;
-		justify-content: flex-end;
 		margin: var(--s-5) 0 0;
 		font-size: var(--t-meta);
-	}
-	.all a {
-		font-weight: 600;
-		color: var(--ink);
-	}
-	@media (max-width: 640px) {
-		.all a {
-			padding: var(--s-2) 0;
-		}
-	}
-
-	/* While Actueel loads: a few quiet lines where the timeline will stand. */
-	.laden {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-5);
-		padding: var(--s-3) 0;
-	}
-	.laden__regel {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.balk {
-		display: block;
-		height: var(--s-3);
-		width: 80%;
-		border-radius: var(--r-1);
-		background: var(--paper-2);
-	}
-	.balk--kort {
-		width: 30%;
 	}
 </style>
