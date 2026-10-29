@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import type { Collection } from '$lib/vocabulary';
 import {
+	bestEarly,
 	bestHit,
 	around,
 	bySection,
@@ -425,6 +426,33 @@ describe('bestHit', () => {
 			])?.hit.id
 		).toBe('ecli');
 		expect(bestHit([group('articles', hit('art', 'articles', 0.5))])).toBeNull();
+	});
+});
+
+describe('bestEarly', () => {
+	type H = Schema<'SearchResultItem'>;
+	const hit = (id: string, collection: string, score: number) =>
+		({ id, key: id, collection, display_name: id, score }) as unknown as H;
+	const group = (kind: Collection, ...hits: H[]) => ({ kind, hits });
+	const lead = (best: string | null) => ({
+		kinds: ['instruments', 'factions'] as Collection[],
+		answer: { named: true, best }
+	});
+	const groups = [
+		group('instruments', hit('wet', 'instruments', 0.5)),
+		group('articles', hit('art', 'articles', 1))
+	];
+
+	it('takes the pick of the lead lane at once and keeps it when a slower lane names another', () => {
+		const answers = [lead('wet').answer, { named: true, best: 'art' }];
+		expect(bestEarly(lead('wet'), groups, answers, false)?.hit.id).toBe('wet');
+		expect(bestEarly(lead('wet'), groups, answers, true)?.hit.id).toBe('wet');
+	});
+
+	it('leaves a slower lane to deliver it only when the lead names none, and only once all are in', () => {
+		const answers = [lead(null).answer, { named: true, best: 'art' }];
+		expect(bestEarly(lead(null), groups, answers, false)).toBeNull();
+		expect(bestEarly(lead(null), groups, answers, true)?.hit.id).toBe('art');
 	});
 });
 

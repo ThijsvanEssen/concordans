@@ -21,7 +21,7 @@
 		bySection,
 		groupLabel,
 		groupOrder,
-		pickBest,
+		bestEarly,
 		sectionOf,
 		slots
 	} from '$lib/search/present';
@@ -109,16 +109,28 @@
 	const judgments = $derived(judgmentFacets(results.hitsOf('judgments')));
 	// The groups stand in the order of the typeahead (groupOrder): by the fast lane alone, so
 	// the slow ones (the text, the judgments) come in under their places, each holding its
-	// place with "Laden…", and move none. The Beste treffer stands above once every lane is in.
+	// place with "Laden…", and move none. The Beste treffer stands above as soon as the lead
+	// lane (the fast one) is in, and no slower lane replaces it.
 	const order = $derived(
 		groupOrder(
 			kinds,
 			LANES[0].kinds.map((kind) => ({ kind, hits: hitsOf(kind) }))
 		)
 	);
-	const best = $derived(!chosen && results.done ? pickBest(groups, results.answers) : null);
+	const lead = $derived(LANES.find((l) => l.kinds.some((k) => kinds.includes(k))) ?? LANES[0]);
+	const leadIn = $derived(results.lanes[lead.id].status !== 'loading');
+	const best = $derived(
+		!chosen && leadIn
+			? bestEarly(
+					{ kinds: lead.kinds, answer: results.lanes[lead.id] },
+					groups,
+					results.answers,
+					results.done
+				)
+			: null
+	);
 	const bestComing = $derived(
-		!chosen && !results.done && !best && groups.length > 0 && q.length >= 2
+		!chosen && !results.done && !best && (groups.length > 0 || leadIn) && q.length >= 2
 	);
 	const waiting = $derived(
 		new Set(

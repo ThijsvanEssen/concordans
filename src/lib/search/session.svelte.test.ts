@@ -702,7 +702,9 @@ describe('the order of the groups', () => {
 		);
 		await settle();
 		const order = () => s.shown.map((x) => (x.best ? 'beste' : x.kind));
-		expect(order().slice(0, 3)).toEqual(['members', 'articles', 'judgments']);
+		// The Beste treffer stands as the fast lane is in; its group gives the hit up.
+		expect(order().slice(0, 3)).toEqual(['beste', 'articles', 'judgments']);
+		expect(s.best?.hit.id).toBe('members/yesilgoz');
 		const before = order();
 		of('articles').answer(answer({ articles: [hit('articles', 'a', 0.1)] }));
 		await settle();
@@ -710,7 +712,61 @@ describe('the order of the groups', () => {
 		expect(order().filter((k) => before.includes(k))).toEqual(
 			before.filter((k) => order().includes(k))
 		);
-		expect(order()[0]).toBe('members');
+		expect(order()[0]).toBe('beste');
+		expect(s.best?.hit.id).toBe('members/yesilgoz');
+		stop();
+	});
+});
+
+describe('the Beste treffer comes with the fast lane', () => {
+	it('stands as soon as the fast lane is in, and no slow lane replaces it or moves the list', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'huur');
+		of('instruments').answer(
+			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { best: 'instruments/huurwet' })
+		);
+		await settle();
+		expect(s.allIn).toBe(false);
+		expect(s.best?.hit.id).toBe('instruments/huurwet');
+		expect(s.bestComing).toBe(false);
+		const before = s.shown.map((x) => (x.best ? 'beste' : x.kind));
+		// The text lane names a better hit later: the Beste treffer stays, nothing shifts.
+		of('articles').answer(
+			answer({ articles: [hit('articles', 'art', 9)] }, { best: 'articles/art' })
+		);
+		await settle();
+		expect(s.best?.hit.id).toBe('instruments/huurwet');
+		expect(s.shown[0]).toMatchObject({ best: true });
+		expect(s.shown.map((x) => (x.best ? 'beste' : x.kind)).slice(0, before.length - 1)).toEqual(
+			before.slice(0, before.length - 1)
+		);
+		of('judgments').answer(answer({ judgments: [hit('judgments', 'j', 9)] }, { best: null }));
+		await settle();
+		expect(s.allIn).toBe(true);
+		expect(s.best?.hit.id).toBe('instruments/huurwet');
+		stop();
+	});
+
+	it('holds the place of the Beste treffer where the fast lane has none, and a slow lane may fill it', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'stikstofbeleid');
+		of('instruments').answer(answer({ instruments: [] }, { best: null }));
+		await settle();
+		expect(s.best).toBe(null);
+		expect(s.bestComing).toBe(true);
+		of('articles').answer(
+			answer({ articles: [hit('articles', 'art', 1)] }, { best: 'articles/art' })
+		);
+		await settle();
+		// Still the place held: the judgments are on their way.
+		expect(s.best).toBe(null);
+		expect(s.bestComing).toBe(true);
+		of('judgments').answer(answer({ judgments: [] }, { best: null }));
+		await settle();
+		expect(s.best?.hit.id).toBe('articles/art');
+		expect(s.bestComing).toBe(false);
 		stop();
 	});
 });
