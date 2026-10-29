@@ -26,6 +26,7 @@ export type LayerId =
 	| 'law'
 	| 'implementation'
 	| 'statute'
+	| 'named'
 	| 'amvb'
 	| 'kb'
 	| 'ministerial'
@@ -38,6 +39,7 @@ const LAYER_LABEL: Record<LayerId, string> = {
 	law: 'Wet',
 	implementation: 'Implementatie',
 	statute: 'Wet',
+	named: 'Wet, noemt',
 	kb: 'Koninklijk besluit',
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
@@ -47,6 +49,12 @@ const LAYER_LABEL: Record<LayerId, string> = {
 
 /** The order of the layers of regulations under the articles. */
 const REGULATION_LAYERS: LayerId[] = ['amvb', 'kb', 'ministerial', 'policy', 'other'];
+
+/**
+ * How a node hangs under its parent: a power given, only named, or not known (the data has no
+ * basis_kind for it). Unknown is no delegation: it stands behind Noemt, as a mention does.
+ */
+export type ParentWay = 'delegates' | 'mentioned' | 'unknown';
 
 export type ChainNode = {
 	/** The node id: `instruments/bwbr…`, `articles/bwbr…_16`. */
@@ -72,12 +80,14 @@ export type ChainNode = {
 	/** `grondslag art. 16, 20 en 33`, `noemt art. 22`: how it hangs under the law. */
 	grondslag: string | null;
 	mentions: string | null;
+	/** Its articles whose basis_kind the data lacks: neither a power given nor a mention. */
+	unknown?: string | null;
 	/** How it hangs, said on a phone's list: a seat and its years, an appeal and its court. */
 	how?: string | null;
 	/** The nodes of the layer above it, and how: a power given, or only named. */
 	parents: {
 		id: string;
-		way: 'delegates' | 'mentioned';
+		way: ParentWay;
 		relation?: Relation;
 		cite?: ArticleCite;
 	}[];
@@ -94,11 +104,14 @@ export type ChainNode = {
 export const parentRelation = (p: ChainNode['parents'][number]): Relation =>
 	p.relation ?? (p.way === 'delegates' ? 'BASED_ON' : 'REFERS_TO');
 
+/** A line of the keten that is no power given: a mention, or a grondslag the data lacks. */
+export const isMention = (p: Pick<ChainNode['parents'][number], 'way'>) => p.way !== 'delegates';
+
 /** The kind a line of the keten is drawn in: a mention is an Aanhaling, a grondslag Structureel. */
 export const parentKind = (p: ChainNode['parents'][number]): LineKind =>
 	lineKindOf(
 		parentRelation(p),
-		p.relation === 'REFERS_TO' || p.way === 'mentioned' ? 'judgment' : 'article'
+		p.relation === 'REFERS_TO' || isMention(p) ? 'judgment' : 'article'
 	);
 
 /**
@@ -190,9 +203,28 @@ type ChainOptions = {
 	article?: string | null;
 	/** The regulations that only name the law, with dashed lines; off, only what rests on it. */
 	mentions?: boolean;
+	/**
+	 * The laws that only name the law in their text (REFERS_TO, `related-instruments`), drawn as
+	 * mentions: with `mentions` off they are not part of the keten.
+	 */
+	refers?: readonly Referring[] | null;
 	/** The EU acts the law implements, above it, and the laws that implement it, below (F1). */
 	eu?: { implements: readonly EuInstrument[]; implementedBy: readonly EuInstrument[] } | null;
 };
+
+/** A law that refers to the one drawn, as `related-instruments` gives it. */
+type Referring = Pick<
+	Schema<'InstrumentRelatedItem'>,
+	| 'id'
+	| 'key'
+	| 'bwb_id'
+	| 'celex'
+	| 'display_name'
+	| 'citation_title'
+	| 'kind'
+	| 'date_in_force'
+	| 'inbound_cited_count'
+>;
 
 const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
 	id: i.id,
@@ -204,6 +236,7 @@ const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
 	since: null,
 	grondslag: null,
 	mentions: null,
+	unknown: null,
 	parents,
 	further: []
 });
@@ -223,6 +256,7 @@ export function chain(
 		kind = null,
 		article = null,
 		eu = null,
+		refers = null,
 		mentions = true
 	}: ChainOptions = {}
 ): {
@@ -286,6 +320,9 @@ export function chain(
 			)
 		});
 	}
+	/** A missing basis_kind is its own state: not known, never taken for a power given. */
+	const wayOf = (kind: string | null | undefined): ParentWay =>
+		kind === 'delegates' || kind === 'mentioned' ? kind : 'unknown';
 	const abbrOf = (i: Summary): string => i.abbreviation ?? i.short_title ?? nameOf(i);
 	const lawAbbr = law.abbreviation ?? (law.instrument ? abbrOf(law.instrument) : null) ?? law.name;
 	/**
@@ -296,9 +333,9 @@ export function chain(
 		id: string,
 		list: readonly BasisArticle[],
 		abbr: string,
-		fallback: 'delegates' | 'mentioned'
+		fallback: ParentWay
 	): ChainNode['parents'] => {
-		const out = (['delegates', 'mentioned'] as const).flatMap((way) => {
+		const out = (['delegates', 'mentioned', 'unknown'] as const).flatMap((way) => {
 			const mine = list.filter((a) => (a.basis_kind ?? fallback) === way);
 			return mine.length ? [{ id, way, cite: citeOf(mine, abbr) ?? undefined }] : [];
 		});
@@ -322,6 +359,7 @@ export function chain(
 					since: null,
 					grondslag: null,
 					mentions: null,
+					unknown: null,
 					parents: [],
 					further: []
 				})),
@@ -343,14 +381,10 @@ export function chain(
 				since: null,
 				grondslag: null,
 				mentions: null,
+				unknown: null,
 				parents: [
 					...(basis?.items ?? []).flatMap((b) =>
-						parentsOf(
-							b.instrument.id,
-							b.articles,
-							abbrOf(b.instrument),
-							b.basis_kind === 'mentioned' ? 'mentioned' : 'delegates'
-						)
+						parentsOf(b.instrument.id, b.articles, abbrOf(b.instrument), wayOf(b.basis_kind))
 					),
 					...(eu?.implements ?? []).map((i) => ({ id: i.id, way: 'delegates' as const }))
 				],
@@ -363,8 +397,6 @@ export function chain(
 	// regulation of it in turn (sub_delegated: the Cyberbeveiligingsregelingen under the
 	// Cyberbeveiligingsbesluit), each tied to what it is issued under, with the articles it names.
 	const byId = new Map<string, ChainNode>();
-	const wayOf = (kind: string | null | undefined): 'delegates' | 'mentioned' =>
-		kind === 'mentioned' ? 'mentioned' : 'delegates';
 	const take = (
 		r: Pick<Item, 'instrument' | 'kind' | 'date_in_force' | 'expired_on'> & {
 			sub_delegated?: Item['sub_delegated'];
@@ -388,6 +420,7 @@ export function chain(
 			expired: r.expired_on ?? null,
 			grondslag: null,
 			mentions: null,
+			unknown: null,
 			parents,
 			further: (r.sub_delegated ?? []).map((sub) => nameOf(sub.instrument))
 		});
@@ -402,21 +435,56 @@ export function chain(
 				sub,
 				parentsOf(item.instrument.id, sub.articles, abbrOf(item.instrument), wayOf(sub.basis_kind))
 			);
-	// Without the mentions, a regulation that only names the law is no part of its keten.
-	const nodes = [...byId.values()].filter(
-		(node) => mentions || node.parents.some((p) => p.way === 'delegates')
-	);
+	// The laws that only name this one in their text: mentions, with the number of its articles.
+	for (const r of mentions ? (refers ?? []) : []) {
+		if (!/^(?:wet|rijkswet)$/i.test(r.kind ?? '')) continue;
+		const cite = {
+			full: `${r.inbound_cited_count} art. ${lawAbbr}`,
+			count: r.inbound_cited_count,
+			abbr: lawAbbr
+		};
+		take(
+			{
+				instrument: {
+					...r,
+					title: r.display_name ?? r.citation_title ?? r.id,
+					short_title: null,
+					abbreviation: null
+				} as unknown as Summary,
+				kind: r.kind,
+				date_in_force: r.date_in_force,
+				expired_on: null
+			},
+			[{ id: law.id, way: 'mentioned', relation: 'REFERS_TO', cite }]
+		);
+	}
+	// Without the mentions, only what rests on the law is part of its keten: a regulation under
+	// a regulation that is left out goes with it, unless a power given leads to it another way.
+	const alive = new Set<string>([law.id]);
+	if (mentions) for (const id of byId.keys()) alive.add(id);
+	else
+		for (let grown = true; grown; ) {
+			grown = false;
+			for (const [id, node] of byId)
+				if (!alive.has(id) && node.parents.some((p) => p.way === 'delegates' && alive.has(p.id))) {
+					alive.add(id);
+					grown = true;
+				}
+		}
+	const nodes = [...byId.values()].filter((node) => alive.has(node.id));
 	if (!mentions)
-		for (const node of nodes) node.parents = node.parents.filter((p) => p.way === 'delegates');
+		for (const node of nodes)
+			node.parents = node.parents.filter((p) => p.way === 'delegates' && alive.has(p.id));
 	// What it rests on, said on a phone's row: the articles of each law with its abbreviation.
 	for (const node of nodes) {
-		const said = (way: 'delegates' | 'mentioned') =>
+		const said = (way: ParentWay) =>
 			node.parents
 				.filter((p) => p.way === way && p.cite)
 				.map((p) => p.cite!.full)
 				.join(', ') || null;
 		node.grondslag = said('delegates');
 		node.mentions = said('mentioned');
+		node.unknown = said('unknown');
 	}
 	// Ordered by what they hang under, so the lines cross as little as they can: by the place of
 	// the regulation above, then by name.
@@ -427,11 +495,25 @@ export function chain(
 		return at.length ? Math.min(...at) : Number.POSITIVE_INFINITY;
 	};
 	const perLayer = new Map<LayerId, ChainNode[]>();
+	// A wet issued under the law stands beside it in its layer (no line between them); one that
+	// only names it, or whose basis the data lacks, in a layer of its own under it, with the
+	// dashed line and its label. The regulations under either hang from it.
+	const bucketOf = (n: ChainNode): LayerId => {
+		const id = layerOf(n.kind);
+		return id === 'statute' && n.parents.every(isMention) ? 'named' : id;
+	};
+	const cited = (n: ChainNode) => Math.max(0, ...n.parents.map((p) => p.cite?.count ?? 0));
 	const statutes: ChainNode[] = [];
-	for (const id of ['statute' as const, ...REGULATION_LAYERS]) {
+	for (const id of ['statute' as const, 'named' as const, ...REGULATION_LAYERS]) {
 		const all = nodes
-			.filter((n) => layerOf(n.kind) === id)
-			.sort((x, y) => keyOf(x) - keyOf(y) || NL.compare(x.name, y.name));
+			.filter((n) => bucketOf(n) === id)
+			.sort(
+				(x, y) =>
+					keyOf(x) - keyOf(y) ||
+					// Those that name most of the law's articles first.
+					(id === 'named' ? cited(y) - cited(x) : 0) ||
+					NL.compare(x.name, y.name)
+			);
 		const drawn: ChainNode[] = [];
 		for (const n of all) {
 			if (drawn.length >= max && n.id !== keep) {
@@ -445,7 +527,6 @@ export function chain(
 		if (id === 'statute') statutes.push(...drawn);
 		else if (drawn.length) perLayer.set(id, drawn);
 	}
-	// A wet beside the law stands in its layer; the regulations under it hang from it.
 	for (const n of statutes) n.parents = [];
 	lawLayer.nodes.push(...statutes);
 	if (eu?.implementedBy.length)
@@ -457,7 +538,7 @@ export function chain(
 				eu.implementedBy.map((i) => euNode(i, [{ id: law.id, way: 'delegates' }]))
 			)
 		});
-	for (const id of REGULATION_LAYERS) {
+	for (const id of ['named' as const, ...REGULATION_LAYERS]) {
 		const list = perLayer.get(id);
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}

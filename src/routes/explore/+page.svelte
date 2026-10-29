@@ -131,7 +131,7 @@
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 	import { getChains, getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
-	import { getEuLinks } from '$lib/api/verbonden';
+	import { getEuLinks, getRelatedInstruments } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
@@ -458,6 +458,11 @@
 		basis: Awaited<ReturnType<typeof getLawBasis>> | null;
 		eu: Awaited<ReturnType<typeof getEuLinks>> | null;
 	} | null>(null);
+	/** The laws that only name the keten's law in their text, asked once Noemt is on. */
+	let chainRefers = $state.raw<{
+		bwb: string;
+		items: Awaited<ReturnType<typeof getRelatedInstruments>>['items'];
+	} | null>(null);
 	let chainError = $state.raw<{ bwb: string; error: unknown } | null>(null);
 	let chainTries = $state(0);
 	const chainFailure = $derived(
@@ -490,6 +495,20 @@
 				report('Keten', e);
 				if (current) chainError = { bwb, error: e };
 			});
+		return () => {
+			current = false;
+		};
+	});
+	$effect(() => {
+		const bwb = chainLaw;
+		// A law's keten only: an article or a publication names no law that refers to it.
+		if (!bwb || !chainMentions || chainArticle || chainRefers?.bwb === bwb) return;
+		let current = true;
+		getRelatedInstruments(bwb, 200)
+			.then((r) => {
+				if (current) chainRefers = { bwb, items: r.items };
+			})
+			.catch((e) => report('Keten noemt', e));
 		return () => {
 			current = false;
 		};
@@ -578,6 +597,7 @@
 				kind: chainKind,
 				article: chainArticle,
 				mentions,
+				refers: chainRefers?.bwb === bwb ? chainRefers.items : null,
 				eu: eu
 					? {
 							implements: eu.implements.map((l) => l.instrument),
