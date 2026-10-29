@@ -27,7 +27,8 @@
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { hasArrow } from '$lib/graph/line-kind';
-	import { citeText } from '$lib/network/cite-label';
+	import { citeLines, citeText } from '$lib/network/cite-label';
+	import { openHref } from '$lib/bron/href';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
@@ -279,6 +280,7 @@
 	 * style of the line is this one place.
 	 */
 	const lines = $derived.by(() => {
+		const nameOf = new Map(shown.flatMap((l) => l.nodes.map((k) => [k.id, k.name] as const)));
 		// A tak runs in the middle of the gutter, never on the line between two rows.
 		const rails = tops.map((t) => t + 8);
 		const nodes = new Map<string, TreeNode>();
@@ -340,6 +342,7 @@
 				? `${r.tip.x},${r.tip.y} ${r.tip.x - w},${r.tip.y + e.head} ${r.tip.x + w},${r.tip.y + e.head}`
 				: null;
 			const word = wordOf(e.relation, e.label);
+			const articles = e.o.cite?.articles ?? [];
 			return [
 				{
 					id: r.id,
@@ -351,6 +354,14 @@
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
 					cite: e.o.cite ? citeText(e.o.cite) : null,
+					// What the label opens: the first of its articles, at the lid it names; the glance
+					// names them all.
+					citeFull: e.o.cite?.full ?? '',
+					citeLines: e.o.cite ? citeLines(e.o.cite) : [],
+					citeHref: articles[0]
+						? openHref({ collection: 'articles', key: articles[0].key }, { at: articles[0].at })
+						: null,
+					citeLaw: nameOf.get(e.o.id) ?? '',
 					mentioned: isMention(e.o),
 					// On the line close above the card of the child; with several laws above it,
 					// under each law instead, so the labels never stand on each other.
@@ -422,6 +433,16 @@
 		const lines = layer.id === 'law' ? [] : grondslagOf(k);
 		if (!lines.length) return hover.close();
 		target = { anchor: anchor as HTMLElement, kicker: layer.label, title: k.name, lines };
+		hover.enter();
+	};
+	/** The glance of a label on a line: the articles it names, each with the abbreviation of its law. */
+	const citeGlance = (l: (typeof lines)[number], anchor: Element) => {
+		target = {
+			anchor: anchor as HTMLElement,
+			kicker: l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag',
+			title: l.citeLaw,
+			lines: l.citeLines
+		};
 		hover.enter();
 	};
 	const card = $derived(hover.open ? target : null);
@@ -597,8 +618,21 @@
 			<!-- The articles on a line, on a rim of paper over the lines. -->
 			{#each lines.filter((l) => l.cite) as l (l.id)}
 				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
-				<g class="cite">
+				<a
+					class="cite"
+					href={l.citeHref ?? undefined}
+					aria-label={l.citeFull}
+					onpointerenter={(e) => {
+						hover.pointer(e.pointerType);
+						citeGlance(l, e.currentTarget);
+					}}
+					onpointerleave={() => hover.leave()}
+					onkeydown={() => hover.keys()}
+					onfocus={(e) => citeGlance(l, e.currentTarget)}
+					onblur={() => hover.leave()}
+				>
 					<rect
+						class="frame"
 						x={l.citeAt.x - w / 2}
 						y={l.citeAt.y - 10}
 						width={w}
@@ -606,8 +640,10 @@
 						rx="2"
 						stroke-dasharray={l.mentioned ? '2 2' : undefined}
 					/>
+					<!-- A finger's 44 px, unseen. -->
+					<rect class="hit" x={l.citeAt.x - w / 2} y={l.citeAt.y - 10} width={w} height="20" />
 					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle">{l.cite}</text>
-				</g>
+				</a>
 			{/each}
 			{#each shown as layer, i (layer.id)}
 				{#each layer.nodes as k (k.id)}
@@ -893,10 +929,30 @@
 	}
 	/* The articles on a line (Keten, Referentielabel): serif on a framed rim of paper; a dotted frame
 	   where the line only names them. */
-	.cite rect {
+	.cite .frame {
 		fill: var(--paper);
 		stroke: var(--rule-strong);
 		stroke-width: 1;
+	}
+	.cite .hit {
+		fill: transparent;
+	}
+	@media (pointer: coarse) {
+		.cite .hit {
+			height: calc(44px / var(--sc));
+			transform: translateY(calc((20px - 44px / var(--sc)) / 2));
+		}
+	}
+	.cite:hover text {
+		fill: var(--ink);
+		text-decoration: underline;
+	}
+	.cite:focus {
+		outline: none;
+	}
+	.cite:focus-visible .frame {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
 	}
 	.cite text {
 		font-family: var(--font-serif);

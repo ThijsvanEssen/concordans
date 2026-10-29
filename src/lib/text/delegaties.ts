@@ -74,6 +74,7 @@ export function ledenTekst(leden: unknown): string | null {
 /** An article a preamble or a reference names, with the leden and onderdelen it names. */
 type Deel = {
 	article_number?: string | null;
+	key?: string | null;
 	leden?: readonly string[] | null;
 	onderdelen?: readonly string[] | null;
 };
@@ -182,7 +183,7 @@ export function uitgewerktIn(referring: unknown, bwb?: string | null): string | 
 }
 
 /** An article the head names: its number as cited (`23 lid 1`), the article it opens. */
-type BasisArticle = {
+export type BasisArticle = {
 	label: string;
 	key: string;
 	/** The place the head names inside it (`lid-1`, `lid-1-onder-f`), where it names exactly one. */
@@ -212,7 +213,7 @@ const determinerOf = (naam: string): string =>
 
 /** The articles of a law a regulation rests on, each with the article it opens, in the
  *  order of artikelDelen (`19`, `23 lid 1`, `28`). */
-function basisArticles(
+export function basisArticles(
 	articles: readonly (Deel & { key?: string | null })[],
 	bwb?: string | null
 ): BasisArticle[] {

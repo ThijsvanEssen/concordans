@@ -2,7 +2,7 @@
 // of their law behind them (`art. 19, 23 lid 1, 28 Cbb`). Past 27 characters the line says how
 // many (`11 art. Cbw`) and the glance on hover gives them all. One place: the drawing, the list
 // on a phone and the glance read it here.
-import { grondslagArtikelen } from '$lib/text/delegaties';
+import { basisArticles, grondslagArtikelen, type BasisArticle } from '$lib/text/delegaties';
 import { formatCount } from '$lib/text/getal';
 import { NL } from '$lib/text/collator';
 
@@ -15,6 +15,8 @@ export type ArticleCite = {
 	count: number;
 	/** The abbreviation of the law, else its short title; never filled in by hand. */
 	abbr: string;
+	/** Each article it names, with the article it opens and the lid it names: the label is a link. */
+	articles: BasisArticle[];
 };
 
 /** The longest label a line carries in full. */
@@ -25,9 +27,15 @@ export function citeOf(articles: readonly Deel[], abbr: string): ArticleCite | n
 		NL.compare(a.article_number ?? '', b.article_number ?? '')
 	);
 	const line = grondslagArtikelen(sorted);
-	return line ? { full: `${line} ${abbr}`, count: articles.length, abbr } : null;
+	return line
+		? { full: `${line} ${abbr}`, count: articles.length, abbr, articles: basisArticles(sorted) }
+		: null;
 }
 
 /** What stands on the line. */
 export const citeText = (c: ArticleCite): string =>
 	c.full.length <= CITE_MAX ? c.full : `${formatCount(c.count)} art. ${c.abbr}`;
+
+/** The glance of a label: every article it names on a line of its own (`art. 23 lid 1 Cbb`). */
+export const citeLines = (c: ArticleCite): string[] =>
+	c.articles.map((a) => `art. ${a.label} ${c.abbr}`);
