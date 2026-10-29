@@ -6,19 +6,30 @@
 /** Up to this width a screen counts as narrow. */
 const SMAL = 640;
 
-/** The page or a scroll area wider than it is, each as `tag.class +Npx`. */
+/**
+ * The page, a scroll area wider than it is, or an element that reaches past the right edge of
+ * the screen, each as `tag.class +Npx`. What pans on purpose sits in `data-zijscroll`. The
+ * function stands alone (no outside names): the browser suite runs it in the page.
+ */
 export function zijscroll(root: Document = document): string[] {
 	const out: string[] = [];
-	const page = root.documentElement.scrollWidth - root.documentElement.clientWidth;
+	const label = (e: Element) => `${e.tagName.toLowerCase()}.${[...e.classList].join('.')}`;
+	const width = root.documentElement.clientWidth;
+	const page = root.documentElement.scrollWidth - width;
 	if (page > 1) out.push(`pagina +${page}px`);
 	for (const e of root.body.querySelectorAll<HTMLElement>('*')) {
-		if (e.clientWidth === 0 || e.scrollWidth <= e.clientWidth + 1) continue;
 		if (e.closest('[data-zijscroll]')) continue;
 		const { overflowX } = getComputedStyle(e);
-		if (overflowX !== 'auto' && overflowX !== 'scroll') continue;
-		out.push(
-			`${e.tagName.toLowerCase()}.${[...e.classList].join('.')} +${e.scrollWidth - e.clientWidth}px`
-		);
+		if (
+			e.clientWidth > 0 &&
+			e.scrollWidth > e.clientWidth + 1 &&
+			(overflowX === 'auto' || overflowX === 'scroll')
+		)
+			out.push(`${label(e)} +${e.scrollWidth - e.clientWidth}px`);
+		// Past the edge: a reader that clips its overflow still shows a part cut off.
+		const { right } = e.getBoundingClientRect();
+		if (right > width + 1 && e.checkVisibility())
+			out.push(`${label(e)} rand +${Math.round(right - width)}px`);
 	}
 	return out;
 }

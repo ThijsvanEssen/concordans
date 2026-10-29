@@ -166,6 +166,8 @@
 	.reader-frame {
 		height: 100%;
 		overflow-y: auto;
+		/* A net: a reader never pans sideways; what reaches past the column is the guard's to find. */
+		overflow-x: clip;
 		scrollbar-gutter: stable;
 		padding: var(--reader-pad-top, var(--s-6)) var(--reader-pad-right, var(--s-6)) var(--s-8)
 			var(--reader-pad-left, var(--s-6));

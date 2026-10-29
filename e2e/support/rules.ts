@@ -1,10 +1,14 @@
 // The house rules a page can be checked on without a person looking: each returns what
 // breaks the rule, as short descriptions, so a failure names the element.
 import type { Page } from '@playwright/test';
+import { zijscroll } from '../../src/lib/dev/zijscroll';
 
-/** How far the page reaches past the width of the screen, in pixels (0 when it fits). */
-export const overflowX = (page: Page) =>
-	page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+/**
+ * What reaches sideways past the screen, as short descriptions (empty when it all fits): the
+ * page, a column that scrolls sideways and any element past the right edge, outside what pans
+ * on purpose (`data-zijscroll`). The same check as the development warning (lib/dev/zijscroll.ts).
+ */
+export const overflowX = (page: Page) => page.evaluate(zijscroll as () => string[]);
 
 /** Visible text with a "·" as separator (house rule: a comma). */
 export const middots = (page: Page) =>
