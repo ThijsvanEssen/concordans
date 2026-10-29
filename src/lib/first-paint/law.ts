@@ -16,7 +16,7 @@ import { partsOf } from '$lib/text/article-parts';
 import { articleName } from '$lib/text/bw';
 import { coverageLine } from '$lib/text/coverage';
 import { langeDatum } from '$lib/text/datum';
-import { basisHeadLines } from '$lib/text/delegaties';
+import { basisHeadLines, lawsShown } from '$lib/text/delegaties';
 import { newSections } from '$lib/text/division';
 import { formatCount } from '$lib/text/getal';
 import { lawName, metaOf } from '$lib/text/instrument-meta';
@@ -206,9 +206,6 @@ function head(v: LawPaint, title: string, k: Classes): string {
 	);
 }
 
-/** The laws of a Gelet op named first (WholeLawReader's GROUNDS_SHOWN); the rest opens in place. */
-const GROUNDS_SHOWN = 3;
-
 /** The words of the status line: whether it holds, what the data lacks, its grondslag, its
  *  treaty; null where it has none (the reader draws no empty line). */
 function status(v: LawPaint, k: Classes): string | null {
@@ -228,7 +225,7 @@ function status(v: LawPaint, k: Classes): string | null {
 	const kind = kindName(d.kind);
 	if (/^BWBR/i.test(v.bwb_id) && kind && !/wet$/i.test(kind))
 		for (const part of basisHeadLines(v.basis)) {
-			const shown = part.wetten.slice(0, GROUNDS_SHOWN);
+			const shown = part.wetten.slice(0, lawsShown(part, false));
 			const rest = part.wetten.length - shown.length;
 			out +=
 				`<p class="whole-count ${k.law}">${esc(part.werkwoord)} ` +
@@ -236,6 +233,9 @@ function status(v: LawPaint, k: Classes): string | null {
 					.map(
 						(w, i) =>
 							(i > 0 ? (i === shown.length - 1 && !rest ? ' en ' : ', ') : '') +
+							(w.articles.length
+								? `art. ${w.articles.map((a, j) => (j > 0 ? (j === w.articles.length - 1 ? ' en ' : ', ') : '') + `<a>${esc(a.label)}</a>`).join('')} van ${w.determiner} `
+								: '') +
 							`<a>${esc(w.naam)}</a>`
 					)
 					.join('') +

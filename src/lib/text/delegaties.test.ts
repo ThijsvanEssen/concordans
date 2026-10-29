@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Schema } from '$lib/api/types';
 import {
 	basisHeadLines,
 	grondslagWerkwoord,
@@ -156,7 +157,8 @@ describe('the grondslag of a regulation', () => {
 			outbound_citation_count: null,
 			path: null
 		},
-		basis_kind
+		basis_kind,
+		articles: [] as Schema<'ImplementedBasisArticleDTO'>[]
 	});
 
 	it('says in the head under which laws it is made, then those it only names', () => {
@@ -171,6 +173,31 @@ describe('the grondslag of a regulation', () => {
 			['Noemt in de aanhef', ['Algemene wet bestuursrecht']]
 		]);
 		expect(basisHeadLines([])).toEqual([]);
+	});
+
+	it('names the articles a regulation rests on, each a link, and the law with its determiner', () => {
+		const art = (nr: string, leden: string[] = []) =>
+			({ key: `bwbr0052875_${nr}`, article_number: nr, leden, onderdelen: [] }) as never;
+		const besluit = {
+			...wet('bwbr0052875', 'Cyberbeveiligingsbesluit', 'delegates'),
+			articles: [art('19'), art('23', ['1']), art('28')]
+		};
+		const [deel] = basisHeadLines([
+			besluit,
+			{ ...wet('bwbr0052872', 'Cyberbeveiligingswet', 'delegates'), articles: [art('3')] }
+		]);
+		expect(deel.wetten[0].articles).toEqual([
+			{ label: '19', key: 'bwbr0052875_19' },
+			{ label: '23 lid 1', key: 'bwbr0052875_23' },
+			{ label: '28', key: 'bwbr0052875_28' }
+		]);
+		expect(deel.wetten.map((w) => w.determiner)).toEqual(['het', 'de']);
+		// A law only named has no articles in the head.
+		const [, genoemd] = basisHeadLines([
+			besluit,
+			{ ...wet('bwbr0005537', 'Algemene wet bestuursrecht', 'mentioned'), articles: [art('3')] }
+		]);
+		expect(genoemd.wetten[0].articles).toEqual([]);
 	});
 
 	it('names the kind of what is issued, and a preamble that only names the article', () => {
