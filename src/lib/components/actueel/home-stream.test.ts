@@ -486,11 +486,21 @@ describe('a judgment in the feed', () => {
 			)
 		).toEqual({
 			label: 'Uitspraak',
-			title: 'ABRvS 15\u00a0september\u00a02026',
+			title: 'ABRvS, beslist 15\u00a0september\u00a02026',
 			major: false,
 			teken: 'stuk',
 			vorm: 'uitspraak'
 		});
+		// The API's own cite has plain spaces in its day.
+		expect(
+			headlineOf(
+				item({
+					court: 'GHDHA',
+					decided_on: '2024-06-13',
+					cite: { short: 'Hof Den Haag 13 juni 2024', full: '' }
+				})
+			).title
+		).toBe('Hof Den Haag, beslist 13\u00a0juni\u00a02024');
 		const conclusie = headlineOf(
 			item({
 				court: 'PHR',

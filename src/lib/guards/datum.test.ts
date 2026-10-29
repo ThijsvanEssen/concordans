@@ -9,7 +9,7 @@ describe('a date in words', () => {
 	it('puts sinds, per, op, vanaf and tot before a date through sinceDate, asOfDate, onDate, fromDate and untilDate', () => {
 		// "sinds ${langeDatum(x)}" fixes the long form in the word's place; one helper does it, and
 		// no sentence has the short form ("op 15 okt. 2026" over "op 2 maart 2026").
-		const woord = /\b(sinds|per|op|vanaf|tot( en met)?)\s+(\$?\{)(lange|korte)Datum\(/i;
+		const woord = /\b(sinds|per|op|vanaf|beslist|tot( en met)?)\s+(\$?\{)(lange|korte)Datum\(/i;
 		expect(regelOvertreders((l) => !NIET_REGEL.test(l) && woord.test(l))).toEqual([]);
 	});
 
