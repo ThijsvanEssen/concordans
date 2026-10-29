@@ -149,7 +149,12 @@
 					</ul>
 				</Sectie>
 			{/each}
-			<Sectie id="relaties" title="Relatienamen" aantal={RELATION_NAMES.length} sleutel="api-relaties">
+			<Sectie
+				id="relaties"
+				title="Relatienamen"
+				aantal={RELATION_NAMES.length}
+				sleutel="api-relaties"
+			>
 				<p class="api-tag-desc">
 					De naam van een verbinding in de API (<code>relation</code>) en zoals de site haar noemt.
 				</p>
