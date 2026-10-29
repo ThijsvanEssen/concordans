@@ -176,6 +176,7 @@ const responseWith = (
 				{
 					lid_counts: null,
 					capacity_counts: null,
+					tier_counts: null,
 					relation,
 					collection: other.collection,
 					direction,

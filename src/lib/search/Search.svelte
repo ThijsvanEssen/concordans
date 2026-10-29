@@ -11,7 +11,7 @@
 	import { chamberLinks } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
 	import { goto } from '$app/navigation';
-	import { FAST_MIN_CHARS, SEARCH_KINDS } from './lanes';
+	import { SEARCH_KINDS } from './lanes';
 	import { bronHref, focusOf } from '$lib/bron/href';
 	import type { BronRef } from '$lib/bron/ref';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -188,8 +188,9 @@
 
 	{@render belowField?.()}
 
-	{#if search.q.length >= FAST_MIN_CHARS && !picker}
-		<!-- The same period as every list with dates (Periode). -->
+	{#if !picker}
+		<!-- The same period as every list with dates (Periode), there before the first letter so
+		     nothing moves when typing starts. -->
 		<div class="periode">
 			<Periode
 				from={search.from}
@@ -444,9 +445,13 @@
 </div>
 
 <style>
-	/* In line with the hits below it. */
+	/* As wide as the field above it (Design System, Periode); in the dialog, whose field has no
+	   border, in line with its text and the hits. */
 	.periode {
-		padding: var(--s-2) var(--s-4) 0;
+		padding-top: var(--s-2);
+	}
+	.search--overlay .periode {
+		padding-inline: var(--s-4);
 	}
 	.search {
 		display: flex;

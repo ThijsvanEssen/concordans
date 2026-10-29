@@ -14,6 +14,7 @@ import {
 	getBuckets,
 	lidCountsByCollection,
 	lidCountsOf,
+	tierCountsOf,
 	neighborsOf,
 	sumLidCounts,
 	type Neighbor,
@@ -82,6 +83,8 @@ export type VerbondenState = {
 	lidTellingen?: Map<string, number> | null;
 	/** The same per collection of the buckets, for the bronfilter (`memberCountsUnder`). */
 	lidPerBak?: Map<string, Map<string, number>> | null;
+	/** Of a judgment: the judgments it is connected to per tier, all of them (`tier_counts`). */
+	tierTellingen?: Map<string, number> | null;
 	/** Whether the groups hold every row, not the first five per bucket. */
 	volledig?: boolean;
 	/**
@@ -325,6 +328,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				perBak ??= lidCountsByCollection(response);
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
+				const tiers = tierCountsOf(response);
 				buckets = totals;
 				const props = (response.node.props ?? {}) as Record<string, unknown>;
 				basis = {
@@ -376,6 +380,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						failed: false,
 						lidTellingen: perBak ? sumLidCounts(perBak) : null,
 						lidPerBak: perBak,
+						tierTellingen: tiers,
 						volledig: basis?.volledig ?? false
 					});
 				zet();
