@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
 import { inPool } from '$lib/api/pool';
-import { SOFT_NODE_CAP, type GraphStore } from '$lib/graph/store/types';
+import { NEIGHBORHOOD_CAP, SOFT_NODE_CAP, type GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
@@ -310,7 +310,7 @@ export class NetwerkComposer {
 			if (isOn(n, n.ids[i])) participants.push({ response: r.value });
 		});
 		if (participants.length === 1)
-			participants[0] = { response: withinCap(participants[0].response, SOFT_NODE_CAP) };
+			participants[0] = { response: withinCap(participants[0].response, NEIGHBORHOOD_CAP) };
 		// A shorter reach than the last one lets the farther bronnen go: the canvas starts anew.
 		const level = this.#levelOf(n, found);
 		const shorter = level < this.#level;
