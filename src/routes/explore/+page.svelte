@@ -552,6 +552,9 @@
 		if (chainArticle) ensureInstrumentName(chainLaw);
 	});
 	/** The keten with or without its mentions: drawn, and counted for Relatie. */
+	/** The room the keten measured, and the bronnen of a layer that fit in it (160 px each, 144 for the labels). */
+	let chainRoom = $state(0);
+	const chainFit = $derived(Math.max(0, Math.floor((chainRoom - 144) / 176)));
 	const chainOf = (mentions: boolean) => {
 		const bwb = chainLaw;
 		if (!bwb || chainData?.bwb !== bwb) return null;
@@ -568,9 +571,9 @@
 			chainData.delegated,
 			chainData.basis,
 			{
-				// The drawing pans sideways past its width; a phone's list stays short.
-				// The drawing pans sideways past its width; a phone's list stays short.
-				max: telefoon ? 4 : 12,
+				// The drawing pans sideways past its width; what shows without panning follows the room
+				// the keten measured, at least 12. A phone's list stays short.
+				max: telefoon ? 4 : Math.max(12, chainFit),
 				keep: marked,
 				kind: chainKind,
 				article: chainArticle,
@@ -2133,6 +2136,7 @@
 	{#if view === 'keten'}
 		{#if chainView.component}{@const ChainViewC = chainView.component}<ChainViewC
 				{scale}
+				bind:room={chainRoom}
 				layers={chainModel?.layers ?? []}
 				rest={chainModel?.rest}
 				more={chainModel?.more}

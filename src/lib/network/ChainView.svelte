@@ -44,6 +44,7 @@
 		chosen = null,
 		gap = null,
 		scale = 1,
+		room = $bindable(0),
 		hiddenKinds = new Set(),
 		hiddenLines = new Set(),
 		more = {},
@@ -56,6 +57,8 @@
 		others = [],
 		onChoose
 	}: {
+		/** The room of the drawing, as the keten measures it (ResizeObserver): how many bronnen a layer shows without panning follows it. */
+		room?: number;
 		/** The bron the keten starts from, which no filter hides. */
 		start?: string | null;
 		/** The period of the strip: a bron dated outside it is drawn faint, and counted. */
@@ -111,6 +114,9 @@
 	const SLOT = 176;
 	const need = $derived(Math.max(0, ...shown.map((l) => LEFT + 24 + l.nodes.length * SLOT)));
 	const width = $derived(Math.max(avail, need));
+	$effect(() => {
+		room = avail;
+	});
 	/** A layer is 104 px high (Keten, Maten). */
 	const ROW = 104;
 	/** From a layer's label to its bronnen, and the line height of a name. */
