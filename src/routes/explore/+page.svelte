@@ -195,6 +195,9 @@
 	/** How far the canvas's neighbourhood reached, for the legend's Diepte. */
 	let reach = $state<NeighborhoodReach | null>(null);
 	store.neighborhood.subscribe((r) => (reach = r));
+	/** Bronnen the budget took off: the canvas is not complete then. */
+	let trimmed = $state(0);
+	store.trimmedCount.subscribe((n) => (trimmed = n));
 	store.selection.subscribe((n) => {
 		selectedNode = n;
 	});
@@ -341,11 +344,17 @@
 	 */
 	const netwerkReach = $derived<NeighborhoodReach>(
 		composer.reach
-			? { focal: '', ...composer.reach, buckets: composer.cut }
+			? {
+					focal: '',
+					...composer.reach,
+					capped: composer.reach.capped || trimmed > 0,
+					buckets: composer.cut
+				}
 			: {
 					focal: '',
 					depth: 1,
-					capped: composer.cut.length > 0 && !composer.extending && explicitDepth !== 0,
+					capped:
+						(composer.cut.length > 0 || trimmed > 0) && !composer.extending && explicitDepth !== 0,
 					cap: NEIGHBORHOOD_CAP,
 					buckets: composer.cut
 				}
