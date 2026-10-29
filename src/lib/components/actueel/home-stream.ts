@@ -555,9 +555,12 @@ export function headlineOf(i: FeedItem): Headline {
 
 /** A judgment's day said as its decision day: "Hof Den Haag, beslist 13 juni 2024" (Thijs, 29 Oct). */
 function decidedOn(title: string, decided: string | null | undefined): string {
-	const said = decidedDate(decided);
+	const plain = (t: string) => t.replaceAll('\u00a0', ' ');
+	const said = plain(decidedDate(decided));
 	const day = said.slice(said.indexOf(' ') + 1);
-	return day && title.includes(` ${day}`) ? title.replace(` ${day}`, `, ${said}`) : title;
+	return said && plain(title).includes(` ${day}`)
+		? plain(title).replace(` ${day}`, `, ${said}`)
+		: title;
 }
 
 /** The line of one event alone, as a day of Actueel and the homepage write it. */
