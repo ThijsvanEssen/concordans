@@ -165,8 +165,7 @@
 		nameOfPad,
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
-	import { panelOfKey, verbondenInView, type Panel } from './panels';
-	import { LINKED_ROW } from '$lib/verbonden/row';
+	import { verbondenInView, type Panel } from './panels';
 	import { mayShortcut } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
@@ -1943,30 +1942,16 @@
 		}
 	}
 
-	// Alt L, Alt 1, Alt 2, Alt [ and Alt ] (the register, lib/keys): answered while this page
+	// Alt L, Alt [ and Alt ] (the register, lib/keys): answered while this page
 	// stands; each answers false where it has nothing to do, so the key goes on.
 	onMount(() => {
 		const stop = [
 			answer('toggle-view', toggleView),
-			answer('panel', (_e, combo) => panelKey(combo.cap)),
 			answer('article-prev', () => stepArticle(-1)),
 			answer('article-next', () => stepArticle(1))
 		];
 		return () => stop.forEach((f) => f());
 	});
-
-	/** Alt 1 and Alt 2: the layers of a bron, Tekst and Verbonden; 2 puts the focus on Verbonden's first row. */
-	function panelKey(key: string): boolean {
-		const panel = panelOfKey(key);
-		if (!panel || !selectedNode || mode !== 'read' || !window.matchMedia(PHONE).matches)
-			return false;
-		readTab = panel;
-		if (panel === 'verbonden')
-			requestAnimationFrame(() =>
-				document.querySelector<HTMLElement>(`.verbonden :is(${LINKED_ROW})`)?.focus()
-			);
-		return true;
-	}
 
 	/** The reader's place, kept while the netwerk is up: the bron and how far its text was scrolled. */
 	let readingPlace: { id: string; top: number } | null = null;

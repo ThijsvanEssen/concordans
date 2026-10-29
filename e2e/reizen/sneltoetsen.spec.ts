@@ -27,8 +27,6 @@ const gezegd = (page: Page) =>
 const naamVanFocus = (page: Page) => page.evaluate(() => document.activeElement?.tagName ?? 'BODY');
 
 type Geval = {
-	/** Only on a phone: the keys that stand for a tab. */
-	telefoon?: boolean;
 	run: (page: Page) => Promise<void>;
 };
 
@@ -149,24 +147,6 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(page).not.toHaveURL(/mode=netwerk/);
 		}
 	},
-	'panel-tab': {
-		telefoon: true,
-		run: async (page) => {
-			await page.goto(LEZER);
-			await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
-			await page.keyboard.press('Alt+Digit2');
-			const panelen = page.getByRole('navigation', { name: 'Panelen' });
-			await expect(panelen.getByRole('button', { name: 'Verbonden' })).toHaveAttribute(
-				'aria-pressed',
-				'true'
-			);
-			await page.keyboard.press('Alt+Digit1');
-			await expect(panelen.getByRole('button', { name: 'Tekst' })).toHaveAttribute(
-				'aria-pressed',
-				'true'
-			);
-		}
-	},
 	'article-prev': {
 		run: async (page) => {
 			await page.goto('/wetten/BWBR0005289/artikel/6:163');
@@ -278,7 +258,7 @@ for (const t of TE_TESTEN) {
 	test(`${t.id}: ${t.description}`, async ({ page, touch }) => {
 		const geval = GEVALLEN[t.id];
 		test.skip(!geval, 'no case: see the last test');
-		test.skip(!!geval?.telefoon !== touch, geval?.telefoon ? 'a phone key' : 'a keyboard key');
+		test.skip(touch, 'a phone has no keyboard');
 		await geval!.run(page);
 	});
 }
@@ -298,11 +278,11 @@ test('every key of the register has its case, and the reserved Alt W is bound to
 });
 
 // The pictures for the review (SNELTOETSEN_PNG=<directory>): the window on Ctrl / and the line
-// that says where Alt L went, at 1440 and at 375.
-test('pictures of the window and the line of Alt L', async ({ page, isMobile }) => {
+// that says where Alt L went, at 1440.
+test('pictures of the window and the line of Alt L', async ({ page, touch }) => {
 	const map = process.env.SNELTOETSEN_PNG;
-	test.skip(!map, 'only for the review');
-	const breed = isMobile ? '375' : '1440';
+	test.skip(!map || touch, 'only for the review, on a keyboard');
+	const breed = '1440';
 	await page.goto(LEZER);
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
 	await page.keyboard.press('ControlOrMeta+Slash');
@@ -316,4 +296,15 @@ test('pictures of the window and the line of Alt L', async ({ page, isMobile }) 
 	await page.keyboard.press('Alt+KeyL');
 	await expect(melding(page)).toContainText('Naar lezer');
 	await page.screenshot({ path: `${map}/wissel-naar-lezer-${breed}.png` });
+});
+
+// A phone has no keyboard: no hint of a key stands on the page (Thijs, 29 Oct).
+test('a phone shows no key hint', async ({ page, touch }) => {
+	test.skip(!touch, 'a keyboard shows them');
+	for (const pad of ['/wetten', LEZER]) {
+		await page.goto(pad);
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		await expect(page.locator('.kbd, kbd')).toHaveCount(0);
+		await expect(page.locator('body')).not.toContainText(/(Ctrl|⌘) ?K\b/);
+	}
 });

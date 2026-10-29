@@ -12,9 +12,9 @@
 //
 // Free of the browsers: Alt D, Alt F, Alt E and Alt Home are Chrome's and Edge's, the letters of
 // the menus (Alt F, E, V, S, B, T, H) are Firefox's on Windows, and Alt 1 to 8 switch tabs in
-// Firefox on Linux. So the keys of `pagina` are Alt with L, J, K, W, 1, 2, the brackets and the
-// slash, and Ctrl/⌘ with K and the slash. Alt 1 and Alt 2 only act on a phone, where the tabs
-// are. Ctrl+Alt is AltGr on Windows and gives a character: it is never a key of ours.
+// Firefox on Linux. So the keys of `pagina` are Alt with L, J, K, W, the brackets and the
+// slash, and Ctrl/⌘ with K and the slash. A phone has no keyboard and gets no keys of its own
+// (Thijs, 29 Oct); a tablet with one keeps these. Ctrl+Alt is AltGr on Windows and gives a character: it is never a key of ours.
 
 export type KeyContext = 'overal' | 'zoeken' | 'lezer' | 'netwerk' | 'bladeren' | 'vergelijken';
 
@@ -57,11 +57,6 @@ export type Shortcut = {
 
 const letterKey = (c: string, extra: Partial<Combo> = {}): Combo => ({
 	code: `Key${c}`,
-	cap: c,
-	...extra
-});
-const digitKey = (c: string, extra: Partial<Combo> = {}): Combo => ({
-	code: `Digit${c}`,
 	cap: c,
 	...extra
 });
@@ -130,15 +125,6 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		join: 'together',
 		description: 'Bij een bron: wisselen tussen de lezer en het netwerk',
 		handler: 'toggle-view'
-	},
-	{
-		id: 'panel-tab',
-		kind: 'page',
-		context: 'lezer',
-		keys: [digitKey('1', ALT), digitKey('2', ALT)],
-		join: 'together',
-		description: 'Op de telefoon: de tab Tekst of Verbonden',
-		handler: 'panel'
 	},
 	{
 		id: 'article-prev',
