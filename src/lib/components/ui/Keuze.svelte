@@ -36,6 +36,7 @@
 			aria-pressed={waarde === o.waarde}
 			disabled={o.uit}
 			title={o.titel}
+			aria-label={o.name}
 			onclick={() => waarde !== o.waarde && onSelect(o.waarde)}
 			>{@render voor?.(o.waarde)}{o.label}</button
 		>
