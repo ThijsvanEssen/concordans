@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/api/articles/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The narrow form of several articles
+         * @description The narrow form of an article, to read it beside something else: its heading (`label`, `heading`, `display_name`, its `law` with the abbreviation, `validity`), its text as `blocks`, one per lid, onderdeel or aanhef with the anchor of its place (`lid-2-onder-a`) and the links in it whose target the data holds, and the articles before and after it in its law (`previous`, `next`). No citations of it and no network: the article route has those. One item per article of `refs`, in the order asked (each once), at most 20; an article the data does not hold has `article` null and its `ref` in `not_in_data`.
+         */
+        get: operations["get_article_text_batch_api_articles_batch_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/articles/{bwb_id}/{article_number}/text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The narrow form of an article
+         * @description The narrow form of an article, to read it beside something else: its heading (`label`, `heading`, `display_name`, its `law` with the abbreviation, `validity`), its text as `blocks`, one per lid, onderdeel or aanhef with the anchor of its place (`lid-2-onder-a`) and the links in it whose target the data holds, and the articles before and after it in its law (`previous`, `next`). No citations of it and no network: the article route has those. 404 when the article is unknown.
+         */
+        get: operations["get_article_text_api_articles__bwb_id___article_number__text_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/articles/{bwb_id}/{article_number}": {
         parameters: {
             query?: never;
@@ -237,7 +277,7 @@ export interface paths {
         };
         /**
          * One instrument
-         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`), the official number of a law of the Staatsblad (`STB-2026-56`: the law, `wet_stb_2026_56`; the publication is `stb_2026_56`) or its node key (`bwbv0001000`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count, and for a treaty the other instruments with its treaty number (`same_treaty`). 404 for an unknown instrument.
+         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`), the official number of a law of the Staatsblad (`STB-2026-56`: the law, `wet_stb_2026_56`; the publication is `stb_2026_56`) or its node key (`bwbv0001000`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count, of a BWB regulation its aanhef (`preamble`), and for a treaty the other instruments with its treaty number (`same_treaty`). 404 for an unknown instrument.
          */
         get: operations["get_instrument_api_instruments__identifier__get"];
         put?: never;
@@ -417,7 +457,7 @@ export interface paths {
         };
         /**
          * Regulations issued under a law
-         * @description The regulations whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names, whether those give the power it is made under (`basis_kind`), its articles that work each out (`referring`), the other laws it names (`also_based_on`) and the regulations issued under it in turn (`sub_delegated`): AMvBs first, then ministerial regulations, then the others; by title. By `validity` those in force (the default), those no longer in force (`expired_on` today or before) or all, each with its `expired_on`; `expired_total` counts the ones no longer in force whatever was asked for and `by_kind` the items per kind. A repealed article is left out. `detail=summary`: the light form, per regulation only the articles of the law it names, without `referring` and `also_based_on`, with `sub_delegated` (its articles without `referring`). Empty for an unknown instrument.
+         * @description The regulations whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names, whether those give the power it is made under (`basis_kind`), its articles that work each out (`referring`), the other laws it names (`also_based_on`) and the regulations issued under it in turn (`sub_delegated`): AMvBs first, then ministerial regulations, then the others; by title. By `validity` those in force (the default), those no longer in force (`expired_on` today or before) or all, each with its `expired_on`; `expired_total` counts the ones no longer in force whatever was asked for and `by_kind` the items per kind. A repealed article is left out. `detail=summary`: the light form, per regulation only the articles of the law it names, without `referring` and `also_based_on`, with the first of `sub_delegated` (their articles without `referring`) and how many there are (`sub_delegated_total`). Empty for an unknown instrument.
          */
         get: operations["get_instrument_delegated_route_api_instruments__bwb_id__delegated_get"];
         put?: never;
@@ -579,7 +619,7 @@ export interface paths {
         };
         /**
          * Explore a node and its neighbors
-         * @description Fetches a node from the given collection and returns its neighbors from the unified edge collection in buckets, one per relation, direction and neighbor collection. Each neighbor carries the edge that leads to it: `edge_id`, `status`, `confidence` and `meta`. A bucket holds one page (`limit` neighbors from `offset`, in the same order on every request), its `total`, and the `next_offset` of the following page (null on the last). `relations`, `node_types`, `direction` and `status` narrow the edges; the totals count what remains. What became of an old article no new article takes the place of (`TRANSPOSED_TO` the new law, `meta.outcome`) is a neighbour of the old article, not of the law.
+         * @description Fetches a node from the given collection and returns its neighbors from the unified edge collection in buckets, one per relation, direction and neighbor collection. Each neighbor carries the edge that leads to it: `edge_id`, `status`, `confidence` and `meta`. A bucket holds one page (`limit` neighbors from `offset`, in the same order on every request), its `total`, and the `next_offset` of the following page (null on the last). `relations`, `node_types`, `direction` and `status` narrow the edges; the totals count what remains. What became of an old article no new article takes the place of (`TRANSPOSED_TO` the new law, `meta.outcome`) is a neighbour of the old article, not of the law. A dossier has a bucket `LED_BY` (outbound) of committees and a committee one (inbound) of dossiers that no edge holds: derived from the activities about the dossier the committee leads (as `committees` of `/api/dossiers/{number}`; of a committee those `ABOUT` a dossier), after the buckets of the edges. Each edge of it has `edge_id` `derived:<from>:LED_BY:<to>`, status `canoniek` and `meta` `derived_from` (`activities`), `role` (`lead`: the Kamer names a voortouwcommissie alone) and `activities` (how many it leads; with `props=canvas` `derived_from` alone); in the order of the neighbours' ids, with `sort=importance` the most activities first.
          *
          *     a node (any node collection) with its neighbours in buckets of one relation, direction and neighbour collection, a page of `limit` (at most 200; 500 with `props=canvas`) from `offset` in each. An article's `lid_counts` are waited for only on the first page with every prop: a further page or a page of the canvas gives those counted before, or none while they are being counted. Every neighbour carries its edge: `edge_id` (the edge `key`), `status`, `confidence`, `meta`. The node, every neighbour and every node of a neighbourhood or path has `title`, the `<title>` of its page (`core.names.title_of`; of a publication with the title of its nota van toelichting; with `props=canvas` too, which keeps what it reads), and a judgment `cite` (as on `/api/judgments/{ecli}`); a dossier has in its props `short_title` and `short_title_basis` as the feed gives them, a decision `short_subject` (the name what was voted on goes by: `Wet AI-toezicht`, `Begroting Defensie 2027`; null without one), a paper or a case `kind_group`. `props=canvas` gives a neighbour only what the canvas of the explorer draws: of its props those of its collection and those its title reads (`_rows.canvas_keys`; of each of its `actors` the role, name and faction; an instrument its `kind` (`wet`, as `/api/instruments/{identifier}` gives it), an annex its `label` and `title`, an instrument version the citation title of its law, `instrument_citation_title`, from the columns of `instruments`; a motion, an amendment or a judgment its `outcome` alone of how it ended), of its edge's `meta` the keys the canvas reads (null when none, never `{}`); the node itself stays whole. A bucket has `type`, `total` (its edges), `next_offset` (null on the last page), `lid_counts`, `capacity_counts`, `tier_counts` and `items`; `tier_counts`, of a judgment's bucket of judgments: per tier how many of the whole bucket (`{"hoge_raad": 412, "rechtbank": 530}`, `""` for one without a tier), so a bar per instantie counts them all and not the page; null for every other bucket; `capacity_counts`, of a member's `AUTHORED` (outbound): per capacity they signed in (`meta.capacity`: `kamerlid`, `bewindspersoon`, `overig`; `""` for none), how many of the whole bucket and not only of its page (`{"kamerlid": 980, "bewindspersoon": 503}`), from `lg_authored`; null for every other bucket and with a `status` filter; `lid_counts`, of an article: per lid the edges of the whole bucket cite (in their `meta`: `leden`, and the `leden` of each of a judgment's `mentions`), how many do (only the leden the article has: a citation can give it the lid of another article it names), `""` for those that cite none and an edge that cites two counted for each (`{"1": 28, "2": 174, "": 12}`); with `limit=1` (the light node) an article whose lid counts are not kept yet waits for them 0.5 s at most, then answers with every `lid_counts` null and `lid_counts_pending` true while they are counted (a larger `limit` waits for them), so that a reader can show them without reading every page (counted over the meta of every edge of the article, so kept an hour whatever the data does, a newer count made in the background after that; those of the 20 most cited articles warmed); null for a bucket that cites no lid and for a node that is no article; `limit` (default 30, max 200) and `offset` page inside every bucket. Bucket and page order are the same on every request. A neighbour is light: its `props` leave out besides those the text of a paper (`sections`, `footnotes`), the structure of an article (`parts`, `references`, `breadcrumb`) and the rollups of an activity (`case_ids`, `case_kinds_by_dossier`; the node itself keeps them); a judgment carries `ecli`, `display_name`, `names`, `summary`, `date`, `court`, `court_code`, `case_number`, `source`, `stub`, `translation_of`, `advocate_general`, `advocate_general_role`, `outcome`, `outcome_text`, `conclusion_outcome`, `conclusion_outcome_text` and `echr_findings` alone (`lg_judgment_light`), and its `tier` (`hoge_raad`, `hvj_eu`, `ehrm`: by its court code, of code XX by the court it names) and its `source` (by its ECLI) where those lack them; its `summary` is cut at 400 characters (with `…`), and the `meta` of its edge leaves out `mentions` (each place a judgment cites the article or the judgment; `/api/judgments/{ecli}` has them), which the node itself, `/api/documents/{key}` and `/api/articles/...` carry. The answer has the `title` and `description` of the node's page (as `/render` gives them, from the node's own props: without the outcome of a motion or the counts of an article; `title` is the page's `<title>` without `, Concordans`, never cut, the title the app's tab shows: `Art. 6:162 BW, Onrechtmatige daad` (an article with its heading, else its `caption`), `Motie 36496-71 Bolhuis over een AI-killswitch` (a motion or an amendment by its number, then every word of its subject), `HR 20 december 2019 (Urgenda), ECLI:NL:HR:2019:2006`, `36600-VII Begroting Binnenlandse Zaken en Koninkrijksrelaties 2025`; a day in a title or a description as `20 december 2019`) and its readable `path` (null for a node without one, an activity). The `meta` of a neighbour's edge holds `paragraphs` where a judgment cites: the numbers of the paragraphs it cites in ("4.3", as the judgment prints them), stored on an edge to a cited judgment and taken from the mentions of an edge to a cited article, so a list of citing judgments shows where each cites without a request per row. With `edge_meta=passages` (also with `props=canvas`) it holds `passages` too, from the mentions of the edge: the first place in each of its first three paragraphs (a footnote counts apart), each `paragraph_id`, `paragraph_number`, `footnote` (its label, null in the paragraph itself), `snippet`, `text` (the citation as written) and `start`, `end` (`snippet[start:end]` is `text`), so a row or a card shows the passage without the judgment; none of a mention linked before it kept `snippet_start`. `light` (the default) leaves them out: they weigh about 0.9 kB an edge. The `meta` of an edge from a Tweede Kamer paper holds `place`, where its citation stands in what `/api/documents/{key}` serves (`part` `title`, `text` with `section_id`, or `footnote` with `footnote_id`; `start` and `end` in that part; see data-model (docs/data-model.md#judgment))
          */
@@ -1410,9 +1450,9 @@ export interface paths {
          * Search across several entity types
          * @description Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first. With `resolve=true` the answer also holds `resolved`, what `/api/resolve` answers for `q`: one request for a search box that goes to the node a citation names and lists the hits otherwise.
          *
-         *     text search over `types` (`articles`, `cabinets`, `commitments`, `committees`, `decisions`, `documents`, `dossiers`, `factions`, `instruments`, `judgments`, `members`; all by default), `kind`, `limit`, and a period `from`, `to` (YYYY-MM-DD, both days in it, either open; 422 for `from` after `to`): each hit by a date of its own, in full and live search alike: a judgment the day of its decision (`date_eff`), a paper its date, a dossier the day it was opened, a vote its date, a commitment the day it was made, a law the day it came into force (`date_in_force`), an article the day its law came into force; a type without a date of its own (a member, a faction, a committee, a cabinet) finds nothing within a period. An article only a citation names, with no text of its own, is no hit. A citation in `q` (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`, a full ECLI) puts its article or judgment first, and so does the whole name of a judgment (`Urgenda`, `Lindenbaum/Cohen`: one of its `names`, any case). Every hit has a `score`, its rank tier for `q`: an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), every word of `q` in its name (0.25), a match on words only (0.1), compared in lower case and without accents (`yesilgoz` is part of `Yeşilgöz-Zegerius`); a type lists its hits best first, ties in database order. The names of a hit are its `display_name`, citation title, the `heading` of an article and the `aliases` of an instrument (`BW`, `Boek 6 BW`, `6 BW`: 0.75, before the words); `q` inside the title of a division an article stands in counts as part of its name (0.25). Scores compare across types: a heading or alias that is `q` (0.75) outranks a judgment that only holds its words (0.1). A word of `q` also finds its plural or singular where the last consonant changes between them, which stem apart (`huurprijs` and `huurprijzen`, `brief` and `brieven`). Within a type the database orders by BM25 before the `limit` (on a large table its statistics, the number of rows and the mean length of a field, are an estimate from a fixed sample, at most 6 hours old; the number of rows that hold a common word is the planner's estimate from its statistics, a rare word is counted, and a count that takes over 5 s weighs its terms as held by every row; a word matches the start of a value or a part of it from three characters, the start in any case and, in a name or title, without accents), with a word in a heading (x4), a division title (x1.5), a display name (x2), an alias or short title (x3) weighing more than one in a text; an instrument whose alias or short title is the whole of `q` is always fetched. Of the articles the database orders by their tier before BM25, as far as the article says it (named by its terms, a heading or display name that starts with `q`, every word of `q` in its heading or the title of a division it stands in), so that the best tiers are among the hits however few are asked, while typing too (`onrechtmatige daad`: art. 6:162 BW, in the title Onrechtmatige daad, before the articles of the Wet conflictenrecht onrechtmatige daad). An article is also found by its terms, what the judgments that cite it call it (`noodweer`: art. 41 Sr, whose words do not hold it; `lg_article_terms`), as a match on words (0.1), ranked above those that only hold the word; such a hit has `extra.terms`, the words of `q` it was found by, which come from the case law, not from the law. An article of which every word of `q` is a strong term (a good share of the judgments that use the word cite it, and few judgments cite it at all: `verjaring`, art. 3:310 BW) scores as a whole name (0.75), the best by its words first; a word in more than one in 50 summaries names no article and is left out of that (`ontslag op staande voet`: art. 7:677 BW, named by its other words). A word of `q` that is the short title or an alias of a law (as the instrument has it, whole, any case and without accents: `Cbw`, `Sr`, `BW` of every book) also matches each of its articles, as the name of the law in its `display_name` does (`zorgplicht cbw`: art. 21 of the Cyberbeveiligingswet), and each dossier the law is `LEGISLATED_IN` (`cbw`: dossier 36764, the bill that became it; ranked above a dossier that only holds the word), in full and live search alike. `dossier` and `dossiers` name the type and are left out of a search of dossiers unless they are all of `q` (`cbw dossier` asks for the dossier of the Cbw). `extra` of an article carries `instrument_title` (its law), `instrument_abbreviation`, `heading` and `division_titles` (its `display_name` the article as it is cited: `Art. 6:162 BW`), of an instrument `short_title`, `aliases`, `kind` and the dates `date_published`, `date_in_force` and `version_date_in_force` (as `/api/instruments/{identifier}` gives them; regulations of one title told apart by them); an article and an instrument `expired_on`, the first day it no longer holds (of an article the earlier of its law's and its own end, docs/api.md "Validity"): one expired by today comes after every hit of its score that holds, not left out; of a judgment `ecli`, `appno`, `names` and `cite` (as `/api/judgments` gives it; and `person` when it was found by one), of a document `dossier_number`, of a dossier `number`, `kind`, `current_phase`, `closed`, `outcome` and `short_title` (the name it goes by, as `/api/dossiers` gives it: `Wet betaalbare huur`; null without one). A judgment is also found by a person it names (`lg_judgment_persons`: a party not anonymised, whoever acts for a party) when every word of `q` is a word of that one name, whole (while typing, `mode=live`, the last word by its start): `R. van Gelder`, `Van Gelder` and `mr. drs. R. van Gelder` find `mr. drs. R. van Gelder`, `Vermeulen` finds `mr. I.T.F. Vermeulen`, `college van gedeputeerde staten van Zuid-Holland` finds that party; at least one word of three characters or more that is no title, article or particle (`van`, `mr`); the newest first of the first 2,000 names found. Such a hit has `extra.person` (`name` as written, `role`: the party's role, or `advocaat`, `gemachtigde`, `raadsman` of who acts for one, and `party`: the alias or name of the party they act for, null for a party) and scores 0.25 when `q` is all of the name but its titles, initials, articles and particles, else 0.1 after the judgments found by their words. A member is found by every word of its names (its name, party and the factions of its timeline), a faction by its name, abbreviation and aliases; a word without accents or in capitals finds a name with them (`yesilgoz`: Yeşilgöz; of a member in its own name only; a member without a role, `extra.has_role` false, after every member with one, whatever its score). A cabinet is found by every word of its name (`Rutte`, `kabinet Schoof`), newest first, with `from_date` and `to_date` in `extra`; a commitment by every word of its text or its number (`TZ202609-011`), newest first, with `number`, `made_on`, `status`, `minister_name`, `cabinet` and `ministry` in `extra`. A vote (`decisions`) by every word of what was voted on (`subject`) or its `kind` (`Motie`, `Wetgeving`), newest first, with `date`, `kind`, `passed`, `chamber` and `dossier_numbers` in `extra`; `stemming`, `stemmingen`, `besluit` and `besluiten` name the type and are left out (`stemming abortus` asks for the votes on abortion). Words of `q` that are the abbreviation, name or alias of a faction (of either chamber, past ones too; not when they are part of the name of a member, nor all of `q`) are no words of the search of the papers and the votes: their hits are signed for it (a paper by one of its Kamerleden for it, a vote on such a paper), and `searched.<type>.signed_for` names it (`motie stikstof VVD`). A document hit has in `extra` its `kind`, `external_id`, `dossier_number`, `sequence` (its number in the dossier: nr. 12), `number` (as above: `12`, the letter `A` of an Eerste Kamer paper), `date` (as the source gives it; null when it has none), `chamber` (`TK`, `EK`, null for Staatsblad and Staatscourant, as in `/api/documents`) and `dossier_short_title` (the name its dossier goes by, as `/api/dossiers` gives it; null without one); with `resolve=true` also `resolved`, what `/api/resolve` answers for `q` (kind `none` for a query over 200 characters), null without it: a search box resolves and searches in one request. `mode=live` (while typing; `full` is the default) answers all types within 250 ms together (a type that waited for a thread has what is left): a type not done by then is empty and named in `partial` (`{"judgments": true}`; a type not cut off is not in it); nothing is ranked by its words (no BM25): each word of `q` is a word of a field (every word it holds: `20/325` both 20 and 325), a whole value (a number, an identifier) or, from three characters, the start of a word of a name or title (`stik`: Stikstofwet; not `tikst`, which the full search finds), and of the first 2,000 rows found those whose name or title starts with `q` come first, then the most cited articles, the laws with the most articles, the dossiers with the latest activity and the newest papers; the judgments are found without ranking their summaries: by ECLI, by a part of a name (`Urgenda`), or by every word of three characters or more in the display name (court, date, case number), the most cited first, and when none does (a subject, `onrechtmatige daad`) the newest that hold the words (summary, name, display name; of the first 2,000 found, without a rank); a query of fewer than three characters finds no judgment. The full search ranks each type within 2 s, all together within 2.5 s: a type that takes longer answers what its live search finds (within 0.5 s more; for judgments that no name or display name holds: the newest that hold the words, of the first 2,000 found, without a rank) and is named in `partial` too, instead of the request answering 503 at its deadline; the next search of the same terms finds what it counted meanwhile. `searched` says per type of `types` what its search reads: `fields` (`title`, `name`, `number`, `summary`, `text`, `kind`) and `completeness.text`, `none` for a type whose text it does not read (judgments, documents).
+         *     text search over `types` (`articles`, `cabinets`, `commitments`, `committees`, `decisions`, `documents`, `dossiers`, `factions`, `instruments`, `judgments`, `members`, `ministries`; all by default), `kind`, `limit`, and a period `from`, `to` (YYYY-MM-DD, both days in it, either open; 422 for `from` after `to`): each hit by a date of its own, in full and live search alike: a judgment the day of its decision (`date_eff`), a paper its date, a dossier the day it was opened, a vote its date, a commitment the day it was made, a law the day it came into force (`date_in_force`), an article the day its law came into force; a type without a date of its own (a member, a faction, a committee, a cabinet, a ministry) finds nothing within a period. A ministry is found by the start of a word of its name or its abbreviation for every word (TOOI: `BZK`, `JenV`; `&` read as `en`, so `J&V` is `JenV`; loose letters, groups of one or two with at least one of one, are the one abbreviation they write, in every type: `J en V`, `j & v`, `B Z K`, `BZ K`), `ministerie` and `ministeries` left out; one `q` names whole (`BZK`, `Financiën`, `ministerie van Justitie en Veiligheid`) first and `exact` (its abbreviation 1, its name 0.75), then the current ones, then the former ones newest first; `extra` has its `abbreviation`, `tooi`, `to_date` (its last day) and `successor`. An article only a citation names, with no text of its own, is no hit. A citation in `q` (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`, a full ECLI) puts its article or judgment first, and so does the whole name of a judgment (`Urgenda`, `Lindenbaum/Cohen`: one of its `names`, any case). Every hit has a `score`, its rank tier for `q`: an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), every word of `q` in its name (0.25), a match on words only (0.1), compared in lower case and without accents (`yesilgoz` is part of `Yeşilgöz-Zegerius`); a type lists its hits best first, ties in database order, a law or an article that no longer holds after every one that does, whatever its score, unless `q` names it exactly (`exact`). The names of a hit are its `display_name`, citation title, the `heading` of an article and the `aliases` of an instrument (`BW`, `Boek 6 BW`, `6 BW`: 0.75, before the words); `q` inside the title of a division an article stands in counts as part of its name (0.25). Scores compare across types: a heading or alias that is `q` (0.75) outranks a judgment that only holds its words (0.1). A word of `q` also finds its plural or singular where the last consonant changes between them, which stem apart (`huurprijs` and `huurprijzen`, `brief` and `brieven`). Within a type the database orders by BM25 before the `limit` (on a large table its statistics, the number of rows and the mean length of a field, are an estimate from a fixed sample, at most 6 hours old; the number of rows that hold a common word is the planner's estimate from its statistics, a rare word is counted, and a count that takes over 5 s weighs its terms as held by every row; a word matches the start of a value or a part of it from three characters, the start in any case and, in a name or title, without accents), with a word in a heading (x4), a division title (x1.5), a display name (x2), an alias or short title (x3) weighing more than one in a text; an instrument whose alias or short title is the whole of `q` is always fetched, and so is every book of a code `q` is the name of (`BW`, `Burgerlijk Wetboek`: the citation title of its books without the book), in the order of their number (1, 2, ..., 10). Of the articles the database orders by their tier before BM25, as far as the article says it (named by its terms, a heading or display name that starts with `q`, every word of `q` in its heading or the title of a division it stands in), so that the best tiers are among the hits however few are asked, while typing too (`onrechtmatige daad`: art. 6:162 BW, in the title Onrechtmatige daad, before the articles of the Wet conflictenrecht onrechtmatige daad). An article is also found by its terms, what the judgments that cite it call it (`noodweer`: art. 41 Sr, whose words do not hold it; `lg_article_terms`), as a match on words (0.1), ranked above those that only hold the word; such a hit has `extra.terms`, the words of `q` it was found by, which come from the case law, not from the law. An article of which every word of `q` is a strong term (a good share of the judgments that use the word cite it, and few judgments cite it at all: `verjaring`, art. 3:310 BW) scores as a whole name (0.75), the best by its words first; a word in more than one in 50 summaries names no article and is left out of that (`ontslag op staande voet`: art. 7:677 BW, named by its other words). A word of `q` that is the short title or an alias of a law (as the instrument has it, whole, any case and without accents: `Cbw`, `Sr`, `BW` of every book) also matches each of its articles, as the name of the law in its `display_name` does (`zorgplicht cbw`: art. 21 of the Cyberbeveiligingswet), and each dossier the law is `LEGISLATED_IN` (`cbw`: dossier 36764, the bill that became it; ranked above a dossier that only holds the word), in full and live search alike. `dossier` and `dossiers` name the type and are left out of a search of dossiers unless they are all of `q` (`cbw dossier` asks for the dossier of the Cbw). `extra` of an article carries `instrument_title` (its law), `instrument_abbreviation`, `heading` and `division_titles` (its `display_name` the article as it is cited: `Art. 6:162 BW`), of an instrument `short_title`, `aliases`, `kind` and the dates `date_published`, `date_in_force` and `version_date_in_force` (as `/api/instruments/{identifier}` gives them; regulations of one title told apart by them); an article and an instrument `expired_on`, the first day it no longer holds (of an article the earlier of its law's and its own end, docs/api.md "Validity"): one expired by today comes after every hit of its score that holds, not left out; of a judgment `ecli`, `appno`, `names` and `cite` (as `/api/judgments` gives it; and `person` when it was found by one), of a document `dossier_number`, of a dossier `number`, `kind`, `current_phase`, `closed`, `outcome` and `short_title` (the name it goes by, as `/api/dossiers` gives it: `Wet betaalbare huur`; null without one). A judgment is also found by a person it names (`lg_judgment_persons`: a party not anonymised, whoever acts for a party) when every word of `q` is a word of that one name, whole (while typing, `mode=live`, the last word by its start): `R. van Gelder`, `Van Gelder` and `mr. drs. R. van Gelder` find `mr. drs. R. van Gelder`, `Vermeulen` finds `mr. I.T.F. Vermeulen`, `college van gedeputeerde staten van Zuid-Holland` finds that party; at least one word of three characters or more that is no title, article or particle (`van`, `mr`); the newest first of the first 2,000 names found. Such a hit has `extra.person` (`name` as written, `role`: the party's role, or `advocaat`, `gemachtigde`, `raadsman` of who acts for one, and `party`: the alias or name of the party they act for, null for a party) and scores 0.25 when `q` is all of the name but its titles, initials, articles and particles, else 0.1 after the judgments found by their words. A member is found by every word of its names (its name, party and the factions of its timeline), a faction by its name, abbreviation and aliases; a word without accents or in capitals finds a name with them (`yesilgoz`: Yeşilgöz; of a member in its own name only; a member without a role, `extra.has_role` false, after every member with one, whatever its score). A cabinet is found by every word of its name (`Rutte`, `kabinet Schoof`), newest first, with `from_date` and `to_date` in `extra`; a commitment by every word of its text or its number (`TZ202609-011`), newest first, with `number`, `made_on`, `status`, `minister_name`, `cabinet` and `ministry` in `extra`. A vote (`decisions`) by every word of what was voted on (`subject`) or its `kind` (`Motie`, `Wetgeving`), newest first, with `date`, `kind`, `passed`, `chamber` and `dossier_numbers` in `extra`; `stemming`, `stemmingen`, `besluit` and `besluiten` name the type and are left out (`stemming abortus` asks for the votes on abortion). Words of `q` that are the abbreviation, name or alias of a faction (of either chamber, past ones too; not when they are part of the name of a member, nor all of `q`) are no words of the search of the papers and the votes: their hits are signed for it (a paper by one of its Kamerleden for it, a vote on such a paper), and `searched.<type>.signed_for` names it (`motie stikstof VVD`). A document hit has in `extra` its `kind`, `external_id`, `dossier_number`, `sequence` (its number in the dossier: nr. 12), `number` (as above: `12`, the letter `A` of an Eerste Kamer paper), `date` (as the source gives it; null when it has none), `chamber` (`TK`, `EK`, null for Staatsblad and Staatscourant, as in `/api/documents`) and `dossier_short_title` (the name its dossier goes by, as `/api/dossiers` gives it; null without one); with `resolve=true` also `resolved`, what `/api/resolve` answers for `q` (kind `none` for a query over 200 characters), null without it: a search box resolves and searches in one request. `mode=live` (while typing; `full` is the default) answers all types within 250 ms together (a type that waited for a thread has what is left): a type not done by then is empty and named in `partial` (`{"judgments": true}`; a type not cut off is not in it); nothing is ranked by its words (no BM25): each word of `q` is a word of a field (every word it holds: `20/325` both 20 and 325), a whole value (a number, an identifier) or, from three characters, the start of a word of a name or title (`stik`: Stikstofwet; not `tikst`, which the full search finds), and of the first 2,000 rows found those whose name or title starts with `q` come first, then the most cited articles, the laws with the most articles, the dossiers with the latest activity and the newest papers; the judgments are found without ranking their summaries: by ECLI, by a part of a name (`Urgenda`), or by every word of three characters or more in the display name (court, date, case number), the most cited first, and when none does (a subject, `onrechtmatige daad`) the newest that hold the words (summary, name, display name; of the first 2,000 found, without a rank); a query of fewer than three characters finds no judgment. The full search ranks each type within 2 s, all together within 2.5 s: a type that takes longer answers what its live search finds (within 0.5 s more; for judgments that no name or display name holds: the newest that hold the words, of the first 2,000 found, without a rank) and is named in `partial` too, instead of the request answering 503 at its deadline; the next search of the same terms finds what it counted meanwhile. `searched` says per type of `types` what its search reads: `fields` (`title`, `name`, `number`, `summary`, `text`, `kind`) and `completeness.text`, `none` for a type whose text it does not read (judgments, documents).
          *
-         *     The stop words of `q` (the Dutch stop words of PostgreSQL's Snowball dictionary: `wat`, `is`, `de`, `van`, `mijn`) are no words of the search, unless they are all of it: `words` are those searched, `left_out` the others (`wat is de opzegtermijn van mijn huurcontract` searches `opzegtermijn huurcontract`). When no hit of any type holds every word of two or more, the full search (not `mode=live`) is asked again for the hits that hold one at least (of a ranked type those with more first; not of a citation, `Kamerstuk 35925 VI nr. 5`) and `matched` is `any`, else `all`. `toezegging` and `toezeggingen` name the type of a commitment and are left out of its search (`toezeggingen pensioenen`); a word of a commitment, a vote or a cabinet also finds the forms of its stem of four characters or more (`pensioenen`: nabestaandenpensioen). A word of the name of a kind of motion (`wantrouwen` of motie van wantrouwen, `afkeuring` of motie van afkeuring; `motion_kind`, `semantic tk-motion-kinds`) also finds the motions of that kind and the votes on them, whose subject does not hold it (`het opzeggen van het vertrouwen`), a motion above those that only hold the word; `motion_kind` keeps the papers and the votes to those motions. An LJN (`LJN AU3313`, `AU3313`: the number of the ECLI of a decision before 2013) is the judgment whose ECLI ends in it, as an ECLI is. A member is named whole by the name without the names or initials before it (`Rutte`: Mark Rutte, 0.75, before the Besluit archief Rutten that holds it). `exact` per hit says whether `q` names it as the one thing it is (its citation, ECLI, LJN, number, the abbreviation or whole title of a law, the name of a judgment, the whole name of a member, faction, committee or cabinet), never by a heading or words; `best` is the id of what a search box opens on Enter: the match of `resolved` of confidence 0.9 or more, else the hit of a concept, else the one `exact` hit, else null (`huurverhoging`: no hit it names, however its words match).
+         *     The stop words of `q` (the Dutch stop words of PostgreSQL's Snowball dictionary: `wat`, `is`, `de`, `van`, `mijn`) are no words of the search, unless they are all of it: `words` are those searched, `left_out` the others (`wat is de opzegtermijn van mijn huurcontract` searches `opzegtermijn huurcontract`). When no hit of any type holds every word of two or more, the full search (not `mode=live`) is asked again for the hits that hold one at least (of a ranked type those with more first; not of a citation, `Kamerstuk 35925 VI nr. 5`) and `matched` is `any`, else `all`. `toezegging` and `toezeggingen` name the type of a commitment and are left out of its search (`toezeggingen pensioenen`); a word of a commitment, a vote or a cabinet also finds the forms of its stem of four characters or more (`pensioenen`: nabestaandenpensioen). A word of the name of a kind of motion (`wantrouwen` of motie van wantrouwen, `afkeuring` of motie van afkeuring; `motion_kind`, `semantic tk-motion-kinds`) also finds the motions of that kind and the votes on them, whose subject does not hold it (`het opzeggen van het vertrouwen`), a motion above those that only hold the word; `motion_kind` keeps the papers and the votes to those motions. An LJN (`LJN AU3313`, `AU3313`: the number of the ECLI of a decision before 2013) is the judgment whose ECLI ends in it, as an ECLI is. A member is named whole by the name without the names or initials before it (`Rutte`: Mark Rutte, 0.75, before the Besluit archief Rutten that holds it), and by each part of a double surname (`Yeşilgöz`: Dilan Yeşilgöz-Zegerius, 0.75). A paper is no identifier of its dossier: it scores 1 by its own number, not by that of its dossier. `exact` per hit says whether `q` names it as the one thing it is (its citation, ECLI, LJN, number, the abbreviation or whole title of a law, the name of a judgment, the whole name of a member, faction, committee, cabinet or ministry), never by a heading or words; `best` is the id of what a search box opens on Enter: the match of `resolved` of confidence 0.9 or more, else the hit of a concept, else the one `exact` hit (an `exact` ministry before the committees: `BZK`), else null (`huurverhoging`: no hit it names, however its words match).
          *
          *     A query that is a term of the curated list of concepts (`wanprestatie`, `ontslag op staande voet`, `GDPR`, `minimum wage`; the whole query or its words without its stop words, any case, without accents and punctuation; docs/api.md "Concepts") has the article or law the term is about first among the hits of its type, score 1, `exact`, with `concept` the term (not with a period, nor when its type is not in `types`); it is `best` unless `resolved` names something with confidence 0.9 or more.
          *
@@ -3098,6 +3138,39 @@ export interface components {
             total: number;
         };
         /**
+         * ArticleNeighborDTO
+         * @description The article before or after one in the list of the articles of its law.
+         */
+        ArticleNeighborDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id: string | null;
+            /** Celex */
+            celex: string | null;
+            /** Official Id */
+            official_id: string | null;
+            /** Article Number */
+            article_number: string | null;
+            /**
+             * Label
+             * @description `Artikel 67`.
+             */
+            label: string | null;
+            /**
+             * Address
+             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             */
+            address: string;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
          * ArticlePartDTO
          * @description A part of an article with its content.
          */
@@ -3534,6 +3607,215 @@ export interface components {
              * @description Its cells that span columns or rows.
              */
             spans: components["schemas"]["ArticleCellSpanDTO"][];
+        };
+        /**
+         * ArticleTextBatchItem
+         * @description One article a batch asks for, in the order it asks.
+         */
+        ArticleTextBatchItem: {
+            /**
+             * Ref
+             * @description As asked: `BWBR0052875/19`.
+             */
+            ref: string;
+            /** @description Null when the data does not hold it. */
+            article: components["schemas"]["ArticleTextDTO"] | null;
+        };
+        /** ArticleTextBatchResponse */
+        ArticleTextBatchResponse: {
+            /** Items */
+            items: components["schemas"]["ArticleTextBatchItem"][];
+            /**
+             * Not In Data
+             * @description The `ref`s of the items the data does not hold, in their order.
+             */
+            not_in_data: string[];
+        };
+        /**
+         * ArticleTextBlockDTO
+         * @description A lid, an onderdeel, an aanhef or a paragraph of the text, in text order.
+         */
+        ArticleTextBlockDTO: {
+            /**
+             * Anchor
+             * @description The id of its part (`lid-1`, `lid-2-aanhef`, `lid-2-onder-b`), the anchor of the place; null outside every part (an article without leden). It repeats where its part goes on after a part inside it (a line after a list).
+             */
+            anchor: string | null;
+            /**
+             * Kind
+             * @description `lid`, `onderdeel`, `aanhef` or `tekst` (the kind of its part, `tekst` outside every part), or `kop` (a heading on a line of its own).
+             */
+            kind: string;
+            /**
+             * Number
+             * @description Its number as printed: `2`, `a`, `1°`.
+             */
+            number: string | null;
+            /**
+             * Marker
+             * @description What is printed before it: `2.`, `a.`; null for none.
+             */
+            marker: string | null;
+            /**
+             * Within
+             * @description The anchors of the parts it stands in, the outermost first: `lid-2` of `lid-2-onder-a`. A lid with an aanhef has no block of its own: its aanhef and onderdelen name it here.
+             */
+            within: string[];
+            /**
+             * Text
+             * @description Its text, a paragraph a line.
+             */
+            text: string;
+            /** Links */
+            links: components["schemas"]["ArticleTextLinkDTO"][];
+        };
+        /**
+         * ArticleTextDTO
+         * @description An article to read beside something else: its heading, its text in blocks, and the
+         *     articles before and after it.
+         */
+        ArticleTextDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id: string | null;
+            /** Celex */
+            celex: string | null;
+            /**
+             * Official Id
+             * @description Of an article of a law the BWB does not hold (yet): the id of the Staatsblad publication that enacted its law (`stb-2026-56`), which names the law in the article routes (`/api/articles/STB-2026-56/2.8.6`) and in its address.
+             */
+            official_id: string | null;
+            /** Article Number */
+            article_number: string | null;
+            /**
+             * Address
+             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             */
+            address: string;
+            /**
+             * Label
+             * @description `Artikel 68`.
+             */
+            label: string | null;
+            /**
+             * Heading
+             * @description The title of its kop: `(toezichthouders)`.
+             */
+            heading: string | null;
+            /**
+             * Display Name
+             * @description How it is cited: `Art. 68 Cbw`.
+             */
+            display_name: string | null;
+            /** Repealed */
+            repealed: boolean;
+            /** @description Whether it holds today, from the dates its source gives (docs/api.md "Validity"); null where the source says nothing of it (an EU act, a treaty the Verdragenbank does not say is in force). */
+            validity: components["schemas"]["ValidityDTO"] | null;
+            law: components["schemas"]["ArticleTextLawDTO"] | null;
+            /** Blocks */
+            blocks: components["schemas"]["ArticleTextBlockDTO"][];
+            /** @description The article before it in its law, as `/api/instruments/{bwb_id}/articles` lists them; null for the first, and for one not in that list. */
+            previous: components["schemas"]["ArticleNeighborDTO"] | null;
+            /** @description The article after it; null for the last. */
+            next: components["schemas"]["ArticleNeighborDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ArticleTextLawDTO
+         * @description The law an article stands in.
+         */
+        ArticleTextLawDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id: string | null;
+            /** Celex */
+            celex: string | null;
+            /**
+             * Official Id
+             * @description Of an article of a law the BWB does not hold (yet): the id of the Staatsblad publication that enacted its law (`stb-2026-56`), which names the law in the article routes (`/api/articles/STB-2026-56/2.8.6`) and in its address.
+             */
+            official_id: string | null;
+            /** Title */
+            title: string | null;
+            /** Citation Title */
+            citation_title: string | null;
+            /**
+             * Abbreviation
+             * @description The abbreviation it is cited by (`Cbw`), as `abbreviation` of the instrument.
+             */
+            abbreviation: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ArticleTextLinkDTO
+         * @description A reference in a block whose target the data holds, with the place it names.
+         */
+        ArticleTextLinkDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /**
+             * Start
+             * @description Offset of `text` in the `text` of the block.
+             */
+            start: number;
+            /** End */
+            end: number;
+            /** Text */
+            text: string;
+            target: components["schemas"]["ArticleTextLinkTargetDTO"];
+        };
+        /**
+         * ArticleTextLinkTargetDTO
+         * @description What a link opens: an article, a judgment, a law, an annex or an EU act.
+         */
+        ArticleTextLinkTargetDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Collection */
+            collection: string;
+            /** Bwb Id */
+            bwb_id: string | null;
+            /** Celex */
+            celex: string | null;
+            /** Official Id */
+            official_id: string | null;
+            /** Article Number */
+            article_number: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * ArticleVersionDTO
@@ -6495,7 +6777,7 @@ export interface components {
             laws_named: components["schemas"]["DossierLawNamedDTO"][];
             /**
              * Committees
-             * @description Committees leading an activity about the dossier.
+             * @description Committees leading an activity about the dossier: its `LED_BY` committees of `/api/nodes/dossiers/{key}`.
              */
             committees: components["schemas"]["DossierCommitteeDTO"][];
             /**
@@ -9640,9 +9922,15 @@ export interface components {
             articles: components["schemas"]["BasisArticleDTO"][];
             /**
              * Sub Delegated
-             * @description The regulations in force issued under its articles in turn, as on the full form.
+             * @description The first 12 regulations in force issued under its articles in turn, in the order of the full form.
              */
             sub_delegated: components["schemas"]["SubDelegatedDTO"][];
+            /**
+             * Sub Delegated Total
+             * @description How many regulations in force are issued under its articles in turn: more than `sub_delegated` gives when it has more than 12.
+             * @default 0
+             */
+            sub_delegated_total: number;
         };
         /**
          * InstrumentDetailDTO
@@ -9819,6 +10107,8 @@ export interface components {
             same_treaty: components["schemas"]["LinkedInstrumentDTO"][];
             /** @description Of a treaty of the Verdragenbank: where it was signed, its Tractatenblad publications, its parties with their dates, the parts of the Kingdom, the dossiers of its approval and the treaties it belongs to or that belong to it. Null for any other instrument. */
             treaty: components["schemas"]["TreatyRegisterDTO"] | null;
+            /** @description Of a BWB regulation: its aanhef ("De Minister van …, Gelet op artikel …, Besluit:"), with its links; null without one. */
+            preamble: components["schemas"]["InstrumentPreambleDTO"] | null;
             /**
              * Completeness
              * @description Of a law of the Staatsblad the BWB does not hold (yet): `references` of all its articles (`partial`: `missing` not linked or linked to a stub) and `definitions`. Of a publication the BWB names (`kind` `publicatie`): `text` `not_fetched` (its text is on officielebekendmakingen.nl; what it changes is read from the BWB). Per part (`text`, `paragraphs`, `tables`, `references`, `definitions`, `versions`, `succession`, `outcome`, `source`) `{state, as_of, missing, reason}` (docs/api.md "Completeness"). Null for any other instrument.
@@ -10277,6 +10567,28 @@ export interface components {
              * @description Pass as ``after`` for the next page; null on the last page.
              */
             next_cursor: string | null;
+        };
+        /**
+         * InstrumentPreambleDTO
+         * @description The aanhef of a BWB regulation: who enacts it, its considerans and its
+         *     afkondiging, with the links in it.
+         */
+        InstrumentPreambleDTO: {
+            /**
+             * Text
+             * @description Its text, a paragraph a line.
+             */
+            text: string;
+            /**
+             * Parts
+             * @description Its blocks, in the order of the text, a block before the `gelet_op` inside it.
+             */
+            parts: components["schemas"]["PreamblePartDTO"][];
+            /**
+             * References
+             * @description Its links to an article, a regulation or an EU act, as those of the text of an article: offsets into `text`, each with its `target`.
+             */
+            references: components["schemas"]["ArticleReferenceDTO"][];
         };
         /**
          * InstrumentReferenceArticleDTO
@@ -12985,6 +13297,24 @@ export interface components {
          */
         Post: "minister-president" | "viceminister-president" | "minister" | "minister_zonder_portefeuille" | "staatssecretaris";
         /**
+         * PreamblePartDTO
+         * @description A block of the aanhef of a regulation, as a span of its `text`.
+         */
+        PreamblePartDTO: {
+            /**
+             * Kind
+             * @description The block as the BWB names it: `wij` ("Wij Willem-Alexander, …": a law or an AMvB), `wie` ("De Minister van …"), `considerans` ("Gelet op …"), `afkondiging` ("Besluit:"), `preambule` (of a treaty); or `gelet_op`: the text of the considerans that states the legal basis (a line "Gelet op …", or a clause "ingevolge artikel …" of a line), inside it.
+             */
+            kind: string;
+            /**
+             * Start
+             * @description Offset of the block in the `text` of the aanhef.
+             */
+            start: number;
+            /** End */
+            end: number;
+        };
+        /**
          * PublicationDTO
          * @description An amending publication (Staatsblad, Tractatenblad, ...) as recorded on a version.
          */
@@ -13198,7 +13528,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "article" | "instrument" | "judgment" | "dossier" | "document" | "commitment" | "faction" | "member";
+            kind: "article" | "instrument" | "judgment" | "dossier" | "document" | "commitment" | "faction" | "member" | "ministry";
             /** Display Name */
             display_name: string | null;
             /**
@@ -13207,8 +13537,13 @@ export interface components {
              */
             title: string | null;
             /**
+             * Expired On
+             * @description Of an article or a law: the first day it no longer holds, as `extra.expired_on` of its hit in `/api/search` (of an article the earlier of its law's and its own end); null while it holds and for every other kind. On or before today it has expired.
+             */
+            expired_on: string | null;
+            /**
              * Confidence
-             * @description 1: an identifier (ECLI, BWB id, CELEX); 0.95: a citation read whole; 0.9: a law, faction or member by exact abbreviation or name; lower for partial names, an article without a law, or several equally good nodes (at most 0.5)
+             * @description 1: an identifier (ECLI, BWB id, CELEX); 0.95: a citation read whole; 0.9: a law, faction, member or ministry by exact abbreviation or name; lower for partial names, an article without a law, or several equally good nodes (at most 0.5)
              */
             confidence: number;
             /**
@@ -13225,7 +13560,7 @@ export interface components {
             /** Q */
             q: string;
             /** Kind */
-            kind: ("article" | "instrument" | "judgment" | "dossier" | "document" | "commitment" | "faction" | "member") | "none";
+            kind: ("article" | "instrument" | "judgment" | "dossier" | "document" | "commitment" | "faction" | "member" | "ministry") | "none";
             /**
              * Confidence
              * @description Confidence of `match`; 0 for `none`; at most 0.5 for a choice
@@ -15083,6 +15418,70 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_article_text_batch_api_articles_batch_get: {
+        parameters: {
+            query: {
+                /** @description The articles as their routes name them, `{bwb_id}/{article_number}`, comma-separated: `BWBR0052875/19,BWBR0005289/6:162`. */
+                refs: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleTextBatchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_article_text_api_articles__bwb_id___article_number__text_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleTextDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_article_detail_api_articles__bwb_id___article_number__get: {
         parameters: {
             query?: never;
