@@ -411,7 +411,20 @@
 		const ask = summaryAsk(s, had);
 		if (!ask) return;
 		const ac = new AbortController();
-		getFeedSummary({ ...ask, ...JSON.parse(filters), margin: CLOSE_VOTE, limit: 1 }, ac.signal)
+		const parsed = JSON.parse(filters);
+		// The lower courts only here (the homepage stays as cheap), and where judgments can be
+		// asked for: not under a kind that excludes them, and never with a `tier` (it would count twice).
+		const judgments = !parsed.kind || String(parsed.kind).split(',').includes('uitspraak');
+		getFeedSummary(
+			{
+				...ask,
+				...parsed,
+				margin: CLOSE_VOTE,
+				limit: 1,
+				...(judgments && !parsed.tier ? { lower_courts: true } : {})
+			},
+			ac.signal
+		)
 			.then((r) => {
 				const found = (r.days ?? []).map((d) => [d.date, d] as const);
 				summaries = new Map(had ? [...summaries, ...found] : found);
