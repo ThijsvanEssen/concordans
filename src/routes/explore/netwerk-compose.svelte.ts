@@ -71,9 +71,13 @@ export function withinCap(response: NodeResponse, cap: number): NodeResponse {
  */
 export const REACH_MAX = 6;
 
-/** Per request, the share of the canvas's room one chosen bron takes (at least 50). */
+/**
+ * Per request, the share of the canvas's room one chosen bron takes (at least 50). The room is
+ * one budget, SOFT_NODE_CAP places shared by the chosen bronnen, and a group that folds costs
+ * one: so a request may bring more than it can show, and the budget picks the most important.
+ */
 export const reachCap = (bronnen: number) =>
-	Math.min(NEIGHBORHOOD_CAP, Math.max(50, Math.floor(SOFT_NODE_CAP / Math.max(1, bronnen))));
+	Math.max(50, Math.floor(SOFT_NODE_CAP / Math.max(1, bronnen)));
 
 export class NetwerkComposer {
 	/** The chosen bronnen as the panel Netwerk lists them. */
@@ -321,6 +325,7 @@ export class NetwerkComposer {
 		const { alone } = this.#store.compose({
 			participants,
 			surroundings: this.surroundings,
+			steps: level,
 			fresh
 		});
 		this.composed = true;

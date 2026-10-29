@@ -22,6 +22,8 @@ const ARC = 70;
 
 /** Between the members of one hull, centre to centre. */
 const MEMBER_GAP = 60;
+/** Air between a hull's disc (its members plus the margin) and the middle, and what is chosen there. */
+const HULL_CLEARANCE = 48;
 /** A member of a chosen bron's hull stands this far from that bron. */
 const SATELLITE = 76;
 
@@ -148,7 +150,10 @@ export function radialLayout(
 				const w = width(slot);
 				const angle = start + ((at + w / 2) / used) * span;
 				at += w;
-				placeSlot(g, slot, Math.cos(angle) * r, Math.sin(angle) * r);
+				// A hull's disc never reaches the middle, where the chosen bronnen and their hulls stand
+				// (a dossier of many stukken, itself a bron on the ring, would close round the wet).
+				const out = Math.max(r, inner + packRadius(slot.length) + HULL_CLEARANCE);
+				placeSlot(g, slot, Math.cos(angle) * out, Math.sin(angle) * out);
 			}
 			placed += these.length;
 			ring++;

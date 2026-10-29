@@ -1,6 +1,7 @@
 import Graph from 'graphology';
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { hullOutline, pointInPolygon } from './hull';
 import { forEachRealNeighbor, radialLayout, realDegree } from './layout';
 
 const at = (g: Graph, id: string) => ({
@@ -94,6 +95,28 @@ describe('radialLayout: hulls (Netwerkcanvas, Omhulling)', () => {
 		for (let i = 1; i < ids.length; i++)
 			expect(apart(graph, ids[i - 1], ids[i])).toBeGreaterThan(100);
 	});
+});
+
+describe('radialLayout: a dossier beside a chosen wet', () => {
+	// The stukken of a dossier tie to the wet too (REFERS_TO): they stand as one island on the
+	// ring, however many, and its disc never holds the wet's anchor (Cbw in dossier 36764).
+	const kind = (id: string) => id.split('/')[0];
+	for (const stukken of [20, 60, 150]) {
+		it(`${stukken} stukken: the disc around them does not hold the wet or its hull`, () => {
+			const g = new Graph();
+			const wet = ['w/anchor', 'w/a1', 'w/a2'];
+			const stuk = Array.from({ length: stukken }, (_, i) => `s/${String(i).padStart(3, '0')}`);
+			for (const id of [...wet, ...stuk]) g.addNode(id, { x: 0, y: 0, anchor: id === 'w/anchor' });
+			const hullOf = (id: string) => (id.startsWith('s/') ? 'D' : id.startsWith('w/') ? 'W' : null);
+			const holds = (h: string, id: string) => hullOf(id) === h;
+			radialLayout(g, ['w/anchor'], kind, ['s'], (a, b) => a.localeCompare(b), hullOf, holds);
+			const disc = hullOutline(
+				stuk.map((id) => at(g, id)),
+				16
+			);
+			for (const id of wet) expect(pointInPolygon(at(g, id), disc.polygon)).toBe(false);
+		});
+	}
 });
 
 describe('forEachRealNeighbor and realDegree', () => {
