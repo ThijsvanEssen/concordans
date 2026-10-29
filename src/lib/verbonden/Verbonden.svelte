@@ -346,7 +346,7 @@
 		if (selection.collection !== 'judgments') return null;
 		const k = kinds.find((x) => x.id === 'judgments');
 		if (!k || k.rows.length === 0) return null;
-		const per = verbonden.id === selection.id ? verbonden.tierPerBak : null;
+		const per = verbonden.id === selection.id ? verbonden.tiersPerBucket : null;
 		const read = k.groups.flatMap((g) => [...(g.match ?? []), ...(g.bakken ?? [])]) as Bucket[];
 		const counted = per ? sumTierCounts(per, (key) => inBuckets(key, read)) : null;
 		const facet = new Map<string, number>(counted ?? []);

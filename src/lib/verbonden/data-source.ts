@@ -84,7 +84,7 @@ export type VerbondenState = {
 	/** The same per collection of the buckets, for the bronfilter (`memberCountsUnder`). */
 	lidPerBak?: Map<string, Map<string, number>> | null;
 	/** Of a judgment: per bucket, the judgments of it per tier, all of them (`tier_counts`). */
-	tierPerBak?: Map<string, ReadonlyMap<string, number>> | null;
+	tiersPerBucket?: Map<string, ReadonlyMap<string, number>> | null;
 	/** Whether the groups hold every row, not the first five per bucket. */
 	volledig?: boolean;
 	/**
@@ -380,7 +380,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						failed: false,
 						lidTellingen: perBak ? sumLidCounts(perBak) : null,
 						lidPerBak: perBak,
-						tierPerBak: tiers,
+						tiersPerBucket: tiers,
 						volledig: basis?.volledig ?? false
 					});
 				zet();
