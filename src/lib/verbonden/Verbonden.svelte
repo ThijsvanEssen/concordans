@@ -337,23 +337,28 @@
 		return () => ac.abort();
 	});
 	const partsApi = $derived(tierCounts?.id === selection.id ? tierCounts.parts : null);
-	// The judgments that cite a judgment have no facet of the API: the instanties are counted
-	// from the rows that are in, "N van M" while there are more (UX-toets C10).
+	// The judgments of a judgment per instantie: all of them as the API counts them
+	// (`tier_counts`, live-toets 29 Oct B7); without it, from the rows that are in, "N van M"
+	// while there are more (UX-toets C10).
 	const tally = $derived.by(() => {
 		if (selection.collection !== 'judgments') return null;
 		const k = kinds.find((x) => x.id === 'judgments');
 		if (!k || k.rows.length === 0) return null;
-		const facet = new Map<string, number>();
-		for (const r of k.rows) {
-			const tier = typeof r.props?.tier === 'string' ? r.props.tier : '';
-			facet.set(tier, (facet.get(tier) ?? 0) + 1);
-		}
+		const counted = verbonden.id === selection.id ? verbonden.tierTellingen : null;
+		const facet = new Map<string, number>(counted ?? []);
+		if (!counted)
+			for (const r of k.rows) {
+				const tier = typeof r.props?.tier === 'string' ? r.props.tier : '';
+				facet.set(tier, (facet.get(tier) ?? 0) + 1);
+			}
+		const all = [...facet.values()].reduce((n, c) => n + c, 0);
 		const tierSplit = tierParts(
 			[...facet].map(([value, count]) => ({ value, count })),
-			k.rows.length
+			all
 		);
 		// One instantie is no strook, and "alle" of a part would not be true.
-		return tierSplit.length > 1 ? { parts: tierSplit, of: Math.max(k.count, k.rows.length) } : null;
+		const of = counted ? all : Math.max(k.count, k.rows.length);
+		return tierSplit.length > 1 ? { parts: tierSplit, of } : null;
 	});
 	const parts = $derived(tally ? tally.parts : partsApi);
 	/** How many of the soort's judgments the strook counts, where not all. */

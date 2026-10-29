@@ -103,6 +103,7 @@ describe('zonderArtikelen', () => {
 			articles: 2,
 			enacted: 2,
 			proposed: 0,
+			truncated: false,
 			laws: [
 				{
 					law: {

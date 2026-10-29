@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
 import { ApiError } from './client';
-import { getBuckets, lidCountsOf } from './nodes';
+import { getBuckets, lidCountsOf, tierCountsOf } from './nodes';
 
 const response = (buckets: unknown[]) => ({ node: {}, neighbors: { total: 0, buckets } }) as never;
 
@@ -25,6 +25,33 @@ describe('lidCountsOf', () => {
 
 	it('gives null where the API counts no lid', () => {
 		expect(lidCountsOf(response([{ relation: 'PART_OF', direction: 'outbound' }]))).toBeNull();
+	});
+});
+
+describe('tierCountsOf', () => {
+	it('adds the judgments per tier of every bucket of judgments, all of them', () => {
+		const counts = tierCountsOf(
+			response([
+				{
+					relation: 'REFERS_TO',
+					direction: 'inbound',
+					tier_counts: { hoge_raad: 60, rechtbank: 900 }
+				},
+				{ relation: 'REFERS_TO', direction: 'outbound', tier_counts: { hoge_raad: 3, '': 1 } },
+				{ relation: 'REFERS_TO', direction: 'outbound', tier_counts: null }
+			])
+		);
+		expect(counts).toEqual(
+			new Map([
+				['hoge_raad', 63],
+				['rechtbank', 900],
+				['', 1]
+			])
+		);
+	});
+
+	it('gives null where the API counts no tier', () => {
+		expect(tierCountsOf(response([{ relation: 'PART_OF', direction: 'outbound' }]))).toBeNull();
 	});
 });
 
