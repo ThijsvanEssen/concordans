@@ -5,7 +5,7 @@
 // column; the canvas is as high as what it holds. In Tijd, Kamerstukken and Rechtspraak stand by
 // their date (time-axis.ts). Pure and deterministic: text is measured by an estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
-import type { Column, Scene, SceneUnit } from './scene';
+import type { Column, Scene, SceneLine, SceneUnit } from './scene';
 import { axisY, timeAxis, type TimeAxis } from './time-axis';
 
 export const GUTTER = 76;
@@ -22,7 +22,8 @@ export const CONTENT_TOP = 116;
 const MARGIN_LEFT = 36;
 /** In Tijd the axis stands left of the columns. */
 const MARGIN_LEFT_TIMED = 78;
-const MARGIN_RIGHT = 30;
+/** Right of the last column: room for its panel and the rails of its gutter (lane-lines). */
+const MARGIN_RIGHT = PANEL + GUTTER / 2 + 8;
 const LANE_HEAD = 26;
 const LANE_SPACE = 22;
 const STRIP_SPACE = 24;
@@ -36,6 +37,9 @@ const DOT = 20;
 const DOT_LINE = 22;
 const ROW_HEAD = 20;
 const MAX_LINES = 3;
+/** The name in a hull's pill: 12 px semibold, measured as 13; its padding left and right. */
+const PILL_SIZE = 13;
+const PILL_PAD = 20;
 
 export type Box = { x: number; y: number; width: number; height: number };
 
@@ -46,9 +50,12 @@ export type UnitBox = Box & {
 	label: Box;
 	/** A hull's rows, by the height of their first line of members. */
 	rows: { id: string; y: number }[];
+	/** The text as measured: the name's lines (a hull's pill: one), and the smaller lines under it. */
+	text: { name: string[]; small: string[] };
 };
 
-type ColumnBox = Box & { column: Column };
+/** A column's panel; `inner`: the room at its right, inside the panel, for the rails of its own lines. */
+type ColumnBox = Box & { column: Column; inner: number };
 
 export type LaneLayout = {
 	width: number;
@@ -63,11 +70,12 @@ export type LaneLayout = {
 	axis: TimeAxis | null;
 };
 
-/** The width of a text, estimated: half the font size a character. */
-const textWidth = (text: string, size = 13): number => text.length * size * 0.5 + 2;
+/** The width of a text, estimated: half the font size a character, a capital seven tenths. */
+const textWidth = (text: string, size = 13): number =>
+	[...text].reduce((w, ch) => w + (/[A-Z]/.test(ch) ? 0.7 : 0.5), 0) * size + 2;
 
-/** A text in lines of at most `width`, at most MAX_LINES; the last one cut with "…". */
-export function wrapLabel(text: string, width: number, size = 13): string[] {
+/** A text in lines of at most `width`, at most `max`; the last one cut with "…". */
+export function wrapLabel(text: string, width: number, size = 13, max = MAX_LINES): string[] {
 	const lines: string[] = [];
 	for (const word of text.split(/\s+/).filter(Boolean)) {
 		const last = lines.at(-1);
@@ -80,9 +88,8 @@ export function wrapLabel(text: string, width: number, size = 13): string[] {
 		while (short.length > 1 && textWidth(`${short}…`, size) > width) short = short.slice(0, -1);
 		return `${short.trimEnd()}…`;
 	};
-	const kept = lines.slice(0, MAX_LINES).map((l) => (textWidth(l, size) <= width ? l : cut(l)));
-	if (lines.length > MAX_LINES && !kept[MAX_LINES - 1].endsWith('…'))
-		kept[MAX_LINES - 1] = cut(kept[MAX_LINES - 1]);
+	const kept = lines.slice(0, max).map((l) => (textWidth(l, size) <= width ? l : cut(l)));
+	if (lines.length > max && !kept[max - 1].endsWith('…')) kept[max - 1] = cut(kept[max - 1]);
 	return kept;
 }
 
@@ -107,17 +114,17 @@ function nodeBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 		height,
 		mark: { x, y, width: GLYPH, height: GLYPH },
 		label,
-		rows: []
+		rows: [],
+		text: { name, small: role }
 	};
 }
 
 function groupBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 	const r = discRadius(u.members.length);
 	const text = room - 2 * r - 8;
-	const lines = [
-		...wrapLabel(u.label, text),
-		...(u.breakdown ? wrapLabel(u.breakdown, text, 12) : [])
-	];
+	const name = wrapLabel(u.label, text);
+	const small = u.breakdown ? wrapLabel(u.breakdown, text, 12) : [];
+	const lines = [...name, ...small];
 	const height = Math.max(2 * r, lines.length * SMALL_LINE + 2);
 	const width = Math.min(text, widest(lines));
 	const label = { x: x + 2 * r + 8, y, width, height };
@@ -128,7 +135,8 @@ function groupBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 		height,
 		mark: { x, y, width: 2 * r, height: 2 * r },
 		label,
-		rows: []
+		rows: [],
+		text: { name, small }
 	};
 }
 
@@ -150,11 +158,15 @@ function hullBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 			headed ? textWidth(row.label, 12) + 24 : 0
 		);
 	}
-	const pill = wrapLabel(u.label, room - 16, 12).slice(0, 1);
-	const width = Math.min(room, Math.max(32 + wide, widest(pill, 12) + 16, 80));
-	const mark = { x, y: y + HULL_PILL, width, height: cy + 8 - (y + HULL_PILL) };
-	const label = { x, y, width: Math.min(width, widest(pill, 12) + 16), height: HULL_PILL - 4 };
-	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows };
+	// The pill: one line, cut with "…" where the column ends; measured as a size larger, for its weight.
+	const pill = wrapLabel(u.label, room - PILL_PAD, PILL_SIZE, 1);
+	const named = Math.min(room, widest(pill, PILL_SIZE) + PILL_PAD);
+	const markWidth = Math.min(room, Math.max(32 + wide, 80));
+	const mark = { x, y: y + HULL_PILL, width: markWidth, height: cy + 8 - (y + HULL_PILL) };
+	const label = { x, y, width: named, height: HULL_PILL - 4 };
+	const width = Math.max(markWidth, named);
+	const text = { name: pill, small: [] };
+	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
 }
 
 const boxOf = (u: SceneUnit, x: number, y: number, room: number): UnitBox =>
@@ -173,22 +185,102 @@ const byDefault = (a: SceneUnit, b: SceneUnit) =>
 	a.label.localeCompare(b.label) ||
 	a.id.localeCompare(b.id);
 
-type Frame = { x: number; width: number };
+/** Where a column's units stand; `inner`: its own rails' room right of them. */
+type Frame = { x: number; width: number; inner?: number };
 
-/** The x and width of each column that holds a unit, the rest of the width to Wetten. */
-function framesOf(scene: Scene, width: number, timed: boolean): Map<Column, Frame> {
+/** The rails a gutter takes at least this far apart, so no two lines run on one another. */
+const RAIL_MIN = 9;
+/** A gutter never grows past this: beyond it, its rails stand closer. */
+const GUTTER_MAX = 360;
+
+/**
+ * How many rails each gutter holds, after the column of that index: a line runs down the gutter
+ * before its target's column (and, past a column between, the one after its own), a line within a
+ * column down the gutter right of it. A bundle (one target or one bron, one lijnsoort) is one rail.
+ */
+function gutterLoads(scene: Scene, used: readonly Column[]): number[] {
+	const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
+	const index = new Map(scene.units.map((u) => [u.id, used.indexOf(u.column)]));
+	const rails = scene.lines.flatMap((l) => {
+		const [a, b] = [index.get(l.from)!, index.get(l.to)!];
+		const strip = general.has(l.from) || general.has(l.to);
+		return guttersOf(a, b, general.has(l.from), general.has(l.to))
+			.filter((g) => g >= 0 && g < used.length)
+			.map((g) => ({ g, strip, l }));
+	});
+	// As lane-lines bundles them: on the end where more of one lijnsoort meet.
+	const count = new Map<string, number>();
+	const keysOf = (g: number, l: SceneLine) => [
+		`${g} to ${l.to} ${l.kind}`,
+		`${g} from ${l.from} ${l.kind}`
+	];
+	for (const { g, l } of rails) for (const k of keysOf(g, l)) count.set(k, (count.get(k) ?? 0) + 1);
+	const keys = used.map(() => new Set<string>());
+	for (const { g, strip, l } of rails) {
+		const [into, outOf] = keysOf(g, l);
+		keys[g].add(strip ? l.id : (count.get(outOf) ?? 0) > (count.get(into) ?? 0) ? outOf : into);
+	}
+	return keys.map((k) => k.size);
+}
+
+/** The gutters a line between columns `a` and `b` runs down; to the strip, on either side of its column. */
+function guttersOf(a: number, b: number, fromStrip: boolean, toStrip: boolean): number[] {
+	if (fromStrip && toStrip) return [];
+	if (fromStrip || toStrip) {
+		const k = fromStrip ? b : a;
+		return [k - 1, k];
+	}
+	if (a === b) return [];
+	return a < b ? [b - 1, ...(b - a > 1 ? [a] : [])] : [b, ...(a - b > 1 ? [a - 1] : [])];
+}
+
+/**
+ * The rails of each column's own lines (a wet that names a wet), inside its panel: one per target and
+ * lijnsoort, as lane-lines bundles them.
+ */
+function innerLoads(scene: Scene, used: readonly Column[]): number[] {
+	const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
+	const column = new Map(scene.units.map((u) => [u.id, used.indexOf(u.column)]));
+	const keys = used.map(() => new Set<string>());
+	for (const l of scene.lines) {
+		const a = column.get(l.from)!;
+		if (a === column.get(l.to) && !general.has(l.from) && !general.has(l.to))
+			keys[a].add(`${l.to} ${l.kind}`);
+	}
+	return keys.map((k) => (k.size > 0 ? 12 + k.size * RAIL_MIN : 0));
+}
+
+/** The width a gutter needs for `rails` rails, between the panels on either side. */
+const gutterFor = (rails: number) =>
+	Math.min(GUTTER_MAX, Math.max(GUTTER, Math.ceil(2 * PANEL + 12 + rails * RAIL_MIN)));
+
+/**
+ * The x and width of each column that holds a unit, the rest of the width to Wetten; and the width
+ * the canvas takes: `width`, or more where its columns and gutters need it.
+ */
+function framesOf(
+	scene: Scene,
+	width: number,
+	timed: boolean
+): { frames: Map<Column, Frame>; width: number } {
 	const used = COLUMN_ORDER.filter((c) => scene.units.some((u) => u.column === c && !u.general));
 	const left = timed ? MARGIN_LEFT_TIMED : MARGIN_LEFT;
-	const fixed = used.reduce((n, c) => n + (FIXED_WIDTH[c] ?? 0), 0);
-	const laws = Math.max(LAWS_MIN, width - left - MARGIN_RIGHT - fixed - GUTTER * (used.length - 1));
+	const gutters = gutterLoads(scene, used).map(gutterFor);
+	const inner = innerLoads(scene, used);
+	const fixed = used.reduce((n, c, i) => n + (FIXED_WIDTH[c] ?? 0) + inner[i], 0);
+	const between = gutters.slice(0, -1).reduce((n, g) => n + g, 0);
+	const right = Math.max(MARGIN_RIGHT, (gutters.at(-1) ?? 0) / 2 + 8);
+	const laws = Math.max(LAWS_MIN, width - left - right - fixed - between);
 	const frames = new Map<Column, Frame>();
 	let x = left;
-	for (const c of used) {
+	used.forEach((c, i) => {
 		const w = FIXED_WIDTH[c] ?? laws;
-		frames.set(c, { x, width: w });
-		x += w + GUTTER;
-	}
-	return frames;
+		frames.set(c, { x, width: w, inner: inner[i] });
+		x += w + inner[i] + gutters[i];
+	});
+	const last = [...frames.values()].at(-1);
+	const end = last ? Math.ceil(last.x + last.width + (last.inner ?? 0) + right) : 0;
+	return { frames, width: Math.max(width, end) };
 }
 
 const PAIR_SPACE = 36;
@@ -353,7 +445,9 @@ function placeAll(
  * orders each column by where the partners of its units stood in the first.
  */
 export function laneLayout(scene: Scene, width: number, time = false): LaneLayout {
-	const frames = framesOf(scene, width, time);
+	const framed = framesOf(scene, width, time);
+	const frames = framed.frames;
+	width = framed.width;
 	const dated = scene.units.filter(
 		(u) => !u.general && (u.column === 'papers' || u.column === 'rulings')
 	);
@@ -378,7 +472,8 @@ export function laneLayout(scene: Scene, width: number, time = false): LaneLayou
 	const columns = [...frames].map(([column, f]) => ({
 		column,
 		x: f.x,
-		width: f.width,
+		width: f.width + (f.inner ?? 0),
+		inner: f.inner ?? 0,
 		y: CONTENT_TOP,
 		height: bottom - CONTENT_TOP
 	}));

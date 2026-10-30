@@ -20,6 +20,9 @@ export function createGraphStore(): GraphStore {
 		...createExpansion(ctx),
 		...view,
 		...netwerk,
+		setLanes: (on) => {
+			ctx.network.lanes = on;
+		},
 		reset: () => {
 			view.reset();
 			netwerk.releaseNetwerk();

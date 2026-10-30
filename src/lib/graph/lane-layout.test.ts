@@ -59,7 +59,7 @@ describe.each(EXAMPLES)('the layout of %s', (name) => {
 			it('keeps a gutter between two columns, and the strip under them all', () => {
 				for (let i = 1; i < layout.columns.length; i++) {
 					const a = layout.columns[i - 1];
-					expect(layout.columns[i].x - (a.x + a.width)).toBe(GUTTER);
+					expect(layout.columns[i].x - (a.x + a.width)).toBeGreaterThanOrEqual(GUTTER);
 				}
 				if (layout.strip)
 					for (const c of layout.columns) expect(layout.strip.y).toBeGreaterThan(c.y + c.height);

@@ -1778,6 +1778,13 @@
 	// Voorstellen: the lopende voorstellen of the bronnen on the canvas beside them (besluit 37).
 	const PROPOSALS = 'voorstellen';
 	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
+	// Omgeving as lanes (PLAN-doek-banen, fasen 4 en 5): behind ?doek=banen beside the canvas of
+	// now, with its Tijd (?tijd=ja, off by default). The budget counts the lanes' groups then.
+	const LANES = 'doek';
+	const TIME = 'tijd';
+	const lanesOn = $derived(params.get(LANES) === 'banen' && view === 'omgeving');
+	const timeOn = $derived(params.get(TIME) === 'ja');
+	$effect(() => store.setLanes(lanesOn));
 	const proposals = new Proposals(
 		store,
 		() => proposalsOn,
@@ -2471,6 +2478,9 @@
 								lijstHref={netwerkActive ? undefined : lijstHref}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
+								banen={lanesOn}
+								time={timeOn}
+								onTime={(on) => setUrl({ [TIME]: on ? 'ja' : null })}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
 								surroundings={view === 'omgeving'}
 								externCounts={view === 'keten'

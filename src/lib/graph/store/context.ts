@@ -8,6 +8,7 @@ import {
 	containerKindOf,
 	focusKindOf,
 	createContainerGroups,
+	type ContainerGroup,
 	type ContainerKind
 } from '../container-membership';
 import { isCollection, nodeId, type Collection, type Relation } from '$lib/vocabulary';
@@ -25,6 +26,7 @@ import {
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
 import { canvasClusters, hullOfLaw, isCanvasNode } from '../canvas-clusters';
+import { buildScene, sceneClusters } from '../scene';
 import { isDrawn } from '../collection-role';
 import { lineKindOf } from '../line-kind';
 import { planTrim } from './budget';
@@ -65,6 +67,42 @@ function weightOf(nodes: ReadonlyMap<string, GraphNode>, edges: readonly GraphEd
 	return (id: string) => weight.get(id) ?? 0;
 }
 
+/** The groups the budget counts as one place each: the lanes' scene, or the canvas's clusters. */
+function budgetClusters(o: {
+	view: GraphNode[];
+	edges: GraphEdge[];
+	selected: GraphNode | null;
+	pinned: ReadonlySet<string>;
+	network: {
+		core: ReadonlySet<string> | null;
+		surroundings: boolean;
+		looseMax: number;
+		lanes: boolean;
+	};
+	groups: ReadonlyMap<string, ContainerGroup>;
+}) {
+	const { view, selected, pinned, network } = o;
+	if (network.lanes) {
+		const chosen = pinned.size > 0 ? [...pinned] : selected ? [selected.id] : [];
+		return sceneClusters(buildScene({ nodes: view, edges: o.edges, chosen }));
+	}
+	const byId = new Map(view.map((n) => [n.id, n]));
+	return canvasClusters(
+		{
+			nodes: view.filter(isCanvasNode),
+			edges: o.edges.filter((e) => isDrawn(e.relation)),
+			focus: selected?.id ?? null,
+			pinned,
+			core: network.core,
+			surroundings: network.surroundings,
+			looseMax: network.looseMax,
+			groups: o.groups,
+			nodeOf: (id) => byId.get(id)
+		},
+		new Set()
+	);
+}
+
 /**
  * Shared mutable state and the primitives every loader builds on: node and
  * edge maps, the writable stores that mirror them, trimming and the
@@ -84,10 +122,13 @@ export function createGraphContext() {
 		core: ReadonlySet<string> | null;
 		surroundings: boolean;
 		looseMax: number;
+		/** Omgeving is drawn as lanes: a group of the scene costs one place, not a cluster. */
+		lanes: boolean;
 	} = {
 		core: null,
 		surroundings: false,
-		looseMax: CLUSTER_MAX_LOOSE
+		looseMax: CLUSTER_MAX_LOOSE,
+		lanes: false
 	};
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
@@ -198,20 +239,14 @@ export function createGraphContext() {
 		const groups = containers.current();
 		const view = [...nodes.values()];
 		const drawn = [...edges.values()].filter((e) => isDrawn(e.relation));
-		const clusters = canvasClusters(
-			{
-				nodes: view.filter(isCanvasNode),
-				edges: drawn,
-				focus: selected?.id ?? null,
-				pinned,
-				core: network.core,
-				surroundings: network.surroundings,
-				looseMax: network.looseMax,
-				groups,
-				nodeOf: (id) => nodes.get(id)
-			},
-			new Set()
-		);
+		const clusters = budgetClusters({
+			view,
+			edges: [...edges.values()],
+			selected,
+			pinned,
+			network,
+			groups
+		});
 		const protect = new Set(pinned);
 		if (keep) protect.add(keep);
 		if (selected) {

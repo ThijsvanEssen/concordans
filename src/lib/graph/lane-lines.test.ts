@@ -69,6 +69,39 @@ describe.each(EXAMPLES)('the lines of %s', (name) => {
 				).toEqual([]);
 			});
 
+			it('runs no two lines of another bron or lijnsoort on one another', () => {
+				// A shared run is a bundle only for one lijnsoort into one target or out of one bron;
+				// else it would hide which cites which, or a line under another.
+				// Only the arrows into one mark meet, on their last run.
+				const kindOf = (l: LanePath) => scene.lines.find((x) => x.id === l.id)!.kind;
+				const shares = (a: LanePath, b: LanePath) =>
+					kindOf(a) === kindOf(b) && (a.from === b.from || a.to === b.to);
+				// Open: the climbs into the strip Algemene wetten still share their passages.
+				const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
+				const verticals = lines
+					.filter((l) => !general.has(l.from) && !general.has(l.to))
+					.flatMap((l) =>
+						l.points.slice(1).flatMap((b, i) => {
+							const a = l.points[i];
+							// The first run out of a mark and the last into one: lines fan out of one bron
+							// and arrows meet in one target there, as in the Keten.
+							const end = i === 0 || i === l.points.length - 2;
+							return Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) > 4 && !end
+								? [{ l, x: a.x, lo: Math.min(a.y, b.y), hi: Math.max(a.y, b.y) }]
+								: [];
+						})
+					);
+				const close: string[] = [];
+				for (let i = 0; i < verticals.length; i++)
+					for (let j = i + 1; j < verticals.length; j++) {
+						const [a, b] = [verticals[i], verticals[j]];
+						if (a.l === b.l || shares(a.l, b.l)) continue;
+						const shared = Math.min(a.hi, b.hi) - Math.max(a.lo, b.lo);
+						if (shared > 8 && Math.abs(a.x - b.x) < 4.5) close.push(`${a.l.id} | ${b.l.id}`);
+					}
+				expect(close).toEqual([]);
+			});
+
 			it('crosses no line in a gutter that the other order of their rails would not cross', () => {
 				const gutters: [number, number][] = layout.columns.map((c, i) => {
 					const next = layout.columns[i + 1];
@@ -96,19 +129,19 @@ describe('the lines, by their rules', () => {
 	const layout = laneLayout(scene, WIDTH);
 	const lines = laneLines(scene, layout);
 
-	it('ends a line to a hull at the row it names', () => {
+	it('ends a line to a hull at the row it names, or just beside it', () => {
 		for (const l of lines) {
 			const line = scene.lines.find((x) => x.id === l.id)!;
 			if (!line.toRow) continue;
 			const row = layout.units.get(l.to)!.rows.find((r) => r.id === line.toRow)!;
-			expect(l.points.at(-1)!.y).toBe(row.y);
+			// Beside it where lines of several lijnsoorten end at that row (byKind).
+			expect(Math.abs(l.points.at(-1)!.y - row.y)).toBeLessThanOrEqual(8);
 		}
 	});
 
-	it('draws a dot-family line without an arrow, the width by its count', () => {
+	it('draws a dot-family line without an arrow, every line as wide', () => {
 		const votes = lines.find((l) => scene.lines.find((x) => x.id === l.id)?.kind === 'member')!;
 		expect(votes.arrow).toBe(false);
-		const one = lines.find((l) => scene.lines.find((x) => x.id === l.id)?.count === 1)!;
-		expect(one.width).toBe(1.2);
+		expect(new Set(lines.map((l) => l.width)).size).toBe(1);
 	});
 });

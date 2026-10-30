@@ -9,6 +9,7 @@
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
 	import GraphCanvas from './GraphCanvas.svelte';
+	import BanenView from './BanenView.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
@@ -133,6 +134,9 @@
 		externStippen = null,
 		externLines = null,
 		onToevoegen,
+		banen = false,
+		time = false,
+		onTime,
 		...legend
 	}: {
 		store: GraphStore;
@@ -191,6 +195,11 @@
 		} | null;
 		/** Empty canvas: what the reader can do, add a bron. */
 		onToevoegen?: () => void;
+		/** Omgeving as lanes (?doek=banen, PLAN-doek-banen): SVG in columns per soort, not sigma. */
+		banen?: boolean;
+		/** Tijd in the lanes: in Kamerstukken and Rechtspraak the height is the date. */
+		time?: boolean;
+		onTime?: (on: boolean) => void;
 		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
 		depth: number;
 		onDepth: (d: number) => void;
@@ -666,7 +675,8 @@
 	};
 
 	function runLayout() {
-		if (g.order === 0) return;
+		// The lanes lay out their own scene (lane-layout.ts).
+		if (g.order === 0 || banen) return;
 		const centre = pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : [];
 		// The hull a bron stands in: a wet's own for its anchor, else the first that holds it.
 		const hullOf = (id: string): string | null => {
@@ -747,6 +757,12 @@
 	let expanded = $state<ReadonlySet<string>>(new Set());
 	/** Kinds shown in full that would fold: their count, for the button that folds them. */
 	let foldable = $state<Cluster[]>([]);
+	/** What the lanes draw: the store's nodes and edges as they are, unfolded. */
+	let laneNodes = $state.raw<GraphNode[]>([]);
+	let laneEdges = $state.raw<GraphEdge[]>([]);
+	const laneChosen = $derived(
+		pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : []
+	);
 	let clusteredFor: string | null = null;
 	/** The cluster whose card stands in the strip at the right (Canvaskaart). */
 	let clusterCard = $state<{ cluster: Cluster } | null>(null);
@@ -805,8 +821,11 @@
 			ledTotal: bucketTotal('dossiers')
 		};
 		const alle = (open: ReadonlySet<string>) => canvasClusters(input, open);
-		clusters = alle(expanded);
-		foldable = expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
+		// The lanes group by their scene (scene.ts): the canvas folds nothing then.
+		laneNodes = rawNodes;
+		laneEdges = rawEdges;
+		clusters = banen ? [] : alle(expanded);
+		foldable = !banen && expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
 		const signature = clusters.map((c) => `${c.id}:${c.members.length}:${c.total}`).join(',');
 		if (!rawChanged && signature === drawnClusters) {
 			if (layoutStale) {
@@ -857,11 +876,13 @@
 		applyFilters();
 	}
 
-	// Another weergave folds otherwise: drawn again.
+	// Another weergave folds otherwise, the lanes not at all: drawn again.
 	$effect(() => {
 		void surroundings;
+		void banen;
 		untrack(() => {
 			rawChanged = true;
+			layoutStale = true;
 			queueRedraw();
 		});
 	});
@@ -1394,6 +1415,7 @@
 					{onDepth}
 					withNetwerk={netwerkActive && view === 'omgeving'}
 					reach={externCounts ? null : reach}
+					time={banen && view === 'omgeving' && onTime ? { on: time, onSelect: onTime } : null}
 				>
 					<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 					{#if (hasNodes || midden) && !legend.counting}
@@ -1419,7 +1441,8 @@
 				{@render controls(
 					() => canvas?.zoom(1.5),
 					() => canvas?.zoom(1 / 1.5),
-					() => canvas?.fit()
+					() => canvas?.fit(),
+					!banen
 				)}
 			{/if}
 		</div>
@@ -1478,7 +1501,8 @@
 				{@render controls(
 					() => canvas?.zoom(1.5),
 					() => canvas?.zoom(1 / 1.5),
-					() => canvas?.fit()
+					() => canvas?.fit(),
+					!banen
 				)}
 				{#if !hasNodes && !midden && !selection && onToevoegen}
 					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
@@ -1489,68 +1513,92 @@
 						>
 					</div>
 				{/if}
-				<GraphCanvas
-					graph={g}
-					focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
-					{filters}
-					{hiddenKinds}
-					{pinnedIds}
-					{coreIds}
-					{containerGroups}
-					{focusContainerId}
-					{groupPeriod}
-					{yearPeriod}
-					rechter={filter.rechter}
-					{selectedEdgeId}
-					{lineLids}
-					{inFluxMap}
-					externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
-					{notitieIds}
-					onNodeClick={(id) => {
-						if (isClusterId(id)) return openCluster(id);
-						const n = lookup.get(id);
-						if (n) markeer(n);
-					}}
-					onNodeDoubleClick={(id) => {
-						// The second click: the bron opens. "Omgeving tonen" on its card draws its own
-						// neighbourhood, as a double click did before.
-						if (isClusterId(id)) return;
-						const n = lookup.get(id);
-						if (n) open(n);
-					}}
-					markedId={gemarkeerd?.id ?? null}
-					onHullClick={(id) => {
-						// The name or the rim of a hull chooses the wet it stands for, its card in the strip.
-						const n = lookup.get(id);
-						if (n) markeer(n);
-					}}
-					onEdgeClick={(id) => {
-						const e = store.getEdgeById(id);
-						if (e) onEdgeClick?.(e);
-					}}
-					onStageClick={() => {
-						ontmarkeer();
-						onClear?.();
-					}}
-					onDrawn={(set) => {
-						drawn = set;
-						untrack(telCanvas);
-					}}
-					onReady={(api) => {
-						canvas = api;
-						canvas.refresh();
-						const camera = skipNextFit && savedCamera();
-						if (camera) {
-							canvas.restoreCamera(camera);
-							skipNextFit = false;
-						} else {
-							canvas.fit();
-						}
-					}}
-					onCameraChange={(state) => {
-						saveCamera(state);
-					}}
-				/>
+				{#if banen}
+					<BanenView
+						nodes={laneNodes}
+						edges={laneEdges}
+						chosen={laneChosen}
+						visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
+						{time}
+						marked={gemarkeerd?.id ?? null}
+						pointed={pijl?.id ?? keyNode?.id ?? null}
+						onMark={(id) => {
+							const n = lookup.get(id);
+							if (n) markeer(n);
+						}}
+						onOpen={(id) => {
+							const n = lookup.get(id);
+							if (n) open(n);
+						}}
+						onDrawn={(set) => {
+							drawn = set;
+							untrack(telCanvas);
+						}}
+					/>
+				{:else}
+					<GraphCanvas
+						graph={g}
+						focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
+						{filters}
+						{hiddenKinds}
+						{pinnedIds}
+						{coreIds}
+						{containerGroups}
+						{focusContainerId}
+						{groupPeriod}
+						{yearPeriod}
+						rechter={filter.rechter}
+						{selectedEdgeId}
+						{lineLids}
+						{inFluxMap}
+						externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
+						{notitieIds}
+						onNodeClick={(id) => {
+							if (isClusterId(id)) return openCluster(id);
+							const n = lookup.get(id);
+							if (n) markeer(n);
+						}}
+						onNodeDoubleClick={(id) => {
+							// The second click: the bron opens. "Omgeving tonen" on its card draws its own
+							// neighbourhood, as a double click did before.
+							if (isClusterId(id)) return;
+							const n = lookup.get(id);
+							if (n) open(n);
+						}}
+						markedId={gemarkeerd?.id ?? null}
+						onHullClick={(id) => {
+							// The name or the rim of a hull chooses the wet it stands for, its card in the strip.
+							const n = lookup.get(id);
+							if (n) markeer(n);
+						}}
+						onEdgeClick={(id) => {
+							const e = store.getEdgeById(id);
+							if (e) onEdgeClick?.(e);
+						}}
+						onStageClick={() => {
+							ontmarkeer();
+							onClear?.();
+						}}
+						onDrawn={(set) => {
+							drawn = set;
+							untrack(telCanvas);
+						}}
+						onReady={(api) => {
+							canvas = api;
+							canvas.refresh();
+							const camera = skipNextFit && savedCamera();
+							if (camera) {
+								canvas.restoreCamera(camera);
+								skipNextFit = false;
+							} else {
+								canvas.fit();
+							}
+						}}
+						onCameraChange={(state) => {
+							saveCamera(state);
+						}}
+					/>
+				{/if}
 
 				{#if foldable.length > 0}
 					<div class="vouw">

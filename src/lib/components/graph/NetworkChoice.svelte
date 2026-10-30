@@ -25,6 +25,7 @@
 		onDepth,
 		withNetwerk = false,
 		reach = null,
+		time = null,
 		children
 	}: {
 		view: View;
@@ -36,6 +37,8 @@
 		withNetwerk?: boolean;
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
+		/** Tijd of the lanes (Omgeving as banen): off by default; null where there is no Tijd. */
+		time?: { on: boolean; onSelect: (on: boolean) => void } | null;
 		/** What belongs to the weergave: Tonen, Relatie, Periode, Meer. */
 		children?: Snippet;
 	} = $props();
@@ -78,6 +81,24 @@
 				onSelect={(d) => onDepth(Number(d))}
 			/>
 			{#if incomplete}<p class="stil why" role="note">{incomplete}</p>{/if}
+		</Sectie>
+	{/if}
+	{#if time}
+		<Sectie title="Tijd" niveau={3} inklapbaar={false}>
+			<Keuze
+				label="Tijd"
+				vol
+				waarde={time.on ? 'aan' : 'uit'}
+				opties={[
+					{ waarde: 'uit', label: 'Uit', titel: 'De kolommen geordend naar hun verbindingen' },
+					{
+						waarde: 'aan',
+						label: 'Aan',
+						titel: 'In Kamerstukken en Rechtspraak is de hoogte de datum'
+					}
+				]}
+				onSelect={(w) => time.onSelect(w === 'aan')}
+			/>
 		</Sectie>
 	{/if}
 	{@render children?.()}
