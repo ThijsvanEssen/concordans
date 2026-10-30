@@ -301,7 +301,6 @@ test('a dossier marks a toezegging it only had on the agenda of the debate', asy
 		(n) => metBasis(n, (key) => (key === TZ_ROW_NAKOMING ? 'nakoming' : 'agenda')) as Rec
 	);
 	await page.goto('/dossiers/36512');
-	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
 	// On a phone Verbonden stands under the text and loads once it is scrolled to (V1).
 	await page.getByRole('heading', { level: 1 }).waitFor();
 	await naarVerbonden(page);
