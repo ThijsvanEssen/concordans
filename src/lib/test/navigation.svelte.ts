@@ -11,7 +11,7 @@ const ORIGIN = 'http://localhost';
 type NavigationType = 'enter' | 'goto' | 'popstate';
 type Navigation = { type: NavigationType; from: { url: URL } | null; to: { url: URL } | null };
 
-const page = $state({ url: new URL('/', ORIGIN), state: {} as App.PageState });
+const page = $state({ url: new URL('/', ORIGIN) });
 /** The navigation under way, as SvelteKit's `navigating`: Back is one until the page reacted. */
 const navigating = $state<{ type: NavigationType | null }>({ type: null });
 let entries: URL[] = [page.url];
@@ -25,7 +25,6 @@ onForget(() => {
 	entries = [new URL('/', ORIGIN)];
 	at = 0;
 	page.url = entries[0];
-	page.state = {};
 	steps.length = 0;
 	listeners.clear();
 });
@@ -46,10 +45,7 @@ export const address = () => `${page.url.pathname}${page.url.search}${page.url.h
 /** The history from the first entry to the last, and where the page stands in it. */
 export const history = () => ({ entries: entries.map((u) => `${u.pathname}${u.search}`), at });
 
-function goto(
-	href: string,
-	{ replaceState = false, state = {} }: { replaceState?: boolean; state?: App.PageState } = {}
-) {
+function goto(href: string, { replaceState = false } = {}) {
 	const from = page.url;
 	const url = new URL(href, from);
 	steps.push({ href, step: !replaceState });
@@ -59,7 +55,6 @@ function goto(
 		at++;
 	}
 	page.url = url;
-	page.state = state;
 	notify('goto', from, url);
 	return Promise.resolve();
 }

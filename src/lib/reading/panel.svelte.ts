@@ -55,17 +55,10 @@ export const readOpen = (): ReadRef[] => parseRead(page.url.searchParams.get(REA
 export const isRead = (item: ReadRef): boolean =>
 	readOpen().some((r) => r.key === item.key && r.at === item.at);
 
-/**
- * Another address of the page beside it, a step of its own (Alt L, Tekst and Netwerk): the
- * panel kept open there, at the article of the stapel it opened at (live-toets peek 5, C6).
- */
-export function keepReading(href: string): Promise<void> {
+/** Another address of the page beside it, the panel kept open there (Alt L, Tekst and Netwerk). */
+export function keepRead(href: string): string {
 	const reads = readOpen();
-	const focus = page.state.readFocus;
-	return goto(reads.length ? withRead(new URL(href, page.url), reads) : href, {
-		...NAV,
-		state: focus ? { readFocus: focus } : {}
-	});
+	return reads.length ? withRead(new URL(href, page.url), reads) : href;
 }
 
 const KEY = Symbol('reading-panel');

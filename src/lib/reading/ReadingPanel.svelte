@@ -112,8 +112,15 @@
 	// New articles: the one it opens at and its cited part in view with room above, the focus
 	// kept in the panel (on its title when what had it went with the old text), and said to a
 	// screen reader.
+	// The same articles beside another page (Alt L: a step without the place it opened at) are
+	// left as they stand, the focus where it was (live-toets peek 5, C6).
+	let shown: { value: string; focus?: string } | null = null;
 	$effect(() => {
 		if (!texts.length) return;
+		const value = readValue(reads);
+		const focus = page.state.readFocus;
+		if (shown?.value === value && (!focus || focus === shown.focus)) return;
+		shown = { value, focus };
 		const at = stacked ? opensAt : 0;
 		const r = reads[at];
 		const a = texts[at];
