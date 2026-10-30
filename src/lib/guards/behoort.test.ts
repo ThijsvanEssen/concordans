@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { behoort, KERN } from '$lib/bron/behoort';
 import { BANDS } from '$lib/bron/behoort-rules';
-import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
+import { NODE_TYPES, RELATION_NAMES, type Collection } from '$lib/vocabulary';
 
 const COLLECTIONS = Object.keys(NODE_TYPES) as Collection[];
 const bucketId = (b: { relation: string; direction: string; collection: string }) =>
@@ -14,7 +14,7 @@ const everyBucket = {
 	node: { key: 'bron', labels: [] },
 	neighbors: {
 		total: 0,
-		buckets: RELATIONS.flatMap((relation) =>
+		buckets: RELATION_NAMES.flatMap((relation) =>
 			(['inbound', 'outbound'] as const).flatMap((direction) =>
 				COLLECTIONS.map((collection) => {
 					const key = bucketId({ relation, direction, collection });

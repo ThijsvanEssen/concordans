@@ -3,7 +3,7 @@ import {
 	AMENDING_RELATIONS,
 	CHANGE_RELATIONS,
 	NODE_TYPES,
-	RELATIONS,
+	RELATION_NAMES,
 	changeRelation,
 	changeRelationOf,
 	isAmendingRelation,
@@ -35,8 +35,8 @@ describe('node ids', () => {
 describe('vocabulary', () => {
 	it('knows the collections and relations of the API catalogue, each once', () => {
 		expect(Object.keys(NODE_TYPES).sort()).toEqual([...catalogus.collections].sort());
-		expect([...RELATIONS].sort()).toEqual(catalogus.relations.map((r) => r.name).sort());
-		expect(new Set(RELATIONS).size).toBe(RELATIONS.length);
+		expect([...RELATION_NAMES].sort()).toEqual(catalogus.relations.map((r) => r.name).sort());
+		expect(new Set(RELATION_NAMES).size).toBe(RELATION_NAMES.length);
 	});
 
 	it('has the catalogue the API types its schema with', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	CHANGE_RELATIONS,
-	RELATIONS,
+	RELATION_NAMES,
 	changeRelation,
 	type Collection,
 	type Relation
@@ -367,7 +367,7 @@ const CATALOGUS = catalogus.relations as {
 
 describe('one source of words per relation, direction and collection', () => {
 	it('knows every relation of the API', () => {
-		expect(CATALOGUS.map((r) => r.name).sort()).toEqual([...RELATIONS].sort());
+		expect(CATALOGUS.map((r) => r.name).sort()).toEqual([...RELATION_NAMES].sort());
 	});
 
 	const paren: [Relation, Collection, Collection][] = [];
@@ -388,7 +388,7 @@ describe('one source of words per relation, direction and collection', () => {
 
 	it('leaves a relation out only with its reason', () => {
 		for (const [relation, reden] of Object.entries(ZONDER_WOORDEN)) {
-			expect(RELATIONS).toContain(relation);
+			expect(RELATION_NAMES).toContain(relation);
 			expect(reden!.length).toBeGreaterThan(20);
 		}
 	});

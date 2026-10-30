@@ -19,7 +19,6 @@
 	import { page } from '$app/state';
 	import { meldZijscroll } from '$lib/dev/zijscroll';
 	import { canonical } from '$lib/seo/routes';
-	import { currentAddress } from '$lib/bron/legacy-address';
 	import { LADEN_TITEL, serverKop } from '$lib/seo/server-head.svelte';
 	import { removeServerText } from '$lib/seo/server-text';
 	import { releaseFirstPaint, startTakeover } from '$lib/first-paint/takeover';
@@ -74,13 +73,6 @@
 				noScroll: true,
 				state: page.state
 			}).catch((e) => report('Bundel', e));
-		}
-		// An address of the old network is carried over, in place (no step in the history).
-		const clean = naar && currentAddress(naar);
-		if (clean) {
-			goto(clean, { replaceState: true, keepFocus: true, noScroll: true }).catch((e) =>
-				report('Oud adres', e)
-			);
 		}
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
 		afterTick(stilAnnouncer);

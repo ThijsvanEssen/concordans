@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
+import { NODE_TYPES, RELATION_NAMES, type Collection } from '$lib/vocabulary';
 import {
 	EDGE_WEIGHT,
 	buildNodeLabel,
@@ -25,7 +25,7 @@ const node = (collection: Collection, key: string, props: BaseNode['props'] = {}
 
 describe('relations', () => {
 	it('gives every relation a weight', () => {
-		expect(Object.keys(EDGE_WEIGHT).sort()).toEqual([...RELATIONS].sort());
+		expect(Object.keys(EDGE_WEIGHT).sort()).toEqual([...RELATION_NAMES].sort());
 	});
 
 	it('reads REFERS_TO by the kind of its source', () => {

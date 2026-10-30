@@ -1,15 +1,7 @@
-// The ways in and the steps between (R3-I): an old network address is carried over, a link
-// that names the bronnen comes for Verbonden on a phone, a defined term opens its card on a
+// The ways in and the steps between (R3-I): a link that names the bronnen comes for Verbonden on
+// a phone, a defined term opens its card on a
 // first tap, a list names itself in the tab, and the app can be installed.
 import { expect, test } from '../support/test';
-
-test('an address of the old network is carried over, in place', async ({ page }) => {
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=graph');
-	await expect(page).toHaveURL(/\/artikel\/6:162\?mode=netwerk$/);
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=text');
-	await expect(page).toHaveURL(/\/artikel\/6:162$/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
-});
 
 test('?bronnen= brings Verbonden into view where it stands under the text', async ({
 	page,

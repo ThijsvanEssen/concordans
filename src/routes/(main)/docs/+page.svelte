@@ -5,7 +5,7 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import { modKey } from '$lib/util/platform';
-	import { RELATIONS } from '$lib/vocabulary';
+	import { RELATION_NAMES } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 
 	/** The headings of the page, in order: a way to each in the left column. */
@@ -275,7 +275,7 @@
 					</p>
 					<p>De soorten verbindingen:</p>
 					<KeyList columns={2}>
-						{#each RELATIONS as relation (relation)}
+						{#each RELATION_NAMES as relation (relation)}
 							<KeyRow>{relationLabel(relation)}</KeyRow>
 						{/each}
 					</KeyList>

@@ -98,7 +98,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		'onFilter' | 'lijstHref' | 'counting' | 'proposals'
+		'onFilter' | 'lijstHref' | 'counting' | 'proposals' | 'chain'
 	>;
 
 	let {
@@ -131,7 +131,6 @@
 		externCounts = null,
 		extern = null,
 		externStippen = null,
-		middenZoom = true,
 		externLines = null,
 		onToevoegen,
 		...legend
@@ -185,8 +184,6 @@
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
 		externStippen?: readonly Stip[] | null;
-		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
-		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
 		externLines?: {
 			hidden: ReadonlySet<LineKind>;
@@ -198,6 +195,8 @@
 		depth: number;
 		onDepth: (d: number) => void;
 	} & LegendProps = $props();
+	/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
+	const middenZoom = $derived(view !== 'keten');
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
 	const g = new Graph();
@@ -1372,8 +1371,8 @@
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
 		onToggleGroup={toggleGroup}
-		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
-		{hasNodes}
+		canvasCounts={externCounts ?? canvasCounts}
+		hasNodes={hasNodes || !!externCounts}
 		{kindRowsShown}
 		{kindsSettled}
 		{withCurrentMember}

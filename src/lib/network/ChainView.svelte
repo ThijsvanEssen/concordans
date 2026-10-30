@@ -41,6 +41,8 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import {
 		isMention,
+		isOutside,
+		whyFaint,
 		parentKind,
 		parentRelation,
 		type ChainNode,
@@ -444,7 +446,7 @@
 	} | null>(null);
 	/** The glance of a regulation: after a rest of the pointer or the focus, never for a finger. */
 	const glance = (k: ChainNode, layer: ChainLayer, anchor: Element) => {
-		const lines = layer.id === 'law' ? [] : grondslagOf(k);
+		const lines = [...whyFaint(k, period), ...(layer.id === 'law' ? [] : grondslagOf(k))];
 		if (!lines.length) return hover.close();
 		target = { anchor: anchor as HTMLElement, kicker: layer.label, title: k.name, lines };
 		hover.enter();
@@ -535,11 +537,7 @@
 		const [one, many] = KIND_WORDS[l.id] ?? ['bron', 'bronnen'];
 		return `${formatCount(n)} andere ${n === 1 ? one : many}`;
 	};
-	/** Dated outside the period of the strip: faint, not gone (Thijs, 23 Oct). */
-	const outside = (k: ChainNode) =>
-		!!period &&
-		!!k.since &&
-		((!!period.van && k.since < period.van) || (!!period.tot && k.since > period.tot));
+	const outside = (k: ChainNode) => isOutside(k, period);
 	const outsideCount = $derived(shown.flatMap((l) => l.nodes).filter(outside).length);
 	const otherIds = $derived(new Set(others.map((o) => o.id)));
 	const notHere = $derived(
@@ -717,9 +715,8 @@
 						onfocus={(e) => glance(k, layer, e.currentTarget)}
 						onblur={() => hover.leave()}
 					>
-						{#if k.expired || layer.id === 'law'}<title
-								>{k.expired ? `${k.name}, vervallen sinds ${k.expired}` : k.name}</title
-							>{/if}
+						<!-- A name in full where no glance says more; never a second tip beside it. -->
+						{#if layer.id === 'law' && !whyFaint(k, period).length}<title>{k.name}</title>{/if}
 						<circle cx={p.x} cy={p.y} r="22" class="hit" />
 						{#if otherIds.has(k.id) && chosen !== k.id && k.id !== start}<rect
 								class="sel sel--ander"

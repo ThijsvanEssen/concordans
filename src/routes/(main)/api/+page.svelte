@@ -4,7 +4,7 @@
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import type { PageData } from './$types';
-	import { RELATIONS } from '$lib/vocabulary';
+	import { RELATION_NAMES } from '$lib/vocabulary';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 
 	let { data }: { data: PageData } = $props();
@@ -149,7 +149,12 @@
 					</ul>
 				</Sectie>
 			{/each}
-			<Sectie id="relaties" title="Relatienamen" aantal={RELATIONS.length} sleutel="api-relaties">
+			<Sectie
+				id="relaties"
+				title="Relatienamen"
+				aantal={RELATION_NAMES.length}
+				sleutel="api-relaties"
+			>
 				<p class="api-tag-desc">
 					De naam van een verbinding in de API (<code>relation</code>) en zoals de site haar noemt.
 				</p>
@@ -158,7 +163,7 @@
 						<tr><th>API</th><th>Op de site</th></tr>
 					</thead>
 					<tbody>
-						{#each RELATIONS as relation (relation)}
+						{#each RELATION_NAMES as relation (relation)}
 							<tr><td><code>{relation}</code></td><td>{relationLabel(relation)}</td></tr>
 						{/each}
 					</tbody>

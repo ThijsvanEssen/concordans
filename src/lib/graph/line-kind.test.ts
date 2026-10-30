@@ -1,6 +1,6 @@
 // Every line the canvas draws stands under a row of Relatie (Netwerkcanvas, Lijnen).
 import { describe, expect, it } from 'vitest';
-import { RELATIONS } from '$lib/vocabulary';
+import { RELATION_NAMES } from '$lib/vocabulary';
 import { edgeColorFor, edgeStyleFor, edgeToneFor } from '$lib/components/graph/nodeSprites';
 import { isDrawn } from './collection-role';
 import { LINE_KINDS, LINE_KIND_SAMPLE, LINE_KIND_STYLE, lineKindOf } from './line-kind';
@@ -10,7 +10,7 @@ const KINDS: DrawClass[] = ['article', 'judgment', 'document', 'member'];
 
 describe('lijnsoorten', () => {
 	it('give every drawn relation, from every kind, a kind with a row', () => {
-		for (const r of RELATIONS)
+		for (const r of RELATION_NAMES)
 			for (const from of KINDS) expect(LINE_KINDS, `${r} ${from}`).toContain(lineKindOf(r, from));
 	});
 	it('hold the nine relations the DS names', () => {
@@ -29,7 +29,7 @@ describe('lijnsoorten', () => {
 		expect(lineKindOf('REFERS_TO', 'judgment')).toBe('citation');
 	});
 	it('give a kind one style: every relation of it is drawn alike', () => {
-		for (const r of RELATIONS.filter(isDrawn))
+		for (const r of RELATION_NAMES.filter(isDrawn))
 			for (const from of KINDS) {
 				const kind = lineKindOf(r, from);
 				const sample = LINE_KIND_SAMPLE[kind];

@@ -15,8 +15,10 @@ import {
 	isRelation,
 	nodeId,
 	NODE_TYPES,
+	RELATIONS,
 	type Collection,
-	type Relation
+	type Relation,
+	type RelationLayer
 } from '$lib/vocabulary';
 
 export type BaseNode = Schema<'BaseNodeDTO'>;
@@ -66,8 +68,6 @@ export interface GraphNode {
 	size?: number;
 }
 
-type EdgeCategory = 'structural' | 'mutation' | 'semantic';
-
 export interface GraphEdge {
 	id: string;
 	source: string;
@@ -83,85 +83,19 @@ export interface GraphEdge {
 	meta?: Record<string, unknown> | null;
 }
 
-const CATEGORY_OF_RELATION: Record<Relation, EdgeCategory> = {
-	PART_OF: 'structural',
-	VERSION_OF: 'structural',
-	ESTABLISHES: 'mutation',
-	AMENDS: 'mutation',
-	INTRODUCES: 'mutation',
-	REPEALS: 'mutation',
-	COMMENCES: 'mutation',
-	TRANSPOSED_TO: 'mutation',
-	BASED_ON: 'structural',
-	IMPLEMENTS: 'structural',
-	LEGISLATED_IN: 'structural',
-	PUBLISHED_IN: 'structural',
-	REFERS_TO: 'structural',
-	EXPLAINS: 'mutation',
-	APPEAL_OF: 'semantic',
-	ADVISES_ON: 'semantic',
-	ANSWERS: 'semantic',
-	CONTINUES: 'semantic',
-	REFERRED_BY: 'semantic',
-	SAME_AS: 'structural',
-	SCOPED_BY: 'structural',
-	ABOUT: 'structural',
-	LED_BY: 'structural',
-	MADE_IN: 'structural',
-	MEMBER_OF: 'structural',
-	AUTHORED: 'mutation',
-	VOTED: 'semantic',
-	REVISES: 'mutation',
-	ACCOMPANIES: 'structural',
-	RELATED_TO: 'semantic',
-	SECOND_READING_OF: 'mutation',
-	SERVED_IN: 'structural'
-};
-
-/** Line width of an edge, by relation. */
-export const EDGE_WEIGHT: Record<Relation, number> = {
-	PART_OF: 0.6,
-	VERSION_OF: 0.6,
-	ESTABLISHES: 1.0,
-	AMENDS: 1.0,
-	INTRODUCES: 1.0,
-	REPEALS: 1.0,
-	COMMENCES: 1.0,
-	TRANSPOSED_TO: 0.8,
-	BASED_ON: 0.8,
-	IMPLEMENTS: 0.8,
-	LEGISLATED_IN: 0.7,
-	PUBLISHED_IN: 0.6,
-	REFERS_TO: 0.7,
-	EXPLAINS: 0.8,
-	APPEAL_OF: 0.6,
-	ADVISES_ON: 0.6,
-	ANSWERS: 0.6,
-	CONTINUES: 0.6,
-	REFERRED_BY: 0.6,
-	SAME_AS: 0.6,
-	SCOPED_BY: 0.6,
-	ABOUT: 0.6,
-	LED_BY: 0.6,
-	MADE_IN: 0.7,
-	MEMBER_OF: 0.6,
-	AUTHORED: 0.8,
-	VOTED: 0.6,
-	REVISES: 1.0,
-	ACCOMPANIES: 0.6,
-	RELATED_TO: 0.6,
-	SECOND_READING_OF: 0.8,
-	SERVED_IN: 0.6
-};
+/** Line width of an edge, by relation: the weight in RELATIONS. */
+export const EDGE_WEIGHT = Object.fromEntries(
+	Object.entries(RELATIONS).map(([relation, { weight }]) => [relation, weight])
+) as { readonly [R in Relation]: number };
 
 /**
  * REFERS_TO between two articles is part of the text of the law (structural).
  * From anything else it is a citation (semantic).
  */
-export function edgeCategory(relation: Relation, sourceClass: DrawClass): EdgeCategory {
+export function edgeCategory(relation: Relation, sourceClass: DrawClass): RelationLayer {
 	return relation === 'REFERS_TO' && sourceClass !== 'article'
 		? 'semantic'
-		: CATEGORY_OF_RELATION[relation];
+		: RELATIONS[relation]?.layer;
 }
 
 // Dutch dossier titles are routinely 200+ characters and end with the wet's
