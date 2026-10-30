@@ -24,6 +24,10 @@
 	import { NOTATION_COLLECTION } from './resolve-query';
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
+	import DoenRows from './DoenRows.svelte';
+	import { DoenLijst } from './doen.svelte';
+	import { searchTextOf } from '$lib/keys/commands';
+	import type { Target } from '$lib/keys/doen.svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -64,11 +68,12 @@
 
 	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
 	// the + in the Netwerk panel (onSelect) is the way to add one.
-	function open(ref: BronRef | string, at: string | null) {
+	function open(ref: BronRef | string, at: string | null, label = '') {
+		if (doen.withBron({ ref, label }, () => onOpen?.())) return;
 		if (onSelect) {
 			const id = focusOf(ref);
 			if (id) onSelect(id);
-			search.query = '';
+			doen.line = '';
 			return;
 		}
 		const href = bronHref(ref, { at, keepNetwerk: false });
@@ -87,11 +92,36 @@
 	$effect.pre(() => {
 		search.kinds = scope ? SEARCH_KINDS.filter((k) => scope.includes(k)) : SEARCH_KINDS;
 	});
+	// In ⌘K the line may start with a word that does something (commands.ts): the search looks
+	// for what follows it. Not in a field that picks (Bron toevoegen): there a line is a bron.
+	const doen = new DoenLijst(
+		() => overlay && !onSelect,
+		() => target
+	);
+	$effect.pre(() => {
+		search.query = searchTextOf(doen.line, doen.parsed);
+	});
 	// A query handed over (Zoek in alle bronnen) fills the field.
 	$effect.pre(() => {
-		if (initial) search.query = initial;
+		if (initial) doen.line = initial;
 	});
 	search.connect();
+
+	/** The bron Enter would open now: what a word with a bron (`keten awb`) does its work on. */
+	const target = $derived.by((): Target | null => {
+		const choice = search.choices[0];
+		if (choice) return { ref: choice.ref, label: choice.label ?? search.q };
+		const cited =
+			search.resolvedWith?.term === search.q && search.citation ? search.resolvedWith.target : null;
+		const named = cited ?? search.bare;
+		if (named) return { ref: named.ref, label: named.label ?? search.q };
+		const hit = search.best?.hit ?? (search.answered === search.q ? search.hits[0] : undefined);
+		return hit ? { ref: hitName(hit), label: presentHit(hit, search.q, []).title } : null;
+	});
+	// An Enter on a row Doen that waited for the search: done once the bron is found.
+	$effect(() => doen.settle(() => onOpen?.()));
+	/** A row of the results is the one the keys are on, not a row Doen. */
+	const isActive = (row: number) => doen.at === null && search.isActive(row);
 
 	const uid = $props.id();
 	const rowId = (row: number) => `${uid}-row-${row}`;
@@ -106,6 +136,12 @@
 	});
 
 	function onkeydown(e: KeyboardEvent) {
+		const results = {
+			count: search.rowCount,
+			atFirst: search.rowCount === 0 || search.active === 0,
+			enter: () => search.point(0)
+		};
+		if (doen.key(e, results, () => onOpen?.())) return;
 		if (e.key === 'ArrowDown' && search.rowCount > 0) {
 			e.preventDefault();
 			search.down();
@@ -115,8 +151,8 @@
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
 			search.pressEnter();
-		} else if (e.key === 'Escape' && !overlay && search.query) {
-			search.query = '';
+		} else if (e.key === 'Escape' && !overlay && doen.line) {
+			doen.line = '';
 		}
 	}
 
@@ -125,7 +161,10 @@
 	let pointerAt = '';
 	const placeOf = (e: PointerEvent) => `${e.screenX},${e.screenY}`;
 	const pointAt = (row: number) => (e: PointerEvent) => {
-		if (placeOf(e) !== pointerAt) search.point(row);
+		if (placeOf(e) !== pointerAt) {
+			doen.leave();
+			search.point(row);
+		}
 	};
 
 	function focusOnMount(node: HTMLInputElement) {
@@ -164,7 +203,7 @@
 			</svg>
 		{/if}
 		<input
-			bind:value={search.query}
+			bind:value={doen.line}
 			bind:this={fieldEl}
 			use:focusOnMount
 			{onkeydown}
@@ -173,12 +212,14 @@
 			maxlength={QUERY_MAX_LENGTH}
 			role="combobox"
 			aria-label="Zoeken"
-			aria-expanded={search.rowCount > 0}
+			aria-expanded={search.rowCount + doen.rows.length > 0}
 			aria-controls="{uid}-list"
 			aria-autocomplete="list"
-			aria-activedescendant={search.rowCount > 0 && search.isActive(search.active)
-				? rowId(search.active)
-				: undefined}
+			aria-activedescendant={doen.at !== null
+				? `${uid}-doen-${doen.at}`
+				: search.rowCount > 0 && search.isActive(search.active)
+					? rowId(search.active)
+					: undefined}
 			{placeholder}
 			autocomplete="off"
 			spellcheck="false"
@@ -205,12 +246,22 @@
 
 	<div
 		class="list"
-		class:list--filled={search.filled}
+		class:list--filled={search.filled || doen.rows.length > 0}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
 		bind:this={listEl}
 	>
+		{#if doen.rows.length > 0}
+			<DoenRows
+				{uid}
+				rows={doen.rows}
+				at={doen.at}
+				here={doen.empty}
+				ondo={(row) => doen.do(row, () => onOpen?.())}
+				onpoint={(i) => doen.point(i)}
+			/>
+		{/if}
 		{#if search.leftOut.length > 0}
 			<p class="state state--group stil weggelaten">Weggelaten: {search.leftOut.join(', ')}</p>
 		{/if}
@@ -246,7 +297,7 @@
 					{@const expired = expiredTitle(choice.ref.collection, choice.expiredOn)}
 					<SearchOption
 						id={rowId(i)}
-						active={search.isActive(i)}
+						active={isActive(i)}
 						citation
 						href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
 						onchoose={() => open(choice.ref, choice.at)}
@@ -258,7 +309,7 @@
 						{#if expired}<span class="row-context"
 								><span class="row-expired" title={expired}>vervallen</span></span
 							>{/if}
-						{#if search.active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
+						{#if isActive(i)}<span class="kbd" aria-hidden="true">↵</span>{/if}
 					</SearchOption>
 				{/each}
 				{#if search.choicesMore > 0}
@@ -284,7 +335,7 @@
 					: null}
 			<SearchOption
 				id={rowId(0)}
-				active={search.active === 0}
+				active={doen.at === null && search.active === 0}
 				citation
 				onchoose={() => search.openCitation()}
 				onpoint={pointAt(0)}
@@ -306,7 +357,7 @@
 			<!-- A link like the hits: its target is known, so a new tab can open it. -->
 			<SearchOption
 				id={rowId(0)}
-				active={search.active === 0}
+				active={doen.at === null && search.active === 0}
 				citation
 				href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
 				onchoose={() => open(bare.ref, bare.at)}
@@ -362,9 +413,9 @@
 					{/if}
 					<SearchOption
 						id={rowId(i)}
-						active={search.isActive(i)}
+						active={isActive(i)}
 						href={bronHref(hitName(hit), { keepNetwerk: false })}
-						onchoose={() => open(hitName(hit), null)}
+						onchoose={() => open(hitName(hit), null, shown.title)}
 						onpoint={pointAt(i)}
 					>
 						<span class="row-main">
@@ -438,7 +489,7 @@
 					{#each search.narrower as word (word)}
 						<TekstLink
 							onclick={() => {
-								search.query = word;
+								doen.line = word;
 							}}>Zoek "{word}"</TekstLink
 						>
 					{/each}

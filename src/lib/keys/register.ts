@@ -226,6 +226,63 @@ export const SHORTCUTS: readonly Shortcut[] = [
 	}
 ];
 
+// ── The words of ⌘K ─────────────────────────────────────────────────────────
+// ⌘K searches and does (Thijs, 30 Oct: "de combinatie van zoeken en doen wel sterk"): a word of
+// this list at the start of what is typed puts a row Doen above the results, which Enter does.
+// The word, a prefix of it of three letters or more, or a short form (`kt`). What follows the
+// word is its object: a bron as the search finds it, a number of steps, a soort or relatie as
+// Tonen and Relatie name them (commands.ts). The page that can do it says so (doen.svelte.ts);
+// where none does, the search alone answers.
+
+/** What follows the word: a bron the search finds, a bron of the netwerk, steps, a soort. */
+type CommandArg = 'bron' | 'gekozen' | 'stappen' | 'soort';
+
+export type Command = {
+	id: string;
+	/** The words that call it, the first its name. */
+	words: readonly string[];
+	/** Short forms that are not a prefix of a word: `kt` for keten. */
+	short?: readonly string[];
+	/** A sign that calls it before its object: `+uitspraken`, `- wwke`. */
+	sign?: '+' | '-';
+	context: KeyContext;
+	arg?: CommandArg;
+	/** The key of SHORTCUTS that does the same, shown beside the row. */
+	key?: string;
+	description: string;
+	/** The flow of the report it answers (docs/claude/ux-review/toetsenbordflows-20261030.md). */
+	flow: string;
+};
+
+export const COMMANDS: readonly Command[] = [
+	{
+		id: 'omgeving',
+		words: ['omgeving'],
+		short: ['om'],
+		context: 'netwerk',
+		description: 'Weergave Omgeving',
+		flow: 'F2'
+	},
+	{
+		id: 'keten',
+		words: ['keten'],
+		short: ['kt'],
+		context: 'netwerk',
+		arg: 'bron',
+		description: 'Weergave Keten, van deze bron of van de bron die je typt',
+		flow: 'F2'
+	},
+	{
+		id: 'verband',
+		words: ['verband'],
+		short: ['vb'],
+		context: 'netwerk',
+		arg: 'bron',
+		description: 'Weergave Verband; de bron die je typt komt erbij',
+		flow: 'F2'
+	}
+];
+
 /** Clicks that are not keys: a link opened at once. In docs and the window, not in the e2e. */
 export const MOUSE = {
 	id: 'klik',
