@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chain, chainTally } from './chain';
-import { citeText } from './cite-label';
+import { citeLines, citeText } from './cite-label';
 
 const law = (id: string, title: string) => ({
 	id,
@@ -21,7 +21,7 @@ const law = (id: string, title: string) => ({
 	path: null
 });
 const article = (n: string, basis: 'delegates' | 'mentioned' = 'delegates') => ({
-	leden: [],
+	leden: [] as string[],
 	onderdelen: [],
 	aanhef: false,
 	id: `articles/bwbr0010346_${n}`,
@@ -313,7 +313,66 @@ describe('the keten of a law and of its AMvB', () => {
 			} as never,
 			null
 		);
-		expect(citeText(k2.layers[1].nodes[0].parents[0].cite!)).toBe('7 art. Cbw');
+		// never a count alone ("4 art." read as article 4): the first that fit, and how many more
+		expect(citeText(k2.layers[1].nodes[0].parents[0].cite!)).toBe('art. 3, 16, 17, 21, 24 +2');
+	});
+	it('draws two lines to a regulation under the law and under its AMvB: one of each', () => {
+		const zorg = item(
+			'instruments/zorg',
+			'Cyberbeveiligingsregeling voor de zorg',
+			'ministeriele-regeling',
+			[article('68')]
+		);
+		const cbb = {
+			...item('instruments/cbb', 'Cyberbeveiligingsbesluit', 'amvb', [article('3')]),
+			instrument: { ...law('instruments/cbb', 'Cyberbeveiligingsbesluit'), abbreviation: 'Cbb' },
+			sub_delegated: [
+				{
+					instrument: zorg.instrument,
+					kind: zorg.kind,
+					date_in_force: zorg.date_in_force,
+					basis_kind: 'mentioned',
+					articles: [article('20', 'mentioned'), article('29', 'mentioned')]
+				}
+			]
+		};
+		const k = chain(
+			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
+			{ bwb_id: 'B', total: 2, items: [cbb, zorg] } as never,
+			null
+		);
+		const node = k.layers.flatMap((l) => l.nodes).find((n) => n.id === 'instruments/zorg')!;
+		expect(node.parents.map((p) => [p.id, p.way, p.cite && citeText(p.cite)])).toEqual([
+			['instruments/bwbr0010346', 'delegates', 'art. 68 Cbw'],
+			['instruments/cbb', 'mentioned', 'art. 20, 29 Cbb']
+		]);
+	});
+	it('shortens a label of leden to the articles that fit, the glance naming them all', () => {
+		const ienw = [
+			{ ...article('2'), leden: ['2'] },
+			{ ...article('3'), leden: ['3'] },
+			article('19'),
+			{ ...article('23'), leden: ['1'] }
+		];
+		const k = chain(
+			{ id: 'instruments/bwbr0052875', name: 'Cyberbeveiligingsbesluit', abbreviation: 'Cbb' },
+			{
+				bwb_id: 'B',
+				total: 1,
+				items: [
+					item('instruments/ienw', 'Cyberbeveiligingsregeling IenW', 'ministeriele-regeling', ienw)
+				]
+			} as never,
+			null
+		);
+		const cite = k.layers[1].nodes[0].parents[0].cite!;
+		expect(citeText(cite)).toBe('art. 2 lid 2, 3 lid 3 +2');
+		expect(citeLines(cite)).toEqual([
+			'art. 2 lid 2 Cbb',
+			'art. 3 lid 3 Cbb',
+			'art. 19 Cbb',
+			'art. 23 lid 1 Cbb'
+		]);
 	});
 });
 
@@ -423,7 +482,9 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		expect(n.grondslag).toBeNull();
 		expect(n.mentions).toBeNull();
 		expect(n.unknown).toBe('art. 218 Gw');
-		expect(on.layers.find((l) => l.id === 'named')?.nodes.map((x) => x.id)).toEqual([
+		// beside the law in its layer, with its dashed line: no layer of its own
+		expect(on.layers.find((l) => l.id === 'law')?.nodes.map((x) => x.id)).toEqual([
+			'instruments/bwbr0001840',
 			'instruments/procl'
 		]);
 	});
@@ -453,19 +514,49 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		}
 	] as never;
 
-	it('draws a wet that only names the law in its text as Noemt, with the number of its articles', () => {
+	it('draws a wet that only names the law in its text beside it, without a count', () => {
 		const k = chain(gw, delegated, null, { mentions: true, refers });
-		const named = k.layers.find((l) => l.id === 'named')!;
+		const named = { nodes: k.layers.find((l) => l.id === 'law')!.nodes.slice(1) };
+		expect(k.layers.some((l) => (l.id as string) === 'named')).toBe(false);
 		expect(named.nodes.map((n) => n.name)).toEqual(['Kieswet']);
+		// the API gives how many articles, not which: no label ("2 art." reads as article 2)
 		expect(named.nodes[0].parents).toEqual([
-			{
-				id: 'instruments/bwbr0001840',
-				way: 'mentioned',
-				relation: 'REFERS_TO',
-				cite: { full: '2 art. Gw', count: 2, abbr: 'Gw', articles: [] }
-			}
+			{ id: 'instruments/bwbr0001840', way: 'mentioned', relation: 'REFERS_TO', named: 2 }
 		]);
-		expect(named.nodes[0].mentions).toBe('2 art. Gw');
+		expect(named.nodes[0].mentions).toBe('Gw');
+	});
+
+	it('puts a wet that names an AMvB in the row Wet above it, and not the law it rests on', () => {
+		const cbb = {
+			id: 'instruments/bwbr0052875',
+			name: 'Cyberbeveiligingsbesluit',
+			abbreviation: 'Cbb'
+		};
+		const cbw = law('instruments/bwbr0052872', 'Cyberbeveiligingswet');
+		const basis = {
+			bwb_id: 'BWBR0052875',
+			total: 1,
+			items: [{ instrument: cbw, kind: 'wet', basis_kind: 'delegates', articles: [article('3')] }]
+		} as never;
+		const naming = [
+			{
+				...(refers as never as Record<string, unknown>[])[0],
+				id: cbw.id,
+				display_name: 'Cyberbeveiligingswet',
+				citation_title: 'Cyberbeveiligingswet'
+			},
+			{
+				...(refers as never as Record<string, unknown>[])[0],
+				id: 'instruments/hrw',
+				display_name: 'Handelsregisterwet 2007',
+				citation_title: 'Handelsregisterwet 2007'
+			}
+		] as never;
+		const k = chain(cbb, null, basis, { kind: 'amvb', mentions: true, refers: naming });
+		const ids = (id: string) => k.layers.find((l) => l.id === id)?.nodes.map((n) => n.id);
+		expect(ids('basis')).toEqual([cbw.id, 'instruments/hrw']);
+		expect(ids('law')).toEqual([cbb.id]);
+		expect(k.layers.flatMap((l) => l.nodes).filter((n) => n.id === cbw.id)).toHaveLength(1);
 	});
 
 	it('puts those that name most of its articles first', () => {
@@ -480,14 +571,16 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			mentions: true,
 			refers: [advocaten, ...(refers as never as [])] as never
 		});
-		expect(k.layers.find((l) => l.id === 'named')!.nodes.map((n) => n.name)).toEqual([
-			'Kieswet',
-			'Advocatenwet'
-		]);
+		expect(
+			k.layers
+				.find((l) => l.id === 'law')!
+				.nodes.slice(1)
+				.map((n) => n.name)
+		).toEqual(['Kieswet', 'Advocatenwet']);
 	});
 
 	it('leaves them out while Noemt is off', () => {
 		const k = chain(gw, delegated, null, { mentions: false, refers });
-		expect(k.layers.some((l) => l.id === 'named')).toBe(false);
+		expect(k.layers.find((l) => l.id === 'law')!.nodes.map((n) => n.name)).toEqual([gw.name]);
 	});
 });
