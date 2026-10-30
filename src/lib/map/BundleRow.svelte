@@ -11,6 +11,7 @@
 	import { vandaag } from '$lib/text/datum';
 	import { groepen, placeRows, rowTitle, type Map, type MapItem } from './map';
 	import { bundlePageHref } from './page';
+	import { firstLine } from './markup';
 
 	let {
 		bundle,
@@ -38,7 +39,7 @@
 					(r.places.length ? ` (${r.places.map((p) => rowTitle(p, true).title).join(', ')})` : '')
 			)
 			.join(', ');
-	const question = $derived(bundle.notitie?.split('\n')[0]?.trim() || null);
+	const question = $derived(firstLine(bundle.notitie));
 </script>
 
 <IndexRow title={bundle.naam} {href} {open} {onToggle}>
