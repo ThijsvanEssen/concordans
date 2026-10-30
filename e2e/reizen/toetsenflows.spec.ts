@@ -138,6 +138,7 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 		// A result the keys are on: the right column offers its netwerk and its keten.
 		await palette(page, 'keten awb');
+		await expect(page.getByRole('dialog').getByRole('option').nth(1)).toBeVisible();
 		await page.keyboard.press('ArrowDown');
 		await expect(page.getByRole('complementary', { name: 'Voorbeeld' })).toContainText(
 			'Netwerk van'

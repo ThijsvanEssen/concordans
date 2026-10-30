@@ -46,13 +46,12 @@ test('J and K go through the overview of Verbonden', async ({ page, isMobile }) 
 	await page.goto(READER);
 	const titles = page.locator('.verbonden a.kind__title');
 	await expect(titles.first()).toBeVisible({ timeout: 30_000 });
-	await page.locator('body').click({ position: { x: 1, y: 1 } });
-	await page.keyboard.press('Alt+KeyJ');
-	await expect(titles.first()).toBeFocused();
+	// J and K with the focus in the list (Alt K is Keten since 30 Oct).
+	await titles.first().focus();
 	if ((await titles.count()) > 1) {
-		await page.keyboard.press('Alt+KeyJ');
+		await page.keyboard.press('j');
 		await expect(titles.nth(1)).toBeFocused();
-		await page.keyboard.press('Alt+KeyK');
+		await page.keyboard.press('k');
 		await expect(titles.first()).toBeFocused();
 	}
 });
