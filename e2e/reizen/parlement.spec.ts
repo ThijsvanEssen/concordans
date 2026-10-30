@@ -357,3 +357,14 @@ test('a burgerinitiatief is not called the initiative bill of the Kamerlid who h
 	);
 	await expect(page.getByText('Initiatiefvoorstel van')).toHaveCount(0);
 });
+
+test('a dossier of more than a hundred stukken shows its voorstel van wet and memorie first', async ({
+	page
+}) => {
+	await page.goto('/dossiers/36600');
+	const stukken = page.getByRole('link', {
+		name: /^(Voorstel van wet|Memorie van toelichting), Kamerstukken/
+	});
+	await expect(stukken.first()).toBeVisible();
+	await expect(stukken.first()).toContainText('nr. 1');
+});
