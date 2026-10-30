@@ -301,12 +301,14 @@ test('a dossier marks a toezegging it only had on the agenda of the debate', asy
 		(n) => metBasis(n, (key) => (key === TZ_ROW_NAKOMING ? 'nakoming' : 'agenda')) as Rec
 	);
 	await page.goto('/dossiers/36512');
-	const verbonden = page.getByRole('complementary', { name: 'Verbonden' });
 	// On a phone Verbonden stands under the text and loads once it is scrolled to (V1).
 	await page.getByRole('heading', { level: 1 }).waitFor();
 	await naarVerbonden(page);
 	await page.locator('.col--panel').scrollIntoViewIfNeeded();
-	await verbonden.getByRole('button', { name: /^Alle \d+ toezeggingen$/ }).click();
+	await page
+		.locator('section[data-kind="commitments"]')
+		.getByRole('button', { name: 'Toezeggingen' })
+		.click();
 	// The soort opened in place in the one view of Verbonden (A208e).
 	const groep = page.locator('section[data-kind="commitments"]');
 	const rij = (begin: RegExp) =>

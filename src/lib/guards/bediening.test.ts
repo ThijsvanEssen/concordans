@@ -184,13 +184,13 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(rij).toMatch(/row__part--herkomst/);
 	});
 
-	it('keeps the choice of bronnen in the filter, not in the head of Verbonden', () => {
+	it('keeps the choice of bronnen in the filter of the table, not in the head of Verbonden', () => {
 		// Thijs, 11 Oct: the groups below already are the kinds chosen; the menu Bronnen in the
 		// choose-line went. The presets and the kinds stay reachable in the filter sheet.
 		const verbonden = bron('lib/verbonden/Verbonden.svelte');
 		expect(verbonden).not.toMatch(/label="Bronnen"/);
 		expect(verbonden).not.toMatch(/\bPRESETS\b/);
-		expect(verbonden).toMatch(/onclick=\{onOpenFilter\}>Filter</);
+		expect(verbonden).not.toMatch(/>Filter</);
 		const sheet = bron('lib/verbonden/FilterSheet.svelte');
 		expect(sheet).toMatch(/presetsToChoose\.map/);
 		expect(sheet).toMatch(/#each sourcesToChoose as k/);

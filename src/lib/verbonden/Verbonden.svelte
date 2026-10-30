@@ -70,7 +70,6 @@
 		selection,
 		filter,
 		onFilter,
-		onOpenFilter,
 		onAddToNetwerk,
 		inNetwerk,
 		onProposedText,
@@ -87,7 +86,6 @@
 		selection: GraphNode;
 		filter: VerbondenFilter;
 		onFilter: (f: VerbondenFilter) => void;
-		onOpenFilter: () => void;
 		/** Één bron uit de rij in het netwerk zetten. */
 		onAddToNetwerk?: (row: Row) => void;
 		/** Of de bron van een rij al in het netwerk staat. */
@@ -501,7 +499,6 @@
 		<!-- At the right of the heading: Filter, and the werkplek with this bron (Thijs, 29 Oct). -->
 		{#if !empty}
 			<span class="head__acties">
-				<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
 				{#if tekst}
 					<a class="btn" href={networkHref ?? '/explore'}
 						><Picto naam="netwerk-o" size={13} />Open in netwerk</a

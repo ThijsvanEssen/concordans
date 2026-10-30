@@ -263,7 +263,16 @@
 				<circle cx={b.x} cy={b.y} r={Math.max(b.r, 22)} class="hit" />
 				<!-- The canvas's cluster: a disc in the colour of its kind on a rim of paper, its count in paper. -->
 				<circle cx={b.x} cy={b.y} r={b.r} fill="var(--paper)" />
-				<circle cx={b.x} cy={b.y} r={b.r * CLUSTER_FILL} fill={colour(b.collection, b.hue)} />
+				<circle
+					cx={b.x}
+					cy={b.y}
+					r={b.r * CLUSTER_FILL}
+					fill={b.trap !== undefined
+						? b.trap
+							? `var(--rechtspraak-${b.trap})`
+							: 'var(--rule-strong)'
+						: colour(b.collection, b.hue)}
+				/>
 				<text x={b.x} y={b.y + 4.5} text-anchor="middle" class="count">{formatCount(b.count)}</text>
 				<text x={b.lx} y={b.ly} text-anchor="middle" class="name"
 					>{#each b.lines as line, i (i)}<tspan x={b.lx} dy={i ? LINE_H : 0}>{line}</tspan

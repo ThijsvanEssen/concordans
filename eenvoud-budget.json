@@ -22,12 +22,12 @@
 		"src/lib/components/graph/GraphView.svelte": 2096,
 		"src/lib/network/ChainView.svelte": 1148,
 		"src/lib/text/judgment-text.ts": 1108,
-		"src/lib/verbonden/Verbonden.svelte": 874,
+		"src/lib/verbonden/Verbonden.svelte": 871,
 		"src/lib/verbonden/groups.ts": 1217,
 		"src/lib/verbonden/loaders.ts": 1511,
 		"src/routes/(main)/actueel/+page.svelte": 855,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 3022
+		"src/routes/explore/+page.svelte": 3021
 	},
 	"effects_per_svelte": {
 		"src/lib/components/explore/IndexView.svelte": 9,

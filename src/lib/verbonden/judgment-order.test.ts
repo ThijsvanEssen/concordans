@@ -31,7 +31,6 @@ const html = (collection: 'articles' | 'instruments') => {
 			selection: { id: `${collection}/x`, collection, key: 'x' } as GraphNode,
 			filter: EMPTY_FILTER,
 			onFilter: () => {},
-			onOpenFilter: () => {},
 			tableHref: '#'
 		}
 	}).body;

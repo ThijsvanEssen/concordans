@@ -30,10 +30,11 @@ describe('the head of a reader', () => {
 		expect(bewaar).toBeLessThan(acties.indexOf('<Follow '));
 	});
 
-	it('leaves Verbonden without a unit in the count and without Alle N for what is shown', () => {
+	it('leaves Verbonden without a unit in the count and with a heading that folds, not Alle N', () => {
 		const samenvatting = bron('lib/verbonden/KindSummary.svelte');
 		expect(samenvatting).not.toMatch(/k\.id === 'laws'/);
-		expect(samenvatting).toMatch(/\{#if k\.count > PREVIEW_ROWS\}/);
+		expect(samenvatting).not.toMatch(/aantal=\{countOf\(k\)\}/);
+		expect(samenvatting).toMatch(/aria-expanded=\{open\.has\(k\.id\)\}/);
 	});
 
 	it('shows no table of contents of one line, and says nothing of one that is empty', () => {

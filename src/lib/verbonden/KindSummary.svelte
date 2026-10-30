@@ -8,6 +8,7 @@
 	import { openHref, refId } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
@@ -132,7 +133,16 @@
 	{@const repeated = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
-			<span>{k.label}</span><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
+			{#if k.count > PREVIEW_ROWS}
+				<button
+					type="button"
+					class="kind__fold raakvlak"
+					aria-expanded={open.has(k.id)}
+					onclick={() => onOpen(k.id)}
+					><span>{k.label}</span><Caret open={open.has(k.id)} side /></button
+				>{:else}<span>{k.label}</span>{/if}<span class="kind__count"
+				>{telt ? formatCount(countOf(k)) : ''}</span
+			>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
 			<TierBar parts={tiers} pending={tiersPending} counted={tiersCounted} />
@@ -235,17 +245,6 @@
 				/>
 			</p>
 		{/if}
-		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
-		{#if k.count > PREVIEW_ROWS}
-			<p class="kind__all">
-				<AlleN
-					aantal={countOf(k)}
-					noun={k.noun}
-					open={open.has(k.id)}
-					onclick={() => onOpen(k.id)}
-				/>
-			</p>
-		{/if}
 	</section>
 {/each}
 
@@ -271,6 +270,19 @@
 		display: flex;
 		gap: var(--s-4);
 		align-items: baseline;
+	}
+	/* The heading is the button that opens the soort: its own letter, no frame; the count beside. */
+	.kind__fold {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
 	}
 	.kind__count {
 		font-weight: 400;

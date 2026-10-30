@@ -2311,7 +2311,6 @@
 					selection={selectedNode}
 					{filter}
 					onFilter={applyFilter}
-					onOpenFilter={() => (filterOpen = true)}
 					onAddToNetwerk={(row) => {
 						const id = focusOf(row.ref);
 						if (id) addIdToNetwerk(id, row.title);
