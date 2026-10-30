@@ -1,6 +1,6 @@
 // A wet and the dossier of the same name are told apart by their kind, in one wording
 // everywhere (Thijs, 13 Oct): the wet as "Wet", the dossier as "Dossier 36764", never its
-// bare number. The wording lives in `kamerstukNummer` (dossier-naam.ts) and DossierNaam; a page
+// bare number. The wording lives in `dossierNumberLabel` (dossier-naam.ts) and DossierNaam; a page
 // that writes its own "Dossier 36764" or "Dossier 36764" beside them fails here.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -11,7 +11,7 @@ import {
 	dossierOwnName,
 	dossierUitProps,
 	dossierVolledigeTitel,
-	kamerstukNummer,
+	dossierNumberLabel,
 	officialNumber
 } from './dossier-naam';
 import { dossierVanRij, type Row } from '$lib/verbonden/rows';
@@ -49,8 +49,8 @@ describe('wet and dossier of the same name', () => {
 	});
 
 	it('names a dossier by its kind and number, never the bare number', () => {
-		expect(kamerstukNummer('36764')).toBe('Dossier 36764');
-		expect(kamerstukNummer('36764', 'EK')).toBe('Dossier I 36764');
+		expect(dossierNumberLabel('36764')).toBe('Dossier 36764');
+		expect(dossierNumberLabel('36764', 'EK')).toBe('Dossier I 36764');
 		expect(dossierLabel({ number: '36764', short_title: 'Cyberbeveiligingswet' })).toBe(
 			'Dossier 36764 Cyberbeveiligingswet'
 		);
@@ -129,8 +129,8 @@ describe('a dossier number in its official notation', () => {
 		const d = { number: '36600-VIII' };
 		const props = { label: '36600-VIII', number: '36600', suffix: 'VIII' };
 		const shown = [
-			kamerstukNummer('36600-VIII'),
-			kamerstukNummer('36600-VIII', 'EK'),
+			dossierNumberLabel('36600-VIII'),
+			dossierNumberLabel('36600-VIII', 'EK'),
 			dossierLabel(d),
 			dossierName(d),
 			kamerstukName({ dossier_number: '36600-VIII', number: 5 }),
@@ -162,7 +162,7 @@ describe('a dossier number in its official notation', () => {
 		];
 		expect(shown.filter((t) => !t || HYPHENATED_SUFFIX.test(t))).toEqual([]);
 		expect(dossierLabel(d)).toBe('Dossier 36600 VIII');
-		expect(kamerstukNummer('21501-20')).toBe('Dossier 21501-20');
+		expect(dossierNumberLabel('21501-20')).toBe('Dossier 21501-20');
 	});
 
 	it('tells a dossier without a name of its own by dossierOwnName, not by its number', () => {

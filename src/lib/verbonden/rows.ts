@@ -16,7 +16,7 @@ import { changeRelationOf, isCollection, type Relation } from '$lib/vocabulary';
 import {
 	dossierOwnName,
 	dossierUitProps,
-	kamerstukNummer,
+	dossierNumberLabel,
 	type DossierNaamBron
 } from '$lib/bron/dossier-naam';
 import { describeBronShort, UNNAMED } from '$lib/bron/describe';
@@ -451,7 +451,7 @@ export function historyRow(e: {
 	return {
 		ref,
 		title: e.dossier_number
-			? (dossierOwnName(dossierVan(e)!) ?? kamerstukNummer(e.dossier_number))
+			? (dossierOwnName(dossierVan(e)!) ?? dossierNumberLabel(e.dossier_number))
 			: (e.summary ?? naamVanId(`${ref.collection}/${ref.key}`)),
 		dossier: dossierVan(e),
 		identifier: e.summary ?? null,
@@ -459,7 +459,7 @@ export function historyRow(e: {
 			[
 				proposed ? 'voorgesteld' : null,
 				change ? relationWords(change, 'documents', 'articles').actief : null,
-				e.dossier_number ? kamerstukNummer(e.dossier_number) : null
+				e.dossier_number ? dossierNumberLabel(e.dossier_number) : null
 			]
 				.filter(Boolean)
 				.join(', ') || null,

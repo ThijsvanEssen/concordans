@@ -9,7 +9,7 @@
 	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { dossierName, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+	import { dossierName, dossierNumberLabel, officialNumber } from '$lib/bron/dossier-naam';
 	import { atomHref } from '$lib/components/actueel/feed';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
@@ -109,7 +109,7 @@
 	{#if dossierNumber}<link
 			rel="alternate"
 			type="application/atom+xml"
-			title="Actueel in {kamerstukNummer(dossierNumber)}"
+			title="Actueel in {dossierNumberLabel(dossierNumber)}"
 			href={atomHref({ dossier: dossierNumber })}
 		/>{/if}
 </svelte:head>
@@ -125,7 +125,7 @@
 		<div class="r-dossier">
 			<ReaderHead
 				collection="dossiers"
-				kindLabel={kamerstukNummer(d.number)}
+				kindLabel={dossierNumberLabel(d.number)}
 				title={capitalize(d.short_title ?? d.title ?? officialNumber(d.number))}
 				acties={{
 					// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).

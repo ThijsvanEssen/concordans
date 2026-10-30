@@ -5,7 +5,7 @@
 	import { notHeld } from '$lib/text/coverage';
 	import BronLink from './BronLink.svelte';
 	import DossierNaam from './DossierNaam.svelte';
-	import { kamerstukNummer } from './dossier-naam';
+	import { dossierNumberLabel } from './dossier-naam';
 
 	let {
 		dossier
@@ -22,7 +22,7 @@
 </script>
 
 {#if dossier.exists === false}<span title={notHeld('Dit dossier')}
-		>{kamerstukNummer(dossier.number)}</span
+		>{dossierNumberLabel(dossier.number)}</span
 	>{:else}<BronLink
 		ref={{ collection: 'dossiers', key: dossier.key, number: dossier.number }}
 		title={dossier.title ?? 'Het dossier van de wet die de tekst wijzigde'}

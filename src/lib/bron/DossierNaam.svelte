@@ -6,7 +6,7 @@
 	import {
 		dossierOwnName,
 		dossierVolledigeTitel,
-		kamerstukNummer,
+		dossierNumberLabel,
 		type DossierNaamBron
 	} from './dossier-naam';
 
@@ -29,7 +29,7 @@
 </script>
 
 <span class="dossier" title={lang ?? undefined}
-	>{#if vorm === 'naam'}{naam ?? kamerstukNummer(d.number)}{:else}{kamerstukNummer(
+	>{#if vorm === 'naam'}{naam ?? dossierNumberLabel(d.number)}{:else}{dossierNumberLabel(
 			d.number
 		)}{#if naam}<span class="naam">{` ${naam}`}</span>{/if}{/if}</span
 >

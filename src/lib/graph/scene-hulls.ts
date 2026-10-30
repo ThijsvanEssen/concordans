@@ -3,7 +3,7 @@
 // A stuk belongs to its dossier by `dossier_number` (only some carry the edge); an activity about
 // several dossiers sits in one of them and bridges none: the others only count (`bridged`).
 import { textOf } from '$lib/text/words';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { isLetter, motionOrAmendment } from '$lib/text/document-kind';
 import { nodeId, type Relation } from '$lib/vocabulary';
 import { holdsInHull } from './container-membership';
@@ -192,7 +192,7 @@ export function hullCandidates(
 /** The name of a hull: its container's, else the dossier's number or the wet's citation title. */
 export function hullLabel(c: HullCandidate): string {
 	if (c.container) return c.container.label;
-	if (c.kind === 'dossier') return kamerstukNummer(c.id.replace(/^dossiers\//, ''));
+	if (c.kind === 'dossier') return dossierNumberLabel(c.id.replace(/^dossiers\//, ''));
 	const props = c.members[0]?.raw?.props;
 	return textOf(props?.instrument_citation_title) ?? lawIdOf(props) ?? '';
 }

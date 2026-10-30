@@ -9,7 +9,7 @@ import { sortLabel } from '$lib/bron/rubrieken';
 // searched for marked. Stukken of one dossier stand under that dossier.
 import type { Schema } from '$lib/api/types';
 import { kindName } from '$lib/text/law-kind';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/votes/stages';
 import { articleName } from '$lib/text/bw';
 import { citationRecord } from '$lib/text/citation-record';
@@ -292,7 +292,7 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 			const lang = nameOf(hit);
 			return {
 				title: kort ?? lang,
-				context: [extra(hit, 'number') && kamerstukNummer(extra(hit, 'number')), status]
+				context: [extra(hit, 'number') && dossierNumberLabel(extra(hit, 'number')), status]
 					.filter(Boolean)
 					.join(', '),
 				// The long title below the name it is known by.
@@ -420,7 +420,7 @@ export function sectionOf(hit: Hit): string | null {
 	if (hit.collection !== 'documents') return null;
 	const number = extra(hit, 'dossier_number');
 	return number
-		? `${kamerstukNummer(number)} ${citeertitel(hit) ?? hit.display_name ?? ''}`.trim()
+		? `${dossierNumberLabel(number)} ${citeertitel(hit) ?? hit.display_name ?? ''}`.trim()
 		: null;
 }
 

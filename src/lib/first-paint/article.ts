@@ -9,7 +9,7 @@ import type { Schema } from '$lib/api/types';
 import type { Validity } from '$lib/api/validity';
 import { citeDate, validityOf } from '$lib/api/validity';
 import { lawLineWords, type LawLayer, type LawSource } from '$lib/bron/law-line';
-import { dossierOwnName, kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierOwnName, dossierNumberLabel } from '$lib/bron/dossier-naam';
 import {
 	dossierExplanation,
 	explanatoryLabel,
@@ -274,7 +274,7 @@ export function articleColumn(v: ArticlePaint, k: Classes): string {
 
 /** A dossier as DossierLink names it: a link where the data holds it, its number where not. */
 function dossierLink(d: Dossier, k: Classes): string {
-	const number = esc(kamerstukNummer(d.number));
+	const number = esc(dossierNumberLabel(d.number));
 	if (d.exists === false) return `<span>${number}</span>`;
 	const name = dossierOwnName(d);
 	return `<a><span class="dossier ${k.dossierName}">${number}${name ? `<span class="naam ${k.dossierName}"> ${esc(name)}</span>` : ''}</span></a>`;

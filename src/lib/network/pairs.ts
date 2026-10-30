@@ -5,7 +5,7 @@
 // drawing on a wide screen and the list on a phone read one model.
 import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
-import { dossierNummer, kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+import { dossierNummer, dossierNumberLabel, officialNumber } from '$lib/bron/dossier-naam';
 import { bothPhrase, joinsAll } from './both-words';
 import type { Collection } from '$lib/vocabulary';
 import {
@@ -41,7 +41,7 @@ export function withDossierNumbers(ends: readonly PairEnd[]): PairEnd[] {
 			dossierNummer(e.props, e.id.split('/')[1]) ?? e.id.split('/')[1] ?? ''
 		);
 		if (!nummer || name.startsWith(nummer)) return name;
-		return name === kamerstukNummer(nummer) ? nummer : `${nummer} ${name}`;
+		return name === dossierNumberLabel(nummer) ? nummer : `${nummer} ${name}`;
 	};
 	return ends.map((e) =>
 		e.collection === 'dossiers'

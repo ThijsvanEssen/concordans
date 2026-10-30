@@ -9,7 +9,7 @@ import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
-import { dossierOwnName, dossierUitProps, kamerstukNummer } from './dossier-naam';
+import { dossierOwnName, dossierUitProps, dossierNumberLabel } from './dossier-naam';
 
 /** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
 export function bronFullName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
@@ -40,7 +40,7 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	// Verbonden: "Cyberbeveiligingswet", never the title of three lines.
 	if (n.collection === 'dossiers') {
 		const d = dossierUitProps({ display_name: n.raw?.display_name, ...p }, n.key);
-		return dossierOwnName(d) ?? kamerstukNummer(d.number);
+		return dossierOwnName(d) ?? dossierNumberLabel(d.number);
 	}
 	// Anything else by the title Verbonden gives it: "Rechtbank Rotterdam, 2 juni 2022".
 	if (n.drawClass !== 'article') {

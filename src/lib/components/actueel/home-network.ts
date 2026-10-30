@@ -10,7 +10,7 @@ import { bronPlural, isCollection, type Collection } from '$lib/vocabulary';
 import { neighborsOf, type Neighbor, type NodeGraph } from '$lib/api/nodes';
 import { capitalize, textOf } from '$lib/text/words';
 import { refOf } from '$lib/bron/ref';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { bwCode } from '$lib/text/bw';
 import { lawIdOf } from '$lib/graph/types';
 import type { Schets } from './wetsnetwerk';
@@ -33,7 +33,7 @@ function dossierGroep(s: Schets, leiders: Row[]): SketchGroup[] {
 	const nummer = s.kandidaat.number;
 	const dossier: Row = {
 		ref: refOf('dossiers', nummer, { number: nummer }),
-		title: kamerstukNummer(nummer),
+		title: dossierNumberLabel(nummer),
 		context: null,
 		filterGroup: 'dossiers'
 	};

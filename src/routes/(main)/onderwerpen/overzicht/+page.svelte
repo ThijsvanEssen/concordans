@@ -27,7 +27,7 @@
 	import OverviewFacets from '$lib/onderwerpen/OverviewFacets.svelte';
 	import OverviewCourse from '$lib/onderwerpen/OverviewCourse.svelte';
 	import OverviewList from '$lib/onderwerpen/OverviewList.svelte';
-	import { isDay, maandNaam, fromDate, vandaag } from '$lib/text/datum';
+	import { isDay, monthName, fromDate, vandaag } from '$lib/text/datum';
 	import { download, safeFileName } from '$lib/util/save-file';
 	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
@@ -717,7 +717,7 @@
 				? v
 				: v.includes('-W')
 					? `week ${Number(v.slice(6))} van ${v.slice(0, 4)}`
-					: `${maandNaam(`${v}-01`, false)} ${v.slice(0, 4)}`;
+					: `${monthName(`${v}-01`, false)} ${v.slice(0, 4)}`;
 		return [wat, wanneer].filter(Boolean).join(', ');
 	});
 	const selectie = $derived(

@@ -106,7 +106,7 @@ export const dagMaand = (iso: string | null | undefined): string => {
 };
 
 /** The month alone, `september` or, `kort`, `sep.`: over the days of a timetable. */
-export const maandNaam = (iso: string | null | undefined, kort = false): string => {
+export const monthName = (iso: string | null | undefined, kort = false): string => {
 	const t = dagVan(iso);
 	return t ? (kort ? MAAND_KORT : MONTHS)[t.m - 1] : '';
 };

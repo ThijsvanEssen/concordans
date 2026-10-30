@@ -10,7 +10,7 @@ import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME, type Chamber } from '$lib/components/parliamentary/chamber';
 import { commitmentTeken } from '$lib/components/explore/index/government';
 import { describeBron } from '$lib/bron/describe';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import {
 	AMENDEMENT,
 	CLOSE_VOTE,
@@ -198,7 +198,10 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 					? `${decides(chamber, passed, 'wetsvoorstel')}: ${names[0]}`
 					: decides(chamber, passed, `${inWords(those.length)} wetsvoorstellen`),
 				context: one
-					? [voteHow(those[0]), those[0].dossier ? kamerstukNummer(those[0].dossier.number) : null]
+					? [
+							voteHow(those[0]),
+							those[0].dossier ? dossierNumberLabel(those[0].dossier.number) : null
+						]
 							.filter(Boolean)
 							.join('. ') || null
 					: listLine(names, BILLS_NAMED),
@@ -341,7 +344,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			label: 'Wetsvoorstel',
 			vorm: 'voorstel',
 			title: `Wetsvoorstel ingediend: ${name(b)}`,
-			context: b.dossier ? kamerstukNummer(b.dossier.number) : null,
+			context: b.dossier ? dossierNumberLabel(b.dossier.number) : null,
 			href: hrefOf(b),
 			major: true,
 			teken: 'stuk',

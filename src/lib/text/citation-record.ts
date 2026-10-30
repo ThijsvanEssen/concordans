@@ -10,7 +10,7 @@ import { citeArticle, citePublication, type Citation } from './cite';
 import { stbCitation } from './enacted-law';
 import { headingCite, type HeadingSource } from './judgment-heading';
 import { kamerstukCitation, kamerstukLabel, kamerstukName, type Paper } from './kamerstuk';
-import { kamerstukNummer, officialNumber } from '$lib/bron/dossier-naam';
+import { dossierNumberLabel, officialNumber } from '$lib/bron/dossier-naam';
 
 export type CitationRecord = {
 	/** The name its heading gives it: `Artikel 6:162 BW`, `Wet beveiliging netwerk- en
@@ -142,7 +142,7 @@ function dossierRecord(d: Extract<CitedSource, { kind: 'dossier' }>): CitationRe
 	const number = officialNumber(d.number);
 	const cited = `Kamerstukken ${number}`;
 	return {
-		heading: d.name ?? kamerstukNummer(d.number),
+		heading: d.name ?? dossierNumberLabel(d.number),
 		short: cited,
 		full: d.name ? `${cited} (${d.name})` : cited,
 		dated: null,

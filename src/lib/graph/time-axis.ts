@@ -1,7 +1,7 @@
 // The axis of Tijd: in Kamerstukken and Rechtspraak the height is the date. Only a year in which
 // something stands there gets height; a run of empty years is one bend of BEND px without a year,
 // and months are marked only on a short axis, where a year is tall enough to read them.
-import { maandNaam, yearFraction } from '$lib/text/datum';
+import { monthName, yearFraction } from '$lib/text/datum';
 
 /** The height of a run of empty years: a bend, without a year. */
 const BEND = 14;
@@ -50,7 +50,7 @@ function axisTicks(segments: readonly AxisSegment[], bottom: number): AxisTick[]
 		for (const month of [3, 6, 9])
 			ticks.push({
 				y: s.y + (s.height * month) / 12,
-				label: maandNaam(`${s.from}-${String(month + 1).padStart(2, '0')}-01`, true),
+				label: monthName(`${s.from}-${String(month + 1).padStart(2, '0')}-01`, true),
 				kind: 'month'
 			});
 	}

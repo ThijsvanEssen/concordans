@@ -26,7 +26,7 @@ import {
 	dossierOwnName,
 	dossierUitProps,
 	dossierVolledigeTitel,
-	kamerstukNummer
+	dossierNumberLabel
 } from './dossier-naam';
 import { eersteIndiener, isEersteIndiener } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
@@ -162,7 +162,7 @@ export function previewFromNode(
 			const { outcome, current_phase } = props;
 			const d = dossierUitProps(props);
 			return {
-				kicker: d.number ? `${kind}, ${kamerstukNummer(d.number)}` : kind,
+				kicker: d.number ? `${kind}, ${dossierNumberLabel(d.number)}` : kind,
 				title: dossierOwnName(d) ?? name,
 				date: langeDatum(textOf(props.opened_on)) || null,
 				lines: dossierStatus({

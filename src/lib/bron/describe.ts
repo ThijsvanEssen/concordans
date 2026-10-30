@@ -9,7 +9,7 @@ import { langeDatum, shortDatesIn } from '$lib/text/datum';
 import type { Cite } from '$lib/text/judgment-heading';
 import { courtName } from '$lib/text/court';
 import { isGeneriek } from '$lib/bron/generiek';
-import { dossierOwnName, dossierUitProps, kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierOwnName, dossierUitProps, dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { kindName } from '$lib/text/law-kind';
 import { withoutKamerstuk } from '$lib/text/kamerstuk';
 import { articleTitle, citationRecord } from '$lib/text/citation-record';
@@ -180,7 +180,7 @@ export function describeBron(
 			return {
 				title: dossierOwnName(d) ?? name,
 				context: null,
-				identifier: d.number ? kamerstukNummer(d.number) : null,
+				identifier: d.number ? dossierNumberLabel(d.number) : null,
 				date
 			};
 		}

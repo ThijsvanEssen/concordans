@@ -1,7 +1,7 @@
 // The Kamerstuk a paper is: its own dossier and its number there (API 0.63). A dossier's
 // timeline also holds papers of another dossier (in 31746 stands 31058, nr. 11), so the
 // number alone would name the wrong Kamerstuk.
-import { dossierNumberText, kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierNumberText, dossierNumberLabel } from '$lib/bron/dossier-naam';
 
 export type Kamerstuk = {
 	dossier: string;
@@ -72,7 +72,7 @@ export function kamerstukLabel(p: Paper): string | null {
 export function kamerstukName(p: Paper): string | null {
 	if (!p.dossier_number) return null;
 	const place = kamerstukLabel(p) ?? dossierOf({ ...p, dossier_number: p.dossier_number });
-	return kamerstukNummer(place, p.chamber === 'EK' ? 'EK' : null);
+	return dossierNumberLabel(place, p.chamber === 'EK' ? 'EK' : null);
 }
 
 /**

@@ -11,7 +11,7 @@
 // and the position inside the text as the fragment.
 import { padHref, type Pad } from '$lib/bron/address';
 import { keyEcli } from '$lib/text/ecli';
-import { kamerstukNummer } from '$lib/bron/dossier-naam';
+import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { citationRecord, enactedLawPlace } from '$lib/text/citation-record';
 import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 import { isContainerKind } from '$lib/graph/container-membership';
@@ -129,7 +129,7 @@ export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = ()
 				})?.short ?? padHref(p)
 			);
 		case 'dossier':
-			return kamerstukNummer(p.nummer);
+			return dossierNumberLabel(p.nummer);
 		case 'uitspraak':
 			return p.ecli;
 		case 'publicatie':

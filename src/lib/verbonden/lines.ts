@@ -3,7 +3,7 @@
 import { count, joinAnd, lowerFirst } from '$lib/text/words';
 import { vandaag } from '$lib/text/datum';
 import { articleRef, bookNumber } from '$lib/text/bw';
-import { dossierLabel, kamerstukNummer, type DossierNaamBron } from '$lib/bron/dossier-naam';
+import { dossierLabel, dossierNumberLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
 import type { Row } from './rows';
 
 /**
@@ -67,7 +67,7 @@ export function activityLine(
 	// A dossier by its number and name: "over 22112 Nieuwe Commissievoorstellen …".
 	const numbers = a.dossiers?.length
 		? a.dossiers.map((d) => dossierLabel(d))
-		: (a.dossier_numbers ?? []).map((n) => kamerstukNummer(n));
+		: (a.dossier_numbers ?? []).map((n) => dossierNumberLabel(n));
 	const over = numbers.length ? `over ${joinAnd(numbers)}` : null;
 	return [a.kind, status, over].filter(Boolean).join(', ') || null;
 }

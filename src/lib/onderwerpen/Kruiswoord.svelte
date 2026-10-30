@@ -10,7 +10,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { failureText } from '$lib/components/ui/LoadState.svelte';
 	import NewMark from '$lib/components/ui/NewMark.svelte';
-	import { maandNaam } from '$lib/text/datum';
+	import { monthName } from '$lib/text/datum';
 	import { jaarVanVak, type Keuze, type Kolom, type Rij, type Vak } from './kruiswoord';
 
 	export type KolomKop = {
@@ -79,7 +79,7 @@
 		return !!grens && v <= grens;
 	};
 	const label = (v: Vak, kort: boolean) =>
-		v.includes('-W') ? `week ${Number(v.slice(6))}` : maandNaam(`${v}-01`, kort);
+		v.includes('-W') ? `week ${Number(v.slice(6))}` : monthName(`${v}-01`, kort);
 	const gekozen = (k: Kolom, v: Vak) => keuze?.kolom === k && keuze.vak === v;
 	const kies = (k: Kolom, v: Vak) => onSelect(gekozen(k, v) ? null : { kolom: k, vak: v });
 	const heeftNieuw = $derived([...rijen.values()].some((r) => kolommen.some((c) => r[c.k].nieuw)));

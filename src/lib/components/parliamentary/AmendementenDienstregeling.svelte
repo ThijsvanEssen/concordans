@@ -15,7 +15,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
-	import { maandNaam, maandagVan } from '$lib/text/datum';
+	import { monthName, maandagVan } from '$lib/text/datum';
 	import { noneHeld } from '$lib/text/coverage';
 	import {
 		getAmendementen,
@@ -54,7 +54,7 @@
 			else uit.push({ maand: k.slice(0, 7), span: 1 });
 		}
 		return uit.map((m, i) => {
-			const kort = maandNaam(`${m.maand}-01`, m.span < 3);
+			const kort = monthName(`${m.maand}-01`, m.span < 3);
 			const jaar = i > 0 && uit[i - 1].maand.slice(0, 4) !== m.maand.slice(0, 4);
 			return { ...m, label: jaar ? `${kort} ${m.maand.slice(0, 4)}` : kort };
 		});

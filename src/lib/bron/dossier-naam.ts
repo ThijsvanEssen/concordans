@@ -40,7 +40,7 @@ export const dossierNumberText = (number: string, suffix?: string | null) =>
  * The kind of a dossier with its number, the one wording for it everywhere: `Dossier 36764`,
  * `Dossier I 36764` for the Eerste Kamer. A stuk in it follows after a comma.
  */
-export const kamerstukNummer = (number: string, kamer?: 'EK' | 'TK' | null) =>
+export const dossierNumberLabel = (number: string, kamer?: 'EK' | 'TK' | null) =>
 	`Dossier${kamer === 'EK' ? ' I' : ''} ${officialNumber(number)}`;
 
 /**
@@ -110,6 +110,6 @@ export const dossierName = (d: DossierNaamBron): string =>
 /** "Dossier 36889 wijziging van Archiefwet 1995"; "Dossier 36889" where no name is known. */
 export function dossierLabel(d: DossierNaamBron): string {
 	const name = dossierOwnName(d);
-	const nummer = kamerstukNummer(d.number);
+	const nummer = dossierNumberLabel(d.number);
 	return name ? `${nummer} ${name}` : nummer;
 }
