@@ -6,7 +6,6 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
@@ -184,6 +183,27 @@
 			}))
 		}))
 	);
+	// The way on as the timeline's last line: a mark of its own, then Eerdere gebeurtenissen.
+	const withEarlier = $derived<TijdGroep[]>(
+		groups.map((g, i) =>
+			i < groups.length - 1
+				? g
+				: {
+						...g,
+						regels: [
+							...g.regels,
+							{
+								id: 'eerder',
+								datum: null,
+								teken: 'activiteit',
+								vorm: 'overig',
+								zin: 'Eerdere gebeurtenissen',
+								href: '/actueel'
+							}
+						]
+					}
+		)
+	);
 </script>
 
 <RouteKop />
@@ -258,9 +278,7 @@
 				<p class="volger">Wat de Kamers en de rechter de afgelopen dagen met de wet deden.</p>
 			</header>
 			<LoadState state={feed.state} what="Actueel" retry={feed.retry} form="block" />
-			<Tijdlijn groepen={groups} datums={false}>
-				{#snippet meer()}<AlleN noun="gebeurtenissen" href="/actueel" />{/snippet}
-			</Tijdlijn>
+			<Tijdlijn groepen={withEarlier} datums={false} />
 		</section>
 	</div>
 </div>
