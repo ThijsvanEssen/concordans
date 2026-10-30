@@ -306,7 +306,10 @@ test('a dossier marks a toezegging it only had on the agenda of the debate', asy
 	await page.getByRole('heading', { level: 1 }).waitFor();
 	await naarVerbonden(page);
 	await page.locator('.col--panel').scrollIntoViewIfNeeded();
-	await verbonden.getByRole('button', { name: 'Toezeggingen' }).click();
+	await page
+		.locator('section[data-kind="commitments"]')
+		.getByRole('button', { name: 'Toezeggingen' })
+		.click();
 	// The soort opened in place in the one view of Verbonden (A208e).
 	const groep = page.locator('section[data-kind="commitments"]');
 	const rij = (begin: RegExp) =>

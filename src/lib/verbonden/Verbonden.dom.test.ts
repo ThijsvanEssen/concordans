@@ -259,15 +259,14 @@ describe('Verbonden', () => {
 		expect(screen.queryByRole('link', { name: 'Open in netwerk' })).toBeNull();
 	});
 
-	it('opens in Tekst on the soorten: a heading with its count, folded, a click opens its titles', async () => {
+	it('opens in Tekst on the soorten: a heading with its count, three titles with one line, no Alle N', async () => {
 		paneel(ROWS, { tekst: true });
 		const koppen = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.trim());
 		expect(koppen).toEqual(['Uitspraken1', 'Stukken1']);
-		// Folded: the heading alone; the passage and the ECLI wait for the row to open.
-		expect(screen.queryByRole('link', { name: 'Hoge Raad, 20 december 2019' })).toBeNull();
+		// The passage and the ECLI wait for the row to open; no Filter, no order at a glance.
+		expect(screen.queryByText(/HR:2019:2006/)).toBeNull();
 		expect(screen.queryByRole('button', { name: 'Filter' })).toBeNull();
 		expect(screen.queryByRole('button', { name: 'Datum' })).toBeNull();
-		await fireEvent.click(screen.getByRole('button', { name: 'Uitspraken' }));
 		await klik(screen.getByRole('link', { name: 'Hoge Raad, 20 december 2019' }));
 		expect(goto).not.toHaveBeenCalled();
 		expect(screen.getByText(/HR:2019:2006/)).toBeTruthy();
@@ -298,6 +297,6 @@ describe('Verbonden', () => {
 		expect(screen.queryByRole('button', { name: /Alle soorten|Indeling/ })).toBeNull();
 		expect(document.querySelectorAll('[data-kind="judgments"] .kind__rows > li')).toHaveLength(4);
 		await fireEvent.click(knop);
-		expect(document.querySelectorAll('[data-kind="judgments"] .kind__rows > li')).toHaveLength(0);
+		expect(document.querySelectorAll('[data-kind="judgments"] .kind__rows > li')).toHaveLength(3);
 	});
 });
