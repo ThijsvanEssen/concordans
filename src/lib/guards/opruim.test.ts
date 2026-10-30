@@ -138,6 +138,11 @@ const TEST_HOOKS: Uitzondering[] = [
 			'the scene of Omgeving as lanes: read by its view and the budget from phase 4 on (PLAN-doek-banen)'
 	},
 	{
+		pad: 'lib/graph/lane-layout.ts',
+		regel: /^(laneLayout|wrapLabel)$/,
+		reden: 'the layout of the lanes: read by their view from phase 4 on (PLAN-doek-banen)'
+	},
+	{
 		pad: 'lib/api/records.ts',
 		regel: /^RECORDS_KEPT$/,
 		reden: 'a test hook: how many records the cache keeps, for the test that fills it'

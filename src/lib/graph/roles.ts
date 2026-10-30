@@ -8,6 +8,9 @@ import type { GraphNode } from './types';
 
 export type MakerLane = 'government' | 'council' | 'parliament';
 
+/** The cards of Wie maakt, from top to bottom. */
+export const MAKER_LANE_ORDER: readonly MakerLane[] = ['government', 'council', 'parliament'];
+
 type MakerRole = {
 	lane: MakerLane;
 	/** The function on the day, as the lane names it: "minister VWS", "advies Raad van State". */
