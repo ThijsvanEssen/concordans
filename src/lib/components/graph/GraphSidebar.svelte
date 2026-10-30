@@ -53,7 +53,8 @@
 		proposals,
 		kindRowsShown = null,
 		kindsSettled = true,
-		withCurrentMember = false
+		withCurrentMember = false,
+		chain = null
 	}: {
 		filter: VerbondenFilter;
 		onFilter: (f: VerbondenFilter) => void;
@@ -87,6 +88,12 @@
 		kindsSettled?: boolean;
 		/** Leden drawn filled while current, as an outline once gone: the key says so (N13). */
 		withCurrentMember?: boolean;
+		/**
+		 * Keten: the key to its drawing (B53). The bron it starts from in ink, and, in the keten of
+		 * a law, the articles on a line in a frame, whole for a grondslag, dashed where it only names
+		 * them or its grondslag is unknown (ChainView, Referentielabel).
+		 */
+		chain?: { start: Collection | null; labels: boolean } | null;
 	} = $props();
 
 	// The kinds count what is on the canvas, with a selection too: the legend is the key to
@@ -151,6 +158,15 @@
 {/snippet}
 
 {#snippet tonenRest()}
+	{#if chain}
+		<!-- The bron the keten starts from, in ink; the others in the colour of their kind. -->
+		<p class="sleutel sleutel--keten">
+			<span class="sleutel__item"
+				><KindGlyph collection={chain.start ?? undefined} size={11} colour="var(--ink)" />Gekozen
+				bron</span
+			>
+		</p>
+	{/if}
 	{#if annexes > 0 || hiddenAnnexes}
 		<FilterOptie
 			label="Bijlagen"
@@ -321,6 +337,17 @@
 					>
 						{#snippet voor()}<LineSample relation={sample.relation} from={sample.from} />{/snippet}
 					</FilterOptie>
+					{#if chain?.labels && (l === 'structural' || l === 'citation')}
+						<!-- The articles on such a line, framed as the keten frames them. -->
+						<p class="sleutel sleutel--keten">
+							<span class="sleutel__item"
+								><span class="artikel" class:artikel--genoemd={l === 'citation'}>art.</span>{l ===
+								'structural'
+									? 'Grondslag'
+									: 'Noemt, of grondslag onbekend'}</span
+							>
+						</p>
+					{/if}
 				{/each}
 			</Sectie>
 		{/if}
@@ -364,6 +391,24 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
+	}
+	/* An article label of the keten in small: serif on a frame, dashed where it only names. */
+	.artikel {
+		flex: none;
+		padding: 0 var(--s-1);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		line-height: 1.4;
+		color: var(--ink-2);
+	}
+	.artikel--genoemd {
+		border-style: dashed;
+	}
+	/* On a phone the keten is a list that says its grondslag in words: no drawing to key. */
+	@media (max-width: 768px) {
+		.sleutel--keten {
+			display: none;
+		}
 	}
 	/* A row of Tonen, and beside its count the whole of a kind cut off: one line, the link the
 	   last word of "67 van 10.406" (a link cannot stand inside the option's button). */

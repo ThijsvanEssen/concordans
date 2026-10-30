@@ -98,7 +98,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		'onFilter' | 'lijstHref' | 'counting' | 'proposals'
+		'onFilter' | 'lijstHref' | 'counting' | 'proposals' | 'chain'
 	>;
 
 	let {
@@ -1372,8 +1372,8 @@
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
 		onToggleGroup={toggleGroup}
-		canvasCounts={externCounts ? { ...canvasCounts, ...externCounts } : canvasCounts}
-		{hasNodes}
+		canvasCounts={externCounts ?? canvasCounts}
+		hasNodes={hasNodes || !!externCounts}
 		{kindRowsShown}
 		{kindsSettled}
 		{withCurrentMember}

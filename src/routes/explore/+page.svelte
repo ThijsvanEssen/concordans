@@ -2416,6 +2416,9 @@
 											}
 										}
 									: null}
+								chain={view === 'keten'
+									? { start: chainStart?.collection ?? null, labels: !lineageStart }
+									: null}
 								proposals={view === 'omgeving'
 									? {
 											on: proposalsOn,
