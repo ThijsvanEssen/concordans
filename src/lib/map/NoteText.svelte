@@ -91,13 +91,10 @@
 	}
 	ul,
 	ol {
-		padding-left: 22px;
+		padding-left: var(--s-5);
 	}
 	ul {
 		list-style: disc;
-	}
-	li {
-		padding-left: 2px;
 	}
 	/* A citaat: the words of another, on the ground of quoted text. */
 	blockquote {
