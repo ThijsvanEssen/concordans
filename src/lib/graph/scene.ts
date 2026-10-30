@@ -10,7 +10,7 @@
 //   what hangs on her alone go to the strip Algemene wetten;
 // - one line per pair of units: the heaviest relation, with the number of edges and the row it
 //   ends in; no unit without a line to the chosen bronnen: the rest is counted below.
-import { rubriekOfSort, sortOf, type Sort } from '$lib/bron/rubrieken';
+import { rubriekOfSort, sortOf, type Rubriek, type Sort } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
 import { nodeId, RELATIONS, type Relation } from '$lib/vocabulary';
 import { isDrawn } from './collection-role';
@@ -98,17 +98,19 @@ type SceneInput = {
 	visibility?: Visibility;
 };
 
-const RUBRIEK_COLUMN = {
-	wetten: 'laws',
-	rechtspraak: 'rulings',
-	kamerstukken: 'papers',
-	parlement: 'makers',
-	regering: 'makers'
-} as const satisfies Record<string, Column>;
+/** The column of a rubriek: Wetten, Rechtspraak, Kamerstukken; Parlement and Regering make. */
+const columnOfRubriek = (rubriek: Rubriek): Column =>
+	rubriek === 'wetten'
+		? 'laws'
+		: rubriek === 'rechtspraak'
+			? 'rulings'
+			: rubriek === 'kamerstukken'
+				? 'papers'
+				: 'makers';
 
 /** The column of a soort; the activiteiten of the Kamer stand with the Kamerstukken. */
 const columnOfSort = (sort: Sort): Column =>
-	sort === 'activiteiten' ? 'papers' : RUBRIEK_COLUMN[rubriekOfSort(sort)];
+	sort === 'activiteiten' ? 'papers' : columnOfRubriek(rubriekOfSort(sort));
 
 const dayOf = (node: GraphNode | undefined): string | null =>
 	textOf(node?.raw?.props?.date)?.slice(0, 10) ?? null;
