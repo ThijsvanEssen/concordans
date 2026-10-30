@@ -91,7 +91,8 @@ export function createViewActions(
 					);
 				} else if (placement.place === 'line') {
 					addEdge(source.id, target.id, row.relation, {
-						status: row.proposed ? 'voorgesteld' : null
+						status: row.proposed ? 'voorgesteld' : null,
+						...(row.meta ? { meta: row.meta } : {})
 					});
 				}
 			}

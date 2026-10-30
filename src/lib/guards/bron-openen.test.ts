@@ -21,14 +21,14 @@ describe('opening a bron', () => {
 		// the bron. A row of Verbonden has no panel of actions (Thijs, 10 Oct): its title and the
 		// row itself open it in place, every kind of bron (principe 5, A255): a Kamerstuk on its
 		// core text (RijInhoud, as in Actueel and Bronnen), any other on its glance
-		// (RowGlance); the bron is one step further.
+		// (RowGlance), an article in the Leespaneel (read-row.ts); the bron is one step further.
 		const rows = BRONNEN.filter(({ text }) =>
 			/class="(row-title|row__title)"[\s\S]{0,240}(href=|\{href\})/.test(text)
 		);
 		expect(rows.length).toBeGreaterThan(0);
 		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
 		const verbonden = rows.find(({ path }) => path.endsWith('verbonden/VerbondenRow.svelte'))!;
-		expect(verbonden.text).toMatch(/terPlekke\(e, onToggle\)/);
+		expect(verbonden.text).toMatch(/terPlekke\(e, openRow\)/);
 		expect(verbonden.text).not.toContain('goto(');
 	});
 

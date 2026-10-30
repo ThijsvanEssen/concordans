@@ -61,6 +61,7 @@
 		momentOf,
 		type Period,
 		isContainerKind,
+		isDrawnGroup,
 		type ContainerGroup,
 		type ContainerKind
 	} from '$lib/graph/container-membership';
@@ -245,6 +246,31 @@
 	let drawn: ReadonlySet<string> = new Set();
 	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
 	let drawnBronnen = $state<DrawnBron[]>([]);
+	/**
+	 * The commissies and dossiers drawn as a ring or a point, the focus left out: each a bron of
+	 * its soort in Tonen, also a ring with no point of its own (B41).
+	 */
+	function containersDrawn(ids: readonly string[], focal: string) {
+		const shown = new Set(ids);
+		return [...containerGroups.values()].flatMap((group) => {
+			const bron = parseNodeId(group.id);
+			if (!bron || (group.kind !== 'committee' && group.kind !== 'dossier')) return [];
+			if (group.id.toLowerCase() === focal) return [];
+			if (!g.hasNode(group.id) && !isDrawnGroup(group, focusContainerId)) return [];
+			if (![...group.members].some((m) => shown.has(m))) return [];
+			const props = lookup.get(group.id)?.raw?.props ?? undefined;
+			return [
+				{
+					...bron,
+					id: group.id,
+					props,
+					filterGroup: filterGroupOf(bron.collection, bron.key, props ?? null),
+					holdsFocus: !!selection && group.members.has(selection.id),
+					point: g.hasNode(group.id)
+				}
+			];
+		});
+	}
 	function drawnBronnenOf(ids: readonly string[]): DrawnBron[] {
 		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
 		// A focus drawn as a hull (a wet, a dossier, a fractie) holds what it draws: one step.
@@ -268,6 +294,14 @@
 			if (c) for (const m of c.members) take(store.getNodeById(m) ?? lookup.get(m), true);
 			else take(lookup.get(id), !focus || g.areNeighbors(focus, id));
 		}
+		// A commissie or dossier drawn as a ring or a point is one bron of its soort (B41).
+		const counted = new Set(out.map((b) => b.id));
+		for (const { holdsFocus, point, ...ring } of containersDrawn(ids, focal))
+			if (!counted.has(ring.id))
+				out.push({
+					...ring,
+					direct: !focus || holdsFocus || (point && g.areNeighbors(focus, ring.id))
+				});
 		return out;
 	}
 
@@ -324,7 +358,10 @@
 			rechter: filter.rechter,
 			period: yearPeriod,
 			verborgen,
-			hiddenLines: filters.hiddenLines
+			hiddenLines: filters.hiddenLines,
+			rings: containersDrawn([...drawn], (selection?.id ?? '').toLowerCase()).filter(
+				(r) => !r.point
+			)
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
@@ -740,6 +777,11 @@
 		queueRedraw();
 	};
 
+	/** The whole of a collection around the focus, as the API counts it. */
+	const bucketTotal = (collection: Collection): number | null =>
+		(reach?.buckets ?? lightBuckets(verbonden.buckets)).find((b) => b.collection === collection)
+			?.total ?? null;
+
 	/** Draw what the store holds, through the clusters; only when that or they changed. */
 	function redraw() {
 		// A fractie, commissie or dossier as focus clusters too: its anchor is the point its
@@ -760,12 +802,13 @@
 			surroundings,
 			looseMax,
 			groups: containerGroups,
-			nodeOf: (id) => lookup.get(id) ?? rawNodes.find((r) => r.id === id)
+			nodeOf: (id) => lookup.get(id) ?? rawNodes.find((r) => r.id === id),
+			ledTotal: bucketTotal('dossiers')
 		};
 		const alle = (open: ReadonlySet<string>) => canvasClusters(input, open);
 		clusters = alle(expanded);
 		foldable = expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
-		const signature = clusters.map((c) => `${c.id}:${c.members.length}`).join(',');
+		const signature = clusters.map((c) => `${c.id}:${c.members.length}:${c.total}`).join(',');
 		if (!rawChanged && signature === drawnClusters) {
 			if (layoutStale) {
 				layoutStale = false;
@@ -832,8 +875,13 @@
 			drawClass: drawClassOf(c.collection),
 			label: clusterLabel(c),
 			size: CLUSTER_SIZE,
-			members: c.members.length
+			members: c.members.length,
+			total: c.total
 		}) as GraphNode;
+
+	/** The count in a cluster's circle: the whole it stands for, else its members. */
+	const clusterCount = (n: GraphNode & { total?: number; members?: number }) =>
+		formatCount(n.total ?? n.members ?? 0);
 
 	const clusterEdge = (c: Cluster, focus: string): GraphEdge => ({
 		id: `${c.id}~${focus}`,
@@ -889,8 +937,7 @@
 			.filter((r) => r.collection === c.collection)
 			.sort((a, b) => b.drawn - a.drawn)[0];
 		if (row) return row.total;
-		const buckets = reach?.buckets ?? lightBuckets(verbonden.buckets);
-		return buckets.find((b) => b.collection === c.collection)?.total ?? null;
+		return bucketTotal(c.collection);
 	};
 	function closeClusterCard(e: PointerEvent) {
 		if (clusterCard && !(e.target as HTMLElement | null)?.closest?.('.cluster-kaart'))
@@ -992,7 +1039,7 @@
 				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
 				kleur: colour,
 				image: isClusterId(n.id)
-					? clusterSprite(formatCount((n as GraphNode & { members?: number }).members ?? 0), colour)
+					? clusterSprite(clusterCount(n), colour)
 					: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
 				forceLabel: true
 			};

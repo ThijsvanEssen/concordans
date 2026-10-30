@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SvelteMap } from 'svelte/reactivity';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { FilterGroup } from '$lib/verbonden/filter';
@@ -35,14 +36,15 @@
 	import { sideScroll } from '$lib/actions/side-scroll';
 	import { HoverCard } from '$lib/actions/hover-card.svelte';
 	import BasisGlance from '$lib/network/BasisGlance.svelte';
+	import { plainClick } from '$lib/actions/klik';
+	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import {
 		isMention,
 		parentKind,
 		parentRelation,
 		type ChainNode,
-		type ChainLayer,
-		type ParentWay
+		type ChainLayer
 	} from '$lib/network/chain';
 	type LayerId = ChainLayer['id'];
 
@@ -173,7 +175,7 @@
 	const place = $derived.by(() => {
 		const m = new Map<string, { x: number; y: number }>();
 		const left = LEFT;
-		const right = Math.max(LEFT + 200, width - 24);
+		const end = Math.max(LEFT + 200, width - 24);
 		// A lone bron that a line passes over (the conclusie between the hof and the Hoge Raad) steps
 		// aside, so the line does not run through its name.
 		const rowOf = new Map<string, number>();
@@ -184,6 +186,8 @@
 				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 		shown.forEach((layer, i) => {
 			const n = layer.nodes.length;
+			// "N andere" stands a slot past the last: its room is kept.
+			const right = rest[layer.id] ? end - SLOT : end;
 			// Apart by a slot at most; a layer without a place above it is centred on the drawing.
 			const sep = Math.min((right - left) / n, SLOT);
 			const wish = layer.nodes.map((k, j) => {
@@ -222,7 +226,7 @@
 			// A name stays within the drawing, whichever side its node stands on.
 			wish.forEach((w, j) => {
 				const half = halfOf(w.k, n);
-				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, width - half));
+				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, right + 24 - half));
 				m.set(w.k.id, { x, y: tops[i] + DROP });
 			});
 		});
@@ -333,6 +337,21 @@
 			{ rails, boxes }
 		);
 		const byId = new Map(routed.map((r) => [r.id, r]));
+		// A label stands on the line's own piece, by the regulation it holds for: under the parent
+		// only where the line is the parent's one line down; never on a stem it shares (Thijs, 29
+		// Oct: "onder de Cbw lijkt het alsof het voor alles geldt"). Two at one regulation stack.
+		const out = new Map<string, number>();
+		for (const e of edges)
+			if (!byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`)?.beside)
+				out.set(e.o.id, (out.get(e.o.id) ?? 0) + 1);
+		const stacked = new Map<string, number>();
+		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
+			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y };
+			if (e.many && out.get(e.o.id) === 1) return { x: r.tip.x, y: r.tip.y + 17 };
+			const i = stacked.get(e.k.id) ?? 0;
+			if (e.o.cite) stacked.set(e.k.id, i + 1);
+			return { x: r.end.x, y: r.end.y - 20 - 24 * i };
+		};
 		return edges.flatMap((e) => {
 			const r = byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`);
 			if (!r) return [];
@@ -354,17 +373,17 @@
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
 					cite: e.o.cite ? citeText(e.o.cite) : null,
-					// What the label opens: the first of its articles, at the lid it names; the glance
-					// names them all.
+					// What the label opens: its articles in the Leespaneel, under each other; its link
+					// is the first, at the lid it names. The glance names them all.
 					citeLines: e.o.cite ? citeLines(e.o.cite) : [],
+					citeArticles: articles.map(({ key, at }) => ({ key, at })),
 					citeHref: articles[0]
 						? openHref({ collection: 'articles', key: articles[0].key }, { at: articles[0].at })
 						: null,
 					citeLaw: nameOf.get(e.o.id) ?? '',
 					mentioned: isMention(e.o),
-					// On the line close above the card of the child; with several laws above it,
-					// under each law instead, so the labels never stand on each other.
-					citeAt: e.many ? { x: r.tip.x, y: r.tip.y + 17 } : { x: r.end.x, y: r.end.y - 20 },
+					unknown: e.o.way === 'unknown',
+					citeAt: citeAtOf(e, r),
 					colour: toneColour(
 						edgeColorFor(e.relation, e.from),
 						edgeToneFor(e.relation, null, e.from)
@@ -410,15 +429,11 @@
 		) ||
 		null;
 	/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
-	const grondslagOf = (k: ChainNode): string[] => {
-		const said = (way: ParentWay) =>
-			k.parents.filter((p) => p.way === way && p.cite).map((p) => p.cite!.full);
-		const out: string[] = [];
-		if (said('delegates').length) out.push(`Grondslag ${said('delegates').join(', ')}`);
-		if (said('mentioned').length) out.push(`Noemt ${said('mentioned').join(', ')}`);
-		if (said('unknown').length) out.push(`Grondslag onbekend ${said('unknown').join(', ')}`);
-		return out;
-	};
+	const grondslagOf = (k: ChainNode): string[] => [
+		...(k.grondslag ? [`Grondslag ${k.grondslag}`] : []),
+		...(k.mentions ? [`Noemt ${k.mentions}`] : []),
+		...(k.unknown ? [`Grondslag onbekend ${k.unknown}`] : [])
+	];
 	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
 	const hover = new HoverCard(() => false);
 	let target = $state<{
@@ -438,13 +453,38 @@
 	const citeGlance = (l: (typeof lines)[number], anchor: Element) => {
 		target = {
 			anchor: anchor as HTMLElement,
-			kicker: l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag',
+			kicker: `${l.unknown ? 'Grondslag onbekend' : l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag'}, opent in het paneel`,
 			title: l.citeLaw,
 			lines: l.citeLines
 		};
 		hover.enter();
 	};
 	const card = $derived(hover.open ? target : null);
+	/** The width of a label as drawn, measured: its frame fits it in any font and zoom. */
+	const citeWidths = new SvelteMap<string, number>();
+	const measure = (el: SVGTextElement, text: string) => {
+		const take = (t: string) => {
+			const n = el.getComputedTextLength();
+			if (n > 0 && citeWidths.get(t) !== n) citeWidths.set(t, n);
+		};
+		take(text);
+		document.fonts?.ready.then(
+			() => take(text),
+			() => {}
+		);
+		return { update: take };
+	};
+	/** A label whose article the Leespaneel shows: landed, every label of it, not only the one clicked. */
+	const readKeys = $derived(new Set(readOpen().map((r) => r.key)));
+	const landed = (l: (typeof lines)[number]) => l.citeArticles.some((a) => readKeys.has(a.key));
+	/** A click on a label: its articles in the panel; the drawing does not move, the choice stays. */
+	function openCite(e: MouseEvent, l: (typeof lines)[number]) {
+		if (!l.citeArticles.length || !plainClick(e)) return;
+		e.preventDefault();
+		e.stopPropagation();
+		hover.close();
+		openInPanel(l.citeArticles);
+	}
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
 	let pan = $state<HTMLElement | null>(null);
 	let centredFor = '';
@@ -616,11 +656,16 @@
 			{/each}
 			<!-- The articles on a line, on a rim of paper over the lines. -->
 			{#each lines.filter((l) => l.cite) as l (l.id)}
-				{@const w = Math.ceil(l.cite!.length * 6.3) + 16}
+				{@const w = Math.ceil(citeWidths.get(l.cite!) ?? l.cite!.length * 6.3) + 16}
+				{@const on = landed(l)}
 				<a
 					class="cite"
 					href={l.citeHref ?? undefined}
+					class:is-open={on}
 					aria-label={l.citeLines.join(', ')}
+					aria-expanded={l.citeArticles.length ? on : undefined}
+					aria-controls={on ? PANEL_ID : undefined}
+					onclick={(e) => openCite(e, l)}
 					onpointerenter={(e) => {
 						hover.pointer(e.pointerType);
 						citeGlance(l, e.currentTarget);
@@ -641,7 +686,9 @@
 					/>
 					<!-- A finger's 44 px, unseen. -->
 					<rect class="hit" x={l.citeAt.x - w / 2} y={l.citeAt.y - 10} width={w} height="20" />
-					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle">{l.cite}</text>
+					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle" use:measure={l.cite!}
+						>{l.cite}</text
+					>
 				</a>
 			{/each}
 			{#each shown as layer, i (layer.id)}
@@ -865,7 +912,9 @@
 	.node:focus:not(:focus-visible) {
 		outline: none;
 	}
+	/* The edge that fades as it pans stays clear of the layer labels, pinned at 24 px. */
 	.pan {
+		--fade-width: var(--s-4);
 		overflow-x: auto;
 		scroll-padding-inline: var(--s-8);
 		scrollbar-width: none;
@@ -879,16 +928,14 @@
 		transform: translateX(calc(var(--sx, 0px) / var(--sc, 1)));
 	}
 	/* A label of a layer is a control label (sans 11 px 600, spaced), not a name. */
+	/* No halo: it stands on paper, and a stroke of paper bit into the letters beside it where the
+	   browser paints spaced text glyph by glyph (Thijs, 29 Oct: RICHTLIJN). */
 	.layer-label {
 		font-family: var(--font-ui);
 		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		fill: var(--ink-3);
-		paint-order: stroke;
-		stroke: var(--paper);
-		stroke-width: 6px;
-		stroke-linejoin: round;
 	}
 	.others {
 		cursor: pointer;
@@ -957,6 +1004,15 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
 		fill: var(--ink-2);
+	}
+	/* Landed: the Leespaneel shows its article; the wash and an ink rim. */
+	.cite.is-open .frame {
+		fill: var(--wassing);
+		stroke: var(--ink);
+		stroke-width: 2;
+	}
+	.cite.is-open text {
+		fill: var(--ink);
 	}
 	/* Outside the period of the strip: faint, not gone. */
 	.node.is-dim {

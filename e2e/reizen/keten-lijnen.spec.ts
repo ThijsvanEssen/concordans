@@ -21,6 +21,7 @@ const drawn = (page: Page) =>
 			const n = Math.ceil(p.getTotalLength() / 3);
 			return {
 				parent: p.dataset.parent ?? '',
+				dashed: p.hasAttribute('stroke-dasharray'),
 				d: p.getAttribute('d') ?? '',
 				pts: Array.from({ length: n + 1 }, (_, i) => {
 					const q = p.getPointAtLength((p.getTotalLength() * i) / n);
@@ -192,7 +193,10 @@ test('BW 7: a line to a layer further down runs no long U through the layer betw
 	await page.goto('/wetten/BWBR0005290?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
 	await expect(page.locator('.chain .name').first()).toBeVisible();
-	const { lines, names } = await drawn(page);
+	// The lines of what rests on the law; a dashed mention to a layer past a full one still runs
+	// through it (open, 30 Oct).
+	const { lines: all, names } = await drawn(page);
+	const lines = all.filter((l) => !l.dashed);
 	expect(lines.length).toBeGreaterThan(0);
 	// No line through a name.
 	const through = lines.flatMap((l) =>
@@ -252,20 +256,24 @@ test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn
 		'AMVB',
 		'MINISTERIËLE REGELING'
 	]);
-	await expect(page.locator('.chain .cite text', { hasText: '11 art. Cbw' })).toBeAttached();
+	await expect(
+		page.locator('.chain .cite text', { hasText: 'art. 3, 16 lid 1 en 7 +9' })
+	).toBeAttached();
 });
 
-test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articles, Enter opens the first at its lid', async ({
+test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articles, Enter opens them in the panel', async ({
 	page
 }) => {
 	await page.goto('/wetten/BWBR0052872?mode=netwerk&weergave=keten');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
 	await expect(page.locator('.chain .name').first()).toBeVisible();
 	const label = page.locator('.chain a.cite', { hasText: 'art. 19, 23 lid 1, 28 Cbb' }).first();
+	// The link stays the page of the first, for ⌘-click and a crawler.
 	await expect(label).toHaveAttribute('href', /focus=articles\/bwbr0052875_19$/);
-	// The glance names every article it holds, on hover.
+	// The glance names every article it holds, on hover, and says where it opens.
 	await label.hover({ force: true });
 	const tip = page.getByRole('tooltip');
+	await expect(tip).toContainText('opent in het paneel');
 	await expect(tip).toContainText('art. 19 Cbb');
 	await expect(tip).toContainText('art. 23 lid 1 Cbb');
 	await expect(tip).toContainText('art. 28 Cbb');
@@ -276,7 +284,18 @@ test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articl
 	await expect(label).toBeFocused();
 	await expect(label.locator('.frame')).toHaveCSS('outline-style', 'solid');
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/wetten\/BWBR0052875\/artikel\/19$/);
+	// The Leespaneel, its three articles under each other; the keten stays where it was.
+	await expect(page).toHaveURL(
+		/mode=netwerk.*lees=articles\/bwbr0052875_19,articles\/bwbr0052875_23\.lid-1,articles\/bwbr0052875_28/
+	);
+	const p = page.locator('#leespaneel');
+	await expect(p.getByRole('heading', { level: 2 })).toHaveText('Art. 19, 23 lid 1 en 28 Cbb');
+	const sprong = p.getByRole('navigation', { name: 'Ga naar artikel' });
+	await expect(sprong.getByRole('link')).toHaveText(['19', '23 lid 1', '28']);
+	await expect(p.getByRole('heading', { level: 3 })).toHaveCount(3);
+	await expect(label).toHaveClass(/is-open/);
+	await expect(label).toHaveAttribute('aria-expanded', 'true');
+	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
 });
 
 test('Cbw: a label that names one lid opens its article at that lid, marked', async ({ page }) => {
@@ -286,6 +305,8 @@ test('Cbw: a label that names one lid opens its article at that lid, marked', as
 	await expect(lid).toBeAttached();
 	await lid.focus();
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/artikel\/[^/]+#lid-\d+$/);
-	await expect(page.locator('.is-landed')).toHaveCount(1);
+	await expect(page).toHaveURL(/lees=articles\/[^,]+\.lid-\d+$/);
+	const p = page.locator('#leespaneel');
+	await expect(p.locator('[aria-current="location"]')).toHaveCount(1);
+	await expect(p.getByRole('heading', { level: 2 })).toBeFocused();
 });

@@ -35,12 +35,13 @@ const SORT_ROWS = [
 	['dossiers', 'kamerstukken', 'Dossiers', 'dossier'],
 	['stukken', 'kamerstukken', 'Stukken', 'stuk'],
 	['stemmingen', 'kamerstukken', 'Stemmingen', 'stemming'],
-	['activiteiten', 'kamerstukken', 'Activiteiten', 'activiteit'],
 	['toezeggingen', 'kamerstukken', 'Toezeggingen', 'toezegging'],
 	['kamerzaken', 'kamerstukken', 'Kamerzaken', 'Kamerzaak'],
 	['kamerleden', 'parlement', 'Kamerleden', 'kamerlid'],
 	['fracties', 'parlement', 'Fracties', 'fractie'],
 	['commissies', 'parlement', 'Commissies', 'commissie'],
+	// Work of the Kamer and its commissies: in their colour, apart from the stukken (B41).
+	['activiteiten', 'parlement', 'Activiteiten', 'activiteit'],
 	['kabinetten', 'regering', 'Kabinetten', 'kabinet'],
 	['ministeries', 'regering', 'Ministeries', 'ministerie'],
 	['bewindspersonen', 'regering', 'Bewindspersonen', 'bewindspersoon']
