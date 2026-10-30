@@ -14,7 +14,7 @@ import { HULL, NODE } from '$lib/graph/draw-spec';
 import { plural } from '$lib/text/words';
 import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection, type Relation } from '$lib/vocabulary';
-import type { TierCount } from './tiers';
+import { shapeOfTier, type TierCount, type Trap } from './tiers';
 import type { Row } from './rows';
 
 /** The most bronnen drawn: more and a group becomes one bron with its count (besluit 32). */
@@ -98,6 +98,8 @@ type Circle = SketchLine & {
 	ly: number;
 	collection: Collection | null;
 	hue: string | null;
+	/** A circle of one instantie: its trap, as the vlak in the strook of Uitspraken (null: Overige). */
+	trap?: Trap | null;
 	x: number;
 	y: number;
 	r: number;
@@ -197,7 +199,12 @@ export function divide(
 			return;
 		}
 		const own = g.parts?.length
-			? g.parts.map((d) => ({ id: `${g.id}:${d.tier ?? 'other'}`, label: d.label, count: d.count }))
+			? g.parts.map((d) => ({
+					id: `${g.id}:${d.tier ?? 'other'}`,
+					label: d.label,
+					count: d.count,
+					trap: shapeOfTier(d.tier).trap
+				}))
 			: [{ id: g.id, label: g.name, count: g.count }];
 		const line = g.rows.find((r) => r.relation);
 		for (const p of own)

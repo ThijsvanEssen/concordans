@@ -8,6 +8,7 @@
 	import { openHref, refId } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import type { GraphNode } from '$lib/graph/types';
@@ -132,7 +133,13 @@
 	{@const repeated = repeatedTitles(k.rows.slice(0, PREVIEW_ROWS))}
 	<section class="kind" data-kind={k.id}>
 		<h3 class="kind__head">
-			<span>{k.label}</span><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
+			<button
+				type="button"
+				class="kind__fold raakvlak"
+				aria-expanded={open.has(k.id)}
+				onclick={() => onOpen(k.id)}
+				><span>{k.label}</span><Caret open={open.has(k.id)} side /></button
+			><span class="kind__count">{telt ? formatCount(countOf(k)) : ''}</span>
 		</h3>
 		{#if k.id === 'judgments' && (tiers?.length || tiersPending)}
 			<TierBar parts={tiers} pending={tiersPending} counted={tiersCounted} />
@@ -146,77 +153,77 @@
 			/>
 		{/if}
 		{#if open.has(k.id)}{@render kindTools?.(k.id)}{/if}
-		<ul class="kind__rows" bind:this={lists[k.id]}>
-			{#each open.has(k.id) ? shownRows(k) : k.rows
-						.filter((r) => !isNested(r))
-						.slice(0, PREVIEW_ROWS) as row (rowKey(row))}
-				{#if opened === rowKey(row)}
-					<li class="kind__open" class:kind__onder={isNested(row)}>
-						<ul class="rows">
-							<VerbondenRow
-								{row}
-								{selection}
-								inPlace={inPlace(k, row)}
-								sister={repeated.has(row.title) ? caseNumberOf(row) : null}
-								open
-								onToggle={() => toggle(row)}
-								{onProposedText}
-								{onAddToNetwerk}
-								{inNetwerk}
-							/>
-						</ul>
-					</li>
+		{#if open.has(k.id)}
+			<ul class="kind__rows" bind:this={lists[k.id]}>
+				{#each shownRows(k) as row (rowKey(row))}
+					{#if opened === rowKey(row)}
+						<li class="kind__open" class:kind__onder={isNested(row)}>
+							<ul class="rows">
+								<VerbondenRow
+									{row}
+									{selection}
+									inPlace={inPlace(k, row)}
+									sister={repeated.has(row.title) ? caseNumberOf(row) : null}
+									open
+									onToggle={() => toggle(row)}
+									{onProposedText}
+									{onAddToNetwerk}
+									{inNetwerk}
+								/>
+							</ul>
+						</li>
+					{:else}
+						{@const shape = tierShapeOf(row)}
+						{@const line = shortLine(row)}
+						{@const read = readOfRow(row, inPlace(k, row))}
+						{@const landed = !!read && isRead(read)}
+						<li class="kind__row" class:kind__onder={isNested(row)} data-read={landed || undefined}>
+							<div class="kind__kop">
+								<span class="kind__vlak"
+									>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
+											vorm={row.stuksoort === 'wetsvoorstellen'
+												? 'voorstel'
+												: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
+											size={11}
+										/>{/if}</span
+								>
+								<a
+									class="kind__title"
+									title={typeof row.props?.instrument_citation_title === 'string' &&
+									row.ref.collection === 'articles'
+										? row.props.instrument_citation_title
+										: undefined}
+									href={openHref(row.ref, { at: ankerVanRij(row) })}
+									aria-expanded={landed}
+									aria-controls={landed ? PANEL_ID : undefined}
+									onclick={(e) => terPlekke(e, () => openRow(k, row))}
+									>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
+											row
+										)}{/if}</a
+								>
+							</div>
+							{#if row.uitkomst}
+								<!-- How the judgment ended, or that the data does not say: never left out. -->
+								<span class="kind__line kind__line--vlak"
+									><span
+										class="kind__uitkomst kind__uitkomst--{row.uitkomst.vastgesteld
+											? 'bekend'
+											: 'onbekend'}"
+										title={row.uitkomst.title ?? undefined}>{row.uitkomst.text}</span
+									>{#if line}, {line}{/if}</span
+								>
+							{:else if line}<span class="kind__line kind__line--vlak">{line}</span>{/if}
+						</li>
+					{/if}
 				{:else}
-					{@const shape = tierShapeOf(row)}
-					{@const line = shortLine(row)}
-					{@const read = readOfRow(row, inPlace(k, row))}
-					{@const landed = !!read && isRead(read)}
-					<li class="kind__row" class:kind__onder={isNested(row)} data-read={landed || undefined}>
-						<div class="kind__kop">
-							<span class="kind__vlak"
-								>{#if shape}<TierSwatch {shape} />{:else}<KindGlyph
-										vorm={row.stuksoort === 'wetsvoorstellen'
-											? 'voorstel'
-											: vormVanBron(row.ref.collection, row.props, row.ref.key, row.relation)}
-										size={11}
-									/>{/if}</span
-							>
-							<a
-								class="kind__title"
-								title={typeof row.props?.instrument_citation_title === 'string' &&
-								row.ref.collection === 'articles'
-									? row.props.instrument_citation_title
-									: undefined}
-								href={openHref(row.ref, { at: ankerVanRij(row) })}
-								aria-expanded={landed}
-								aria-controls={landed ? PANEL_ID : undefined}
-								onclick={(e) => terPlekke(e, () => openRow(k, row))}
-								>{row.title}{#if repeated.has(row.title) && caseNumberOf(row)}, {caseNumberOf(
-										row
-									)}{/if}</a
-							>
-						</div>
-						{#if row.uitkomst}
-							<!-- How the judgment ended, or that the data does not say: never left out. -->
-							<span class="kind__line kind__line--vlak"
-								><span
-									class="kind__uitkomst kind__uitkomst--{row.uitkomst.vastgesteld
-										? 'bekend'
-										: 'onbekend'}"
-									title={row.uitkomst.title ?? undefined}>{row.uitkomst.text}</span
-								>{#if line}, {line}{/if}</span
-							>
-						{:else if line}<span class="kind__line kind__line--vlak">{line}</span>{/if}
-					</li>
-				{/if}
-			{:else}
-				{#each { length: k.failed ? 0 : Math.min(PREVIEW_ROWS, k.count) } as _, i (i)}
-					<li class="kind__row kind__row--pending" aria-hidden="true">
-						<span class="pending"></span><span class="pending pending--short"></span>
-					</li>
+					{#each { length: k.failed ? 0 : Math.min(PREVIEW_ROWS, k.count) } as _, i (i)}
+						<li class="kind__row kind__row--pending" aria-hidden="true">
+							<span class="pending"></span><span class="pending pending--short"></span>
+						</li>
+					{/each}
 				{/each}
-			{/each}
-		</ul>
+			</ul>
+		{/if}
 		<!-- Opened, the rows come a page at a time: the next page one click further, with how
 		     many still wait, never the whole at once (T11). -->
 		{#if more(k)}
@@ -232,17 +239,6 @@
 					loaded={shown}
 					list={lists[k.id]}
 					onclick={() => next(k)}
-				/>
-			</p>
-		{/if}
-		<!-- Alle N is the way to the rest: with nothing more than the rows above it opens nothing. -->
-		{#if k.count > PREVIEW_ROWS}
-			<p class="kind__all">
-				<AlleN
-					aantal={countOf(k)}
-					noun={k.noun}
-					open={open.has(k.id)}
-					onclick={() => onOpen(k.id)}
 				/>
 			</p>
 		{/if}
@@ -271,6 +267,19 @@
 		display: flex;
 		gap: var(--s-4);
 		align-items: baseline;
+	}
+	/* The heading is the button that opens the soort: its own letter, no frame; the count beside. */
+	.kind__fold {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
 	}
 	.kind__count {
 		font-weight: 400;

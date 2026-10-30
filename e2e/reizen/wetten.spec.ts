@@ -64,9 +64,11 @@ test('a law reads whole, with its overview, a date to read it on and what is bas
 	// The regulations issued under the law are a soort of their own, before the laws it cites.
 	await expect(verbonden.getByRole('heading', { name: 'Uitvoeringsregelingen' })).toBeVisible();
 	await expect(verbonden.getByRole('heading', { name: /^Wetten/ })).toBeVisible();
-	await verbonden.getByRole('button', { name: /^Alle [\d.]+ uitvoeringsregelingen/ }).click();
-	// Opened in place in the one view (A208e): Minder folds it again.
-	await expect(verbonden.getByRole('button', { name: 'Minder' })).toBeVisible();
+	const kop = verbonden.getByRole('button', { name: 'Uitvoeringsregelingen' });
+	await expect(kop).toHaveAttribute('aria-expanded', 'false');
+	await kop.click();
+	// Opened in place in the one view (A208e): the heading folds it again.
+	await expect(kop).toHaveAttribute('aria-expanded', 'true');
 });
 
 test('an article: its leden, the law above it and the next article', async ({ page }) => {

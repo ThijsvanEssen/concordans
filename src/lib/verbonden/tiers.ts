@@ -10,7 +10,7 @@ import { formatCount } from '$lib/text/getal';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 
 /** The step of rubriek-rechtspraak an instantie stands in (Design System, VerbondenGroep). */
-type Trap = 1 | 2 | 3 | 4;
+export type Trap = 1 | 2 | 3 | 4;
 
 type CourtGroup = {
 	/** The tiers the API counts as this instantie: the Parket stands with the Hoge Raad, as the filter Rechter has it. */

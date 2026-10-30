@@ -56,9 +56,14 @@ describe('KindSummary', () => {
 		}
 	});
 
-	it('offers Alle N from the fourth on', () => {
-		toon(4);
-		expect(screen.getByRole('button', { name: 'Alle 4 wetten en artikelen' })).toBeTruthy();
+	it('folds a soort under its heading: no Alle N, the heading opens it', async () => {
+		const onOpen = vi.fn();
+		render(KindSummary, { kinds: [soort(4)], selection: selectie, onOpen });
+		expect(screen.queryByRole('button', { name: /^Alle / })).toBeNull();
+		const knop = screen.getByRole('button', { name: 'Wetten' });
+		expect(knop.getAttribute('aria-expanded')).toBe('false');
+		await fireEvent.click(knop);
+		expect(onOpen).toHaveBeenCalledWith('laws');
 	});
 
 	it('opened, counts the rows it lists once every page is in (Alle N pages up to N)', () => {
