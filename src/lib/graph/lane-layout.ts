@@ -10,7 +10,7 @@ import { axisY, timeAxis, type TimeAxis } from './time-axis';
 
 export const GUTTER = 76;
 const HULL_GAP = 56;
-const ITEM_GAP = 30;
+export const ITEM_GAP = 30;
 /** The edge of a column's panel around what it holds. */
 export const PANEL = 14;
 
@@ -39,7 +39,7 @@ const MAX_LINES = 3;
 
 export type Box = { x: number; y: number; width: number; height: number };
 
-type UnitBox = Box & {
+export type UnitBox = Box & {
 	/** The mark: a node's glyph, a group's disc, a hull's rectangle. */
 	mark: Box;
 	/** The name beside the mark, or a hull's pill above it. */
