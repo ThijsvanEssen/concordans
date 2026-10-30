@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chain, chainTally } from './chain';
+import { chain, chainTally, isOutside, whyFaint } from './chain';
 import { citeLines, citeText } from './cite-label';
 
 const law = (id: string, title: string) => ({
@@ -582,5 +582,30 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 	it('leaves them out while Noemt is off', () => {
 		const k = chain(gw, delegated, null, { mentions: false, refers });
 		expect(k.layers.find((l) => l.id === 'law')!.nodes.map((n) => n.name)).toEqual([gw.name]);
+	});
+});
+
+// A bron drawn faint says why in its glance (B53): vervallen, or dated outside the period.
+describe('why a bron of the keten is drawn otherwise', () => {
+	const period = { van: '2020-01-01', tot: '2024-12-31' };
+	it('says since when a regulation is no longer in force', () => {
+		expect(whyFaint({ since: '2010-01-01', expired: '2019-07-01' }, null)).toEqual([
+			'Vervallen sinds 1 juli 2019'
+		]);
+	});
+	it('says a bron dated outside the period is so, with its date', () => {
+		expect(whyFaint({ since: '2026-01-01', expired: null }, period)).toEqual([
+			'Buiten de periode, in werking sinds 1 januari 2026'
+		]);
+		expect(isOutside({ since: '2019-12-31' }, period)).toBe(true);
+	});
+	it('says nothing of a bron in force within the period, or without a date or a period', () => {
+		expect(whyFaint({ since: '2022-05-01', expired: null }, period)).toEqual([]);
+		expect(whyFaint({ since: null, expired: null }, period)).toEqual([]);
+		expect(whyFaint({ since: '2026-01-01' }, null)).toEqual([]);
+		expect(whyFaint({ since: '2026-01-01' }, { van: null, tot: null })).toEqual([]);
+	});
+	it('says both where both hold', () => {
+		expect(whyFaint({ since: '2010-01-01', expired: '2019-07-01' }, period)).toHaveLength(2);
 	});
 });
