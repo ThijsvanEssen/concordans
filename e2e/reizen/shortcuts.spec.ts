@@ -67,7 +67,7 @@ test('after L the focus is on something visible', async ({ page }) => {
 		.poll(() => page.evaluate(() => document.activeElement?.tagName ?? 'BODY'))
 		.not.toBe('BODY');
 	await page.keyboard.press('Alt+KeyL');
-	await expect(page).toHaveURL(/mode=netwerk|mode=graph/);
+	await expect(page).toHaveURL(/mode=netwerk/);
 	await expect
 		.poll(() => page.evaluate(() => document.activeElement?.tagName ?? 'BODY'))
 		.not.toBe('BODY');

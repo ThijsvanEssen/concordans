@@ -5,6 +5,8 @@ set -euo pipefail
 npm run types:api
 git diff --exit-code -- src/lib/api/generated
 npx eslint --cache .
+# The simplicity budget (eenvoud-budget.json): nothing rose, and what fell is written down.
+scripts/eenvoud.sh
 git ls-files -z -- . ':!.claude/launch.json' | xargs -0 npx prettier --check --ignore-unknown
 # The heavy gates (vitest, svelte-check, build, the browser suite) one run at a time on this machine: the
 # agents of several worktrees otherwise run them side by side and the machine swaps. A run waits for the

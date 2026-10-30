@@ -37,7 +37,7 @@ src/lib/
 
 ## Names
 
-The API's names are the code's names: collections, relations, fields. Dutch appears in user-facing text and in values a source owns (document kinds, phase names, the status `voorgesteld`). `src/lib/vocabulary.ts` types the collections and relations by the API's schema, with `BRON_LABEL`, the one list of what each kind is called. `src/lib/graph/types.ts` maps them to what the canvas shows. A table typed `Record<Relation, ...>` or `Record<Collection, ...>` fails the check when the API gains a name and the table does not. `KindGlyph` is the one glyph per kind.
+The API's names are the code's names: collections, relations, fields. Dutch appears in user-facing text and in values a source owns (document kinds, phase names, the status `voorgesteld`). `src/lib/vocabulary.ts` types the collections and relations by the API's schema, with `BRON_LABEL`, the one list of what each kind is called, and `RELATIONS`, the one table of what each relation is in the interface (lijnsoort, line weight, layer); `line-kind.ts` and `graph/types.ts` read it, and a new relation is one row there. A table typed `Record<Relation, ...>` or `Record<Collection, ...>` fails the check when the API gains a name and the table does not. `KindGlyph` is the one glyph per kind.
 
 ## Views of the Verkenner
 

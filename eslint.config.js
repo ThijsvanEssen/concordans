@@ -7,8 +7,25 @@ import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import ts from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
+import budget from './eenvoud-budget.json' with { type: 'json' };
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
+
+// The limits of a function (complexity as ruff C901 in lawgraph, and length), with the ceiling of
+// each file that was over them when the limits came (eenvoud-budget.json): a function there may
+// not grow, and scripts/eenvoud.sh lowers the ceiling as it shrinks. Tests are exempt.
+const functionLimits = ({ complexity, 'max-lines-per-function': max }) => ({
+	complexity: ['error', complexity],
+	'max-lines-per-function': ['error', { max, skipBlankLines: true, skipComments: true }]
+});
+/** A path as a glob of itself: a route's (main) or [slug] is no pattern. */
+const literal = (path) => path.replace(/[[\]()*?{}!+@]/g, '\\$&');
+const ceilings = ['complexity', 'max-lines-per-function'].flatMap((rule) =>
+	Object.entries(budget[rule]).map(([file, n]) => ({
+		files: [literal(file)],
+		rules: { [rule]: functionLimits({ ...budget.limits, [rule]: n })[rule] }
+	}))
+);
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
@@ -33,8 +50,14 @@ export default defineConfig(
 			// The app has no `kit.paths.base`, so plain absolute hrefs are correct. resolve() only matters with a base path.
 			'svelte/no-navigation-without-resolve': 'off',
 			// Flags every Map/Set/Date, including local scratch values. Reactive collections here are copy-on-write inside $state.
-			'svelte/prefer-svelte-reactivity': 'off'
+			'svelte/prefer-svelte-reactivity': 'off',
+			...functionLimits(budget.limits)
 		}
+	},
+	...ceilings,
+	{
+		files: ['**/*.test.ts', 'e2e/**'],
+		rules: { complexity: 'off', 'max-lines-per-function': 'off' }
 	},
 	{
 		files: ['**/*.ts', '**/*.svelte', '**/*.svelte.js'],

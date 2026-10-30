@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RELATIONS } from '$lib/vocabulary';
+import { RELATION_NAMES } from '$lib/vocabulary';
 import { bothPhrase } from './both-words';
 
 describe('the phrase under a kenmerk', () => {
@@ -14,7 +14,7 @@ describe('the phrase under a kenmerk', () => {
 		expect(bothPhrase('REFERS_TO', 'documents', false, 3)).toBe('noemt alle drie');
 	});
 	it('has a phrase for every relation, never "door door" or "door beide"', () => {
-		for (const r of RELATIONS)
+		for (const r of RELATION_NAMES)
 			for (const fromBron of [true, false])
 				for (const row of ['cabinets', 'documents', 'committees'] as const)
 					for (const n of [2, 3, 5]) {

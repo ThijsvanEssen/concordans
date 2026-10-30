@@ -1,6 +1,7 @@
 // The names the API defines for nodes and edges (lawgraph docs/data-model.md), typed by the
 // generated schema: a collection or relation the API adds or drops fails the typecheck here.
 import type { Schema } from '$lib/api/types';
+import type { LineKind } from '$lib/graph/line-kind';
 
 /** The collection of a node: the first half of its id. */
 export type Collection = Schema<'BaseNodeDTO'>['collection'];
@@ -29,43 +30,56 @@ export const NODE_TYPES = {
 	ministries: 'ministry'
 } as const satisfies Record<Collection, string>;
 
-/** Every relation once, in the order of the API's catalogue; the record makes the type complete. */
-const RELATION_SET: Record<Relation, true> = {
-	PART_OF: true,
-	VERSION_OF: true,
-	ESTABLISHES: true,
-	AMENDS: true,
-	INTRODUCES: true,
-	REPEALS: true,
-	COMMENCES: true,
-	TRANSPOSED_TO: true,
-	BASED_ON: true,
-	IMPLEMENTS: true,
-	LEGISLATED_IN: true,
-	PUBLISHED_IN: true,
-	REFERS_TO: true,
-	EXPLAINS: true,
-	APPEAL_OF: true,
-	CONTINUES: true,
-	REFERRED_BY: true,
-	ADVISES_ON: true,
-	ANSWERS: true,
-	SAME_AS: true,
-	SCOPED_BY: true,
-	ABOUT: true,
-	LED_BY: true,
-	MADE_IN: true,
-	MEMBER_OF: true,
-	SERVED_IN: true,
-	AUTHORED: true,
-	RELATED_TO: true,
-	REVISES: true,
-	ACCOMPANIES: true,
-	SECOND_READING_OF: true,
-	VOTED: true
+/** The layer of a relation: the structure of the law, a change of it, or a reading of it. */
+export type RelationLayer = 'structural' | 'mutation' | 'semantic';
+
+/** What the interface makes of a relation: its lijnsoort, the weight of its line and its layer. */
+interface RelationSpec {
+	lineKind: LineKind;
+	weight: number;
+	layer: RelationLayer;
+}
+
+/**
+ * Every relation once, in the order of the API's catalogue: the one table of what a relation is
+ * in the interface. The record makes it complete; the line, its width and its layer read it.
+ */
+export const RELATIONS: Record<Relation, RelationSpec> = {
+	PART_OF: { lineKind: 'part', weight: 0.6, layer: 'structural' },
+	VERSION_OF: { lineKind: 'part', weight: 0.6, layer: 'structural' },
+	ESTABLISHES: { lineKind: 'change', weight: 1.0, layer: 'mutation' },
+	AMENDS: { lineKind: 'change', weight: 1.0, layer: 'mutation' },
+	INTRODUCES: { lineKind: 'change', weight: 1.0, layer: 'mutation' },
+	REPEALS: { lineKind: 'change', weight: 1.0, layer: 'mutation' },
+	COMMENCES: { lineKind: 'change', weight: 1.0, layer: 'mutation' },
+	TRANSPOSED_TO: { lineKind: 'structural', weight: 0.8, layer: 'mutation' },
+	BASED_ON: { lineKind: 'structural', weight: 0.8, layer: 'structural' },
+	IMPLEMENTS: { lineKind: 'structural', weight: 0.8, layer: 'structural' },
+	LEGISLATED_IN: { lineKind: 'structural', weight: 0.7, layer: 'structural' },
+	PUBLISHED_IN: { lineKind: 'citation', weight: 0.6, layer: 'structural' },
+	REFERS_TO: { lineKind: 'citation', weight: 0.7, layer: 'structural' },
+	EXPLAINS: { lineKind: 'explanation', weight: 0.8, layer: 'mutation' },
+	APPEAL_OF: { lineKind: 'citation', weight: 0.6, layer: 'semantic' },
+	CONTINUES: { lineKind: 'citation', weight: 0.6, layer: 'semantic' },
+	REFERRED_BY: { lineKind: 'citation', weight: 0.6, layer: 'semantic' },
+	ADVISES_ON: { lineKind: 'citation', weight: 0.6, layer: 'semantic' },
+	ANSWERS: { lineKind: 'citation', weight: 0.6, layer: 'semantic' },
+	SAME_AS: { lineKind: 'citation', weight: 0.6, layer: 'structural' },
+	SCOPED_BY: { lineKind: 'structural', weight: 0.6, layer: 'structural' },
+	ABOUT: { lineKind: 'part', weight: 0.6, layer: 'structural' },
+	LED_BY: { lineKind: 'led', weight: 0.6, layer: 'structural' },
+	MADE_IN: { lineKind: 'citation', weight: 0.7, layer: 'structural' },
+	MEMBER_OF: { lineKind: 'member', weight: 0.6, layer: 'structural' },
+	SERVED_IN: { lineKind: 'member', weight: 0.6, layer: 'structural' },
+	AUTHORED: { lineKind: 'submitter', weight: 0.8, layer: 'mutation' },
+	RELATED_TO: { lineKind: 'citation', weight: 0.6, layer: 'semantic' },
+	REVISES: { lineKind: 'change', weight: 1.0, layer: 'mutation' },
+	ACCOMPANIES: { lineKind: 'part', weight: 0.6, layer: 'structural' },
+	SECOND_READING_OF: { lineKind: 'structural', weight: 0.8, layer: 'mutation' },
+	VOTED: { lineKind: 'member', weight: 0.6, layer: 'semantic' }
 };
 
-export const RELATIONS = Object.keys(RELATION_SET) as readonly Relation[];
+export const RELATION_NAMES = Object.keys(RELATIONS) as readonly Relation[];
 
 /** The changes of the law, in the order a line names them: enacts, amends, inserts, repeals. */
 export const CHANGE_RELATIONS = [
@@ -121,7 +135,7 @@ export const isCollection = (value: string | null | undefined): value is Collect
 	value != null && Object.hasOwn(NODE_TYPES, value);
 
 export const isRelation = (value: string | null | undefined): value is Relation =>
-	value != null && Object.hasOwn(RELATION_SET, value);
+	value != null && Object.hasOwn(RELATIONS, value);
 
 /** A node id: `collection/key`. */
 type NodeId = `${Collection}/${string}`;
