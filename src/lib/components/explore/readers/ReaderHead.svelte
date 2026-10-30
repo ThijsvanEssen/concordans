@@ -374,15 +374,18 @@
 		gap: var(--s-2);
 		margin: 1px 0 var(--s-1) var(--s-4);
 	}
-	/* The strip of facts with the tools at its last line's right. */
+	/* The strip of facts with the tools at its last line's right. The strip keeps its cells on
+	   one line where the column holds them: where the tools do not fit beside it, they go to a
+	   line of their own under it, at the right (Thijs, 30 Oct: Aangehaald in the row). */
 	.reader-facts {
 		align-self: stretch;
 		display: flex;
+		flex-wrap: wrap;
 		align-items: flex-end;
-		gap: var(--s-4);
+		gap: var(--s-2) var(--s-4);
 	}
 	.reader-facts__strook {
-		flex: 1;
+		flex: 1 1 auto;
 		min-width: 0;
 	}
 	.reader-toolbox {
