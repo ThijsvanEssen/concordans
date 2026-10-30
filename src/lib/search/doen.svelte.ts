@@ -6,7 +6,7 @@ import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelt
 import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
 
-export class DoenLijst {
+export class PaletteActions {
 	/** The line as typed, the word included; the search gets what is left (searchTextOf). */
 	line = $state('');
 

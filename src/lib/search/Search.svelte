@@ -25,7 +25,7 @@
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
 	import DoenRows from './DoenRows.svelte';
-	import { DoenLijst } from './doen.svelte';
+	import { PaletteActions } from './doen.svelte';
 	import { searchTextOf } from '$lib/keys/commands';
 	import type { Target } from '$lib/keys/doen.svelte';
 	import type { Snippet } from 'svelte';
@@ -94,7 +94,7 @@
 	});
 	// In ⌘K the line may start with a word that does something (commands.ts): the search looks
 	// for what follows it. Not in a field that picks (Bron toevoegen): there a line is a bron.
-	const doen = new DoenLijst(
+	const doen = new PaletteActions(
 		() => overlay && !onSelect,
 		() => target
 	);

@@ -1974,7 +1974,7 @@
 		verbandWith,
 		toggle: selectedNode ? readAction : null,
 		toggleView,
-		toevoegen: () => ((verbandAfterAdd = true), (toevoegenOpen = true)),
+		openAdd: () => ((verbandAfterAdd = true), (toevoegenOpen = true)),
 		depth: view === 'verband' ? pairSteps : depth,
 		steps: netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3],
 		setDepth,

@@ -28,7 +28,7 @@ export type Werkplek = {
 	toggle: 'read' | 'network' | null;
 	toggleView: () => void;
 	/** Bron toevoegen open, for a second bron that Verband then shows. */
-	toevoegen: () => void;
+	openAdd: () => void;
 	/** Aantal stappen as it stands, and the steps offered (0 only with chosen bronnen). */
 	depth: number;
 	steps: readonly number[];
@@ -235,7 +235,7 @@ export function keyView(w: Werkplek, to: ViewId): boolean {
 	if (!w.hasBron || (!w.graph && to !== 'keten') || (to === 'keten' && !w.chainPossible))
 		return false;
 	// One bron: Bron toevoegen for the second, and Verband once it is there (Thijs, 30 Oct).
-	if (to === 'verband' && !w.verbandPossible) w.toevoegen();
+	if (to === 'verband' && !w.verbandPossible) w.openAdd();
 	else w.toView(to);
 	return true;
 }
