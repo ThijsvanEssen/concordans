@@ -8,6 +8,8 @@
 	import HelpDialog from '$lib/keys/HelpDialog.svelte';
 	import { onKeydown } from '$lib/keys/dispatch.svelte';
 	import { page } from '$app/state';
+	import { beforeNavigate } from '$app/navigation';
+	import { leave } from '$lib/keys/recent.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { READ_PARAM, parseRead } from '$lib/reading/param';
 
@@ -27,6 +29,12 @@
 		}
 	}
 	provideSearchOpener(openSearch);
+	// Recent in ⌘K: the place left, by the name its tab had.
+	// On the first page `from` can come without a url (eerste-verf.test.ts).
+	beforeNavigate(({ from }) => {
+		const url = from?.url;
+		if (url) leave(url, document.title);
+	});
 
 	// The Leespaneel, in a chunk of its own: asked when the address names an article to read.
 	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Leespaneel');

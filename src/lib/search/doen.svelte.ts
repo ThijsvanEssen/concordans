@@ -3,6 +3,8 @@
 // past the last goes on into the results, ↑ above the first result comes back.
 import { parseCommand, type Parsed } from '$lib/keys/commands';
 import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelte';
+import { recentRows } from '$lib/keys/recent.svelte';
+import { page } from '$app/state';
 
 export class DoenLijst {
 	/** The line as typed, the word included; the search gets what is left (searchTextOf). */
@@ -25,7 +27,11 @@ export class DoenLijst {
 	readonly parsed = $derived<Parsed | null>(this.#on() ? parseCommand(this.line) : null);
 	readonly empty = $derived(this.#on() && !this.line.trim());
 	readonly rows = $derived<DoRow[]>(
-		this.parsed ? rowsFor(this.parsed, this.#target()) : this.empty ? hereRows() : []
+		this.parsed
+			? rowsFor(this.parsed, this.#target())
+			: this.empty
+				? [...hereRows(), ...recentRows(page.url)]
+				: []
 	);
 
 	/** The row the keys are on; null where they are in the results. */

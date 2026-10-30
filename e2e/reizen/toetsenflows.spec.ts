@@ -51,6 +51,22 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await expect(page).not.toHaveURL(/weergave=/);
 		await expect(canvas(page)).toBeFocused();
 	},
+	// Nothing typed: what can be done here, the first that changes something chosen; and Recent.
+	Hier: async (page) => {
+		await inNetwerk(page);
+		const { rows, chosen } = await palette(page, '');
+		await expect(rows.filter({ hasText: 'Weergave Omgeving' })).toContainText('nu');
+		await expect(chosen).toContainText('Weergave Keten');
+		await page.keyboard.press('ArrowDown');
+		await expect(chosen).toContainText('Aantal stappen');
+		await page.keyboard.press('ArrowUp');
+		await page.keyboard.press('Enter');
+		await expect(page).toHaveURL(/weergave=keten/);
+		await doe(page, 'netwerk awb', 'Netwerk van');
+		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);
+		const recent = await palette(page, '', 'Recent');
+		await expect(recent.rows.first()).toContainText('Netwerk');
+	},
 	// Enter on a label of the keten reads its article in the Leespaneel, not on a page of its own.
 	W7: async (page) => {
 		await page.goto(`${GRONDWET}&weergave=keten`);

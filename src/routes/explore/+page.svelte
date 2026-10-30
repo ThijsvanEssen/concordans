@@ -1971,7 +1971,9 @@
 					chainPossible: chainPossible || (mode !== 'graph' && withChain(selectedNode)),
 					verbandPossible,
 					toView,
-					verbandWith
+					verbandWith,
+					toggle: selectedNode ? readAction : null,
+					toggleView
 				}))
 			),
 			answer('toggle-view', toggleView),

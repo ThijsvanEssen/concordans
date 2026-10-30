@@ -20,6 +20,9 @@ export type Werkplek = {
 	toView: (w: ViewId) => void;
 	/** `target` joins the netwerk, and Verband shows what it shares with the rest. */
 	verbandWith: (target: Target) => void;
+	/** Where Alt L leads from here: the text, the netwerk, or nowhere (a netwerk without a bron). */
+	toggle: 'read' | 'network' | null;
+	toggleView: () => void;
 };
 
 const LABEL: Record<ViewId, string> = {
@@ -62,9 +65,32 @@ function viewRows(w: Werkplek, p: Parsed, target: Target | null): DoRow[] {
 	];
 }
 
+/** Before anything is typed: the weergaven with the one that stands, and the way of Alt L. */
+function hereRows(w: Werkplek): DoRow[] {
+	if (!w.hasBron) return [];
+	const rows = w.graph
+		? [
+				viewRow(w, 'omgeving', null),
+				viewRow(w, 'verband', w.verbandPossible ? null : NEEDS_TWO),
+				viewRow(w, 'keten', w.chainPossible ? null : 'Keten is er bij een wet of een artikel')
+			]
+		: w.chainPossible
+			? [viewRow(w, 'keten', null)]
+			: [];
+	if (w.toggle)
+		rows.push({
+			id: 'toggle',
+			label: w.toggle === 'read' ? 'Naar de tekst' : 'Naar het netwerk',
+			key: 'toggle-view',
+			run: w.toggleView
+		});
+	return rows;
+}
+
 /** The doer of the werkplek, reading its state as it is when asked. */
 export function werkplekDoer(state: () => Werkplek): Doer {
 	return {
-		rows: (p, target) => viewRows(state(), p, target)
+		rows: (p, target) => viewRows(state(), p, target),
+		here: () => hereRows(state())
 	};
 }
