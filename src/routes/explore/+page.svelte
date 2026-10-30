@@ -599,8 +599,7 @@
 	/** The room the keten measured, and the bronnen of a layer that fit in it (160 px each, 144 for the labels). */
 	let chainRoom = $state(0);
 	const chainFit = $derived(Math.max(0, Math.floor((chainRoom - 144) / 176)));
-	// The drawing pans sideways past its width; what shows without panning follows the room
-	// the keten measured, at least 12. A phone's list stays short.
+	// What shows without panning follows the room measured, at least 12; a phone's list stays short.
 	const chainOf = (mentions: boolean, max = telefoon ? 4 : Math.max(12, chainFit)) => {
 		const bwb = chainLaw;
 		if (!bwb || chainData?.bwb !== bwb) return null;
@@ -644,8 +643,7 @@
 				: null
 			: chainOf(chainMentions)
 	);
-	// Relatie counts every line of the keten, those under an "Alle N" too: the same on a phone
-	// as on a screen of any width.
+	// Relatie counts every line of the keten, under an "Alle N" too: the same on any width.
 	const chainAll = $derived(lineageStart ? chainModel : chainOf(true, Number.POSITIVE_INFINITY));
 	const chainGap = $derived.by(() => {
 		if (view !== 'keten' || chainLoading) return null;
