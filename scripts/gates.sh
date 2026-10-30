@@ -4,10 +4,23 @@
 set -euo pipefail
 npm run types:api
 git diff --exit-code -- src/lib/api/generated
-npx eslint --cache .
-# The simplicity budget (eenvoud-budget.json): nothing rose, and what fell is written down.
-scripts/eenvoud.sh
-git ls-files -z -- . ':!.claude/launch.json' | xargs -0 npx prettier --check --ignore-unknown
+# The light gates side by side: ESLint, the simplicity budget (eenvoud-budget.json: nothing rose,
+# and what fell is written down) and Prettier. Each writes its own log, shown when it ends; one
+# that fails fails the run.
+light=$(mktemp -d)
+npx eslint --cache . >"$light/eslint" 2>&1 &
+eslint=$!
+scripts/eenvoud.sh >"$light/eenvoud" 2>&1 &
+eenvoud=$!
+git ls-files -z -- . ':!.claude/launch.json' | xargs -0 npx prettier --check --ignore-unknown >"$light/prettier" 2>&1 &
+prettier=$!
+failed=0
+for gate in eslint eenvoud prettier; do
+  if ! wait "${!gate}"; then failed=1; echo "gates: $gate failed"; fi
+  cat "$light/$gate"
+done
+rm -rf "$light"
+[ "$failed" -eq 0 ]
 # The heavy gates (vitest, svelte-check, build, the browser suite) one run at a time on this machine: the
 # agents of several worktrees otherwise run them side by side and the machine swaps. A run waits for the
 # lock; a lock whose holder is gone is taken over.
