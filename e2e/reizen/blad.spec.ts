@@ -70,11 +70,16 @@ test('Filter of Bladeren: a Blad of its own on a phone, with Toon at its foot', 
 	);
 });
 
-test('Filter of Verbonden: a Blad with the search field in focus, and Toon at its foot', async ({
+test('Filter of the table of Verbonden: a Blad with the search field in focus, and Toon at its foot', async ({
 	page
 }) => {
 	await page.goto(ARTICLE);
 	await naarVerbonden(page);
+	// The head of Verbonden has no Filter any more (Thijs, 30 Oct); the table has it.
+	await page
+		.getByRole('link', { name: / in een tabel$/ })
+		.first()
+		.click();
 	const knop = page.getByRole('button', { name: 'Filter', exact: true });
 	await knop.click();
 	const blad = page.getByRole('dialog', { name: 'Filter' });
