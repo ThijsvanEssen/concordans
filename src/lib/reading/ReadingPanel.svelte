@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The Leespaneel (Design System, Tekst en lezen): the article a reference names, read beside
+	// The Zijpaneel (Design System, Tekst en lezen): the article a reference names, read beside
 	// the text it stands in. A Blad that is not modal: at the right under the top bar (from 1800 px
 	// in the margin, in the page's flow), on a phone from below; the page beside it stays the page.
 	// Its head names the article and its law and has Open artikel (the page, one step further);
@@ -74,7 +74,7 @@
 			const texts = await Promise.all(reads.map((r) => textOf(r.key)));
 			return texts.some(Boolean) ? texts : null;
 		},
-		'Leespaneel'
+		'Zijpaneel'
 	);
 	const texts = $derived(articles.state.status === 'ready' ? (articles.state.data ?? []) : []);
 	const loaded = $derived(stacked ? null : (texts[0] ?? null));

@@ -35,7 +35,7 @@ const article = {
 	}
 } as ArticleTextData;
 
-describe('the article of the Leespaneel', () => {
+describe('the article of the Zijpaneel', () => {
 	it('marks the cited lid with all it holds, and an onderdeel alone', () => {
 		expect(isCited(block('lid-1'), 'lid-1')).toBe(true);
 		expect(isCited(block('lid-1-onder-a', ['lid-1']), 'lid-1')).toBe(true);

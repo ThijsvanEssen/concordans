@@ -1,4 +1,4 @@
-// The Leespaneel (B40): an article a reference names, read beside the text it stands in. A click
+// The Zijpaneel (B40): an article a reference names, read beside the text it stands in. A click
 // opens it and puts it in the address (`?lees=`), Back closes it and the focus goes back to the
 // reference; a shared link opens it and × takes only the parameter away. The page stays usable
 // beside it; ⌘-click and Open artikel are the page. A law's articles in the head stand in it

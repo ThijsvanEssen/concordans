@@ -8,6 +8,11 @@
 	import HelpDialog from '$lib/keys/HelpDialog.svelte';
 	import { onKeydown } from '$lib/keys/dispatch.svelte';
 	import { page } from '$app/state';
+	import { beforeNavigate } from '$app/navigation';
+	import { leave } from '$lib/keys/recent.svelte';
+	import { offer } from '$lib/keys/doen.svelte';
+	import { overalDoer } from '$lib/keys/doen-overal';
+	import { onMount } from 'svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { READ_PARAM, parseRead } from '$lib/reading/param';
 
@@ -27,9 +32,17 @@
 		}
 	}
 	provideSearchOpener(openSearch);
+	// ⌘K on every page: `keten awb`, `netwerk 36764` (doen-overal.ts).
+	onMount(() => offer(overalDoer));
+	// Recent in ⌘K: the place left, by the name its tab had.
+	// On the first page `from` can come without a url (eerste-verf.test.ts).
+	beforeNavigate(({ from }) => {
+		const url = from?.url;
+		if (url) leave(url, document.title);
+	});
 
-	// The Leespaneel, in a chunk of its own: asked when the address names an article to read.
-	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Leespaneel');
+	// The Zijpaneel, in a chunk of its own: asked when the address names an article to read.
+	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Zijpaneel');
 	const reads = $derived(parseRead(page.url.searchParams.get(READ_PARAM)));
 	$effect(() => {
 		if (reads.length) readingPanel.load();
@@ -90,7 +103,7 @@
 		/* Under the tab bar of a phone. */
 		padding-bottom: var(--tabbar-h);
 	}
-	/* From 1800 px the Leespaneel stands in the flow: the page gives it its width at the right. */
+	/* From 1800 px the Zijpaneel stands in the flow: the page gives it its width at the right. */
 	@media (min-width: 1800px) {
 		.app-shell.has-panel .app-shell__content {
 			padding-right: var(--paneel-breed);
