@@ -76,20 +76,21 @@ export function parseCommand(line: string): Parsed | null {
 	const hits = byWord(norm(first));
 	// A prefix two words share ("ver…") calls neither: the search answers.
 	if (hits.length !== 1) return null;
-	const command = hits[0];
-	const rest = more.join(' ').trim();
+	return withObject(hits[0], first, more.join(' ').trim(), only);
+}
+
+/** The steps or the soort after the word; null where they are words of a search after all. */
+function withObject(command: Command, first: string, rest: string, only: boolean): Parsed | null {
 	const parsed: Parsed = { command, rest, only };
 	if (command.arg === 'stappen') {
 		// `s2` carries its number, `stappen 2` has it after the word.
 		const n = Number(/\d$/.exec(first)?.[0] ?? rest);
 		if (rest || /\d$/.test(first)) parsed.steps = Number.isInteger(n) ? n : NaN;
 	}
-	if (command.arg === 'soort') {
-		const soort = soortOf(rest);
-		if (soort) parsed.soort = soort;
-	}
+	const soort = command.arg === 'soort' ? soortOf(rest) : null;
+	if (soort) parsed.soort = soort;
 	// "met spoed", "stappen naar": words of a search after all.
-	if (rest && !parsed.soort && command.arg === 'soort') return null;
+	if (rest && !soort && command.arg === 'soort') return null;
 	if (rest && Number.isNaN(parsed.steps)) return null;
 	return parsed;
 }

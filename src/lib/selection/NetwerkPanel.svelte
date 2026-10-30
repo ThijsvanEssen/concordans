@@ -37,7 +37,8 @@
 		onClear,
 		telefoon = false,
 		searching = $bindable(false),
-		searchingWhy = null
+		searchingWhy = null,
+		onSearchClose
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -59,6 +60,7 @@
 		searching?: boolean;
 		/** Why the page opened it (Alt V with one bron). */
 		searchingWhy?: string | null;
+		onSearchClose?: () => void;
 	} = $props();
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
@@ -177,7 +179,10 @@
 		chosen={entries.map((e) => e.id)}
 		why={searchingWhy}
 		{onSelect}
-		onClose={() => (searching = false)}
+		onClose={() => {
+			searching = false;
+			onSearchClose?.();
+		}}
 	/>
 {/if}
 

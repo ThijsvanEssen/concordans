@@ -12,9 +12,8 @@
 	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { answer } from '$lib/keys/dispatch.svelte';
-	import { offer } from '$lib/keys/doen.svelte';
-	import { stepsWord, werkplekDoer, type ViewId } from './doen';
-	import type { Target } from '$lib/keys/doen.svelte';
+	import { offer, type Target } from '$lib/keys/doen.svelte';
+	import { focusView, keyView, stepBy, werkplekDoer, type ViewId, type Werkplek } from './doen';
 	import { announce } from '$lib/bevestig/bevestig.svelte';
 	import { scrollerOf } from '$lib/bron/landing';
 	import { get } from 'svelte/store';
@@ -1650,7 +1649,12 @@
 		}
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
 		if (!netwerkActive) composer.keepCanvas();
-		setNetwerk(withAdded(netwerk, id));
+		const verband = verbandAfterAdd && toevoegenOpen && view !== 'verband';
+		verbandAfterAdd = false;
+		setNetwerk(
+			withAdded(netwerk, id),
+			verband ? { [VIEW_PARAM]: 'verband', [MARK_PARAM]: null } : {}
+		);
 		meldNetwerk(`${naam ?? 'De bron'} toegevoegd aan het netwerk.`, () =>
 			setNetwerk(withRemoved(netwerk, id))
 		);
@@ -1959,119 +1963,76 @@
 		}
 	}
 
-	// Alt L, Alt [ and Alt ] (the register, lib/keys): answered while this page
-	// stands; each answers false where it has nothing to do, so the key goes on.
+	/** The werkplek as ⌘K and its keys see it (doen.ts), read when asked. */
+	const werkplek = (): Werkplek => ({
+		graph: mode === 'graph',
+		view,
+		hasBron: !!(focus || pad || netwerkActive),
+		chainPossible: chainPossible || (mode !== 'graph' && withChain(selectedNode)),
+		verbandPossible,
+		toView,
+		verbandWith,
+		toggle: selectedNode ? readAction : null,
+		toggleView,
+		toevoegen: () => ((verbandAfterAdd = true), (toevoegenOpen = true)),
+		depth: view === 'verband' ? pairSteps : depth,
+		steps: netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3],
+		setDepth,
+		filter,
+		linesOff: new Set(filtersOff.lines),
+		setFilters: (f, lines) =>
+			setUrl({
+				...(f ? filterParams(f) : {}),
+				...(lines ? { [OFF]: offValue({ ...filtersOff, lines }) } : {})
+			}),
+		say: (text) => announce(text),
+		chosen: netwerkActive
+			? composer.entries.map((e) => ({
+					id: e.id,
+					label: e.node ? chipNaam(e, e.node).label : e.label
+				}))
+			: [],
+		add: (t) => {
+			const id = focusOf(t.ref);
+			if (id) addIdToNetwerk(id, t.label || undefined);
+		},
+		remove: (id, label) => {
+			setNetwerk(withRemoved(netwerk, id));
+			meldNetwerk(`${label} weggehaald uit het netwerk.`, () => setNetwerk(withAdded(netwerk, id)));
+		},
+		clear: wisAlles
+	});
+	/** Alt V with one bron opened Bron toevoegen: the bron added there shows Verband (Thijs, 30 Oct). */
+	let verbandAfterAdd = $state(false);
+
+	// Alt L, Alt [ and Alt ], and the keys of the weergaven (the register, lib/keys): answered
+	// while this page stands; each answers false where it has nothing to do, so the key goes on.
 	onMount(() => {
 		const stop = [
-			offer(
-				werkplekDoer(() => ({
-					graph: mode === 'graph',
-					view,
-					hasBron: !!(focus || pad || netwerkActive),
-					chainPossible: chainPossible || (mode !== 'graph' && withChain(selectedNode)),
-					verbandPossible,
-					toView,
-					verbandWith,
-					toggle: selectedNode ? readAction : null,
-					toggleView,
-					depth: stepsNow,
-					steps: stepsOffered,
-					setDepth,
-					filter,
-					linesOff: new Set(filtersOff.lines),
-					setFilters: (f, lines) =>
-						setUrl({
-							...(f ? filterParams(f) : {}),
-							...(lines ? { [OFF]: offValue({ ...filtersOff, lines }) } : {})
-						}),
-					say: (text) => announce(text),
-					chosen: netwerkActive
-						? composer.entries.map((e) => ({
-								id: e.id,
-								label: e.node ? chipNaam(e, e.node).label : e.label
-							}))
-						: [],
-					add: (t) => {
-						const id = focusOf(t.ref);
-						if (id) addIdToNetwerk(id, t.label || undefined);
-					},
-					remove: (id, label) => {
-						setNetwerk(withRemoved(netwerk, id));
-						meldNetwerk(`${label} weggehaald uit het netwerk.`, () =>
-							setNetwerk(withAdded(netwerk, id))
-						);
-					},
-					clear: wisAlles
-				}))
-			),
+			offer(werkplekDoer(werkplek)),
 			answer('toggle-view', toggleView),
-			answer('view-omgeving', () => keyView('omgeving')),
-			answer('view-keten', () => keyView('keten')),
-			answer('view-verband', () => keyView('verband')),
-			answer('steps-less', () => stepBy(-1)),
-			answer('steps-more', () => stepBy(1)),
+			answer('view-omgeving', () => keyView(werkplek(), 'omgeving')),
+			answer('view-keten', () => keyView(werkplek(), 'keten')),
+			answer('view-verband', () => keyView(werkplek(), 'verband')),
+			answer('steps-less', () => stepBy(werkplek(), -1)),
+			answer('steps-more', () => stepBy(werkplek(), 1)),
 			answer('article-prev', () => stepArticle(-1)),
 			answer('article-next', () => stepArticle(1))
 		];
 		return () => stop.forEach((f) => f());
 	});
 
-	// ── ⌘K: the weergaven by their word (doen.ts) ────────────────────────────
 	/** Weergave `w`, from the reader too; said in words, the focus on what it shows. */
 	function toView(w: ViewId) {
 		const node = selectedNode;
 		if (mode === 'graph') chooseView(w);
 		else if (node && !node.id.startsWith('synth:')) {
 			const href = werkplekHref(refOf(node.collection, node.key, node.raw?.props));
-			const to = withParams(new URL(href, page.url), {
-				[VIEW_PARAM]: w === 'omgeving' ? null : w
-			});
+			const to = withParams(new URL(href, page.url), { [VIEW_PARAM]: w === 'omgeving' ? null : w });
 			navigateDone(keepRead(to), { step: true }).catch((err) => report('Wisselen', err));
 		} else return;
 		announce(`Weergave ${VIEWS.find((v) => v.waarde === w)?.label}`);
 		focusView(w);
-	}
-
-	/** Aantal stappen as it stands, and the steps offered (as NetworkChoice offers them). */
-	const stepsNow = $derived(view === 'verband' ? pairSteps : depth);
-	const stepsOffered = $derived(netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3]);
-
-	// Alt O, Alt K, Alt V (register): the weergave; false where there is none to show here.
-	function keyView(w: ViewId): boolean {
-		if (!(focus || pad || netwerkActive)) return false;
-		if (mode !== 'graph' && w !== 'keten') return false;
-		if (w === 'keten' && !(chainPossible || (mode !== 'graph' && withChain(selectedNode))))
-			return false;
-		if (w === 'verband' && !verbandPossible) {
-			// One bron: Bron toevoegen for the second, and Verband once it is there (Thijs, 30 Oct).
-			verbandAfterAdd = true;
-			toevoegenOpen = true;
-			return true;
-		}
-		toView(w);
-		return true;
-	}
-	let verbandAfterAdd = $state(false);
-	$effect(() => {
-		if (!toevoegenOpen) verbandAfterAdd = false;
-		else if (verbandAfterAdd && verbandPossible) {
-			verbandAfterAdd = false;
-			untrack(() => chooseView('verband'));
-		}
-	});
-
-	// Alt − and Alt =: one step less or more, how far the netwerk reaches, in every weergave
-	// with steps (Thijs, 30 Oct: one meaning).
-	function stepBy(d: 1 | -1): boolean {
-		if (mode !== 'graph' || view === 'keten' || !(focus || pad || netwerkActive)) return false;
-		const next = stepsNow + d;
-		if (!stepsOffered.includes(next)) {
-			announce(d < 0 ? 'Minder stappen kan niet' : 'Meer stappen kan niet');
-			return true;
-		}
-		setDepth(next);
-		announce(stepsWord(next));
-		return true;
 	}
 
 	/** Verband with a bron typed in ⌘K: it joins the netwerk, in one step with the weergave. */
@@ -2082,27 +2043,6 @@
 		setNetwerk(withAdded(netwerk, id), { [VIEW_PARAM]: 'verband', [MARK_PARAM]: null });
 		announce(`Verband met ${target.label || 'de bron'}`);
 		focusView('verband');
-	}
-
-	/** The first stop of the weergave once it is drawn: the canvas, a link of the keten, a row. */
-	function focusView(w: ViewId) {
-		const sel = {
-			omgeving: '.graph-canvas-wrap',
-			keten: '.drawing [tabindex="0"]',
-			verband: '.shared [tabindex="0"], .shared a, .shared button'
-		}[w];
-		// A weergave of its own loads first (Keten laden…): looked for a while, unless the reader
-		// went on elsewhere in the meantime.
-		let tries = 0;
-		const place = () => {
-			const at = document.activeElement;
-			if (at && at !== document.body && at.id !== 'main-content') return;
-			const el = document.querySelector<HTMLElement>(sel);
-			if (el) el.focus({ preventScroll: true });
-			else if (tries++ < 150) setTimeout(place, 100);
-			else document.getElementById('main-content')?.focus({ preventScroll: true });
-		};
-		setTimeout(place, 50);
 	}
 
 	/** The reader's place, kept while the netwerk is up: the bron and how far its text was scrolled. */
@@ -2596,6 +2536,7 @@
 									{#if panelChunk.component}{@const PanelC = panelChunk.component}<PanelC
 											bind:searching={toevoegenOpen}
 											searchingWhy={verbandAfterAdd ? 'Verband vraagt een tweede bron' : null}
+											onSearchClose={() => (verbandAfterAdd = false)}
 											entries={netwerkActive
 												? composer.entries.map((e) =>
 														e.node

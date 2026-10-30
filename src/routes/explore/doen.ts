@@ -27,6 +27,8 @@ export type Werkplek = {
 	/** Where Alt L leads from here: the text, the netwerk, or nowhere (a netwerk without a bron). */
 	toggle: 'read' | 'network' | null;
 	toggleView: () => void;
+	/** Bron toevoegen open, for a second bron that Verband then shows. */
+	toevoegen: () => void;
 	/** Aantal stappen as it stands, and the steps offered (0 only with chosen bronnen). */
 	depth: number;
 	steps: readonly number[];
@@ -85,7 +87,7 @@ function viewRows(w: Werkplek, p: Parsed, target: Target | null): DoRow[] {
 	];
 }
 
-export const stepsWord = (n: number) => (n === 0 ? 'Alleen gekozen' : count(n, 'stap', 'stappen'));
+const stepsWord = (n: number) => (n === 0 ? 'Alleen gekozen' : count(n, 'stap', 'stappen'));
 
 function stepRows(w: Werkplek, p: Parsed): DoRow[] {
 	if (!w.graph) return [];
@@ -224,6 +226,54 @@ function hereRows(w: Werkplek): DoRow[] {
 			run: w.toggleView
 		});
 	return rows;
+}
+
+// ── The keys of the weergaven (register.ts) ─────────────────────────────────
+
+/** Alt O, Alt K, Alt V: the weergave; false where there is none to show here. */
+export function keyView(w: Werkplek, to: ViewId): boolean {
+	if (!w.hasBron || (!w.graph && to !== 'keten') || (to === 'keten' && !w.chainPossible))
+		return false;
+	// One bron: Bron toevoegen for the second, and Verband once it is there (Thijs, 30 Oct).
+	if (to === 'verband' && !w.verbandPossible) w.toevoegen();
+	else w.toView(to);
+	return true;
+}
+
+/** Alt − and Alt =: one step less or more, how far the netwerk reaches (Thijs, 30 Oct). */
+export function stepBy(w: Werkplek, d: 1 | -1): boolean {
+	if (!w.graph || w.view === 'keten' || !w.hasBron) return false;
+	const next = w.depth + d;
+	if (!w.steps.includes(next)) w.say(d < 0 ? 'Minder stappen kan niet' : 'Meer stappen kan niet');
+	else {
+		w.setDepth(next);
+		w.say(stepsWord(next));
+	}
+	return true;
+}
+
+const FIRST_STOP: Record<ViewId, string> = {
+	omgeving: '.graph-canvas-wrap',
+	keten: '.drawing [tabindex="0"]',
+	verband: '.shared [tabindex="0"], .shared a, .shared button'
+};
+
+/**
+ * The first stop of the weergave once it is drawn: the canvas, a link of the keten, a row. A
+ * weergave of its own loads first (Keten laden…): looked for a while, unless the reader went on
+ * elsewhere in the meantime.
+ */
+export function focusView(w: ViewId) {
+	let tries = 0;
+	const place = () => {
+		const at = document.activeElement;
+		if (at && at !== document.body && at.id !== 'main-content') return;
+		const el = document.querySelector<HTMLElement>(FIRST_STOP[w]);
+		if (el) el.focus({ preventScroll: true });
+		else if (tries++ < 150) setTimeout(place, 100);
+		else document.getElementById('main-content')?.focus({ preventScroll: true });
+	};
+	setTimeout(place, 50);
 }
 
 /** The doer of the werkplek, reading its state as it is when asked. */
