@@ -56,6 +56,7 @@ test('a lid is kept in a chosen bundel from its menu, with its anchor', async ({
 
 	await page.goto('/bundels');
 	await page.getByRole('link', { name: 'Onrechtmatige daad' }).click();
+	await page.getByRole('link', { name: 'Open bundel' }).click();
 	const lid = page.getByRole('link', { name: 'art. 6:162 lid 2 BW' });
 	await expect(lid).toBeVisible();
 	await expect(lid).toHaveAttribute('href', /#lid-2$/);
