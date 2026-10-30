@@ -1,7 +1,8 @@
 // The link of a map: the map in the fragment (/bundels#m=…), as JSON deflated into
 // base64url. A fragment never leaves the browser, so its items and notes reach no server,
 // no /render and no log; only who has the link reads it.
-import type { Annotation, SharedMap, GroepNotities, Map, MapItem } from './map';
+import type { Annotation, SharedMap, GroepNotities, Map, MapItem, References } from './map';
+import { referencesIn } from './references';
 import { readAnnotations, readItem } from './map';
 
 /** The fragment's key: `#m=…`. */
@@ -14,13 +15,14 @@ export const BROKEN = 'broken';
 export const isOldLink = (p: URLSearchParams) =>
 	[...p.keys()].some((k) => /^map(?:naam|notitie|groepen|volgorde)?$/.test(k));
 
-/** What the fragment holds: the map's name, order, note, notes per group, items and
- *  aantekeningen. */
+/** What the fragment holds: the map's name, order, note, notes per group, the addresses of
+ *  their verwijzingen, items and aantekeningen. */
 type Payload = {
 	naam: string;
 	volgorde?: 'eigen';
 	notitie?: string;
 	groepNotities?: GroepNotities;
+	references?: References;
 	items: MapItem[];
 	aantekeningen?: Annotation[];
 };
@@ -28,7 +30,7 @@ type Payload = {
 /** What of a bundel a link or a file holds. */
 type Shared = Pick<
 	Map,
-	'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities' | 'aantekeningen'
+	'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities' | 'references' | 'aantekeningen'
 >;
 
 async function pipe(bytes: Uint8Array, stream: CompressionStream | DecompressionStream) {
@@ -59,6 +61,24 @@ function groupNotes(notes: unknown, items: readonly MapItem[]): GroepNotities {
 	);
 }
 
+/** The addresses that are text, of the verwijzingen the notes still hold. */
+function addresses(value: unknown, notes: readonly (string | null | undefined)[]): References {
+	if (!value || typeof value !== 'object') return {};
+	const used = new Set(notes.flatMap((n) => (n ? referencesIn(n).map((r) => r.key) : [])));
+	return Object.fromEntries(
+		Object.entries(value).filter(
+			([k, v]) => used.has(k) && typeof v === 'string' && v.startsWith('/')
+		)
+	);
+}
+
+/** Every note of a map: its own, its groups', its items'. */
+const notesOf = (m: Pick<Shared, 'notitie' | 'groepNotities' | 'items'>) => [
+	m.notitie,
+	...Object.values(m.groepNotities ?? {}),
+	...m.items.map((i) => i.notitie)
+];
+
 /** What a link or a file holds of a map: its name, order, note, notes per group, items and
  *  aantekeningen. */
 export function payloadOf(m: Shared): Payload {
@@ -67,6 +87,8 @@ export function payloadOf(m: Shared): Payload {
 	if (m.notitie?.trim()) payload.notitie = m.notitie.trim();
 	const notes = groupNotes(m.groepNotities, m.items);
 	if (Object.keys(notes).length) payload.groepNotities = notes;
+	const kept = addresses(m.references, notesOf({ ...m, groepNotities: notes }));
+	if (Object.keys(kept).length) payload.references = kept;
 	if (m.aantekeningen?.length) payload.aantekeningen = [...m.aantekeningen];
 	return payload;
 }
@@ -81,12 +103,16 @@ export function readPayload(value: unknown): SharedMap | null {
 	if (!payload || typeof payload !== 'object' || !Array.isArray(payload.items)) return null;
 	const items = payload.items.flatMap((v) => readItem(v) ?? []);
 	const a = readAnnotations(payload.aantekeningen, items);
+	const notitie =
+		typeof payload.notitie === 'string' && payload.notitie.trim() ? payload.notitie : null;
+	const groepNotities = groupNotes(payload.groepNotities, items);
 	return {
 		naam: typeof payload.naam === 'string' && payload.naam.trim() ? payload.naam.trim() : null,
 		items,
 		volgorde: payload.volgorde === 'eigen' ? 'eigen' : 'groep',
-		notitie: typeof payload.notitie === 'string' && payload.notitie.trim() ? payload.notitie : null,
-		groepNotities: groupNotes(payload.groepNotities, items),
+		notitie,
+		groepNotities,
+		references: addresses(payload.references, notesOf({ notitie, groepNotities, items })),
 		aantekeningen: a.aantekeningen,
 		skipped: payload.items.length - items.length + a.rest.length
 	};

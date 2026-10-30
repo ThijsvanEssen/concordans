@@ -10,6 +10,7 @@ import { queryHref } from '$lib/util/address';
 import { buildBronHref } from '$lib/bron/href';
 import { padOfFocus } from '$lib/bron/address';
 import { csvText } from '$lib/text/csv';
+import { plainText } from './markup';
 import { anchorLabel } from '$lib/text/anchor';
 import { isDay, langeDatum } from '$lib/text/datum';
 
@@ -70,6 +71,9 @@ export type Map = {
 	notitie?: string | null;
 	/** The reader's note per group (a law, a dossier, a judgment), by the group's key. */
 	groepNotities?: GroepNotities;
+	/** The addresses of the verwijzingen in its notes the API gave, by their key
+	 *  (`artikel 98 sr`): a shared bundel asks nothing (./references). */
+	references?: References;
 	/** The day of the visit before to its own page: what is new came after it. */
 	since?: string | null;
 	/** The day of the last visit to its own page. */
@@ -111,6 +115,9 @@ export type Annotation = {
 /** Notes per group, by the group's key. */
 export type GroepNotities = Record<string, string>;
 
+/** Addresses by a verwijzing's key. */
+export type References = Record<string, string>;
+
 /** A map from a link: its name, items, order and note as the link gives them. */
 export type SharedMap = {
 	naam: string | null;
@@ -118,6 +125,7 @@ export type SharedMap = {
 	volgorde: Map['volgorde'];
 	notitie: string | null;
 	groepNotities: GroepNotities;
+	references?: References;
 	aantekeningen: Annotation[];
 	/** Items and aantekeningen of the link in an older or broken form, left out: the page
 	 *  names how many. */
@@ -644,12 +652,16 @@ const attributionOf = (i: MapItem, v: Attribution) => {
 	return ` (${address ? `${address}, ` : ''}geraadpleegd ${langeDatum(v.consulted)})`;
 };
 
+/** A note under its citation: as plain text, each line indented. */
+const noteUnder = (note: string | null | undefined) =>
+	note?.trim() ? `\n   ${plainText(note.trim()).replaceAll('\n', '\n   ')}` : '';
+
 const citation = (i: MapItem, n: number, v?: Attribution) =>
-	`${n}. ${i.voluit || i.kort}${v ? attributionOf(i, v) : ''}${i.notitie ? `\n   ${i.notitie}` : ''}`;
+	`${n}. ${i.voluit || i.kort}${v ? attributionOf(i, v) : ''}${noteUnder(i.notitie)}`;
 
 /**
  * The map as a list of citations for a memo: numbered, the full form where kept, a note as
- * an indented line under its citation; per group, or in the reader's own order. The map's
+ * indented lines under its citation, each note as plain text (its opmaak in lines); per group, or in the reader's own order. The map's
  * own note goes above, as its first paragraph; a group's note under the group's name. With
  * `attribution` each citation ends in its link and the day it was consulted.
  */
@@ -660,7 +672,7 @@ export function citaten(
 	groepNotities?: GroepNotities | null,
 	attribution?: Attribution
 ): string {
-	const head = notitie?.trim() ? `${notitie.trim()}\n\n` : '';
+	const head = notitie?.trim() ? `${plainText(notitie.trim())}\n\n` : '';
 	if (volgorde === 'eigen')
 		return head + items.map((i, n) => citation(i, n + 1, attribution)).join('\n');
 	let n = 0;
@@ -671,7 +683,7 @@ export function citaten(
 				const bij = groepNotities?.[sleutel]?.trim();
 				return [
 					groep,
-					...(bij ? [bij] : []),
+					...(bij ? [plainText(bij)] : []),
 					...items.map((i) => citation(i, ++n, attribution))
 				].join('\n');
 			})
@@ -710,7 +722,7 @@ export function csv(
 			kindLabel(i),
 			i.voluit || i.kort,
 			(i.at && (anchorLabel(i.at, i.id) ?? placeInCitation(i.kort))) || '',
-			i.notitie ?? '',
+			plainText(i.notitie ?? ''),
 			adres(i),
 			...(consulted ? [consulted] : [])
 		])

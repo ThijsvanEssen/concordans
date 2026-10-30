@@ -42,6 +42,8 @@
 	import NewMark from '$lib/components/ui/NewMark.svelte';
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
 	import { Fresh } from './fresh.svelte';
+	import { linesHtml, noteHtml } from './markup';
+	import { referencePath, type NoteReference } from './references';
 
 	let {
 		m = null,
@@ -57,13 +59,16 @@
 	} = $props();
 
 	/** What is shown: the bundel's own or the shared one. */
-	const b = $derived<Pick<Map, 'naam' | 'items' | 'volgorde' | 'notitie' | 'groepNotities'>>(
+	const b = $derived<
+		Pick<Map, 'naam' | 'items' | 'volgorde' | 'notitie' | 'groepNotities' | 'references'>
+	>(
 		m ?? {
 			naam: sharedMapName(shared ?? { naam: null }),
 			items: shared?.items ?? [],
 			volgorde: shared?.volgorde ?? 'groep',
 			notitie: shared?.notitie ?? null,
-			groepNotities: shared?.groepNotities ?? {}
+			groepNotities: shared?.groepNotities ?? {},
+			references: shared?.references ?? {}
 		}
 	);
 	/** The groups of what the bundel holds, as MapGroups heads them. */
@@ -151,6 +156,21 @@
 		} else if (asking === 'empty') kaart.empty(m.id);
 		asking = null;
 	}
+	/** Each citation with its link and the day it was consulted. */
+	const withLink = () => ({
+		address: (i: MapItem) => itemAddress(i, page.url.origin),
+		consulted: vandaag()
+	});
+	/** The citations as HTML beside their text: the bundel's note in its opmaak, its links
+	 *  absolute, for a word processor; the citations as their lines. */
+	function citationsHtml(attribution?: ReturnType<typeof withLink>) {
+		const href = (r: NoteReference) => {
+			const path = referencePath(r, b.references);
+			return path ? new URL(path, page.url.origin).href : null;
+		};
+		const note = b.notitie?.trim() ? noteHtml(b.notitie, href) : '';
+		return note + linesHtml(citaten(b.items, b.volgorde, null, b.groepNotities, attribution));
+	}
 	/** One item of a menu: closes it, then acts. */
 	const act = (close: () => void, f: () => void) => () => {
 		close();
@@ -168,7 +188,8 @@
 			copier.copy(
 				citaten(b.items, b.volgorde, b.notitie, b.groepNotities),
 				'citations',
-				`citaten van ${b.naam}`
+				`citaten van ${b.naam}`,
+				citationsHtml()
 			)
 		)}>Kopieer citaten</button
 	>
@@ -178,12 +199,10 @@
 		class="tekstmenu__item"
 		onclick={act(close, () =>
 			copier.copy(
-				citaten(b.items, b.volgorde, b.notitie, b.groepNotities, {
-					address: (i) => itemAddress(i, page.url.origin),
-					consulted: vandaag()
-				}),
+				citaten(b.items, b.volgorde, b.notitie, b.groepNotities, withLink()),
 				'citations',
-				`citaten van ${b.naam} met link`
+				`citaten van ${b.naam} met link`,
+				citationsHtml(withLink())
 			)
 		)}>Kopieer citaten met link</button
 	>
@@ -366,11 +385,12 @@
 			tekst={own.notitie}
 			bij={own.naam}
 			bundel={own.naam}
+			references={own.references}
 			field
 			onBewaar={(t) => kaart.mapNotitie(t, own.id)}
 		/>
 	{:else}
-		<Aantekening tekst={b.notitie} bij={b.naam} bundel={b.naam} />
+		<Aantekening tekst={b.notitie} bij={b.naam} bundel={b.naam} references={b.references} />
 	{/if}
 	{#if m}<p class="papier">Gewijzigd {korteDatum(vandaag(new Date(m.gewijzigd)))}</p>{/if}
 	<div class="werkregel">
@@ -411,6 +431,7 @@
 			items={b.items}
 			order={b.volgorde}
 			notes={b.groepNotities ?? {}}
+			references={b.references}
 			{open}
 			{fresh}
 		/>

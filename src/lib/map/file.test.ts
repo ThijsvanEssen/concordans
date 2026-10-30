@@ -43,6 +43,7 @@ describe('a bundel as a file', () => {
 				volgorde: 'eigen',
 				notitie: map.notitie,
 				groepNotities: { 'wet:bwbr0005290': 'Arbeidsrecht' },
+				references: {},
 				aantekeningen: [],
 				skipped: 0
 			}

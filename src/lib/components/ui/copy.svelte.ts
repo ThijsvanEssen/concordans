@@ -9,20 +9,30 @@ import { BEVESTIG_MS, announce } from '$lib/bevestig/bevestig.svelte';
 export const COPY_MS = BEVESTIG_MS;
 const FAILED = 'Kopiëren kon niet';
 
-type Write = (text: string) => Promise<void>;
+type Write = (text: string, html?: string) => Promise<void>;
 
-const clipboard: Write = (text) => navigator.clipboard.writeText(text);
+/** The text, and beside it the same as HTML where one is given: a word processor keeps its form. */
+const clipboard: Write = (text, html) =>
+	html && typeof ClipboardItem !== 'undefined' && navigator.clipboard.write
+		? navigator.clipboard.write([
+				new ClipboardItem({
+					'text/plain': new Blob([text], { type: 'text/plain' }),
+					'text/html': new Blob([html], { type: 'text/html' })
+				})
+			])
+		: navigator.clipboard.writeText(text);
 
 export function createCopier(write: Write = clipboard) {
 	let last = $state<{ key: string; ok: boolean } | null>(null);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	return {
 		/** Copies `text`; `key` names the button, so only that one changes its label, and `wat`
-		 *  names what was copied for the status line (`Gekopieerd: art. 6:162 BW`). */
-		async copy(text: string, key = '', wat?: string) {
+		 *  names what was copied for the status line (`Gekopieerd: art. 6:162 BW`); `html` goes
+		 *  with it, for a word processor. */
+		async copy(text: string, key = '', wat?: string, html?: string) {
 			let ok = true;
 			try {
-				await write(text);
+				await write(text, html);
 			} catch {
 				// The clipboard is refused in some contexts (an insecure page, a frame).
 				ok = false;

@@ -27,7 +27,8 @@
 		SOURCE_KINDS,
 		type GroepNotities,
 		type Map,
-		type MapItem
+		type MapItem,
+		type References
 	} from './map';
 	import { kaart } from './map.svelte';
 	import Aantekening from './Aantekening.svelte';
@@ -43,6 +44,7 @@
 		items,
 		order,
 		notes,
+		references = null,
 		open,
 		fresh = null
 	}: {
@@ -51,6 +53,8 @@
 		items: MapItem[];
 		order: Map['volgorde'];
 		notes: GroepNotities;
+		/** The addresses of the references in its notes. */
+		references?: References | null;
 		/** The rows and laws open, by the item's key or `law:<group>`: Alles uitklappen sets them. */
 		open: SvelteSet<string>;
 		/** What is new since the visit before, as it comes in (the bundel's own page). */
@@ -97,6 +101,7 @@
 					tekst={i.notitie}
 					bij={i.kort}
 					bundel={map?.naam}
+					{references}
 					bind:open={() => noteOpen === key, (v) => (noteOpen = v ? key : null)}
 					onBewaar={map ? (t) => kaart.notitie(i, t, map.id) : undefined}
 				/>
@@ -246,6 +251,7 @@
 					tekst={note}
 					bij={g.groep}
 					bundel={map?.naam}
+					{references}
 					bind:open={
 						() => groupNoteOpen === g.sleutel, (v) => (groupNoteOpen = v ? g.sleutel : null)
 					}
