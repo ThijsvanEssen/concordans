@@ -79,8 +79,8 @@ describe('the keyboard', () => {
 			),
 			selector(
 				'lib/styles/basis.css',
-				"[tabindex='-1']:focus:not(:focus-visible)",
-				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
+				"[tabindex='-1']:focus:not(:focus-visible, [data-ring])",
+				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring, and a step of Alt W (data-ring)'
 			)
 		];
 		const zonder = BRONNEN.flatMap(({ path, text }) =>
