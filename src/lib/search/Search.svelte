@@ -25,9 +25,11 @@
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
 	import DoenRows from './DoenRows.svelte';
+	import PalettePreview from './PalettePreview.svelte';
+	import PaletteColumns from './PaletteColumns.svelte';
+	import { rowTarget, topTarget } from './targets';
 	import { PaletteActions } from './doen.svelte';
 	import { searchTextOf } from '$lib/keys/commands';
-	import type { Target } from '$lib/keys/doen.svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -107,19 +109,15 @@
 	});
 	search.connect();
 
-	/** The bron Enter would open now: what a word with a bron (`keten awb`) does its work on. */
-	const target = $derived.by((): Target | null => {
-		const choice = search.choices[0];
-		if (choice) return { ref: choice.ref, label: choice.label ?? search.q };
-		const cited =
-			search.resolvedWith?.term === search.q && search.citation ? search.resolvedWith.target : null;
-		const named = cited ?? search.bare;
-		if (named) return { ref: named.ref, label: named.label ?? search.q };
-		const hit = search.best?.hit ?? (search.answered === search.q ? search.hits[0] : undefined);
-		return hit ? { ref: hitName(hit), label: presentHit(hit, search.q, []).title } : null;
-	});
+	const target = $derived(topTarget(search));
 	// An Enter on a row Doen that waited for the search: done once the bron is found.
 	$effect(() => doen.settle(() => onOpen?.()));
+	/** The bron of the result the keys are on: the right column shows what it can do. */
+	const atBron = $derived(
+		doen.at === null && search.isActive(search.active) ? rowTarget(search, search.active) : null
+	);
+	/** Two columns: in ⌘K, not in a field that picks. */
+	const columns = $derived(overlay && !onSelect);
 	/** A row of the results is the one the keys are on, not a row Doen. */
 	const isActive = (row: number) => doen.at === null && search.isActive(row);
 
@@ -136,12 +134,7 @@
 	});
 
 	function onkeydown(e: KeyboardEvent) {
-		const results = {
-			count: search.rowCount,
-			atFirst: search.rowCount === 0 || search.active === 0,
-			enter: () => search.point(0)
-		};
-		if (doen.key(e, results, () => onOpen?.())) return;
+		if (doen.key(e, search, () => onOpen?.())) return;
 		if (e.key === 'ArrowDown' && search.rowCount > 0) {
 			e.preventDefault();
 			search.down();
@@ -244,270 +237,288 @@
 		</div>
 	{/if}
 
-	<div
-		class="list"
-		class:list--filled={search.filled || doen.rows.length > 0}
-		id="{uid}-list"
-		role="listbox"
-		aria-label="Resultaten"
-		bind:this={listEl}
-	>
-		{#if doen.rows.length > 0}
-			<DoenRows
-				{uid}
-				rows={doen.rows}
-				at={doen.at}
-				here={doen.empty}
-				ondo={(row) => doen.do(row, () => onOpen?.())}
-				onpoint={(i) => doen.point(i)}
-			/>
-		{/if}
-		{#if search.leftOut.length > 0}
-			<p class="state state--group stil weggelaten">Weggelaten: {search.leftOut.join(', ')}</p>
-		{/if}
-		{#if search.outsideLaw}
-			<p class="state stil" role="status">
-				{notHeld(`"${search.q}"`)}.
-				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="external noopener"
-					>wetten.overheid.nl</a
-				>
-			</p>
-		{/if}
-		{#if search.chamber}
-			<p class="state stil" role="status">
-				{CHAMBER_NAME[search.chamber]}:
-				{#each chamberLinks(search.chamber) as link, i (link.href)}{i > 0 ? ', ' : ''}<a
-						href={link.href}>{link.label}</a
-					>{/each}
-			</p>
-		{/if}
-		{#if search.notFound}
-			<p class="state stil" role="status">
-				{notHeld(`"${search.q}"`)}. <a href="/bronnen#dekking">Dekking</a>
-			</p>
-		{/if}
-		{#if search.choices.length > 0}
-			<!-- A citation that fits more than one article: each, straight to the article. -->
-			<div class="group" role="group" aria-labelledby="{uid}-keuzes">
-				<div class="group-label" id="{uid}-keuzes">
-					<KindGlyph collection="articles" />
-					Artikelen met dit nummer
-				</div>
-				{#each search.choices as choice, i (choice.ref.key)}
-					{@const expired = expiredTitle(choice.ref.collection, choice.expiredOn)}
-					<SearchOption
-						id={rowId(i)}
-						active={isActive(i)}
-						citation
-						href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
-						onchoose={() => open(choice.ref, choice.at)}
-						onpoint={pointAt(i)}
+	<PaletteColumns two={columns}>
+		<div
+			class="list"
+			class:list--filled={search.filled || doen.rows.length > 0}
+			id="{uid}-list"
+			role="listbox"
+			aria-label="Resultaten"
+			bind:this={listEl}
+		>
+			{#if doen.rows.length > 0}
+				<DoenRows
+					{uid}
+					rows={doen.rows}
+					at={doen.at}
+					here={doen.empty}
+					ondo={(row) => doen.do(row, () => onOpen?.())}
+					onpoint={(i) => doen.point(i)}
+				/>
+			{/if}
+			{#if search.leftOut.length > 0}
+				<p class="state state--group stil weggelaten">Weggelaten: {search.leftOut.join(', ')}</p>
+			{/if}
+			{#if search.outsideLaw}
+				<p class="state stil" role="status">
+					{notHeld(`"${search.q}"`)}.
+					<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="external noopener"
+						>wetten.overheid.nl</a
 					>
-						<span class="row-title"
-							>{choice.label ?? naamVanId(nodeId(choice.ref.collection, choice.ref.key))}</span
+				</p>
+			{/if}
+			{#if search.chamber}
+				<p class="state stil" role="status">
+					{CHAMBER_NAME[search.chamber]}:
+					{#each chamberLinks(search.chamber) as link, i (link.href)}{i > 0 ? ', ' : ''}<a
+							href={link.href}>{link.label}</a
+						>{/each}
+				</p>
+			{/if}
+			{#if search.notFound}
+				<p class="state stil" role="status">
+					{notHeld(`"${search.q}"`)}. <a href="/bronnen#dekking">Dekking</a>
+				</p>
+			{/if}
+			{#if search.choices.length > 0}
+				<!-- A citation that fits more than one article: each, straight to the article. -->
+				<div class="group" role="group" aria-labelledby="{uid}-keuzes">
+					<div class="group-label" id="{uid}-keuzes">
+						<KindGlyph collection="articles" />
+						Artikelen met dit nummer
+					</div>
+					{#each search.choices as choice, i (choice.ref.key)}
+						{@const expired = expiredTitle(choice.ref.collection, choice.expiredOn)}
+						<SearchOption
+							id={rowId(i)}
+							active={isActive(i)}
+							citation
+							href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
+							onchoose={() => open(choice.ref, choice.at)}
+							onpoint={pointAt(i)}
 						>
-						{#if expired}<span class="row-context"
-								><span class="row-expired" title={expired}>vervallen</span></span
-							>{/if}
-						{#if isActive(i)}<span class="kbd" aria-hidden="true">↵</span>{/if}
-					</SearchOption>
-				{/each}
-				{#if search.choicesMore > 0}
-					<p class="state state--group stil">
-						en {search.choicesMore}
-						{plural(search.choicesMore, 'ander artikel', 'andere artikelen')}
-					</p>
-				{/if}
-			</div>
-		{:else if search.citation}
-			<!-- The bron the API named, else the kind of the notation ("36799, nr. 31" a stuk). -->
-			{@const kind =
-				(search.resolvedWith?.term === search.q
-					? search.resolvedWith.target?.ref.collection
-					: null) ?? NOTATION_COLLECTION[search.citation.kind]}
-			<!-- The name from the source once the answer has it, not the query as typed. -->
-			{@const name =
-				(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
-				search.q}
-			{@const expired =
-				search.resolvedWith?.term === search.q
-					? expiredTitle(kind, search.resolvedWith.target?.expiredOn)
-					: null}
-			<SearchOption
-				id={rowId(0)}
-				active={doen.at === null && search.active === 0}
-				citation
-				onchoose={() => search.openCitation()}
-				onpoint={pointAt(0)}
-			>
-				<span class="row-kind"
-					><KindGlyph collection={kind} />{#if !startsWithKind(name, bronLabel(kind))}
-						{bronLabel(kind)}{/if}</span
-				>
-				<span class="row-title">{name}</span>
-				{#if expired}<span class="row-context"
-						><span class="row-expired" title={expired}>vervallen</span></span
-					>{/if}
-				<span class="kbd" aria-hidden="true">↵</span>
-			</SearchOption>
-		{:else if search.bare}
-			{@const bare = search.bare}
-			{@const name = bare.label ?? search.q}
-			{@const expired = expiredTitle(bare.ref.collection, bare.expiredOn)}
-			<!-- A link like the hits: its target is known, so a new tab can open it. -->
-			<SearchOption
-				id={rowId(0)}
-				active={doen.at === null && search.active === 0}
-				citation
-				href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
-				onchoose={() => open(bare.ref, bare.at)}
-				onpoint={pointAt(0)}
-			>
-				<span class="row-kind"
-					><KindGlyph
-						collection={bare.ref.collection}
-					/>{#if !startsWithKind(name, bronLabel(bare.ref.collection))}
-						{bronLabel(bare.ref.collection)}{/if}</span
-				>
-				<span class="row-title">{name}</span>
-				{#if expired}<span class="row-context"
-						><span class="row-expired" title={expired}>vervallen</span></span
-					>{/if}
-				<span class="kbd" aria-hidden="true">↵</span>
-			</SearchOption>
-		{/if}
-
-		{#if search.bestComing}
-			<!-- The place of the Beste treffer, from the first answer on (#52). -->
-			<div class="group group--beste" role="group" aria-labelledby="{uid}-beste-komt">
-				<div class="group-label" id="{uid}-beste-komt">
-					Beste treffer <span class="laden">laden…</span>
-				</div>
-			</div>
-		{/if}
-		{#each search.shown as group (group.best ? 'beste' : group.kind)}
-			{@const gid = group.best ? 'beste' : group.kind}
-			<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
-			{@const neighbours = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
-			<div class="group" class:group--beste={group.best} role="group" aria-labelledby="{uid}-{gid}">
-				<div class="group-label" id="{uid}-{gid}">
-					<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
-					{#if group.best}Beste treffer, <KindGlyph collection={group.kind} />
-						{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
-						{groupLabel(group.kind)}{/if}
-					{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
-					{#if !group.best && search.partialKinds.has(group.kind)}
-						<span class="deel">treffers met een deel van de woorden</span>
+							<span class="row-title"
+								>{choice.label ?? naamVanId(nodeId(choice.ref.collection, choice.ref.key))}</span
+							>
+							{#if expired}<span class="row-context"
+									><span class="row-expired" title={expired}>vervallen</span></span
+								>{/if}
+							{#if isActive(i)}<span class="kbd" aria-hidden="true">↵</span>{/if}
+						</SearchOption>
+					{/each}
+					{#if search.choicesMore > 0}
+						<p class="state state--group stil">
+							en {search.choicesMore}
+							{plural(search.choicesMore, 'ander artikel', 'andere artikelen')}
+						</p>
 					{/if}
 				</div>
-				{#if !picker && !group.best && searchedLine(search.searched[group.kind])}
-					<!-- What its search reads, so a hit not found is not taken for one not there. -->
-					<p class="gezocht"><Coverage searched={search.searched[group.kind]} /></p>
-				{/if}
-				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
-					{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
-					{@const shown = presentHit(hit, search.q, neighbours)}
-					{@const section = sectionOf(hit)}
-					{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
-						<div class="section" role="presentation">{section}</div>
-					{/if}
-					<SearchOption
-						id={rowId(i)}
-						active={isActive(i)}
-						href={bronHref(hitName(hit), { keepNetwerk: false })}
-						onchoose={() => open(hitName(hit), null, shown.title)}
-						onpoint={pointAt(i)}
+			{:else if search.citation}
+				<!-- The bron the API named, else the kind of the notation ("36799, nr. 31" a stuk). -->
+				{@const kind =
+					(search.resolvedWith?.term === search.q
+						? search.resolvedWith.target?.ref.collection
+						: null) ?? NOTATION_COLLECTION[search.citation.kind]}
+				<!-- The name from the source once the answer has it, not the query as typed. -->
+				{@const name =
+					(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
+					search.q}
+				{@const expired =
+					search.resolvedWith?.term === search.q
+						? expiredTitle(kind, search.resolvedWith.target?.expiredOn)
+						: null}
+				<SearchOption
+					id={rowId(0)}
+					active={doen.at === null && search.active === 0}
+					citation
+					onchoose={() => search.openCitation()}
+					onpoint={pointAt(0)}
+				>
+					<span class="row-kind"
+						><KindGlyph collection={kind} />{#if !startsWithKind(name, bronLabel(kind))}
+							{bronLabel(kind)}{/if}</span
 					>
-						<span class="row-main">
-							<span class="row-title">{shown.title}</span>
-							{#if shown.snippet}
-								<span class="row-snippet"
-									>{#each shown.snippet as part, n (n)}{#if part.mark}<mark>{part.text}</mark
-											>{:else}{part.text}{/if}{/each}</span
-								>
-							{/if}
-							{#if conceptOf(hit)}<span class="row-begrip">via begrip {conceptOf(hit)}</span>{/if}
-						</span>
-						{#if picker && chosen.includes(focusOf(hitName(hit)) ?? '')}<span class="row-al"
-								>al in het netwerk</span
-							>{:else if shown.chamber || shown.context || shown.expired}<span class="row-context"
-								>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}>{shown.chamber}</abbr
-									>{/if}{shown.chamber && shown.context
-									? ` ${shown.context}`
-									: shown.context}{#if shown.expired}{shown.context ? ', ' : ''}<span
-										class="row-expired"
-										title={shown.expired}>vervallen</span
-									>{/if}</span
-							>{/if}
-					</SearchOption>
-				{/each}
-				{#if search.moreKinds.has(group.kind)}
-					<!-- The live mode answered within its time and left more out: the full answer on asking. -->
-					<p class="volledig">
-						<TekstLink onclick={() => search.askInFull()}
-							>Meer {groupLabel(group.kind).toLowerCase()}</TekstLink
-						>
-					</p>
-				{/if}
-			</div>
-		{/each}
+					<span class="row-title">{name}</span>
+					{#if expired}<span class="row-context"
+							><span class="row-expired" title={expired}>vervallen</span></span
+						>{/if}
+					<span class="kbd" aria-hidden="true">↵</span>
+				</SearchOption>
+			{:else if search.bare}
+				{@const bare = search.bare}
+				{@const name = bare.label ?? search.q}
+				{@const expired = expiredTitle(bare.ref.collection, bare.expiredOn)}
+				<!-- A link like the hits: its target is known, so a new tab can open it. -->
+				<SearchOption
+					id={rowId(0)}
+					active={doen.at === null && search.active === 0}
+					citation
+					href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
+					onchoose={() => open(bare.ref, bare.at)}
+					onpoint={pointAt(0)}
+				>
+					<span class="row-kind"
+						><KindGlyph
+							collection={bare.ref.collection}
+						/>{#if !startsWithKind(name, bronLabel(bare.ref.collection))}
+							{bronLabel(bare.ref.collection)}{/if}</span
+					>
+					<span class="row-title">{name}</span>
+					{#if expired}<span class="row-context"
+							><span class="row-expired" title={expired}>vervallen</span></span
+						>{/if}
+					<span class="kbd" aria-hidden="true">↵</span>
+				</SearchOption>
+			{/if}
 
-		{#each search.failedLanes as lane (lane.id)}
-			<!-- A lane that failed: its group says so, the other groups stand. A lane under way
+			{#if search.bestComing}
+				<!-- The place of the Beste treffer, from the first answer on (#52). -->
+				<div class="group group--beste" role="group" aria-labelledby="{uid}-beste-komt">
+					<div class="group-label" id="{uid}-beste-komt">
+						Beste treffer <span class="laden">laden…</span>
+					</div>
+				</div>
+			{/if}
+			{#each search.shown as group (group.best ? 'beste' : group.kind)}
+				{@const gid = group.best ? 'beste' : group.kind}
+				<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
+				{@const neighbours = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
+				<div
+					class="group"
+					class:group--beste={group.best}
+					role="group"
+					aria-labelledby="{uid}-{gid}"
+				>
+					<div class="group-label" id="{uid}-{gid}">
+						<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
+						{#if group.best}Beste treffer, <KindGlyph collection={group.kind} />
+							{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
+							{groupLabel(group.kind)}{/if}
+						{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
+						{#if !group.best && search.partialKinds.has(group.kind)}
+							<span class="deel">treffers met een deel van de woorden</span>
+						{/if}
+					</div>
+					{#if !picker && !group.best && searchedLine(search.searched[group.kind])}
+						<!-- What its search reads, so a hit not found is not taken for one not there. -->
+						<p class="gezocht"><Coverage searched={search.searched[group.kind]} /></p>
+					{/if}
+					{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
+						{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
+						{@const shown = presentHit(hit, search.q, neighbours)}
+						{@const section = sectionOf(hit)}
+						{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
+							<div class="section" role="presentation">{section}</div>
+						{/if}
+						<SearchOption
+							id={rowId(i)}
+							active={isActive(i)}
+							href={bronHref(hitName(hit), { keepNetwerk: false })}
+							onchoose={() => open(hitName(hit), null, shown.title)}
+							onpoint={pointAt(i)}
+						>
+							<span class="row-main">
+								<span class="row-title">{shown.title}</span>
+								{#if shown.snippet}
+									<span class="row-snippet"
+										>{#each shown.snippet as part, n (n)}{#if part.mark}<mark>{part.text}</mark
+												>{:else}{part.text}{/if}{/each}</span
+									>
+								{/if}
+								{#if conceptOf(hit)}<span class="row-begrip">via begrip {conceptOf(hit)}</span>{/if}
+							</span>
+							{#if picker && chosen.includes(focusOf(hitName(hit)) ?? '')}<span class="row-al"
+									>al in het netwerk</span
+								>{:else if shown.chamber || shown.context || shown.expired}<span class="row-context"
+									>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}
+											>{shown.chamber}</abbr
+										>{/if}{shown.chamber && shown.context
+										? ` ${shown.context}`
+										: shown.context}{#if shown.expired}{shown.context ? ', ' : ''}<span
+											class="row-expired"
+											title={shown.expired}>vervallen</span
+										>{/if}</span
+								>{/if}
+						</SearchOption>
+					{/each}
+					{#if search.moreKinds.has(group.kind)}
+						<!-- The live mode answered within its time and left more out: the full answer on asking. -->
+						<p class="volledig">
+							<TekstLink onclick={() => search.askInFull()}
+								>Meer {groupLabel(group.kind).toLowerCase()}</TekstLink
+							>
+						</p>
+					{/if}
+				</div>
+			{/each}
+
+			{#each search.failedLanes as lane (lane.id)}
+				<!-- A lane that failed: its group says so, the other groups stand. A lane under way
 			     holds its place among the groups (slots). -->
-			{@const name = lane.kinds.map((k) => groupLabel(k)).join(' en ')}
-			<div class="group" role="group" aria-labelledby="{uid}-{lane.id}-stand">
-				<div class="group-label" id="{uid}-{lane.id}-stand">
-					<KindGlyph collection={lane.kinds[0]} />
-					{name}
+				{@const name = lane.kinds.map((k) => groupLabel(k)).join(' en ')}
+				<div class="group" role="group" aria-labelledby="{uid}-{lane.id}-stand">
+					<div class="group-label" id="{uid}-{lane.id}-stand">
+						<KindGlyph collection={lane.kinds[0]} />
+						{name}
+					</div>
+					<div class="state state--group">
+						<LoadState
+							state={{ status: 'error', error: search.lanes[lane.id].error }}
+							what={name}
+							plural
+							retry={() => search.retry(lane.id)}
+						/>
+					</div>
 				</div>
-				<div class="state state--group">
+			{/each}
+
+			{#if search.failure}
+				<div class="state">
 					<LoadState
-						state={{ status: 'error', error: search.lanes[lane.id].error }}
-						what={name}
+						state={{ status: 'error', error: search.failure.error }}
+						what="De resultaten"
 						plural
-						retry={() => search.retry(lane.id)}
+						retry={() => search.retrySearch()}
 					/>
 				</div>
-			</div>
-		{/each}
-
-		{#if search.failure}
-			<div class="state">
-				<LoadState
-					state={{ status: 'error', error: search.failure.error }}
-					what="De resultaten"
-					plural
-					retry={() => search.retrySearch()}
+			{:else if search.empty}
+				<div class="state stil" role="status">
+					<span>Geen resultaten voor "{search.q}"</span>
+					<span class="verder">
+						<TekstLink onclick={() => fieldEl?.select()}>Pas de zoekterm aan</TekstLink>
+						{#each search.narrower as word (word)}
+							<TekstLink
+								onclick={() => {
+									doen.line = word;
+								}}>Zoek "{word}"</TekstLink
+							>
+						{/each}
+						{#if search.from || search.to}
+							<TekstLink
+								onclick={() => {
+									search.from = '';
+									search.to = '';
+								}}>Zonder periode</TekstLink
+							>
+						{/if}
+						{#if scope && onWiden}
+							<TekstLink onclick={() => onWiden()}>Zoek in alle bronnen</TekstLink>
+						{/if}
+					</span>
+				</div>
+			{/if}
+		</div>
+		{#snippet aside()}
+			{#if doen.at !== null || atBron}
+				<PalettePreview
+					row={doen.at !== null ? doen.rows[doen.at] : null}
+					bron={atBron?.label ?? null}
+					actions={atBron ? doen.actionsFor(atBron) : []}
+					ondo={(row) => doen.do(row, () => onOpen?.())}
 				/>
-			</div>
-		{:else if search.empty}
-			<div class="state stil" role="status">
-				<span>Geen resultaten voor "{search.q}"</span>
-				<span class="verder">
-					<TekstLink onclick={() => fieldEl?.select()}>Pas de zoekterm aan</TekstLink>
-					{#each search.narrower as word (word)}
-						<TekstLink
-							onclick={() => {
-								doen.line = word;
-							}}>Zoek "{word}"</TekstLink
-						>
-					{/each}
-					{#if search.from || search.to}
-						<TekstLink
-							onclick={() => {
-								search.from = '';
-								search.to = '';
-							}}>Zonder periode</TekstLink
-						>
-					{/if}
-					{#if scope && onWiden}
-						<TekstLink onclick={() => onWiden()}>Zoek in alle bronnen</TekstLink>
-					{/if}
-				</span>
-			</div>
-		{/if}
-	</div>
+			{/if}
+		{/snippet}
+	</PaletteColumns>
 </div>
 
 <style>

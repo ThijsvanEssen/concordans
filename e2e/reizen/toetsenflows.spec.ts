@@ -58,6 +58,10 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		const { rows, chosen } = await palette(page, '');
 		await expect(rows.filter({ hasText: 'Weergave Omgeving' })).toContainText('nu');
 		await expect(chosen).toContainText('Weergave Keten');
+		// The right column says what the chosen row does, and its key.
+		const preview = page.getByRole('complementary', { name: 'Voorbeeld' });
+		await expect(preview).toContainText('Weergave Keten');
+		await expect(preview).toContainText('Enter doet dit');
 		await page.keyboard.press('ArrowDown');
 		await expect(chosen).toContainText('Aantal stappen');
 		await page.keyboard.press('ArrowUp');
@@ -132,6 +136,13 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 	F18: async (page) => {
 		await page.goto('/docs');
 		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		// A result the keys are on: the right column offers its netwerk and its keten.
+		await palette(page, 'keten awb');
+		await page.keyboard.press('ArrowDown');
+		await expect(page.getByRole('complementary', { name: 'Voorbeeld' })).toContainText(
+			'Netwerk van'
+		);
+		await page.keyboard.press('Escape');
 		await doe(page, 'nw awb', 'Netwerk van Algemene wet bestuursrecht');
 		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);
 	},

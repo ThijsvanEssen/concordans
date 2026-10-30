@@ -2,9 +2,11 @@
 // can be done here before anything is typed. The first row stands chosen, so Enter does it; ↓
 // past the last goes on into the results, ↑ above the first result comes back.
 import { parseCommand, type Parsed } from '$lib/keys/commands';
+import { COMMANDS } from '$lib/keys/register';
 import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelte';
 import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
+import type { SearchSession } from './session.svelte';
 
 export class PaletteActions {
 	/** The line as typed, the word included; the search gets what is left (searchTextOf). */
@@ -49,24 +51,18 @@ export class PaletteActions {
 		this.#chosen = { line: this.line, at };
 	}
 
-	/**
-	 * A key in the field: true where the rows Doen took it. `results` are the search's rows:
-	 * how many, whether the first is the one the keys are on, and the way onto it.
-	 */
-	key(
-		e: KeyboardEvent,
-		results: { count: number; atFirst: boolean; enter: () => void },
-		done: () => void
-	): boolean {
+	/** A key in the field: true where the rows Doen took it; else the results of `search` move. */
+	key(e: KeyboardEvent, search: SearchSession, done: () => void): boolean {
 		const { at, rows } = this;
 		if (e.key === 'ArrowDown' && at !== null) {
 			if (at < rows.length - 1) this.#choose(at + 1);
-			else if (results.count > 0) {
+			else if (search.rowCount > 0) {
 				this.#choose(null);
-				results.enter();
+				search.point(0);
 			}
 		} else if (e.key === 'ArrowUp' && at !== null) this.#choose(Math.max(0, at - 1));
-		else if (e.key === 'ArrowUp' && rows.length && results.atFirst) this.#choose(rows.length - 1);
+		else if (e.key === 'ArrowUp' && rows.length && (!search.rowCount || search.active === 0))
+			this.#choose(rows.length - 1);
 		else if (e.key === 'Enter' && at !== null) this.do(rows[at], done);
 		else return false;
 		e.preventDefault();
@@ -103,6 +99,14 @@ export class PaletteActions {
 			this.#waiting = null;
 			this.do(row, done);
 		}
+	}
+
+	/** What else ⌘K can do with a bron: the words that take one, done with it (the right column). */
+	actionsFor(target: Target): DoRow[] {
+		return COMMANDS.filter((c) => c.arg === 'bron' && !c.sign)
+			.concat(COMMANDS.filter((c) => c.arg === 'bron' && c.sign))
+			.flatMap((command) => rowsFor({ command, rest: target.label, only: false }, target))
+			.filter((r) => r.run && !r.why);
 	}
 
 	/** A result chosen while the word asks for a bron: the command does its work on it. */
