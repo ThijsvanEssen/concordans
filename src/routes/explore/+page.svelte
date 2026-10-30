@@ -48,7 +48,7 @@
 	import { inPool } from '$lib/api/pool';
 	import { kopNode } from '$lib/bron/first-node';
 	import { NETWORK_MODE, bronHref, exploreMode, focusOf, openHref, refId } from '$lib/bron/href';
-	import { keepRead } from '$lib/reading/panel.svelte';
+	import { keepReading } from '$lib/reading/panel.svelte';
 	import { refOf, type BronRef } from '$lib/bron/ref';
 	import { getDossierKey } from '$lib/api/dossiers';
 	import { getMemberVotes } from '$lib/api/members';
@@ -151,14 +151,7 @@
 		type Netwerk,
 		type NetwerkEntry
 	} from '$lib/selection/netwerk';
-	import {
-		navigate,
-		navigateDone,
-		patchParams,
-		queryHref,
-		withParams,
-		type ParamPatch
-	} from '$lib/util/address';
+	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
 	import {
 		besideJudgment,
 		depthFor as depthOfClass,
@@ -1742,9 +1735,7 @@
 		const ref = refOf(node.collection, node.key, node.raw?.props);
 		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
 		// The Zijpaneel beside it stays: it is not the bron that changes view (live-toets C3).
-		return navigateDone(keepRead(on ? openHref(ref, { at }) : werkplekHref(ref, at)), {
-			step: true
-		});
+		return keepReading(on ? openHref(ref, { at }) : werkplekHref(ref, at));
 	}
 	/** The werkplek with the bron: as the button Netwerk of the top bar opens it. */
 	const werkplekHref = (ref: BronRef, at: string | null = null) =>
@@ -2029,7 +2020,7 @@
 		else if (node && !node.id.startsWith('synth:')) {
 			const href = werkplekHref(refOf(node.collection, node.key, node.raw?.props));
 			const to = withParams(new URL(href, page.url), { [VIEW_PARAM]: w === 'omgeving' ? null : w });
-			navigateDone(keepRead(to), { step: true }).catch((err) => report('Wisselen', err));
+			keepReading(to).catch((err) => report('Wisselen', err));
 		} else return;
 		announce(`Weergave ${VIEWS.find((v) => v.waarde === w)?.label}`);
 		focusView(w);

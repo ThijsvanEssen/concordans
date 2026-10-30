@@ -638,10 +638,14 @@
 	.rust .kop {
 		font-size: var(--t-micro);
 	}
+	/* Two lines before it is cut: "2 wetten, 157 artikelen en 2 stukken" read whole on 375
+	   (live-toets peek 5, C5). */
 	.rust .micro {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
 		font-size: var(--t-label);
 	}
 	.rust .mini {

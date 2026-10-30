@@ -170,7 +170,10 @@
 		if (focus) el.querySelector<HTMLElement>('.lp-stuk-titel')?.focus({ preventScroll: true });
 	}
 
-	/** Which article of the stapel is in view: the last whose head has reached the top. */
+	/**
+	 * Which article of the stapel is in view: the last whose head has reached the top; at the
+	 * end of the text the one taken there, else the last (live-toets peek 5, C2).
+	 */
 	function track() {
 		const s = scroller();
 		if (!s) return;
@@ -180,8 +183,8 @@
 			const el = pieceEl(i);
 			if (el && el.getBoundingClientRect().top <= top) at = i;
 		});
-		const end = s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
-		if (end && pinned > at) at = pinned;
+		const end = s.scrollTop > 0 && s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
+		if (end) at = pinned >= 0 ? pinned : reads.length - 1;
 		else pinned = -1;
 		current = at;
 	}
@@ -191,6 +194,13 @@
 		s.addEventListener('scroll', track, { passive: true });
 		return () => s.removeEventListener('scroll', track);
 	});
+
+	/** An article whole or its cited part only; what is in view then follows the text. */
+	function wholeOf(key: string) {
+		whole = { ...whole, [key]: !whole[key] };
+		pinned = -1;
+		afterTick(track);
+	}
 
 	/** A link of the jump menu: its article at the top; ⌘-click keeps the link's own way. */
 	function toChip(e: MouseEvent, i: number) {
@@ -216,8 +226,15 @@
 		el instanceof HTMLElement && el.isConnected && el.id !== 'main-content' && el.checkVisibility();
 	function toReader() {
 		const links = document.querySelectorAll('#main-content a[href], #main-content button');
-		const back = [lastOutside, reference(), ...links].find(shows);
-		back?.focus();
+		ringed([lastOutside, reference(), ...links].find(shows));
+	}
+
+	/** A step of Alt W: the focus there with its ring, after a click too (live-toets peek 5, B1). */
+	function ringed(el: HTMLElement | SVGElement | null | undefined) {
+		if (!el) return;
+		el.dataset.ring = '';
+		el.addEventListener('blur', () => delete el.dataset.ring, { once: true });
+		el.focus();
 	}
 
 	/** In the panel the article before or after: of the stapel, or the neighbour of the one. */
@@ -245,7 +262,7 @@
 		document.addEventListener('focusin', remember);
 		const stop = [
 			// Alt W: between the reader and the panel.
-			answer('panel-toggle', () => (focusInside() ? toReader() : titleEl()?.focus())),
+			answer('panel-toggle', () => (focusInside() ? toReader() : ringed(titleEl()))),
 			// Alt [ and ]: in the panel its article before and after; elsewhere the reader's.
 			answer('article-prev', () => step(-1)),
 			answer('article-next', () => step(1))
@@ -362,7 +379,7 @@
 										type="button"
 										class="btn is-text lp-heel"
 										aria-expanded={!!whole[r.key]}
-										onclick={() => (whole = { ...whole, [r.key]: !whole[r.key] })}
+										onclick={() => wholeOf(r.key)}
 										>{whole[r.key] ? 'Alleen het geciteerde' : 'Heel artikel'}</button
 									>{/if}
 							{:else}
@@ -544,6 +561,11 @@
 		.lp-sprong a,
 		.lp-terug {
 			min-height: 44px;
+		}
+		/* "19" is 18 px wide: a finger's 44 px across too (live-toets peek 5, B2). */
+		.lp-sprong a {
+			justify-content: center;
+			min-width: var(--veld-h-raak);
 		}
 	}
 </style>

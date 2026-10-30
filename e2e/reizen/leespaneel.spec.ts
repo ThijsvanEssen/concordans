@@ -3,7 +3,7 @@
 // reference; a shared link opens it and × takes only the parameter away. The page stays usable
 // beside it; ⌘-click and Open artikel are the page. A law's articles in the head stand in it
 // under each other (the stapel), a row of Verbonden opens it in one click.
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
 const REGELING = '/wetten/BWBR0052884';
@@ -40,6 +40,10 @@ test("a reference in the head opens its law's articles under each other, at its 
 	const sprong = p.getByRole('navigation', { name: 'Ga naar artikel' });
 	await expect(sprong.getByRole('link')).toHaveText(['19', '23 lid 1', '28']);
 	await expect(sprong.locator('[aria-current="true"]')).toHaveText('23 lid 1');
+	// "19" is 18 px wide: on a phone a finger's 44 px across (B52, B2).
+	if (touch)
+		for (const a of await sprong.getByRole('link').all())
+			expect((await a.boundingBox())!.width).toBeGreaterThanOrEqual(44);
 	// Its cited lid only, marked, in words too; the whole article one click away.
 	const geciteerd = p.locator('[aria-current="location"]');
 	await expect(geciteerd).toHaveCount(1);
@@ -131,6 +135,52 @@ test('of one article Alt ] is its next; Alt W goes back to a link with a ring, n
 	await page.keyboard.press('Alt+KeyW');
 	await expect(page.locator('#main-content')).not.toBeFocused();
 	await expect(page.locator('#main-content :focus')).toHaveCount(1);
+});
+
+test('after a click Alt W shows where the focus went; at the end the last article is in view; Alt L keeps the one it opened at (B52)', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'a phone has no keyboard');
+	await page.goto(REGELING);
+	const lid = kop(page).getByRole('link', { name: '23 lid 1', exact: true });
+	await lid.click();
+	const p = paneel(page);
+	const stuk = p.getByRole('heading', { level: 3, name: 'Artikel 23 Cbb' });
+	await expect(stuk).toBeFocused();
+	// Chrome counts a key with Alt as no typing: after a click the step shows its ring all the same.
+	const ring = (l: Locator) => l.evaluate((el) => getComputedStyle(el).outlineStyle);
+	await page.keyboard.press('Alt+KeyW');
+	await expect(lid).toBeFocused();
+	expect(await ring(lid)).toBe('solid');
+	await page.keyboard.press('Alt+KeyW');
+	const titel = p.getByRole('heading', { level: 2 });
+	await expect(titel).toBeFocused();
+	expect(await ring(titel)).toBe('solid');
+	// Scrolled to the end, the last article is the one in view, not the one whose head is on top.
+	await p.getByRole('button', { name: 'Heel artikel' }).click();
+	await p.locator('.lp-tekst').evaluate((el) => {
+		const s = el.closest('.inhoud')!;
+		s.scrollTop = s.scrollHeight;
+	});
+	const sprong = p.getByRole('navigation', { name: 'Ga naar artikel' });
+	await expect(sprong.locator('[aria-current="true"]')).toHaveText('28');
+	// Alt L: the page beside it changes view; the panel stays at the article it opened at, the
+	// focus where it was in it (not the first article's head).
+	await stuk.focus();
+	await page.keyboard.press('Alt+KeyL');
+	await expect(page).toHaveURL(/mode=netwerk/);
+	await expect(stuk).toBeFocused();
+});
+
+test("a number under Licht toe is the article's readable address and opens it in the panel", async ({
+	page
+}) => {
+	await page.goto('/kamerstukken/36764/3');
+	const drie = page.locator('.toegelicht').getByRole('link', { name: '3', exact: true });
+	await expect(drie).toHaveAttribute('href', '/wetten/BWBR0052872/artikel/3');
+	await drie.click();
+	await expect(paneel(page).getByRole('heading', { level: 2 })).toHaveText(/^Artikel 3 Cbw/);
 });
 
 test('Alt L changes the view of the page beside the panel; the panel stays (C3)', async ({

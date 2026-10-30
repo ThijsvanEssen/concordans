@@ -210,6 +210,35 @@ describe('the address of a focus', () => {
 		expect(padOfFocus('dossiers/k1')).toBeNull();
 	});
 
+	it("writes an article's address where the answer names its law and number but no path (Licht toe)", () => {
+		keepPaths({
+			explains: [
+				{
+					id: 'articles/bwbr0052872_3',
+					key: 'bwbr0052872_3',
+					collection: 'articles',
+					bwb_id: 'BWBR0052872',
+					article_number: '3'
+				},
+				{
+					id: 'articles/bw6_162',
+					key: 'bw6_162',
+					collection: 'articles',
+					bwb_id: 'BWBR0005289',
+					article_number: '162'
+				},
+				{
+					id: 'instruments/bwbr0052872',
+					collection: 'instruments',
+					bwb_id: 'BWBR0052872',
+					article_number: null
+				}
+			]
+		});
+		expect(padOfFocus('articles/bwbr0052872_3')).toBe('/wetten/BWBR0052872/artikel/3');
+		expect(padOfFocus('articles/bw6_162')).toBe('/wetten/BWBR0005289/artikel/6:162');
+	});
+
 	it('reads the addresses in an answer of a record getter, such as an article’s explanations', async () => {
 		fakeApi({
 			'/api/articles/{bwb_id}/{article_number}/explanations': {

@@ -50,8 +50,3 @@ export const withParams = (
 export function navigate(href: string, { step = false } = {}): void {
 	goto(href, { replaceState: !step, keepFocus: true, noScroll: true });
 }
-
-/** As `navigate`, for the caller that does something once the page has been drawn. */
-export function navigateDone(href: string, { step = false } = {}): Promise<void> {
-	return goto(href, { replaceState: !step, keepFocus: true, noScroll: true });
-}

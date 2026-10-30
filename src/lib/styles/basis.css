@@ -292,7 +292,8 @@ a.raakvlak.is-open {
 	text-decoration: underline 2px var(--rule-strong);
 }
 
-:focus-visible {
+:focus-visible,
+[data-ring]:focus {
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;
 }
@@ -306,8 +307,10 @@ a.raakvlak.is-open {
 	}
 }
 
-/* Where a list is jumped to, it shows the focus as any target would: no ring of its own. */
-[tabindex='-1']:focus:not(:focus-visible) {
+/* Where a list is jumped to, it shows the focus as any target would: no ring of its own.
+   A focus a key moved there (data-ring, Alt W) keeps its ring: Chrome counts a key with Alt as
+   no typing, so after a click it would show none (live-toets peek 5, B1). */
+[tabindex='-1']:focus:not(:focus-visible, [data-ring]) {
 	outline: none;
 }
 

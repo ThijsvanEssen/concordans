@@ -388,6 +388,7 @@
 								<!-- Each number reads in the Zijpaneel beside the stuk. -->
 								{#each w.artikelen as a, i (a.key)}{i > 0 ? ', ' : ' art. '}<BronLink
 										ref={{ collection: 'articles', key: a.key }}
+										class="raak-rij"
 										panel>{a.nummer}</BronLink
 									>{/each}
 							</li>

@@ -346,6 +346,7 @@
 					: ', '}{/if}<BronLink
 				ref={{ collection: 'articles', key: a.key }}
 				at={a.at}
+				class="raak-rij"
 				panel
 				stack={w.articles}>{a.label}</BronLink
 			>{/each}{` van ${w.determiner} `}{/if}<a
