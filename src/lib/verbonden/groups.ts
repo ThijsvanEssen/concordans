@@ -479,7 +479,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		{
 			// The AMvB's and regelingen whose Gelet op names the article (Thijs, 12 Oct).
 			id: 'based-on',
-			label: 'Gebaseerd op dit artikel',
+			label: 'Uitgewerkt in',
 			noun: 'regelingen',
 			load: 'article-delegated',
 			bakken: [{ relation: 'BASED_ON', direction: 'inbound', collection: 'instruments' }]

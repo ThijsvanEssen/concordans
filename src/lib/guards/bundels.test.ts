@@ -75,7 +75,7 @@ describe('a bundel’s own page, the place to work (bundels-ux 2b)', () => {
 	it('draws a group’s head without a count or a caret, its ways on in a ⋯', () => {
 		const g = groups();
 		expect(g).not.toMatch(/class="aantal"|<Caret\b/);
-		expect(g).toContain('Regelingen gebaseerd op');
+		expect(g).toContain('Uitgewerkt in');
 	});
 
 	it('gives every row one ⋯ (RijActies, shared with Bladeren) in place of four buttons', () => {
