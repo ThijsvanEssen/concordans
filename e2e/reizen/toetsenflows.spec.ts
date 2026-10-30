@@ -67,6 +67,37 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		const recent = await palette(page, '', 'Recent');
 		await expect(recent.rows.first()).toContainText('Netwerk');
 	},
+	// Aantal stappen by its word; 0 only with chosen bronnen.
+	F3: async (page) => {
+		await inNetwerk(page);
+		await doe(page, 's2', '2 stappen');
+		await expect.poll(() => params(page).get('diepte')).toBe('2');
+		await doe(page, 's0', 'Alleen gekozen');
+		await expect.poll(() => params(page).get('diepte')).toBe('0');
+		const { rows } = await palette(page, 'stappen');
+		await expect(rows).toHaveCount(4);
+		await page.keyboard.press('Escape');
+	},
+	// A soort of Tonen off and on by its word, and all back.
+	F4: async (page) => {
+		await inNetwerk(page);
+		await doe(page, '-stukken', 'Stukken verbergen');
+		await expect.poll(() => params(page).get('bronnen')).not.toContain('stukken');
+		await doe(page, '+stukken', 'Stukken tonen');
+		await expect.poll(() => params(page).get('bronnen')).toBeNull();
+		await doe(page, 'alleen wetten', 'Alleen wetten');
+		await expect.poll(() => params(page).get('bronnen')).toBe('wetten');
+		await doe(page, 'alles', 'Alle soorten en relaties');
+		await expect.poll(() => params(page).get('bronnen')).toBeNull();
+	},
+	// A relatie of Relatie, alone.
+	F14: async (page) => {
+		await inNetwerk(page);
+		await doe(page, 'alleen aanhaling', 'Alleen aanhaling');
+		await expect.poll(() => params(page).get('uit')).toBeTruthy();
+		await doe(page, 'alles', 'Alle soorten en relaties');
+		await expect.poll(() => params(page).get('uit')).toBeNull();
+	},
 	// Enter on a label of the keten reads its article in the Leespaneel, not on a page of its own.
 	W7: async (page) => {
 		await page.goto(`${GRONDWET}&weergave=keten`);

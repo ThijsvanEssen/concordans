@@ -280,6 +280,56 @@ export const COMMANDS: readonly Command[] = [
 		arg: 'bron',
 		description: 'Weergave Verband; de bron die je typt komt erbij',
 		flow: 'F2'
+	},
+	{
+		id: 'stappen',
+		words: ['stappen'],
+		short: ['s1', 's2', 's3'],
+		context: 'netwerk',
+		arg: 'stappen',
+		description: 'Aantal stappen: hoe ver het netwerk reikt',
+		flow: 'F3'
+	},
+	{
+		id: 'gekozen',
+		words: ['gekozen'],
+		short: ['s0'],
+		context: 'netwerk',
+		description: 'Alleen de gekozen bronnen en hun onderlinge verbindingen',
+		flow: 'F3'
+	},
+	{
+		id: 'tonen',
+		words: ['met'],
+		sign: '+',
+		context: 'netwerk',
+		arg: 'soort',
+		description: 'Een soort (Tonen) of relatie (Relatie) aan: +uitspraken',
+		flow: 'F4'
+	},
+	{
+		id: 'zonder',
+		words: ['zonder'],
+		sign: '-',
+		context: 'netwerk',
+		arg: 'soort',
+		description: 'Een soort of relatie uit: -stukken',
+		flow: 'F4'
+	},
+	{
+		id: 'alleen',
+		words: ['alleen'],
+		context: 'netwerk',
+		arg: 'soort',
+		description: 'Alleen deze soort of relatie',
+		flow: 'F14'
+	},
+	{
+		id: 'alles',
+		words: ['alles'],
+		context: 'netwerk',
+		description: 'Alle soorten en relaties weer aan',
+		flow: 'F4'
 	}
 ];
 

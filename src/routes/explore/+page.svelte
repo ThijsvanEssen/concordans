@@ -1973,7 +1973,18 @@
 					toView,
 					verbandWith,
 					toggle: selectedNode ? readAction : null,
-					toggleView
+					toggleView,
+					depth: view === 'verband' ? pairSteps : depth,
+					steps: netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3],
+					setDepth,
+					filter,
+					linesOff: new Set(filtersOff.lines),
+					setFilters: (f, lines) =>
+						setUrl({
+							...(f ? filterParams(f) : {}),
+							...(lines ? { [OFF]: offValue({ ...filtersOff, lines }) } : {})
+						}),
+					say: (text) => announce(text)
 				}))
 			),
 			answer('toggle-view', toggleView),
