@@ -335,7 +335,7 @@ describe('lookUp', () => {
 		await lookUp({ soort: 'artikel', wet: 'BWBR0005290', nummer: '7:612' });
 		await vi.waitFor(() =>
 			expect(fake.asked('/api/dossiers/{number}/documents')).toEqual([
-				{ path: { number: '34372' }, query: { limit: 100 } }
+				{ path: { number: '34372' }, query: { limit: 200 } }
 			])
 		);
 	});

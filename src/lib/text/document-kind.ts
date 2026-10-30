@@ -57,6 +57,7 @@ export function ownKind(kind: unknown): string | null {
 const KIND_ORDER: readonly RegExp[] = [
 	/^((nader )?gewijzigd )?voorstel van wet|^wetsvoorstel/i,
 	/memorie van toelichting/i,
+	/^advies afdeling advisering|^nader rapport/i,
 	/nota van wijziging/i,
 	/nota naar aanleiding van het verslag|memorie van antwoord/i,
 	/verslag/i,
