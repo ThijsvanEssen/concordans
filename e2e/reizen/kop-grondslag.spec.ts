@@ -25,6 +25,11 @@ test('an article of the head opens at its lid, marked, and shows a glance on hov
 			return { h: parseFloat(r.height) };
 		}))!;
 		expect(box.h).toBeGreaterThanOrEqual(44);
+		// The law named after them too (B48).
+		const law = kop.getByRole('link', { name: 'Cyberbeveiligingsbesluit', exact: true });
+		expect(
+			parseFloat(await law.evaluate((e) => getComputedStyle(e, '::after').height))
+		).toBeGreaterThanOrEqual(44);
 	} else {
 		await lid.hover();
 		await expect(page.getByRole('tooltip')).toContainText('opent in het paneel');

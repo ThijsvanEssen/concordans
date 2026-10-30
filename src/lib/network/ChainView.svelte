@@ -1086,8 +1086,7 @@
 		}
 		.list {
 			display: block;
-			/* Room under the last row for the floating Weergave button. */
-			padding: var(--s-2) var(--s-4) calc(var(--s-8) + var(--s-4));
+			padding: var(--s-2) var(--s-4) var(--s-8);
 		}
 	}
 	.list__layer {

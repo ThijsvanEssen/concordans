@@ -1406,9 +1406,11 @@
 	</ViewSheet>
 	<div class="graph-main">
 		<!-- On a phone Deel and the zoom in a bar of their own above the drawing: over it they
-		     covered its bronnen (UX-toets T10b). -->
+		     covered its bronnen (UX-toets T10b). Over a weergave of its own Weergave too, at the left:
+		     floating, it covered the first words of a row of the keten's list (B48). -->
 		<div class="control-bar">
 			{#if midden}
+				{@render sheetButton()}
 				{@render controls(
 					() => (middleScale = Math.min(3, middleScale * 1.25)),
 					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
@@ -1613,7 +1615,7 @@
 			/>
 		</div>
 	</div>
-	{@render sheetButton()}
+	{#if !midden}{@render sheetButton()}{/if}
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
@@ -1860,6 +1862,11 @@
 			position: static;
 			flex-direction: row;
 			gap: var(--s-2);
+		}
+		.control-bar > .sheet-button {
+			position: static;
+			margin-right: auto;
+			box-shadow: none;
 		}
 		.graph-canvas-wrap > .doek-balk,
 		.graph-canvas-wrap > .zoom,

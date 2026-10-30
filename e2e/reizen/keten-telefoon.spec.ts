@@ -29,12 +29,12 @@ test('The card of the others is a framed button of a finger’s height', async (
 	expect(border).not.toBe('rgba(0, 0, 0, 0)');
 });
 
-test('the last row of the list clears the floating Weergave button', async ({ page }) => {
+test('Weergave stands in the bar above the list, over none of its rows (B48)', async ({ page }) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
 	const list = page.locator('.chain .list');
 	await expect(list).toBeVisible();
-	await page.locator('.chain').evaluate((e) => (e.scrollTop = e.scrollHeight));
-	const last = (await list.locator('.list__row').last().boundingBox())!;
+	await page.locator('.chain').evaluate((e) => (e.scrollTop = e.scrollHeight / 2));
 	const weergave = (await page.getByRole('button', { name: 'Weergave' }).boundingBox())!;
-	expect(last.y + last.height).toBeLessThanOrEqual(weergave.y);
+	const top = (await page.locator('.chain').boundingBox())!.y;
+	expect(weergave.y + weergave.height).toBeLessThanOrEqual(top);
 });
