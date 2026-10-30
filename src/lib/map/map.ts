@@ -70,6 +70,9 @@ export type Map = {
 	notitie?: string | null;
 	/** The reader's note per group (a law, a dossier, a judgment), by the group's key. */
 	groepNotities?: GroepNotities;
+	/** The addresses of the verwijzingen in its notes the API gave, by their key
+	 *  (`artikel 98 sr`): a shared bundel asks nothing (./verwijzingen). */
+	verwijzingen?: Verwijzingen;
 	/** The day of the visit before to its own page: what is new came after it. */
 	since?: string | null;
 	/** The day of the last visit to its own page. */
@@ -111,6 +114,9 @@ export type Annotation = {
 /** Notes per group, by the group's key. */
 export type GroepNotities = Record<string, string>;
 
+/** Addresses by a verwijzing's key. */
+export type Verwijzingen = Record<string, string>;
+
 /** A map from a link: its name, items, order and note as the link gives them. */
 export type SharedMap = {
 	naam: string | null;
@@ -118,6 +124,7 @@ export type SharedMap = {
 	volgorde: Map['volgorde'];
 	notitie: string | null;
 	groepNotities: GroepNotities;
+	verwijzingen?: Verwijzingen;
 	aantekeningen: Annotation[];
 	/** Items and aantekeningen of the link in an older or broken form, left out: the page
 	 *  names how many. */

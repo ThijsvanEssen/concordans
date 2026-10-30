@@ -21,9 +21,11 @@ import {
 	type SharedMap,
 	type GroepNotities,
 	type Map,
+	type Verwijzingen,
 	type MapItem
 } from './map';
 import { keepStorage } from './persist';
+import { zoekVerwijzingen } from './verwijzingen';
 import { keptIn, removedFrom } from '$lib/bevestig/bevestig.svelte';
 import { bundlePageHref } from './page';
 import { isDay } from '$lib/text/datum';
@@ -58,6 +60,7 @@ const MAP_FIELDS = fieldsOf<Map>({
 	gewijzigd: true,
 	notitie: true,
 	groepNotities: true,
+	verwijzingen: true,
 	since: true,
 	seen: true,
 	aantekeningen: true
@@ -159,6 +162,7 @@ function lees(text = stored()): Stand | null {
 			gewijzigd: String(m.gewijzigd || nu()),
 			notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
 			groepNotities: textsOnly(m.groepNotities),
+			verwijzingen: textsOnly(m.verwijzingen),
 			since: day(m.since),
 			seen: day(m.seen)
 		}));
@@ -303,6 +307,27 @@ class Kaarten {
 		this.#change(id, (m) => ({
 			items: m.items.map((x) => (itemKey(x) === k ? { ...x, notitie: t || null } : x))
 		}));
+		this.#verwijs(t, id);
+	}
+	/** The addresses of the verwijzingen in a note kept, asked once where the text does not
+	 *  say them; kept with the bundel when they come. */
+	#verwijs(text: string, id: string) {
+		const bekend = this.#stand.mappen.find((m) => m.id === id)?.verwijzingen ?? {};
+		zoekVerwijzingen(text, bekend)
+			.then((nieuw) => this.#adressen(nieuw, id))
+			// No answer: the verwijzingen stay text, and are asked again with the next change.
+			.catch(() => {});
+	}
+	#adressen(nieuw: Verwijzingen, id: string) {
+		if (!Object.keys(nieuw).length) return;
+		this.#vers();
+		this.#stand = {
+			...this.#stand,
+			mappen: this.#stand.mappen.map((m) =>
+				m.id === id ? { ...m, verwijzingen: { ...m.verwijzingen, ...nieuw } } : m
+			)
+		};
+		this.#bewaar();
 	}
 	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1, id: string) {
 		this.#change(id, (m) => ({ items: verschuif(m.items, itemKey(i), richting, m.volgorde) }));
@@ -319,11 +344,13 @@ class Kaarten {
 			else delete rest[sleutel];
 			return { groepNotities: rest };
 		});
+		this.#verwijs(t, id);
 	}
 	/** The note on the map as a whole; empty is none. */
 	mapNotitie(text: string, id: string) {
 		const t = text.trim();
 		this.#change(id, () => ({ notitie: t || null }));
+		this.#verwijs(t, id);
 	}
 
 	/**
@@ -432,7 +459,8 @@ class Kaarten {
 			items: withItems(m.items, g.items),
 			aantekeningen: withAnnotations(m.aantekeningen ?? [], g.aantekeningen),
 			notitie: m.notitie || g.notitie,
-			groepNotities: { ...g.groepNotities, ...m.groepNotities }
+			groepNotities: { ...g.groepNotities, ...m.groepNotities },
+			verwijzingen: { ...g.verwijzingen, ...m.verwijzingen }
 		}));
 	}
 	/** In place of a map: its id kept, its name, items, order and notes the shared one's. */
@@ -444,7 +472,8 @@ class Kaarten {
 			aantekeningen: [...g.aantekeningen],
 			volgorde: g.volgorde,
 			notitie: g.notitie,
-			groepNotities: { ...g.groepNotities }
+			groepNotities: { ...g.groepNotities },
+			verwijzingen: { ...g.verwijzingen }
 		}));
 	}
 	/** As a bundel of its own, under its name, in its order, with its note; a shared Losse
@@ -457,6 +486,7 @@ class Kaarten {
 		if (g.notitie) this.mapNotitie(g.notitie, m.id);
 		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n, m.id);
 		if (g.aantekeningen.length) this.#change(m.id, () => ({ aantekeningen: [...g.aantekeningen] }));
+		this.#adressen(g.verwijzingen ?? {}, m.id);
 		return m;
 	}
 }

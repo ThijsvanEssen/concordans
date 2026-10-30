@@ -142,7 +142,7 @@ export type Segment = { soort: 'teken' | 'verwijzing' | 'tekst'; tekst: string }
 
 function segmentsOf(delen: Inline[]): Segment[] {
 	return delen.flatMap((d): Segment[] => {
-		if (d.soort === 'vet' || d.soort === 'cursief') {
+		if ('delen' in d) {
 			const t = d.soort === 'vet' ? '**' : '*';
 			return [{ soort: 'teken', tekst: t }, ...segmentsOf(d.delen), { soort: 'teken', tekst: t }];
 		}
@@ -203,8 +203,10 @@ const escape = (s: string) =>
 function htmlInline(delen: Inline[], pad: (v: Verwijzing) => string | null): string {
 	return delen
 		.map((d) => {
-			if (d.soort === 'vet') return `<strong>${htmlInline(d.delen, pad)}</strong>`;
-			if (d.soort === 'cursief') return `<em>${htmlInline(d.delen, pad)}</em>`;
+			if ('delen' in d) {
+				const tag = d.soort === 'vet' ? 'strong' : 'em';
+				return `<${tag}>${htmlInline(d.delen, pad)}</${tag}>`;
+			}
 			if (d.soort === 'tekst') return escape(d.tekst);
 			const href = d.soort === 'url' ? d.tekst : pad(d.verwijzing);
 			return href ? `<a href="${escape(href)}">${escape(d.tekst)}</a>` : escape(d.tekst);
