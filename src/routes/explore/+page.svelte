@@ -1984,7 +1984,24 @@
 							...(f ? filterParams(f) : {}),
 							...(lines ? { [OFF]: offValue({ ...filtersOff, lines }) } : {})
 						}),
-					say: (text) => announce(text)
+					say: (text) => announce(text),
+					chosen: netwerkActive
+						? composer.entries.map((e) => ({
+								id: e.id,
+								label: e.node ? chipNaam(e, e.node).label : e.label
+							}))
+						: [],
+					add: (t) => {
+						const id = focusOf(t.ref);
+						if (id) addIdToNetwerk(id, t.label || undefined);
+					},
+					remove: (id, label) => {
+						setNetwerk(withRemoved(netwerk, id));
+						meldNetwerk(`${label} weggehaald uit het netwerk.`, () =>
+							setNetwerk(withAdded(netwerk, id))
+						);
+					},
+					clear: wisAlles
 				}))
 			),
 			answer('toggle-view', toggleView),

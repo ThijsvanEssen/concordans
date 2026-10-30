@@ -1,11 +1,12 @@
 // What the werkplek does from ⌘K (lib/keys/doen.svelte.ts): its weergaven, its steps, Tonen and
-// Relatie. The page hands its state and its ways over (`Werkplek`); the rows
+// Relatie, its chosen bronnen. The page hands its state and its ways over (`Werkplek`); the rows
 // say in words what each does, and why where it cannot be done here.
 import type { Doer, DoRow, Target } from '$lib/keys/doen.svelte';
 import type { Parsed, Soort } from '$lib/keys/commands';
 import { FILTER_GROUPS, withFilterGroup, type VerbondenFilter } from '$lib/verbonden/filter';
 import { LINE_KINDS, type LineKind } from '$lib/graph/line-kind';
 import { count } from '$lib/text/words';
+import { focusOf } from '$lib/bron/href';
 
 export type ViewId = 'omgeving' | 'verband' | 'keten';
 
@@ -36,6 +37,11 @@ export type Werkplek = {
 	/** Both in one step of the address: either left as it is where null. */
 	setFilters: (filter: VerbondenFilter | null, linesOff: LineKind[] | null) => void;
 	say: (text: string) => void;
+	/** The bronnen chosen, by the name a link uses and the name the panel gives them. */
+	chosen: readonly { id: string; label: string }[];
+	add: (target: Target) => void;
+	remove: (id: string, label: string) => void;
+	clear: () => void;
 };
 
 const LABEL: Record<ViewId, string> = {
@@ -149,6 +155,46 @@ function soortRows(w: Werkplek, p: Parsed): DoRow[] {
 	];
 }
 
+/** `+ wwke`, `- wwke`, `wis`: the chosen bronnen. */
+function bronRows(w: Werkplek, p: Parsed, target: Target | null): DoRow[] {
+	const id = p.command.id;
+	if (id === 'wis')
+		return w.graph
+			? [
+					{
+						id: 'wis',
+						label: 'Alle gekozen bronnen weg',
+						...(w.chosen.length ? { run: w.clear } : { why: 'Er zijn geen gekozen bronnen' })
+					}
+				]
+			: [];
+	if (id === 'weghalen') {
+		const q = p.rest.toLowerCase();
+		const hits = w.chosen.filter((c) => c.label.toLowerCase().includes(q));
+		if (!w.chosen.length)
+			return [{ id: 'weg', label: 'Bron weghalen', why: 'Er zijn geen gekozen bronnen' }];
+		return hits.map((c) => ({
+			id: `weg-${c.id}`,
+			label: `Weghalen: ${c.label}`,
+			run: () => w.remove(c.id, c.label)
+		}));
+	}
+	if (!p.rest)
+		return [{ id: 'toevoegen', label: 'Bron toevoegen', why: 'typ de naam van een bron' }];
+	if (!target)
+		return [
+			{ id: 'toevoegen', label: `Toevoegen: ${p.rest}`, why: 'zoekt de bron…', pending: true }
+		];
+	const al = w.chosen.some((c) => c.id === focusOf(target.ref));
+	return [
+		{
+			id: 'toevoegen',
+			label: `Toevoegen: ${target.label}`,
+			...(al ? { why: 'al in het netwerk' } : { run: () => w.add(target) })
+		}
+	];
+}
+
 /** Before anything is typed: the weergaven with the one that stands, and the way of Alt L. */
 function hereRows(w: Werkplek): DoRow[] {
 	if (!w.hasBron) return [];
@@ -168,6 +214,7 @@ function hereRows(w: Werkplek): DoRow[] {
 			word: 's0 – s3',
 			fill: 'stappen '
 		});
+	rows.push({ id: 'plus', label: 'Bron toevoegen…', word: '+ naam', fill: '+ ' });
 	if (w.toggle)
 		rows.push({
 			id: 'toggle',
@@ -186,6 +233,8 @@ export function werkplekDoer(state: () => Werkplek): Doer {
 			const arg = p.command.arg;
 			if (arg === 'stappen' || p.command.id === 'gekozen') return stepRows(w, p);
 			if (arg === 'soort' || p.command.id === 'alles') return soortRows(w, p);
+			if (arg === 'gekozen' || p.command.id === 'wis' || p.command.id === 'toevoegen')
+				return bronRows(w, p, target);
 			return viewRows(w, p, target);
 		},
 		here: () => hereRows(state())

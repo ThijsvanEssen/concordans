@@ -6,6 +6,7 @@ import { expect, test } from '../support/test';
 import { COMMANDS } from '../../src/lib/keys/register';
 
 const GRONDWET = '/explore?netwerk=instruments/bwbr0001840';
+const AWB = 'instruments/bwbr0005537';
 const canvas = (page: Page) => page.getByRole('application', { name: /^Netwerk\./ });
 const focusIn = (page: Page, selector: string) =>
 	page.evaluate((s) => !!document.activeElement?.closest(s), selector);
@@ -97,6 +98,42 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await expect.poll(() => params(page).get('uit')).toBeTruthy();
 		await doe(page, 'alles', 'Alle soorten en relaties');
 		await expect.poll(() => params(page).get('uit')).toBeNull();
+	},
+	// A bron typed after +: it joins the netwerk, with the way back.
+	F5: async (page) => {
+		await inNetwerk(page);
+		await doe(page, '+ awb', 'Toevoegen: Algemene wet bestuursrecht');
+		await expect.poll(() => params(page).get('netwerk')).toContain(AWB);
+		await expect(page.locator('.bevestiging')).toContainText('toegevoegd');
+	},
+	// Out again by its name, or all at once.
+	F6: async (page) => {
+		await inNetwerk(page, `${GRONDWET},${AWB}`);
+		await doe(page, '- awb', 'Weghalen: Awb');
+		await expect.poll(() => params(page).get('netwerk')).not.toContain(AWB);
+		await doe(page, 'wis', 'Alle gekozen bronnen weg');
+		await expect.poll(() => params(page).get('netwerk')).toBeNull();
+	},
+	// The keten of a law from anywhere, in three keys.
+	F1: async (page) => {
+		await page.goto('/docs');
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		await doe(page, 'keten awb', 'Keten van Algemene wet bestuursrecht');
+		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?.*weergave=keten/);
+	},
+	// Verband with a law typed: it joins, and the weergave is Verband, in one step.
+	F7: async (page) => {
+		await inNetwerk(page);
+		await doe(page, 'verband awb', 'Verband met Algemene wet bestuursrecht');
+		await expect.poll(() => params(page).get('netwerk')).toContain(AWB);
+		await expect.poll(() => params(page).get('weergave')).toBe('verband');
+	},
+	// The netwerk of a bron typed, from anywhere.
+	F18: async (page) => {
+		await page.goto('/docs');
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+		await doe(page, 'nw awb', 'Netwerk van Algemene wet bestuursrecht');
+		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);
 	},
 	// Enter on a label of the keten reads its article in the Leespaneel, not on a page of its own.
 	W7: async (page) => {

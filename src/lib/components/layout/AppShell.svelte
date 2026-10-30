@@ -10,6 +10,9 @@
 	import { page } from '$app/state';
 	import { beforeNavigate } from '$app/navigation';
 	import { leave } from '$lib/keys/recent.svelte';
+	import { offer } from '$lib/keys/doen.svelte';
+	import { overalDoer } from '$lib/keys/doen-overal';
+	import { onMount } from 'svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { READ_PARAM, parseRead } from '$lib/reading/param';
 
@@ -29,6 +32,8 @@
 		}
 	}
 	provideSearchOpener(openSearch);
+	// ⌘K on every page: `keten awb`, `netwerk 36764` (doen-overal.ts).
+	onMount(() => offer(overalDoer));
 	// Recent in ⌘K: the place left, by the name its tab had.
 	// On the first page `from` can come without a url (eerste-verf.test.ts).
 	beforeNavigate(({ from }) => {

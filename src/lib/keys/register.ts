@@ -330,6 +330,40 @@ export const COMMANDS: readonly Command[] = [
 		context: 'netwerk',
 		description: 'Alle soorten en relaties weer aan',
 		flow: 'F4'
+	},
+	{
+		id: 'toevoegen',
+		words: ['toevoegen'],
+		sign: '+',
+		context: 'netwerk',
+		arg: 'bron',
+		description: 'De bron die je typt aan het netwerk toevoegen: + wwke',
+		flow: 'F5'
+	},
+	{
+		id: 'weghalen',
+		words: ['weghalen'],
+		sign: '-',
+		context: 'netwerk',
+		arg: 'gekozen',
+		description: 'Een gekozen bron uit het netwerk halen: - wwke',
+		flow: 'F6'
+	},
+	{
+		id: 'wis',
+		words: ['wis'],
+		context: 'netwerk',
+		description: 'Alle gekozen bronnen weg',
+		flow: 'F6'
+	},
+	{
+		id: 'netwerk',
+		words: ['netwerk'],
+		short: ['nw'],
+		context: 'overal',
+		arg: 'bron',
+		description: 'Het netwerk van de bron die je typt',
+		flow: 'F18'
 	}
 ];
 

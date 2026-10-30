@@ -10,7 +10,8 @@ describe('opening a bron', () => {
 			{ pad: 'lib/bron/href.ts', reden: 'the rule itself' },
 			{ pad: 'lib/verbonden/VerbondenTabel.svelte', reden: 'In het netwerk of an opened row' },
 			{ pad: 'lib/components/open/PostOpen.svelte', reden: 'In het netwerk of a bewindspersoon' },
-			{ pad: 'routes/explore/+page.svelte', reden: 'In het netwerk under Netwerk tonen, key L' }
+			{ pad: 'routes/explore/+page.svelte', reden: 'In het netwerk under Netwerk tonen, key L' },
+			{ pad: 'lib/keys/doen-overal.ts', reden: '⌘K: netwerk awb, keten awb' }
 		];
 		expect(overtreders((t) => /mode: 'graph'/.test(t), netwerkLinks)).toEqual([]);
 	});
