@@ -32,7 +32,7 @@ export const CONTEXTS: readonly { id: KeyContext; name: string }[] = [
 	{ id: 'overal', name: 'Overal' },
 	{ id: 'zoeken', name: 'Zoeken' },
 	{ id: 'lezer', name: 'In de lezer' },
-	{ id: 'paneel', name: 'Bij het Leespaneel' },
+	{ id: 'paneel', name: 'Bij het Zijpaneel' },
 	{ id: 'netwerk', name: 'In het netwerk' },
 	{ id: 'bladeren', name: 'Bij een lijst' },
 	{ id: 'vergelijken', name: 'Bij Vergelijken' }
@@ -142,7 +142,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'lezer',
 		keys: [{ code: 'BracketLeft', key: '[', cap: '[', alt: true }],
 		join: 'together',
-		description: 'Het vorige artikel van de wet; in het Leespaneel het vorige daar',
+		description: 'Het vorige artikel van de wet; in het Zijpaneel het vorige daar',
 		handler: 'article-prev'
 	},
 	{
@@ -151,7 +151,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'lezer',
 		keys: [{ code: 'BracketRight', key: ']', cap: ']', alt: true }],
 		join: 'together',
-		description: 'Het volgende artikel van de wet; in het Leespaneel het volgende daar',
+		description: 'Het volgende artikel van de wet; in het Zijpaneel het volgende daar',
 		handler: 'article-next'
 	},
 	{
@@ -160,7 +160,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'paneel',
 		keys: [letterKey('W', ALT)],
 		join: 'together',
-		description: 'Wisselen tussen de lezer en het Leespaneel',
+		description: 'Naar het zijpaneel en weer terug',
 		handler: 'panel-toggle'
 	},
 	{

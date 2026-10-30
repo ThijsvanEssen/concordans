@@ -146,7 +146,7 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await doe(page, 'nw awb', 'Netwerk van Algemene wet bestuursrecht');
 		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);
 	},
-	// Enter on a label of the keten reads its article in the Leespaneel, not on a page of its own.
+	// Enter on a label of the keten reads its article in the Zijpaneel, not on a page of its own.
 	W7: async (page) => {
 		await page.goto(`${GRONDWET}&weergave=keten`);
 		const label = page.locator('svg.drawing a.cite').first();

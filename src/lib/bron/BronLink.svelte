@@ -11,7 +11,7 @@
 	// A reference to a bron, the same everywhere. A click opens the bron in Tekst, its reader
 	// with Verbonden beside it (besluit 32, openHref); its network is one step further. In a text
 	// read (readHere: the text of an article, the head of a regulation) a reference to an article
-	// opens the Leespaneel beside it instead; the link stays the page, for ⌘-click and a crawler.
+	// opens the Zijpaneel beside it instead; the link stays the page, for ⌘-click and a crawler.
 	// Hover or focus shows its card after a moment (HoverCard): a glance (PreviewCard), or for a
 	// judgment at an r.o. (`at` rov-…) the overweging itself, a card to read (OverwegingKaart,
 	// Thijs 14 Oct). Escape closes either; a tap outside closes the card to read, a focus that
@@ -65,7 +65,7 @@
 		markering?: Markering | null;
 		/** Where the link goes, where not to the bron's own reader: beside the article. */
 		href?: string | null;
-		/** A click on a reference to an article opens the Leespaneel; by default where readHere. */
+		/** A click on a reference to an article opens the Zijpaneel; by default where readHere. */
 		panel?: boolean;
 		/** The articles it stands with (a law's in the head): the panel opens on all, at this one. */
 		stack?: readonly ReadRef[] | null;
@@ -83,7 +83,7 @@
 	const inPage = $derived(!!at && !!id && focusIn(page.url) === id);
 	const href = $derived(naar ?? (inPage ? `#${at}` : openHref(ref, { at })));
 
-	// The article the Leespaneel opens on: not a jump within the page, not a defined term's card.
+	// The article the Zijpaneel opens on: not a jump within the page, not a defined term's card.
 	const readRef = $derived(
 		panel && !naar && !inPage && !voorbeeld && id?.startsWith('articles/')
 			? { key: id.slice('articles/'.length), at: at ?? null }

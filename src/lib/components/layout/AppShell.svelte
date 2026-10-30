@@ -41,8 +41,8 @@
 		if (url) leave(url, document.title);
 	});
 
-	// The Leespaneel, in a chunk of its own: asked when the address names an article to read.
-	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Leespaneel');
+	// The Zijpaneel, in a chunk of its own: asked when the address names an article to read.
+	const readingPanel = new Lazy(() => import('$lib/reading/ReadingPanel.svelte'), 'Zijpaneel');
 	const reads = $derived(parseRead(page.url.searchParams.get(READ_PARAM)));
 	$effect(() => {
 		if (reads.length) readingPanel.load();
@@ -103,7 +103,7 @@
 		/* Under the tab bar of a phone. */
 		padding-bottom: var(--tabbar-h);
 	}
-	/* From 1800 px the Leespaneel stands in the flow: the page gives it its width at the right. */
+	/* From 1800 px the Zijpaneel stands in the flow: the page gives it its width at the right. */
 	@media (min-width: 1800px) {
 		.app-shell.has-panel .app-shell__content {
 			padding-right: var(--paneel-breed);

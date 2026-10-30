@@ -30,7 +30,7 @@ describe('the register of the keys', () => {
 			for (const c of t.keys) expect(c.alt || c.mod, `${t.id} ${c.cap}`).toBe(true);
 	});
 
-	it('gives no two keys of the page the same combination; Alt W goes to the Leespaneel', () => {
+	it('gives no two keys of the page the same combination; Alt W goes to the Zijpaneel', () => {
 		const seen = new Set<string>();
 		for (const t of SHORTCUTS.filter((x) => x.kind !== 'focus'))
 			for (const c of t.keys) {

@@ -1741,7 +1741,7 @@
 		if (!node || node.id.startsWith('synth:')) return;
 		const ref = refOf(node.collection, node.key, node.raw?.props);
 		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
-		// The Leespaneel beside it stays: it is not the bron that changes view (live-toets C3).
+		// The Zijpaneel beside it stays: it is not the bron that changes view (live-toets C3).
 		return navigateDone(keepRead(on ? openHref(ref, { at }) : werkplekHref(ref, at)), {
 			step: true
 		});
