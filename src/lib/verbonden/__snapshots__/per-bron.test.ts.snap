@@ -51,7 +51,7 @@ exports[`Verbonden of a 'artikel' > keeps its groups, rows, kern and export > gr
   {
     "count": "0",
     "id": "based-on",
-    "label": "Gebaseerd op dit artikel",
+    "label": "Uitgewerkt in",
     "plaats": "verbonden",
     "rows": [],
     "section": null,

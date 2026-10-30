@@ -211,7 +211,7 @@
 										onclick={() => {
 											close();
 											toggle(`law:${g.sleutel}`);
-										}}>Regelingen gebaseerd op</button
+										}}>Uitgewerkt in</button
 									>
 								{/if}
 								{#if map && !note}

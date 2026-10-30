@@ -1,6 +1,6 @@
 // The regulations an item of a map opens with, under its text (Thijs, 12 Oct: "verbonden
 // regelingen?"): for an article the regulations whose Gelet op names it (`.../delegated`,
-// as Verbonden's group Gebaseerd op dit artikel), for a law those whose Gelet op names one of
+// as Verbonden's group Uitgewerkt in), for a law those whose Gelet op names one of
 // its articles (`/instruments/{bwb}/delegated`, as Verbonden's Uitvoeringsregelingen), each
 // by its name, its kind, the day it took effect and, under a law, the articles it rests on.
 // The rows are Verbonden's own (regelingRow, wetRegelingRow): the same names, kinds and
@@ -57,7 +57,7 @@ const regelingVanRij = (r: Row, op: 'instruments' | 'articles'): Regeling => ({
 export async function opArtikel(bwb: string, nummer: string): Promise<Regelingen> {
 	const found = await getDelegated(bwb, nummer);
 	return {
-		titel: 'Gebaseerd op dit artikel',
+		titel: 'Uitgewerkt in',
 		regelingen: (found?.items ?? []).map((r) => regelingVanRij(regelingRow(r), 'articles'))
 	};
 }
