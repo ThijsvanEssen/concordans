@@ -8,6 +8,7 @@ import { naamVanId } from '$lib/bron/menselijk';
 import { NL } from '$lib/text/collator';
 import { citeOf, type ArticleCite } from '$lib/network/cite-label';
 import { kindName } from '$lib/text/law-kind';
+import { sinceDate } from '$lib/text/datum';
 import type { Relation } from '$lib/vocabulary';
 import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 import { filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
@@ -562,3 +563,24 @@ export function chain(
 	}
 	return { layers, rest, more, total: nodes.length, amending, missing };
 }
+
+/** The period of the strip, its bounds as days; either may be open. */
+type ChainPeriod = { van: string | null; tot: string | null } | null;
+
+/** Dated outside the period of the strip: drawn faint, not gone (Thijs, 23 Oct). */
+export const isOutside = (k: Pick<ChainNode, 'since'>, period: ChainPeriod): boolean =>
+	!!period &&
+	!!k.since &&
+	((!!period.van && k.since < period.van) || (!!period.tot && k.since > period.tot));
+
+/**
+ * Why a bron of the keten is drawn otherwise, as its glance says it (B53, Thijs: "Als je hovert
+ * is het dan duidelijk waarom ze een ander styling hebben?"): vervallen, or outside the period.
+ */
+export const whyFaint = (
+	k: Pick<ChainNode, 'since' | 'expired'>,
+	period: ChainPeriod
+): string[] => [
+	...(k.expired ? [`Vervallen ${sinceDate(k.expired)}`] : []),
+	...(isOutside(k, period) ? [`Buiten de periode, in werking ${sinceDate(k.since)}`] : [])
+];

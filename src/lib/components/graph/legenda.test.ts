@@ -57,3 +57,16 @@ describe('Relatie', () => {
 		expect(page).not.toMatch(/RELATION_WORDS/);
 	});
 });
+
+describe('the legend of a weergave of its own', () => {
+	const view = readFileSync(
+		join(process.cwd(), 'src/lib/components/graph/GraphView.svelte'),
+		'utf8'
+	);
+	it('stands under Weergave without a canvas drawn first (Keten opened at its address, B53)', () => {
+		expect(view).toMatch(/hasNodes=\{hasNodes \|\| !!externCounts\}/);
+	});
+	it('counts what the weergave draws alone, no Bijlagen of the canvas beside it', () => {
+		expect(view).toMatch(/canvasCounts=\{externCounts \?\? canvasCounts\}/);
+	});
+});

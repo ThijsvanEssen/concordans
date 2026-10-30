@@ -38,3 +38,49 @@ describe('the Legenda counts', () => {
 			expect(getByRole('button', { name: /^Toelichtingen/ }).textContent).toMatch(/10/);
 		});
 });
+
+// Keten keys its own drawing under Tonen and Relatie (B53): the bron it starts from in ink, and
+// in the keten of a law the frame of the articles on a line, whole or dashed.
+describe('the Legenda of Keten', () => {
+	const keten = (chain: { start: 'instruments' | null; labels: boolean } | null) => ({
+		...props(null),
+		canvasCounts: {
+			kinds: { wetten: 15, europees: 1 },
+			lines: { structural: 14, citation: 3 }
+		},
+		chain
+	});
+	const sleutel = (c: HTMLElement) =>
+		[...c.querySelectorAll('.sleutel--keten')].map((p) =>
+			p.textContent?.replace(/\s+/g, ' ').trim()
+		);
+
+	it('names the bron the keten starts from', () => {
+		const { container } = render(GraphSidebar, keten({ start: 'instruments', labels: true }));
+		expect(sleutel(container)).toContain('Gekozen bron');
+	});
+	it('keys the articles on a line: whole for a grondslag, dashed for a mention', () => {
+		const { container } = render(GraphSidebar, keten({ start: 'instruments', labels: true }));
+		expect(sleutel(container)).toEqual([
+			'Gekozen bron',
+			'art.Grondslag',
+			'art.Noemt, of grondslag onbekend'
+		]);
+		const frames = [...container.querySelectorAll('.artikel')];
+		expect(frames.map((f) => f.classList.contains('artikel--genoemd'))).toEqual([false, true]);
+	});
+	it('stands each frame under its own row of Relatie', () => {
+		const { container } = render(GraphSidebar, keten({ start: 'instruments', labels: true }));
+		const structural = container.querySelector('.artikel:not(.artikel--genoemd)')!;
+		const row = structural.closest('.sleutel')!.previousElementSibling;
+		expect(row?.textContent).toMatch(/Structureel/);
+	});
+	it('has no frames in a keten without articles on its lines (a judgment, a fractie)', () => {
+		const { container } = render(GraphSidebar, keten({ start: null, labels: false }));
+		expect(sleutel(container)).toEqual(['Gekozen bron']);
+	});
+	it('keys nothing of the keten in Omgeving', () => {
+		const { container } = render(GraphSidebar, keten(null));
+		expect(container.querySelector('.sleutel--keten')).toBeNull();
+	});
+});
