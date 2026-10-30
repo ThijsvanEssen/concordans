@@ -88,7 +88,8 @@ export function buildDossierHub(
 	const rows = (documents?.items ?? []).map((d) => ({
 		// A document of neither chamber (a Staatsblad) stands with the Tweede Kamer's.
 		chamber: d.chamber === 'EK' ? 'EK' : 'TK',
-		explanatory: d.is_explanatory === true,
+		kern: isKernstuk(d),
+		nummer: Number(d.number) || Infinity,
 		date: d.date ?? '',
 		row: {
 			ref: { collection: 'documents', key: d.key },
@@ -100,8 +101,12 @@ export function buildDossierHub(
 			props: { ...d }
 		} satisfies Row
 	}));
+	// The kernstukken stand first, by number (1 voorstel, 2 memorie, 3 advies), then the rest newest first.
 	rows.sort(
-		(a, b) => Number(b.explanatory) - Number(a.explanatory) || b.date.localeCompare(a.date)
+		(a, b) =>
+			Number(b.kern) - Number(a.kern) ||
+			(a.kern ? a.nummer - b.nummer : 0) ||
+			b.date.localeCompare(a.date)
 	);
 
 	const tweedeKamer = rows.filter((r) => r.chamber === 'TK').map((r) => r.row);
@@ -114,6 +119,16 @@ export function buildDossierHub(
 		eersteKamer,
 		...(total > rows.length ? { tkTotal: total - eersteKamer.length } : {})
 	};
+}
+
+/** The stukken that make a dossier what it is: the proposal, its toelichting, the advice and the
+ *  nota's van wijziging; read from `kind`, not from titles. */
+function isKernstuk(d: Schema<'DossierDocumentDTO'>): boolean {
+	return (
+		d.is_explanatory === true ||
+		d.kind_group === 'wetsvoorstel' ||
+		/^(advies afdeling|nader rapport|nota van wijziging)/i.test(d.kind ?? '')
+	);
 }
 
 /** `number` is the dossier's number (`37020-XV`, the node's `label`). */

@@ -133,4 +133,39 @@ describe('buildDossierHub: the wet from the dossier', () => {
 			buildDossierHub(null, { total: 2, items: documents.items.slice(0, 2) } as never).tkTotal
 		).toBeUndefined();
 	});
+
+	it('puts the kernstukken first, by number, before the newer stukken', () => {
+		const doc = (number: string, kind: string, kind_group: string, date: string, extra = {}) => ({
+			key: `k${number}${kind}`,
+			chamber: 'TK',
+			number,
+			kind,
+			kind_group,
+			date,
+			is_explanatory: false,
+			...extra
+		});
+		const hub = buildDossierHub(null, {
+			total: 5,
+			items: [
+				doc('60', 'Motie', 'motie', '2026-10-08'),
+				doc(
+					'3',
+					'Advies Afdeling advisering Raad van State en Nader rapport',
+					'overig',
+					'2026-01-03'
+				),
+				doc('2', 'Memorie van toelichting', 'overig', '2026-01-02', { is_explanatory: true }),
+				doc('7', 'Brief regering', 'brief', '2026-05-01'),
+				doc('1', 'Voorstel van wet', 'wetsvoorstel', '2026-01-01')
+			]
+		} as never);
+		expect(hub.tweedeKamer.map((r) => (r.props as { number: string }).number)).toEqual([
+			'1',
+			'2',
+			'3',
+			'60',
+			'7'
+		]);
+	});
 });

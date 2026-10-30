@@ -667,7 +667,7 @@
 		],
 		"path": "/dossiers/36764"
 	},
-	"/api/dossiers/{number}/documents {\"number\":\"36764\"} {\"limit\":100}": {
+	"/api/dossiers/{number}/documents {\"number\":\"36764\"} {\"limit\":200}": {
 		"total": 43,
 		"items": [
 			{
@@ -789,6 +789,10 @@
 				"path": "/kamerstukken/36764/D"
 			}
 		]
+	},
+	"/api/dossiers/{number}/documents {\"number\":\"36764\"} {\"limit\":100,\"offset\":4}": {
+		"total": 43,
+		"items": []
 	},
 	"/api/nodes/{collection}/{key} {\"collection\":\"dossiers\",\"key\":\"36764\"} {\"limit\":1}": {
 		"node": {
