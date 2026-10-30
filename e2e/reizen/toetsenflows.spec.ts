@@ -156,6 +156,11 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await page.keyboard.press('Enter');
 		await expect.poll(() => params(page).get('lees')).toBeTruthy();
 		await expect(page).toHaveURL(/^[^?]*\/explore\?/);
+		// Esc closes it and the keys go on from the label that opened it.
+		await expect(page.locator('#leespaneel .lp-titel')).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect.poll(() => params(page).get('lees')).toBeNull();
+		await expect(label).toBeFocused();
 	}
 };
 
@@ -164,6 +169,20 @@ for (const [flow, run] of Object.entries(FLOWS))
 		test.skip(touch, 'a phone has no keyboard');
 		await run(page);
 	});
+
+test('a row Doen is a result: no "Geen resultaten" beside it', async ({ page, touch }) => {
+	test.skip(touch, 'a phone has no keyboard');
+	await inNetwerk(page);
+	const answered = page.waitForResponse((r) => new URL(r.url()).searchParams.get('q') === 'kt');
+	const { chosen } = await palette(page, 'kt');
+	await expect(chosen).toContainText('Weergave Keten');
+	await answered;
+	// The answer drawn: two frames after it came in.
+	await page.evaluate(
+		() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+	);
+	await expect(page.getByRole('dialog').getByText(/Geen resultaten/)).toHaveCount(0);
+});
 
 test('every command of the register has its flow here', () => {
 	for (const c of COMMANDS) expect(Object.keys(FLOWS), c.id).toContain(c.flow);

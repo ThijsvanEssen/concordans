@@ -404,12 +404,6 @@
 	.artikel--genoemd {
 		border-style: dashed;
 	}
-	/* On a phone the keten is a list that says its grondslag in words: no drawing to key. */
-	@media (max-width: 768px) {
-		.sleutel--keten {
-			display: none;
-		}
-	}
 	/* A row of Tonen, and beside its count the whole of a kind cut off: one line, the link the
 	   last word of "67 van 10.406" (a link cannot stand inside the option's button). */
 	.rij {

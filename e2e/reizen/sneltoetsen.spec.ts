@@ -295,10 +295,17 @@ const GEVALLEN: Record<string, Geval> = {
 			await page.goto('/wetten/BWBR0001840/artikel/23');
 			await page.getByRole('link', { name: 'Vergelijken', exact: true }).click();
 			await expect(page).toHaveURL(/versies=/);
+			// The comparison drawn, its keys on: "N van M" between its arrows. Each key waits for
+			// the step it made, not for the address alone (a busy machine is late with both).
+			const stand = page.getByRole('group', { name: 'Wijzigingen' }).locator('.value-segment');
+			await expect(stand).toHaveText(/^\d+ van \d+$/);
 			const first = page.url();
+			const [n, m] = (await stand.innerText()).split(' van ').map(Number);
 			await page.keyboard.press('ArrowLeft');
+			await expect(stand).toHaveText(`${n - 1} van ${m}`);
 			await expect(page).not.toHaveURL(first);
 			await page.keyboard.press('ArrowRight');
+			await expect(stand).toHaveText(`${n} van ${m}`);
 			await expect(page).toHaveURL(first);
 		}
 	}

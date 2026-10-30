@@ -481,7 +481,8 @@
 						retry={() => search.retrySearch()}
 					/>
 				</div>
-			{:else if search.empty}
+			{:else if search.empty && doen.rows.length === 0}
+				<!-- A row Doen is a result too: no "Geen resultaten" beside it. -->
 				<div class="state stil" role="status">
 					<span>Geen resultaten voor "{search.q}"</span>
 					<span class="verder">
