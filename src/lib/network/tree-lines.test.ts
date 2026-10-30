@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { crossings } from '$lib/graph/lane-lines';
+import { sample } from '$lib/test/paths';
 import { easePath, treeLines, type Box, type Pt, type TreeNode } from './tree-lines';
 
 // A small keten: a person on top, layers of 104 px, rails 14,5 above each layer.
@@ -44,53 +46,7 @@ const edges = [
 const boxes = [...nodes].map(([id, n]) => boxOf(id, n));
 const lines = treeLines(nodes, edges, { rails, boxes });
 
-/** Points along a path of M, L, Q and C commands, 2 px apart at most. */
-function sample(d: string): Pt[] {
-	const t = d.match(/[MLQC]|-?\d+(?:\.\d+)?/g) ?? [];
-	const out: Pt[] = [];
-	let cur: Pt = { x: 0, y: 0 };
-	for (let i = 0; i < t.length; ) {
-		const c = t[i++];
-		const n = c === 'Q' ? 4 : c === 'C' ? 6 : 2;
-		const v = t.slice(i, i + n).map(Number);
-		i += n;
-		const end = { x: v[n - 2], y: v[n - 1] };
-		if (c === 'M') out.push(end);
-		else {
-			const steps = Math.max(2, Math.ceil(Math.hypot(end.x - cur.x, end.y - cur.y) / 2));
-			for (let s = 1; s <= steps; s++) {
-				const u = s / steps;
-				const a = 1 - u;
-				if (c === 'L') out.push({ x: cur.x + (end.x - cur.x) * u, y: cur.y + (end.y - cur.y) * u });
-				else if (c === 'Q')
-					out.push({
-						x: a * a * cur.x + 2 * a * u * v[0] + u * u * end.x,
-						y: a * a * cur.y + 2 * a * u * v[1] + u * u * end.y
-					});
-				else
-					out.push({
-						x: a ** 3 * cur.x + 3 * a * a * u * v[0] + 3 * a * u * u * v[2] + u ** 3 * end.x,
-						y: a ** 3 * cur.y + 3 * a * a * u * v[1] + 3 * a * u * u * v[3] + u ** 3 * end.y
-					});
-			}
-		}
-		cur = end;
-	}
-	return out;
-}
-
-const crosses = (a: Pt[], b: Pt[]) => {
-	const ccw = (p: Pt, q: Pt, r: Pt) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
-	for (let i = 1; i < a.length; i++)
-		for (let j = 1; j < b.length; j++) {
-			const d1 = ccw(a[i - 1], a[i], b[j - 1]);
-			const d2 = ccw(a[i - 1], a[i], b[j]);
-			const d3 = ccw(b[j - 1], b[j], a[i - 1]);
-			const d4 = ccw(b[j - 1], b[j], a[i]);
-			if (d1 * d2 < -1e-6 && d3 * d4 < -1e-6) return true;
-		}
-	return false;
-};
+const crosses = (a: Pt[], b: Pt[]) => crossings(a, b) > 0;
 
 describe('treeLines', () => {
 	it('draws every line as a bezier: no corner is a corner', () => {

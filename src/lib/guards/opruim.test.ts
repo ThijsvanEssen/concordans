@@ -143,6 +143,11 @@ const TEST_HOOKS: Uitzondering[] = [
 		reden: 'the layout of the lanes: read by their view from phase 4 on (PLAN-doek-banen)'
 	},
 	{
+		pad: 'lib/graph/lane-lines.ts',
+		regel: /^laneLines$/,
+		reden: 'the lines of the lanes: read by their view from phase 4 on (PLAN-doek-banen)'
+	},
+	{
 		pad: 'lib/api/records.ts',
 		regel: /^RECORDS_KEPT$/,
 		reden: 'a test hook: how many records the cache keeps, for the test that fills it'
