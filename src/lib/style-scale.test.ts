@@ -53,7 +53,7 @@ describe('the type and spacing scale', () => {
 // alike. Before this, 767 and 768 stood side by side, and at exactly 768 px (an upright iPad)
 // the list folded to one column while "Filter" stayed hidden.
 // 1280: Verbonden 400 beside the contents and the text, as mockup V1 (A190, Thijs 23 Oct).
-// 1800: the Leespaneel 560 px in the page's flow, beside the frame (studie-artikel-peek, DS).
+// 1800: the Zijpaneel 560 px in the page's flow, beside the frame (studie-artikel-peek, DS).
 const WIDTHS = [
 	520, 560, 620, 640, 768, 769, 780, 900, 1024, 1100, 1101, 1279, 1280, 1439, 1440, 1600, 1800
 ];

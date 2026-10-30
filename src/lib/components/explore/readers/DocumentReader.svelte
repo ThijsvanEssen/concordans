@@ -385,7 +385,7 @@
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}
 							<li>
 								<span class="wet">{wet?.shortTitle ?? wet?.title ?? w.bwbId}</span>
-								<!-- Each number reads in the Leespaneel beside the stuk. -->
+								<!-- Each number reads in the Zijpaneel beside the stuk. -->
 								{#each w.artikelen as a, i (a.key)}{i > 0 ? ', ' : ' art. '}<BronLink
 										ref={{ collection: 'articles', key: a.key }}
 										panel>{a.nummer}</BronLink

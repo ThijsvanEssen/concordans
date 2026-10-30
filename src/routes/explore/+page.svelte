@@ -12,6 +12,8 @@
 	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { answer } from '$lib/keys/dispatch.svelte';
+	import { offer, type Target } from '$lib/keys/doen.svelte';
+	import { focusView, keyView, stepBy, werkplekDoer, type ViewId, type Werkplek } from './doen';
 	import { announce } from '$lib/bevestig/bevestig.svelte';
 	import { scrollerOf } from '$lib/bron/landing';
 	import { get } from 'svelte/store';
@@ -380,7 +382,6 @@
 		{ waarde: 'verband', label: 'Verband' },
 		{ waarde: 'keten', label: 'Keten' }
 	] as const;
-	type ViewId = (typeof VIEWS)[number]['waarde'];
 	const view = $derived<ViewId>(
 		VIEWS.find((w) => w.waarde === params.get(VIEW_PARAM))?.waarde ?? 'omgeving'
 	);
@@ -1547,7 +1548,7 @@
 			: { ...e, label: naam };
 	}
 
-	function setNetwerk(n: Netwerk) {
+	function setNetwerk(n: Netwerk, also: ParamPatch = {}) {
 		// What the reader composes is kept for the next visit; a link's netwerk is not.
 		bewaarNetwerk(
 			n.ids.length > 0 ? new URLSearchParams(netwerkClean(netwerkParams(n))).toString() : null
@@ -1558,7 +1559,8 @@
 		setUrl(
 			{
 				...next,
-				[OFF]: offValue({ ...filtersOff, chosen: offOf(next.uit ?? null).chosen })
+				[OFF]: offValue({ ...filtersOff, chosen: offOf(next.uit ?? null).chosen }),
+				...also
 			},
 			{ push: shrinks }
 		);
@@ -1647,7 +1649,12 @@
 		}
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
 		if (!netwerkActive) composer.keepCanvas();
-		setNetwerk(withAdded(netwerk, id));
+		const verband = verbandAfterAdd && toevoegenOpen && view !== 'verband';
+		verbandAfterAdd = false;
+		setNetwerk(
+			withAdded(netwerk, id),
+			verband ? { [VIEW_PARAM]: 'verband', [MARK_PARAM]: null } : {}
+		);
 		meldNetwerk(`${naam ?? 'De bron'} toegevoegd aan het netwerk.`, () =>
 			setNetwerk(withRemoved(netwerk, id))
 		);
@@ -1734,7 +1741,7 @@
 		if (!node || node.id.startsWith('synth:')) return;
 		const ref = refOf(node.collection, node.key, node.raw?.props);
 		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
-		// The Leespaneel beside it stays: it is not the bron that changes view (live-toets C3).
+		// The Zijpaneel beside it stays: it is not the bron that changes view (live-toets C3).
 		return navigateDone(keepRead(on ? openHref(ref, { at }) : werkplekHref(ref, at)), {
 			step: true
 		});
@@ -1956,16 +1963,87 @@
 		}
 	}
 
-	// Alt L, Alt [ and Alt ] (the register, lib/keys): answered while this page
-	// stands; each answers false where it has nothing to do, so the key goes on.
+	/** The werkplek as ⌘K and its keys see it (doen.ts), read when asked. */
+	const werkplek = (): Werkplek => ({
+		graph: mode === 'graph',
+		view,
+		hasBron: !!(focus || pad || netwerkActive),
+		chainPossible: chainPossible || (mode !== 'graph' && withChain(selectedNode)),
+		verbandPossible,
+		toView,
+		verbandWith,
+		toggle: selectedNode ? readAction : null,
+		toggleView,
+		openAdd: () => ((verbandAfterAdd = true), (toevoegenOpen = true)),
+		depth: view === 'verband' ? pairSteps : depth,
+		steps: netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3],
+		setDepth,
+		filter,
+		linesOff: new Set(filtersOff.lines),
+		setFilters: (f, lines) =>
+			setUrl({
+				...(f ? filterParams(f) : {}),
+				...(lines ? { [OFF]: offValue({ ...filtersOff, lines }) } : {})
+			}),
+		say: (text) => announce(text),
+		chosen: netwerkActive
+			? composer.entries.map((e) => ({
+					id: e.id,
+					label: e.node ? chipNaam(e, e.node).label : e.label
+				}))
+			: [],
+		add: (t) => {
+			const id = focusOf(t.ref);
+			if (id) addIdToNetwerk(id, t.label || undefined);
+		},
+		remove: (id, label) => {
+			setNetwerk(withRemoved(netwerk, id));
+			meldNetwerk(`${label} weggehaald uit het netwerk.`, () => setNetwerk(withAdded(netwerk, id)));
+		},
+		clear: wisAlles
+	});
+	/** Alt V with one bron opened Bron toevoegen: the bron added there shows Verband (Thijs, 30 Oct). */
+	let verbandAfterAdd = $state(false);
+
+	// Alt L, Alt [ and Alt ], and the keys of the weergaven (the register, lib/keys): answered
+	// while this page stands; each answers false where it has nothing to do, so the key goes on.
 	onMount(() => {
 		const stop = [
+			offer(werkplekDoer(werkplek)),
 			answer('toggle-view', toggleView),
+			answer('view-omgeving', () => keyView(werkplek(), 'omgeving')),
+			answer('view-keten', () => keyView(werkplek(), 'keten')),
+			answer('view-verband', () => keyView(werkplek(), 'verband')),
+			answer('steps-less', () => stepBy(werkplek(), -1)),
+			answer('steps-more', () => stepBy(werkplek(), 1)),
 			answer('article-prev', () => stepArticle(-1)),
 			answer('article-next', () => stepArticle(1))
 		];
 		return () => stop.forEach((f) => f());
 	});
+
+	/** Weergave `w`, from the reader too; said in words, the focus on what it shows. */
+	function toView(w: ViewId) {
+		const node = selectedNode;
+		if (mode === 'graph') chooseView(w);
+		else if (node && !node.id.startsWith('synth:')) {
+			const href = werkplekHref(refOf(node.collection, node.key, node.raw?.props));
+			const to = withParams(new URL(href, page.url), { [VIEW_PARAM]: w === 'omgeving' ? null : w });
+			navigateDone(keepRead(to), { step: true }).catch((err) => report('Wisselen', err));
+		} else return;
+		announce(`Weergave ${VIEWS.find((v) => v.waarde === w)?.label}`);
+		focusView(w);
+	}
+
+	/** Verband with a bron typed in ⌘K: it joins the netwerk, in one step with the weergave. */
+	function verbandWith(target: Target) {
+		const id = focusOf(target.ref);
+		if (!id || mode !== 'graph') return;
+		if (!netwerkActive) composer.keepCanvas();
+		setNetwerk(withAdded(netwerk, id), { [VIEW_PARAM]: 'verband', [MARK_PARAM]: null });
+		announce(`Verband met ${target.label || 'de bron'}`);
+		focusView('verband');
+	}
 
 	/** The reader's place, kept while the netwerk is up: the bron and how far its text was scrolled. */
 	let readingPlace: { id: string; top: number } | null = null;
@@ -2457,6 +2535,8 @@
 								{#snippet canvasOverlay()}
 									{#if panelChunk.component}{@const PanelC = panelChunk.component}<PanelC
 											bind:searching={toevoegenOpen}
+											searchingWhy={verbandAfterAdd ? 'Verband vraagt een tweede bron' : null}
+											onSearchClose={() => (verbandAfterAdd = false)}
 											entries={netwerkActive
 												? composer.entries.map((e) =>
 														e.node

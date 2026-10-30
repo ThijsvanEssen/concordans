@@ -1,4 +1,4 @@
-// The article of the Leespaneel as it reads: its blocks (one per lid, onderdeel or aanhef, from
+// The article of the Zijpaneel as it reads: its blocks (one per lid, onderdeel or aanhef, from
 // /api/articles/{bwb}/{nr}/text), which of them the reference cites, and the names in its head.
 import type { Schema } from '$lib/api/types';
 import { anchorLabel } from '$lib/text/anchor';

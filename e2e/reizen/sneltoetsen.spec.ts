@@ -8,6 +8,7 @@ import { SHORTCUTS } from '../../src/lib/keys/register';
 
 const LEZER = '/wetten/BWBR0005289/artikel/6:162';
 const NETWERK = `${LEZER}?mode=netwerk`;
+const GRONDWET = '/explore?netwerk=instruments/bwbr0001840';
 const canvas = (page: Page) => page.getByRole('application', { name: /^Netwerk\./ });
 const lijst = (page: Page) => page.locator('.canvas-node-list a');
 const regel = (page: Page) => page.locator('.canvas-node-list + p[aria-live="polite"]');
@@ -184,18 +185,55 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(titels.first()).toBeFocused();
 		}
 	},
-	'row-page': {
+	'view-omgeving': {
 		run: async (page) => {
-			await page.goto(LEZER);
-			const titels = page.locator('.verbonden a.kind__title');
-			await expect(titels.nth(1)).toBeVisible({ timeout: 30_000 });
-			await page.locator('body').click({ position: { x: 1, y: 1 } });
-			await page.keyboard.press('Alt+KeyJ');
-			await expect(titels.first()).toBeFocused();
-			await page.keyboard.press('Alt+KeyJ');
-			await expect(titels.nth(1)).toBeFocused();
+			await page.goto(`${GRONDWET}&weergave=keten`);
+			await expect(page.locator('svg.drawing')).toBeAttached();
+			await page.keyboard.press('Alt+KeyO');
+			await expect(page).not.toHaveURL(/weergave=/);
+			await expect(canvas(page)).toBeFocused();
+		}
+	},
+	'view-keten': {
+		run: async (page) => {
+			// From the reader: the werkplek with the keten of the law.
+			await page.goto('/wetten/BWBR0001840');
+			await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 			await page.keyboard.press('Alt+KeyK');
-			await expect(titels.first()).toBeFocused();
+			await expect(page).toHaveURL(/mode=netwerk.*weergave=keten|weergave=keten.*mode=netwerk/);
+		}
+	},
+	'view-verband': {
+		run: async (page) => {
+			// One bron: Bron toevoegen opens for the second, and says why.
+			await page.goto(GRONDWET);
+			await expect(canvas(page)).toBeVisible();
+			await page.keyboard.press('Alt+KeyV');
+			const blad = page.getByRole('dialog', { name: 'Bron toevoegen' });
+			await expect(blad).toContainText('Verband vraagt een tweede bron');
+			await page.keyboard.press('Escape');
+			await page.goto(`${GRONDWET},instruments/bwbr0005537`);
+			await expect(canvas(page)).toBeVisible();
+			await page.keyboard.press('Alt+KeyV');
+			await expect(page).toHaveURL(/weergave=verband/);
+		}
+	},
+	'steps-more': {
+		run: async (page) => {
+			await page.goto(GRONDWET);
+			await expect(canvas(page)).toBeVisible();
+			await page.keyboard.press('Alt+Equal');
+			await expect(page).toHaveURL(/diepte=2/);
+		}
+	},
+	'steps-less': {
+		run: async (page) => {
+			await page.goto(`${GRONDWET}&diepte=1`);
+			await expect(canvas(page)).toBeVisible();
+			await page.keyboard.press('Alt+Minus');
+			await expect(page).toHaveURL(/diepte=0/);
+			await page.keyboard.press('Alt+Minus');
+			await expect(melding(page)).toContainText('Minder stappen kan niet');
 		}
 	},
 	'network-point': {

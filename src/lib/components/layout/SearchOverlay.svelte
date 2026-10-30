@@ -100,6 +100,12 @@
 		box-shadow: var(--shadow-modal);
 	}
 
+	/* Two columns from 1024 px: the list, and what the row the keys are on does. */
+	@media (min-width: 1024px) {
+		.modal {
+			width: 880px;
+		}
+	}
 	@media (max-width: 640px) {
 		.overlay {
 			padding-top: var(--s-4);

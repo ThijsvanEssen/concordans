@@ -3,7 +3,7 @@
 	// verbinding (hoe.ts) with the place a passage stands at, the passage, and the meta line. A
 	// click anywhere on it opens it in place, as its title does: a Kamerstuk its core text, a
 	// connected law the references between the two, any other bron its glance; an article opens
-	// in the Leespaneel, at the lid it names, in one click. The bron is one step further (Lees
+	// in the Zijpaneel, at the lid it names, in one click. The bron is one step further (Lees
 	// verder, Open artikel, or the title with a modifier).
 	import { page } from '$app/state';
 	import { textOf } from '$lib/text/words';
@@ -130,7 +130,7 @@
 			: null
 	);
 
-	// An article reads in the Leespaneel (read-row.ts); any other bron opens under the row.
+	// An article reads in the Zijpaneel (read-row.ts); any other bron opens under the row.
 	const readRef = $derived(readOfRow(row, inPlace));
 	const landed = $derived(!!readRef && isRead(readRef));
 	const openRow = () => (readRef ? openInPanel(readRef, { from: 'verbonden' }) : onToggle());
@@ -314,7 +314,7 @@
 	.row__main.is-open {
 		background: var(--paper-2);
 	}
-	/* Landed: the Leespaneel shows its article. */
+	/* Landed: the Zijpaneel shows its article. */
 	.row__main[data-read] {
 		background: var(--paper-2);
 		box-shadow: inset 3px 0 0 var(--ink);
