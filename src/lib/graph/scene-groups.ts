@@ -1,12 +1,12 @@
 // The folding rules of the scene (scene.ts): general wetten to their strip, four bronnen or more of
-// one soort with the same lines into one group, and what has no line to the chosen bronnen into
-// one count below the canvas. Each takes units and lines and returns new ones.
+// one soort with the same target (or one in the same column) into one group, and what has no line
+// to the chosen bronnen into one count below the canvas. Each takes units and lines and returns new ones.
 import { sortOf } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
 import { RELATIONS } from '$lib/vocabulary';
 import { filterGroupCount } from '$lib/verbonden/filter';
 import type { LineKind } from './line-kind';
-import type { Scene, SceneCounts, SceneLine, SceneUnit } from './scene';
+import type { Column, Scene, SceneCounts, SceneLine, SceneUnit } from './scene';
 import type { GraphNode } from './types';
 
 /** Bronnen of one soort with the same lines are one group from this many on. */
@@ -67,13 +67,15 @@ function closer(a: SceneLine, b: SceneLine, otherA: SceneUnit, otherB: SceneUnit
 	);
 }
 
+/** A unit's target, its column, and the row and lijnsoort its line ends in (`exact`). */
+type Target = { id: string; column: Column; exact: string };
+
 /**
  * The target of each unit: the unit at the other end of its main line (to a chosen unit first,
- * then the heaviest relation), with the row and the lijnsoort it ends in. A line between two makers
- * (a seat in a fractie) is no target: four Kamerleden who signed the moties of one dossier are one
- * group, whatever their fractie.
+ * then the heaviest relation). A line between two makers (a seat in a fractie) is no target: four
+ * Kamerleden who signed the moties of one dossier are one group, whatever their fractie.
  */
-function targetsOf(units: readonly SceneUnit[], lines: readonly SceneLine[]): Map<string, string> {
+function targetsOf(units: readonly SceneUnit[], lines: readonly SceneLine[]): Map<string, Target> {
 	const byId = new Map(units.map((u) => [u.id, u]));
 	const best = new Map<string, { line: SceneLine; other: SceneUnit; row: string | null }>();
 	for (const l of lines) {
@@ -88,7 +90,12 @@ function targetsOf(units: readonly SceneUnit[], lines: readonly SceneLine[]): Ma
 				best.set(self, { line: l, other: o, row });
 		}
 	}
-	return new Map([...best].map(([id, b]) => [id, `${b.other.id}#${b.row ?? ''}#${b.line.kind}`]));
+	return new Map(
+		[...best].map(([id, { other, row, line }]) => [
+			id,
+			{ id: other.id, column: other.column, exact: `${other.id}#${row ?? ''}#${line.kind}` }
+		])
+	);
 }
 
 /** An uitspraak's instantie as a group counts it: rb, hof, HR, RvS, CRvB, CBb. */
@@ -133,10 +140,35 @@ function groupUnit(parts: readonly SceneUnit[], byId: ReadonlyMap<string, GraphN
 	};
 }
 
+/** Units by key, the ones with a key only; a chosen bron and a hull never fold. */
+function byKeyOf(
+	units: readonly SceneUnit[],
+	keyOf: (u: SceneUnit) => string | null
+): Map<string, SceneUnit[]> {
+	const out = new Map<string, SceneUnit[]>();
+	for (const u of units) {
+		const key = u.shape === 'node' && !u.focus ? keyOf(u) : null;
+		if (key !== null) out.set(key, [...(out.get(key) ?? []), u]);
+	}
+	return out;
+}
+
+/** The target most of a group's parts have; the first by id on a tie. */
+function commonTarget(parts: readonly SceneUnit[], targets: ReadonlyMap<string, Target>): string {
+	const counts = new Map<string, number>();
+	for (const u of parts) {
+		const id = targets.get(u.id)!.id;
+		counts.set(id, (counts.get(id) ?? 0) + 1);
+	}
+	return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+}
+
 /**
  * Bronnen of one soort, lane and strip with the same target (`targetsOf`), GROUP_MIN or more, as
- * one group, with one line: to that target. What else its bronnen have a line with only counts
- * (`elsewhere`). A chosen bron and a hull never fold.
+ * one group. Of what is left, those of one soort, lane and strip with a target in the same column
+ * fold too. A group keeps one line: to the target most of its bronnen have. What else its bronnen
+ * have a line with only counts (`elsewhere`). In Wie maakt a name says who did what: there only
+ * makers of one Kamer with the same target, row and lijnsoort fold.
  */
 export function foldGroups(
 	units: readonly SceneUnit[],
@@ -144,24 +176,28 @@ export function foldGroups(
 	nodes: readonly GraphNode[]
 ): { units: SceneUnit[]; unitOf: Map<string, string>; targetOf: Map<string, string> } {
 	const targets = targetsOf(units, lines);
-	const byKey = new Map<string, SceneUnit[]>();
-	for (const u of units) {
-		const target = targets.get(u.id);
-		if (u.shape !== 'node' || u.focus || !target) continue;
-		const key = [u.sort, u.lane ?? '', u.general, target].join('|');
-		byKey.set(key, [...(byKey.get(key) ?? []), u]);
-	}
+	const base = (u: SceneUnit) => [u.sort, u.lane ?? '', u.chamber ?? '', u.general].join('|');
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const unitOf = new Map<string, string>();
 	const targetOf = new Map<string, string>();
 	const groups: SceneUnit[] = [];
-	for (const parts of byKey.values()) {
-		if (parts.length < GROUP_MIN) continue;
-		const group = groupUnit(parts, byId);
-		groups.push(group);
-		targetOf.set(group.id, (targets.get(parts[0].id) ?? '').split('#')[0]);
-		for (const u of parts) unitOf.set(u.id, group.id);
-	}
+	const fold = (keyOf: (t: Target, maker: boolean) => string | null) => {
+		const free = units.filter((u) => !unitOf.has(u.id));
+		const byKey = byKeyOf(free, (u) => {
+			const t = targets.get(u.id);
+			const key = t && keyOf(t, u.column === 'makers');
+			return key ? `${base(u)}|${key}` : null;
+		});
+		for (const parts of byKey.values()) {
+			if (parts.length < GROUP_MIN) continue;
+			const group = groupUnit(parts, byId);
+			groups.push(group);
+			targetOf.set(group.id, commonTarget(parts, targets));
+			for (const u of parts) unitOf.set(u.id, group.id);
+		}
+	};
+	fold((t, maker) => (maker ? t.exact : t.id));
+	fold((t, maker) => (maker ? null : t.column));
 	return { units: [...units.filter((u) => !unitOf.has(u.id)), ...groups], unitOf, targetOf };
 }
 

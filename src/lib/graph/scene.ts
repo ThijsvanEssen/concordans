@@ -4,7 +4,8 @@
 // it and the lines (lane-lines.ts) route it. The rules, from the design of round 3:
 // - a dossier holds its bronnen in rows in the order of the procedure, a wet its articles per
 //   hoofdstuk (scene-hulls.ts); who makes stands in three lanes by their function (roles.ts);
-// - four bronnen or more of one soort with the same lines are one group (scene-groups.ts);
+// - four bronnen or more of one soort with the same target, or a target in the same column, are
+//   one group (scene-groups.ts);
 // - a general wet (no change or structural line, more than twenty bronnen only through her) and
 //   what hangs on her alone go to the strip Algemene wetten;
 // - one line per pair of units: the heaviest relation, with the number of edges and the row it

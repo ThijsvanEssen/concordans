@@ -69,11 +69,11 @@ describe('the scene of the five examples (round 3)', () => {
 		});
 		expect(groups(s)).toEqual([
 			'laws 4 europees en internationaal',
-			'laws 7 wetten',
+			'laws 9 wetten',
 			'makers 16 fracties',
 			'makers 4 kamerleden',
 			'papers 16 stemmingen',
-			'papers 6 stukken'
+			'papers 8 stukken'
 		]);
 		// Two commissies VWS: twice in the data (a gap for lawgraph).
 		expect(s.units.filter((u) => u.sort === 'commissies').map((u) => u.label)).toEqual([
@@ -110,7 +110,7 @@ describe('the scene of the five examples (round 3)', () => {
 			'Hoofdstuk 12'
 		]);
 		expect(law?.rows.reduce((n, r) => n + r.members.length, 0)).toBe(74);
-		expect(groups(s)).toEqual(['papers 53 stukken']);
+		expect(groups(s)).toEqual(['papers 61 stukken']);
 	});
 
 	it('v1: the uitspraken by instantie, the Awb in the strip Algemene wetten', () => {
@@ -121,19 +121,39 @@ describe('the scene of the five examples (round 3)', () => {
 			label: 'Algemene wet bestuursrecht',
 			general: true
 		});
-		// Round 3 drew the Wkkgz in Wetten, with "30 uitspraken, rb 16, HR 7, RvS 4, hof 3". By the
-		// rule of the plan she is general too (no change or structural line to a chosen bron, 30
-		// uitspraken only through her): the 18 that cite her alone go with her to the strip.
+		// The rule decides, not the name: the Wkkgz has no change or structural line to a chosen bron
+		// and 30 uitspraken only through her. The 18 that cite her alone go with her to the strip.
 		expect(unit(s, (u) => u.id === 'instruments/bwbr0037173')?.general).toBe(true);
 		const rulings = s.units.filter((u) => u.sort === 'uitspraken' && u.shape === 'group');
 		expect(rulings.map((u) => [u.general, u.breakdown]).sort()).toEqual([
 			[false, 'HR 6, rb 3, RvS 2, hof 1'],
+			[false, 'RvS 3, rb 2, HR 1'],
 			[true, 'rb 13, hof 2, RvS 2, HR 1'],
 			[true, 'rb 3, HR 1']
 		]);
 		// Changed by a chosen stuk: never general.
 		expect(unit(s, (u) => u.id === 'instruments/bwbr0023864')?.general).toBe(false);
 		expect(s.units.filter((u) => u.shape === 'hull' && u.column === 'papers').length).toBe(5);
+	});
+
+	it('v1: loose bronnen fold by the column of their target too', () => {
+		const s = scene('v1');
+		// Round 3 drew ±45 units; by one target alone it was 98.
+		expect(s.units.length).toBe(48);
+		const loose = s.units.filter((u) => u.shape === 'node' && u.column !== 'makers');
+		expect(loose.map((u) => u.label).sort()).toEqual([
+			'32402, Wet kwaliteit, klachten en geschillen zorg',
+			'33684, Jeugdwet',
+			'Bevorderen contracteren, nr. 941',
+			'Richtlijn 1999/93/EG',
+			'Verordening (EU) nr. 910/2014',
+			'Verslag van een hoorzitting / rondetafelgesprek, nr. 180',
+			'Wet kwaliteit, klachten en geschillen zorg'
+		]);
+		// Publicaties to several wetten: one group, its line to the wet most of them have.
+		const stb = unit(s, (u) => u.label === '15 publicaties')!;
+		expect(s.lines.filter((l) => l.from === stb.id || l.to === stb.id).length).toBe(1);
+		expect(stb.elsewhere).toBeGreaterThan(0);
 	});
 
 	it('v2: the Cyberbeveiligingswet in its rows, four dossiers only through the procedure', () => {
