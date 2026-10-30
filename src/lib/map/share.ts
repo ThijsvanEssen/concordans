@@ -1,8 +1,8 @@
 // The link of a map: the map in the fragment (/bundels#m=…), as JSON deflated into
 // base64url. A fragment never leaves the browser, so its items and notes reach no server,
 // no /render and no log; only who has the link reads it.
-import type { Annotation, SharedMap, GroepNotities, Map, MapItem, Verwijzingen } from './map';
-import { verwijzingenIn } from './verwijzingen';
+import type { Annotation, SharedMap, GroepNotities, Map, MapItem, References } from './map';
+import { referencesIn } from './references';
 import { readAnnotations, readItem } from './map';
 
 /** The fragment's key: `#m=…`. */
@@ -22,7 +22,7 @@ type Payload = {
 	volgorde?: 'eigen';
 	notitie?: string;
 	groepNotities?: GroepNotities;
-	verwijzingen?: Verwijzingen;
+	references?: References;
 	items: MapItem[];
 	aantekeningen?: Annotation[];
 };
@@ -30,7 +30,7 @@ type Payload = {
 /** What of a bundel a link or a file holds. */
 type Shared = Pick<
 	Map,
-	'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities' | 'verwijzingen' | 'aantekeningen'
+	'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities' | 'references' | 'aantekeningen'
 >;
 
 async function pipe(bytes: Uint8Array, stream: CompressionStream | DecompressionStream) {
@@ -62,9 +62,9 @@ function groupNotes(notes: unknown, items: readonly MapItem[]): GroepNotities {
 }
 
 /** The addresses that are text, of the verwijzingen the notes still hold. */
-function addresses(value: unknown, notes: readonly (string | null | undefined)[]): Verwijzingen {
+function addresses(value: unknown, notes: readonly (string | null | undefined)[]): References {
 	if (!value || typeof value !== 'object') return {};
-	const used = new Set(notes.flatMap((n) => (n ? verwijzingenIn(n).map((v) => v.sleutel) : [])));
+	const used = new Set(notes.flatMap((n) => (n ? referencesIn(n).map((r) => r.key) : [])));
 	return Object.fromEntries(
 		Object.entries(value).filter(
 			([k, v]) => used.has(k) && typeof v === 'string' && v.startsWith('/')
@@ -87,8 +87,8 @@ export function payloadOf(m: Shared): Payload {
 	if (m.notitie?.trim()) payload.notitie = m.notitie.trim();
 	const notes = groupNotes(m.groepNotities, m.items);
 	if (Object.keys(notes).length) payload.groepNotities = notes;
-	const kept = addresses(m.verwijzingen, notesOf({ ...m, groepNotities: notes }));
-	if (Object.keys(kept).length) payload.verwijzingen = kept;
+	const kept = addresses(m.references, notesOf({ ...m, groepNotities: notes }));
+	if (Object.keys(kept).length) payload.references = kept;
 	if (m.aantekeningen?.length) payload.aantekeningen = [...m.aantekeningen];
 	return payload;
 }
@@ -112,7 +112,7 @@ export function readPayload(value: unknown): SharedMap | null {
 		volgorde: payload.volgorde === 'eigen' ? 'eigen' : 'groep',
 		notitie,
 		groepNotities,
-		verwijzingen: addresses(payload.verwijzingen, notesOf({ notitie, groepNotities, items })),
+		references: addresses(payload.references, notesOf({ notitie, groepNotities, items })),
 		aantekeningen: a.aantekeningen,
 		skipped: payload.items.length - items.length + a.rest.length
 	};

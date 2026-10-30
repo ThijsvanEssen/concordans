@@ -21,11 +21,12 @@ import {
 	type SharedMap,
 	type GroepNotities,
 	type Map,
-	type Verwijzingen,
+	type References,
 	type MapItem
 } from './map';
 import { keepStorage } from './persist';
-import { zoekVerwijzingen } from './verwijzingen';
+import { lookUpReferences } from './references';
+import { ignore } from '$lib/api/errors';
 import { keptIn, removedFrom } from '$lib/bevestig/bevestig.svelte';
 import { bundlePageHref } from './page';
 import { isDay } from '$lib/text/datum';
@@ -60,7 +61,7 @@ const MAP_FIELDS = fieldsOf<Map>({
 	gewijzigd: true,
 	notitie: true,
 	groepNotities: true,
-	verwijzingen: true,
+	references: true,
 	since: true,
 	seen: true,
 	aantekeningen: true
@@ -104,7 +105,7 @@ const textsOnly = (v: unknown): GroepNotities =>
 /** The items and aantekeningen of a bundel this version cannot read, by the bundel's id, as
  *  they were kept: written back with it unchanged, never thrown away (a newer version may
  *  read them). */
-let onleesbaar: Record<string, { items: unknown[]; aantekeningen: unknown[] }> = {};
+let unreadable: Record<string, { items: unknown[]; aantekeningen: unknown[] }> = {};
 let gemeld = false;
 
 /** A bundel as kept in this browser, read: what is whole, the rest kept aside for the write,
@@ -119,7 +120,7 @@ function heleMap(id: string, m: Record<string, unknown>): Pick<Map, 'items' | 'a
 	}
 	const a = readAnnotations(m.aantekeningen, items);
 	if (rest.length || a.rest.length) {
-		onleesbaar[id] = { items: rest, aantekeningen: a.rest };
+		unreadable[id] = { items: rest, aantekeningen: a.rest };
 		if (!gemeld)
 			console.warn(
 				`Bundels: ${formatCount(rest.length + a.rest.length)} item(s) of aantekening(en) in deze browser niet te lezen, wel bewaard.`
@@ -146,11 +147,11 @@ function stored(): string | null {
 }
 
 /** The bundels as this browser keeps them now; null where it keeps none it can read. */
-function lees(text = stored()): Stand | null {
+function readKept(text = stored()): Stand | null {
 	try {
 		const raw = JSON.parse(text ?? 'null');
 		if (!raw || !Array.isArray(raw.mappen) || !raw.mappen.length) return null;
-		onleesbaar = {};
+		unreadable = {};
 		// The first is Mijn markeringen by its place, whatever name it was kept under; a field
 		// of a later version as it was kept.
 		const mappen: Map[] = raw.mappen.map((m: Map, n: number) => ({
@@ -162,7 +163,7 @@ function lees(text = stored()): Stand | null {
 			gewijzigd: String(m.gewijzigd || nu()),
 			notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null,
 			groepNotities: textsOnly(m.groepNotities),
-			verwijzingen: textsOnly(m.verwijzingen),
+			references: textsOnly(m.references),
 			since: day(m.since),
 			seen: day(m.seen)
 		}));
@@ -177,7 +178,7 @@ class Kaarten {
 	/** What this tab last read or wrote: a read of the same leaves its copy as it is. */
 	#lastText = typeof window === 'undefined' ? null : stored();
 	#stand = $state<Stand>(
-		(typeof window === 'undefined' ? null : lees(this.#lastText)) ?? firstState()
+		(typeof window === 'undefined' ? null : readKept(this.#lastText)) ?? firstState()
 	);
 	constructor() {
 		// What another tab kept comes in at once (the browser's storage event).
@@ -195,7 +196,7 @@ class Kaarten {
 		// does not run again on its own visit.
 		if (text === this.#lastText) return;
 		this.#lastText = text;
-		const kept = lees(text);
+		const kept = readKept(text);
 		if (kept) this.#stand = kept;
 	}
 	mappen = $derived(this.#stand.mappen);
@@ -216,7 +217,7 @@ class Kaarten {
 
 	#bewaar() {
 		const mappen = this.#stand.mappen.map(({ aantekeningen, ...m }) => {
-			const rest = onleesbaar[m.id];
+			const rest = unreadable[m.id];
 			const all = [...(aantekeningen ?? []), ...(rest?.aantekeningen ?? [])];
 			return {
 				...m,
@@ -289,7 +290,7 @@ class Kaarten {
 	weg(i: Pick<MapItem, 'id' | 'at'>, id: string) {
 		const k = itemKey(i);
 		this.#change(id, (m) => {
-			const rest = onleesbaar[id];
+			const rest = unreadable[id];
 			if (rest) rest.aantekeningen = rest.aantekeningen.filter((a) => !annotationOn(a, k));
 			return {
 				items: m.items.filter((x) => itemKey(x) !== k),
@@ -307,24 +308,24 @@ class Kaarten {
 		this.#change(id, (m) => ({
 			items: m.items.map((x) => (itemKey(x) === k ? { ...x, notitie: t || null } : x))
 		}));
-		this.#verwijs(t, id);
+		this.#lookUp(t, id);
 	}
 	/** The addresses of the verwijzingen in a note kept, asked once where the text does not
 	 *  say them; kept with the bundel when they come. */
-	#verwijs(text: string, id: string) {
-		const bekend = this.#stand.mappen.find((m) => m.id === id)?.verwijzingen ?? {};
-		zoekVerwijzingen(text, bekend)
-			.then((nieuw) => this.#adressen(nieuw, id))
-			// No answer: the verwijzingen stay text, and are asked again with the next change.
-			.catch(() => {});
+	#lookUp(text: string, id: string) {
+		const known = this.#stand.mappen.find((m) => m.id === id)?.references ?? {};
+		// No answer: the verwijzingen stay text, and are asked again with the next change.
+		lookUpReferences(text, known)
+			.then((found) => this.#addReferences(found, id))
+			.catch(ignore('references'));
 	}
-	#adressen(nieuw: Verwijzingen, id: string) {
-		if (!Object.keys(nieuw).length) return;
+	#addReferences(found: References, id: string) {
+		if (!Object.keys(found).length) return;
 		this.#vers();
 		this.#stand = {
 			...this.#stand,
 			mappen: this.#stand.mappen.map((m) =>
-				m.id === id ? { ...m, verwijzingen: { ...m.verwijzingen, ...nieuw } } : m
+				m.id === id ? { ...m, references: { ...m.references, ...found } } : m
 			)
 		};
 		this.#bewaar();
@@ -344,13 +345,13 @@ class Kaarten {
 			else delete rest[sleutel];
 			return { groepNotities: rest };
 		});
-		this.#verwijs(t, id);
+		this.#lookUp(t, id);
 	}
 	/** The note on the map as a whole; empty is none. */
 	mapNotitie(text: string, id: string) {
 		const t = text.trim();
 		this.#change(id, () => ({ notitie: t || null }));
-		this.#verwijs(t, id);
+		this.#lookUp(t, id);
 	}
 
 	/**
@@ -460,7 +461,7 @@ class Kaarten {
 			aantekeningen: withAnnotations(m.aantekeningen ?? [], g.aantekeningen),
 			notitie: m.notitie || g.notitie,
 			groepNotities: { ...g.groepNotities, ...m.groepNotities },
-			verwijzingen: { ...g.verwijzingen, ...m.verwijzingen }
+			references: { ...g.references, ...m.references }
 		}));
 	}
 	/** In place of a map: its id kept, its name, items, order and notes the shared one's. */
@@ -473,7 +474,7 @@ class Kaarten {
 			volgorde: g.volgorde,
 			notitie: g.notitie,
 			groepNotities: { ...g.groepNotities },
-			verwijzingen: { ...g.verwijzingen }
+			references: { ...g.references }
 		}));
 	}
 	/** As a bundel of its own, under its name, in its order, with its note; a shared Losse
@@ -486,7 +487,7 @@ class Kaarten {
 		if (g.notitie) this.mapNotitie(g.notitie, m.id);
 		for (const [k, n] of Object.entries(g.groepNotities)) this.groepNotitie(k, n, m.id);
 		if (g.aantekeningen.length) this.#change(m.id, () => ({ aantekeningen: [...g.aantekeningen] }));
-		this.#adressen(g.verwijzingen ?? {}, m.id);
+		this.#addReferences(g.references ?? {}, m.id);
 		return m;
 	}
 }

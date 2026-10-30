@@ -42,26 +42,26 @@ describe('the link of a map', () => {
 			volgorde: 'eigen',
 			notitie: map.notitie,
 			groepNotities: { 'wet:bwbr0005289': 'De onrechtmatige daad' },
-			verwijzingen: {},
+			references: {},
 			aantekeningen: [],
 			skipped: 0
 		});
 	});
 
-	it('carries the addresses of the verwijzingen its notes still hold, so it asks nothing', async () => {
+	it('carries the addresses of the references its notes still hold, so it asks nothing', async () => {
 		const shared = await sharedOfFragment(
 			(
 				await linkOf({
 					...map,
 					notitie: '# Vraag\nValt het onder **art. 98 Sr**?',
-					verwijzingen: {
+					references: {
 						'artikel 98 sr': '/wetten/BWBR0001854/artikel/98',
 						'artikel 1 awb': '/wetten/BWBR0005537/artikel/1:1'
 					}
 				} as typeof map)
 			).hash
 		);
-		expect(shared !== BROKEN && shared?.verwijzingen).toEqual({
+		expect(shared !== BROKEN && shared?.references).toEqual({
 			'artikel 98 sr': '/wetten/BWBR0001854/artikel/98'
 		});
 	});

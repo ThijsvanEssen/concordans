@@ -42,14 +42,14 @@ afterEach(() => vi.unstubAllGlobals());
 const lookup = vi.hoisted(() => vi.fn());
 vi.mock('$lib/api/search', () => ({ lookup }));
 
-describe('the verwijzingen in a note (B62)', () => {
+describe('the references in a note (B62)', () => {
 	it('asks the address of an abbreviation once, and keeps it with the bundel', async () => {
 		lookup.mockResolvedValue({ props: { bwb_id: 'BWBR0001854', article_number: '98' } });
 		const { kaart } = await store();
 		const m = kaart.nieuw('Staat', [lid]);
 		kaart.mapNotitie('# Vraag\nValt het onder art. 98 Sr of art. 6:162 BW?', m.id);
 		await vi.waitFor(() =>
-			expect(kaart.mappen.find((x) => x.id === m.id)?.verwijzingen).toEqual({
+			expect(kaart.mappen.find((x) => x.id === m.id)?.references).toEqual({
 				'artikel 98 sr': '/wetten/BWBR0001854/artikel/98'
 			})
 		);

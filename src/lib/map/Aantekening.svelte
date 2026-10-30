@@ -2,19 +2,25 @@
 	// The reader's own note in a map, one form for an item's, a group's and the map's (Thijs,
 	// 12 Oct: "nu lijkt het alsof het bij de wet hoort"): set apart from the text it is about
 	// by a rule at its left and a label: the sign of Bewaar and the name of the bundel it is kept
-	// in (DS Aantekening), as the network marks a bron with a note; the note itself upright, in the reader's letter. Where it can
-	// be changed a click opens it in place: Enter keeps it, Escape leaves it, leaving the
-	// field keeps it. Read only, as on a network card, the label names its place. With
-	// `field` an empty note is an empty field under its label (a bundel's research question). The note of an arcering (O4) stands under its place in the text, and
-	// a click opens the menu of its arcering (`onOpen`), where it is changed.
+	// in (DS Aantekening), as the network marks a bron with a note; the note itself upright, in the reader's letter,
+	// in its opmaak (B62: koppen, lists, citaat, vet, cursief; a verwijzing a link). Where it can
+	// be changed a click on it opens it in place (NoteField), its label the button for the
+	// keys: ⌘↵ or leaving the field keeps it, Escape leaves it. Read only, as on a network card,
+	// the label names its place and the note is one run of words. With `field` an empty note is an
+	// empty field under its label (a bundel's research question). The note of an arcering (O4)
+	// stands under its place in the text, and a click opens the menu of its arcering (`onOpen`),
+	// where it is changed.
 	import Picto from '$lib/components/ui/Picto.svelte';
-	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
+	import NoteField from './NoteField.svelte';
+	import NoteText from './NoteText.svelte';
+	import type { References } from './map';
 
 	let {
 		tekst,
 		bij,
 		waar = null,
 		bundel = null,
+		references = null,
 		compact = false,
 		open = $bindable(false),
 		field = false,
@@ -28,7 +34,10 @@
 		waar?: string | null;
 		/** The bundel it is kept in: the label is its name. */
 		bundel?: string | null;
-		/** Without its own margin and measure, in a card that spaces its lines itself. */
+		/** The addresses the bundel keeps for the verwijzingen in its notes. */
+		references?: References | null;
+		/** Without its own margin and measure, in a card that spaces its lines itself: one run
+		 *  of words, three lines at most. */
 		compact?: boolean;
 		/** The field open; without `onBewaar` it never opens. */
 		open?: boolean;
@@ -41,54 +50,53 @@
 	} = $props();
 
 	const label = $derived(bundel ?? (waar ? `Aantekening bij ${waar}` : 'Aantekening'));
+	/** Escape in the empty field: a new, empty field in its place. */
+	let fresh = $state(0);
 
 	function done(value: string) {
 		if (!open) return;
 		onBewaar?.(value);
 		open = false;
 	}
-	function onKey(e: KeyboardEvent) {
-		const field = e.currentTarget as HTMLTextAreaElement;
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			done(field.value);
-		} else if (e.key === 'Escape') {
-			// The field's own Escape (isEscape leaves a field alone): the note as it was.
-			e.preventDefault();
-			field.value = tekst ?? '';
-			open = false;
-		}
-	}
-	/** The empty field: Enter or leaving it keeps what was typed, Escape leaves it empty. */
-	function emptyKey(e: KeyboardEvent) {
-		const field = e.currentTarget as HTMLTextAreaElement;
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			field.blur();
-		} else if (e.key === 'Escape') {
-			e.preventDefault();
-			field.value = '';
-			field.blur();
-		}
+	/** A click on the note opens it, one on a link in it follows the link. */
+	function openAt(e: MouseEvent) {
+		if ((e.target as Element).closest('a')) return;
+		e.stopPropagation();
+		open = true;
 	}
 </script>
 
 {#if !tekst && !open && field && onBewaar}
 	<div class="aantekening" class:compact>
 		<span class="label"><Picto naam="bewaard" size={10} />{label}</span>
-		<Tekstveld
-			multiline
-			rows={2}
-			label="Aantekening bij {bij}"
-			onkeydown={emptyKey}
-			onblur={(e) => {
-				if (e.currentTarget.value.trim()) onBewaar(e.currentTarget.value);
-			}}
-		/>
+		{#key fresh}
+			<NoteField
+				label="Aantekening bij {bij}"
+				onDone={(t) => {
+					if (t.trim()) onBewaar(t);
+				}}
+				onBack={() => {
+					fresh++;
+					(document.activeElement as HTMLElement | null)?.blur();
+				}}
+			/>
+		{/key}
 	</div>
 {:else if (open && onBewaar) || tekst}
 	<div class="aantekening" class:compact>
-		<span class="label"><Picto naam="bewaard" size={10} />{label}</span>
+		{#if onBewaar && !onOpen && !open}
+			<button
+				type="button"
+				class="label"
+				aria-label="{label} wijzigen"
+				onclick={(e) => {
+					e.stopPropagation();
+					open = true;
+				}}><Picto naam="bewaard" size={10} />{label}</button
+			>
+		{:else}
+			<span class="label"><Picto naam="bewaard" size={10} />{label}</span>
+		{/if}
 		{#if onOpen}
 			<button
 				type="button"
@@ -97,30 +105,26 @@
 				onclick={(e) => {
 					e.stopPropagation();
 					onOpen(e.currentTarget);
-				}}>{tekst}</button
+				}}><NoteText text={tekst ?? ''} run /></button
 			>
 		{:else if open && onBewaar}
-			<Tekstveld
-				multiline
-				rows={2}
+			<NoteField
 				focus
 				label="Aantekening bij {bij}"
-				value={tekst ?? ''}
-				onkeydown={onKey}
-				onblur={(e) => done(e.currentTarget.value)}
+				text={tekst ?? ''}
+				onDone={done}
+				onBack={() => (open = false)}
 			/>
+		{:else if compact}
+			<p class="tekst kort"><NoteText text={tekst ?? ''} run /></p>
 		{:else if onBewaar}
-			<button
-				type="button"
-				class="tekst"
-				title="Aantekening wijzigen"
-				onclick={(e) => {
-					e.stopPropagation();
-					open = true;
-				}}>{tekst}</button
-			>
+			<!-- The label is the button for the keys; a click anywhere on the note opens it too. -->
+			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+			<div class="tekst bewerkbaar" title="Aantekening wijzigen" onclick={openAt}>
+				<NoteText text={tekst ?? ''} {references} />
+			</div>
 		{:else}
-			<p class="tekst">{tekst}</p>
+			<div class="tekst"><NoteText text={tekst ?? ''} {references} /></div>
 		{/if}
 	</div>
 {/if}
@@ -143,10 +147,22 @@
 	.label {
 		display: inline-flex;
 		align-items: center;
+		align-self: flex-start;
 		gap: var(--s-1);
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	button.label {
+		cursor: text;
+	}
+	button.label:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
 	}
 	.tekst {
 		display: block;
@@ -160,10 +176,17 @@
 		line-height: var(--lh-body);
 		color: var(--ink-2);
 		text-align: left;
-		white-space: pre-line;
 	}
-	button.tekst {
+	.bewerkbaar {
 		cursor: text;
+	}
+	/* On a card: three lines at most. */
+	.kort {
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 	button.tekst[aria-haspopup] {
 		cursor: pointer;
