@@ -23,6 +23,5 @@ trap 'rm -rf "$LOCK"' EXIT
 npx vitest run
 npm run check
 npm run check:e2e
-npm run build
-# The browser suite builds and serves the app itself (playwright.config.ts).
+# The browser suite builds and serves the app itself (playwright.config.ts), so the build is checked there.
 npm run e2e
