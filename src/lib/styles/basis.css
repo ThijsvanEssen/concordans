@@ -150,7 +150,7 @@ a:hover {
 	min-height: calc(var(--s-5) + var(--s-1));
 	white-space: nowrap;
 }
-/* A reference whose article the Leespaneel shows: landed, where the reader came from. */
+/* A reference whose article the Zijpaneel shows: landed, where the reader came from. */
 a.raakvlak.is-open {
 	background: var(--wassing);
 	box-shadow: 0 0 0 1px var(--wassing);

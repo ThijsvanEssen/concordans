@@ -12,8 +12,10 @@
 //
 // Free of the browsers: Alt D, Alt F, Alt E and Alt Home are Chrome's and Edge's, the letters of
 // the menus (Alt F, E, V, S, B, T, H) are Firefox's on Windows, and Alt 1 to 8 switch tabs in
-// Firefox on Linux. So the keys of `pagina` are Alt with L, J, K, W, the brackets and the
-// slash, and Ctrl/⌘ with K and the slash. A phone has no keyboard and gets no keys of its own
+// Firefox on Linux (so the steps are Alt − and Alt =, not Alt 0 to 3). So the keys of `pagina`
+// are Alt with L, W, O, K, V, the brackets, the slash, − and =, and Ctrl/⌘ with K and the slash.
+// Alt V is Firefox's menu Beeld on Windows: answered here first (Thijs, 30 Oct), still to be
+// measured there. A phone has no keyboard and gets no keys of its own
 // (Thijs, 29 Oct); a tablet with one keeps these. Ctrl+Alt is AltGr on Windows and gives a character: it is never a key of ours.
 
 export type KeyContext =
@@ -30,7 +32,7 @@ export const CONTEXTS: readonly { id: KeyContext; name: string }[] = [
 	{ id: 'overal', name: 'Overal' },
 	{ id: 'zoeken', name: 'Zoeken' },
 	{ id: 'lezer', name: 'In de lezer' },
-	{ id: 'paneel', name: 'Bij het Leespaneel' },
+	{ id: 'paneel', name: 'Bij het Zijpaneel' },
 	{ id: 'netwerk', name: 'In het netwerk' },
 	{ id: 'bladeren', name: 'Bij een lijst' },
 	{ id: 'vergelijken', name: 'Bij Vergelijken' }
@@ -140,7 +142,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'lezer',
 		keys: [{ code: 'BracketLeft', key: '[', cap: '[', alt: true }],
 		join: 'together',
-		description: 'Het vorige artikel van de wet; in het Leespaneel het vorige daar',
+		description: 'Het vorige artikel van de wet; in het Zijpaneel het vorige daar',
 		handler: 'article-prev'
 	},
 	{
@@ -149,7 +151,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'lezer',
 		keys: [{ code: 'BracketRight', key: ']', cap: ']', alt: true }],
 		join: 'together',
-		description: 'Het volgende artikel van de wet; in het Leespaneel het volgende daar',
+		description: 'Het volgende artikel van de wet; in het Zijpaneel het volgende daar',
 		handler: 'article-next'
 	},
 	{
@@ -158,7 +160,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		context: 'paneel',
 		keys: [letterKey('W', ALT)],
 		join: 'together',
-		description: 'Wisselen tussen de lezer en het Leespaneel',
+		description: 'Naar het zijpaneel en weer terug',
 		handler: 'panel-toggle'
 	},
 	{
@@ -172,13 +174,49 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		focusIn: 'in de lijst'
 	},
 	{
-		id: 'row-page',
+		id: 'view-omgeving',
 		kind: 'page',
-		context: 'bladeren',
-		keys: [letterKey('J', ALT), letterKey('K', ALT)],
+		context: 'netwerk',
+		keys: [letterKey('O', ALT)],
 		join: 'together',
-		description: 'Vanaf elke plek naar de volgende of vorige rij van de lijst op de pagina',
-		handler: 'rows'
+		description: 'Weergave Omgeving',
+		handler: 'view-omgeving'
+	},
+	{
+		id: 'view-keten',
+		kind: 'page',
+		context: 'netwerk',
+		keys: [letterKey('K', ALT)],
+		join: 'together',
+		description: 'Weergave Keten, ook vanuit de lezer',
+		handler: 'view-keten'
+	},
+	{
+		id: 'view-verband',
+		kind: 'page',
+		context: 'netwerk',
+		keys: [letterKey('V', ALT)],
+		join: 'together',
+		description: 'Weergave Verband; met één bron opent Bron toevoegen voor de tweede',
+		handler: 'view-verband'
+	},
+	{
+		id: 'steps-less',
+		kind: 'page',
+		context: 'netwerk',
+		keys: [{ code: 'Minus', key: '-', cap: '−', alt: true }],
+		join: 'together',
+		description: 'Een stap minder: het netwerk reikt minder ver',
+		handler: 'steps-less'
+	},
+	{
+		id: 'steps-more',
+		kind: 'page',
+		context: 'netwerk',
+		keys: [{ code: 'Equal', key: '=', cap: '=', alt: true }],
+		join: 'together',
+		description: 'Een stap meer: het netwerk reikt verder',
+		handler: 'steps-more'
 	},
 	{
 		id: 'network-point',
@@ -223,6 +261,150 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		join: 'together',
 		description: 'Bij Vergelijken: de vorige of volgende wijziging',
 		handler: 'VersionCompare'
+	}
+];
+
+// ── The words of ⌘K ─────────────────────────────────────────────────────────
+// ⌘K searches and does (Thijs, 30 Oct: "de combinatie van zoeken en doen wel sterk"): a word of
+// this list at the start of what is typed puts a row Doen above the results, which Enter does.
+// The word, a prefix of it of three letters or more, or a short form (`kt`). What follows the
+// word is its object: a bron as the search finds it, a number of steps, a soort or relatie as
+// Tonen and Relatie name them (commands.ts). The page that can do it says so (doen.svelte.ts);
+// where none does, the search alone answers.
+
+/** What follows the word: a bron the search finds, a bron of the netwerk, steps, a soort. */
+type CommandArg = 'bron' | 'gekozen' | 'stappen' | 'soort';
+
+export type Command = {
+	id: string;
+	/** The words that call it, the first its name. */
+	words: readonly string[];
+	/** Short forms that are not a prefix of a word: `kt` for keten. */
+	short?: readonly string[];
+	/** A sign that calls it before its object: `+uitspraken`, `- wwke`. */
+	sign?: '+' | '-';
+	context: KeyContext;
+	arg?: CommandArg;
+	/** The key of SHORTCUTS that does the same, shown beside the row. */
+	key?: string;
+	description: string;
+	/** The flow of the report it answers (docs/claude/ux-review/toetsenbordflows-20261030.md). */
+	flow: string;
+};
+
+export const COMMANDS: readonly Command[] = [
+	{
+		id: 'omgeving',
+		words: ['omgeving'],
+		short: ['om'],
+		context: 'netwerk',
+		key: 'view-omgeving',
+		description: 'Weergave Omgeving',
+		flow: 'F2'
+	},
+	{
+		id: 'keten',
+		words: ['keten'],
+		short: ['kt'],
+		context: 'netwerk',
+		arg: 'bron',
+		key: 'view-keten',
+		description: 'Weergave Keten, van deze bron of van de bron die je typt',
+		flow: 'F2'
+	},
+	{
+		id: 'verband',
+		words: ['verband'],
+		short: ['vb'],
+		context: 'netwerk',
+		arg: 'bron',
+		key: 'view-verband',
+		description: 'Weergave Verband; de bron die je typt komt erbij',
+		flow: 'F2'
+	},
+	{
+		id: 'stappen',
+		words: ['stappen'],
+		short: ['s1', 's2', 's3'],
+		context: 'netwerk',
+		arg: 'stappen',
+		description: 'Aantal stappen: hoe ver het netwerk reikt',
+		flow: 'F3'
+	},
+	{
+		id: 'gekozen',
+		words: ['gekozen'],
+		short: ['s0'],
+		context: 'netwerk',
+		description: 'Alleen de gekozen bronnen en hun onderlinge verbindingen',
+		flow: 'F3'
+	},
+	{
+		id: 'tonen',
+		words: ['met'],
+		sign: '+',
+		context: 'netwerk',
+		arg: 'soort',
+		description: 'Een soort (Tonen) of relatie (Relatie) aan: +uitspraken',
+		flow: 'F4'
+	},
+	{
+		id: 'zonder',
+		words: ['zonder'],
+		sign: '-',
+		context: 'netwerk',
+		arg: 'soort',
+		description: 'Een soort of relatie uit: -stukken',
+		flow: 'F4'
+	},
+	{
+		id: 'alleen',
+		words: ['alleen'],
+		context: 'netwerk',
+		arg: 'soort',
+		description: 'Alleen deze soort of relatie',
+		flow: 'F14'
+	},
+	{
+		id: 'alles',
+		words: ['alles'],
+		context: 'netwerk',
+		description: 'Alle soorten en relaties weer aan',
+		flow: 'F4'
+	},
+	{
+		id: 'toevoegen',
+		words: ['toevoegen'],
+		sign: '+',
+		context: 'netwerk',
+		arg: 'bron',
+		description: 'De bron die je typt aan het netwerk toevoegen: + wwke',
+		flow: 'F5'
+	},
+	{
+		id: 'weghalen',
+		words: ['weghalen'],
+		sign: '-',
+		context: 'netwerk',
+		arg: 'gekozen',
+		description: 'Een gekozen bron uit het netwerk halen: - wwke',
+		flow: 'F6'
+	},
+	{
+		id: 'wis',
+		words: ['wis'],
+		context: 'netwerk',
+		description: 'Alle gekozen bronnen weg',
+		flow: 'F6'
+	},
+	{
+		id: 'netwerk',
+		words: ['netwerk'],
+		short: ['nw'],
+		context: 'overal',
+		arg: 'bron',
+		description: 'Het netwerk van de bron die je typt',
+		flow: 'F18'
 	}
 ];
 

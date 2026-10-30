@@ -1,4 +1,4 @@
-// A row of an article in Verbonden reads in the Leespaneel, at the lid it names, in one click
+// A row of an article in Verbonden reads in the Zijpaneel, at the lid it names, in one click
 // (studie-artikel-peek, Verbonden-rij); not where its group is read beside the selected bron.
 // Its title stays the page. One rule for the rows of the summary and of the groups.
 import type { ReadRef } from '$lib/reading/param';

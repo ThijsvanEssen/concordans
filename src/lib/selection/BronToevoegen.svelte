@@ -10,11 +10,14 @@
 
 	let {
 		chosen,
+		why = null,
 		onSelect,
 		onClose
 	}: {
 		/** The bronnen of the netwerk, by the name a link uses. */
 		chosen: readonly string[];
+		/** Why it opened, where a key opened it: "Verband vraagt een tweede bron". */
+		why?: string | null;
 		onSelect: (id: string) => void;
 		onClose: () => void;
 	} = $props();
@@ -69,6 +72,7 @@
 		onSelect={pick}
 	>
 		{#snippet belowField()}
+			{#if why}<p class="toevoegen__waarom" role="status">{why}</p>{/if}
 			<div class="toevoegen__filters" data-zijscroll>
 				<Keuze
 					label="Soort bron"
@@ -82,6 +86,12 @@
 </Blad>
 
 <style>
+	.toevoegen__waarom {
+		margin: var(--s-2) var(--s-4) 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
 	.toevoegen__filters {
 		overflow-x: auto;
 		padding: var(--s-2) var(--s-4);

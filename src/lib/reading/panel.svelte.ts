@@ -1,4 +1,4 @@
-// Opening and closing the Leespaneel (param.ts), and where a reference opens it. A click opens
+// Opening and closing the Zijpaneel (param.ts), and where a reference opens it. A click opens
 // one step in the history, so Back closes the panel; from article to article within the panel
 // that step is replaced. Closing with × or Escape is that step back when this page opened it,
 // and otherwise (a shared link) only takes the parameter away: Back never walks ten peeks back.
@@ -36,7 +36,7 @@ export function openInPanel(items: ReadRef | readonly ReadRef[], at: OpenAt = {}
 			...(at.focus ? { readFocus: at.focus } : {}),
 			...(at.from ? { readFrom: at.from } : {})
 		}
-	}).catch((e) => report('Leespaneel', e));
+	}).catch((e) => report('Zijpaneel', e));
 }
 
 /** Closes the panel: a step back when this page opened it, else the parameter taken away. */
@@ -44,7 +44,7 @@ export function closePanel(): void {
 	if (page.state.readOpened) history.back();
 	else
 		goto(withRead(page.url, []), { ...NAV, replaceState: true }).catch((e) =>
-			report('Leespaneel', e)
+			report('Zijpaneel', e)
 		);
 }
 

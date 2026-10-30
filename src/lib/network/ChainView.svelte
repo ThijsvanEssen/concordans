@@ -375,7 +375,7 @@
 					word,
 					wordAt: { x: r.end.x + 12, y: r.end.y - 6 },
 					cite: e.o.cite ? citeText(e.o.cite) : null,
-					// What the label opens: its articles in the Leespaneel, under each other; its link
+					// What the label opens: its articles in the Zijpaneel, under each other; its link
 					// is the first, at the lid it names. The glance names them all.
 					citeLines: e.o.cite ? citeLines(e.o.cite) : [],
 					citeArticles: articles.map(({ key, at }) => ({ key, at })),
@@ -476,7 +476,7 @@
 		);
 		return { update: take };
 	};
-	/** A label whose article the Leespaneel shows: landed, every label of it, not only the one clicked. */
+	/** A label whose article the Zijpaneel shows: landed, every label of it, not only the one clicked. */
 	const readKeys = $derived(new Set(readOpen().map((r) => r.key)));
 	const landed = (l: (typeof lines)[number]) => l.citeArticles.some((a) => readKeys.has(a.key));
 	/** A click on a label: its articles in the panel; the drawing does not move, the choice stays. */
@@ -1002,7 +1002,7 @@
 		font-size: var(--t-note);
 		fill: var(--ink-2);
 	}
-	/* Landed: the Leespaneel shows its article; the wash and an ink rim. */
+	/* Landed: the Zijpaneel shows its article; the wash and an ink rim. */
 	.cite.is-open .frame {
 		fill: var(--wassing);
 		stroke: var(--ink);

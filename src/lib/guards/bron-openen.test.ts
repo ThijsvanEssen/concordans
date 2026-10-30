@@ -10,7 +10,8 @@ describe('opening a bron', () => {
 			{ pad: 'lib/bron/href.ts', reden: 'the rule itself' },
 			{ pad: 'lib/verbonden/VerbondenTabel.svelte', reden: 'In het netwerk of an opened row' },
 			{ pad: 'lib/components/open/PostOpen.svelte', reden: 'In het netwerk of a bewindspersoon' },
-			{ pad: 'routes/explore/+page.svelte', reden: 'In het netwerk under Netwerk tonen, key L' }
+			{ pad: 'routes/explore/+page.svelte', reden: 'In het netwerk under Netwerk tonen, key L' },
+			{ pad: 'lib/keys/doen-overal.ts', reden: '⌘K: netwerk awb, keten awb' }
 		];
 		expect(overtreders((t) => /mode: 'graph'/.test(t), netwerkLinks)).toEqual([]);
 	});
@@ -21,7 +22,7 @@ describe('opening a bron', () => {
 		// the bron. A row of Verbonden has no panel of actions (Thijs, 10 Oct): its title and the
 		// row itself open it in place, every kind of bron (principe 5, A255): a Kamerstuk on its
 		// core text (RijInhoud, as in Actueel and Bronnen), any other on its glance
-		// (RowGlance), an article in the Leespaneel (read-row.ts); the bron is one step further.
+		// (RowGlance), an article in the Zijpaneel (read-row.ts); the bron is one step further.
 		const rows = BRONNEN.filter(({ text }) =>
 			/class="(row-title|row__title)"[\s\S]{0,240}(href=|\{href\})/.test(text)
 		);
