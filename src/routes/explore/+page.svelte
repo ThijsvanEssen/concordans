@@ -2395,7 +2395,6 @@
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
-								middenZoom={view !== 'keten'}
 								surroundings={view === 'omgeving'}
 								externCounts={view === 'keten'
 									? chainCounts
@@ -2416,9 +2415,7 @@
 											}
 										}
 									: null}
-								chain={view === 'keten'
-									? { start: chainStart?.collection ?? null, labels: !lineageStart }
-									: null}
+								chain={chainStart && { start: chainStart.collection, labels: !lineageStart }}
 								proposals={view === 'omgeving'
 									? {
 											on: proposalsOn,

@@ -131,7 +131,6 @@
 		externCounts = null,
 		extern = null,
 		externStippen = null,
-		middenZoom = true,
 		externLines = null,
 		onToevoegen,
 		...legend
@@ -185,8 +184,6 @@
 		midden?: Snippet<[number]>;
 		extern?: ExternalCard | null;
 		externStippen?: readonly Stip[] | null;
-		/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
-		middenZoom?: boolean;
 		/** Relatie of a weergave of its own: what it hides, and its switch. */
 		externLines?: {
 			hidden: ReadonlySet<LineKind>;
@@ -198,6 +195,8 @@
 		depth: number;
 		onDepth: (d: number) => void;
 	} & LegendProps = $props();
+	/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
+	const middenZoom = $derived(view !== 'keten');
 
 	// ── graphology (data + layout, no sigma) ─────────────────────────────────
 	const g = new Graph();
