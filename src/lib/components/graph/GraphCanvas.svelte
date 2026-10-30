@@ -238,7 +238,7 @@
 				w,
 				h,
 				rank: rankOf(id, cluster),
-				always: id === focusedId
+				always: id === focusedId || isCommittee(id)
 			});
 		});
 		glyphRects = glyphs;
@@ -249,6 +249,8 @@
 		const rims = hullHitAreas.map((a) => a.polygon);
 		return planLabels(candidates, room, hullNames, glyphs, max, rims);
 	}
+	/** A commissie's point keeps its short name (J&V), on a phone too: they are few (B41). */
+	const isCommittee = (id: string) => graph.getNodeAttribute(id, 'collection') === 'committees';
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
 	let renderer: SigmaType | null = null;
@@ -1080,7 +1082,7 @@
 				const label =
 					cluster && id !== hoveredId
 						? ''
-						: forceLabel || !narrow?.matches
+						: forceLabel || !narrow?.matches || isCommittee(id)
 							? (data.label as string)
 							: '';
 

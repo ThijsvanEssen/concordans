@@ -29,7 +29,7 @@ import { isDrawn } from '../collection-role';
 import { lineKindOf } from '../line-kind';
 import { planTrim } from './budget';
 import { CLUSTER_MAX_LOOSE } from '$lib/selection/cluster';
-import { isPublication, periodOf, placeConnection, type End } from './placement';
+import { aboutEnd, isPublication, periodOf, placeConnection, type End } from './placement';
 
 /**
  * The names of a container's hull: short on the hull, in full on hover. A dossier by its number
@@ -361,18 +361,22 @@ export function createGraphContext() {
 			hull: centerContainerKind,
 			drawn: true
 		};
+		const dossiers =
+			response.neighbors.buckets.find(
+				(b) => b.relation === 'ABOUT' && b.direction === 'outbound' && b.type === 'dossier'
+			)?.total ?? 0;
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
 			const id = nodeId(neighbor.collection, neighbor.key);
 			if (keep && !keep(id)) continue;
 			const relation = relationOf(neighbor.relation);
 			if (!relation) continue;
 			const other = drawable(neighbor);
-			const far = endOf(neighbor.collection, other, neighbor.props);
 			const outbound = neighbor.direction === 'outbound';
+			const far = endOf(neighbor.collection, other, neighbor.props);
 			const placement = placeConnection({
 				relation,
 				source: outbound ? near : far,
-				target: outbound ? far : near,
+				target: outbound ? aboutEnd(relation, far, dossiers) : near,
 				confidence: neighbor.confidence,
 				threshold: threshold()
 			});

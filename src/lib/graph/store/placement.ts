@@ -83,6 +83,14 @@ export function placeConnection(c: Connection): Placement {
 		if (target.drawn) return { place: 'line', meta: true, anchor: 'source' };
 		return { place: 'none' };
 	}
+	// A commissie leads a dossier (LED_BY, derived): a point with a line "geleid door", not a
+	// hull around the dossier's hull; three commissies would stack three rings around it (B41).
+	if (relation === 'LED_BY' && source.hull === 'dossier' && target.hull === 'committee') {
+		if (source.drawn && target.drawn) return { place: 'line', meta: true };
+		if (source.drawn) return { place: 'line', meta: true, anchor: 'target' };
+		if (target.drawn) return { place: 'line', meta: true, anchor: 'source' };
+		return { place: 'none' };
+	}
 	/** The first side, target before source, for which `test` holds with the other end drawn. */
 	const sideWhere = (test: (side: Side) => boolean) =>
 		SIDES.find((side) => end(other(side)).drawn && test(side));
@@ -119,6 +127,15 @@ export function placeConnection(c: Connection): Placement {
 	if (semantic && c.confidence != null && c.confidence < c.threshold) return { place: 'none' };
 	return line(true);
 }
+
+/**
+ * The end of a dossier a bron is about, of a bron about `dossiers` of them: about more than
+ * one (a wetgevingsoverleg on 36764 and 36765, a procedurevergadering on six), it stands in
+ * none of their rings; each dossier ties, a point with a line "over". A ring holds only what
+ * is its own (B41, Thijs 29 Oct).
+ */
+export const aboutEnd = (relation: Relation, end: End, dossiers: number): End =>
+	relation === 'ABOUT' && end.hull === 'dossier' && dossiers > 1 ? { ...end, ties: true } : end;
 
 /**
  * The seat an edge records (`meta.from_date`, `meta.to_date`), or null when it records none:

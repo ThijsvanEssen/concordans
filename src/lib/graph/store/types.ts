@@ -56,6 +56,8 @@ export type CanvasRow = {
 	cite?: BaseNode['cite'];
 	/** The seat the verbinding records (a member's term, a bewindspersoon's posts). */
 	period?: Period | null;
+	/** The `meta` of its edge, where the canvas reads it (`latest` of a `LED_BY`). */
+	meta?: Record<string, unknown> | null;
 };
 
 export type GraphFilters = {

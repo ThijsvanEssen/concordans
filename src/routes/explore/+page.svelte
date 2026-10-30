@@ -135,6 +135,7 @@
 	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 	import { getChains, getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
+	import { LED_BY_FOCUS, ledByRows } from '$lib/graph/led-by';
 	import { getEuLinks, getRelatedInstruments } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
@@ -1246,6 +1247,14 @@
 				asked: around.amending ?? store.askNeighborhood(node.collection, node.key, amendingOptions)
 			});
 			if (epoch !== focusEpoch) return;
+		}
+		// A dossier's committees, a committee's dossiers: derived, in a bucket of the node alone.
+		if (LED_BY_FOCUS.has(node.collection)) {
+			const response = await store
+				.nodeResponse(node.collection, node.key)
+				.catch(ignore('Verkenner leiding'));
+			if (epoch !== focusEpoch) return;
+			if (response) store.showRows(node.id, ledByRows(node.collection, response));
 		}
 		store.sweepOrphans();
 	}

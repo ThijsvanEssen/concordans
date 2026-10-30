@@ -40,26 +40,30 @@ export type Cluster = {
 	 * member ties, with the verbinding most members have with each. Without: around a focus.
 	 */
 	ends?: { id: string; relation: string; toEnd: boolean }[];
+	/** How many it stands for where more are than are loaded: a commissie's 607 other dossiers. */
+	total?: number;
 };
 
 type Node = { id: string; collection: Collection };
 type Edge = { source: string; target: string; relation: string };
 
 /** "250 uitspraken": the count and the kind, as the cluster is named. */
-export const clusterLabel = (c: Pick<Cluster, 'collection' | 'members'>) =>
-	`${formatCount(c.members.length)} ${sortLabel(sortOf(c.collection, '', null)).toLowerCase()}`;
+export const clusterLabel = (c: Pick<Cluster, 'collection' | 'members' | 'total'>) =>
+	`${formatCount(c.total ?? c.members.length)} ${sortLabel(sortOf(c.collection, '', null)).toLowerCase()}`;
 
 /**
  * The heading of a cluster's card: of how many it holds where there are more (N2): "200 van
  * 63.600 stemmingen", the whole as the legend counts it.
  */
-export const clusterHeading = (
-	c: Pick<Cluster, 'collection' | 'members'>,
+export function clusterHeading(
+	c: Pick<Cluster, 'collection' | 'members' | 'total'>,
 	totaal: number | null
-) =>
-	totaal != null && totaal > c.members.length
-		? `${formatCount(c.members.length)} van ${formatCount(totaal)} ${sortLabel(sortOf(c.collection, '', null)).toLowerCase()}`
+): string {
+	const whole = totaal ?? c.total;
+	return whole != null && whole > c.members.length
+		? `${formatCount(c.members.length)} van ${formatCount(whole)} ${sortLabel(sortOf(c.collection, '', null)).toLowerCase()}`
 		: clusterLabel(c);
+}
 
 /**
  * The clusters around `focus`: per kind, the neighbours tied to nothing but the focus and its

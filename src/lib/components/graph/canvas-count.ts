@@ -55,6 +55,8 @@ export function countCanvas(o: {
 	/** The bronnen hidden with their grouping (`metGroepVerborgen`). */
 	verborgen: ReadonlyMap<string, ContainerKind>;
 	hiddenLines: ReadonlySet<LineKind>;
+	/** The commissies and dossiers drawn as a ring with no point of their own: one bron each. */
+	rings?: readonly { filterGroup: FilterGroup }[];
 }): { counts: CanvasCounts; drawnIds: string[] } {
 	const { graph, drawn, selectionId, hiddenKinds, rechter, verborgen } = o;
 	let nodes = 0;
@@ -107,6 +109,7 @@ export function countCanvas(o: {
 		m.count++;
 		if (!m.groepen.includes(groep)) m.groepen.push(groep);
 	});
+	for (const { filterGroup } of o.rings ?? []) kinds[filterGroup] = (kinds[filterGroup] ?? 0) + 1;
 	const lines: CanvasCounts['lines'] = {};
 	graph.forEachEdge((_id, attrs, src, tgt) => {
 		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;

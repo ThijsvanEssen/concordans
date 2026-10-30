@@ -98,6 +98,11 @@ describe('clusterHeading', () => {
 		expect(clusterHeading(c, 200)).toBe(clusterLabel(c));
 		expect(clusterHeading(c, null)).toBe(clusterLabel(c));
 	});
+	it("names the whole a cluster stands for: a commissie's 607 other dossiers (B41)", () => {
+		const other = { collection: 'dossiers' as const, members: ['d1', 'd2'], total: 607 };
+		expect(clusterLabel(other)).toBe('607 dossiers');
+		expect(clusterHeading(other, null)).toBe('2 van 607 dossiers');
+	});
 });
 
 describe('tussenClustersOf', () => {
