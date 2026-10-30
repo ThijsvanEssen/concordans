@@ -6,7 +6,6 @@
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
@@ -184,6 +183,27 @@
 			}))
 		}))
 	);
+	// The way on as the timeline's last line: a mark of its own, then Eerdere gebeurtenissen.
+	const withEarlier = $derived<TijdGroep[]>(
+		groups.map((g, i) =>
+			i < groups.length - 1
+				? g
+				: {
+						...g,
+						regels: [
+							...g.regels,
+							{
+								id: 'eerder',
+								datum: null,
+								teken: 'activiteit',
+								vorm: 'overig',
+								zin: 'Eerdere gebeurtenissen',
+								href: '/actueel'
+							}
+						]
+					}
+		)
+	);
 </script>
 
 <RouteKop />
@@ -258,8 +278,7 @@
 				<p class="volger">Wat de Kamers en de rechter de afgelopen dagen met de wet deden.</p>
 			</header>
 			<LoadState state={feed.state} what="Actueel" retry={feed.retry} form="block" />
-			<Tijdlijn groepen={groups} datums={false} />
-			<p class="all"><AlleN noun="gebeurtenissen" href="/actueel" /></p>
+			<Tijdlijn groepen={withEarlier} datums={false} />
 		</section>
 	</div>
 </div>
@@ -380,9 +399,12 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	/* On a line of its own under the timeline, at the left, as AlleN under every list. */
-	.all {
-		margin: var(--s-5) 0 0;
-		font-size: var(--t-meta);
+	/* Each next day a step further down (--s-6 with the timeline's gap), so a new day reads
+	   as one; the last line of a day has no rule under it, as the first has none over it. */
+	.actueel :global(.tl > .sectie + .sectie) {
+		margin-top: var(--s-2);
+	}
+	.actueel :global(.regel:last-child > .tekst) {
+		border-bottom: 0;
 	}
 </style>

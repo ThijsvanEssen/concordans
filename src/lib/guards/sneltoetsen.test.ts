@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import ShortcutList from '$lib/keys/ShortcutList.svelte';
-import { CONTEXTS, MOUSE, SHORTCUTS, isCombo, shortcutOfEvent } from '$lib/keys/register';
+import { COMMANDS, CONTEXTS, MOUSE, SHORTCUTS, isCombo, shortcutOfEvent } from '$lib/keys/register';
 import { BRONNEN, bron, overtreders, plek } from '$lib/test/bronnen';
 
 const geboden = SHORTCUTS.filter((t) => t.kind !== 'reserved');
@@ -30,7 +30,7 @@ describe('the register of the keys', () => {
 			for (const c of t.keys) expect(c.alt || c.mod, `${t.id} ${c.cap}`).toBe(true);
 	});
 
-	it('gives no two keys of the page the same combination; Alt W goes to the Leespaneel', () => {
+	it('gives no two keys of the page the same combination; Alt W goes to the Zijpaneel', () => {
 		const seen = new Set<string>();
 		for (const t of SHORTCUTS.filter((x) => x.kind !== 'focus'))
 			for (const c of t.keys) {
@@ -89,5 +89,32 @@ describe('the register of the keys', () => {
 				plek('lib/components/graph/CanvasNodeList.svelte', 'N in the list (register: netwerk-n)')
 			])
 		).toEqual([]);
+	});
+});
+
+describe('the words of ⌘K', () => {
+	const words = COMMANDS.flatMap((c) => [...c.words, ...(c.short ?? [])]);
+
+	it('names each command and each word once', () => {
+		expect(new Set(COMMANDS.map((c) => c.id)).size).toBe(COMMANDS.length);
+		expect(new Set(words).size).toBe(words.length);
+	});
+
+	it('makes no word a prefix of another: a prefix of three letters calls one command', () => {
+		const full = COMMANDS.flatMap((c) => c.words);
+		for (const a of full)
+			for (const b of full) if (a !== b) expect(b.startsWith(a), `${a} ${b}`).toBe(false);
+	});
+
+	it('gives every command a context, a flow of the report, and only a key that exists', () => {
+		for (const c of COMMANDS) {
+			expect(CONTEXTS.map((x) => x.id)).toContain(c.context);
+			expect(c.flow, c.id).toMatch(/^F\d+$/);
+			if (c.key)
+				expect(
+					SHORTCUTS.map((s) => s.id),
+					c.id
+				).toContain(c.key);
+		}
 	});
 });

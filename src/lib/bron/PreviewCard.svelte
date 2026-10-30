@@ -34,7 +34,7 @@
 		/** With `readLabel`: where the card's link goes (a defined term: its article). */
 		href?: string | null;
 		readLabel?: string | null;
-		/** A click opens the Leespaneel, not the reader. */
+		/** A click opens the Zijpaneel, not the reader. */
 		panel?: boolean;
 		onpointerenter?: () => void;
 		onpointerleave?: () => void;

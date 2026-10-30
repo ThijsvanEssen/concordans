@@ -11,7 +11,7 @@
 	// close it, the page behind it stands still (lockScroll), the focus goes into it and comes back
 	// to what opened it. The content is a snippet, an optional `foot` has what ends the sheet
 	// (Wis alles, Toon N). Opened inside another Blad, only the last one answers Escape and Tab.
-	// Not modal (`modaal={false}`, the Leespaneel): no scherm, no lock, Tab is not held and the
+	// Not modal (`modaal={false}`, the Zijpaneel): no scherm, no lock, Tab is not held and the
 	// page stays a page; Escape still closes it, and on a phone a tap beside it. From below it
 	// stands at 60 % of the screen, its grip takes it to 88 %. From 1800 px a panel at the right is
 	// 560 px wide and stands in the page's flow: the page makes room for it (AppShell).

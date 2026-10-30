@@ -284,7 +284,7 @@ test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articl
 	await expect(label).toBeFocused();
 	await expect(label.locator('.frame')).toHaveCSS('outline-style', 'solid');
 	await page.keyboard.press('Enter');
-	// The Leespaneel, its three articles under each other; the keten stays where it was.
+	// The Zijpaneel, its three articles under each other; the keten stays where it was.
 	await expect(page).toHaveURL(
 		/mode=netwerk.*lees=articles\/bwbr0052875_19,articles\/bwbr0052875_23\.lid-1,articles\/bwbr0052875_28/
 	);

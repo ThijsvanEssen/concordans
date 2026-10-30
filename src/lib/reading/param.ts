@@ -1,4 +1,4 @@
-// The Leespaneel in the address: `?lees=articles/bwbr0052872_68.lid-1`, the article and the
+// The Zijpaneel in the address: `?lees=articles/bwbr0052872_68.lid-1`, the article and the
 // place in it that is cited. One parameter, so a link with it opens the panel at whoever gets it;
 // several articles are comma-separated (`…_19,…_23.lid-1`), the panel shows them under each other.
 // The fragment (`#lid-2`) stays the place in the reader; `?naast` stays the text under it.

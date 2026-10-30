@@ -72,7 +72,7 @@ test.describe('on a phone', () => {
 	test.beforeEach(({ touch }) => test.skip(!touch, 'a phone'));
 
 	for (const [naam, pad, wacht] of [
-		['the start', '/', 'Alle gebeurtenissen'],
+		['the start', '/', 'Eerdere gebeurtenissen'],
 		['an article', ARTICLE, null],
 		['a Kamerlid', '/leden/rob-jetten', 'toezeggingen'],
 		['a Kamerstuk', '/kamerstukken/36799/31', null],
@@ -86,7 +86,7 @@ test.describe('on a phone', () => {
 			await page.waitForLoadState('networkidle');
 			expect.soft(await kleine(page)).toEqual([]);
 			// The article again with Verbonden to the front: a row open, its places and its
-			// Lees verder (a row of an article opens the Leespaneel instead).
+			// Lees verder (a row of an article opens the Zijpaneel instead).
 			if (naam === 'an article') {
 				await naarVerbonden(page);
 				await page.locator('a.kind__title[aria-expanded]:not([href*="/artikel/"])').first().click();

@@ -35,6 +35,10 @@ describe('the most important rows first', () => {
 			'motie',
 			'brief'
 		]);
+		expect(kindRank('Advies Afdeling advisering Raad van State en Nader rapport')).toBeLessThan(
+			kindRank('Verslag')
+		);
+		expect(kindRank('Memorie van toelichting')).toBeLessThan(kindRank('Nader rapport'));
 		expect(kindRank('Nota naar aanleiding van het verslag')).toBeLessThan(kindRank('Verslag'));
 	});
 

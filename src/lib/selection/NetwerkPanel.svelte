@@ -36,7 +36,9 @@
 		onAdd,
 		onClear,
 		telefoon = false,
-		searching = $bindable(false)
+		searching = $bindable(false),
+		searchingWhy = null,
+		onSearchClose
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -56,6 +58,9 @@
 		telefoon?: boolean;
 		/** The search for a bron to add is open; the page opens it too, from the empty canvas. */
 		searching?: boolean;
+		/** Why the page opened it (Alt V with one bron). */
+		searchingWhy?: string | null;
+		onSearchClose?: () => void;
 	} = $props();
 
 	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
@@ -170,7 +175,15 @@
 	{/if}
 </CanvasKaart>
 {#if searching}
-	<BronToevoegen chosen={entries.map((e) => e.id)} {onSelect} onClose={() => (searching = false)} />
+	<BronToevoegen
+		chosen={entries.map((e) => e.id)}
+		why={searchingWhy}
+		{onSelect}
+		onClose={() => {
+			searching = false;
+			onSearchClose?.();
+		}}
+	/>
 {/if}
 
 <style>

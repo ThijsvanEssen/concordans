@@ -357,3 +357,15 @@ test('a burgerinitiatief is not called the initiative bill of the Kamerlid who h
 	);
 	await expect(page.getByText('Initiatiefvoorstel van')).toHaveCount(0);
 });
+
+test('a dossier of more than a hundred stukken shows its oldest kernstukken first', async ({
+	page
+}) => {
+	await page.goto('/dossiers/36600');
+	await naarVerbonden(page);
+	const lijst = page
+		.getByRole('heading', { name: /^Stukken/ })
+		.locator('xpath=following-sibling::ul[1]');
+	await expect(lijst.getByRole('link').first()).toContainText('Nader rapport');
+	await expect(lijst.getByRole('link').nth(1)).toContainText('Advies Afdeling');
+});

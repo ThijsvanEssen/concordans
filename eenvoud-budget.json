@@ -27,7 +27,7 @@
 		"src/lib/verbonden/loaders.ts": 1511,
 		"src/routes/(main)/actueel/+page.svelte": 855,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2942
+		"src/routes/explore/+page.svelte": 3022
 	},
 	"effects_per_svelte": {
 		"src/lib/components/explore/IndexView.svelte": 9,
@@ -45,7 +45,7 @@
 		"src/lib/components/graph/GraphView.svelte": 64,
 		"src/lib/verbonden/Verbonden.svelte": 41,
 		"src/routes/(main)/actueel/+page.svelte": 42,
-		"src/routes/explore/+page.svelte": 105
+		"src/routes/explore/+page.svelte": 107
 	},
 	"complexity": {
 		"src/lib/bron/describe.ts": 46,

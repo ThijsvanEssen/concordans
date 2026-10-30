@@ -262,20 +262,31 @@ export const getExplanations = (bwb: string, number: string) =>
 	);
 
 /**
- * The first hundred documents of a dossier, once: the panel Verbonden lists them per chamber,
- * and an article's reader finds its memorie there when no EXPLAINS edge names it (the dossier
- * of the wet that gave its text). Null for a dossier the data lacks, said as such.
+ * The newest two hundred documents of a dossier, once, and where there are more the oldest
+ * hundred (the API lists newest first, and the proposal, memorie and advies are the oldest): the
+ * panel Verbonden lists them per chamber, and an article's reader finds its memorie there when no
+ * EXPLAINS edge names it (the dossier of the wet that gave its text). Null for a dossier the data
+ * lacks, said as such.
  */
 export const getDossierDocuments = (number: string) =>
-	once(`dossiers/${number}/documents?limit=100`, () =>
-		ifExists(
-			unwrap(
-				api.GET('/api/dossiers/{number}/documents', {
-					params: { path: { number }, query: { limit: 100 } }
-				})
-			)
-		)
-	);
+	once(`dossiers/${number}/documents?limit=200`, async () => {
+		const page = (limit: number, offset?: number) =>
+			ifExists(
+				unwrap(
+					api.GET('/api/dossiers/{number}/documents', {
+						params: { path: { number }, query: { limit, offset } }
+					})
+				)
+			);
+		const head = await page(200);
+		if (!head || head.total <= head.items.length) return head;
+		const tail = await page(100, Math.max(head.total - 100, head.items.length));
+		const seen = new Set(head.items.map((d) => d.key));
+		return {
+			...head,
+			items: [...head.items, ...(tail?.items ?? []).filter((d) => !seen.has(d.key))]
+		};
+	});
 
 /** The stukken that explain an article, the first fifty; null where the API does not have
  *  the article. The reader and the panel Verbonden share it. */

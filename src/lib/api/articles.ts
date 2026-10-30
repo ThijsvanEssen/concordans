@@ -154,7 +154,7 @@ export const getCitedByTop = (bwb: string, number: string, signal?: AbortSignal)
 	);
 
 /**
- * The narrow form of an article, to read it beside something else (the Leespaneel): its
+ * The narrow form of an article, to read it beside something else (the Zijpaneel): its
  * heading, its text as blocks per part and its neighbours in the law; once per session.
  */
 export const getArticleText = (bwbId: string, articleNumber: string) =>

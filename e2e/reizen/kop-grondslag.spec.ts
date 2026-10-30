@@ -29,7 +29,7 @@ test('an article of the head opens at its lid, marked, and shows a glance on hov
 		await lid.hover();
 		await expect(page.getByRole('tooltip')).toContainText('opent in het paneel');
 	}
-	// A click opens the Leespaneel on the law's articles (leespaneel.spec.ts); the Open artikel of
+	// A click opens the Zijpaneel on the law's articles (leespaneel.spec.ts); the Open artikel of
 	// this one is the page, at the lid.
 	await lid.click();
 	await page.locator('#lp-bwbr0052875_23').getByRole('link', { name: 'Open artikel' }).click();

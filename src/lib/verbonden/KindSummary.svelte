@@ -105,7 +105,7 @@
 			? shapeOfTier(row.props.tier)
 			: null;
 	const toggle = (row: Row) => (opened = opened === rowKey(row) ? null : rowKey(row));
-	/** A row's own answer: an article in the Leespaneel (read-row.ts), any other bron opened here. */
+	/** A row's own answer: an article in the Zijpaneel (read-row.ts), any other bron opened here. */
 	const openRow = (k: Kind, row: Row) => {
 		const read = readOfRow(row, inPlace(k, row));
 		if (read) openInPanel(read, { from: 'verbonden' });
@@ -296,7 +296,7 @@
 		margin: 0 calc(-1 * var(--s-4));
 		padding-block: 0;
 	}
-	/* Landed: the Leespaneel shows its article (as a row of a group, VerbondenRow). */
+	/* Landed: the Zijpaneel shows its article (as a row of a group, VerbondenRow). */
 	.kind__row[data-read] {
 		margin-inline: calc(-1 * var(--s-4));
 		padding-inline: var(--s-4);
