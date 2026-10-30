@@ -362,6 +362,7 @@ test('a dossier of more than a hundred stukken shows its oldest kernstukken firs
 	page
 }) => {
 	await page.goto('/dossiers/36600');
+	await naarVerbonden(page);
 	const lijst = page
 		.getByRole('heading', { name: /^Stukken/ })
 		.locator('xpath=following-sibling::ul[1]');
