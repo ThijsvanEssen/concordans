@@ -258,8 +258,9 @@
 				<p class="volger">Wat de Kamers en de rechter de afgelopen dagen met de wet deden.</p>
 			</header>
 			<LoadState state={feed.state} what="Actueel" retry={feed.retry} form="block" />
-			<Tijdlijn groepen={groups} datums={false} />
-			<p class="all"><AlleN noun="gebeurtenissen" href="/actueel" /></p>
+			<Tijdlijn groepen={groups} datums={false}>
+				{#snippet meer()}<AlleN noun="gebeurtenissen" href="/actueel" />{/snippet}
+			</Tijdlijn>
 		</section>
 	</div>
 </div>
@@ -380,9 +381,12 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	/* On a line of its own under the timeline, at the left, as AlleN under every list. */
-	.all {
-		margin: var(--s-5) 0 0;
-		font-size: var(--t-meta);
+	/* Each next day a step further down (--s-6 with the timeline's gap), so a new day reads
+	   as one; the last line of a day has no rule under it, as the first has none over it. */
+	.actueel :global(.tl > .sectie + .sectie) {
+		margin-top: var(--s-2);
+	}
+	.actueel :global(.regel:last-child > .tekst) {
+		border-bottom: 0;
 	}
 </style>
