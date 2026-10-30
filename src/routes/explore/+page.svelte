@@ -13,7 +13,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { answer } from '$lib/keys/dispatch.svelte';
 	import { offer } from '$lib/keys/doen.svelte';
-	import { werkplekDoer, type ViewId } from './doen';
+	import { stepsWord, werkplekDoer, type ViewId } from './doen';
 	import type { Target } from '$lib/keys/doen.svelte';
 	import { announce } from '$lib/bevestig/bevestig.svelte';
 	import { scrollerOf } from '$lib/bron/landing';
@@ -1974,8 +1974,8 @@
 					verbandWith,
 					toggle: selectedNode ? readAction : null,
 					toggleView,
-					depth: view === 'verband' ? pairSteps : depth,
-					steps: netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3],
+					depth: stepsNow,
+					steps: stepsOffered,
 					setDepth,
 					filter,
 					linesOff: new Set(filtersOff.lines),
@@ -2005,6 +2005,11 @@
 				}))
 			),
 			answer('toggle-view', toggleView),
+			answer('view-omgeving', () => keyView('omgeving')),
+			answer('view-keten', () => keyView('keten')),
+			answer('view-verband', () => keyView('verband')),
+			answer('steps-less', () => stepBy(-1)),
+			answer('steps-more', () => stepBy(1)),
 			answer('article-prev', () => stepArticle(-1)),
 			answer('article-next', () => stepArticle(1))
 		];
@@ -2025,6 +2030,48 @@
 		} else return;
 		announce(`Weergave ${VIEWS.find((v) => v.waarde === w)?.label}`);
 		focusView(w);
+	}
+
+	/** Aantal stappen as it stands, and the steps offered (as NetworkChoice offers them). */
+	const stepsNow = $derived(view === 'verband' ? pairSteps : depth);
+	const stepsOffered = $derived(netwerkActive && view === 'omgeving' ? [0, 1, 2, 3] : [1, 2, 3]);
+
+	// Alt O, Alt K, Alt V (register): the weergave; false where there is none to show here.
+	function keyView(w: ViewId): boolean {
+		if (!(focus || pad || netwerkActive)) return false;
+		if (mode !== 'graph' && w !== 'keten') return false;
+		if (w === 'keten' && !(chainPossible || (mode !== 'graph' && withChain(selectedNode))))
+			return false;
+		if (w === 'verband' && !verbandPossible) {
+			// One bron: Bron toevoegen for the second, and Verband once it is there (Thijs, 30 Oct).
+			verbandAfterAdd = true;
+			toevoegenOpen = true;
+			return true;
+		}
+		toView(w);
+		return true;
+	}
+	let verbandAfterAdd = $state(false);
+	$effect(() => {
+		if (!toevoegenOpen) verbandAfterAdd = false;
+		else if (verbandAfterAdd && verbandPossible) {
+			verbandAfterAdd = false;
+			untrack(() => chooseView('verband'));
+		}
+	});
+
+	// Alt − and Alt =: one step less or more, how far the netwerk reaches, in every weergave
+	// with steps (Thijs, 30 Oct: one meaning).
+	function stepBy(d: 1 | -1): boolean {
+		if (mode !== 'graph' || view === 'keten' || !(focus || pad || netwerkActive)) return false;
+		const next = stepsNow + d;
+		if (!stepsOffered.includes(next)) {
+			announce(d < 0 ? 'Minder stappen kan niet' : 'Meer stappen kan niet');
+			return true;
+		}
+		setDepth(next);
+		announce(stepsWord(next));
+		return true;
 	}
 
 	/** Verband with a bron typed in ⌘K: it joins the netwerk, in one step with the weergave. */
@@ -2548,6 +2595,7 @@
 								{#snippet canvasOverlay()}
 									{#if panelChunk.component}{@const PanelC = panelChunk.component}<PanelC
 											bind:searching={toevoegenOpen}
+											searchingWhy={verbandAfterAdd ? 'Verband vraagt een tweede bron' : null}
 											entries={netwerkActive
 												? composer.entries.map((e) =>
 														e.node

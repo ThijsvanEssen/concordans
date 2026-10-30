@@ -57,6 +57,7 @@ function viewRow(w: Werkplek, to: ViewId, why: string | null): DoRow {
 		id: to,
 		label: `Weergave ${LABEL[to]}`,
 		word: to,
+		key: `view-${to}`,
 		now: w.graph && w.view === to,
 		...(why ? { why } : { run: () => w.toView(to) })
 	};
@@ -84,7 +85,7 @@ function viewRows(w: Werkplek, p: Parsed, target: Target | null): DoRow[] {
 	];
 }
 
-const stepsWord = (n: number) => (n === 0 ? 'Alleen gekozen' : count(n, 'stap', 'stappen'));
+export const stepsWord = (n: number) => (n === 0 ? 'Alleen gekozen' : count(n, 'stap', 'stappen'));
 
 function stepRows(w: Werkplek, p: Parsed): DoRow[] {
 	if (!w.graph) return [];
