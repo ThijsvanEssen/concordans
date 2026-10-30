@@ -267,7 +267,7 @@
 	}
 	.keys {
 		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-4);
+		gap: var(--s-1) var(--s-3);
 		margin: 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);

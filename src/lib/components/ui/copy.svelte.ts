@@ -13,7 +13,7 @@ type Write = (text: string, html?: string) => Promise<void>;
 
 /** The text, and beside it the same as HTML where one is given: a word processor keeps its form. */
 const clipboard: Write = (text, html) =>
-	html && typeof ClipboardItem !== 'undefined'
+	html && typeof ClipboardItem !== 'undefined' && navigator.clipboard.write
 		? navigator.clipboard.write([
 				new ClipboardItem({
 					'text/plain': new Blob([text], { type: 'text/plain' }),
