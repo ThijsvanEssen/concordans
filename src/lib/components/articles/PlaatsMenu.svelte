@@ -27,6 +27,7 @@
 	// a click on an arcering opens it with its aantekening and Arcering weg.
 	import { menu } from '$lib/actions/menu';
 	import { topLayer } from '$lib/actions/top-layer';
+	import { afterTick } from '$lib/util/after-tick';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { citedWhat, type CiteItem } from '$lib/components/ui/cite-items';
 	import { kaart } from '$lib/map/map.svelte';
@@ -98,6 +99,16 @@
 
 	const copier = createCopier();
 	const aan = $derived(!!bewaar && kaart.heeft(bewaar));
+	/** Bewaar in bundel… asked: the bundels with their ticks stand in place of the two Bewaar items. */
+	let choosing = $state(false);
+
+	/** The first bundel takes the focus, so the arrows and Escape go on working. */
+	function choose() {
+		choosing = true;
+		afterTick(() =>
+			document.querySelector<HTMLElement>('.plaatsmenu [role="menuitemcheckbox"]')?.focus()
+		);
+	}
 
 	function sluit(focus = true) {
 		// Held before closing: once the menu is gone its props are too.
@@ -228,7 +239,7 @@
 		<div class="regel">
 			<!-- Kept: the bundels with their ticks, as Bewaar's menu (BundleChecklist); nothing
 			     is taken out of all at once. -->
-			{#if aan}
+			{#if aan || choosing}
 				<BundleChecklist item={bewaar} close={sluit} />
 			{:else}
 				{@const into = kaart.keepsIn}
@@ -240,6 +251,14 @@
 						kaart.keep(bewaar, into.id);
 						sluit();
 					}}>Bewaar in {into.naam}</button
+				>
+				<button
+					type="button"
+					class="tekstmenu__item"
+					role="menuitem"
+					onclick={() => {
+						choose();
+					}}>Bewaar in bundel…</button
 				>
 			{/if}
 		</div>

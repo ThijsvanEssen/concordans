@@ -37,6 +37,30 @@ test('a new bundel is named in the menu and keeps the bron at once', async ({ pa
 	await expect(page.getByRole('link', { name: 'Onrechtmatige daad' })).toBeVisible();
 });
 
+test('a lid is kept in a chosen bundel from its menu, with its anchor', async ({ page }) => {
+	await page.goto(ARTICLE);
+	await page.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
+	await page.getByRole('menuitem', { name: 'Nieuwe bundel' }).click();
+	const name = page.getByRole('textbox', { name: 'Naam van de nieuwe bundel' });
+	await name.fill('Onrechtmatige daad');
+	await name.press('Enter');
+
+	await page.getByRole('button', { name: 'art. 6:162 lid 2 BW: citeren, bewaren' }).click();
+	await page.getByRole('menuitem', { name: 'Bewaar in bundel…' }).click();
+	await expect(page.getByRole('menuitemcheckbox').first()).toBeFocused();
+	await page.getByRole('menuitemcheckbox', { name: 'Onrechtmatige daad' }).click();
+	await expect(page.getByRole('menuitemcheckbox', { name: 'Onrechtmatige daad' })).toHaveAttribute(
+		'aria-checked',
+		'true'
+	);
+
+	await page.goto('/bundels');
+	await page.getByRole('link', { name: 'Onrechtmatige daad' }).click();
+	const lid = page.getByRole('link', { name: 'art. 6:162 lid 2 BW' });
+	await expect(lid).toBeVisible();
+	await expect(lid).toHaveAttribute('href', /#lid-2$/);
+});
+
 test('the overview opens a bundel in place; its page groups what it keeps', async ({ page }) => {
 	await keepArticle(page);
 	await keepPlaces(page);
