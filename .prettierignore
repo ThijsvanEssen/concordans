@@ -18,5 +18,8 @@ src/lib/bron/readable-paths.json
 # Recorded from the API, written by src/lib/test/opname.ts
 /src/lib/fixtures/verbonden/
 
+# The five examples of the lanes canvas: neighbourhoods from the API, slimmed (graph/scene.test.ts)
+/src/lib/fixtures/lanes/
+
 # The server's HTML of the start page (home.py of the API), byte for byte (npm run sync:start).
 src/lib/components/home/start-server.html

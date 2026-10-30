@@ -132,6 +132,12 @@ const NOT_A_MODULE = /^lib\/test\/|^lib\/fixtures\/|^routes\/|^hooks\.|\.d\.ts$/
 /** An export only a test reads, which its module does not use: a hook for that test. */
 const TEST_HOOKS: Uitzondering[] = [
 	{
+		pad: 'lib/graph/scene.ts',
+		regel: /^(buildScene|sceneClusters)$/,
+		reden:
+			'the scene of Omgeving as lanes: read by its view and the budget from phase 4 on (PLAN-doek-banen)'
+	},
+	{
 		pad: 'lib/api/records.ts',
 		regel: /^RECORDS_KEPT$/,
 		reden: 'a test hook: how many records the cache keeps, for the test that fills it'
