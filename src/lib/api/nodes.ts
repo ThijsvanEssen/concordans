@@ -27,6 +27,8 @@ export const getNodeGraph = (
 		/** `passages`: an edge of a judgment's citation with the places it cites (API 0.79.55),
 		 *  asked only where a row or a card shows them, not for the canvas. */
 		edgeMeta?: 'passages';
+		/** `importance`: a committee's dossiers (`LED_BY`) the latest first. */
+		sort?: 'key' | 'importance';
 		/**
 		 * A node waits as long as the API does: a full one can take a cold API more than 10 s
 		 * (art. 3:2 Awb, 651 kB, prod 9 Oct), and is then not cut off and asked again. `short`:
@@ -46,7 +48,8 @@ export const getNodeGraph = (
 					direction: opts.direction,
 					offset: opts.offset,
 					props: opts.props,
-					edge_meta: opts.edgeMeta
+					edge_meta: opts.edgeMeta,
+					sort: opts.sort
 				}
 			},
 			signal: opts.signal

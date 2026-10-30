@@ -1,4 +1,4 @@
-// The lijnsoorten of the canvas (Netwerkcanvas, Lijnen): every relation is one of seven, and a
+// The lijnsoorten of the canvas (Netwerkcanvas, Lijnen): every relation is one of eight, and a
 // kind carries the colour, stroke, arrow and weight of its lines. Relatie lists them, one row
 // each, and switches them off; no relation draws a line that is in none of them.
 // The stroke gives the family (solid: the law itself; dashed: names it; round dots: belongs to,
@@ -13,7 +13,8 @@ export const LINE_KINDS = [
 	'citation',
 	'explanation',
 	'submitter',
-	'member'
+	'member',
+	'led'
 ] as const;
 
 export type LineKind = (typeof LINE_KINDS)[number];
@@ -25,7 +26,8 @@ export const LINE_KIND_LABEL: Record<LineKind, string> = {
 	citation: 'Aanhaling',
 	explanation: 'Toelichting',
 	submitter: 'Ingediend door',
-	member: 'Lid van'
+	member: 'Lid van',
+	led: 'Onder leiding van'
 };
 
 /**
@@ -46,7 +48,8 @@ export const LINE_KIND_SAMPLE: Record<LineKind, { relation: Relation; from: Draw
 	citation: { relation: 'REFERS_TO', from: 'judgment' },
 	explanation: { relation: 'EXPLAINS', from: 'document' },
 	submitter: { relation: 'AUTHORED', from: 'member' },
-	member: { relation: 'MEMBER_OF', from: 'member' }
+	member: { relation: 'MEMBER_OF', from: 'member' },
+	led: { relation: 'LED_BY', from: 'dossier' }
 };
 
 export const isLineKind = (s: string): s is LineKind =>
@@ -71,7 +74,9 @@ export const LINE_KIND_STYLE: Record<LineKind, KindStyle> = {
 	citation: { colour: 'slate', tone: 'licht', stroke: 'kort' },
 	part: { colour: 'moss', tone: 'middel', stroke: 'punten' },
 	submitter: { colour: 'plum', tone: 'donker', stroke: 'puntenIndiener' },
-	member: { colour: 'ink3', tone: 'licht', stroke: 'punten' }
+	member: { colour: 'ink3', tone: 'licht', stroke: 'punten' },
+	// A commissie's voortouw: the dots of belongs to, in the colour of the parlement (B41).
+	led: { colour: 'plum', tone: 'donker', stroke: 'punten' }
 };
 
 /** A line of the family hoort bij has no arrowhead: the omhulling or the nodes say the direction. */

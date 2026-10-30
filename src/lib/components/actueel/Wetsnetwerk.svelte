@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The network of the last passed bill as the small network of Verbonden draws it (Netwerk
-	// tonen): the changed article in the middle, around it the proposal, the dossier and the
-	// judgments. Read only: a bron opens the real network with it. The drawing is a chunk of
+	// tonen): the changed article in its law, one step out, the dossier as a hull with whom
+	// leads it (home-network). Read only: a bron opens the real network with it. The drawing is a chunk of
 	// its own, asked after the first paint of the page; if it does not come, the line under it
 	// is still the way in.
 	import { goto } from '$app/navigation';
@@ -12,7 +12,7 @@
 	import { langeDatum } from '$lib/text/datum';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import type { Sketch } from '$lib/verbonden/sketch';
-	import { kaartVan, type Schets } from './wetsnetwerk';
+	import type { Schets } from './wetsnetwerk';
 
 	type TekeningProps = {
 		sketch: Sketch;
@@ -31,16 +31,11 @@
 	let fout = $state.raw<unknown>(null);
 	function laad() {
 		kaart = null;
-		Promise.all([import('$lib/verbonden/NetworkSketch.svelte'), import('$lib/verbonden/sketch')])
-			.then(([ns, sk]) => {
+		Promise.all([import('$lib/verbonden/NetworkSketch.svelte'), import('./home-network')])
+			.then(async ([ns, sn]) => {
+				const sketch = await sn.homeNetwork(schets);
 				if (weg) return;
-				kaart = {
-					Tekening: ns.default,
-					sketch: sk.sketch(kaartVan(schets), schets.centrum.naam, undefined, 'article', {
-						home: schets.centrum.law,
-						centre: { collection: 'articles', key: schets.centrum.id }
-					})
-				};
+				kaart = { Tekening: ns.default, sketch };
 			})
 			.catch((e) => {
 				report('Wetsnetwerk', e);

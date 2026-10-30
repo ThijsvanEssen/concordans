@@ -52,7 +52,7 @@ const REGULATION_LAYERS: LayerId[] = ['amvb', 'kb', 'ministerial', 'policy', 'ot
  * How a node hangs under its parent: a power given, only named, or not known (the data has no
  * basis_kind for it). Unknown is no delegation: it stands behind Noemt, as a mention does.
  */
-export type ParentWay = 'delegates' | 'mentioned' | 'unknown';
+type ParentWay = 'delegates' | 'mentioned' | 'unknown';
 
 export type ChainNode = {
 	/** The node id: `instruments/bwbr…`, `articles/bwbr…_16`. */
@@ -88,6 +88,8 @@ export type ChainNode = {
 		way: ParentWay;
 		relation?: Relation;
 		cite?: ArticleCite;
+		/** A law that names it in its text: how many of its articles, for the order; no label. */
+		named?: number;
 	}[];
 	/** The regulations issued under it in turn, one level down. */
 	further: string[];
@@ -433,15 +435,12 @@ export function chain(
 				sub,
 				parentsOf(item.instrument.id, sub.articles, abbrOf(item.instrument), wayOf(sub.basis_kind))
 			);
-	// The laws that only name this one in their text: mentions, with the number of its articles.
+	// The laws that only name this one in their text: mentions, without a label, for the API
+	// gives how many articles they name, not which (a count reads as an article number, B48); not
+	// a law the keten draws above it already (the Cbw over the Cbb).
+	const above = new Set((basis?.items ?? []).map((b) => b.instrument.id));
 	for (const r of mentions ? (refers ?? []) : []) {
-		if (!/^(?:wet|rijkswet)$/i.test(r.kind ?? '')) continue;
-		const cite = {
-			full: `${r.inbound_cited_count} art. ${lawAbbr}`,
-			count: r.inbound_cited_count,
-			abbr: lawAbbr,
-			articles: []
-		};
+		if (!/^(?:wet|rijkswet)$/i.test(r.kind ?? '') || above.has(r.id)) continue;
 		take(
 			{
 				instrument: {
@@ -454,7 +453,7 @@ export function chain(
 				date_in_force: r.date_in_force,
 				expired_on: null
 			},
-			[{ id: law.id, way: 'mentioned', relation: 'REFERS_TO', cite }]
+			[{ id: law.id, way: 'mentioned', relation: 'REFERS_TO', named: r.inbound_cited_count }]
 		);
 	}
 	// Without the mentions, only what rests on the law is part of its keten: a regulation under
@@ -476,10 +475,12 @@ export function chain(
 			node.parents = node.parents.filter((p) => p.way === 'delegates' && alive.has(p.id));
 	// What it rests on, said on a phone's row: the articles of each law with its abbreviation.
 	for (const node of nodes) {
+		// A law that names it in its text: the law it names, no count.
 		const said = (way: ParentWay) =>
 			node.parents
-				.filter((p) => p.way === way && p.cite)
-				.map((p) => p.cite!.full)
+				.flatMap(({ way: w, cite: c, relation }) =>
+					w !== way ? [] : c ? [c.full] : relation === 'REFERS_TO' ? [lawAbbr] : []
+				)
 				.join(', ') || null;
 		node.grondslag = said('delegates');
 		node.mentions = said('mentioned');
@@ -502,7 +503,8 @@ export function chain(
 		const id = layerOf(n.kind);
 		return id === 'statute' && n.parents.every(isMention) ? 'named' : id;
 	};
-	const cited = (n: ChainNode) => Math.max(0, ...n.parents.map((p) => p.cite?.count ?? 0));
+	const cited = (n: ChainNode) =>
+		Math.max(0, ...n.parents.map((p) => p.named ?? p.cite?.count ?? 0));
 	const statutes: ChainNode[] = [];
 	const naming: ChainNode[] = [];
 	for (const id of ['statute' as const, 'named' as const, ...REGULATION_LAYERS]) {
@@ -530,7 +532,21 @@ export function chain(
 		else if (drawn.length) perLayer.set(id, drawn);
 	}
 	for (const n of statutes) n.parents = [];
-	lawLayer.nodes.push(...statutes, ...naming);
+	lawLayer.nodes.push(...statutes);
+	// A wet that names it stands in the row Wet: beside the law, or above an AMvB or a regulation,
+	// beside the laws it rests on (B2: not in the row of the Cbb).
+	if (!isRegulation(kind)) lawLayer.nodes.push(...naming);
+	else if (naming.length) {
+		const row = layers.find((l) => l.id === 'basis');
+		// A row of its own when the data has no grondslag above it: not 'basis', which says it has.
+		if (row) row.nodes.push(...naming);
+		else
+			layers.splice(layers.indexOf(lawLayer), 0, {
+				id: 'statute',
+				label: LAYER_LABEL.statute,
+				nodes: naming
+			});
+	}
 	if (eu?.implementedBy.length)
 		layers.push({
 			id: 'implementation',

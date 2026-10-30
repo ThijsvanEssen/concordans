@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kandidaten, schetsVan, kaartVan, type CitedBy } from './wetsnetwerk';
+import { kandidaten, schetsVan, type CitedBy } from './wetsnetwerk';
 import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 
 const vote = (number: string, date: string, chamber: 'TK' | 'EK', subkind: string, passed = true) =>
@@ -134,46 +134,11 @@ const k = {
 describe('schetsVan', () => {
 	const s = schetsVan(k, changes, citedBy)!;
 
-	it('draws the dossier, its stukken by number with the amendments as one, the law, the judgments', () => {
-		expect(s.kolommen.map((c) => c.titel)).toEqual([
-			'Dossier',
-			'Stukken die wijzigen',
-			'Gewijzigde artikelen',
-			'Uitspraken over artikel 273f'
-		]);
-		expect(s.kolommen[1].bronnen.map((b) => b.label)).toEqual([
-			'Voorstel van wet',
-			'Nota van wijziging',
-			'2 amendementen'
-		]);
-		expect(s.kolommen[1].bronnen.map((b) => b.sub ?? null)).toEqual(['nr. 2', 'nr. 7', null]);
-		expect(s.kolommen[2].kader?.label).toBe('Wetboek van Strafrecht');
-		expect(s.kolommen[2].na?.label).toBe('en 1 andere wet');
+	it('puts the most changed article in the middle', () => {
+		expect(s.centrum).toEqual({ id: 'articles/bwbr0001854_273f', naam: 'Artikel 273f' });
 	});
 
-	it('puts the most changed article first, and each judgment once', () => {
-		expect(s.kolommen[2].bronnen[0].label).toBe('Artikel 273f');
-		expect(s.kolommen[3].bronnen.map((b) => b.label)).toEqual(['A', 'B', '39 uitspraken']);
-		expect(s.kolommen[3].bronnen[0].sub).toBe('HR 27\u00a0oktober\u00a02009, 264× aangehaald');
-	});
-
-	it('links each stuk to the articles it changes', () => {
-		expect(s.lijnen).toContainEqual(['documents/d7', 'articles/bwbr0001854_273f']);
-		expect(s.lijnen).toContainEqual(['groep/amendementen', 'articles/bwbr0001854_160']);
-		expect(s.lijnen).toContainEqual(['articles/bwbr0001854_273f', 'judgments/A']);
-	});
-
-	it('counts the chain for a narrow screen', () => {
-		expect(s.keten).toEqual({
-			stukken: 4,
-			artikelen: 4,
-			wet: 'Wetboek van Strafrecht',
-			uitspraken: 39,
-			artikel: 'Artikel 273f'
-		});
-	});
-
-	it('opens the Verkenner on at least what the band draws: every stuk, every law', () => {
+	it('opens the Verkenner on every stuk, every law, the article and two judgments', () => {
 		expect(s.exploreHref).toBe(
 			'/explore?netwerk=dossiers/36547,documents/d2,documents/d7,documents/d20,documents/d22,' +
 				'instruments/bwbr0001854,instruments/bwbr0028180,articles/bwbr0001854_273f,judgments/A,judgments/B'
@@ -182,17 +147,6 @@ describe('schetsVan', () => {
 
 	it('leaves the judgments out when none cites the article', () => {
 		const zonder = schetsVan(k, changes, { ...citedBy, judgment_total: 0, items: [] })!;
-		expect(zonder.kolommen).toHaveLength(3);
-	});
-});
-
-describe('kaartVan', () => {
-	it('draws the article with its proposal, its dossier and its judgments', () => {
-		const groepen = kaartVan(schetsVan(k, changes, citedBy)!);
-		expect(groepen.map((g) => g.id)).toEqual(['stukken', 'dossiers', 'uitspraken']);
-		expect(groepen[0].rows[0].title).toBeTruthy();
-		expect(groepen[1].rows[0].title).toBe('Dossier 36547');
-		expect(groepen[2].count).toBe(39);
-		expect(groepen[2].capped).toBe(true);
+		expect(zonder.exploreHref).not.toContain('judgments/');
 	});
 });

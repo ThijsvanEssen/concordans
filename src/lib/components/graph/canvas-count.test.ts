@@ -88,3 +88,19 @@ describe('countCanvas, the period', () => {
 		expect(counts.kinds).toEqual({ stukken: 3 });
 	});
 });
+
+describe('a commissie drawn as a ring (B41)', () => {
+	it('is one bron of its soort, with no point of its own', () => {
+		const { counts } = countCanvas({
+			graph: canvas(),
+			drawn: new Set(['f', 'in']),
+			selectionId: 'f',
+			hiddenKinds: new Set(),
+			rechter: null,
+			verborgen: new Map(),
+			hiddenLines: new Set(),
+			rings: [{ filterGroup: 'commissies' }]
+		});
+		expect(counts.kinds).toEqual({ stukken: 4, commissies: 1 });
+	});
+});

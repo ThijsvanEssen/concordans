@@ -4,23 +4,9 @@
 // is no grondslag (the Proclamatie).
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
-import { openSheet } from '../support/sheet';
+import { noemt } from '../support/noemt';
 
 const GRONDWET = '/explore?netwerk=instruments/bwbr0001840&weergave=keten';
-const strip = (page: Page) => page.getByRole('complementary', { name: 'Bronnen en filters' });
-
-/** Noemt (Relatie: Aanhaling) switched, in the strip of a wide screen or the sheet of a phone. */
-async function noemt(page: Page) {
-	await openSheet(page);
-	const toggle = strip(page).getByRole('button', { name: 'Filter', exact: true });
-	if (await toggle.isVisible()) await toggle.click();
-	await strip(page)
-		.getByRole('region', { name: 'Filters' })
-		.getByRole('button', { name: /^Aanhaling/ })
-		.click();
-	if (await page.getByRole('dialog', { name: 'Weergave' }).isVisible())
-		await page.keyboard.press('Escape');
-}
 
 /** The text the keten holds: the drawing on a wide screen, the list on a phone. */
 const ketenText = async (page: Page) =>

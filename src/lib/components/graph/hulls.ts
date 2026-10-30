@@ -122,7 +122,8 @@ export function hullLinkOf(
 	tgt: string,
 	{ graph, groups, groupsOf, drawn, alone }: HullGroups
 ): { from: string; to: string } | null {
-	if (!isAnchor(graph, tgt) || alone?.has(tgt)) return null;
+	// An anchor standing alone is a bron: its line is a line, not one between hulls (B41).
+	if (!isAnchor(graph, tgt) || alone?.has(tgt) || alone?.has(src)) return null;
 	const to = [...(groupsOf.get(tgt) ?? [])][0];
 	const from = [...(groupsOf.get(src) ?? [])].find((id) => {
 		const group = groups.get(id);
@@ -463,7 +464,7 @@ export function layoutHulls(s: HullScene): HullLayout {
 			labelY: (start.y + end.y) / 2
 		});
 	}
-	links.push(...anchorLines(s, anchorHull, active));
+	links.push(...anchorLines(s, anchorHull, active, alone));
 	unstacked(links, s.labelWidth);
 
 	const hulls = [...drawn.values()];
@@ -492,7 +493,8 @@ export function layoutHulls(s: HullScene): HullLayout {
 function anchorLines(
 	s: HullScene,
 	anchorHull: ReadonlyMap<string, Drawn>,
-	active: ReadonlySet<string> | null
+	active: ReadonlySet<string> | null,
+	alone: ReadonlyMap<string, string>
 ): HullLink[] {
 	const { graph } = s;
 	const links: HullLink[] = [];
@@ -509,7 +511,7 @@ function anchorLines(
 		return { x: p.x + ((toward.x - p.x) / d) * radius, y: p.y + ((toward.y - p.y) / d) * radius };
 	};
 	graph.forEachEdge((_e, attrs, src, tgt) => {
-		if (attrs.layoutOnly || hullLinkOf(src, tgt, s)) return;
+		if (attrs.layoutOnly || hullLinkOf(src, tgt, { ...s, alone })) return;
 		const fromHull = anchorHull.get(src);
 		const toHull = anchorHull.get(tgt);
 		if (!fromHull && !toHull) return;

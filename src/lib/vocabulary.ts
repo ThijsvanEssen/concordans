@@ -67,7 +67,7 @@ export const RELATIONS: Record<Relation, RelationSpec> = {
 	SAME_AS: { lineKind: 'citation', weight: 0.6, layer: 'structural' },
 	SCOPED_BY: { lineKind: 'structural', weight: 0.6, layer: 'structural' },
 	ABOUT: { lineKind: 'part', weight: 0.6, layer: 'structural' },
-	LED_BY: { lineKind: 'member', weight: 0.6, layer: 'structural' },
+	LED_BY: { lineKind: 'led', weight: 0.6, layer: 'structural' },
 	MADE_IN: { lineKind: 'citation', weight: 0.7, layer: 'structural' },
 	MEMBER_OF: { lineKind: 'member', weight: 0.6, layer: 'structural' },
 	SERVED_IN: { lineKind: 'member', weight: 0.6, layer: 'structural' },
