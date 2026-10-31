@@ -196,6 +196,11 @@ a.raakvlak.is-open {
 		align-items: center;
 		min-height: var(--veld-h-raak);
 	}
+	/* Lines of text links that wrap (a law's articles in a row): a finger's 44 px per line, so
+	   the target of one never covers another on the line above or below. */
+	.raak-regels {
+		line-height: var(--veld-h-raak);
+	}
 	.tekstmenu__knop::after,
 	.raakvlak-knop::after {
 		content: '';

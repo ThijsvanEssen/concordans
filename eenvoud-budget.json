@@ -16,7 +16,7 @@
 		"src/lib/components/articles/VersionCompare.svelte": 972,
 		"src/lib/components/explore/IndexView.svelte": 1063,
 		"src/lib/components/explore/readers/ArticleReader.svelte": 1210,
-		"src/lib/components/explore/readers/DocumentReader.svelte": 855,
+		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1609,
 		"src/lib/components/graph/GraphView.svelte": 2096,

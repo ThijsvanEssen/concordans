@@ -346,7 +346,6 @@
 					: ', '}{/if}<BronLink
 				ref={{ collection: 'articles', key: a.key }}
 				at={a.at}
-				class="raak-rij"
 				panel
 				stack={w.articles}>{a.label}</BronLink
 			>{/each}{` van ${w.determiner} `}{/if}<a
@@ -394,7 +393,7 @@
 		{@const all = allGrounds.has(deel.werkwoord)}
 		{@const shown = deel.wetten.slice(0, lawsShown(deel, all))}
 		{@const rest = deel.wetten.length - shown.length}
-		<p class="whole-count">
+		<p class="whole-count raak-regels">
 			{deel.werkwoord}
 			{#each shown as w, i (w.key)}{#if i > 0}{i === shown.length - 1 && !rest
 						? ' en '
