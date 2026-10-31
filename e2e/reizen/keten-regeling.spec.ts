@@ -21,9 +21,10 @@ test('the wetten a regulation names stand in the row Wet, its AMvB in the row AM
 	await page.goto(IENW);
 	if (isMobile) {
 		const layer = (name: string) => page.locator(`.chain .list__layer[aria-label="${name}"]`);
-		for (const wet of WETTEN) await expect(layer('Wet')).toContainText(wet);
+		// A phone's list shows the first four of a layer, the rest under "N andere".
+		for (const wet of WETTEN.slice(0, 4)) await expect(layer('Wet')).toContainText(wet);
 		await expect(layer('AMvB')).toHaveText(/Cyberbeveiligingsbesluit/);
-		await expect(layer('AMvB')).not.toContainText('Omgevingswet');
+		for (const wet of WETTEN) await expect(layer('AMvB')).not.toContainText(wet);
 		return;
 	}
 	const svg = page.locator('svg.drawing');
