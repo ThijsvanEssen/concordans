@@ -21,7 +21,7 @@
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
 	import type { MakerLane } from '$lib/graph/roles';
 	import type { Visibility } from '$lib/graph/visibility';
-	import { kort, type GraphEdge, type GraphNode } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode } from '$lib/graph/types';
 	import { arrowLength, edgeCapFor, edgeDashFor, toneColour, tokens } from './nodeSprites';
 
 	let {
@@ -96,7 +96,7 @@
 			edges,
 			chosen,
 			visibility,
-			nameOf: (n) => kort(bronNaam(n, $instrumentMetaStore))
+			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
 		})
 	);
 	const byId = $derived(new Map(nodes.map((n) => [n.id, n])));
@@ -121,7 +121,10 @@
 	const named = $derived(phone ? (layout as StripLayout).named : null);
 
 	$effect(() => {
-		onDrawn(new Set(scene.units.flatMap((u) => u.members)));
+		// A hull is drawn too: its pill marks the wet or dossier it stands for.
+		onDrawn(
+			new Set(scene.units.flatMap((u) => (u.shape === 'hull' ? [u.id, ...u.members] : u.members)))
+		);
 	});
 
 	// ── lit and dim ───────────────────────────────────────────────────────────
@@ -137,6 +140,10 @@
 	const touches = (p: LanePath) =>
 		hoveredLine ? p.id === hoveredLine : !lit || p.from === lit || p.to === lit;
 	const anyLit = $derived(!!lit || !!hoveredLine);
+	// A mark taken away (Escape, the card closed): what a click lit goes out with it.
+	$effect(() => {
+		if (!marked) hovered = null;
+	});
 	const markedUnit = $derived(marked ? (unitOf.get(marked)?.id ?? null) : null);
 
 	// ── the look of a line ────────────────────────────────────────────────────
@@ -200,6 +207,9 @@
 		const colour = n ? kindColour(n.collection, null, props) : sortColour(sort);
 		return { d: v.d, wijze: v.wijze, colour };
 	}
+	/** The bron a hull's pill stands for: its wet or dossier where the canvas has it, else its first. */
+	const hullBron = (u: SceneUnit) =>
+		byId.has(u.id) ? u.id : (u.members.find((m) => chosen.includes(m)) ?? u.members[0]);
 	const discText = (u: SceneUnit) => formatCount(u.members.length);
 	const rowCount = (n: number) => (n > 1 ? ` ${formatCount(n)}` : '');
 	const GAP_LINES = ['functie niet', 'in de gegevens'];
@@ -274,11 +284,12 @@
 	<g
 		class="pill"
 		role="button"
-		tabindex="0"
+		tabindex="-1"
 		aria-label={u.label}
-		aria-pressed={lit === u.id}
-		onclick={() => (hovered = hovered === u.id ? null : u.id)}
-		onkeydown={(e) => onKey(e, () => (hovered = hovered === u.id ? null : u.id))}
+		aria-pressed={markedUnit === u.id}
+		onclick={() => onMark(hullBron(u))}
+		ondblclick={() => onOpen(hullBron(u))}
+		onkeydown={(e) => onKey(e, () => onMark(hullBron(u)))}
 	>
 		<title>{u.label}</title>
 		<rect
@@ -303,7 +314,7 @@
 				<g
 					class="member"
 					role="button"
-					tabindex="0"
+					tabindex="-1"
 					aria-label="{row.label || u.label}{rowCount(row.members.length)}"
 					onclick={() => onMark(holdsChosen ?? row.members[0])}
 					onkeydown={(e) => onKey(e, () => onMark(holdsChosen ?? row.members[0]))}
@@ -325,7 +336,7 @@
 						class="member"
 						class:is-marked={marked === m}
 						role="button"
-						tabindex="0"
+						tabindex="-1"
 						aria-label={n?.label ?? m}
 						aria-pressed={marked === m}
 						onclick={() => onMark(m)}
@@ -373,7 +384,7 @@
 				!paths.some((p) => touches(p) && (p.from === u.id || p.to === u.id))}
 			data-unit={u.id}
 			role="button"
-			tabindex="0"
+			tabindex="-1"
 			aria-label={titleOf(u)}
 			aria-pressed={u.shape === 'node' ? markedUnit === u.id : lit === u.id}
 			onclick={() => choose(u)}
@@ -441,10 +452,10 @@
 
 <div class="banen" class:is-phone={phone} bind:clientWidth={avail} data-testid="banen">
 	{#if scene.units.length === 0}
-		<div class="leeg">
-			<p class="leeg__kop">Niets te tekenen</p>
-			<p class="stil">Tonen en Relatie laten hier geen bron over.</p>
-		</div>
+		<!-- No bron at all: the canvas says so itself (Nog geen bron gekozen). -->
+		{#if nodes.length > 0}<div class="leeg">
+				<p class="leeg__kop">Niets te tekenen met deze filters</p>
+			</div>{/if}
 	{:else}
 		<svg
 			class="drawing"

@@ -501,7 +501,7 @@
 	}
 	// A bron that left the canvas is pointed at no longer.
 	$effect(() => {
-		if (pijl && !drawnIds.includes(pijl.id)) pijl = null;
+		if (pijl && !isOnCanvas(pijl.id)) pijl = null;
 	});
 	// The card of the bron in the keyboard's list: Tab goes into it, Escape and Shift+Tab back
 	// to that bron, Tab past its last action on to the canvas (UX test 10 Oct, #14).
@@ -575,7 +575,7 @@
 	}
 	// A bron that left the canvas is no longer marked here; the address keeps it.
 	$effect(() => {
-		if (gemarkeerd && !drawnIds.includes(gemarkeerd.id)) ontmarkeer(false);
+		if (gemarkeerd && !isOnCanvas(gemarkeerd.id)) ontmarkeer(false);
 	});
 	// The bron the address marks (?marked, after Back), once it is drawn: its card opens again.
 	// A mark the address lost (Back past it) closes.
@@ -583,6 +583,7 @@
 	$effect(() => {
 		const id = marked;
 		const drawnNow = drawnIds;
+		void laneDrawn;
 		const had = markedBefore;
 		markedBefore = id;
 		untrack(() => {
@@ -590,7 +591,7 @@
 				if (had && gemarkeerd?.id === had) ontmarkeer(false);
 				return;
 			}
-			if (gemarkeerd?.id === id || !drawnNow.includes(id)) return;
+			if (gemarkeerd?.id === id || !(banen ? laneDrawn.has(id) : drawnNow.includes(id))) return;
 			const n = lookup.get(id);
 			if (!n) return;
 			gemarkeerd = n;
@@ -759,6 +760,9 @@
 	let foldable = $state<Cluster[]>([]);
 	/** What the lanes draw: the store's nodes and edges as they are, unfolded. */
 	let laneNodes = $state.raw<GraphNode[]>([]);
+	/** What the lanes draw, their hulls' wetten and dossiers too: those can be marked there. */
+	let laneDrawn = $state.raw<ReadonlySet<string>>(new Set());
+	const isOnCanvas = (id: string) => (banen ? laneDrawn.has(id) : drawnIds.includes(id));
 	let laneEdges = $state.raw<GraphEdge[]>([]);
 	const laneChosen = $derived(
 		pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : []
@@ -1523,15 +1527,17 @@
 						marked={gemarkeerd?.id ?? null}
 						pointed={pijl?.id ?? keyNode?.id ?? null}
 						onMark={(id) => {
-							const n = lookup.get(id);
+							// A hull's wet or dossier is no node of the canvas: the store knows it.
+							const n = lookup.get(id) ?? store.getNodeById(id);
 							if (n) markeer(n);
 						}}
 						onOpen={(id) => {
-							const n = lookup.get(id);
+							const n = lookup.get(id) ?? store.getNodeById(id);
 							if (n) open(n);
 						}}
 						onDrawn={(set) => {
 							drawn = set;
+							laneDrawn = set;
 							untrack(telCanvas);
 						}}
 					/>
@@ -1581,6 +1587,7 @@
 						}}
 						onDrawn={(set) => {
 							drawn = set;
+							laneDrawn = set;
 							untrack(telCanvas);
 						}}
 						onReady={(api) => {
