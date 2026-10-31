@@ -22,7 +22,8 @@
 	import type { MakerLane } from '$lib/graph/roles';
 	import type { Visibility } from '$lib/graph/visibility';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
-	import { arrowLength, edgeCapFor, edgeDashFor, toneColour, tokens } from './nodeSprites';
+	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
+	import { laneLineColour } from '$lib/graph/line-strength';
 
 	let {
 		nodes,
@@ -151,7 +152,8 @@
 		const line = scene.lines.find((l) => l.id === p.id);
 		const style = line ? LINE_KIND_STYLE[line.kind] : null;
 		if (!style) return 'var(--ink-3)';
-		return toneColour(tokens()[style.colour], line!.proposed ? 'licht' : style.tone);
+		const t = tokens();
+		return laneLineColour(t[style.colour], t.paper, line!.proposed ? 'licht' : style.tone);
 	};
 	/** The arrowhead at the end of a path, pointing along its last run. */
 	function head(p: LanePath): string | null {

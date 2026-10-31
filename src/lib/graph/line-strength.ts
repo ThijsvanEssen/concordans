@@ -81,3 +81,11 @@ export const lineStrength = (color: string, paper: string, tone: Tone, n: number
 		toneStrength(tone, n),
 		floorStrength(color, paper, tone === 'licht' ? LIGHT_CONTRAST : LINE_CONTRAST)
 	);
+
+/**
+ * The colour of one line of the lanes (LanesView): its tone, but at least LINE_CONTRAST against the
+ * paper, the light tone too. A lane has no fan of lines to tell apart by strength, and its lines
+ * differ in dash as well as colour.
+ */
+export const laneLineColour = (color: string, paper: string, tone: Tone): string =>
+	mixed(color, paper, Math.max(toneStrength(tone, 1), floorStrength(color, paper, LINE_CONTRAST)));
