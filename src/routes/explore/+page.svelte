@@ -1779,12 +1779,11 @@
 	const PROPOSALS = 'voorstellen';
 	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
 	// Omgeving as lanes (PLAN-doek-banen, fasen 4 en 5): behind ?doek=banen beside the canvas of
-	// now, with its Tijd (?tijd=ja, off by default). The budget counts the lanes' groups then.
+	// now, with its Tijd (?tijd=ja, off by default).
 	const LANES = 'doek';
 	const TIME = 'tijd';
 	const lanesOn = $derived(params.get(LANES) === 'banen' && view === 'omgeving');
 	const timeOn = $derived(params.get(TIME) === 'ja');
-	$effect(() => store.setLanes(lanesOn));
 	const proposals = new Proposals(
 		store,
 		() => proposalsOn,

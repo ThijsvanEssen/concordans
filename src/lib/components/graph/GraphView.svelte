@@ -883,7 +883,8 @@
 	// Another weergave folds otherwise, the lanes not at all: drawn again.
 	$effect(() => {
 		void surroundings;
-		void banen;
+		// The budget counts the lanes' groups then, not the canvas's clusters.
+		store.setLanes(banen);
 		untrack(() => {
 			rawChanged = true;
 			layoutStale = true;
