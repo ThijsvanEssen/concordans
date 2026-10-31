@@ -394,7 +394,7 @@
 		{@const all = allGrounds.has(deel.werkwoord)}
 		{@const shown = deel.wetten.slice(0, lawsShown(deel, all))}
 		{@const rest = deel.wetten.length - shown.length}
-		<p class="whole-count">
+		<p class="whole-count raak-regels">
 			{deel.werkwoord}
 			{#each shown as w, i (w.key)}{#if i > 0}{i === shown.length - 1 && !rest
 						? ' en '

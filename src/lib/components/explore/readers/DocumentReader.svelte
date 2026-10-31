@@ -380,7 +380,7 @@
 
 			{#if toegelicht.length > 0}
 				<Sectie title="Licht toe" aantal={doc.explains?.length ?? 0}>
-					<ul class="toegelicht">
+					<ul class="toegelicht raak-regels">
 						{#each toegelicht as w (w.bwbId)}
 							{@const wet = $instrumentMetaStore.get(w.bwbId)}
 							<li>
