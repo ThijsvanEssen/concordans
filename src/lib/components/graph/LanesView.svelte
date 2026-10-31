@@ -595,7 +595,12 @@
 						.map((lane) => [lane, makers.filter((u) => u.lane === lane).length] as const)
 						.filter(([, k]) => k > 0)}
 					<text class="summary" x={c.x + 12} y={c.y + c.height - 14}
-						>{byLane.map(([lane, k]) => `${k} ${LANE_TITLE[lane].toLowerCase()}`).join(', ')}</text
+						>{byLane
+							.map(
+								([lane, k]) =>
+									`${k} ${lane === 'council' ? LANE_TITLE[lane] : LANE_TITLE[lane].toLowerCase()}`
+							)
+							.join(', ')}</text
 					>
 				{/each}
 			{/if}

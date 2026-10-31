@@ -59,8 +59,15 @@ function axisTicks(segments: readonly AxisSegment[], bottom: number): AxisTick[]
 	return ticks;
 }
 
-/** The axis for the days on it, from `top` down; null without a day. */
-export function timeAxis(days: readonly (string | null)[], top: number): TimeAxis | null {
+/**
+ * The axis for the days on it, from `top` down; null without a day. `need`: the height a year must
+ * have at least, so that all it holds stands within it.
+ */
+export function timeAxis(
+	days: readonly (string | null)[],
+	top: number,
+	need: (year: number) => number = () => 0
+): TimeAxis | null {
 	const years = days.map(yearOf).filter((y): y is number => y !== null);
 	if (years.length === 0) return null;
 	const parts = segmentsOf(years);
@@ -68,7 +75,7 @@ export function timeAxis(days: readonly (string | null)[], top: number): TimeAxi
 	const perYear = Math.max(YEAR_MIN, Math.min(YEAR_MAX, AXIS_SPAN / busy));
 	let y = top;
 	const segments = parts.map((p) => {
-		const height = p.empty ? BEND : perYear;
+		const height = p.empty ? BEND : Math.max(perYear, need(p.from));
 		const segment = { ...p, y, height };
 		y += height;
 		return segment;

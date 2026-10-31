@@ -71,6 +71,20 @@ describe.each(EXAMPLES)('the layout of %s', (name) => {
 				expect(layout.height).toBeLessThan(bottom + 120);
 			});
 
+			it('in Tijd, stands each dated unit of Kamerstukken and Rechtspraak within its own year', () => {
+				if (!layout.axis) return;
+				const wrong = scene.units
+					.filter((u) => u.date && !u.general && (u.column === 'papers' || u.column === 'rulings'))
+					.filter((u) => {
+						const year = Number(u.date!.slice(0, 4));
+						const s = layout.axis!.segments.find((g) => !g.empty && year >= g.from && year < g.to);
+						const box = layout.units.get(u.id)!;
+						return !s || box.y < s.y - 4 || box.y + box.height > s.y + s.height + 4;
+					})
+					.map((u) => `${u.id} ${u.date}`);
+				expect(wrong).toEqual([]);
+			});
+
 			it('is deterministic: the same bronnen in another order give the same layout', () => {
 				const g = example(name);
 				const again = buildScene({ ...g, nodes: shuffled(g.nodes), edges: shuffled(g.edges, 5) });

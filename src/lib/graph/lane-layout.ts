@@ -6,6 +6,7 @@
 // their date (time-axis.ts). Pure and deterministic: text is measured by an estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
 import type { Column, Scene, SceneLine, SceneUnit } from './scene';
+import { yearFraction } from '$lib/text/datum';
 import { axisY, timeAxis, type TimeAxis } from './time-axis';
 
 export const GUTTER = 76;
@@ -306,14 +307,15 @@ function placeColumn(
 	units: readonly SceneUnit[],
 	frame: Frame,
 	top: number,
-	axis: TimeAxis | null
+	axis: TimeAxis | null,
+	need: ReadonlyMap<number, number> = new Map()
 ): Placed {
 	const out = new Map<string, UnitBox>();
 	let y = top;
 	let left: Beside | null = null;
 	for (const u of units) {
-		const at = axis ? axisY(axis, u.date) : null;
-		if (at !== null) y = Math.max(y, at - (u.shape === 'hull' ? HULL_PILL + 4 : GLYPH / 2));
+		const at = axis ? timedTop(axis, u.date, need) : null;
+		if (at !== null) y = Math.max(y, at);
 		const beside = axis ? null : besideOf(left, u, frame);
 		if (beside) {
 			out.set(u.id, beside);
@@ -327,6 +329,41 @@ function placeColumn(
 		y = box.y + box.height + (u.shape === 'hull' ? HULL_GAP : ITEM_GAP);
 	}
 	return { units: out, bottom: y };
+}
+
+const gapOf = (u: SceneUnit) => (u.shape === 'hull' ? HULL_GAP : ITEM_GAP);
+
+/**
+ * In Tijd, what a column needs of each year: its units of that year one under the other. The axis
+ * gives a year at least that much, so nothing is pushed into the next year.
+ */
+function yearNeeds(scene: Scene, frames: ReadonlyMap<Column, Frame>) {
+	const needs = new Map<Column, Map<number, number>>();
+	for (const u of scene.units) {
+		const frame = frames.get(u.column);
+		if (u.general || !u.date || !frame || (u.column !== 'papers' && u.column !== 'rulings'))
+			continue;
+		const year = Number(u.date.slice(0, 4));
+		const own = needs.get(u.column) ?? new Map<number, number>();
+		const height = boxOf(u, frame.x, 0, frame.width).height + gapOf(u) + 4;
+		own.set(year, (own.get(year) ?? 0) + height);
+		needs.set(u.column, own);
+	}
+	return needs;
+}
+
+/**
+ * Where a unit of a column in Tijd starts: in its year, as far down as its day, but only as far as
+ * the room the year has beyond what the column puts in it (`yearNeeds`).
+ */
+function timedTop(axis: TimeAxis, day: string | null, need: ReadonlyMap<number, number>) {
+	const at = axisY(axis, day);
+	if (at === null || !day) return at;
+	const year = Number(day.slice(0, 4));
+	const s = axis.segments.find((g) => !g.empty && year >= g.from && year < g.to);
+	if (!s) return at;
+	const slack = Math.max(0, s.height - (need.get(year) ?? 0));
+	return s.y + Math.max(0, Math.min(1, yearFraction(day) - s.from)) * slack;
 }
 
 /** Wie maakt: a card per lane, in the order of MAKER_LANE_ORDER. */
@@ -420,7 +457,8 @@ function placeAll(
 	scene: Scene,
 	frames: Map<Column, Frame>,
 	axis: TimeAxis | null,
-	centre: Map<string, number> | null
+	centre: Map<string, number> | null,
+	needs: ReadonlyMap<Column, Map<number, number>>
 ) {
 	const units = new Map<string, UnitBox>();
 	const bottoms: number[] = [];
@@ -432,7 +470,7 @@ function placeAll(
 		const placed =
 			column === 'makers'
 				? placeMakers(list, frame, CONTENT_TOP)
-				: placeColumn(list, frame, CONTENT_TOP, timed ? axis : null);
+				: placeColumn(list, frame, CONTENT_TOP, timed ? axis : null, needs.get(column));
 		if (column === 'makers') lanes = (placed as ReturnType<typeof placeMakers>).lanes;
 		for (const [id, box] of placed.units) units.set(id, box);
 		bottoms.push(placed.bottom);
@@ -451,14 +489,23 @@ export function laneLayout(scene: Scene, width: number, time = false): LaneLayou
 	const dated = scene.units.filter(
 		(u) => !u.general && (u.column === 'papers' || u.column === 'rulings')
 	);
+	const needs = yearNeeds(scene, frames);
+	const most = (year: number) => Math.max(0, ...[...needs.values()].map((n) => n.get(year) ?? 0));
 	const axis = time
 		? timeAxis(
 				dated.map((u) => u.date),
-				CONTENT_TOP + 14
+				CONTENT_TOP + 14,
+				most
 			)
 		: null;
-	const first = placeAll(scene, frames, axis, null);
-	const { units, lanes, bottom } = placeAll(scene, frames, axis, barycentre(scene, first.units));
+	const first = placeAll(scene, frames, axis, null, needs);
+	const { units, lanes, bottom } = placeAll(
+		scene,
+		frames,
+		axis,
+		barycentre(scene, first.units),
+		needs
+	);
 	const general = scene.units.filter((u) => u.general).sort(byDefault);
 	let strip: Box | null = null;
 	let end = bottom;
