@@ -115,6 +115,25 @@ test('Netwerk opens the bron of the page big, and elsewhere begins with choosing
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Netwerk');
 });
 
+test('on a wide screen a bron has the wissel Lezer | Netwerk in the top bar, and nowhere else (B48)', async ({
+	page
+}) => {
+	test.skip(isPhone(page), 'on a phone the tab bar is the switch');
+	await page.goto(ARTICLE);
+	const wissel = page.getByRole('banner').getByRole('group', { name: 'Lezer of netwerk' });
+	const lezer = wissel.getByRole('button', { name: 'Lezer' });
+	await expect(lezer).toHaveAttribute('aria-pressed', 'true');
+	await wissel.getByRole('button', { name: /^Netwerk/ }).click();
+	await expect(page).toHaveURL(/mode=netwerk/);
+	await expect(lezer).toHaveAttribute('aria-pressed', 'false');
+	await lezer.click();
+	await expect(page).not.toHaveURL(/mode=netwerk/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artikel 6:162 BW');
+	// No bron, no text to read: Netwerk alone.
+	await page.goto('/actueel');
+	await expect(page.getByRole('group', { name: 'Lezer of netwerk' })).toHaveCount(0);
+});
+
 test('on a phone Netwerk is a tab of 44 px, not in the top bar, and the tab bar has five tabs', async ({
 	page
 }) => {

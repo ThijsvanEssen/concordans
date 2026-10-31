@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chain, chainTally, isOutside, whyFaint } from './chain';
-import { citeLines, citeText } from './cite-label';
+import { citeLines, citeOf, citeText } from './cite-label';
 
 const law = (id: string, title: string) => ({
 	id,
@@ -289,7 +289,7 @@ describe('the keten of a law and of its AMvB', () => {
 			for (const l of k.layers) expect(rows.has(l.id as string)).toBe(true);
 	});
 
-	it('says "N art. Cbb" on a line past 27 characters, all of them on the card', () => {
+	it('says the first articles, +N and the law on a line past 27 characters, all of them on the card', () => {
 		const many = [article('3'), article('16'), article('17'), article('21'), article('24')];
 		const k = chain(
 			{ id: 'instruments/bwbr0010346', name: 'Cyberbeveiligingswet', abbreviation: 'Cbw' },
@@ -314,7 +314,23 @@ describe('the keten of a law and of its AMvB', () => {
 			null
 		);
 		// never a count alone ("4 art." read as article 4): the first that fit, and how many more
-		expect(citeText(k2.layers[1].nodes[0].parents[0].cite!)).toBe('art. 3, 16, 17, 21, 24 +2');
+		expect(citeText(k2.layers[1].nodes[0].parents[0].cite!)).toBe('art. 3, 16, 17, 21 +3 Cbw');
+	});
+	it('cuts a law without an abbreviation to the room the line leaves (B48, BW 7)', () => {
+		const besluit = 'Besluit loonbegrip vergoeding aanzegtermijn en transitievergoeding';
+		const one = citeOf([article('1')], besluit)!;
+		expect(citeText(one)).toBe('art. 1 Besluit loonbegrip…');
+		expect(citeText(citeOf([{ ...article('2'), leden: ['4'] }], besluit)!)).toBe(
+			'art. 2 lid 4 Besluit loonb…'
+		);
+		expect(citeLines(one)).toEqual([`art. 1 ${besluit}`]);
+	});
+	it('keeps a label within 27 characters, the law behind it, where one article is long', () => {
+		const long = { ...article('669'), leden: ['1', '3', '5', '7'] };
+		const text = citeText(citeOf([long, article('670')], 'BW')!);
+		expect(text).toMatch(/^art\. 669 lid 1.*… \+1 BW$/);
+		expect(text.length).toBeLessThanOrEqual(27);
+		expect(citeText(citeOf([article('3')], 'BW')!)).toBe('art. 3 BW');
 	});
 	it('draws two lines to a regulation under the law and under its AMvB: one of each', () => {
 		const zorg = item(
@@ -366,7 +382,7 @@ describe('the keten of a law and of its AMvB', () => {
 			null
 		);
 		const cite = k.layers[1].nodes[0].parents[0].cite!;
-		expect(citeText(cite)).toBe('art. 2 lid 2, 3 lid 3 +2');
+		expect(citeText(cite)).toBe('art. 2 lid 2 +3 Cbb');
 		expect(citeLines(cite)).toEqual([
 			'art. 2 lid 2 Cbb',
 			'art. 3 lid 3 Cbb',
@@ -557,6 +573,38 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		expect(ids('basis')).toEqual([cbw.id, 'instruments/hrw']);
 		expect(ids('law')).toEqual([cbb.id]);
 		expect(k.layers.flatMap((l) => l.nodes).filter((n) => n.id === cbw.id)).toHaveLength(1);
+	});
+
+	it('puts a wet that names a regulation in a row Wet above the AMvB it rests on (B71)', () => {
+		const regeling = {
+			id: 'instruments/bwbr0052878',
+			name: 'Cyberbeveiligingsregeling IenW'
+		};
+		const cbb = law('instruments/bwbr0052875', 'Cyberbeveiligingsbesluit');
+		const basis = {
+			bwb_id: 'BWBR0052878',
+			total: 1,
+			items: [{ instrument: cbb, kind: 'amvb', basis_kind: 'delegates', articles: [article('3')] }]
+		} as never;
+		const naming = [
+			{
+				...(refers as never as Record<string, unknown>[])[0],
+				id: 'instruments/bwbr0052872',
+				display_name: 'Cyberbeveiligingswet',
+				citation_title: 'Cyberbeveiligingswet'
+			},
+			{ ...(refers as never as Record<string, unknown>[])[1], id: cbb.id }
+		] as never;
+		const k = chain(regeling, null, basis, {
+			kind: 'ministeriele-regeling',
+			mentions: true,
+			refers: naming
+		});
+		expect(k.layers.map((l) => [l.id, l.nodes.map((n) => n.name)])).toEqual([
+			['statute', ['Cyberbeveiligingswet']],
+			['basis', ['Cyberbeveiligingsbesluit']],
+			['law', ['Cyberbeveiligingsregeling IenW']]
+		]);
 	});
 
 	it('puts those that name most of its articles first', () => {

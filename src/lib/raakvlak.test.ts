@@ -111,7 +111,7 @@ describe('the touch target', () => {
 		const bar = read('lib/components/layout/TopBar.svelte');
 		expect(bar).toContain('class="search-trigger raakvlak-knop"');
 		expect(read('lib/components/layout/NetworkButton.svelte')).toContain(
-			'class="btn netwerk-knop raakvlak-knop"'
+			'class="{className} netwerk-knop raakvlak-knop"'
 		);
 		// The tab bar of a phone is 64 px high and its items fill it.
 		expect(read('lib/styles/tokens.css')).toMatch(

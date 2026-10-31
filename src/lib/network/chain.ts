@@ -537,17 +537,7 @@ export function chain(
 	// A wet that names it stands in the row Wet: beside the law, or above an AMvB or a regulation,
 	// beside the laws it rests on (B2: not in the row of the Cbb).
 	if (!isRegulation(kind)) lawLayer.nodes.push(...naming);
-	else if (naming.length) {
-		const row = layers.find((l) => l.id === 'basis');
-		// A row of its own when the data has no grondslag above it: not 'basis', which says it has.
-		if (row) row.nodes.push(...naming);
-		else
-			layers.splice(layers.indexOf(lawLayer), 0, {
-				id: 'statute',
-				label: LAYER_LABEL.statute,
-				nodes: naming
-			});
-	}
+	else if (naming.length) placeNaming(layers, lawLayer, naming);
 	if (eu?.implementedBy.length)
 		layers.push({
 			id: 'implementation',
@@ -562,6 +552,22 @@ export function chain(
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}
 	return { layers, rest, more, total: nodes.length, amending, missing };
+}
+
+/**
+ * The wetten that name a regulation: beside the laws it rests on, else in a row Wet of their own
+ * above it: not 'basis' where the data has no grondslag, which says it has one, nor a row of
+ * AMvB's (the Cbb over a Cyberbeveiligingsregeling, B71).
+ */
+function placeNaming(layers: ChainLayer[], lawLayer: ChainLayer, naming: ChainNode[]) {
+	const row = layers.find((l) => l.id === 'basis');
+	if (row?.nodes.every((n) => layerOf(n.kind) === 'statute')) row.nodes.push(...naming);
+	else
+		layers.splice(layers.indexOf(row ?? lawLayer), 0, {
+			id: 'statute',
+			label: LAYER_LABEL.statute,
+			nodes: naming
+		});
 }
 
 /** The period of the strip, its bounds as days; either may be open. */

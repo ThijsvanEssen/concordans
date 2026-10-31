@@ -1216,6 +1216,7 @@
 
 	/** The scale of a weergave of its own, by its zoom. */
 	let middleScale = $state(1);
+	const zoomBy = (f: number) => () => (middleScale = Math.min(3, Math.max(0.5, middleScale * f)));
 	/** The canvas and the cards over it (see the markup). */
 	let buhne = $state<HTMLDivElement | null>(null);
 
@@ -1405,16 +1406,12 @@
 		</aside>
 	</ViewSheet>
 	<div class="graph-main">
-		<!-- On a phone Deel and the zoom in a bar of their own above the drawing: over it they
-		     covered its bronnen (UX-toets T10b). -->
+		<!-- On a phone Deel, the zoom and over a weergave of its own Weergave in a bar above the
+		     drawing: over it they covered its bronnen and the rows of a list (UX-toets T10b, B48). -->
 		<div class="control-bar">
 			{#if midden}
-				{@render controls(
-					() => (middleScale = Math.min(3, middleScale * 1.25)),
-					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
-					() => (middleScale = 1),
-					middenZoom
-				)}
+				{@render sheetButton()}
+				{@render controls(zoomBy(1.25), zoomBy(0.8), () => (middleScale = 1), middenZoom)}
 			{:else}
 				{@render controls(
 					() => canvas?.zoom(1.5),
@@ -1426,12 +1423,7 @@
 		{#if midden}
 			<div class="middle-stage">
 				{@render midden(middleScale)}
-				{@render controls(
-					() => (middleScale = Math.min(3, middleScale * 1.25)),
-					() => (middleScale = Math.max(0.5, middleScale / 1.25)),
-					() => (middleScale = 1),
-					middenZoom
-				)}
+				{@render controls(zoomBy(1.25), zoomBy(0.8), () => (middleScale = 1), middenZoom)}
 			</div>
 		{/if}
 		<div class="buhne" bind:this={buhne} hidden={!!midden}>
@@ -1613,7 +1605,7 @@
 			/>
 		</div>
 	</div>
-	{@render sheetButton()}
+	{#if !midden}{@render sheetButton()}{/if}
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
@@ -1856,10 +1848,12 @@
 			border-bottom: 1px solid var(--rule);
 		}
 		.control-bar > .doek-balk,
-		.control-bar > .zoom {
+		.control-bar > .zoom,
+		.control-bar > .sheet-button {
 			position: static;
 			flex-direction: row;
 			gap: var(--s-2);
+			box-shadow: none;
 		}
 		.graph-canvas-wrap > .doek-balk,
 		.graph-canvas-wrap > .zoom,

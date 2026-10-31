@@ -5,7 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { openSheet, closeSheet } from '../support/sheet';
-import { netwerkKnop } from '../support/navigation';
+import { isPhone, netwerkKnop } from '../support/navigation';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:163';
 
@@ -89,9 +89,11 @@ test('Netwerk is a switch: on opens the werkplek, off brings the same text back'
 	await expect(page).toHaveURL(/mode=netwerk/);
 	await expect(page.getByTestId('werkplek')).toBeVisible();
 	await expect(knop).toHaveAttribute('aria-pressed', 'true');
-	// No way back of its own in the strip: the switch is it.
+	// No way back of its own in the strip: the switch is it (on a wide screen its Lezer, B48).
 	await expect(page.getByRole('link', { name: /^← / })).toHaveCount(0);
-	await knop.click();
+	await (
+		isPhone(page) ? knop : page.getByRole('banner').getByRole('button', { name: 'Lezer' })
+	).click();
 	await expect(page).toHaveURL(new RegExp(`${ARTICLE.replace(/[.:]/g, '\\$&')}#lid-2$`));
 	await expect(page.getByTestId('werkplek')).toHaveCount(0);
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

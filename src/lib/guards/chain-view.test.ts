@@ -29,8 +29,10 @@ describe('Keten', () => {
 		expect(chain).toMatch(/<KindGlyph vorm=\{vormKey\(k\)\}/);
 		expect(chain).not.toMatch(/<i class="mark"/);
 	});
-	it('leaves room under the list for the floating Weergave button', () => {
-		expect(chain).toMatch(/calc\(var\(--s-8\) \+ var\(--s-4\)\)/);
+	it('has Weergave in the bar above its list on a phone, not floating over a row (B48)', () => {
+		const view = readFileSync('src/lib/components/graph/GraphView.svelte', 'utf8');
+		expect(view).toMatch(/\{#if midden\}\s*\{@render sheetButton\(\)\}/);
+		expect(view).toMatch(/\{#if !midden\}\{@render sheetButton\(\)\}\{\/if\}/);
 	});
 	it('says the articles on a line through cite-label.ts only: the drawing and the glance read one label', () => {
 		expect(chain).toMatch(/citeText\(/);

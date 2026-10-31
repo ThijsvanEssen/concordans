@@ -256,9 +256,7 @@ test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn
 		'AMVB',
 		'MINISTERIËLE REGELING'
 	]);
-	await expect(
-		page.locator('.chain .cite text', { hasText: 'art. 3, 16 lid 1 en 7 +9' })
-	).toBeAttached();
+	await expect(page.locator('.chain .cite text', { hasText: 'art. 3 +10 Cbw' })).toBeAttached();
 });
 
 test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articles, Enter opens them in the panel', async ({

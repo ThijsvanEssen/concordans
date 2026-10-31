@@ -327,8 +327,9 @@
 			<Sectie title="Relatie" niveau={3} inklapbaar={false}>
 				{#each lines as l (l)}
 					{@const sample = LINE_KIND_SAMPLE[l]}
+					<!-- In the keten of a law a dashed line is said as its rows and glance say it: noemt (B48). -->
 					<FilterOptie
-						label={LINE_KIND_LABEL[l]}
+						label={chain?.labels && l === 'citation' ? 'Noemt' : LINE_KIND_LABEL[l]}
 						wrap
 						on={!hiddenLines.has(l)}
 						onToggle={() => onToggleLine(l)}

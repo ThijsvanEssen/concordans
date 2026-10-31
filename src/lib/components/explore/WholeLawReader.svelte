@@ -349,6 +349,7 @@
 				panel
 				stack={w.articles}>{a.label}</BronLink
 			>{/each}{` van ${w.determiner} `}{/if}<a
+		class="raakvlak"
 		href={bronHref({ collection: 'instruments', key: w.key })}
 		data-sveltekit-noscroll>{w.naam}</a
 	>{/snippet}
