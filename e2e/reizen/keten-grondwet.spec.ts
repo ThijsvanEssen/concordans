@@ -5,6 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { noemt } from '../support/noemt';
+import { isPhone } from '../support/navigation';
 
 const GRONDWET = '/explore?netwerk=instruments/bwbr0001840&weergave=keten';
 
@@ -38,4 +39,22 @@ test('Noemt, on from the start, draws the wetten that only name the Grondwet in 
 		expect(await page.locator('svg.drawing path.line[stroke-dasharray]').count()).toBeGreaterThan(
 			0
 		);
+});
+
+test('Weergave keys the keten with the same rows and counts on a phone as on a wide screen', async ({
+	page
+}) => {
+	await page.goto(GRONDWET);
+	await expect(page.getByText('Koninklijk besluit', { exact: true }).first()).toBeAttached();
+	if (isPhone(page)) await page.getByRole('button', { name: 'Weergave', exact: true }).click();
+	const weergave = isPhone(page)
+		? page.getByRole('dialog', { name: 'Weergave' })
+		: page.getByRole('region', { name: 'Weergave' });
+	for (const row of [/Gekozen\s+bron$/, /Grondslag$/, /Noemt, of grondslag onbekend$/])
+		await expect(weergave.locator('.sleutel__item', { hasText: row })).toBeVisible();
+	// Every line of the keten, those under an "Alle N" too: not what the width leaves drawn.
+	const count = (name: string) =>
+		weergave.getByRole('button', { name: new RegExp(`^${name}`) }).locator('.aantal');
+	await expect(count('Structureel')).toHaveText('166');
+	await expect(count('Aanhaling')).toHaveText('224');
 });

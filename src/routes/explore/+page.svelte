@@ -599,7 +599,8 @@
 	/** The room the keten measured, and the bronnen of a layer that fit in it (160 px each, 144 for the labels). */
 	let chainRoom = $state(0);
 	const chainFit = $derived(Math.max(0, Math.floor((chainRoom - 144) / 176)));
-	const chainOf = (mentions: boolean) => {
+	// What shows without panning follows the room measured, at least 12; a phone's list stays short.
+	const chainOf = (mentions: boolean, max = telefoon ? 4 : Math.max(12, chainFit)) => {
 		const bwb = chainLaw;
 		if (!bwb || chainData?.bwb !== bwb) return null;
 		const id = `instruments/${bwb.toLowerCase()}`;
@@ -615,9 +616,7 @@
 			chainData.delegated,
 			chainData.basis,
 			{
-				// The drawing pans sideways past its width; what shows without panning follows the room
-				// the keten measured, at least 12. A phone's list stays short.
-				max: telefoon ? 4 : Math.max(12, chainFit),
+				max,
 				keep: marked,
 				kind: chainKind,
 				article: chainArticle,
@@ -644,7 +643,8 @@
 				: null
 			: chainOf(chainMentions)
 	);
-	const chainAll = $derived(chainMentions || lineageStart ? chainModel : chainOf(true));
+	// Relatie counts every line of the keten, under an "Alle N" too: the same on any width.
+	const chainAll = $derived(lineageStart ? chainModel : chainOf(true, Number.POSITIVE_INFINITY));
 	const chainGap = $derived.by(() => {
 		if (view !== 'keten' || chainLoading) return null;
 		if (lineageStart) {

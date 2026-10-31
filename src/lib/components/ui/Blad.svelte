@@ -94,7 +94,12 @@
 			release();
 			const back = opener?.() ?? was;
 			// A place that went with the Blad leaves the focus on the page, not on the body.
-			if (back instanceof HTMLElement && back !== document.body && back.isConnected)
+			// A label of the keten is an <a> in an SVG: it takes the focus back too.
+			if (
+				(back instanceof HTMLElement || back instanceof SVGElement) &&
+				back !== document.body &&
+				back.isConnected
+			)
 				back.focus({ preventScroll: true });
 			else document.getElementById('main-content')?.focus({ preventScroll: true });
 		};

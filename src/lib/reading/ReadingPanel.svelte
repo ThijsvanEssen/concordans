@@ -212,8 +212,11 @@
 	 */
 	const had = typeof document === 'undefined' ? null : document.activeElement;
 	let lastOutside: Element | null = had === document.body ? null : had;
-	const shows = (el: Element | null): el is HTMLElement =>
-		el instanceof HTMLElement && el.isConnected && el.id !== 'main-content' && el.checkVisibility();
+	const shows = (el: Element | null): el is HTMLElement | SVGElement =>
+		(el instanceof HTMLElement || el instanceof SVGElement) &&
+		el.isConnected &&
+		el.id !== 'main-content' &&
+		el.checkVisibility();
 	function toReader() {
 		const links = document.querySelectorAll('#main-content a[href], #main-content button');
 		const back = [lastOutside, reference(), ...links].find(shows);
