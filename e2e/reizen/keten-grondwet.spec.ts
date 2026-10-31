@@ -56,5 +56,5 @@ test('Weergave keys the keten with the same rows and counts on a phone as on a w
 	const count = (name: string) =>
 		weergave.getByRole('button', { name: new RegExp(`^${name}`) }).locator('.aantal');
 	await expect(count('Structureel')).toHaveText('166');
-	await expect(count('Aanhaling')).toHaveText('224');
+	await expect(count('Noemt')).toHaveText('224');
 });
