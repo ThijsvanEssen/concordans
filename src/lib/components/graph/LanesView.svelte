@@ -207,11 +207,14 @@
 		const props = n.raw?.props;
 		return markOf(n.collection, kindColour(n.collection, null, props), props, n.key);
 	}
-	/** The bron a hull's pill stands for: its wet or dossier where the canvas has it, else its first. */
-	const hullBron = (u: SceneUnit) =>
-		byId.has(u.id) ? u.id : (u.members.find((m) => chosen.includes(m)) ?? u.members[0]);
+	/** A hull's pill marks its wet or dossier where the canvas has it; else it lights the hull's lines. */
+	function choosePill(u: SceneUnit, read = false) {
+		if (!byId.has(u.id)) hovered = hovered === u.id ? null : u.id;
+		else if (read) onOpen(u.id);
+		else onMark(u.id);
+	}
 	const discText = (u: SceneUnit) => formatCount(u.members.length);
-	const rowCount = (n: number) => (n > 1 ? ` ${formatCount(n)}` : '');
+	const rowCount = (n: number) => (n > 1 ? formatCount(n) : '');
 	const GAP_LINES = ['functie niet', 'in de gegevens'];
 
 	function choose(u: SceneUnit, id = u.members[0]) {
@@ -287,9 +290,9 @@
 		tabindex="-1"
 		aria-label={u.label}
 		aria-pressed={markedUnit === u.id}
-		onclick={() => onMark(hullBron(u))}
-		ondblclick={() => onOpen(hullBron(u))}
-		onkeydown={(e) => onKey(e, () => onMark(hullBron(u)))}
+		onclick={() => choosePill(u)}
+		ondblclick={() => choosePill(u, true)}
+		onkeydown={(e) => onKey(e, () => choosePill(u))}
 	>
 		<title>{u.label}</title>
 		<rect
@@ -315,18 +318,20 @@
 					class="member"
 					role="button"
 					tabindex="-1"
-					aria-label="{row.label || u.label}{rowCount(row.members.length)}"
+					aria-label="{row.label || u.label} {rowCount(row.members.length)}"
 					onclick={() => onMark(holdsChosen ?? row.members[0])}
 					onkeydown={(e) => onKey(e, () => onMark(holdsChosen ?? row.members[0]))}
 				>
 					{@render sign(first, u.sort, box.mark.x + 16, at.y - 7, GLYPH)}
 					<text class="row-name" x={box.mark.x + 38} y={at.y + 4}
-						>{row.label || u.label}{rowCount(row.members.length)}</text
+						>{row.label || u.label}<tspan class="row-count" dx="6"
+							>{rowCount(row.members.length)}</tspan
+						></text
 					>
 				</g>
 			{:else}
 				{#if headed}<text class="row-head" x={box.mark.x + 16} y={at.y - DOT_LINE / 2 - 5}
-						>{row.label}{rowCount(row.members.length)}</text
+						>{row.label}<tspan class="row-count" dx="6">{rowCount(row.members.length)}</tspan></text
 					>{/if}
 				{#each row.members.slice(0, 2 * perLine) as m, i (m)}
 					{@const n = byId.get(m)}
@@ -344,7 +349,7 @@
 						onkeydown={(e) => onKey(e, () => onMark(m))}
 					>
 						<title>{n?.label ?? m}</title>
-						<rect class="hit" x={cx - 3} y={cy - 3} width={GLYPH + 6} height={GLYPH + 6} />
+						<rect class="hit" x={cx - 5} y={cy - 5} width={GLYPH + 10} height={GLYPH + 10} />
 						{#if chosen.includes(m) || marked === m}{@render focusRing({
 								...box,
 								mark: { x: cx, y: cy, width: GLYPH, height: GLYPH }
@@ -605,6 +610,15 @@
 		inset: 0;
 		overflow: auto;
 		background: var(--paper);
+	}
+	/* A phone: the button Weergave floats over the foot of the canvas; the lanes end above it. */
+	@media (max-width: 768px) {
+		.banen {
+			padding-bottom: calc(44px + 2 * var(--s-4));
+		}
+	}
+	.row-count {
+		fill: var(--ink-3);
 	}
 	.drawing {
 		display: block;
