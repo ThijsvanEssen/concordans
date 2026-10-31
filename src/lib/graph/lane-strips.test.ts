@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXAMPLES, example, shuffled } from '$lib/test/lanes';
 import type { Pt } from '$lib/network/tree-lines';
-import { sample } from '$lib/test/paths';
+import { sample, slanted } from '$lib/test/paths';
 import type { Box } from './lane-layout';
 import { laneStrips, stripLines } from './lane-strips';
 import { buildScene } from './scene';
@@ -66,6 +66,11 @@ describe.each(EXAMPLES)('the strips of %s', (name) => {
 				const focus = new Set(scene.units.filter((u) => u.focus).map((u) => u.id));
 				for (const p of stripLines(scene, layout))
 					expect(focus.has(p.from) || focus.has(p.to), p.id).toBe(true);
+			});
+
+			it('runs straight between its bends: no slanted run', () => {
+				const lines = stripLines(scene, layout);
+				expect(lines.filter((l) => slanted(l.d).length > 0).map((l) => l.id)).toEqual([]);
 			});
 
 			it('runs no line through a mark or a name other than its own ends', () => {

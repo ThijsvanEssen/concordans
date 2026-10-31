@@ -5,7 +5,7 @@
 // column; the canvas is as high as what it holds. In Tijd, Kamerstukken and Rechtspraak stand by
 // their date (time-axis.ts). Pure and deterministic: text is measured by an estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
-import type { Column, Scene, SceneLine, SceneUnit } from './scene';
+import type { Column, Scene, SceneUnit } from './scene';
 import { yearFraction } from '$lib/text/datum';
 import { axisY, timeAxis, type TimeAxis } from './time-axis';
 
@@ -202,26 +202,53 @@ const GUTTER_MAX = 360;
 function gutterLoads(scene: Scene, used: readonly Column[]): number[] {
 	const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
 	const index = new Map(scene.units.map((u) => [u.id, used.indexOf(u.column)]));
+	const keys = used.map(() => new Set<string>());
 	const rails = scene.lines.flatMap((l) => {
 		const [a, b] = [index.get(l.from)!, index.get(l.to)!];
 		const strip = general.has(l.from) || general.has(l.to);
-		return guttersOf(a, b, general.has(l.from), general.has(l.to))
-			.filter((g) => g >= 0 && g < used.length)
-			.map((g) => ({ g, strip, l }));
+		const gutters = guttersOf(a, b, general.has(l.from), general.has(l.to)).filter(
+			(g) => g >= 0 && g < used.length
+		);
+		// A rail to or from the strip runs alone.
+		if (strip) for (const g of gutters) keys[g].add(l.id);
+		return strip ? [] : gutters.map((gutter) => ({ gutter, ...l }));
 	});
-	// As lane-lines bundles them: on the end where more of one lijnsoort meet.
-	const count = new Map<string, number>();
-	const keysOf = (g: number, l: SceneLine) => [
-		`${g} to ${l.to} ${l.kind}`,
-		`${g} from ${l.from} ${l.kind}`
-	];
-	for (const { g, l } of rails) for (const k of keysOf(g, l)) count.set(k, (count.get(k) ?? 0) + 1);
-	const keys = used.map(() => new Set<string>());
-	for (const { g, strip, l } of rails) {
-		const [into, outOf] = keysOf(g, l);
-		keys[g].add(strip ? l.id : (count.get(outOf) ?? 0) > (count.get(into) ?? 0) ? outOf : into);
-	}
+	bundleKeys(rails).forEach((key, i) => keys[rails[i].gutter].add(key));
 	return keys.map((k) => k.size);
+}
+
+/** A rail before it is bundled: its gutter and the line it carries. */
+type RailOf = { gutter: number; from: string; to: string; kind: string };
+
+/**
+ * The bundle of each rail, one rule for the layout and the lines: per gutter first the lines of one
+ * lijnsoort into one target (many to one), then those out of one bron (one to many, an uitspraak
+ * that cites ten wetten), each time the largest of what is left.
+ */
+export function bundleKeys(rails: readonly RailOf[]): string[] {
+	const out: string[] = rails.map(() => '');
+	const groups = new Map<string, number[]>();
+	rails.forEach((r, i) => {
+		for (const k of [`${r.gutter} to ${r.to} ${r.kind}`, `${r.gutter} from ${r.from} ${r.kind}`])
+			groups.set(k, [...(groups.get(k) ?? []), i]);
+	});
+	// Many to one first (lines of one lijnsoort into one target, two or more), then the largest
+	// of the rest; of two alike, by key, for one order.
+	const rank = (k: string, n: number) => (k.includes(' to ') && n >= 2 ? 1 : 0);
+	const before = (a: string, n: number, b: string, m: number) =>
+		rank(a, n) !== rank(b, m) ? rank(a, n) > rank(b, m) : n !== m ? n > m : a < b;
+	const left = new Set(rails.keys());
+	while (left.size > 0) {
+		let best = '';
+		let size = 0;
+		for (const [k, members] of groups) {
+			const n = members.filter((i) => left.has(i)).length;
+			if (n > 0 && (size === 0 || before(k, n, best, size))) [best, size] = [k, n];
+		}
+		for (const i of groups.get(best)!) if (left.delete(i)) out[i] = best;
+		groups.delete(best);
+	}
+	return out;
 }
 
 /** The gutters a line between columns `a` and `b` runs down; to the strip, on either side of its column. */

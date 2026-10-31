@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Pt } from '$lib/network/tree-lines';
 import { EXAMPLES, example } from '$lib/test/lanes';
-import { sample } from '$lib/test/paths';
+import { sample, slanted } from '$lib/test/paths';
 import { laneLayout, PANEL, type Box, type LaneLayout } from './lane-layout';
 import { crossings, laneLines, type LanePath } from './lane-lines';
 import { buildScene } from './scene';
@@ -61,6 +61,10 @@ describe.each(EXAMPLES)('the lines of %s', (name) => {
 					expect(l.d).toMatch(/^M[\d. -]+(?:[LQC][\d. -]+)+$/);
 					if (l.points.length > 2) expect(l.d).toMatch(/[QC]/);
 				}
+			});
+
+			it('runs straight between its bends: no slanted run', () => {
+				expect(lines.filter((l) => slanted(l.d).length > 0).map((l) => l.id)).toEqual([]);
 			});
 
 			it('runs through no name and no mark', () => {
@@ -129,14 +133,27 @@ describe('the lines, by their rules', () => {
 	const layout = laneLayout(scene, WIDTH);
 	const lines = laneLines(scene, layout);
 
-	it('ends a line to a hull at the row it names, or just beside it', () => {
+	it('ends a line to a hull at a row of it: its own, or that of its bundle', () => {
 		for (const l of lines) {
 			const line = scene.lines.find((x) => x.id === l.id)!;
 			if (!line.toRow) continue;
-			const row = layout.units.get(l.to)!.rows.find((r) => r.id === line.toRow)!;
-			// Beside it where lines of several lijnsoorten end at that row (byKind).
-			expect(Math.abs(l.points.at(-1)!.y - row.y)).toBeLessThanOrEqual(8);
+			const rows = layout.units.get(l.to)!.rows;
+			// Beside a row where lines of several lijnsoorten end there (byKind); a bundle into one
+			// target ends in the row most of its lines name (meet).
+			const end = l.points.at(-1)!.y;
+			expect(rows.some((r) => Math.abs(end - r.y) <= 8)).toBe(true);
 		}
+	});
+
+	it('ends the lines of one lijnsoort into one hull in one point, where they share a gutter', () => {
+		const into = new Map<string, Set<number>>();
+		for (const l of lines) {
+			const line = scene.lines.find((x) => x.id === l.id)!;
+			const last = l.points.at(-1)!;
+			const key = `${l.to} ${line.kind} ${l.points.at(-3)?.x}`;
+			into.set(key, (into.get(key) ?? new Set()).add(last.y));
+		}
+		expect([...into.values()].filter((ys) => ys.size > 1)).toEqual([]);
 	});
 
 	it('draws a dot-family line without an arrow, every line as wide', () => {

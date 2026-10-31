@@ -3,6 +3,7 @@ import { EXAMPLES, example, shuffled } from '$lib/test/lanes';
 import {
 	CONTENT_TOP,
 	GUTTER,
+	bundleKeys,
 	laneLayout,
 	wrapLabel,
 	type Box,
@@ -172,5 +173,28 @@ describe('wrapLabel', () => {
 		expect(
 			wrapLabel('Wet aanvullende bepalingen verwerking persoonsgegevens in de zorg', 140)
 		).toEqual(['Wet aanvullende', 'bepalingen verwerking', 'persoonsgegevens in…']);
+	});
+});
+
+describe('bundling the rails', () => {
+	it('keeps the lines of one lijnsoort into one target one line, before one to many', () => {
+		// Dossier a names the WVW and two more wetten; dossier b names the WVW: one line into the WVW.
+		const rails = [
+			{ gutter: 1, from: 'a', to: 'wvw', kind: 'citation' },
+			{ gutter: 1, from: 'a', to: 'x', kind: 'citation' },
+			{ gutter: 1, from: 'a', to: 'y', kind: 'citation' },
+			{ gutter: 1, from: 'b', to: 'wvw', kind: 'citation' }
+		];
+		const keys = bundleKeys(rails);
+		expect(keys[0]).toBe(keys[3]);
+		expect(keys[1]).toBe(keys[2]);
+	});
+
+	it('never bundles two lijnsoorten', () => {
+		const keys = bundleKeys([
+			{ gutter: 0, from: 'a', to: 'w', kind: 'citation' },
+			{ gutter: 0, from: 'b', to: 'w', kind: 'change' }
+		]);
+		expect(keys[0]).not.toBe(keys[1]);
 	});
 });

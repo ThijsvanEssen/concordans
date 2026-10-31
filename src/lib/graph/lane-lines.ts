@@ -8,7 +8,15 @@
 // other would.
 // Pure: the view draws what this returns, with the dot, the arrow and the dash of its lijnsoort.
 import { easePath, type Pt } from '$lib/network/tree-lines';
-import { GUTTER, ITEM_GAP, PANEL, type Box, type LaneLayout, type UnitBox } from './lane-layout';
+import {
+	bundleKeys,
+	GUTTER,
+	ITEM_GAP,
+	PANEL,
+	type Box,
+	type LaneLayout,
+	type UnitBox
+} from './lane-layout';
 import { hasArrow, LINE_KIND_STYLE, LINE_KINDS, type Stroke } from './line-kind';
 import type { Scene, SceneLine } from './scene';
 
@@ -429,29 +437,59 @@ function skeleton(p: Plan): Pt[] {
 	const pts: Pt[] = [...p.out];
 	for (const r of p.rails) pts.push({ x: r.x, y: r.enter }, { x: r.x, y: r.leave });
 	pts.push(...p.in);
-	return pts.filter(
-		(q, i) => i === 0 || Math.abs(q.x - pts[i - 1].x) + Math.abs(q.y - pts[i - 1].y) > 0.5
-	);
+	return straight(pts);
 }
 
 /**
- * The key of each rail in its gutter: where more lines of one lijnsoort come into one target than
- * go out of one bron, the rails bundle on their target (twenty dossiers that name one wet), else on
- * their bron (an uitspraak that cites ten wetten). Lines of the strip keep their own.
+ * A skeleton without what adds nothing: a point on top of the one before, or in the middle of a
+ * straight run. Easing a run through a point of its own makes a bend where there is none.
  */
+export function straight(pts: readonly Pt[]): Pt[] {
+	const out: Pt[] = [];
+	for (const q of pts) {
+		const a = out.at(-2);
+		const b = out.at(-1);
+		if (b && Math.abs(q.x - b.x) + Math.abs(q.y - b.y) <= 0.5) continue;
+		const onLine =
+			a &&
+			b &&
+			((Math.abs(a.x - b.x) < 0.5 && Math.abs(b.x - q.x) < 0.5) ||
+				(Math.abs(a.y - b.y) < 0.5 && Math.abs(b.y - q.y) < 0.5));
+		if (onLine) out[out.length - 1] = q;
+		else out.push(q);
+	}
+	return out;
+}
+
+/** The key of each rail in its gutter (`bundleKeys`); lines of the strip keep their own. */
 function bundle(plans: readonly Plan[]) {
-	const count = new Map<string, number>();
-	const keysOf = (p: Plan, r: Rail) => [
-		`${r.gutter} to ${p.line.to} ${p.line.kind}`,
-		`${r.gutter} from ${p.line.from} ${p.line.kind}`
-	];
 	const own = plans.flatMap((p) =>
 		p.rails.filter((r) => !r.key.startsWith('strip')).map((r) => ({ p, r }))
 	);
-	for (const { p, r } of own) for (const k of keysOf(p, r)) count.set(k, (count.get(k) ?? 0) + 1);
-	for (const { p, r } of own) {
-		const [into, outOf] = keysOf(p, r);
-		r.key = (count.get(outOf) ?? 0) > (count.get(into) ?? 0) ? outOf : into;
+	const keys = bundleKeys(own.map(({ p, r }) => ({ gutter: r.gutter, ...p.line })));
+	own.forEach(({ r }, i) => (r.key = keys[i]));
+}
+
+/**
+ * A bundle into one target ends in one point: the row most of its lines end in. Many lines into one
+ * wet are one line, also where they name different hoofdstukken (each its own row in the hull).
+ */
+function meet(plans: readonly Plan[]) {
+	const byKey = new Map<string, Plan[]>();
+	for (const p of plans) {
+		const last = p.rails.at(-1);
+		if (!last || !last.key.includes(' to ') || p.in.some((q) => q.y !== p.in[0]?.y)) continue;
+		byKey.set(last.key, [...(byKey.get(last.key) ?? []), p]);
+	}
+	for (const list of byKey.values()) {
+		const count = new Map<number, number>();
+		for (const p of list) count.set(p.in[0].y, (count.get(p.in[0].y) ?? 0) + 1);
+		const y = [...count].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
+		for (const p of list) {
+			p.in = p.in.map((q) => ({ ...q, y }));
+			const last = p.rails.at(-1)!;
+			p.rails[p.rails.length - 1] = { ...last, leave: y };
+		}
 	}
 }
 
@@ -527,6 +565,7 @@ export function laneLines(scene: Scene, layout: LaneLayout): LanePath[] {
 	}
 	spread(plans, layout, index);
 	bundle(plans);
+	meet(plans);
 	byKind(plans);
 	const byGutter = new Map<number, Rail[]>();
 	for (const p of plans)

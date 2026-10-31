@@ -36,3 +36,21 @@ export function sample(d: string): Pt[] {
 	}
 	return out;
 }
+
+/** The straight runs of a path that are neither level nor upright: a bend eased the wrong way. */
+export function slanted(d: string): [number, number][][] {
+	const t = d.match(/[MLQC]|-?\d+(?:\.\d+)?/g) ?? [];
+	const out: [number, number][][] = [];
+	let cur: [number, number] | null = null;
+	for (let i = 0; i < t.length; ) {
+		const c = t[i++];
+		const n = c === 'Q' ? 4 : c === 'C' ? 6 : 2;
+		const v = t.slice(i, i + n).map(Number);
+		i += n;
+		const end: [number, number] = [v[n - 2], v[n - 1]];
+		if (c === 'L' && cur && Math.abs(end[0] - cur[0]) > 1 && Math.abs(end[1] - cur[1]) > 1)
+			out.push([cur, end]);
+		cur = end;
+	}
+	return out;
+}

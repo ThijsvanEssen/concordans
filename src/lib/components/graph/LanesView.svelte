@@ -446,6 +446,8 @@
 {#snippet path(p: (typeof styled)[number])}
 	<path
 		class="line"
+		data-line={p.id}
+		data-points={JSON.stringify(p.points.map((q) => [Math.round(q.x), Math.round(q.y)]))}
 		d={p.d}
 		fill="none"
 		stroke={p.colour}

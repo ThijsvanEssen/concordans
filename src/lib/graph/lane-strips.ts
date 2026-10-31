@@ -11,7 +11,7 @@
 // Pure: the same LaneLayout as lane-layout.ts, so one view draws both.
 import { easePath, type Pt } from '$lib/network/tree-lines';
 import { wrapLabel, type Box, type LaneLayout, type UnitBox } from './lane-layout';
-import { fromTheEnd, LINE_WIDTH, type LanePath } from './lane-lines';
+import { fromTheEnd, LINE_WIDTH, straight, type LanePath } from './lane-lines';
 import { hasArrow, LINE_KIND_STYLE } from './line-kind';
 import { MAKER_LANE_ORDER } from './roles';
 import type { Column, Scene, SceneLine, SceneUnit } from './scene';
@@ -464,9 +464,7 @@ export function stripLines(scene: Scene, layout: StripLayout): LanePath[] {
 						{ x: lane - (i % 8) * LANE_STEP, y: y2 }
 					];
 		const run: Pt[] = [...g.out, ...turn, { x: g.in[0].x, y: y2 }, ...g.in];
-		const points = (g.down ? run : run.reverse()).filter(
-			(r, k, all) => k === 0 || Math.abs(r.x - all[k - 1].x) + Math.abs(r.y - all[k - 1].y) > 0.5
-		);
+		const points = straight(g.down ? run : run.reverse());
 		const { stroke } = LINE_KIND_STYLE[g.kind];
 		return {
 			id: g.id,

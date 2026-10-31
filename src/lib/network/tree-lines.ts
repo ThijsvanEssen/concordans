@@ -78,7 +78,9 @@ export function easePath(pts: Pt[]): string {
 		const vertIn = pts[i - 1].x === here.x;
 		const next = pts[i + 1];
 		const step = len(here, next);
-		if (!vertIn || next.y !== here.y || step >= 2 * 12 || i + 2 >= n) {
+		// A step of a few px between two runs down, only where the run after it goes down too.
+		const downAfter = i + 2 < n && pts[i + 2].x === next.x;
+		if (!vertIn || next.y !== here.y || step >= 2 * 12 || !downAfter) {
 			const cap = vertIn ? DIP : REACH;
 			const capOut = vertIn ? REACH : DIP;
 			const din = Math.min(cap, room(i - 1, i, false, i === 1));
