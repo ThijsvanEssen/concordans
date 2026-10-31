@@ -155,7 +155,7 @@
 		"src/lib/graph/container-membership.ts": 85,
 		"src/lib/graph/layout.ts": 115,
 		"src/lib/graph/store/compose.ts": 93,
-		"src/lib/graph/store/context.ts": 312,
+		"src/lib/graph/store/context.ts": 308,
 		"src/lib/graph/store/expansion.ts": 196,
 		"src/lib/graph/store/view-actions.ts": 117,
 		"src/lib/network/ChainView.svelte": 105,
