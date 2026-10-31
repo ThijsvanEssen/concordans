@@ -6,7 +6,7 @@
 	// bron marks it (its card at the right, as in the Keten), a second reads it; a pointer or the
 	// focus on a unit lights its lines and dims the rest. The list of bronnen (CanvasNodeList)
 	// stays the way for the keyboard and a screen reader.
-	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
+	import { markOf } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { sortColour, sortLabel, sortOne, type Sort } from '$lib/bron/rubrieken';
 	import { formatCount } from '$lib/text/getal';
@@ -15,7 +15,7 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { LINE_KIND_STYLE } from '$lib/graph/line-kind';
-	import { buildScene, type Scene, type SceneUnit } from '$lib/graph/scene';
+	import { buildScene, type Column, type Scene, type SceneUnit } from '$lib/graph/scene';
 	import { laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
@@ -65,13 +65,13 @@
 	const DOT_LINE = 22;
 	const CONTENT_TOP = 116;
 
-	const COLUMN_TITLE = {
+	const COLUMN_TITLE: Record<Column, string> = {
 		makers: 'Wie maakt',
 		papers: 'Kamerstukken',
 		laws: 'Wetten',
 		rulings: 'Rechtspraak'
-	} as const;
-	const COLUMN_SORT: Record<keyof typeof COLUMN_TITLE, Sort> = {
+	};
+	const COLUMN_SORT: Record<Column, Sort> = {
 		makers: 'kamerleden',
 		papers: 'stukken',
 		laws: 'wetten',
@@ -201,11 +201,11 @@
 
 	// ── units ─────────────────────────────────────────────────────────────────
 	const nodeOf = (u: SceneUnit) => byId.get(u.members[0]);
+	/** The mark of a bron in the colour of its kind, as the canvas draws it (`markOf`). */
 	function glyphOf(n: GraphNode | undefined, sort: Sort) {
-		const props = n?.raw?.props;
-		const v = VORMEN[n ? vormVanBron(n.collection, props, n.key) : 'overig'];
-		const colour = n ? kindColour(n.collection, null, props) : sortColour(sort);
-		return { d: v.d, wijze: v.wijze, colour };
+		if (!n) return markOf('', sortColour(sort));
+		const props = n.raw?.props;
+		return markOf(n.collection, kindColour(n.collection, null, props), props, n.key);
 	}
 	/** The bron a hull's pill stands for: its wet or dossier where the canvas has it, else its first. */
 	const hullBron = (u: SceneUnit) =>
@@ -242,10 +242,10 @@
 	<path
 		d={g.d}
 		transform="translate({x} {y}) scale({sc})"
-		fill={g.wijze === 'lijn' ? 'var(--paper)' : g.colour}
-		fill-rule={g.wijze === 'gat' ? 'evenodd' : 'nonzero'}
-		stroke={g.wijze === 'lijn' ? g.colour : 'var(--paper)'}
-		stroke-width={(g.wijze === 'lijn' ? 2 : 1) / sc}
+		fill={g.fill}
+		fill-rule="evenodd"
+		stroke={g.stroke === 'none' ? 'var(--paper)' : g.stroke}
+		stroke-width={(g.stroke === 'none' ? 1 : 2) / sc}
 		stroke-linejoin="round"
 	/>
 {/snippet}
@@ -334,7 +334,7 @@
 					{@const cy = at.y - GLYPH / 2 + Math.floor(i / perLine) * DOT_LINE}
 					<g
 						class="member"
-						class:is-marked={marked === m}
+						class:is-active={marked === m}
 						role="button"
 						tabindex="-1"
 						aria-label={n?.label ?? m}
@@ -378,7 +378,7 @@
 		{@const showName = !named || named.has(u.id) || u.focus}
 		<g
 			class="unit"
-			class:is-marked={markedUnit === u.id}
+			class:is-active={markedUnit === u.id}
 			class:is-dim={!!lit &&
 				lit !== u.id &&
 				!paths.some((p) => touches(p) && (p.from === u.id || p.to === u.id))}
@@ -450,7 +450,7 @@
 	<circle cx={p.points[0].x} cy={p.points[0].y} r={DOT_RADIUS * 0.75} fill={p.colour} />
 {/snippet}
 
-<div class="banen" class:is-phone={phone} bind:clientWidth={avail} data-testid="banen">
+<div class="banen" bind:clientWidth={avail} data-testid="banen">
 	{#if scene.units.length === 0}
 		<!-- No bron at all: the canvas says so itself (Nog geen bron gekozen). -->
 		{#if nodes.length > 0}<div class="leeg">
@@ -551,7 +551,7 @@
 				{/each}
 			{/if}
 			<!-- The lines under the units; the lit ones over the rest, whole. -->
-			<g class="lines" class:is-dimmed={anyLit}>
+			<g class="lines" class:is-dim={anyLit}>
 				{#each styled.filter((p) => !anyLit || !touches(p)) as p (p.id)}
 					{@render path(p)}
 				{/each}
@@ -627,7 +627,7 @@
 		fill: color-mix(in srgb, var(--tint) 4.5%, transparent);
 	}
 	.col-head {
-		font-size: 13px;
+		font-size: var(--t-micro);
 		font-weight: 600;
 		fill: var(--ink);
 	}
@@ -637,7 +637,7 @@
 	}
 	.lane-head,
 	.tick {
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
@@ -661,7 +661,7 @@
 	}
 	.pill-name {
 		font-family: var(--font-serif);
-		font-size: 12px;
+		font-size: var(--t-note);
 		font-weight: 600;
 		fill: var(--ink);
 	}
@@ -669,18 +669,11 @@
 	.member,
 	.unit {
 		cursor: pointer;
-		outline: none;
-	}
-	.pill:focus-visible rect,
-	.member:focus-visible .hit,
-	.unit:focus-visible .hit {
-		stroke: var(--focus);
-		stroke-width: 2px;
 	}
 	.row-head,
 	.row-name,
 	.summary {
-		font-size: 12px;
+		font-size: var(--t-note);
 		fill: var(--ink-2);
 	}
 	.hit {
@@ -689,7 +682,7 @@
 	}
 	.name {
 		font-family: var(--font-serif);
-		font-size: 13px;
+		font-size: var(--t-micro);
 		fill: var(--ink-2);
 		paint-order: stroke;
 		stroke: var(--paper);
@@ -701,13 +694,12 @@
 	}
 	.name.sub,
 	.role {
-		font-family: var(--font-ui);
-		font-size: 11px;
+		font-size: var(--t-label);
 		fill: var(--ink-3);
 	}
 	.gap {
 		font-family: var(--font-serif);
-		font-size: 12px;
+		font-size: var(--t-note);
 		font-style: italic;
 		fill: var(--ink-3);
 	}
@@ -717,7 +709,7 @@
 		stroke-width: 1.4px;
 	}
 	.count {
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		fill: var(--ink);
 		text-anchor: middle;
@@ -742,7 +734,7 @@
 		pointer-events: stroke;
 	}
 	.line-label {
-		font-size: 12px;
+		font-size: var(--t-note);
 		fill: var(--ink);
 		text-anchor: middle;
 		paint-order: stroke;
@@ -751,11 +743,11 @@
 		stroke-linejoin: round;
 		pointer-events: none;
 	}
-	.lines.is-dimmed {
+	.lines.is-dim {
 		opacity: 0.2;
 	}
 	.unit:hover .name,
-	.unit.is-marked .name {
+	.unit.is-active .name {
 		fill: var(--ink);
 	}
 </style>

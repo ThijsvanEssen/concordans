@@ -9,7 +9,7 @@
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
 	import GraphCanvas from './GraphCanvas.svelte';
-	import BanenView from './BanenView.svelte';
+	import LanesView from './LanesView.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
@@ -134,7 +134,7 @@
 		externStippen = null,
 		externLines = null,
 		onToevoegen,
-		banen = false,
+		lanes = false,
 		time = false,
 		onTime,
 		...legend
@@ -196,7 +196,7 @@
 		/** Empty canvas: what the reader can do, add a bron. */
 		onToevoegen?: () => void;
 		/** Omgeving as lanes (?doek=banen, PLAN-doek-banen): SVG in columns per soort, not sigma. */
-		banen?: boolean;
+		lanes?: boolean;
 		/** Tijd in the lanes: in Kamerstukken and Rechtspraak the height is the date. */
 		time?: boolean;
 		onTime?: (on: boolean) => void;
@@ -591,7 +591,7 @@
 				if (had && gemarkeerd?.id === had) ontmarkeer(false);
 				return;
 			}
-			if (gemarkeerd?.id === id || !(banen ? laneDrawn.has(id) : drawnNow.includes(id))) return;
+			if (gemarkeerd?.id === id || !(lanes ? laneDrawn.has(id) : drawnNow.includes(id))) return;
 			const n = lookup.get(id);
 			if (!n) return;
 			gemarkeerd = n;
@@ -677,7 +677,7 @@
 
 	function runLayout() {
 		// The lanes lay out their own scene (lane-layout.ts).
-		if (g.order === 0 || banen) return;
+		if (g.order === 0 || lanes) return;
 		const centre = pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : [];
 		// The hull a bron stands in: a wet's own for its anchor, else the first that holds it.
 		const hullOf = (id: string): string | null => {
@@ -762,7 +762,12 @@
 	let laneNodes = $state.raw<GraphNode[]>([]);
 	/** What the lanes draw, their hulls' wetten and dossiers too: those can be marked there. */
 	let laneDrawn = $state.raw<ReadonlySet<string>>(new Set());
-	const isOnCanvas = (id: string) => (banen ? laneDrawn.has(id) : drawnIds.includes(id));
+	/** A bron of the lanes by its id; a hull's wet or dossier is no node of the canvas: the store knows it. */
+	const markById = (id: string, then: (n: GraphNode) => void) => {
+		const n = lookup.get(id) ?? store.getNodeById(id);
+		if (n) then(n);
+	};
+	const isOnCanvas = (id: string) => (lanes ? laneDrawn.has(id) : drawnIds.includes(id));
 	let laneEdges = $state.raw<GraphEdge[]>([]);
 	const laneChosen = $derived(
 		pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : []
@@ -828,8 +833,8 @@
 		// The lanes group by their scene (scene.ts): the canvas folds nothing then.
 		laneNodes = rawNodes;
 		laneEdges = rawEdges;
-		clusters = banen ? [] : alle(expanded);
-		foldable = !banen && expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
+		clusters = lanes ? [] : alle(expanded);
+		foldable = !lanes && expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
 		const signature = clusters.map((c) => `${c.id}:${c.members.length}:${c.total}`).join(',');
 		if (!rawChanged && signature === drawnClusters) {
 			if (layoutStale) {
@@ -884,7 +889,7 @@
 	$effect(() => {
 		void surroundings;
 		// The budget counts the lanes' groups then, not the canvas's clusters.
-		store.setLanes(banen);
+		store.setLanes(lanes);
 		untrack(() => {
 			rawChanged = true;
 			layoutStale = true;
@@ -1420,7 +1425,7 @@
 					{onDepth}
 					withNetwerk={netwerkActive && view === 'omgeving'}
 					reach={externCounts ? null : reach}
-					time={banen && view === 'omgeving' && onTime ? { on: time, onSelect: onTime } : null}
+					time={lanes && view === 'omgeving' && onTime ? { on: time, onSelect: onTime } : null}
 				>
 					<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 					{#if (hasNodes || midden) && !legend.counting}
@@ -1447,7 +1452,7 @@
 					() => canvas?.zoom(1.5),
 					() => canvas?.zoom(1 / 1.5),
 					() => canvas?.fit(),
-					!banen
+					!lanes
 				)}
 			{/if}
 		</div>
@@ -1507,7 +1512,7 @@
 					() => canvas?.zoom(1.5),
 					() => canvas?.zoom(1 / 1.5),
 					() => canvas?.fit(),
-					!banen
+					!lanes
 				)}
 				{#if !hasNodes && !midden && !selection && onToevoegen}
 					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
@@ -1518,8 +1523,8 @@
 						>
 					</div>
 				{/if}
-				{#if banen}
-					<BanenView
+				{#if lanes}
+					<LanesView
 						nodes={laneNodes}
 						edges={laneEdges}
 						chosen={laneChosen}
@@ -1527,15 +1532,8 @@
 						{time}
 						marked={gemarkeerd?.id ?? null}
 						pointed={pijl?.id ?? keyNode?.id ?? null}
-						onMark={(id) => {
-							// A hull's wet or dossier is no node of the canvas: the store knows it.
-							const n = lookup.get(id) ?? store.getNodeById(id);
-							if (n) markeer(n);
-						}}
-						onOpen={(id) => {
-							const n = lookup.get(id) ?? store.getNodeById(id);
-							if (n) open(n);
-						}}
+						onMark={(id) => markById(id, markeer)}
+						onOpen={(id) => markById(id, open)}
 						onDrawn={(set) => {
 							drawn = set;
 							laneDrawn = set;

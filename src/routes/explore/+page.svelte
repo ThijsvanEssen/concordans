@@ -2477,7 +2477,7 @@
 								lijstHref={netwerkActive ? undefined : lijstHref}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
-								banen={lanesOn}
+								lanes={lanesOn}
 								time={timeOn}
 								onTime={(on) => setUrl({ [TIME]: on ? 'ja' : null })}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
