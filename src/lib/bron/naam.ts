@@ -103,6 +103,14 @@ export function chipNaam(
 		: { ...e, label: naam };
 }
 
+/** The row of Gekozen of the page's own bron drawn alone: no netwerk to switch it off in. */
+export const eigenRij = (node: GraphNode, id: string, meta: Map<string, InstrumentMeta>) =>
+	chipNaam(
+		{ id, label: '', collection: node.collection, on: true, alone: false, vast: true, node },
+		node,
+		meta
+	);
+
 /**
  * A vote as the dossier's procedure names it, with its day and what was decided:
  * "Stemming Tweede Kamer, aangenomen, 29 september 2026: Wijziging van de Wet …". The

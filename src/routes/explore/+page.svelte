@@ -1533,11 +1533,6 @@
 	}
 
 	const chipNaam = (e: NetwerkEntry, node: GraphNode) => chipNaamVan(e, node, $instrumentMetaStore);
-	const eigenRij = (node: GraphNode, id: string) =>
-		chipNaam(
-			{ id, label: '', collection: node.collection, on: true, alone: false, vast: true, node },
-			node
-		);
 
 	function setNetwerk(n: Netwerk, also: ParamPatch = {}) {
 		// What the reader composes is kept for the next visit; a link's netwerk is not.
@@ -1624,7 +1619,7 @@
 					e.node ? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) } : e
 				)
 			: selectedNode && selectedLinkId
-				? [eigenRij(selectedNode, selectedLinkId)]
+				? [eigenRij(selectedNode, selectedLinkId, $instrumentMetaStore)]
 				: []
 	);
 	// The new bron has reached the reader (its light node or its node): the wait is over.
