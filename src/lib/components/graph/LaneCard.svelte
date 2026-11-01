@@ -93,6 +93,17 @@
 	:global(.graph-view:has(.banen)) {
 		--lane-card-w: 400px;
 	}
+	/* Beside it the columns of Kamerstukken and Wetten still fit, shrunk (LanesView). */
+	@media (max-width: 1280px) {
+		:global(.graph-view:has(.banen)) {
+			--lane-card-w: 340px;
+		}
+	}
+	@media (max-width: 1100px) {
+		:global(.graph-view:has(.banen)) {
+			--lane-card-w: 280px;
+		}
+	}
 	.lane-card {
 		position: absolute;
 		top: 0;
@@ -122,7 +133,7 @@
 			right: 0;
 			bottom: var(--strook-h, 0px);
 			z-index: calc(var(--z-float) + 1);
-			width: var(--strook);
+			width: min(var(--strook), var(--lane-card-w));
 			box-shadow: var(--shadow-pop);
 		}
 	}

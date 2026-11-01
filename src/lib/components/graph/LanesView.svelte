@@ -33,6 +33,7 @@
 		changedNumbers,
 		laneDossierNumber,
 		numberedSquares,
+		cardWidth,
 		showBeside
 	} from '$lib/graph/lane-changes';
 	import LaneCard from './LaneCard.svelte';
@@ -114,8 +115,10 @@
 	const paths: LanePath[] = $derived(
 		phone ? stripLines(scene, layout as StripLayout) : laneLines(scene, layout)
 	);
+	/** How wide the card over the field is: the columns make room for it (B89). */
+	let covered = $state(0);
 	const scale = $derived(
-		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, avail / layout.width))
+		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, (avail - covered) / layout.width))
 	);
 	const named = $derived(phone ? (layout as StripLayout).named : null);
 
@@ -185,12 +188,30 @@
 	);
 
 	let field = $state<HTMLElement | null>(null);
-	// The card lies over the field (Thijs, 1 nov.): what it would cover scrolls out from under it.
+	// The card lies over the field (Thijs, 1 nov.): the drawing shrinks as far as it may, and what
+	// the card would still cover scrolls out from under it.
 	$effect(() => {
-		const id = markedUnit ?? openId;
+		const open = !!(markedUnit ?? openId);
 		const f = field;
+		if (!open || !f) {
+			covered = 0;
+			return;
+		}
+		const frame = requestAnimationFrame(() => (covered = cardWidth(f)));
+		return () => cancelAnimationFrame(frame);
+	});
+	/** The units at the other end of a unit's lines, the wetten last: those are to be seen first. */
+	const linkedOf = (id: string) => {
+		const other = scene.lines.flatMap((l) => (l.from === id ? l.to : l.to === id ? l.from : []));
+		const inLaws = (u: string) => unitOf.get(u)?.column === 'laws';
+		return [...other.filter((u) => !inLaws(u)), ...other.filter(inLaws)];
+	};
+	$effect(() => {
+		const id = markedUnit ?? openUnitOn;
+		const f = field;
+		void scale;
 		if (!id || !f) return;
-		const frame = requestAnimationFrame(() => showBeside(f, id));
+		const frame = requestAnimationFrame(() => showBeside(f, id, linkedOf(id)));
 		return () => cancelAnimationFrame(frame);
 	});
 	// ── the look of a line ────────────────────────────────────────────────────

@@ -346,9 +346,8 @@
 	// Parsed from its own three params only, so selecting a bron does not compose again.
 	//
 	// The address is the state: a link with ?mode=netwerk draws the same in every browser. The
-	// netwerk kept in this browser (bewaard) is what the reader last chose; it is offered only
-	// where the address names no bron at all (the button Netwerk on a page without one), never
-	// laid over a bron that is named.
+	// netwerk kept in this browser (bewaard), what the reader last chose, is offered only where the
+	// address names no bron at all (the button Netwerk on a page without one).
 	leesBewaard();
 	const netwerkQuery = $derived(
 		withReader(netwerkQueryOf(params), mode === 'graph' && focus, onLanes(params))

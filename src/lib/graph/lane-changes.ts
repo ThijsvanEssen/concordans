@@ -5,6 +5,9 @@ import { dossierNumberOf } from '$lib/bron/describe';
 import type { LawChange } from './scene';
 import type { GraphNode } from './types';
 
+/** The air kept around what is scrolled into view. */
+const SCROLL_MARGIN = 16;
+
 /** The marker of a changed wet, around (0, 0): a form, closed or open, so not colour alone. */
 export const CHANGED_MARK = 'M0 -3.5 L4 3.5 H-4 Z';
 /** Its head and legend, and what a tooltip says of the wet. */
@@ -90,27 +93,61 @@ export function scrollToShow(unit: Box, field: Box, card: Box | null): { x: numb
 		if (start >= from && end <= to) return 0;
 		return end - start > to - from || start < from ? start - from : end - to;
 	};
-	const MARGIN = 16;
 	return {
-		x: along(unit.left, unit.right, field.left + MARGIN, right - MARGIN),
-		y: along(unit.top, unit.bottom, field.top + MARGIN, bottom - MARGIN)
+		x: along(unit.left, unit.right, field.left + SCROLL_MARGIN, right - SCROLL_MARGIN),
+		y: along(unit.top, unit.bottom, field.top + SCROLL_MARGIN, bottom - SCROLL_MARGIN)
 	};
 }
 
-/** Scrolls the field so that the unit marked (or its bron in it) stands beside the card over it. */
-export function showBeside(field: HTMLElement, unit: string) {
+/** The card over the field, Zijpaneel or card of a marked bron; a phone's sheet covers no column. */
+function cardOver(field: HTMLElement) {
+	const card =
+		field.parentElement?.querySelector('.lane-card') ??
+		field.closest('.graph-view')?.querySelector('.strook--kaart.is-open');
+	const rect = card?.getBoundingClientRect();
+	return rect && rect.left > field.getBoundingClientRect().left + 1 ? rect : null;
+}
+
+/** How wide the card over the field is: the drawing makes room for it. */
+export const cardWidth = (field: HTMLElement) => cardOver(field)?.width ?? 0;
+
+const around = (rects: DOMRect[]) =>
+	DOMRect.fromRect({
+		x: Math.min(...rects.map((r) => r.left)),
+		y: Math.min(...rects.map((r) => r.top)),
+		width: Math.max(...rects.map((r) => r.right)) - Math.min(...rects.map((r) => r.left)),
+		height: Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top))
+	});
+
+/**
+ * Scrolls the field so that the unit marked (or its bron in it) stands beside the card over it, the
+ * units at the other end of its lines with it (`linked`, the most wanted last) as far as they fit:
+ * what is chosen is seen with the wet its line ends at.
+ */
+export function showBeside(field: HTMLElement, unit: string, linked: readonly string[] = []) {
 	const el =
 		field.querySelector('.member.is-active') ??
 		field.querySelector('.tile.is-open') ??
 		field.querySelector(`[data-unit="${CSS.escape(unit)}"]`);
 	if (!el) return;
-	const card =
-		field.parentElement?.querySelector('.lane-card') ??
-		field.closest('.graph-view')?.querySelector('.strook--kaart.is-open');
-	const { x, y } = scrollToShow(
-		el.getBoundingClientRect(),
-		field.getBoundingClientRect(),
-		card?.getBoundingClientRect() ?? null
+	const box = field.getBoundingClientRect();
+	const card = cardOver(field);
+	const room = (card?.left ?? box.right) - box.left - 2 * SCROLL_MARGIN;
+	const others = linked.flatMap(
+		(id) => field.querySelector(`[data-unit="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? []
 	);
-	field.scrollBy(x, y);
+	// All of them; else without the first, and so on, down to the unit itself.
+	const own = el.getBoundingClientRect();
+	let target = own;
+	for (let from = 0; from <= others.length; from++) {
+		const all = around([own, ...others.slice(from)]);
+		if (all.width <= room) {
+			target = all;
+			break;
+		}
+	}
+	const { x } = scrollToShow(target, box, card);
+	// Lines reach far up and down: only sideways for them, the height is the unit's own.
+	const up = scrollToShow(own, box, card).y;
+	field.scrollBy(x, up);
 }
