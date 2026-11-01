@@ -11,6 +11,7 @@
 		afterRemoval,
 		keepNetwork,
 		networkState,
+		onLanes,
 		onNetwork,
 		readerBron,
 		withReader
@@ -349,7 +350,9 @@
 	// where the address names no bron at all (the button Netwerk on a page without one), never
 	// laid over a bron that is named.
 	leesBewaard();
-	const netwerkQuery = $derived(withReader(netwerkQueryOf(params), mode === 'graph' && focus));
+	const netwerkQuery = $derived(
+		withReader(netwerkQueryOf(params), mode === 'graph' && focus, onLanes(params))
+	);
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
@@ -1783,8 +1786,7 @@
 	const PROPOSALS = 'voorstellen';
 	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
 	// Omgeving as lanes (PLAN-doek-banen, fasen 4 en 5): behind ?doek=banen beside the canvas of now.
-	const LANES = 'doek';
-	const lanesOn = $derived(params.get(LANES) === 'banen' && view === 'omgeving');
+	const lanesOn = $derived(onLanes(params) && view === 'omgeving');
 	const proposals = new Proposals(
 		store,
 		() => proposalsOn,

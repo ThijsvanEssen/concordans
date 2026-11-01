@@ -14,14 +14,19 @@ const WERKPLEK_PARAMS = ['mode', 'netwerk', 'uit', 'tussen', 'weergave', 'kies']
 export const readerBron = (params: URLSearchParams): string | null =>
 	params.get('focus') || parseNetwerk(params).ids[0] || null;
 
+/** The werkplek draws its Omgeving as lanes (?doek=banen, PLAN-doek-banen). */
+export const onLanes = (params: URLSearchParams): boolean => params.get('doek') === 'banen';
+
 /**
  * The query of what is chosen: the netwerk of `query` and the bron of the lezer (`focus`), first
- * where the address does not name it. A bron alone is no netwerk: it stays drawn as itself.
+ * where the address does not name it. On the sigma canvas a bron alone is no netwerk: it stays
+ * drawn as itself. On the lanes (`lanes`) it is a netwerk of one (B84): the button Netwerk and a
+ * link with netwerk= draw the same.
  */
-export function withReader(query: string, focus: string | false | null): string {
+export function withReader(query: string, focus: string | false | null, lanes = false): string {
 	const params = new URLSearchParams(query);
 	const { ids } = parseNetwerk(params);
-	if (!focus || ids.length === 0 || ids.includes(focus)) return query;
+	if (!focus || (ids.length === 0 && !lanes) || ids.includes(focus)) return query;
 	params.set('netwerk', [focus, ...ids].join(','));
 	return params.toString();
 }
@@ -97,7 +102,8 @@ export const onNetwork = (url: URL): boolean => modeOf(url) === 'graph';
 export function networkCount(url: URL, kept: string | null): number {
 	const logical = exploreUrl(url);
 	const query = onNetwork(url) ? logical.search : (kept ?? '');
-	const chosen = withReader(query, logical.searchParams.get('focus'));
+	const lanes = onNetwork(url) && onLanes(logical.searchParams);
+	const chosen = withReader(query, logical.searchParams.get('focus'), lanes);
 	return parseNetwerk(new URLSearchParams(chosen)).ids.length;
 }
 
