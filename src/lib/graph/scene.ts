@@ -18,6 +18,7 @@ import { isDrawn } from './collection-role';
 import { lineKindOf, type LineKind } from './line-kind';
 import { isCouncilAdvice, makerRole, type MakerLane } from './roles';
 import { foldGroups, markGeneral, unreached } from './scene-groups';
+import { foldTiles, type TilePeriod } from './scene-tiles';
 import {
 	HULL_MIN,
 	hullCandidates,
@@ -32,7 +33,7 @@ import { SHOW_ALL, visibleGraph, type Visibility } from './visibility';
 
 export type Column = 'makers' | 'papers' | 'laws' | 'rulings';
 
-type UnitShape = 'node' | 'hull' | 'group';
+type UnitShape = 'node' | 'hull' | 'group' | 'tiles';
 
 export type SceneUnit = {
 	/** A bron's id, a hull's container id, or `group:` and the id of its first member. */
@@ -47,6 +48,8 @@ export type SceneUnit = {
 	members: string[];
 	/** A hull's rows; empty for a bron or a group. */
 	rows: HullRow[];
+	/** Tiles: the dossiers per period, each with its own hull. */
+	periods: TilePeriod[];
 	/** The day it is placed by in Tijd: a bron's date, the first of a hull, the middle of a group. */
 	date: string | null;
 	/** It holds a chosen bron. */
@@ -134,6 +137,7 @@ const blank = (
 	label,
 	members: [],
 	rows: [],
+	periods: [],
 	date: null,
 	focus: false,
 	general: false,
@@ -415,7 +419,8 @@ export function buildScene(input: SceneInput): Scene {
 	const base = baseUnits(sortedNodes, sortedEdges, chosen);
 	const linked = unitEdges(sortedNodes, sortedEdges, base.unitOf, base.home);
 	const general = markGeneral(base.units, linesBetween(base.units, linked.edges));
-	const folded = foldGroups(general, linesBetween(general, linked.edges), sortedNodes);
+	const grouped = foldGroups(general, linesBetween(general, linked.edges), sortedNodes);
+	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked.edges, grouped)));
 	const lines = linesBetween(folded.units, groupEdges(linked.edges, folded));
 	return unreached(
 		withElsewhere(folded.units, linked.edges, folded),

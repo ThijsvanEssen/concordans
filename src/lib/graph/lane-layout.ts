@@ -69,6 +69,17 @@ export type LaneLayout = {
 const textWidth = (text: string, size = 13): number =>
 	[...text].reduce((w, ch) => w + (/[A-Z]/.test(ch) ? 0.7 : 0.5), 0) * size + 2;
 
+/** A line cut with "…" to at most `width`, letter by letter, so it uses the whole room. */
+const cutLine = (line: string, width: number, size: number) => {
+	let short = line;
+	while (short.length > 1 && textWidth(`${short}…`, size) > width) short = short.slice(0, -1);
+	return `${short.trimEnd()}…`;
+};
+
+/** A text on one line of at most `width`, cut where it ends. */
+export const oneLine = (text: string, width: number, size = 13) =>
+	textWidth(text, size) <= width ? text : cutLine(text, width, size);
+
 /** A text in lines of at most `width`, at most `max`; the last one cut with "…". */
 export function wrapLabel(text: string, width: number, size = 13, max = MAX_LINES): string[] {
 	const lines: string[] = [];
@@ -78,11 +89,7 @@ export function wrapLabel(text: string, width: number, size = 13, max = MAX_LINE
 			lines[lines.length - 1] = `${last} ${word}`;
 		else lines.push(word);
 	}
-	const cut = (line: string) => {
-		let short = line;
-		while (short.length > 1 && textWidth(`${short}…`, size) > width) short = short.slice(0, -1);
-		return `${short.trimEnd()}…`;
-	};
+	const cut = (line: string) => cutLine(line, width, size);
 	const kept = lines.slice(0, max).map((l) => (textWidth(l, size) <= width ? l : cut(l)));
 	if (lines.length > max && !kept[max - 1].endsWith('…')) kept[max - 1] = cut(kept[max - 1]);
 	return kept;
@@ -164,14 +171,50 @@ function hullBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
 }
 
+/** Below a period's head, a line per dossier: its number on a tile, its name beside it. */
+const TILE_LINE = 24;
+
+/**
+ * Tiles: a pill, below it a rectangle as wide as the room, a head per period and a line per dossier.
+ * `rows` holds the middle of each line by its dossier's id, and of each head by its period.
+ */
+export function tilesBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
+	const rows: UnitBox['rows'] = [];
+	let cy = y + HULL_PILL + 8;
+	for (const period of u.periods) {
+		rows.push({ id: period.label, y: cy + ROW_HEAD / 2 });
+		cy += ROW_HEAD;
+		for (const dossier of period.units) {
+			rows.push({ id: dossier.id, y: cy + TILE_LINE / 2 });
+			cy += TILE_LINE;
+		}
+		cy += 4;
+	}
+	const pill = wrapLabel(u.label, room - PILL_PAD, PILL_SIZE, 1);
+	const mark = { x, y: y + HULL_PILL, width: room, height: cy + 4 - (y + HULL_PILL) };
+	const label = { x, y, width: widest(pill, PILL_SIZE) + PILL_PAD, height: HULL_PILL - 4 };
+	return {
+		x,
+		y,
+		width: room,
+		height: mark.y + mark.height - y,
+		mark,
+		label,
+		rows,
+		text: { name: pill, small: [] }
+	};
+}
+
 const boxOf = (u: SceneUnit, x: number, y: number, room: number): UnitBox =>
 	u.shape === 'hull'
 		? hullBox(u, x, y, room)
-		: u.shape === 'group'
-			? groupBox(u, x, y, room)
-			: nodeBox(u, x, y, room);
+		: u.shape === 'tiles'
+			? tilesBox(u, x, y, room)
+			: u.shape === 'group'
+				? groupBox(u, x, y, room)
+				: nodeBox(u, x, y, room);
 
-const SHAPE_RANK = { hull: 0, node: 1, group: 2 } as const;
+const SHAPE_RANK = { tiles: 0, hull: 1, node: 2, group: 3 } as const;
 
 /** The order in a column when nothing else decides: chosen first, hulls, bronnen, groups, by name. */
 const byDefault = (a: SceneUnit, b: SceneUnit) =>
@@ -338,7 +381,7 @@ function placeColumn(units: readonly SceneUnit[], frame: Frame, top: number): Pl
 		const box = boxOf(u, frame.x, Math.ceil(y / 4) * 4, frame.width);
 		out.set(u.id, box);
 		left = u.column === 'papers' && u.shape === 'hull' ? { box, unit: u } : null;
-		y = box.y + box.height + (u.shape === 'hull' ? HULL_GAP : ITEM_GAP);
+		y = box.y + box.height + (u.shape === 'hull' || u.shape === 'tiles' ? HULL_GAP : ITEM_GAP);
 	}
 	return { units: out, bottom: y };
 }

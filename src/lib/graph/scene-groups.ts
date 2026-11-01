@@ -75,7 +75,10 @@ type Target = { id: string; column: Column; exact: string };
  * then the heaviest relation). A line between two makers (a seat in a fractie) is no target: four
  * Kamerleden who signed the moties of one dossier are one group, whatever their fractie.
  */
-function targetsOf(units: readonly SceneUnit[], lines: readonly SceneLine[]): Map<string, Target> {
+export function targetsOf(
+	units: readonly SceneUnit[],
+	lines: readonly SceneLine[]
+): Map<string, Target> {
 	const byId = new Map(units.map((u) => [u.id, u]));
 	const best = new Map<string, { line: SceneLine; other: SceneUnit; row: string | null }>();
 	for (const l of lines) {

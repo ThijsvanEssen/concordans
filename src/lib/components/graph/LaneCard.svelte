@@ -5,6 +5,8 @@
 	import { isEscape } from '$lib/actions/keys';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { getDossierTitles } from '$lib/api/dossiers';
+	import { ignore } from '$lib/api/errors';
 	import { laneDossierNumber } from '$lib/graph/lane-changes';
 	import type { SceneUnit } from '$lib/graph/scene';
 	import type { GraphNode } from '$lib/graph/types';
@@ -24,6 +26,22 @@
 	} = $props();
 
 	const dossier = $derived(unit.shape === 'hull' && unit.column === 'papers');
+	const number = $derived(laneDossierNumber(unit.id, unit.members, nodeOf));
+	/** The dossier's own name: its hull knows only the number when it is no bron on the canvas. */
+	let title = $state<string | null>(null);
+	$effect(() => {
+		title = null;
+		if (!dossier) return;
+		let current = true;
+		getDossierTitles(unit.id, number)
+			.then((d) => {
+				if (current) title = d?.title?.trim() || null;
+			})
+			.catch(ignore('Banen dossiernaam'));
+		return () => {
+			current = false;
+		};
+	});
 	const rows = $derived(
 		unit.rows.length > 0 ? unit.rows : [{ id: 'all', label: '', members: unit.members }]
 	);
@@ -47,11 +65,12 @@
 				>×</button
 			>
 		{/snippet}
+		{#if title && title !== unit.label}<p class="name">{title}</p>{/if}
 		{#if unit.breakdown}<p class="breakdown">{unit.breakdown}</p>{/if}
 		{#if unit.shape === 'hull'}
 			<p class="open"><BronLink ref={unit.id}>{dossier ? 'Dossier' : 'Wet'} openen</BronLink></p>
 		{/if}
-		{#if dossier}<LaneChanges number={laneDossierNumber(unit.id, unit.members, nodeOf)} />{/if}
+		{#if dossier}<LaneChanges {number} />{/if}
 		{#each rows as row (row.id)}
 			{#if row.label}<h3 class="row">{row.label}</h3>{/if}
 			<ul class="list">
@@ -110,6 +129,25 @@
 			border-radius: var(--r-2) var(--r-2) 0 0;
 			box-shadow: var(--shadow-modal);
 		}
+	}
+	.lane-card :global(.canvas-kaart__kop),
+	.lane-card :global(.canvas-kaart__inhoud) {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	.lane-card :global(.canvas-kaart__inhoud) {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.open :global(a) {
+		text-decoration: underline;
+	}
+	.name {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink);
 	}
 	.open {
 		margin: 0;

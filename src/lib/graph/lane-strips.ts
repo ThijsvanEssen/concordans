@@ -10,7 +10,7 @@
 // reaches: so it runs through no mark.
 // Pure: the same LaneLayout as lane-layout.ts, so one view draws both.
 import { easePath, type Pt } from '$lib/network/tree-lines';
-import { wrapLabel, type Box, type LaneLayout, type UnitBox } from './lane-layout';
+import { tilesBox, wrapLabel, type Box, type LaneLayout, type UnitBox } from './lane-layout';
 import { fromTheEnd, LINE_WIDTH, straight, type LanePath } from './lane-lines';
 import { hasArrow, LINE_KIND_STYLE } from './line-kind';
 import { MAKER_LANE_ORDER } from './roles';
@@ -95,8 +95,8 @@ const byWeight = (a: SceneUnit, b: SceneUnit) =>
 	a.label.localeCompare(b.label) ||
 	a.id.localeCompare(b.id);
 
-/** A chosen hull: on a phone it alone stands in full. */
-const isFull = (u: SceneUnit) => u.shape === 'hull' && u.focus;
+/** A chosen hull and tiles: on a phone they alone stand in full. */
+const isFull = (u: SceneUnit) => (u.shape === 'hull' && u.focus) || u.shape === 'tiles';
 
 /** The units that carry a name: the chosen ones, then the largest, NAMED at most. */
 function namedOf(scene: Scene): Set<string> {
@@ -144,7 +144,10 @@ function placeStrip(strip: Strip, index: number, top: number, p: Place): number 
 	p.channels.set(`entry:${index}`, top + HEAD);
 	let y = top + HEAD + load(`entry:${index}`);
 	for (const u of strip.units.filter(isFull)) {
-		const box = hullBox(u, x0, y, p.right - x0);
+		const box =
+			u.shape === 'tiles'
+				? tilesBox(u, x0, y, Math.min(p.right - x0, HULL_MAX))
+				: hullBox(u, x0, y, p.right - x0);
 		p.units.set(u.id, box);
 		const band = { x: x0, y: box.y + box.height, width: p.right - x0, height: 0 };
 		band.height = 10 + load(`band:${u.id}`) + load(`pass:${u.id}`);
