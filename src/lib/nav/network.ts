@@ -97,13 +97,13 @@ export const onNetwork = (url: URL): boolean => modeOf(url) === 'graph';
 
 /**
  * How many bronnen the netwerk holds that the button leads back to: the werkplek's own, or
- * the one kept in this browser (`kept`) anywhere else, with the bron of the lezer counted.
+ * the one kept in this browser (`kept`) anywhere else, with the bron of the lezer counted. One
+ * bron alone counts nothing, on the lanes too (B85).
  */
 export function networkCount(url: URL, kept: string | null): number {
 	const logical = exploreUrl(url);
 	const query = onNetwork(url) ? logical.search : (kept ?? '');
-	const lanes = onNetwork(url) && onLanes(logical.searchParams);
-	const chosen = withReader(query, logical.searchParams.get('focus'), lanes);
+	const chosen = withReader(query, logical.searchParams.get('focus'));
 	return parseNetwerk(new URLSearchParams(chosen)).ids.length;
 }
 

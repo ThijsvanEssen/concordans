@@ -37,9 +37,8 @@ describe('withReader', () => {
 	});
 	it('makes one bron a netwerk of one on the lanes, as a link with netwerk= (B84)', () => {
 		expect(onLanesChosen('', WVW)).toEqual([WVW]);
-		expect(networkCount(at('/wetten/BWBR0006622?doek=banen&mode=netwerk'), null)).toBe(1);
-		expect(networkCount(at('/wetten/BWBR0006622?mode=netwerk'), null)).toBe(0);
-		expect(networkCount(at('/wetten/BWBR0006622?doek=banen'), null)).toBe(0);
+		// The button counts nothing for one bron alone (B85).
+		expect(networkCount(at('/wetten/BWBR0006622?doek=banen&mode=netwerk'), null)).toBe(0);
 	});
 	it('does not name a bron twice, and keeps the order of the address', () => {
 		const query = `netwerk=${CBB},${WVW}`;
