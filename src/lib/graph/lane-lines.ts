@@ -382,13 +382,33 @@ function orderBundles(bundles: Rail[][], left: number, right: number): Rail[][] 
 	const breaks = (i: number, rest: number[]) =>
 		rest.reduce((n, j) => n + Math.max(0, cost[i][j] - cost[j][i]), 0);
 	const rest = bundles.map((_, i) => i);
-	const order: Rail[][] = [];
+	const order: number[] = [];
 	while (rest.length > 0) {
 		let pick = 0;
 		for (let k = 1; k < rest.length; k++)
 			if (breaks(rest[k], rest) < breaks(rest[pick], rest)) pick = k;
-		order.push(bundles[rest[pick]]);
+		order.push(rest[pick]);
 		rest.splice(pick, 1);
+	}
+	return settled(order, cost).map((i) => bundles[i]);
+}
+
+/** The order with each bundle moved to where it crosses least, as long as that still helps. */
+function settled(start: readonly number[], cost: readonly number[][]): number[] {
+	let order = [...start];
+	let moved = true;
+	while (moved) {
+		moved = false;
+		for (const b of start) {
+			const others = order.filter((o) => o !== b);
+			const at = (k: number) =>
+				others.reduce((n, o, i) => n + (i < k ? cost[o][b] : cost[b][o]), 0);
+			let best = order.indexOf(b);
+			for (let k = 0; k <= others.length; k++) if (at(k) < at(best)) best = k;
+			if (best === order.indexOf(b)) continue;
+			order = [...others.slice(0, best), b, ...others.slice(best)];
+			moved = true;
+		}
 	}
 	return order;
 }
