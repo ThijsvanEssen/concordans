@@ -1740,7 +1740,6 @@
 		display: grid;
 		grid-template-columns: var(--strook-links) minmax(0, 1fr) var(--strook);
 		--strook: calc(var(--zijkolom) + 2 * var(--s-4));
-		--strook-links: calc(var(--strook) - var(--s-4) + var(--werkplek-marge));
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
@@ -1760,7 +1759,7 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4) var(--s-4) var(--s-4) var(--werkplek-marge);
+		padding: var(--s-4) var(--s-4) var(--s-4) var(--strook-marge);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
@@ -1815,11 +1814,11 @@
 	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
 		.graph-view {
-			grid-template-columns: var(--strook) minmax(0, 1fr);
+			grid-template-columns: var(--strook-links) minmax(0, 1fr);
 		}
 		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
 		.graph-view:has(.strook--kaart.is-open) {
-			grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
+			grid-template-columns: var(--strook-links) minmax(0, 1fr) var(--strook);
 		}
 	}
 	/* A phone: the canvas takes the width; the strip at the left heads it, with the filters in its
