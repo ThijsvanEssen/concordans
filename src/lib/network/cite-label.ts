@@ -21,12 +21,12 @@ export type ArticleCite = {
 };
 
 /** The longest label a line carries in full. */
-const CITE_MAX = 27;
+export const CITE_MAX = 27;
 /** The least of a law's name a label keeps, cut or not. */
 const ABBR_MIN = 10;
 
 /** Text cut to `room` characters with an ellipsis, at a word where one is near. */
-const cut = (s: string, room: number) => {
+export const cut = (s: string, room: number) => {
 	if (s.length <= room) return s;
 	const head = s.slice(0, room - 1);
 	const space = head.lastIndexOf(' ');

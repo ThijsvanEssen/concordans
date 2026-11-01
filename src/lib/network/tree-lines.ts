@@ -8,7 +8,15 @@
 export type Pt = { x: number; y: number };
 /** Where a node stands: its column, its layer, where a line ends above it and leaves under its name. */
 export type TreeNode = { x: number; row: number; top: number; bottom: number };
-type TreeEdge = { id: string; parent: string; child: string; kind: string; lead?: number };
+type TreeEdge = {
+	id: string;
+	parent: string;
+	child: string;
+	kind: string;
+	lead?: number;
+	/** A line to a node beside its parent: its own rail, so a mention does not lie on a grondslag. */
+	lane?: number;
+};
 export type Box = { id: string; x0: number; x1: number; y0: number; y1: number };
 type TreeLine = {
 	id: string;
@@ -184,24 +192,27 @@ const GUTTER = LEVEL * (MAX_LEVEL + 1) + 2;
  * A line to a node in the parent's own layer (a wet that only names the law, beside it): down
  * from under the parent's name, along under the names of the layer, up to under the child's.
  * To a node in a layer above (a wet that names an AMvB, in the row Wet): up from the parent's
- * sign, along the gutter above its layer, up to under the child's name.
+ * sign, along the gutter above its layer, up to under the child's name. A child with two such
+ * lines (art. 14 its grondslag, art. 21 only named) has them side by side.
  */
 function besideLine(
 	e: TreeEdge,
 	nodes: ReadonlyMap<string, TreeNode>,
-	rails: readonly number[]
+	rails: readonly number[],
+	both: boolean
 ): TreeLine {
 	const p = nodes.get(e.parent)!;
 	const c = nodes.get(e.child)!;
 	const up = c.row < p.row;
 	const low = Math.max(...[...nodes.values()].filter((n) => n.row === p.row).map((n) => n.bottom));
-	const y = up ? rails[p.row] - GUTTER : low + BESIDE;
+	const lane = e.lane ?? 0;
+	const y = up ? rails[p.row] - GUTTER : low + BESIDE + LEVEL * lane;
 	const tip = up ? { x: p.x, y: p.top } : { x: p.x, y: p.bottom };
-	const end = { x: c.x, y: c.bottom };
+	const end = { x: c.x + (both ? SPREAD * (lane - 0.5) : 0), y: c.bottom };
 	const points = tidy([
 		{ x: tip.x, y: up ? tip.y : tip.y + (e.lead ?? 0) },
 		{ x: p.x, y },
-		{ x: c.x, y },
+		{ x: end.x, y },
 		end
 	]);
 	return {
@@ -228,7 +239,10 @@ export function treeLines(
 		const c = nodes.get(e.child);
 		return !!p && !!c && c.row <= p.row;
 	};
-	const beside = edges.filter(isBeside).map((e) => besideLine(e, nodes, o.rails));
+	const besides = edges.filter(isBeside);
+	const beside = besides.map((e) =>
+		besideLine(e, nodes, o.rails, besides.filter((b) => b.child === e.child).length > 1)
+	);
 	const all = groups(
 		nodes,
 		edges.filter((e) => !isBeside(e))

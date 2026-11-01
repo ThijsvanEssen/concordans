@@ -28,9 +28,10 @@
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { hasArrow } from '$lib/graph/line-kind';
-	import { citeLines, citeText } from '$lib/network/cite-label';
+	import { citeLines, citeText, cut, CITE_MAX } from '$lib/network/cite-label';
 	import { openHref } from '$lib/bron/href';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
+	import { KIND_WORDS, linesOf, placeLayers, wordOf } from '$lib/network/chain-place';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import { sideScroll } from '$lib/actions/side-scroll';
@@ -136,6 +137,8 @@
 	/** From a layer's label to its bronnen, and the line height of a name. */
 	const DROP = 58;
 	const LINE = 14;
+	/** Labels of one bron stand this far apart. */
+	const STACK = 24;
 	/** A sign of 14 px on a rim of paper of 2; the bron of the keten 18 px on a halo of 4,5 and an edge of 2. */
 	const SIGN = 14;
 	const RIM = 2;
@@ -152,7 +155,10 @@
 	const rowHeights = $derived(
 		shown.map((l) => {
 			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58);
+			// A wet with two lines beside the law: their labels under each other.
+			const here = (id: string) => l.nodes.some((n) => n.id === id);
+			const two = l.nodes.some((k) => k.parents.filter((p) => p.cite && here(p.id)).length > 1);
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58) + (two ? STACK + 4 : 0);
 		})
 	);
 	/** Where each layer begins. */
@@ -168,72 +174,10 @@
 	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
 	const halfOf = (k: ChainNode, n: number) =>
 		Math.ceil((Math.max(...linesOf(k.name, charsFor(n)).map((r) => r.length)) * CHAR) / 2) + 8;
-	/**
-	 * Where each node stands: its layer's row; across, under what it hangs from (the mean of its
-	 * parents' places), kept apart by a node's room and within the width, so the lines run down
-	 * rather than across each other (Thijs, Grondwet, 23 Oct). A layer without placed parents
-	 * spreads evenly.
-	 */
-	const place = $derived.by(() => {
-		const m = new Map<string, { x: number; y: number }>();
-		const left = LEFT;
-		const end = Math.max(LEFT + 200, width - 24);
-		// A lone bron that a line passes over (the conclusie between the hof and the Hoge Raad) steps
-		// aside, so the line does not run through its name.
-		const rowOf = new Map<string, number>();
-		shown.forEach((l, i) => l.nodes.forEach((k) => rowOf.set(k.id, i)));
-		const bypassed = (i: number) =>
-			shown
-				.slice(i + 1)
-				.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
-		shown.forEach((layer, i) => {
-			const n = layer.nodes.length;
-			// "N andere" stands a slot past the last: its room is kept.
-			const right = rest[layer.id] ? end - SLOT : end;
-			// Apart by a slot at most; a layer without a place above it is centred on the drawing.
-			const sep = Math.min((right - left) / n, SLOT);
-			const wish = layer.nodes.map((k, j) => {
-				const at = k.parents.map((p) => m.get(p.id)?.x).filter((x): x is number => x !== undefined);
-				return {
-					k,
-					x: at.length
-						? at.reduce((a, b) => a + b, 0) / at.length
-						: (left + right) / 2 + (j - (n - 1) / 2) * sep
-				};
-			});
-			wish.sort((a, b) => a.x - b.x);
-			// As near its wish as the room allows (pooled blocks, so a group stands centred under
-			// what it hangs from), then within the drawing.
-			const blocks: { sum: number; count: number; at: number }[] = [];
-			wish.forEach((w, j) => {
-				blocks.push({ sum: w.x - j * sep, count: 1, at: j });
-				while (
-					blocks.length > 1 &&
-					blocks[blocks.length - 2].sum / blocks[blocks.length - 2].count >
-						blocks[blocks.length - 1].sum / blocks[blocks.length - 1].count
-				) {
-					const last = blocks.pop()!;
-					blocks[blocks.length - 1].sum += last.sum;
-					blocks[blocks.length - 1].count += last.count;
-				}
-			});
-			const xs = blocks.flatMap((b) =>
-				Array.from({ length: b.count }, (_, i) => b.sum / b.count + (b.at + i) * sep)
-			);
-			const shift = Math.max(0, left + sep / 2 - xs[0]) || Math.min(0, right - sep / 2 - xs[n - 1]);
-			for (let j = 0; j < n; j++) xs[j] += shift;
-			// Half its name and some air, to the side that has room.
-			const room = (layer.nodes[0] ? halfOf(layer.nodes[0], n) : 0) + 48;
-			const aside = n === 1 && bypassed(i) ? (xs[0] + room <= right - 40 ? room : -room) : 0;
-			// A name stays within the drawing, whichever side its node stands on.
-			wish.forEach((w, j) => {
-				const half = halfOf(w.k, n);
-				const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, right + 24 - half));
-				m.set(w.k.id, { x, y: tops[i] + DROP });
-			});
-		});
-		return m;
-	});
+	/** Where each node stands (chain-place.ts). */
+	const place = $derived(
+		placeLayers(shown, { rest, tops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
+	);
 	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
 	const infoOf = $derived.by(() => {
 		const m = new Map<string, { lines: string[] }>();
@@ -249,17 +193,6 @@
 		const i = infoOf.get(id);
 		return 24 + LINE * ((i?.lines.length ?? 1) - 1) + 7;
 	};
-	/** The words on a line of the keten: a judgment's appeal, its cassatie and its conclusie. */
-	const wordOf = (relation: Relation, layer: string) =>
-		relation === 'APPEAL_OF'
-			? layer === 'Hoge Raad'
-				? 'cassatie'
-				: 'hoger beroep'
-			: relation === 'ADVISES_ON'
-				? 'conclusie'
-				: relation === 'CONTINUES'
-					? 'zet voort'
-					: null;
 	/** The box of each name with its sign: where a line must not run (Keten: no line through a name). */
 	const boxes = $derived.by(() => {
 		const out: { id: string; x0: number; x1: number; y0: number; y1: number }[] = [];
@@ -279,11 +212,28 @@
 			}
 		return out;
 	});
+	/** How a line is drawn, in the style of its kind; the style of a line is this one place. */
+	const lookOf = (o: ChainNode['parents'][number], lit: boolean) => {
+		const relation = parentRelation(o);
+		// A mention is an Aanhaling, the text of the law itself a grondslag.
+		const from: DrawClass = relation === 'REFERS_TO' || isMention(o) ? 'judgment' : 'article';
+		const style = edgeStyleFor(relation, null, from);
+		const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
+		return {
+			relation,
+			from,
+			style,
+			width,
+			head: hasArrow(style) ? headLength(width, arrowLength()) : 0,
+			colour: toneColour(edgeColorFor(relation, from), edgeToneFor(relation, null, from)),
+			dash: edgeDashFor(style),
+			cap: edgeCapFor(style)
+		};
+	};
 	/**
 	 * The lines (Netwerkcanvas, Lijnen) as a stamboom (tree-lines.ts): from under the name of what a
 	 * node hangs under, one stem down, a tak per layer, a short line to each node; in the style of
-	 * its kind. The arrowhead stands where the Design System gives one, at the parent's end; the
-	 * style of the line is this one place.
+	 * its kind. The arrowhead stands where the Design System gives one, at the parent's end.
 	 */
 	const lines = $derived.by(() => {
 		const nameOf = new Map(shown.flatMap((l) => l.nodes.map((k) => [k.id, k.name] as const)));
@@ -303,21 +253,11 @@
 			l.nodes.flatMap((k) =>
 				k.parents.flatMap((o) => {
 					if (hiddenLines.has(parentKind(o)) || !nodes.has(o.id) || !nodes.has(k.id)) return [];
-					const relation = parentRelation(o);
-					// A mention is an Aanhaling, the text of the law itself a grondslag.
-					const from: DrawClass = relation === 'REFERS_TO' || isMention(o) ? 'judgment' : 'article';
-					const style = edgeStyleFor(relation, null, from);
 					const lit = chosen === k.id || chosen === o.id;
-					const width = lineThickness(EDGE_WEIGHT[relation]) * (lit ? 1.3 : 1);
-					const head = hasArrow(style) ? headLength(width, arrowLength()) : 0;
 					return [
 						{
-							relation,
-							from,
-							style,
+							...lookOf(o, lit),
 							lit,
-							width,
-							head,
 							o,
 							k,
 							many: k.parents.filter((q) => q.cite).length > 1,
@@ -334,7 +274,8 @@
 				parent: e.o.id,
 				child: e.k.id,
 				kind: `${e.style}|${e.relation}`,
-				lead: e.head
+				lead: e.head,
+				lane: isMention(e.o) ? 1 : 0
 			})),
 			{ rails, boxes }
 		);
@@ -347,12 +288,15 @@
 			if (!byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`)?.beside)
 				out.set(e.o.id, (out.get(e.o.id) ?? 0) + 1);
 		const stacked = new Map<string, number>();
-		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
-			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y };
-			if (e.many && out.get(e.o.id) === 1) return { x: r.tip.x, y: r.tip.y + 17 };
+		const nextAt = (e: (typeof edges)[number]) => {
 			const i = stacked.get(e.k.id) ?? 0;
 			if (e.o.cite) stacked.set(e.k.id, i + 1);
-			return { x: r.end.x, y: r.end.y - 20 - 24 * i };
+			return STACK * i;
+		};
+		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
+			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y + nextAt(e) };
+			if (e.many && out.get(e.o.id) === 1) return { x: r.tip.x, y: r.tip.y + 17 };
+			return { x: r.end.x, y: r.end.y - 20 - nextAt(e) };
 		};
 		return edges.flatMap((e) => {
 			const r = byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`);
@@ -386,17 +330,37 @@
 					mentioned: isMention(e.o),
 					unknown: e.o.way === 'unknown',
 					citeAt: citeAtOf(e, r),
-					colour: toneColour(
-						edgeColorFor(e.relation, e.from),
-						edgeToneFor(e.relation, null, e.from)
-					),
-					dash: edgeDashFor(e.style),
-					cap: edgeCapFor(e.style),
+					colour: e.colour,
+					dash: e.dash,
+					cap: e.cap,
 					width: e.width,
 					lit: e.lit
 				}
 			];
 		});
+	});
+	/**
+	 * A bron whose parent is not on the drawing (under "78 andere wetten"), and which has no line
+	 * else: a short stump up from its sign to the parent's name, so it does not seem loose (B86).
+	 * A click draws the parent, with its line.
+	 */
+	const stumps = $derived.by(() => {
+		const away = new Map(
+			Object.values(more)
+				.flat()
+				.flatMap((n) => (n ? [[n.id, n] as const] : []))
+		);
+		const here = new Set(shown.flatMap((l) => l.nodes.map((k) => k.id)));
+		return shown.flatMap((l, i) =>
+			l.nodes.flatMap((k) => {
+				const o = k.parents.find((p) => !hiddenLines.has(parentKind(p)) && away.has(p.id));
+				const parent = o && away.get(o.id);
+				const at = place.get(k.id);
+				if (!o || !parent || !at || k.parents.some((p) => here.has(p.id))) return [];
+				const label = { x: at.x, y: tops[i] + 22, text: cut(parent.name, CITE_MAX) };
+				return [{ id: k.id, o, parent, label, top: at.y - 12, look: lookOf(o, false) }];
+			})
+		);
 	});
 	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
 	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
@@ -407,16 +371,6 @@
 	const vormKey = (k: ChainNode) =>
 		vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1]);
 	const vormOf = (k: ChainNode) => VORMEN[vormKey(k)];
-	/** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
-	const linesOf = (s: string, max = 22) => {
-		const out: string[] = [];
-		for (const w of s.split(/\s+/)) {
-			const last = out[out.length - 1];
-			if (last && (last + ' ' + w).length <= max) out[out.length - 1] = `${last} ${w}`;
-			else out.push(w);
-		}
-		return out;
-	};
 	/** How a row of the list hangs: its seat or court, else its grondslag and what it names. */
 	const howOf = (k: ChainNode) =>
 		k.how ||
@@ -458,6 +412,17 @@
 			kicker: `${l.unknown ? 'Grondslag onbekend' : l.mentioned ? 'Genoemd in de aanhef' : 'Grondslag'}, opent in het paneel`,
 			title: l.citeLaw,
 			lines: l.citeLines
+		};
+		hover.enter();
+	};
+	/** The glance of a stump: the parent, and the articles it rests on. */
+	const stumpGlance = (t: (typeof stumps)[number], anchor: Element) => {
+		const lines = t.o.cite ? citeLines(t.o.cite) : [];
+		target = {
+			anchor: anchor as HTMLElement,
+			kicker: 'Staat niet op het doek',
+			title: t.parent.name,
+			lines
 		};
 		hover.enter();
 	};
@@ -516,19 +481,6 @@
 		const next = new Set(open);
 		if (!next.delete(id)) next.add(id);
 		open = next;
-	};
-	/** The kind of what a layer holds, for its card of the others: "4 andere wetten". */
-	const KIND_WORDS: Record<string, [string, string]> = {
-		basis: ['wet', 'wetten'],
-		law: ['wet', 'wetten'],
-		named: ['wet', 'wetten'],
-		implementation: ['wet', 'wetten'],
-		eu: ['EU-akte', 'EU-akten'],
-		amvb: ['AMvB', 'AMvB’s'],
-		kb: ['koninklijk besluit', 'koninklijke besluiten'],
-		ministerial: ['regeling', 'regelingen'],
-		policy: ['beleidsregel', 'beleidsregels'],
-		other: ['regeling', 'regelingen']
 	};
 	/** The card of the others: what a click shows or hides. */
 	const otherText = (l: ChainLayer) => {
@@ -688,6 +640,48 @@
 						>{l.cite}</text
 					>
 				</a>
+			{/each}
+			{#each stumps as t (t.id)}
+				{@const w = Math.ceil(citeWidths.get(t.label.text) ?? t.label.text.length * 6.3) + 16}
+				<g
+					class="stomp"
+					role="button"
+					tabindex="0"
+					aria-label="{t.parent.name}, staat niet op het doek"
+					onclick={() => onChoose(t.parent)}
+					onkeydown={(e) => {
+						hover.keys();
+						press(e, () => onChoose(t.parent));
+					}}
+					onpointerenter={(e) => {
+						hover.pointer(e.pointerType);
+						stumpGlance(t, e.currentTarget);
+					}}
+					onpointerleave={() => hover.leave()}
+					onfocus={(e) => stumpGlance(t, e.currentTarget)}
+					onblur={() => hover.leave()}
+				>
+					<path
+						d="M{t.label.x} {t.label.y + 10}L{t.label.x} {t.top}"
+						fill="none"
+						stroke={t.look.colour}
+						stroke-width={t.look.width}
+						stroke-dasharray={t.look.dash}
+						stroke-linecap={t.look.cap}
+					/>
+					<rect
+						class="frame"
+						x={t.label.x - w / 2}
+						y={t.label.y - 10}
+						width={w}
+						height="20"
+						rx="2"
+						stroke-dasharray={isMention(t.o) ? '2 2' : undefined}
+					/>
+					<text x={t.label.x} y={t.label.y + 4} text-anchor="middle" use:measure={t.label.text}
+						>{t.label.text}</text
+					>
+				</g>
 			{/each}
 			{#each shown as layer, i (layer.id)}
 				{#each layer.nodes as k (k.id)}
@@ -972,7 +966,8 @@
 	}
 	/* The articles on a line (Keten, Referentielabel): serif on a framed rim of paper; a dotted frame
 	   where the line only names them. */
-	.cite .frame {
+	.cite .frame,
+	.stomp .frame {
 		fill: var(--paper);
 		stroke: var(--rule-strong);
 		stroke-width: 1;
@@ -986,21 +981,28 @@
 			transform: translateY(calc((20px - 44px / var(--sc)) / 2));
 		}
 	}
-	.cite:hover text {
+	.cite:hover text,
+	.stomp:hover text {
 		fill: var(--ink);
 		text-decoration: underline;
 	}
-	.cite:focus:not(:focus-visible) {
+	.cite:focus:not(:focus-visible),
+	.stomp:focus:not(:focus-visible) {
 		outline: none;
 	}
-	.cite:focus-visible .frame {
+	.cite:focus-visible .frame,
+	.stomp:focus-visible .frame {
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
-	.cite text {
+	.cite text,
+	.stomp text {
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
 		fill: var(--ink-2);
+	}
+	.stomp {
+		cursor: pointer;
 	}
 	/* Landed: the Zijpaneel shows its article; the wash and an ink rim. */
 	.cite.is-open .frame {
