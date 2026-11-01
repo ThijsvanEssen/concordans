@@ -2075,12 +2075,13 @@
 	// By the wissel, a key or a tab alike: into the netwerk the place is kept, back it is found;
 	// a place in the address (#) finds itself.
 	beforeNavigate(({ to }) => {
-		if (mode !== 'read' || !selectedNode || !to || !onNetwork(to.url)) return;
+		const target = to?.url;
+		if (mode !== 'read' || !selectedNode || !target || !onNetwork(target)) return;
 		readingPlace = { id: selectedNode.id, top: readerTop() };
 	});
 	afterNavigate(({ from }) => {
-		if (from?.url && onNetwork(from.url) && mode === 'read' && !page.url.hash)
-			restoreReadingPlace();
+		const left = from?.url;
+		if (left && onNetwork(left) && mode === 'read' && !page.url.hash) restoreReadingPlace();
 	});
 
 	/** Alt [ and Alt ]: the article before or after, its text asked first; the new one at its top. */
