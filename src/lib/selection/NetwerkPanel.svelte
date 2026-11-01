@@ -15,6 +15,8 @@
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
 	import { bronLabel } from '$lib/vocabulary';
+	import { openHref } from '$lib/bron/href';
+	import Picto from '$lib/components/ui/Picto.svelte';
 	import { bronKind } from '$lib/components/graph/bron-kind';
 
 	/** What a chosen bron is, in a word: a publication is no wet. */
@@ -26,6 +28,8 @@
 
 	let {
 		entries,
+		reader = null,
+		onRead,
 		loading = false,
 		expected = 0,
 		selection = null,
@@ -41,6 +45,10 @@
 		onSearchClose
 	}: {
 		entries: NetwerkEntry[];
+		/** The bron the lezer shows: "In de lezer" on its row, Lezen on the others (B85). */
+		reader?: string | null;
+		/** A row leads to the lezer: what is chosen is kept for the way back. */
+		onRead?: () => void;
 		loading?: boolean;
 		/** The bronnen of the netwerk asked and not yet in: their rows hold their place. */
 		expected?: number;
@@ -87,7 +95,7 @@
 			></span>{/if}
 	{/snippet}
 	{#snippet action()}
-		{#if entries.length > 0 && !telefoon}
+		{#if entries.length > 1 && !telefoon}
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 				>Wis alles</TekstLink
 			>
@@ -102,33 +110,49 @@
 							type="button"
 							class="rij__naam"
 							aria-pressed={e.on}
-							disabled={e.missing}
-							title={e.missing
-								? 'Niet gevonden'
-								: e.verborgenMet
-									? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
-									: e.on
-										? `${e.titel ?? e.label}: verbergen`
-										: `${e.titel ?? e.label}: tonen`}
+							disabled={e.missing || e.fixed}
+							title={e.fixed
+								? undefined
+								: e.missing
+									? 'Niet gevonden'
+									: e.verborgenMet
+										? `Aan met ${GROUP_LABEL[e.verborgenMet]}`
+										: e.on
+											? `${e.titel ?? e.label}: verbergen`
+											: `${e.titel ?? e.label}: tonen`}
 							onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
 						>
 							<span class="rij__vink"
 								><Vinkje aan={e.on && !e.verborgenMet} gedimd={!!e.verborgenMet} /></span
 							>
 							<span class="rij__glyph"><KindGlyph collection={e.collection} size={11} /></span>
-							<span class="rij__tekst">
-								<span class="rij__label">{e.label}</span>
-								{#if e.alone}
-									<span class="rij__staat" title="Geen verbinding met de andere gekozen bronnen"
-										>{soortVan(e)}, zonder verbinding</span
-									>
-								{:else}
-									<span class="rij__staat">{soortVan(e)}</span>
-								{/if}
-							</span>
+							<span class="rij__label">{e.label}</span>
 						</button>
-						<IconButton label="{e.label} uit het netwerk weghalen" onclick={() => onRemove(e.id)}
-							>×</IconButton
+						<div class="rij__onder">
+							{#if e.alone}
+								<span class="rij__staat" title="Geen verbinding met de andere gekozen bronnen"
+									>{soortVan(e)}, zonder verbinding</span
+								>
+							{:else}
+								<span class="rij__staat">{soortVan(e)}</span>
+							{/if}
+							{#if e.id === reader}
+								<TekstLink class="rij__lezen" href={openHref(e.id)} onclick={onRead}
+									><Picto naam="tekst" size={13} />In de lezer</TekstLink
+								>
+							{:else if !e.missing}
+								<TekstLink
+									class="rij__lezen"
+									href={openHref(e.id)}
+									onclick={onRead}
+									aria-label="{e.label} lezen">Lezen</TekstLink
+								>
+							{/if}
+						</div>
+						<span class="rij__weg"
+							><IconButton label="{e.label} uit het netwerk weghalen" onclick={() => onRemove(e.id)}
+								>×</IconButton
+							></span
 						>
 					</li>
 				{/each}
@@ -165,7 +189,7 @@
 			>+ Bron toevoegen</button
 		>
 	</section>
-	{#if telefoon && entries.length > 0}
+	{#if telefoon && entries.length > 1}
 		<!-- On a phone under the list, as the Design System has it (NetwerkPaneel, Telefoon). -->
 		<p class="netwerk-acties">
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
@@ -234,10 +258,11 @@
 		display: flex;
 		flex-direction: column;
 	}
+	/* The name, under it what it is and the way to the lezer, the × beside both (B85). */
 	.rij {
-		display: flex;
-		align-items: flex-start;
-		gap: var(--s-1);
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		column-gap: var(--s-2);
 		padding: var(--s-1) 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
@@ -249,8 +274,29 @@
 	.rij + .rij {
 		border-top: 1px solid var(--paper-2);
 	}
+	.rij__weg {
+		grid-column: 2;
+		grid-row: 1 / 3;
+	}
+	.rij__onder {
+		grid-column: 1;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		column-gap: var(--s-2);
+		/* Under the name: past the columns of the tick and the glyph. */
+		padding-left: calc(2 * var(--s-3) + 2 * var(--s-2));
+		font-size: var(--t-micro);
+		line-height: var(--s-4);
+	}
+	.rij__onder :global(.rij__lezen) {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-1);
+		margin-left: auto;
+		white-space: nowrap;
+	}
 	.rij__naam {
-		flex: 1;
 		min-width: 0;
 		display: grid;
 		grid-template-columns: var(--s-3) var(--s-3) 1fr;
@@ -274,19 +320,12 @@
 		justify-content: center;
 		height: var(--s-5);
 	}
-	.rij__tekst {
-		display: flex;
-		flex-direction: column;
-		min-width: 0;
-	}
 	.rij__label {
 		font-weight: 600;
 		line-height: var(--s-5);
 		overflow-wrap: anywhere;
 	}
 	.rij__staat {
-		font-size: var(--t-micro);
-		line-height: var(--s-4);
 		color: var(--ink-3);
 	}
 	.rij.uit .rij__label,

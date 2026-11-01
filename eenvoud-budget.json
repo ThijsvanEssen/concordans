@@ -19,7 +19,7 @@
 		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1609,
-		"src/lib/components/graph/GraphView.svelte": 2128,
+		"src/lib/components/graph/GraphView.svelte": 2127,
 		"src/lib/network/ChainView.svelte": 1147,
 		"src/lib/text/judgment-text.ts": 1108,
 		"src/lib/verbonden/Verbonden.svelte": 871,
@@ -45,7 +45,7 @@
 		"src/lib/components/graph/GraphView.svelte": 65,
 		"src/lib/verbonden/Verbonden.svelte": 41,
 		"src/routes/(main)/actueel/+page.svelte": 42,
-		"src/routes/explore/+page.svelte": 107
+		"src/routes/explore/+page.svelte": 106
 	},
 	"complexity": {
 		"src/lib/bron/describe.ts": 46,

@@ -80,8 +80,6 @@ describe('the scene of the five examples (round 3)', () => {
 			'VWS',
 			'VWS'
 		]);
-		expect(s.counts.bridged).toEqual({ dossiers: 16, activiteiten: 1, stukken: 8 });
-		expect(s.counts.unlinked).toEqual({});
 	});
 
 	it('d2: one line per pair, ending in the row of the procedure it comes from', () => {
@@ -172,7 +170,6 @@ describe('the scene of the five examples (round 3)', () => {
 			role: 'minister JenV'
 		});
 		expect(groups(s)).toContain('makers 4 fracties');
-		expect(s.counts.bridged).toEqual({ dossiers: 4 });
 	});
 });
 
@@ -187,12 +184,8 @@ describe.each(EXAMPLES)('the rules of the scene: %s', (name) => {
 		expect(again).toEqual(scene(name));
 	});
 
-	it('loses no bron: every one stands in a unit or in a count', () => {
-		const s = scene(name);
-		const inUnits = s.units.reduce((n, u) => n + u.members.length, 0);
-		const counted = [...Object.values(s.counts.unlinked), ...Object.values(s.counts.bridged)];
-		expect(inUnits + counted.reduce((n, c) => n + (c ?? 0), 0)).toBe(example(name).nodes.length);
-		const all = s.units.flatMap((u) => u.members);
+	it('draws no bron twice', () => {
+		const all = scene(name).units.flatMap((u) => u.members);
 		expect(new Set(all).size).toBe(all.length);
 	});
 

@@ -8,7 +8,7 @@
 	// stays the way for the keyboard and a screen reader.
 	import { markOf } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
-	import { sortColour, sortLabel, sortOne, type Sort } from '$lib/bron/rubrieken';
+	import { sortColour, type Sort } from '$lib/bron/rubrieken';
 	import { formatCount } from '$lib/text/getal';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 	import { bronNaam } from '$lib/bron/naam';
@@ -251,12 +251,6 @@
 	}
 
 	/** The bronnen with no line to the chosen ones, by soort: one line under the lanes. */
-	const unlinked = $derived(
-		(Object.entries(scene.counts.unlinked) as [Sort, number][])
-			.filter(([, n]) => n > 0)
-			.map(([s, n]) => `${formatCount(n)} ${n === 1 ? sortOne(s) : sortLabel(s).toLowerCase()}`)
-			.join(', ')
-	);
 	const changedWords = (u: SceneUnit) => (u.change ? LAW_CHANGE_WORDS[u.change].says : null);
 	const titleOf = (u: SceneUnit) =>
 		[u.label, u.role, u.breakdown, changedWords(u)].filter(Boolean).join(', ') || u.label;
@@ -588,9 +582,6 @@
 					<text class="line-label" x={p.at.x} y={p.at.y - 6}>{p.label}</text>
 				{/each}
 			</svg>
-			{#if unlinked}<p class="stil unlinked">
-					Zonder lijn naar de gekozen bronnen: {unlinked}
-				</p>{/if}
 		</div>
 	{/if}
 </div>
@@ -641,9 +632,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		margin: 0 0 var(--s-2);
-	}
-	.unlinked {
-		margin: 0 var(--s-4) var(--s-6);
 	}
 	.hull {
 		fill: color-mix(in srgb, var(--tint) 7%, transparent);

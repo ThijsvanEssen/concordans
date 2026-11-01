@@ -89,14 +89,7 @@ export type SceneLine = {
 	toRow: string | null;
 };
 
-export type SceneCounts = {
-	/** Bronnen without a line to the chosen ones, by soort: one count below the canvas. */
-	unlinked: Partial<Record<Sort, number>>;
-	/** Of those, the ones only met through an activity about several dossiers, by soort. */
-	bridged: Partial<Record<Sort, number>>;
-};
-
-export type Scene = { units: SceneUnit[]; lines: SceneLine[]; counts: SceneCounts };
+export type Scene = { units: SceneUnit[]; lines: SceneLine[] };
 
 type SceneInput = {
 	nodes: readonly GraphNode[];
@@ -380,7 +373,7 @@ function bridgesOf(
 /**
  * The edges that may draw a line, by unit. An edge into a hull is no line; nor is one of a bridge
  * to a bron outside its hull draw no line either, but to who makes: that bron is only met
- * through the bridge (`bridged`).
+ * through the bridge.
  */
 function unitEdges(
 	nodes: readonly GraphNode[],
@@ -390,7 +383,6 @@ function unitEdges(
 ) {
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const bridges = bridgesOf(byId, edges, home);
-	const bridged = new Set<string>();
 	const out: UnitEdge[] = [];
 	for (const edge of edges) {
 		const a = byId.get(edge.source);
@@ -400,14 +392,11 @@ function unitEdges(
 		const to = unitOf.get(b.id);
 		if (!from || !to || from === to) continue;
 		const other = bridges.has(a.id) ? b : bridges.has(b.id) ? a : null;
-		if (other && !isMaker(other)) {
-			bridged.add(other === a ? from : to);
-			continue;
-		}
+		if (other && !isMaker(other)) continue;
 		if (!(isHullEdge(a, b, edge.relation) && home.has(a.id)))
 			out.push({ edge, from, to, fromClass: a.drawClass });
 	}
-	return { edges: out, bridged };
+	return out;
 }
 
 /** The scene of a canvas. Deterministic: the same bronnen and edges in any order give the same scene. */
@@ -423,13 +412,11 @@ export function buildScene(input: SceneInput): Scene {
 	const chosen = new Set(input.chosen);
 	const base = baseUnits(sortedNodes, sortedEdges, chosen);
 	const linked = unitEdges(sortedNodes, sortedEdges, base.unitOf, base.home);
-	const general = markGeneral(base.units, linesBetween(base.units, linked.edges));
-	const grouped = foldGroups(general, linesBetween(general, linked.edges), sortedNodes);
-	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked.edges, grouped)));
-	const lines = linesBetween(folded.units, groupEdges(linked.edges, folded));
-	return withChange(
-		unreached(withElsewhere(folded.units, linked.edges, folded), lines, linked.bridged, sortedNodes)
-	);
+	const general = markGeneral(base.units, linesBetween(base.units, linked));
+	const grouped = foldGroups(general, linesBetween(general, linked), sortedNodes);
+	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked, grouped)));
+	const lines = linesBetween(folded.units, groupEdges(linked, folded));
+	return withChange(unreached(withElsewhere(folded.units, linked, folded), lines));
 }
 
 /**
