@@ -2,6 +2,8 @@
 # Every gate before a merge, as CI runs them, stopping at the first that fails. ESLint keeps
 # its cache in .eslintcache, so a second run lints only what changed.
 set -euo pipefail
+# The visual baseline below needs Docker: say so now, not after the wait and the other gates.
+bash scripts/e2e-docker.sh
 # Every gate one run at a time on this machine: the agents of several worktrees otherwise run them side
 # by side, the machine swaps and the browser suite times out (30 okt: the light gates of one run beside
 # the browser suite of another). A run waits for the lock; a lock whose holder is gone is taken over.
@@ -38,3 +40,6 @@ npm run check
 npm run check:e2e
 # The browser suite builds and serves the app itself (playwright.config.ts), so the build is checked there.
 npm run e2e
+# The visual baseline, which the browser suite above skips off Linux, as CI runs it. Never writes a
+# snapshot; a change on purpose: scripts/e2e-docker.sh 'npx playwright test e2e/visueel.spec.ts --update-snapshots=changed'.
+bash scripts/e2e-docker.sh 'CI=1 npx playwright test e2e/visueel.spec.ts --update-snapshots=none --reporter=list'

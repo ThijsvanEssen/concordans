@@ -1,7 +1,7 @@
 // Visual snapshots of a handful of fixed pages, at both widths: what the asserts cannot see
 // (a margin, a type size, an overlap). The baseline is made on Linux, as CI runs it
 // (`npm run e2e:update`, in the Playwright image); elsewhere these are skipped, since fonts
-// render differently per system. The network canvas is left out: WebGL is not pixel-stable.
+// render differently per system, and `npm run gates` runs them in that image. The network canvas is left out: WebGL is not pixel-stable.
 import { keepArticle, keepPlaces } from './support/bundels';
 import { expect, test } from './support/test';
 
