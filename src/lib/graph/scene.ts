@@ -10,6 +10,7 @@
 //   what hangs on her alone go to the strip Algemene wetten;
 // - one line per pair of units: the heaviest relation, with the number of edges and the row it
 //   ends in; no unit without a line to the chosen bronnen: the rest is counted below.
+import { laneFiltered, type LaneFilter } from './lane-filter';
 import { rubriekOfSort, sortOf, type Rubriek, type Sort } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
 import { nodeId, RELATIONS, type Relation } from '$lib/vocabulary';
@@ -98,6 +99,8 @@ type SceneInput = {
 	visibility?: Visibility;
 	/** A bron's name as the site gives it (`bronNaam`: "Art. 8 Sr"); else its label. */
 	nameOf?: (n: GraphNode) => string;
+	/** The bronfilter: what lies outside it leaves the scene (`laneFiltered`). */
+	filter?: LaneFilter;
 };
 
 /** The column of a rubriek: Wetten, Rechtspraak, Kamerstukken; Parlement and Regering make. */
@@ -400,9 +403,10 @@ function unitEdges(
 
 /** The scene of a canvas. Deterministic: the same bronnen and edges in any order give the same scene. */
 export function buildScene(input: SceneInput): Scene {
-	const named = input.nameOf
-		? input.nodes.map((n) => ({ ...n, label: input.nameOf!(n) }))
+	const inFilter = input.filter
+		? laneFiltered(input.nodes, input.filter, input.chosen)
 		: input.nodes;
+	const named = input.nameOf ? inFilter.map((n) => ({ ...n, label: input.nameOf!(n) })) : inFilter;
 	const drawn = named.filter((n) => !isVersionCollection(n.collection));
 	const { nodes, edges } = visibleGraph(drawn, input.edges, input.visibility ?? SHOW_ALL);
 	const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id));

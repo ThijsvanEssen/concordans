@@ -21,6 +21,7 @@
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
 	import type { MakerLane } from '$lib/graph/roles';
 	import type { Visibility } from '$lib/graph/visibility';
+	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
 	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
 	import { laneLineColour } from '$lib/graph/line-strength';
@@ -30,7 +31,7 @@
 		edges,
 		chosen,
 		visibility,
-		time = false,
+		filter,
 		marked = null,
 		pointed = null,
 		onMark,
@@ -43,8 +44,8 @@
 		chosen: readonly string[];
 		/** Tonen and Relatie (B51): the scene leaves out what they hide. */
 		visibility: Visibility;
-		/** Tijd: in Kamerstukken and Rechtspraak the height is the date. */
-		time?: boolean;
+		/** The bronfilter (Tijdstrook, rechter): what lies outside leaves the lanes. */
+		filter: LaneFilter;
 		/** The bron marked: its card at the right, its unit lit. */
 		marked?: string | null;
 		/** The bron the keyboard's list points at: its unit lit. */
@@ -97,6 +98,7 @@
 			edges,
 			chosen,
 			visibility,
+			filter,
 			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
 		})
 	);
@@ -111,7 +113,7 @@
 	});
 
 	const layout: LaneLayout | StripLayout = $derived(
-		phone ? laneStrips(scene, avail, time) : laneLayout(scene, Math.max(avail, 320), time)
+		phone ? laneStrips(scene, avail) : laneLayout(scene, Math.max(avail, 320))
 	);
 	const paths: LanePath[] = $derived(
 		phone ? stripLines(scene, layout as StripLayout) : laneLines(scene, layout)
@@ -542,23 +544,6 @@
 				/>
 				<text class="lane-head" x={l.x + 8} y={l.y + 16}>{LANE_TITLE[l.lane]}</text>
 			{/each}
-			{#if phone}
-				{#each (layout as StripLayout).years as y (y.y)}
-					<text class="lane-head" x="28" y={y.y}>{y.label}</text>
-				{/each}
-			{/if}
-			{#if layout.axis}
-				{#each layout.axis.ticks as t (t.y + t.label)}
-					<text class="tick tick--{t.kind}" x="16" y={t.y + 4}>{t.label}</text>
-					{#if t.kind === 'year'}<line
-							class="tick-line"
-							x1="60"
-							x2={layout.width - 20}
-							y1={t.y}
-							y2={t.y}
-						/>{/if}
-				{/each}
-			{/if}
 			<!-- The lines under the units; the lit ones over the rest, whole. -->
 			<g class="lines" class:is-dim={anyLit}>
 				{#each styled.filter((p) => !anyLit || !touches(p)) as p (p.id)}
@@ -658,21 +643,12 @@
 		fill: var(--paper);
 		stroke-opacity: 0.35;
 	}
-	.lane-head,
-	.tick {
+	.lane-head {
 		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		fill: var(--ink-2);
-	}
-	.tick--month {
-		font-weight: 400;
-		text-transform: none;
-	}
-	.tick-line {
-		stroke: var(--rule);
-		stroke-dasharray: 2 3;
 	}
 	.hull {
 		fill: color-mix(in srgb, var(--tint) 7%, transparent);

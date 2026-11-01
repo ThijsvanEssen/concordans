@@ -135,8 +135,6 @@
 		externLines = null,
 		onToevoegen,
 		lanes = false,
-		time = false,
-		onTime,
 		...legend
 	}: {
 		store: GraphStore;
@@ -197,9 +195,6 @@
 		onToevoegen?: () => void;
 		/** Omgeving as lanes (?doek=banen, PLAN-doek-banen): SVG in columns per soort, not sigma. */
 		lanes?: boolean;
-		/** Tijd in the lanes: in Kamerstukken and Rechtspraak the height is the date. */
-		time?: boolean;
-		onTime?: (on: boolean) => void;
 		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
 		depth: number;
 		onDepth: (d: number) => void;
@@ -1425,7 +1420,6 @@
 					{onDepth}
 					withNetwerk={netwerkActive && view === 'omgeving'}
 					reach={externCounts ? null : reach}
-					time={lanes && view === 'omgeving' && onTime ? { on: time, onSelect: onTime } : null}
 				>
 					<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 					{#if (hasNodes || midden) && !legend.counting}
@@ -1526,10 +1520,10 @@
 				{#if lanes}
 					<LanesView
 						nodes={laneNodes}
+						filter={{ period: yearPeriod, court: filter.rechter }}
 						edges={laneEdges}
 						chosen={laneChosen}
 						visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
-						{time}
 						marked={gemarkeerd?.id ?? null}
 						pointed={pijl?.id ?? keyNode?.id ?? null}
 						onMark={(id) => markById(id, markeer)}

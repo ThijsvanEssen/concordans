@@ -2,12 +2,10 @@
 // GUTTER px between them for the rails of the lines, HULL_GAP px of air under a hull and ITEM_GAP
 // under a bron, Wetten one bron a line, in Kamerstukken only small dossiers in pairs, Wie maakt
 // in three cards (Regering, Raad van State, Parlement), the strip Algemene wetten under the highest
-// column; the canvas is as high as what it holds. In Tijd, Kamerstukken and Rechtspraak stand by
-// their date (time-axis.ts). Pure and deterministic: text is measured by an estimate, not the DOM.
+// column; the canvas is as high as what it holds. Pure and deterministic: text is measured by an
+// estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
 import type { Column, Scene, SceneUnit } from './scene';
-import { yearFraction } from '$lib/text/datum';
-import { axisY, timeAxis, type TimeAxis } from './time-axis';
 
 export const GUTTER = 76;
 const HULL_GAP = 56;
@@ -21,8 +19,6 @@ const LAWS_MIN = 220;
 /** Where the columns start: under their heads, which stand above the panels. */
 export const CONTENT_TOP = 116;
 const MARGIN_LEFT = 36;
-/** In Tijd the axis stands left of the columns. */
-const MARGIN_LEFT_TIMED = 78;
 /** Right of the last column: room for its panel and the rails of its gutter (lane-lines). */
 const MARGIN_RIGHT = PANEL + GUTTER / 2 + 8;
 const LANE_HEAD = 26;
@@ -67,8 +63,6 @@ export type LaneLayout = {
 	/** The strip Algemene wetten, when something stands in it. */
 	strip: Box | null;
 	units: Map<string, UnitBox>;
-	/** The axis of Tijd; null when Tijd is off or nothing has a date. */
-	axis: TimeAxis | null;
 };
 
 /** The width of a text, estimated: half the font size a character, a capital seven tenths. */
@@ -286,13 +280,9 @@ const gutterFor = (rails: number) =>
  * The x and width of each column that holds a unit, the rest of the width to Wetten; and the width
  * the canvas takes: `width`, or more where its columns and gutters need it.
  */
-function framesOf(
-	scene: Scene,
-	width: number,
-	timed: boolean
-): { frames: Map<Column, Frame>; width: number } {
+function framesOf(scene: Scene, width: number): { frames: Map<Column, Frame>; width: number } {
 	const used = COLUMN_ORDER.filter((c) => scene.units.some((u) => u.column === c && !u.general));
-	const left = timed ? MARGIN_LEFT_TIMED : MARGIN_LEFT;
+	const left = MARGIN_LEFT;
 	const gutters = gutterLoads(scene, used).map(gutterFor);
 	const inner = innerLoads(scene, used);
 	const fixed = used.reduce((n, c, i) => n + (FIXED_WIDTH[c] ?? 0) + inner[i], 0);
@@ -319,31 +309,26 @@ const small = (u: SceneUnit, box: UnitBox, room: number) =>
 
 type Beside = { box: UnitBox; unit: SceneUnit };
 
-/** The box of `u` beside the small dossier left of it, if both are small and it fits. */
+/**
+ * The box of `u` beside the small dossier left of it, if both are small and it fits: measured in
+ * the whole column, so a box cut to the room left would not let its names run over its edge.
+ */
 function besideOf(left: Beside | null, u: SceneUnit, frame: Frame): UnitBox | null {
 	if (!left || !small(left.unit, left.box, frame.width)) return null;
 	const x = left.box.x + left.box.width + PAIR_SPACE;
-	const box = boxOf(u, x, left.box.y, frame.x + frame.width - x);
+	const box = boxOf(u, x, left.box.y, frame.width);
 	return small(u, box, frame.width) && box.x + box.width <= frame.x + frame.width ? box : null;
 }
 
 type Placed = { units: Map<string, UnitBox>; bottom: number };
 
-/** The units of one column from `top` down, in their order; in Tijd by the axis (no pairs then). */
-function placeColumn(
-	units: readonly SceneUnit[],
-	frame: Frame,
-	top: number,
-	axis: TimeAxis | null,
-	need: ReadonlyMap<number, number> = new Map()
-): Placed {
+/** The units of one column from `top` down, in their order. */
+function placeColumn(units: readonly SceneUnit[], frame: Frame, top: number): Placed {
 	const out = new Map<string, UnitBox>();
 	let y = top;
 	let left: Beside | null = null;
 	for (const u of units) {
-		const at = axis ? timedTop(axis, u.date, need) : null;
-		if (at !== null) y = Math.max(y, at);
-		const beside = axis ? null : besideOf(left, u, frame);
+		const beside = besideOf(left, u, frame);
 		if (beside) {
 			out.set(u.id, beside);
 			y = Math.max(y, beside.y + beside.height + HULL_GAP);
@@ -358,41 +343,6 @@ function placeColumn(
 	return { units: out, bottom: y };
 }
 
-const gapOf = (u: SceneUnit) => (u.shape === 'hull' ? HULL_GAP : ITEM_GAP);
-
-/**
- * In Tijd, what a column needs of each year: its units of that year one under the other. The axis
- * gives a year at least that much, so nothing is pushed into the next year.
- */
-function yearNeeds(scene: Scene, frames: ReadonlyMap<Column, Frame>) {
-	const needs = new Map<Column, Map<number, number>>();
-	for (const u of scene.units) {
-		const frame = frames.get(u.column);
-		if (u.general || !u.date || !frame || (u.column !== 'papers' && u.column !== 'rulings'))
-			continue;
-		const year = Number(u.date.slice(0, 4));
-		const own = needs.get(u.column) ?? new Map<number, number>();
-		const height = boxOf(u, frame.x, 0, frame.width).height + gapOf(u) + 4;
-		own.set(year, (own.get(year) ?? 0) + height);
-		needs.set(u.column, own);
-	}
-	return needs;
-}
-
-/**
- * Where a unit of a column in Tijd starts: in its year, as far down as its day, but only as far as
- * the room the year has beyond what the column puts in it (`yearNeeds`).
- */
-function timedTop(axis: TimeAxis, day: string | null, need: ReadonlyMap<number, number>) {
-	const at = axisY(axis, day);
-	if (at === null || !day) return at;
-	const year = Number(day.slice(0, 4));
-	const s = axis.segments.find((g) => !g.empty && year >= g.from && year < g.to);
-	if (!s) return at;
-	const slack = Math.max(0, s.height - (need.get(year) ?? 0));
-	return s.y + Math.max(0, Math.min(1, yearFraction(day) - s.from)) * slack;
-}
-
 /** Wie maakt: a card per lane, in the order of MAKER_LANE_ORDER. */
 function placeMakers(units: readonly SceneUnit[], frame: Frame, top: number) {
 	const out = new Map<string, UnitBox>();
@@ -401,7 +351,7 @@ function placeMakers(units: readonly SceneUnit[], frame: Frame, top: number) {
 	for (const lane of MAKER_LANE_ORDER) {
 		const own = units.filter((u) => u.lane === lane);
 		if (own.length === 0) continue;
-		const placed = placeColumn(own, frame, y + LANE_HEAD, null);
+		const placed = placeColumn(own, frame, y + LANE_HEAD);
 		for (const [id, box] of placed.units) out.set(id, box);
 		const bottom = placed.bottom - ITEM_GAP + 10;
 		lanes.push({
@@ -470,34 +420,23 @@ function barycentre(scene: Scene, placed: ReadonlyMap<string, UnitBox>): Map<str
 	return new Map([...sum].map(([id, [s, n]]) => [id, s / n]));
 }
 
-/** The order of a column: in Tijd by date; else chosen first, then by where its partners stand. */
-function ordered(units: SceneUnit[], centre: ReadonlyMap<string, number> | null, timed: boolean) {
-	if (timed)
-		return units.sort(
-			(a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999') || byDefault(a, b)
-		);
+/** The order of a column: chosen first, then by where its partners stand. */
+function ordered(units: SceneUnit[], centre: ReadonlyMap<string, number> | null) {
 	const at = (u: SceneUnit) => (u.focus ? -Infinity : (centre?.get(u.id) ?? Infinity));
 	return units.sort((a, b) => at(a) - at(b) || byDefault(a, b));
 }
 
-function placeAll(
-	scene: Scene,
-	frames: Map<Column, Frame>,
-	axis: TimeAxis | null,
-	centre: Map<string, number> | null,
-	needs: ReadonlyMap<Column, Map<number, number>>
-) {
+function placeAll(scene: Scene, frames: Map<Column, Frame>, centre: Map<string, number> | null) {
 	const units = new Map<string, UnitBox>();
 	const bottoms: number[] = [];
 	let lanes: LaneLayout['lanes'] = [];
 	for (const [column, frame] of frames) {
 		const own = scene.units.filter((u) => u.column === column && !u.general);
-		const timed = !!axis && (column === 'papers' || column === 'rulings');
-		const list = ordered(own, centre, timed);
+		const list = ordered(own, centre);
 		const placed =
 			column === 'makers'
 				? placeMakers(list, frame, CONTENT_TOP)
-				: placeColumn(list, frame, CONTENT_TOP, timed ? axis : null, needs.get(column));
+				: placeColumn(list, frame, CONTENT_TOP);
 		if (column === 'makers') lanes = (placed as ReturnType<typeof placeMakers>).lanes;
 		for (const [id, box] of placed.units) units.set(id, box);
 		bottoms.push(placed.bottom);
@@ -506,33 +445,15 @@ function placeAll(
 }
 
 /**
- * The layout of a scene on a canvas `width` px wide, with Tijd on or off. Two passes: the second
- * orders each column by where the partners of its units stood in the first.
+ * The layout of a scene on a canvas `width` px wide. Two passes: the second orders each column by
+ * where the partners of its units stood in the first.
  */
-export function laneLayout(scene: Scene, width: number, time = false): LaneLayout {
-	const framed = framesOf(scene, width, time);
+export function laneLayout(scene: Scene, width: number): LaneLayout {
+	const framed = framesOf(scene, width);
 	const frames = framed.frames;
 	width = framed.width;
-	const dated = scene.units.filter(
-		(u) => !u.general && (u.column === 'papers' || u.column === 'rulings')
-	);
-	const needs = yearNeeds(scene, frames);
-	const most = (year: number) => Math.max(0, ...[...needs.values()].map((n) => n.get(year) ?? 0));
-	const axis = time
-		? timeAxis(
-				dated.map((u) => u.date),
-				CONTENT_TOP + 14,
-				most
-			)
-		: null;
-	const first = placeAll(scene, frames, axis, null, needs);
-	const { units, lanes, bottom } = placeAll(
-		scene,
-		frames,
-		axis,
-		barycentre(scene, first.units),
-		needs
-	);
+	const first = placeAll(scene, frames, null);
+	const { units, lanes, bottom } = placeAll(scene, frames, barycentre(scene, first.units));
 	const general = scene.units.filter((u) => u.general).sort(byDefault);
 	let strip: Box | null = null;
 	let end = bottom;
@@ -551,5 +472,5 @@ export function laneLayout(scene: Scene, width: number, time = false): LaneLayou
 		y: CONTENT_TOP,
 		height: bottom - CONTENT_TOP
 	}));
-	return { width, height: Math.ceil(end + 40), columns, lanes, strip, units, axis };
+	return { width, height: Math.ceil(end + 40), columns, lanes, strip, units };
 }

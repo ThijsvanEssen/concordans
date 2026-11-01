@@ -7,7 +7,7 @@
 // a chosen hull, or along the edge of a cell), across in a channel (under a chosen hull, or under
 // the head of a strip) and into its target from above (a hull) or from the side (a mark in the
 // grid). Where it changes channel it goes down the free lane at the right, which no hull or cell
-// reaches: so it runs through no mark. In Tijd, Kamerstukken has its years as subheadings.
+// reaches: so it runs through no mark.
 // Pure: the same LaneLayout as lane-layout.ts, so one view draws both.
 import { easePath, type Pt } from '$lib/network/tree-lines';
 import { wrapLabel, type Box, type LaneLayout, type UnitBox } from './lane-layout';
@@ -29,7 +29,6 @@ const ROW = 24;
 const NAME_LINE = 15;
 /** Names under a mark: at most this many units carry one. */
 const NAMED = 6;
-const YEAR_HEAD = 26;
 const CHANNEL_STEP = 6;
 const TIP = 4;
 /** Where the lines of Wie maakt come down: right of the head of the strip below. */
@@ -47,10 +46,9 @@ const STRIP_ORDER: readonly (Column | 'general')[] = [
 	'general'
 ];
 
-/** What the strips add to a layout: which units carry a name, the years of Tijd, the channels. */
+/** What the strips add to a layout: which units carry a name, the channels. */
 export type StripLayout = LaneLayout & {
 	named: ReadonlySet<string>;
-	years: { y: number; label: string }[];
 	/** The strip of each unit, by its place from the top. */
 	stripOf: ReadonlyMap<string, number>;
 	/** Under each chosen hull, the channel its lines run across in. */
@@ -111,42 +109,25 @@ function namedOf(scene: Scene): Set<string> {
 	);
 }
 
-const yearOf = (u: SceneUnit) => u.date?.slice(0, 4) ?? null;
-
 type Strip = { key: Column | 'general'; units: SceneUnit[] };
 
 /** What placing a strip needs beside it, and what it records. */
 type Place = {
 	right: number;
 	named: ReadonlySet<string>;
-	time: boolean;
 	units: Map<string, UnitBox>;
-	years: StripLayout['years'];
 	bands: Map<string, Box>;
 	channels: Map<string, number>;
 	/** How many lines run across in a channel, by its key. */
 	load: ReadonlyMap<string, number>;
 };
 
-/** The grid of a strip: its units in cells, a new line where the width ends; in Tijd by year. */
-function placeGrid(units: readonly SceneUnit[], y0: number, timed: boolean, p: Place): number {
+/** The grid of a strip: its units in cells, a new line where the width ends. */
+function placeGrid(units: readonly SceneUnit[], y0: number, p: Place): number {
 	const x0 = MARGIN + INSET;
 	const perLine = Math.max(1, Math.floor((p.right - x0) / CELL));
-	const sorted = [...units].sort((a, b) =>
-		timed ? (a.date ?? '9999').localeCompare(b.date ?? '9999') || byWeight(a, b) : byWeight(a, b)
-	);
 	let [y, col, line] = [y0, 0, 0];
-	let year: string | null = null;
-	for (const u of sorted) {
-		const own = timed ? yearOf(u) : null;
-		if (timed && own !== year) {
-			if (col > 0) [y, col, line] = [y + line + 12, 0, 0];
-			year = own;
-			if (own) {
-				p.years.push({ y: y + 12, label: own });
-				y += YEAR_HEAD;
-			}
-		}
+	for (const u of [...units].sort(byWeight)) {
 		if (col === perLine) [y, col, line] = [y + line + 12, 0, 0];
 		const box = cellBox(u, x0 + col * CELL, y, p.named.has(u.id), u.shape !== 'node');
 		p.units.set(u.id, box);
@@ -173,7 +154,7 @@ function placeStrip(strip: Strip, index: number, top: number, p: Place): number 
 		y = band.y + band.height + 10;
 	}
 	const rest = strip.units.filter((u) => !isFull(u));
-	return placeGrid(rest, y, p.time && strip.key === 'papers', p) + 16;
+	return placeGrid(rest, y, p) + 16;
 }
 
 /** Wie maakt on a phone: a row of marks, a new row where the width ends; one line counts them. */
@@ -239,8 +220,8 @@ function channelsOf(l: SceneLine, w: Where): { first: string; last: string } {
 	return { first: `entry:${w.stripOf.get(up)! + 1}`, last };
 }
 
-/** The layout of a scene in strips on a screen `width` px wide; Tijd orders Kamerstukken by year. */
-export function laneStrips(scene: Scene, width: number, time = false): StripLayout {
+/** The layout of a scene in strips on a screen `width` px wide. */
+export function laneStrips(scene: Scene, width: number): StripLayout {
 	const strips: Strip[] = STRIP_ORDER.map((key) => ({
 		key,
 		units: scene.units.filter((u) => stripKey(u) === key)
@@ -260,9 +241,7 @@ export function laneStrips(scene: Scene, width: number, time = false): StripLayo
 	const p: Place = {
 		right: width - MARGIN - INSET,
 		named: namedOf(scene),
-		time,
 		units: new Map(),
-		years: [],
 		bands: new Map(),
 		channels: new Map(),
 		load
@@ -284,9 +263,7 @@ export function laneStrips(scene: Scene, width: number, time = false): StripLayo
 		lanes: [],
 		strip,
 		units: p.units,
-		axis: null,
 		named: p.named,
-		years: p.years,
 		stripOf: w.stripOf,
 		bands: p.bands,
 		channels: p.channels
