@@ -74,6 +74,45 @@ export function scrollerOf(el: HTMLElement): HTMLElement | null {
 	return null;
 }
 
+/** What the reader's text scrolls in stands around this element. */
+const readerInner = () => {
+	const column = document.querySelector<HTMLElement>('.col--reader');
+	const frame = column?.querySelector<HTMLElement>('.reader-frame__col');
+	return frame ?? column?.querySelector<HTMLElement>('.reader') ?? column;
+};
+
+/** How far the reader's text is scrolled. */
+export function readerTop(): number {
+	const el = readerInner();
+	return (el && scrollerOf(el)?.scrollTop) ?? 0;
+}
+
+/**
+ * The text just drawn, once it is there: its heading holds the focus, and `top` is where its
+ * scroller stands (null: where it came), as soon as the text reaches that far. `replaced` is the
+ * heading of the text it replaces.
+ */
+export function landOnHeading(top: number | null, replaced = '') {
+	let tries = 0;
+	const place = () => {
+		const el = readerInner();
+		const heading = document.querySelector<HTMLElement>('.col--reader h1');
+		if (!el || !heading || heading.textContent === replaced) {
+			if (tries++ < 60) requestAnimationFrame(place);
+			return;
+		}
+		const scroller = scrollerOf(el);
+		if (scroller && top !== null) scroller.scrollTop = top;
+		if (top && (scroller?.scrollTop ?? 0) < top - 1 && tries++ < 180) {
+			requestAnimationFrame(place);
+			return;
+		}
+		heading.tabIndex = -1;
+		heading.focus({ preventScroll: true });
+	};
+	place();
+}
+
 /** The address of a position in the current view, for the clipboard. */
 export function permalink(url: URL, id: string): string {
 	// The bundel a reader keeps in is this browser's, never part of a link (UX-toets A21 #2).

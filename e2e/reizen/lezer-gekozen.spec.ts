@@ -147,3 +147,47 @@ test('een bron gemarkeerd op het doek is niet de bron van de lezer', async ({ pa
 	await openSheet(page);
 	await expect(rij(page, 'Cbb').getByRole('link', { name: 'In de lezer' })).toBeVisible();
 });
+
+const TWEE = `/wetten/BWBR0006622?mode=netwerk&netwerk=${WVW},instruments/bwbr0010388`;
+
+test('Alt L heen en terug houdt beide bronnen, als de wissel', async ({ page, touch }) => {
+	test.skip(touch, 'een telefoon heeft geen toetsenbord');
+	await page.goto(TWEE);
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 2 bronnen');
+	await expect(lezerKnop(page)).toHaveText('Lezer: WVW');
+	await page.keyboard.press('Alt+l');
+	await expect(page).toHaveURL(/\/wetten\/BWBR0006622$/);
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 2 bronnen');
+	await page.keyboard.press('Alt+l');
+	await expect(page).toHaveURL(/mode=netwerk/);
+	await expect(page).toHaveURL(/bwbr0010388/);
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 2 bronnen');
+});
+
+test('de wissel heen en terug houdt beide bronnen, ook van een gedeelde link', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'op de telefoon staat de wissel er niet');
+	await page.goto(TWEE);
+	await expect(lezerKnop(page)).toHaveText('Lezer: WVW');
+	await lezerKnop(page).click();
+	await expect(page).toHaveURL(/\/wetten\/BWBR0006622$/);
+	await netwerkKnop(page).click();
+	await expect(page).toHaveURL(/bwbr0010388/);
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 2 bronnen');
+});
+
+test('de leesplek blijft bij Lezer, Netwerk, Lezer, zonder anker', async ({ page, touch }) => {
+	await page.goto('/wetten/BWBR0006622');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	const scroller = page.locator('.reader-frame');
+	await expect.poll(() => scroller.evaluate((el) => el.scrollHeight)).toBeGreaterThan(3000);
+	await scroller.evaluate((el) => (el.scrollTop = 1500));
+	await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(1500);
+	await netwerkKnop(page).click();
+	await expect(page).toHaveURL(/mode=netwerk/);
+	await (touch ? netwerkKnop(page) : lezerKnop(page)).click();
+	await expect(page).toHaveURL(/\/wetten\/BWBR0006622$/);
+	await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(1500);
+});

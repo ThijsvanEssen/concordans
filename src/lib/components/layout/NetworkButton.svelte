@@ -10,14 +10,14 @@
 	import { hasFocus } from '$lib/bron/href';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
-	import { networkState } from '$lib/nav/network';
+	import { keepNetwork, networkState } from '$lib/nav/network';
 	import { readerName } from '$lib/nav/bron-rol';
 
 	const url = $derived(page.url);
 	const onBron = $derived(hasFocus(url));
 	const state = $derived(networkState(url));
 	const pressed = $derived(state.pressed);
-	const aantal = $derived(state.count);
+	const chosen = $derived(state.count);
 	const here = $derived(`${url.pathname}${url.search}${url.hash}`);
 	// The werkplek without a bron has no text to lead back to: Netwerk alone.
 	const paired = $derived(onBron || (pressed && state.href !== '/'));
@@ -28,7 +28,7 @@
 		class="{className} netwerk-knop raakvlak-knop"
 		class:is-active={pressed}
 		href={pressed && paired ? here : state.href}
-		aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : 'Netwerk'}
+		aria-label={chosen ? `Netwerk, ${count(chosen, 'bron', 'bronnen')}` : 'Netwerk'}
 		aria-pressed={pressed}
 		aria-keyshortcuts={onBron && !pressed ? 'Alt+L' : undefined}
 		role="button"
@@ -37,8 +37,8 @@
 			: onBron
 				? 'Open deze bron in netwerk'
 				: 'Kies een bron in het netwerk'}
-		><Picto naam="netwerk-o" size={16} /><span>Netwerk</span>{#if aantal}<span
-				class="netwerk-knop__aantal">{aantal}</span
+		><Picto naam="netwerk-o" size={16} /><span>Netwerk</span>{#if chosen}<span
+				class="netwerk-knop__aantal">{chosen}</span
 			>{/if}</a
 	>
 {/snippet}
@@ -48,6 +48,7 @@
 		<a
 			class="lees-keuze__knop raakvlak-knop"
 			href={pressed ? state.href : here}
+			onclick={() => pressed && keepNetwork(url)}
 			aria-pressed={!pressed}
 			aria-keyshortcuts={pressed ? 'Alt+L' : undefined}
 			role="button"

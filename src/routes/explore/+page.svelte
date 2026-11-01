@@ -7,7 +7,14 @@
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
 	import { bronRol, readerName } from '$lib/nav/bron-rol';
-	import { readerBron, withReader, afterRemoval } from '$lib/nav/network';
+	import {
+		afterRemoval,
+		keepNetwork,
+		networkState,
+		onNetwork,
+		readerBron,
+		withReader
+	} from '$lib/nav/network';
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef, bwCode } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
@@ -16,10 +23,10 @@
 	import { offer, type Target } from '$lib/keys/doen.svelte';
 	import { focusView, keyView, stepBy, werkplekDoer, type ViewId, type Werkplek } from './doen';
 	import { announce } from '$lib/bevestig/bevestig.svelte';
-	import { scrollerOf } from '$lib/bron/landing';
+	import { landOnHeading, readerTop } from '$lib/bron/landing';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import type { NeighborhoodAnswer } from '$lib/graph/store/types';
 	import { sprongDoel } from '$lib/stores/sprong';
@@ -1743,18 +1750,6 @@
 		navigate(href, { step: push });
 	}
 
-	// Tekst, or the werkplek with the bron: each a step of its own, the netwerk staying in the
-	// werkplek's address.
-	function setReading(on: boolean): Promise<void> | void {
-		const node = selectedNode;
-		if (!node || node.id.startsWith('synth:')) return;
-		const ref = refOf(node.collection, node.key, node.raw?.props);
-		const at = decodeURIComponent(page.url.hash.slice(1)) || null;
-		// The Zijpaneel beside it stays: it is not the bron that changes view (live-toets C3).
-		return navigateDone(keepRead(on ? openHref(ref, { at }) : werkplekHref(ref, at)), {
-			step: true
-		});
-	}
 	/** The werkplek with the bron: as the button Netwerk of the top bar opens it. */
 	const werkplekHref = (ref: BronRef, at: string | null = null) =>
 		bronHref(ref, { keepMode: false, mode: 'graph', at });
@@ -2056,22 +2051,14 @@
 
 	/** The reader's place, kept while the netwerk is up: the bron and how far its text was scrolled. */
 	let readingPlace: { id: string; top: number } | null = null;
-	const readerScroller = () => {
-		const column = document.querySelector<HTMLElement>('.col--reader');
-		return column ? (column.querySelector<HTMLElement>('.reader') ?? column) : null;
-	};
 
 	/** Alt L: from the reader to the netwerk and back, said in words, the focus on a stop. */
 	function toggleView(): boolean {
 		const to = readAction;
 		if (!to || !selectedNode) return false;
 		const name = pageName(selectedNode, titelVan(selectedNode.id));
-		if (to === 'network') {
-			const el = readerScroller();
-			const scroller = el && scrollerOf(el);
-			readingPlace = { id: selectedNode.id, top: scroller?.scrollTop ?? 0 };
-		}
-		Promise.resolve(setReading(to === 'read'))
+		if (to === 'read') keepNetwork(page.url);
+		navigateDone(keepRead(networkState(page.url).href), { step: true })
 			.catch((err) => report('Wisselen', err))
 			.finally(() => {
 				// A step another navigation overtook still lands in the view asked for.
@@ -2082,32 +2069,20 @@
 		return true;
 	}
 
-	/**
-	 * The text just drawn, once it is there: its heading holds the focus, and `top` is where its
-	 * scroller stands (null: where it came). `replaced` is the heading of the text it replaces.
-	 */
-	function landOnHeading(top: number | null, replaced = '') {
-		let tries = 0;
-		const place = () => {
-			const el = readerScroller();
-			const heading = document.querySelector<HTMLElement>('.col--reader h1');
-			if (!el || !heading || heading.textContent === replaced) {
-				if (tries++ < 60) requestAnimationFrame(place);
-				return;
-			}
-			const scroller = scrollerOf(el);
-			if (scroller && top !== null) scroller.scrollTop = top;
-			heading.tabIndex = -1;
-			heading.focus({ preventScroll: true });
-		};
-		place();
-	}
-
 	/** Back from the netwerk: the text where it was read, the focus on its heading. */
-	function restoreReadingPlace() {
-		const kept = readingPlace;
-		landOnHeading(kept && kept.id === selectedNode?.id ? kept.top : null);
-	}
+	const restoreReadingPlace = () =>
+		landOnHeading(readingPlace?.id === selectedNode?.id ? (readingPlace?.top ?? null) : null);
+	// By the wissel, a key or a tab alike: into the netwerk the place is kept, back it is found;
+	// a place in the address (#) finds itself.
+	beforeNavigate(({ to }) => {
+		const target = to?.url;
+		if (mode !== 'read' || !selectedNode || !target || !onNetwork(target)) return;
+		readingPlace = { id: selectedNode.id, top: readerTop() };
+	});
+	afterNavigate(({ from }) => {
+		const left = from?.url;
+		if (left && onNetwork(left) && mode === 'read' && !page.url.hash) restoreReadingPlace();
+	});
 
 	/** Alt [ and Alt ]: the article before or after, its text asked first; the new one at its top. */
 	function stepArticle(d: 1 | -1): boolean {
@@ -2548,7 +2523,7 @@
 											onSearchClose={() => (verbandAfterAdd = false)}
 											entries={readerFirst(rows, readerId)}
 											reader={readerId}
-											onRead={() => netwerkActive && bewaarNetwerk(networkQuery(netwerk))}
+											onRead={() => keepNetwork(page.url)}
 											loading={composer.loading}
 											expected={netwerkActive ? netwerk.ids.length : 0}
 											{telefoon}

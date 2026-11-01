@@ -121,8 +121,7 @@ test('the card of a bron keeps its actions in place while the text comes in', as
 // The werkplek opens without a shift (N17c): the strip, the canvas and the cards keep their
 // places while the neighbourhood and the uitspraken that cite the article come in; the layout
 // shift of the whole load at most 0.1 ("good"), on a wide screen and on a phone. What is left is
-// the line that says why a step is off, and the dots of the tijdstrook, which find their places
-// when the uitspraken are in.
+// the dots of the tijdstrook, which find their places when the uitspraken are in.
 test('the werkplek opens without a shift', async ({ page }) => {
 	await page.route(/\/api\/(nodes|verbonden)\//, async (route) => {
 		await new Promise((done) => setTimeout(done, 1200));
