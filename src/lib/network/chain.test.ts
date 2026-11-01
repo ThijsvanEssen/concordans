@@ -657,3 +657,88 @@ describe('why a bron of the keten is drawn otherwise', () => {
 		expect(whyFaint({ since: '2010-01-01', expired: '2019-07-01' }, period)).toHaveLength(2);
 	});
 });
+
+describe('the lines of the keten (B86)', () => {
+	const gw = { id: 'instruments/gw', name: 'Grondwet', abbreviation: 'Gw' };
+	const under = (parent: ReturnType<typeof item>, ...subs: ReturnType<typeof item>[]) => {
+		parent.sub_delegated = subs as never;
+		return parent;
+	};
+	const parentsOf = (k: ReturnType<typeof chain>, id: string) =>
+		k.layers
+			.flatMap((l) => l.nodes)
+			.find((n) => n.id === id)!
+			.parents.map((p) => [p.id, p.way, p.cite?.full]);
+	const idsIn = (k: ReturnType<typeof chain>, layer: string) =>
+		k.layers.find((l) => l.id === layer)?.nodes.map((n) => n.id);
+
+	it('keeps the line of a wet on a grondslag, with its article; a wet with both has both', () => {
+		const k = chain(
+			gw,
+			{
+				bwb_id: 'x',
+				total: 2,
+				items: [
+					item('instruments/grond', 'Aanvullingswet', 'wet', [
+						article('14'),
+						article('21', 'mentioned')
+					]),
+					item('instruments/uhw', 'Bekendmakingswet', 'wet', [article('88')])
+				]
+			} as never,
+			null
+		);
+		expect(idsIn(k, 'law')).toEqual(['instruments/gw', 'instruments/grond', 'instruments/uhw']);
+		expect(parentsOf(k, 'instruments/grond')).toEqual([
+			['instruments/gw', 'delegates', 'art. 14 Gw'],
+			['instruments/gw', 'mentioned', 'art. 21 Gw']
+		]);
+		expect(parentsOf(k, 'instruments/uhw')).toEqual([
+			['instruments/gw', 'delegates', 'art. 88 Gw']
+		]);
+	});
+
+	// As the Grondwet: enough AMvB's directly under the law to fill the row on their own.
+	const direct = ['a', 'b', 'c'].map((x) =>
+		item(`instruments/${x}`, `Besluit ${x}`, 'amvb', [article('89')])
+	);
+	const awb = under(
+		item('instruments/awb', 'Algemene wet bestuursrecht', 'wet', [article('107')]),
+		item('instruments/z', 'Zuiver besluit', 'amvb', [article('8')])
+	);
+	const delegatedGw = { bwb_id: 'x', total: 4, items: [...direct, awb] } as never;
+
+	it('does not fill a row with what hangs under the law: a wet beside it keeps its regulation', () => {
+		const k = chain(gw, delegatedGw, null, { max: 2 });
+		expect(idsIn(k, 'amvb')).toEqual(['instruments/a', 'instruments/z']);
+		expect(parentsOf(k, 'instruments/z').map(([id]) => id)).toEqual(['instruments/awb']);
+		expect(k.rest.amvb).toBe(2);
+	});
+
+	it('draws what hangs under the bron marked first', () => {
+		const marked = under(item('instruments/w', 'Wet', 'wet', [article('1')]), ...direct.slice(1));
+		const k = chain(gw, { bwb_id: 'x', total: 2, items: [direct[0], marked] } as never, null, {
+			max: 1,
+			keep: 'instruments/w'
+		});
+		expect(idsIn(k, 'amvb')).toEqual(['instruments/b']);
+	});
+
+	it('keeps a parent that is not drawn among the parents, listed under the others', () => {
+		const wetten = ['p', 'q'].map((x) =>
+			under(
+				item(`instruments/${x}`, `Wet ${x}`, 'wet', [article('1')]),
+				item(`instruments/${x}-r`, `Regel ${x}`, 'beleidsregel', [article('2')])
+			)
+		);
+		const k = chain(gw, { bwb_id: 'x', total: 2, items: wetten } as never, null, { max: 1 });
+		expect(idsIn(k, 'law')).toEqual(['instruments/gw', 'instruments/p']);
+		expect(k.more.law?.map((n) => n.id)).toEqual(['instruments/q']);
+		// A row with room draws it all the same; the drawing says where it hangs (a stump).
+		const q = k.layers
+			.find((l) => l.id === 'policy')!
+			.nodes.concat(k.more.policy ?? [])
+			.find((n) => n.id === 'instruments/q-r')!;
+		expect(q.parents.map((p) => p.id)).toEqual(['instruments/q']);
+	});
+});

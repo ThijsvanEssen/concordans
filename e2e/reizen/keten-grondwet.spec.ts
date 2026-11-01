@@ -58,3 +58,23 @@ test('Weergave keys the keten with the same rows and counts on a phone as on a w
 	await expect(count('Structureel')).toHaveText('166');
 	await expect(count('Noemt')).toHaveText('224');
 });
+
+test('a regulation whose parent is not on the drawing has a stump with its name; a click draws the parent', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a list on a phone');
+	await page.goto(GRONDWET);
+	const stumps = page.locator('svg.drawing .stomp');
+	await expect(stumps.first()).toBeAttached();
+	await expect(stumps.first()).toHaveAttribute('aria-label', /, staat niet op het doek$/);
+	const count = await stumps.count();
+	await stumps.first().focus();
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/kies=instruments/);
+	const parent = new URL(page.url()).searchParams.get('kies');
+	await expect(
+		page.locator(`svg.drawing path.line[data-parent="${parent}"]`).first()
+	).toBeAttached();
+	await expect(stumps).not.toHaveCount(count);
+});
