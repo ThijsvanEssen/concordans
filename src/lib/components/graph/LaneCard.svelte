@@ -114,7 +114,7 @@
 		}
 		:global(.graph-view:has(.banen):has(.strook--kaart.is-open)) {
 			--card-room: var(--strook);
-			grid-template-columns: var(--strook) minmax(0, 1fr);
+			grid-template-columns: var(--strook-links) minmax(0, 1fr);
 		}
 		:global(.graph-view:has(.banen) .strook--kaart) {
 			position: absolute;

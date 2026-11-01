@@ -1396,6 +1396,7 @@
 		onToggleAnnexes={toggleAnnexes}
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
+		showLines={!lanes || !!externLines}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ?? canvasCounts}
 		hasNodes={hasNodes || !!externCounts}
@@ -1515,6 +1516,7 @@
 						edges={laneEdges}
 						chosen={laneChosen}
 						visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
+						onToggleLine={toggleLine}
 						marked={gemarkeerd?.id ?? null}
 						pointed={pijl?.id ?? keyNode?.id ?? null}
 						onMark={(id) => markById(id, markeer)}
@@ -1736,8 +1738,9 @@
 	.graph-view {
 		position: relative;
 		display: grid;
-		grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
+		grid-template-columns: var(--strook-links) minmax(0, 1fr) var(--strook);
 		--strook: calc(var(--zijkolom) + 2 * var(--s-4));
+		--strook-links: calc(var(--strook) - var(--s-4) + var(--werkplek-marge));
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
@@ -1745,7 +1748,7 @@
 	}
 	/* The strip of the card takes room only while a bron is marked. */
 	.graph-view:not(:has(.strook--kaart.is-open)) {
-		grid-template-columns: var(--strook) minmax(0, 1fr);
+		grid-template-columns: var(--strook-links) minmax(0, 1fr);
 	}
 	.strook--kaart:not(.is-open) {
 		display: none;
@@ -1757,7 +1760,7 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4);
+		padding: var(--s-4) var(--s-4) var(--s-4) var(--werkplek-marge);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
@@ -1817,15 +1820,6 @@
 		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
 		.graph-view:has(.strook--kaart.is-open) {
 			grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
-		}
-		.strook--links {
-			padding: var(--s-4);
-		}
-		.strook--kaart {
-			padding: var(--s-4);
-		}
-		.strook--kaart:not(.is-open) {
-			display: none;
 		}
 	}
 	/* A phone: the canvas takes the width; the strip at the left heads it, with the filters in its

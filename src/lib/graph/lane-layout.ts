@@ -5,6 +5,7 @@
 // column; the canvas is as high as what it holds. Pure and deterministic: text is measured by an
 // estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
+import { LAW_CHANGE_WORDS } from './lane-changes';
 import type { Column, Scene, SceneUnit } from './scene';
 
 export const GUTTER = 76;
@@ -167,7 +168,7 @@ function hullBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 		);
 	}
 	// The pill: one line, cut with "…" where the column ends; measured as a size larger, for its weight.
-	const pad = PILL_PAD + (u.changed ? CHANGED_ROOM : 0);
+	const pad = PILL_PAD + (u.change ? CHANGED_ROOM : 0);
 	const pill = wrapLabel(u.label, room - pad, PILL_SIZE, 1);
 	const named = Math.min(room, widest(pill, PILL_SIZE) + pad);
 	const markWidth = Math.min(room, Math.max(32 + wide, 80));
@@ -394,17 +395,19 @@ function placeColumn(units: readonly SceneUnit[], frame: Frame, top: number): Pl
 }
 
 /**
- * Wetten: the changed ones first under their head, then the others under theirs; a chosen wet that
- * is not changed stands above both, without a head. Without a changed wet there are no heads.
+ * Wetten: a chosen wet on top, without a head (its marker says it); then the changed ones, those
+ * proposed and the others, each under a head. Without another changed wet there are no heads.
  */
 function placeLaws(units: readonly SceneUnit[], frame: Frame, top: number) {
-	if (!units.some((u) => u.changed)) return { ...placeColumn(units, frame, top), heads: [] };
+	const rest = units.filter((u) => !u.focus);
+	if (!rest.some((u) => u.change)) return { ...placeColumn(units, frame, top), heads: [] };
 	const out = new Map<string, UnitBox>();
 	const heads: LaneLayout['heads'] = [];
 	const sections = [
-		{ label: null, own: units.filter((u) => u.focus && !u.changed) },
-		{ label: 'Gewijzigd', own: units.filter((u) => u.changed) },
-		{ label: 'Overige wetten', own: units.filter((u) => !u.focus && !u.changed) }
+		{ label: null, own: units.filter((u) => u.focus) },
+		{ label: LAW_CHANGE_WORDS.enacted.head, own: rest.filter((u) => u.change === 'enacted') },
+		{ label: LAW_CHANGE_WORDS.proposed.head, own: rest.filter((u) => u.change === 'proposed') },
+		{ label: 'Overige wetten', own: rest.filter((u) => !u.change) }
 	];
 	let y = top;
 	for (const { label, own } of sections) {

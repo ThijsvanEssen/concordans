@@ -92,14 +92,16 @@ function hullBox(u: SceneUnit, x: number, y: number, width: number): UnitBox {
 	const top = y + PILL;
 	const rows = u.rows.map((r, i) => ({ id: r.id, y: top + 14 + i * ROW }));
 	const mark = { x, y: top, width: wide, height: 8 + u.rows.length * ROW + 8 };
-	const room = wide - 20 - (u.changed ? CHANGED_ROOM : 0);
+	const room = wide - 20 - (u.change ? CHANGED_ROOM : 0);
 	const text = { name: wrapLabel(u.label, room, 13, 1), small: [] };
 	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
 }
 
+const changeRank = (u: SceneUnit) => (u.change === 'enacted' ? 2 : u.change === 'proposed' ? 1 : 0);
+
 const byWeight = (a: SceneUnit, b: SceneUnit) =>
 	Number(b.focus) - Number(a.focus) ||
-	Number(b.changed) - Number(a.changed) ||
+	changeRank(b) - changeRank(a) ||
 	b.members.length - a.members.length ||
 	a.label.localeCompare(b.label) ||
 	a.id.localeCompare(b.id);

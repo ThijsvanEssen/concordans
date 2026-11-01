@@ -14,7 +14,7 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { arrowHead, DOT_RADIUS, longestRunMiddle } from '$lib/graph/line-shape';
-	import { LINE_KIND_STYLE } from '$lib/graph/line-kind';
+	import { LINE_KIND_STYLE, type LineKind } from '$lib/graph/line-kind';
 	import { buildScene, type Scene, type SceneUnit } from '$lib/graph/scene';
 	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
@@ -28,7 +28,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import {
 		CHANGED_MARK,
-		CHANGED_WORDS,
+		LAW_CHANGE_WORDS,
 		changedFirst,
 		changedNumbers,
 		laneDossierNumber,
@@ -50,7 +50,8 @@
 		onMark,
 		onOpen,
 		onUnmark,
-		onDrawn
+		onDrawn,
+		onToggleLine
 	}: {
 		nodes: readonly GraphNode[];
 		edges: readonly GraphEdge[];
@@ -70,6 +71,8 @@
 		onUnmark: () => void;
 		/** What the lanes draw, every bron of a unit: for the counts and the keyboard's list. */
 		onDrawn: (ids: ReadonlySet<string>) => void;
+		/** A click in the legend: Relatie of the canvas, one state with its address. */
+		onToggleLine: (l: LineKind) => void;
 	} = $props();
 
 	/** Below this width the columns stand as strips (Telefoon eerst, fase 5). */
@@ -254,7 +257,7 @@
 			.map(([s, n]) => `${formatCount(n)} ${n === 1 ? sortOne(s) : sortLabel(s).toLowerCase()}`)
 			.join(', ')
 	);
-	const changedWords = (u: SceneUnit) => (u.changed ? CHANGED_WORDS.toLowerCase() : null);
+	const changedWords = (u: SceneUnit) => (u.change ? LAW_CHANGE_WORDS[u.change].says : null);
 	const titleOf = (u: SceneUnit) =>
 		[u.label, u.role, u.breakdown, changedWords(u)].filter(Boolean).join(', ') || u.label;
 </script>
@@ -273,8 +276,13 @@
 	/>
 {/snippet}
 
-{#snippet changedMark(x: number, y: number)}
-	<path class="changed-mark" d={CHANGED_MARK} transform="translate({x} {y})" />
+{#snippet changedMark(u: SceneUnit, x: number, y: number)}
+	<path
+		class="changed-mark"
+		class:hollow={u.change === 'proposed'}
+		d={CHANGED_MARK}
+		transform="translate({x} {y})"
+	/>
 {/snippet}
 
 {#snippet focusRing(box: UnitBox, air = 5)}
@@ -327,10 +335,14 @@
 			rx={box.label.height / 2}
 			stroke={colour}
 		/>
-		{#if u.changed}{@render changedMark(box.label.x + 14, box.label.y + box.label.height / 2)}{/if}
+		{#if u.change}{@render changedMark(
+				u,
+				box.label.x + 14,
+				box.label.y + box.label.height / 2
+			)}{/if}
 		<text
 			class="pill-name"
-			x={box.label.x + 10 + (u.changed ? CHANGED_ROOM : 0)}
+			x={box.label.x + 10 + (u.change ? CHANGED_ROOM : 0)}
 			y={box.label.y + box.label.height / 2 + 4.5}>{box.text.name[0]}</text
 		>
 	</g>
@@ -455,7 +467,7 @@
 			{:else}
 				{@render sign(n, u.sort, box.mark.x, box.mark.y, GLYPH)}
 			{/if}
-			{#if u.changed}{@render changedMark(box.mark.x + box.mark.width + 1, box.mark.y + 1)}{/if}
+			{#if u.change}{@render changedMark(u, box.mark.x + box.mark.width + 1, box.mark.y + 1)}{/if}
 			{#if phone}
 				{#if showName}
 					{#each box.text.name as line, i (i)}
@@ -501,7 +513,12 @@
 		stroke-linecap={p.cap}
 	/>
 	{#if p.head}<polygon points={p.head} fill={p.colour} />{/if}
-	<circle cx={p.points[0].x} cy={p.points[0].y} r={DOT_RADIUS * 0.75} fill={p.colour} />
+	{#if p.stroke === 'puntenIndiener'}<circle
+			cx={p.points[0].x}
+			cy={p.points[0].y}
+			r={DOT_RADIUS * 0.75}
+			fill={p.colour}
+		/>{/if}
 {/snippet}
 
 <div
@@ -511,13 +528,21 @@
 	bind:clientWidth={avail}
 	data-testid="banen"
 >
+	<!-- Also with nothing left to draw: what is switched off comes back here. -->
+	{#if scene.units.length > 0 || visibility.hiddenLines.size > 0}
+		<LaneLegend
+			lines={scene.lines}
+			hidden={visibility.hiddenLines}
+			onToggle={onToggleLine}
+			changes={scene.units.flatMap((u) => u.change ?? [])}
+		/>
+	{/if}
 	{#if scene.units.length === 0}
 		<!-- No bron at all: the canvas says so itself (Nog geen bron gekozen). -->
 		{#if nodes.length > 0}<div class="leeg">
 				<p class="leeg__kop">Niets te tekenen met deze filters</p>
 			</div>{/if}
 	{:else}
-		<LaneLegend lines={scene.lines} changed={scene.units.some((u) => u.changed)} />
 		<!-- As wide as the drawing and the card over it: the right column scrolls out from under it. -->
 		<div class="room" style:width="calc({layout.width * scale}px + var(--card-room, 0px))">
 			<svg
@@ -682,6 +707,11 @@
 		stroke-width: 1.5px;
 		paint-order: stroke;
 		stroke-linejoin: round;
+	}
+	.changed-mark.hollow {
+		fill: var(--paper);
+		stroke: var(--ink-2);
+		stroke-width: 1px;
 	}
 	.number {
 		font-size: var(--t-label);

@@ -2803,12 +2803,7 @@
 	   Verbonden's last column step in by one step (12), so both edges read the same. */
 	@media (min-width: 1280px) {
 		.explore-read--with-nav {
-			padding-inline: max(var(--s-5), calc((100vw - 1680px) / 2));
-		}
-	}
-	@media (min-width: 1440px) {
-		.explore-read--with-nav {
-			padding-inline: max(var(--s-6), calc((100vw - 1680px) / 2));
+			padding-inline: var(--werkplek-marge);
 		}
 	}
 
