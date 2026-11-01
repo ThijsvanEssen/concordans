@@ -15,8 +15,7 @@
 			<p>
 				Concordans haalt openbare informatie over wetten, rechtspraak en parlement op en verbindt
 				die. Bij een artikel zie je welke uitspraken en Kamerstukken ernaar verwijzen, bij een
-				wetsvoorstel hoe het zijn weg door de Kamers vindt en hoe fracties stemden. Het doel is dat
-				dit uitgroeit tot één plek voor wetgeving, rechtspraak en parlement. Daar zijn we nog niet.
+				wetsvoorstel hoe het zijn weg door de Kamers vindt en hoe fracties stemden.
 			</p>
 			<p>
 				Het netwerk is een selectie. Europese regelgeving staat erin voor zover een Nederlandse
