@@ -127,7 +127,6 @@
 		openId = openId === u.id ? null : u.id;
 		if (openId) onUnmark();
 	}
-	// A bron marked takes the place of the group's Zijpaneel.
 	$effect(() => {
 		if (marked) openId = null;
 	});
@@ -222,7 +221,6 @@
 		else if (read) onOpen(u.id);
 		else onMark(u.id);
 	}
-	const discText = (u: SceneUnit) => formatCount(u.members.length);
 	const rowCount = (n: number) => (n > 1 ? formatCount(n) : '');
 	const GAP_LINES = ['functie niet', 'in de gegevens'];
 
@@ -261,18 +259,18 @@
 	/>
 {/snippet}
 
-{#snippet focusRing(box: UnitBox)}
+{#snippet focusRing(box: UnitBox, air = 5)}
 	<circle
 		class="halo"
 		cx={box.mark.x + box.mark.width / 2}
 		cy={box.mark.y + box.mark.height / 2}
-		r={box.mark.width / 2 + 5}
+		r={box.mark.width / 2 + air}
 	/>
 	<circle
 		class="ring"
 		cx={box.mark.x + box.mark.width / 2}
 		cy={box.mark.y + box.mark.height / 2}
-		r={box.mark.width / 2 + 5}
+		r={box.mark.width / 2 + air}
 	/>
 {/snippet}
 
@@ -347,6 +345,8 @@
 					{@const n = byId.get(m)}
 					{@const cx = box.mark.x + 16 + (i % perLine) * DOT}
 					{@const cy = at.y - GLYPH / 2 + Math.floor(i / perLine) * DOT_LINE}
+					{@const square = { x: cx, y: cy, width: GLYPH, height: GLYPH }}
+					{@const own = chosen.includes(m) || marked === m}
 					<g
 						class="member"
 						class:is-active={marked === m}
@@ -360,10 +360,10 @@
 					>
 						<title>{n?.label ?? m}</title>
 						<rect class="hit" x={cx - 5} y={cy - 5} width={GLYPH + 10} height={GLYPH + 10} />
-						{#if chosen.includes(m) || marked === m || changed.has(m)}{@render focusRing({
-								...box,
-								mark: { x: cx, y: cy, width: GLYPH, height: GLYPH }
-							})}{/if}
+						{#if own || changed.has(m)}{@render focusRing(
+								{ ...box, mark: square },
+								own ? 5 : 2.5
+							)}{/if}
 						{@render sign(n, u.sort, cx, cy, GLYPH)}
 						{#if numbered.has(m)}<text class="number" x={cx + GLYPH / 2} y={cy - 8}
 								>{changed.get(m)}</text
@@ -418,7 +418,7 @@
 			{#if u.focus || markedUnit === u.id || openId === u.id}{@render focusRing(box)}{/if}
 			{#if disc}
 				<circle class="disc" {cx} {cy} r={box.mark.width / 2} style:--tint={sortColour(u.sort)} />
-				<text class="count" x={cx} y={cy + 4}>{discText(u)}</text>
+				<text class="count" x={cx} y={cy + 4}>{formatCount(u.members.length)}</text>
 			{:else}
 				{@render sign(n, u.sort, box.mark.x, box.mark.y, GLYPH)}
 			{/if}
