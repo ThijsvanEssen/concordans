@@ -60,8 +60,9 @@ describe('the Netwerk button', () => {
 		expect(networkHref(at(`${article}?mode=netwerk&netwerk=articles/a&kies=x#lid-2`))).toBe(
 			`${article}#lid-2`
 		);
+		// The bron marked on the canvas is not the bron of the lezer (B85).
 		expect(networkHref(at('/explore?netwerk=articles/a,articles/b&kies=articles/b'))).toBe(
-			'/explore?focus=articles%2Fb'
+			'/explore?focus=articles%2Fa'
 		);
 		expect(networkHref(at('/explore?netwerk=articles/a'))).toBe('/explore?focus=articles%2Fa');
 		expect(networkHref(at('/explore'))).toBe('/');
@@ -81,10 +82,16 @@ describe('the Netwerk button', () => {
 		expect(onNetwork(at('/explore?mode=index'))).toBe(false);
 	});
 
-	it("counts the werkplek's own netwerk there, the kept one elsewhere", () => {
-		expect(networkCount(at('/explore?netwerk=articles/a,articles/b'), 5)).toBe(2);
-		expect(networkCount(at('/wetten/BWBR0005289/artikel/6:162'), 3)).toBe(3);
-		expect(networkCount(at('/actueel'), 0)).toBe(0);
+	it("counts the werkplek's own netwerk there, the kept one elsewhere, with the bron of the lezer", () => {
+		const kept = 'netwerk=articles/a,articles/b,articles/c';
+		expect(networkCount(at('/explore?netwerk=articles/a,articles/b'), kept)).toBe(2);
+		expect(networkCount(at('/actueel'), kept)).toBe(3);
+		expect(networkCount(at('/wetten/BWBR0005289'), kept)).toBe(4);
+		expect(networkCount(at('/explore?focus=articles/a'), kept)).toBe(3);
+		expect(networkCount(at('/actueel'), null)).toBe(0);
+		// A bron alone is no netwerk: the button counts nothing.
+		expect(networkCount(at('/wetten/BWBR0005289'), null)).toBe(0);
+		expect(networkCount(at('/wetten/BWBR0006622?mode=netwerk'), null)).toBe(0);
 	});
 });
 

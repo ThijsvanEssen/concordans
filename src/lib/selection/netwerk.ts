@@ -27,6 +27,8 @@ export type NetwerkEntry = {
 	alone: boolean;
 	/** The API does not know it: listed so that it can be removed. */
 	missing?: boolean;
+	/** The page's own bron drawn alone: no netwerk to switch it off in. */
+	vast?: boolean;
 	/** The bron itself, so that its name follows bron/naam.ts once law titles load. */
 	node?: GraphNode;
 	/** On, but hidden with a grouping switched off (a stuk of a dossier with Dossier off). */
@@ -55,6 +57,18 @@ export function netwerkParams(n: Netwerk): Record<string, string | null> {
 		uit: uit.length > 0 ? uit.join(',') : null
 	};
 }
+
+/** The netwerk as the query of its params that hold a value (`netwerk=…&uit=…`). */
+export function netwerkQueryString(n: Netwerk): string {
+	const held = Object.entries(netwerkParams(n)).filter((e): e is [string, string] => e[1] !== null);
+	return new URLSearchParams(held).toString();
+}
+
+/** The rows of Gekozen: the bron of the lezer on top, so it never folds away (B85). */
+export const lezerEerst = (entries: NetwerkEntry[], lezer: string | null): NetwerkEntry[] => [
+	...entries.filter((e) => e.id === lezer),
+	...entries.filter((e) => e.id !== lezer)
+];
 
 export const isOn = (n: Netwerk, id: string) => n.ids.includes(id) && !n.uit.has(id);
 

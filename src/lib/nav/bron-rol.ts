@@ -4,3 +4,6 @@
 import { writable } from 'svelte/store';
 
 export const bronRol = writable<Record<string, unknown> | null>(null);
+
+/** The bron the lezer shows, once its node is there: the wissel names it (B85). */
+export const leesNaam = writable<{ naam: string; titel: string } | null>(null);

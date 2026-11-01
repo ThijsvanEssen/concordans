@@ -10,6 +10,7 @@ import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
 import { dossierOwnName, dossierUitProps, dossierNumberLabel } from './dossier-naam';
+import type { NetwerkEntry } from '$lib/selection/netwerk';
 
 /** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
 export function bronFullName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
@@ -62,6 +63,31 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	// carries: never "Art. 419" without its law (UX test 10 Oct, #23).
 	const wet = textOf(p?.['instrument_abbreviation']) ?? textOf(p?.['instrument_citation_title']);
 	return wet && !n.label.includes(wet) ? `${n.label} ${wet}` : n.label;
+}
+
+/** A bron on the wissel, as short as it is cited: a dossier by its number, a judgment by its citation. */
+export function knopNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+	if (n.collection === 'dossiers') {
+		const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
+		return dossierNumberLabel(d.number);
+	}
+	return textOf(n.raw?.cite?.short) ?? bronNaam(n, meta);
+}
+
+/**
+ * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
+ * suffix ("via 200 van 846 leden") fits on a phone (Thijs, 9 Oct); the rest by bronNaam.
+ */
+export function chipNaam(
+	e: NetwerkEntry,
+	node: GraphNode,
+	meta: Map<string, InstrumentMeta>
+): NetwerkEntry {
+	const naam = bronNaam(node, meta);
+	const afkorting = node.raw?.props?.abbreviation;
+	return node.collection === 'factions' && typeof afkorting === 'string' && afkorting
+		? { ...e, label: afkorting, titel: naam }
+		: { ...e, label: naam };
 }
 
 /**
