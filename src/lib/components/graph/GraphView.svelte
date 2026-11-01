@@ -1420,7 +1420,6 @@
 					depth={view === 'verband' ? pairSteps : depth}
 					{onDepth}
 					withNetwerk={netwerkActive && view === 'omgeving'}
-					reach={externCounts ? null : reach}
 				>
 					<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 					{#if (hasNodes || midden) && !legend.counting}

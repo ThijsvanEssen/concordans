@@ -12,8 +12,6 @@
 	import { count } from '$lib/text/words';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { formatCount } from '$lib/text/getal';
-	import { SOFT_NODE_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
 	import CanvasKaart from './CanvasKaart.svelte';
 
 	type View = 'omgeving' | 'verband' | 'keten';
@@ -24,7 +22,6 @@
 		depth,
 		onDepth,
 		withNetwerk = false,
-		reach = null,
 		children
 	}: {
 		view: View;
@@ -34,8 +31,6 @@
 		onDepth: (d: number) => void;
 		/** Bronnen are chosen: Alleen gekozen is offered, and the steps reach from all of them. */
 		withNetwerk?: boolean;
-		/** How far the last neighbourhood reached, and whether the API cut it off. */
-		reach?: NeighborhoodReach | null;
 		/** What belongs to the weergave: Tonen, Relatie, Periode, Meer. */
 		children?: Snippet;
 	} = $props();
@@ -48,17 +43,7 @@
 
 	const titles = (d: number) =>
 		d === 0 ? 'Alleen de gekozen bronnen en hun onderlinge verbindingen' : undefined;
-	// Every step stays open. Where the netwerk is more than the room (SOFT_NODE_CAP places, a
-	// folded group one), it shows the most important and says so, in a line the keyboard and a
-	// finger read too (C15b); the whole of the direct neighbours, where the API counted them.
-	const total = $derived((reach?.buckets ?? []).reduce((sum, b) => sum + b.total, 0));
-	const incomplete = $derived(
-		depth >= 1 && reach?.capped
-			? `${stepsWord(depth)}: de belangrijkste ${formatCount(SOFT_NODE_CAP)}${
-					total > SOFT_NODE_CAP ? ` van ±${formatCount(total)}` : ''
-				} bronnen. Filter in Tonen voor meer.`
-			: null
-	);
+	// Every step stays open: what the room leaves out, Tonen says per soort (200 van 400).
 </script>
 
 <CanvasKaart title="Weergave" class="netwerkkeuze">
@@ -77,16 +62,12 @@
 				}))}
 				onSelect={(d) => onDepth(Number(d))}
 			/>
-			{#if incomplete}<p class="stil why" role="note">{incomplete}</p>{/if}
 		</Sectie>
 	{/if}
 	{@render children?.()}
 </CanvasKaart>
 
 <style>
-	.why {
-		margin: var(--s-2) 0 0;
-	}
 	.view-slot {
 		margin-bottom: var(--s-3);
 	}

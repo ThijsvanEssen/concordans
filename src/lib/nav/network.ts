@@ -4,8 +4,8 @@
 // werkplek, which begins with choosing a bron.
 import { exploreUrl } from '$lib/bron/address';
 import { hasFocus, modeOf, NETWORK_MODE } from '$lib/bron/href';
-import { parseNetwerk, withRemoved, type Netwerk } from '$lib/selection/netwerk';
-import { keptNetwerk } from '$lib/selection/bewaard.svelte';
+import { networkQuery, parseNetwerk, withRemoved, type Netwerk } from '$lib/selection/netwerk';
+import { bewaarNetwerk, keptNetwerk } from '$lib/selection/bewaard.svelte';
 
 /** The params of the werkplek alone: the text of the bron leaves them (the netwerk is kept). */
 const WERKPLEK_PARAMS = ['mode', 'netwerk', 'uit', 'tussen', 'weergave', 'kies'];
@@ -99,6 +99,14 @@ export function networkCount(url: URL, kept: string | null): number {
 	const query = onNetwork(url) ? logical.search : (kept ?? '');
 	const chosen = withReader(query, logical.searchParams.get('focus'));
 	return parseNetwerk(new URLSearchParams(chosen)).ids.length;
+}
+
+/** The way from the werkplek to the lezer: what is chosen is kept, so the way back brings it. */
+export function keepNetwork(url: URL) {
+	const logical = exploreUrl(url);
+	const chosen = withReader(logical.search, logical.searchParams.get('focus'));
+	const netwerk = parseNetwerk(new URLSearchParams(chosen));
+	if (netwerk.ids.length > 0) bewaarNetwerk(networkQuery(netwerk));
 }
 
 /** What the button and the tab of a phone show at `url`: where it leads, pressed, the count. */
