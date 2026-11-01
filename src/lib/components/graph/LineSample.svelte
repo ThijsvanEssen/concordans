@@ -21,16 +21,19 @@
 	const WIDTH = 28;
 	let {
 		relation,
-		from = 'article'
+		from = 'article',
+		colour: own
 	}: {
 		relation: Relation;
 		/** The kind the line comes from: a citation by an article is structural, otherwise not. */
 		from?: DrawClass;
+		/** Another colour than the canvas's: the lanes hold their lines to 3:1 against the paper. */
+		colour?: string;
 	} = $props();
 
 	const style = $derived(edgeStyleFor(relation, null, from));
 	const colour = $derived(
-		toneColour(edgeColorFor(relation, from), edgeToneFor(relation, null, from))
+		own ?? toneColour(edgeColorFor(relation, from), edgeToneFor(relation, null, from))
 	);
 	const thick = $derived(Math.max(lineThickness(EDGE_WEIGHT[relation]), 1.4));
 	const head = $derived(hasArrow(style) ? thick * arrowLength() : 0);

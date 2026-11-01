@@ -70,7 +70,7 @@ describe('the network and its cards', () => {
 
 	it('lets a Tab reach the strip at the left before the canvas, the card after it', () => {
 		const t = bron('lib/components/graph/GraphView.svelte');
-		const opmaak = t.slice(t.indexOf('<div class="graph-view">'));
+		const opmaak = t.slice(t.indexOf('<div class="graph-view"'));
 		const plaats = (c: string) => opmaak.indexOf(c);
 		expect(plaats('{@render canvasOverlay?.()}')).toBeGreaterThan(-1);
 		expect(plaats('{@render canvasOverlay?.()}')).toBeLessThan(plaats('legenda-inhoud"'));

@@ -86,7 +86,7 @@
 		{#if loading}<span class="laden punt" role="status" aria-label="Laden" title="Laden"
 			></span>{/if}
 	{/snippet}
-	{#snippet actie()}
+	{#snippet action()}
 		{#if entries.length > 0 && !telefoon}
 			<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 				>Wis alles</TekstLink
