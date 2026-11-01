@@ -49,7 +49,9 @@
 				{/each}
 				{#each bare as w (w.key)}
 					<p class="law">
-						<BronLink ref={`instruments/${w.key}`}>{w.name ?? w.short ?? naamVan('instruments', w)}</BronLink>
+						<BronLink ref={`instruments/${w.key}`}
+							>{w.name ?? w.short ?? naamVan('instruments', w)}</BronLink
+						>
 					</p>
 					<p class="numbers stil">Geen gewijzigde artikelen in de gegevens.</p>
 				{/each}

@@ -135,7 +135,9 @@ describe('lawsWithoutArticles', () => {
 				basis: []
 			}
 		];
-		expect(lawsWithoutArticles(data, wijzigt).map((w) => w.name)).toEqual(['Wet goed verhuurderschap']);
+		expect(lawsWithoutArticles(data, wijzigt).map((w) => w.name)).toEqual([
+			'Wet goed verhuurderschap'
+		]);
 		expect(lawsWithoutArticles(data, [])).toEqual([]);
 	});
 });
