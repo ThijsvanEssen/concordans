@@ -1,7 +1,7 @@
 // Where the bronnen of the keten stand and what they say: pure, so the drawing only draws
 // (ChainView.svelte).
 import type { ChainLayer, ChainNode } from '$lib/network/chain';
-import type { Relation } from '$lib/vocabulary';
+import { capitalize } from '$lib/text/words';
 
 type Measures = {
 	rest: Partial<Record<ChainLayer['id'], number>>;
@@ -83,18 +83,6 @@ export function placeLayers(layers: readonly ChainLayer[], o: Measures) {
 	return m;
 }
 
-/** The words on a line of the keten: a judgment's appeal, its cassatie and its conclusie. */
-export const wordOf = (relation: Relation, layer: string) =>
-	relation === 'APPEAL_OF'
-		? layer === 'Hoge Raad'
-			? 'cassatie'
-			: 'hoger beroep'
-		: relation === 'ADVISES_ON'
-			? 'conclusie'
-			: relation === 'CONTINUES'
-				? 'zet voort'
-				: null;
-
 /** A name over as many lines as it takes, of at most `max` characters; never cut (Keten). */
 export const linesOf = (s: string, max = 22) => {
 	const out: string[] = [];
@@ -119,3 +107,23 @@ export const KIND_WORDS: Record<string, [string, string]> = {
 	policy: ['beleidsregel', 'beleidsregels'],
 	other: ['regeling', 'regelingen']
 };
+
+/** How a row of the list hangs: its seat or court, else its grondslag and what it names. */
+export const howOf = (k: ChainNode) =>
+	k.how ||
+	capitalize(
+		[
+			k.grondslag ? `grondslag ${k.grondslag}` : null,
+			k.mentions ? `noemt ${k.mentions}` : null,
+			k.unknown ? `grondslag onbekend ${k.unknown}` : null
+		]
+			.filter(Boolean)
+			.join(', ')
+	) ||
+	null;
+/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
+export const grondslagOf = (k: ChainNode): string[] => [
+	...(k.grondslag ? [`Grondslag ${k.grondslag}`] : []),
+	...(k.mentions ? [`Noemt ${k.mentions}`] : []),
+	...(k.unknown ? [`Grondslag onbekend ${k.unknown}`] : [])
+];

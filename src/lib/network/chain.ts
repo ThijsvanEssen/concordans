@@ -115,6 +115,18 @@ export const parentKind = (p: ChainNode['parents'][number]): LineKind =>
 		p.relation === 'REFERS_TO' || isMention(p) ? 'judgment' : 'article'
 	);
 
+/** The words on a line of the keten: a judgment's appeal, its cassatie and its conclusie. */
+export const wordOf = (relation: Relation, layer: string) =>
+	relation === 'APPEAL_OF'
+		? layer === 'Hoge Raad'
+			? 'cassatie'
+			: 'hoger beroep'
+		: relation === 'ADVISES_ON'
+			? 'conclusie'
+			: relation === 'CONTINUES'
+				? 'zet voort'
+				: null;
+
 /**
  * What Soort and Relatie of the keten count: every bron a kind holds, those listed under an
  * "Alle N" too (so Tonen and the layer say the same number), and each line drawn as the kind it
@@ -495,7 +507,7 @@ export function chain(
 		const at = n.parents.map((p) => placeOf.get(p.id)).filter((x): x is number => x !== undefined);
 		return at.length ? Math.min(...at) : Number.POSITIVE_INFINITY;
 	};
-	const perLayer = new Map<LayerId, ChainNode[]>();
+	const perLayer = new Map<LayerId | 'named', ChainNode[]>();
 	// A wet stands beside the law in its layer: one issued under it with its line and its label;
 	// one that only names it, or whose basis the data lacks, with its dashed line and its label
 	// (Thijs, 29 Oct: the dashed line says it names, no layer of its own). The regulations under
@@ -506,8 +518,6 @@ export function chain(
 	};
 	const cited = (n: ChainNode) =>
 		Math.max(0, ...n.parents.map((p) => p.named ?? p.cite?.count ?? 0));
-	const statutes: ChainNode[] = [];
-	const naming: ChainNode[] = [];
 	const onDrawing = new Set([law.id]);
 	for (const id of ['statute' as const, 'named' as const, ...REGULATION_LAYERS]) {
 		const all = nodes
@@ -531,11 +541,10 @@ export function chain(
 			drawn.push(n);
 			onDrawing.add(n.id);
 		}
-		if (id === 'statute') statutes.push(...drawn);
-		else if (id === 'named') naming.push(...drawn);
-		else if (drawn.length) perLayer.set(id, drawn);
+		perLayer.set(id, drawn);
 	}
-	lawLayer.nodes.push(...statutes);
+	const naming = perLayer.get('named') ?? [];
+	lawLayer.nodes.push(...(perLayer.get('statute') ?? []));
 	// A wet that names it stands in the row Wet: beside the law, or above an AMvB or a regulation,
 	// beside the laws it rests on (B2: not in the row of the Cbb).
 	if (!isRegulation(kind)) lawLayer.nodes.push(...naming);

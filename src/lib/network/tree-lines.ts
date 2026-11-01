@@ -228,6 +228,25 @@ function besideLine(
 	};
 }
 
+/** Taks of one layer that would overlap stand on levels of their own. */
+function setLevels(all: readonly Group[]) {
+	const rows = new Map<number, Group[]>();
+	for (const g of all) rows.set(g.row, [...(rows.get(g.row) ?? []), g]);
+	for (const gs of rows.values()) {
+		const taken: Group[] = [];
+		for (const g of [...gs].sort((a, b) => a.x0 - b.x0)) {
+			let level = 0;
+			while (
+				level < MAX_LEVEL &&
+				taken.some((t) => t.level === level && t.x1 + 8 > g.x0 && g.x1 + 8 > t.x0)
+			)
+				level++;
+			g.level = level;
+			taken.push(g);
+		}
+	}
+}
+
 /** The lines of a keten: a path for each edge, none through a box, the taks of a layer apart. */
 export function treeLines(
 	nodes: ReadonlyMap<string, TreeNode>,
@@ -268,22 +287,7 @@ export function treeLines(
 		g.x0 = Math.min(g.x0, g.column);
 		g.x1 = Math.max(g.x1, g.column);
 	}
-	// Taks of one layer that would overlap stand on levels of their own.
-	const rows = new Map<number, Group[]>();
-	for (const g of all) rows.set(g.row, [...(rows.get(g.row) ?? []), g]);
-	for (const gs of rows.values()) {
-		const taken: Group[] = [];
-		for (const g of [...gs].sort((a, b) => a.x0 - b.x0)) {
-			let level = 0;
-			while (
-				level < MAX_LEVEL &&
-				taken.some((t) => t.level === level && t.x1 + 8 > g.x0 && g.x1 + 8 > t.x0)
-			)
-				level++;
-			g.level = level;
-			taken.push(g);
-		}
-	}
+	setLevels(all);
 	// A child with several lines in has them side by side, the one from the left on the left,
 	// so the lines do not cross as they arrive.
 	const arriving = new Map<string, { id: string; from: number }[]>();

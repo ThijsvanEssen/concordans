@@ -5,14 +5,13 @@
 	import type { FilterGroup } from '$lib/verbonden/filter';
 	import { sortOf } from '$lib/bron/rubrieken';
 	import type { LineKind } from '$lib/graph/line-kind';
-	import type { Relation } from '$lib/vocabulary';
 	// The weergave Keten (besluit 39, mockup A197-c): the law at the top, the articles it gives
 	// powers in, the regulations under them per layer; a line from each to what it hangs under,
 	// dashed where it only names it. On a wide screen a drawing in layers, on a phone a list per
 	// layer (AMvB, Ministeriële regeling, Beleidsregel as headings). One click marks a bron: its
 	// card stands in the strip at the right.
 	import { formatCount } from '$lib/text/getal';
-	import { capitalize, plural } from '$lib/text/words';
+	import { plural } from '$lib/text/words';
 	import { kindColour } from '$lib/bron/kleur';
 	import { VORMEN, vormVanBron } from '$lib/bron/vormen';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -31,7 +30,7 @@
 	import { citeLines, citeText, cut, CITE_MAX } from '$lib/network/cite-label';
 	import { openHref } from '$lib/bron/href';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
-	import { KIND_WORDS, linesOf, placeLayers, wordOf } from '$lib/network/chain-place';
+	import { KIND_WORDS, howOf, grondslagOf, linesOf, placeLayers } from '$lib/network/chain-place';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import { sideScroll } from '$lib/actions/side-scroll';
@@ -46,6 +45,7 @@
 		whyFaint,
 		parentKind,
 		parentRelation,
+		wordOf,
 		type ChainNode,
 		type ChainLayer
 	} from '$lib/network/chain';
@@ -371,25 +371,6 @@
 	const vormKey = (k: ChainNode) =>
 		vormVanBron(k.collection, { celex: k.instrument?.celex ?? null }, k.id.split('/')[1]);
 	const vormOf = (k: ChainNode) => VORMEN[vormKey(k)];
-	/** How a row of the list hangs: its seat or court, else its grondslag and what it names. */
-	const howOf = (k: ChainNode) =>
-		k.how ||
-		capitalize(
-			[
-				k.grondslag ? `grondslag ${k.grondslag}` : null,
-				k.mentions ? `noemt ${k.mentions}` : null,
-				k.unknown ? `grondslag onbekend ${k.unknown}` : null
-			]
-				.filter(Boolean)
-				.join(', ')
-		) ||
-		null;
-	/** The words of its grondslag: the articles it rests on, each with its law's abbreviation. */
-	const grondslagOf = (k: ChainNode): string[] => [
-		...(k.grondslag ? [`Grondslag ${k.grondslag}`] : []),
-		...(k.mentions ? [`Noemt ${k.mentions}`] : []),
-		...(k.unknown ? [`Grondslag onbekend ${k.unknown}`] : [])
-	];
 	/** One glance for the drawing: the regulation it hangs from, shown by HoverCard's rules. */
 	const hover = new HoverCard(() => false);
 	let target = $state<{
