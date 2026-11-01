@@ -1,6 +1,7 @@
 <script lang="ts">
 	// The lijnsoorten the lanes draw now, each with its sample in the colour it has there, so that a
-	// line can be read without hovering. Only what is drawn: Relatie switches them.
+	// line can be read without hovering. Only what is drawn: Relatie switches them. And the marker of a
+	// changed wet, where one stands: on a phone Wetten has no heads, so it alone says what it means.
 	import {
 		LINE_KIND_LABEL,
 		LINE_KIND_SAMPLE,
@@ -11,8 +12,9 @@
 	import type { SceneLine } from '$lib/graph/scene';
 	import LineSample from './LineSample.svelte';
 	import { tokens } from './nodeSprites';
+	import { CHANGED_MARK, CHANGED_WORDS } from '$lib/graph/lane-changes';
 
-	let { lines }: { lines: readonly SceneLine[] } = $props();
+	let { lines, changed }: { lines: readonly SceneLine[]; changed: boolean } = $props();
 
 	const has = (kind: SceneLine['kind'], proposed: boolean) =>
 		lines.some((l) => l.kind === kind && l.proposed === proposed);
@@ -39,6 +41,14 @@
 			{label}
 		</li>
 	{/each}
+	{#if changed}
+		<li>
+			<svg class="mark" width="10" height="10" viewBox="-5 -5 10 10" aria-hidden="true">
+				<path d={CHANGED_MARK} />
+			</svg>
+			{CHANGED_WORDS}
+		</li>
+	{/if}
 </ul>
 
 <style>
@@ -66,6 +76,9 @@
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
+	}
+	.mark path {
+		fill: var(--ink-2);
 	}
 	/* A phone: Deel stands above the field; the samples above the strips, and they scroll away. */
 	@media (max-width: 768px) {

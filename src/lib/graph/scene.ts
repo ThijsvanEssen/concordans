@@ -66,6 +66,8 @@ export type SceneUnit = {
 	breakdown: string | null;
 	/** A group: the other units its bronnen have a line with, not drawn (only to its target). */
 	elsewhere: number;
+	/** A wet a line of Wijziging goes to, proposed or not: it stands first, with a marker. */
+	changed: boolean;
 };
 
 export type SceneLine = {
@@ -145,7 +147,8 @@ const blank = (
 	chamber: null,
 	gap: false,
 	breakdown: null,
-	elsewhere: 0
+	elsewhere: 0,
+	changed: false
 });
 
 const holdsChosen = (c: HullCandidate, chosen: ReadonlySet<string>) =>
@@ -422,12 +425,19 @@ export function buildScene(input: SceneInput): Scene {
 	const grouped = foldGroups(general, linesBetween(general, linked.edges), sortedNodes);
 	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked.edges, grouped)));
 	const lines = linesBetween(folded.units, groupEdges(linked.edges, folded));
-	return unreached(
-		withElsewhere(folded.units, linked.edges, folded),
-		lines,
-		linked.bridged,
-		sortedNodes
+	return withChanged(
+		unreached(withElsewhere(folded.units, linked.edges, folded), lines, linked.bridged, sortedNodes)
 	);
+}
+
+/** Marks the wetten a line of Wijziging goes to; a wet that changes another is not changed by it. */
+function withChanged(scene: Scene): Scene {
+	const targets = new Set(scene.lines.filter((l) => l.kind === 'change').map((l) => l.to));
+	const units = scene.units.map((u) => ({
+		...u,
+		changed: u.column === 'laws' && targets.has(u.id)
+	}));
+	return { ...scene, units };
 }
 
 type Folded = ReturnType<typeof foldGroups>;

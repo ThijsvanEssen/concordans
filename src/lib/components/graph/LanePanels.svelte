@@ -2,7 +2,7 @@
 
 <script lang="ts">
 	// What stands behind the lanes: the panel of each column with its head, the strip Algemene
-	// wetten, the cards of Wie maakt; on a phone the one line that counts who makes.
+	// wetten, the heads in Wetten, the cards of Wie maakt; on a phone the one line that counts who makes.
 	import { sortColour } from '$lib/bron/rubrieken';
 	import { COLUMN_SORT, COLUMN_TITLE, LANE_SORT, LANE_TITLE } from '$lib/graph/lane-columns';
 	import { CONTENT_TOP, type LaneLayout } from '$lib/graph/lane-layout';
@@ -67,6 +67,9 @@
 	/>
 	<text class="col-head" x={s.x + 14} y={s.y + 24}>Algemene wetten</text>
 {/if}
+{#each layout.heads as h (h.label)}
+	<text class="lane-head law-head" x={h.x} y={h.y}>{h.label}</text>
+{/each}
 {#each layout.lanes as l (l.lane)}
 	<rect
 		class="lane"
@@ -115,6 +118,12 @@
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		fill: var(--ink-2);
+	}
+	.law-head {
+		paint-order: stroke;
+		stroke: var(--paper);
+		stroke-width: 3px;
+		stroke-linejoin: round;
 	}
 	.summary {
 		font-size: var(--t-note);

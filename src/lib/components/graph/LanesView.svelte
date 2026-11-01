@@ -16,7 +16,7 @@
 	import { arrowHead, DOT_RADIUS, longestRunMiddle } from '$lib/graph/line-shape';
 	import { LINE_KIND_STYLE } from '$lib/graph/line-kind';
 	import { buildScene, type Scene, type SceneUnit } from '$lib/graph/scene';
-	import { laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
+	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
 	import type { Visibility } from '$lib/graph/visibility';
@@ -27,6 +27,8 @@
 	import { getChangedArticles } from '$lib/api/dossiers';
 	import { load } from '$lib/util/load.svelte';
 	import {
+		CHANGED_MARK,
+		CHANGED_WORDS,
 		changedFirst,
 		changedNumbers,
 		laneDossierNumber,
@@ -252,8 +254,9 @@
 			.map(([s, n]) => `${formatCount(n)} ${n === 1 ? sortOne(s) : sortLabel(s).toLowerCase()}`)
 			.join(', ')
 	);
+	const changedWords = (u: SceneUnit) => (u.changed ? CHANGED_WORDS.toLowerCase() : null);
 	const titleOf = (u: SceneUnit) =>
-		[u.label, u.role, u.breakdown].filter(Boolean).join(', ') || u.label;
+		[u.label, u.role, u.breakdown, changedWords(u)].filter(Boolean).join(', ') || u.label;
 </script>
 
 {#snippet sign(n: GraphNode | undefined, sort: Sort, x: number, y: number, size: number)}
@@ -268,6 +271,10 @@
 		stroke-width={(g.stroke === 'none' ? 1 : 2) / sc}
 		stroke-linejoin="round"
 	/>
+{/snippet}
+
+{#snippet changedMark(x: number, y: number)}
+	<path class="changed-mark" d={CHANGED_MARK} transform="translate({x} {y})" />
 {/snippet}
 
 {#snippet focusRing(box: UnitBox, air = 5)}
@@ -305,13 +312,13 @@
 		class="pill"
 		role="button"
 		tabindex="-1"
-		aria-label={u.label}
+		aria-label={titleOf(u)}
 		aria-pressed={markedUnit === u.id}
 		onclick={() => choosePill(u)}
 		ondblclick={() => choosePill(u, true)}
 		onkeydown={(e) => onKey(e, () => choosePill(u))}
 	>
-		<title>{u.label}</title>
+		<title>{titleOf(u)}</title>
 		<rect
 			x={box.label.x}
 			y={box.label.y}
@@ -320,8 +327,11 @@
 			rx={box.label.height / 2}
 			stroke={colour}
 		/>
-		<text class="pill-name" x={box.label.x + 10} y={box.label.y + box.label.height / 2 + 4.5}
-			>{box.text.name[0]}</text
+		{#if u.changed}{@render changedMark(box.label.x + 14, box.label.y + box.label.height / 2)}{/if}
+		<text
+			class="pill-name"
+			x={box.label.x + 10 + (u.changed ? CHANGED_ROOM : 0)}
+			y={box.label.y + box.label.height / 2 + 4.5}>{box.text.name[0]}</text
 		>
 	</g>
 	{#each u.rows as row (row.id)}
@@ -445,6 +455,7 @@
 			{:else}
 				{@render sign(n, u.sort, box.mark.x, box.mark.y, GLYPH)}
 			{/if}
+			{#if u.changed}{@render changedMark(box.mark.x + box.mark.width + 1, box.mark.y + 1)}{/if}
 			{#if phone}
 				{#if showName}
 					{#each box.text.name as line, i (i)}
@@ -506,7 +517,7 @@
 				<p class="leeg__kop">Niets te tekenen met deze filters</p>
 			</div>{/if}
 	{:else}
-		<LaneLegend lines={scene.lines} />
+		<LaneLegend lines={scene.lines} changed={scene.units.some((u) => u.changed)} />
 		<!-- As wide as the drawing and the card over it: the right column scrolls out from under it. -->
 		<div class="room" style:width="calc({layout.width * scale}px + var(--card-room, 0px))">
 			<svg
@@ -664,6 +675,13 @@
 		fill: color-mix(in srgb, var(--tint) 14%, var(--paper));
 		stroke: var(--tint);
 		stroke-width: 1.4px;
+	}
+	.changed-mark {
+		fill: var(--ink-2);
+		stroke: var(--paper);
+		stroke-width: 1.5px;
+		paint-order: stroke;
+		stroke-linejoin: round;
 	}
 	.number {
 		font-size: var(--t-label);
