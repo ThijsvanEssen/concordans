@@ -22,6 +22,10 @@ describe('laneDossierNumber', () => {
 		expect(laneDossierNumber('dossiers/36600_viii', ['a'], () => stuk)).toBe('36600-VIII');
 		expect(laneDossierNumber('dossiers/21501_02', [], () => undefined)).toBe('21501-02');
 	});
+	it('does not take the number of another dossier a bron in the hull carries', () => {
+		const stuk = { raw: { props: { dossier_number: '29282' } } } as unknown as GraphNode;
+		expect(laneDossierNumber('dossiers/36702', ['a'], () => stuk)).toBe('36702');
+	});
 });
 
 describe('changedNumbers', () => {

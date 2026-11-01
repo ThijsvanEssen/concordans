@@ -4,20 +4,24 @@ import type { Schema } from '$lib/api/types';
 import { dossierNumberOf } from '$lib/bron/describe';
 import type { GraphNode } from './types';
 
-/** The number the API knows a dossier by, as its bronnen carry it; else read from its key. */
+/** A dossier's number as its node's key writes it: `21501-02` is `21501_02`. */
+const keyOfNumber = (number: string) => number.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+
+/**
+ * The number the API knows a dossier by, as a bron of this dossier carries it (a bron in the hull
+ * may belong to another dossier too); else read from its key.
+ */
 export function laneDossierNumber(
 	id: string,
 	members: readonly string[],
 	nodeOf: (id: string) => GraphNode | undefined
 ): string {
+	const key = id.replace(/^dossiers\//, '');
 	for (const m of members) {
 		const number = dossierNumberOf(nodeOf(m)?.raw?.props);
-		if (number) return number;
+		if (number && keyOfNumber(number) === key) return number;
 	}
-	return id
-		.replace(/^dossiers\//, '')
-		.replaceAll('_', '-')
-		.toUpperCase();
+	return key.replaceAll('_', '-').toUpperCase();
 }
 
 /** Every article the dossier changes, by its id, with its number. */

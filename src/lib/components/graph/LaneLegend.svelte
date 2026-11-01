@@ -68,7 +68,7 @@
 		gap: var(--s-2);
 	}
 	/* A phone: Deel stands above the field; the samples above the strips, and they scroll away. */
-	@media (max-width: 599px) {
+	@media (max-width: 768px) {
 		.kinds {
 			position: static;
 			max-width: 100%;
