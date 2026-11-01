@@ -15,20 +15,18 @@
 
 	let { number }: { number: string } = $props();
 
-	const asked = load(
-		() => number,
-		async (n) => {
-			const [data, dossier] = await Promise.all([getChangedArticles(n), getDossier(n)]);
-			return { data, amends: dossier?.legal_effect?.amends ?? [] };
-		},
-		'Gewijzigde artikelen'
+	const asked = load(() => number, getChangedArticles, 'Gewijzigde artikelen');
+	// The law without changed articles comes from the dossier's own, far slower answer: it follows.
+	const dossier = load(() => number, getDossier, 'Gewijzigde wetten');
+	const amends = $derived(
+		dossier.state.status === 'ready' ? (dossier.state.data.legal_effect?.amends ?? []) : []
 	);
 	const lawName = (l: ChangedLaw) => l.law.display_name ?? l.law.bwb_id ?? l.law.celex ?? '';
 	const onlyProposed = (l: ChangedLaw) => l.changes.every((c) => c.stage === 'proposed');
 </script>
 
 <LoadState state={asked.state} what="de gewijzigde artikelen" retry={asked.retry}>
-	{#snippet children({ data, amends })}
+	{#snippet children(data)}
 		{@const bare = data ? lawsWithoutArticles(data, amends) : amends}
 		{#if (data?.laws.length ?? 0) > 0 || bare.length > 0}
 			<Sectie title="Gewijzigde artikelen" niveau={3} inklapbaar={false}>

@@ -19,7 +19,6 @@
 	import { laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
-	import { COLUMN_SORT, COLUMN_TITLE, LANE_SORT, LANE_TITLE } from '$lib/graph/lane-columns';
 	import type { Visibility } from '$lib/graph/visibility';
 	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
@@ -36,6 +35,8 @@
 	} from '$lib/graph/lane-changes';
 	import LaneCard from './LaneCard.svelte';
 	import LaneLegend from './LaneLegend.svelte';
+	import LaneTiles from './LaneTiles.svelte';
+	import LanePanels from './LanePanels.svelte';
 	let {
 		nodes,
 		edges,
@@ -78,7 +79,6 @@
 	const SMALL_LINE = 14;
 	const DOT = 20;
 	const DOT_LINE = 22;
-	const CONTENT_TOP = 116;
 
 	let avail = $state(0);
 	const phone = $derived(avail > 0 && avail < PHONE);
@@ -98,6 +98,7 @@
 		for (const u of scene.units) {
 			out.set(u.id, u);
 			for (const m of u.members) out.set(m, u);
+			for (const p of u.periods) for (const d of p.units) out.set(d.id, u);
 		}
 		return out;
 	});
@@ -116,13 +117,23 @@
 	$effect(() => {
 		// A hull is drawn too: its pill marks the wet or dossier it stands for.
 		onDrawn(
-			new Set(scene.units.flatMap((u) => (u.shape === 'hull' ? [u.id, ...u.members] : u.members)))
+			new Set(
+				scene.units.flatMap((u) =>
+					u.shape === 'hull' || u.shape === 'tiles' ? [u.id, ...u.members] : u.members
+				)
+			)
 		);
 	});
 
 	/** The group, or the hull without a bron of its own, whose Zijpaneel is open. */
 	let openId = $state<string | null>(null);
-	const openUnit = $derived(openId ? (scene.units.find((u) => u.id === openId) ?? null) : null);
+	const openUnit = $derived(
+		scene.units
+			.flatMap((u) => [u, ...u.periods.flatMap((p) => p.units)])
+			.find((u) => u.id === openId) ?? null
+	);
+	/** What the Zijpaneel lights: a dossier among tiles lights their one line. */
+	const openUnitOn = $derived(openId ? (unitOf.get(openId)?.id ?? null) : null);
 	function toggleCard(u: SceneUnit) {
 		openId = openId === u.id ? null : u.id;
 		if (openId) onUnmark();
@@ -136,7 +147,7 @@
 		hovered ??
 			(pointed ? unitOf.get(pointed)?.id : undefined) ??
 			(marked ? unitOf.get(marked)?.id : undefined) ??
-			openUnit?.id ??
+			openUnitOn ??
 			null
 	);
 	/** The line under the pointer: it alone lit, with what it says on it. */
@@ -376,7 +387,19 @@
 {/snippet}
 
 {#snippet unit(u: SceneUnit, box: UnitBox)}
-	{#if u.shape === 'hull' && (!phone || u.focus)}
+	{#if u.shape === 'tiles'}
+		<g
+			class="unit"
+			class:is-dim={!!lit &&
+				lit !== u.id &&
+				!paths.some((p) => touches(p) && (p.from === u.id || p.to === u.id))}
+			data-unit={u.id}
+			onpointerenter={() => (hovered = u.id)}
+			onpointerleave={() => (hovered = null)}
+		>
+			<LaneTiles unit={u} {box} open={openId} nodeOf={(id) => byId.get(id)} onOpen={toggleCard} />
+		</g>
+	{:else if u.shape === 'hull' && (!phone || u.focus)}
 		<g
 			class="unit"
 			class:is-dim={!!lit &&
@@ -494,74 +517,7 @@
 				role="group"
 				aria-label="Omgeving in banen"
 			>
-				{#each layout.columns as c (c.column)}
-					{#if phone}
-						<rect
-							class="panel"
-							x={c.x}
-							y={c.y}
-							width={c.width}
-							height={c.height}
-							rx="12"
-							style:--tint={sortColour(COLUMN_SORT[c.column])}
-						/>
-						<text class="col-head" x={c.x + 12} y={c.y + 22}>{COLUMN_TITLE[c.column]}</text>
-						<rect
-							class="col-bar"
-							x={c.x + 12}
-							y={c.y + 29}
-							width="120"
-							height="3"
-							rx="1.5"
-							fill={sortColour(COLUMN_SORT[c.column])}
-						/>
-					{:else}
-						<rect
-							class="panel"
-							x={c.x - 14}
-							y={CONTENT_TOP - 52}
-							width={c.width + 28}
-							height={c.height + 52 + 14}
-							rx="12"
-							style:--tint={sortColour(COLUMN_SORT[c.column])}
-						/>
-						<text class="col-head" x={c.x} y={CONTENT_TOP - 26}>{COLUMN_TITLE[c.column]}</text>
-						<rect
-							class="col-bar"
-							x={c.x}
-							y={CONTENT_TOP - 18}
-							width={c.width}
-							height="3"
-							rx="1.5"
-							fill={sortColour(COLUMN_SORT[c.column])}
-						/>
-					{/if}
-				{/each}
-				{#if layout.strip}
-					{@const s = layout.strip}
-					<rect
-						class="panel"
-						x={s.x}
-						y={s.y}
-						width={s.width}
-						height={s.height}
-						rx="12"
-						style:--tint="var(--rubriek-wetten)"
-					/>
-					<text class="col-head" x={s.x + 14} y={s.y + 24}>Algemene wetten</text>
-				{/if}
-				{#each layout.lanes as l (l.lane)}
-					<rect
-						class="lane"
-						x={l.x}
-						y={l.y}
-						width={l.width}
-						height={l.height}
-						rx="8"
-						stroke={sortColour(LANE_SORT[l.lane])}
-					/>
-					<text class="lane-head" x={l.x + 8} y={l.y + 16}>{LANE_TITLE[l.lane]}</text>
-				{/each}
+				<LanePanels {layout} {phone} {scene} />
 				<!-- The lines under the units; the lit ones over the rest, whole. -->
 				<g class="lines" class:is-dim={anyLit}>
 					{#each styled.filter((p) => !anyLit || !touches(p)) as p (p.id)}
@@ -595,22 +551,6 @@
 				{#each styled.filter((p) => p.id === hoveredLine && p.label) as p (p.id)}
 					<text class="line-label" x={p.at.x} y={p.at.y - 6}>{p.label}</text>
 				{/each}
-				{#if phone}
-					{#each layout.columns.filter((c) => c.column === 'makers') as c (c.column)}
-						{@const makers = scene.units.filter((u) => u.column === 'makers' && !u.general)}
-						{@const byLane = (['government', 'council', 'parliament'] as const)
-							.map((lane) => [lane, makers.filter((u) => u.lane === lane).length] as const)
-							.filter(([, k]) => k > 0)}
-						<text class="summary" x={c.x + 12} y={c.y + c.height - 14}
-							>{byLane
-								.map(
-									([lane, k]) =>
-										`${k} ${lane === 'council' ? LANE_TITLE[lane] : LANE_TITLE[lane].toLowerCase()}`
-								)
-								.join(', ')}</text
-						>
-					{/each}
-				{/if}
 			</svg>
 			{#if unlinked}<p class="stil unlinked">
 					Zonder lijn naar de gekozen bronnen: {unlinked}
@@ -669,25 +609,6 @@
 	.unlinked {
 		margin: 0 var(--s-4) var(--s-6);
 	}
-	.panel {
-		fill: color-mix(in srgb, var(--tint) 4.5%, transparent);
-	}
-	.col-head {
-		font-size: var(--t-micro);
-		font-weight: 600;
-		fill: var(--ink);
-	}
-	.lane {
-		fill: var(--paper);
-		stroke-opacity: 0.35;
-	}
-	.lane-head {
-		font-size: var(--t-label);
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		fill: var(--ink-2);
-	}
 	.hull {
 		fill: color-mix(in srgb, var(--tint) 7%, transparent);
 		stroke-width: 1.6px;
@@ -708,8 +629,7 @@
 		cursor: pointer;
 	}
 	.row-head,
-	.row-name,
-	.summary {
+	.row-name {
 		font-size: var(--t-note);
 		fill: var(--ink-2);
 	}

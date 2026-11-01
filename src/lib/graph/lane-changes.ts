@@ -92,6 +92,7 @@ export function scrollToShow(unit: Box, field: Box, card: Box | null): { x: numb
 export function showBeside(field: HTMLElement, unit: string) {
 	const el =
 		field.querySelector('.member.is-active') ??
+		field.querySelector('.tile.is-open') ??
 		field.querySelector(`[data-unit="${CSS.escape(unit)}"]`);
 	if (!el) return;
 	const card =
