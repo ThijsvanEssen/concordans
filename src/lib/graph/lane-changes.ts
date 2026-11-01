@@ -2,7 +2,16 @@
 // and with the card that lies over them. Pure: LanesView draws it.
 import type { Schema } from '$lib/api/types';
 import { dossierNumberOf } from '$lib/bron/describe';
+import type { LawChange } from './scene';
 import type { GraphNode } from './types';
+
+/** The marker of a changed wet, around (0, 0): a form, closed or open, so not colour alone. */
+export const CHANGED_MARK = 'M0 -3.5 L4 3.5 H-4 Z';
+/** Its head and legend, and what a tooltip says of the wet. */
+export const LAW_CHANGE_WORDS: Record<LawChange, { head: string; says: string }> = {
+	enacted: { head: 'Gewijzigd', says: 'gewijzigd' },
+	proposed: { head: 'Voorgesteld', says: 'wijziging voorgesteld' }
+};
 
 /** A dossier's number as its node's key writes it: `21501-02` is `21501_02`. */
 const keyOfNumber = (number: string) => number.toLowerCase().replace(/[^a-z0-9]+/g, '_');

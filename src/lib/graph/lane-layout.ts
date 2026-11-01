@@ -5,6 +5,7 @@
 // column; the canvas is as high as what it holds. Pure and deterministic: text is measured by an
 // estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
+import { LAW_CHANGE_WORDS } from './lane-changes';
 import type { Column, Scene, SceneUnit } from './scene';
 
 export const GUTTER = 76;
@@ -37,6 +38,10 @@ const MAX_LINES = 3;
 /** The name in a hull's pill: 12 px semibold, measured as 13; its padding left and right. */
 const PILL_SIZE = 13;
 const PILL_PAD = 20;
+/** The room the marker of a changed wet takes in its pill (LanesView draws it). */
+export const CHANGED_ROOM = 13;
+/** A head in Wetten: its height, with its air above the first unit under it. */
+const LAW_HEAD = 24;
 
 export type Box = { x: number; y: number; width: number; height: number };
 
@@ -62,6 +67,8 @@ export type LaneLayout = {
 	lanes: (Box & { lane: MakerLane })[];
 	/** The strip Algemene wetten, when something stands in it. */
 	strip: Box | null;
+	/** The heads in Wetten, by the baseline of their text: changed wetten apart from the others. */
+	heads: { label: string; x: number; y: number }[];
 	units: Map<string, UnitBox>;
 };
 
@@ -161,8 +168,9 @@ function hullBox(u: SceneUnit, x: number, y: number, room: number): UnitBox {
 		);
 	}
 	// The pill: one line, cut with "…" where the column ends; measured as a size larger, for its weight.
-	const pill = wrapLabel(u.label, room - PILL_PAD, PILL_SIZE, 1);
-	const named = Math.min(room, widest(pill, PILL_SIZE) + PILL_PAD);
+	const pad = PILL_PAD + (u.change ? CHANGED_ROOM : 0);
+	const pill = wrapLabel(u.label, room - pad, PILL_SIZE, 1);
+	const named = Math.min(room, widest(pill, PILL_SIZE) + pad);
 	const markWidth = Math.min(room, Math.max(32 + wide, 80));
 	const mark = { x, y: y + HULL_PILL, width: markWidth, height: cy + 8 - (y + HULL_PILL) };
 	const label = { x, y, width: named, height: HULL_PILL - 4 };
@@ -386,6 +394,32 @@ function placeColumn(units: readonly SceneUnit[], frame: Frame, top: number): Pl
 	return { units: out, bottom: y };
 }
 
+/**
+ * Wetten: a chosen wet on top, without a head (its marker says it); then the changed ones, those
+ * proposed and the others, each under a head. Without another changed wet there are no heads.
+ */
+function placeLaws(units: readonly SceneUnit[], frame: Frame, top: number) {
+	const rest = units.filter((u) => !u.focus);
+	if (!rest.some((u) => u.change)) return { ...placeColumn(units, frame, top), heads: [] };
+	const out = new Map<string, UnitBox>();
+	const heads: LaneLayout['heads'] = [];
+	const sections = [
+		{ label: null, own: units.filter((u) => u.focus) },
+		{ label: LAW_CHANGE_WORDS.enacted.head, own: rest.filter((u) => u.change === 'enacted') },
+		{ label: LAW_CHANGE_WORDS.proposed.head, own: rest.filter((u) => u.change === 'proposed') },
+		{ label: 'Overige wetten', own: rest.filter((u) => !u.change) }
+	];
+	let y = top;
+	for (const { label, own } of sections) {
+		if (own.length === 0) continue;
+		if (label) heads.push({ label, x: frame.x, y: y + 11 });
+		const placed = placeColumn(own, frame, label ? y + LAW_HEAD : y);
+		for (const [id, box] of placed.units) out.set(id, box);
+		y = placed.bottom;
+	}
+	return { units: out, heads, bottom: y };
+}
+
 /** Wie maakt: a card per lane, in the order of MAKER_LANE_ORDER. */
 function placeMakers(units: readonly SceneUnit[], frame: Frame, top: number) {
 	const out = new Map<string, UnitBox>();
@@ -473,9 +507,17 @@ function placeAll(scene: Scene, frames: Map<Column, Frame>, centre: Map<string, 
 	const units = new Map<string, UnitBox>();
 	const bottoms: number[] = [];
 	let lanes: LaneLayout['lanes'] = [];
+	let heads: LaneLayout['heads'] = [];
 	for (const [column, frame] of frames) {
 		const own = scene.units.filter((u) => u.column === column && !u.general);
 		const list = ordered(own, centre);
+		if (column === 'laws') {
+			const laws = placeLaws(list, frame, CONTENT_TOP);
+			heads = laws.heads;
+			for (const [id, box] of laws.units) units.set(id, box);
+			bottoms.push(laws.bottom);
+			continue;
+		}
 		const placed =
 			column === 'makers'
 				? placeMakers(list, frame, CONTENT_TOP)
@@ -484,7 +526,7 @@ function placeAll(scene: Scene, frames: Map<Column, Frame>, centre: Map<string, 
 		for (const [id, box] of placed.units) units.set(id, box);
 		bottoms.push(placed.bottom);
 	}
-	return { units, lanes, bottom: Math.max(CONTENT_TOP, ...bottoms) };
+	return { units, lanes, heads, bottom: Math.max(CONTENT_TOP, ...bottoms) };
 }
 
 /**
@@ -496,7 +538,7 @@ export function laneLayout(scene: Scene, width: number): LaneLayout {
 	const frames = framed.frames;
 	width = framed.width;
 	const first = placeAll(scene, frames, null);
-	const { units, lanes, bottom } = placeAll(scene, frames, barycentre(scene, first.units));
+	const { units, lanes, heads, bottom } = placeAll(scene, frames, barycentre(scene, first.units));
 	const general = scene.units.filter((u) => u.general).sort(byDefault);
 	let strip: Box | null = null;
 	let end = bottom;
@@ -515,5 +557,5 @@ export function laneLayout(scene: Scene, width: number): LaneLayout {
 		y: CONTENT_TOP,
 		height: bottom - CONTENT_TOP
 	}));
-	return { width, height: Math.ceil(end + 40), columns, lanes, strip, units };
+	return { width, height: Math.ceil(end + 40), columns, lanes, strip, heads, units };
 }

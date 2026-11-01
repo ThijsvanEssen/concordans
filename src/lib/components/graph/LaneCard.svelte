@@ -10,6 +10,7 @@
 	import { laneDossierNumber } from '$lib/graph/lane-changes';
 	import type { SceneUnit } from '$lib/graph/scene';
 	import type { GraphNode } from '$lib/graph/types';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
 	import LaneChanges from './LaneChanges.svelte';
 
@@ -61,9 +62,7 @@
 <aside class="lane-card" aria-label="Zijpaneel">
 	<CanvasKaart title={unit.label}>
 		{#snippet action()}
-			<button type="button" class="btn is-text" aria-label="Zijpaneel sluiten" onclick={onClose}
-				>×</button
-			>
+			<IconButton label="Sluiten" keys={['Esc', 'Escape']} onclick={onClose}>×</IconButton>
 		{/snippet}
 		{#if title && title !== unit.label}<p class="name">{title}</p>{/if}
 		{#if unit.breakdown}<p class="breakdown">{unit.breakdown}</p>{/if}
@@ -89,7 +88,11 @@
 
 <style>
 	/* The card lies over the field, the field does not narrow (Thijs, 1 nov.): the strip of a bron's
-	   card leaves the grid while the lanes stand, above its Tijdstrook. A phone keeps its sheet. */
+	   card leaves the grid while the lanes stand, above its Tijdstrook. A phone keeps its sheet.
+	   As wide as a Blad `rechts`, but on a narrow window it leaves the field some room. */
+	:global(.graph-view:has(.banen)) {
+		--lane-card-w: 400px;
+	}
 	.lane-card {
 		position: absolute;
 		top: 0;
@@ -97,7 +100,7 @@
 		bottom: 0;
 		z-index: calc(var(--z-float) + 1);
 		box-sizing: border-box;
-		width: var(--strook);
+		width: min(var(--lane-card-w), 70%);
 		padding: var(--s-4);
 		overflow-y: auto;
 		background: var(--paper);
@@ -105,9 +108,13 @@
 		box-shadow: var(--shadow-pop);
 	}
 	@media (min-width: 769px) {
+		/* Deel stays in view, left of the card. */
+		:global(.graph-view:has(.lane-card) .doek-balk) {
+			right: calc(var(--lane-card-w) + var(--s-3));
+		}
 		:global(.graph-view:has(.banen):has(.strook--kaart.is-open)) {
 			--card-room: var(--strook);
-			grid-template-columns: var(--strook) minmax(0, 1fr);
+			grid-template-columns: var(--strook-links) minmax(0, 1fr);
 		}
 		:global(.graph-view:has(.banen) .strook--kaart) {
 			position: absolute;

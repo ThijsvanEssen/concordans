@@ -43,6 +43,7 @@
 		lijstHref,
 		hiddenLines,
 		onToggleLine,
+		showLines = true,
 		hiddenAnnexes = false,
 		onToggleAnnexes,
 		onToggleGroup,
@@ -62,6 +63,8 @@
 		lijstHref?: (bronnen: readonly FilterGroup[]) => string;
 		hiddenLines: ReadonlySet<LineKind>;
 		onToggleLine: (l: LineKind) => void;
+		/** Relatie here: the lanes switch their lines in their legend above the canvas. */
+		showLines?: boolean;
 		/** Bijlagen (a bron of no kind of its own) switched off. */
 		hiddenAnnexes?: boolean;
 		onToggleAnnexes?: () => void;
@@ -323,7 +326,7 @@
 			</Sectie>
 		{/if}
 
-		{#if lines.length > 0}
+		{#if showLines && lines.length > 0}
 			<Sectie title="Relatie" niveau={3} inklapbaar={false}>
 				{#each lines as l (l)}
 					{@const sample = LINE_KIND_SAMPLE[l]}
