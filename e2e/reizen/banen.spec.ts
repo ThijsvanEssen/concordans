@@ -79,6 +79,12 @@ test('on a phone the Zijpaneel is a sheet at the foot, under the lanes', async (
 	expect(sheet.x).toBe(0);
 	expect(sheet.width).toBe(375);
 	expect((await box(page.getByTestId('banen').locator('svg.drawing'))).width).toBe(before.width);
+	// What is chosen scrolls out from under the sheet.
+	await expect(async () => {
+		const tile = await box(page.locator(TILE_36164));
+		expect(tile.y + tile.height).toBeLessThanOrEqual(sheet.y);
+		expect(tile.y).toBeGreaterThanOrEqual((await box(page.getByTestId('banen'))).y);
+	}).toPass();
 });
 
 test('changed wetten stand under their heads, with a marker the legend explains', async ({

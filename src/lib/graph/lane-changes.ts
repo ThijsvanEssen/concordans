@@ -99,17 +99,21 @@ export function scrollToShow(unit: Box, field: Box, card: Box | null): { x: numb
 	};
 }
 
-/** The card over the field, Zijpaneel or card of a marked bron; a phone's sheet covers no column. */
-function cardOver(field: HTMLElement) {
-	const card =
+/** The card over the field: the Zijpaneel or the card of a marked bron, on a phone a sheet at the foot. */
+const cardOver = (field: HTMLElement) =>
+	(
 		field.parentElement?.querySelector('.lane-card') ??
-		field.closest('.graph-view')?.querySelector('.strook--kaart.is-open');
-	const rect = card?.getBoundingClientRect();
-	return rect && rect.left > field.getBoundingClientRect().left + 1 ? rect : null;
-}
+		field.closest('.graph-view')?.querySelector('.strook--kaart.is-open')
+	)?.getBoundingClientRect() ?? null;
 
-/** How wide the card over the field is: the drawing makes room for it. */
-export const cardWidth = (field: HTMLElement) => cardOver(field)?.width ?? 0;
+/** Does it stand at the right of the field? A sheet at the foot takes no column. */
+const atSide = (card: DOMRect | null, field: DOMRect) => !!card && card.left > field.left + 1;
+
+/** How wide the card at the side of the field is: the drawing makes room for it. */
+export function cardWidth(field: HTMLElement) {
+	const card = cardOver(field);
+	return card && atSide(card, field.getBoundingClientRect()) ? card.width : 0;
+}
 
 const around = (rects: DOMRect[]) =>
 	DOMRect.fromRect({
@@ -132,7 +136,7 @@ export function showBeside(field: HTMLElement, unit: string, linked: readonly st
 	if (!el) return;
 	const box = field.getBoundingClientRect();
 	const card = cardOver(field);
-	const room = (card?.left ?? box.right) - box.left - 2 * SCROLL_MARGIN;
+	const room = (atSide(card, box) ? card!.left : box.right) - box.left - 2 * SCROLL_MARGIN;
 	const others = linked.flatMap(
 		(id) => field.querySelector(`[data-unit="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? []
 	);
