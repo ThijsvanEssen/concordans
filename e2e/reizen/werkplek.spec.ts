@@ -33,7 +33,8 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	const rij = page.getByRole('region', { name });
 	await expect(rij).toContainText(name.split(',')[0]);
 	await rij.getByRole('button', { name: 'Aan het netwerk toevoegen' }).click();
-	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 1 bron');
+	// The bron added and the bron of the lezer (B85).
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 2 bronnen');
 
 	await netwerkKnop(page).click();
 	await expect(page).toHaveURL(/mode=netwerk&netwerk=/);
