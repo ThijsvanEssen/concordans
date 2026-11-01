@@ -1,7 +1,7 @@
 // The hulls of the scene (Omgeving as lanes): a dossier holds its stukken, activiteiten, toezeggingen
 // and stemmingen in rows in the order of the procedure, a wet its articles in a row per hoofdstuk.
 // A stuk belongs to its dossier by `dossier_number` (only some carry the edge); an activity about
-// several dossiers sits in one of them and bridges none: the others only count (`bridged`).
+// several dossiers sits in one of them and bridges none: the others stay off the canvas.
 import { textOf } from '$lib/text/words';
 import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { isLetter, motionOrAmendment } from '$lib/text/document-kind';
