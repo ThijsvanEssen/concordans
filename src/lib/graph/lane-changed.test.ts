@@ -54,7 +54,7 @@ describe('a changed wet on the lanes', () => {
 
 	it('leaves room in its pill for the marker', () => {
 		const s = d2();
-		const hull = laws(s).find((u) => u.changed && u.shape === 'hull')!;
+		const hull = { ...laws(s)[0], shape: 'hull' as const, rows: [], changed: true };
 		const short = { ...s, lines: [], units: [{ ...hull, label: 'Jeugdwet' }] };
 		const without = { ...s, lines: [], units: [{ ...hull, label: 'Jeugdwet', changed: false }] };
 		const width = (o: Scene) => laneLayout(o, WIDTH).units.get(hull.id)!.label.width;
