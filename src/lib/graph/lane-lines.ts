@@ -22,8 +22,6 @@ import type { Scene, SceneLine } from './scene';
 
 /** Rails in a gutter stand this far apart at most. */
 const RAIL_STEP = 10;
-/** Rails of one bundle stand this part of a step apart: none, they run as one line. */
-const BUNDLE = 0;
 /** The room between a line and the edge of what it passes. */
 const AIR = 6;
 /** Where a line arrives at a mark, this far off its edge (the arrow's tip). */
@@ -373,44 +371,44 @@ function leftCost(a: Rail, b: Rail, left: number, right: number): number {
 }
 
 /**
- * The rails from left to right: each pair in the order it crosses least in. Where those orders
- * close a circle, the rail that breaks the least goes first.
+ * The bundles of a gutter from left to right: each pair in the order its rails cross least in.
+ * Where those orders close a circle, the bundle that breaks the least goes first.
  */
-function orderRails(rails: Rail[], left: number, right: number): Rail[] {
-	const cost = rails.map((a) => rails.map((b) => (a === b ? 0 : leftCost(a, b, left, right))));
+function orderBundles(bundles: Rail[][], left: number, right: number): Rail[][] {
+	const sum = (p: Rail[], q: Rail[]) =>
+		p.reduce((n, a) => n + q.reduce((m, b) => m + leftCost(a, b, left, right), 0), 0);
+	const cost = bundles.map((p) => bundles.map((q) => (p === q ? 0 : sum(p, q))));
 	/** What placing `i` left of all the rest breaks: their wish to stand left of it. */
 	const breaks = (i: number, rest: number[]) =>
-		rest.reduce((sum, j) => sum + Math.max(0, cost[i][j] - cost[j][i]), 0);
-	const rest = rails.map((_, i) => i);
-	const order: Rail[] = [];
+		rest.reduce((n, j) => n + Math.max(0, cost[i][j] - cost[j][i]), 0);
+	const rest = bundles.map((_, i) => i);
+	const order: Rail[][] = [];
 	while (rest.length > 0) {
 		let pick = 0;
 		for (let k = 1; k < rest.length; k++)
 			if (breaks(rest[k], rest) < breaks(rest[pick], rest)) pick = k;
-		order.push(rails[rest[pick]]);
+		order.push(bundles[rest[pick]]);
 		rest.splice(pick, 1);
 	}
 	return order;
 }
 
 /**
- * The x of each rail in a gutter, each pair in the order that does not cross where the other
- * would. Rails into one point (or out of one) that stand side by side run close, as a bundle.
+ * The x of each rail in a gutter, each pair of bundles in the order that does not cross where the
+ * other would. Rails with one key (a bundle) stand on one x: they run as one line.
  */
 function placeRails(rails: Rail[], left: number, right: number) {
+	const byKey = new Map<string, Rail[]>();
 	const sorted = [...rails].sort(
 		(a, b) => a.leave - b.leave || a.enter - b.enter || a.key.localeCompare(b.key)
 	);
-	const order = orderRails(sorted, left, right);
-	const gaps: number[] = order.map((r, i) =>
-		i === 0 ? 0 : r.key === order[i - 1].key ? BUNDLE : 1
-	);
-	const units = gaps.reduce((n, g) => n + g, 0);
+	for (const r of sorted) byKey.set(r.key, [...(byKey.get(r.key) ?? []), r]);
+	const order = orderBundles([...byKey.values()], left, right);
+	const units = order.length - 1;
 	const step = units > 0 ? Math.min(RAIL_STEP, (right - left - 2 * AIR) / units) : 0;
-	let x = (left + right) / 2 - (units * step) / 2;
-	order.forEach((r, i) => {
-		x += gaps[i] * step;
-		r.x = x;
+	const x0 = (left + right) / 2 - (units * step) / 2;
+	order.forEach((list, i) => {
+		for (const r of list) r.x = x0 + i * step;
 	});
 }
 

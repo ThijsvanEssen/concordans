@@ -106,19 +106,49 @@ describe.each(EXAMPLES)('the lines of %s', (name) => {
 				expect(close).toEqual([]);
 			});
 
+			it('runs the lines of one lijnsoort into one point as one line down their gutter', () => {
+				// Many to one: the rails of a bundle stand on one x, with no other rail between them.
+				// Open: lines to and from the strip Algemene wetten keep their own rails.
+				const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
+				const kindOf = (l: LanePath) => scene.lines.find((x) => x.id === l.id)!.kind;
+				const zones: [number, number][] = layout.columns.flatMap((c, i) => {
+					const next = layout.columns[i + 1];
+					const right = c.x + c.width;
+					return [
+						[right - c.inner, right + PANEL - 1],
+						[right + PANEL - 1, next ? next.x - PANEL + 1 : WIDTH]
+					];
+				});
+				const rails = new Map<string, Set<number>>();
+				for (const l of lines.filter((x) => !general.has(x.from) && !general.has(x.to))) {
+					const p = l.points;
+					const i = p.findLastIndex((q, k) => k > 0 && k < p.length - 1 && q.x === p[k - 1].x);
+					if (i < 1) continue;
+					const zone = zones.findIndex(([a, b]) => p[i].x > a && p[i].x < b);
+					const end = p.at(-1)!;
+					const key = `${l.to} ${kindOf(l)} ${end.x} ${end.y} ${zone}`;
+					rails.set(key, (rails.get(key) ?? new Set()).add(p[i].x));
+				}
+				expect([...rails].filter(([, xs]) => xs.size > 1).map(([k]) => k)).toEqual([]);
+			});
+
 			it('crosses no line in a gutter that the other order of their rails would not cross', () => {
 				const gutters: [number, number][] = layout.columns.map((c, i) => {
 					const next = layout.columns[i + 1];
 					return [c.x + c.width + PANEL - 1, next ? next.x - PANEL + 1 : WIDTH];
 				});
 				const all = lines.flatMap((l) => runs(l, gutters).map((r) => ({ l, r })));
+				// A rail of a bundle moves only with its bundle: its crossings are the price of one line.
+				const bundled = (r: Run) =>
+					all.filter((o) => o.r.gutter === r.gutter && o.r.pts[1].x === r.pts[1].x).length > 1;
 				const avoidable: string[] = [];
 				const swap = (r: Run, x: number) =>
 					r.pts.map((q, k) => (k === 1 || k === 2 ? { ...q, x } : q));
 				for (let i = 0; i < all.length; i++)
 					for (let j = i + 1; j < all.length; j++) {
 						const [a, b] = [all[i].r, all[j].r];
-						if (a.gutter !== b.gutter || all[i].l === all[j].l) continue;
+						if (a.gutter !== b.gutter || all[i].l === all[j].l || bundled(a) || bundled(b))
+							continue;
 						const other = crossings(swap(a, b.pts[1].x), swap(b, a.pts[1].x));
 						if (crossings(a.pts, b.pts) > 0 && other === 0)
 							avoidable.push(`${all[i].l.id} × ${all[j].l.id}`);
