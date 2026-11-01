@@ -95,7 +95,7 @@ export function buttonTitle(n: GraphNode, meta: Map<string, InstrumentMeta>): st
  * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
  * suffix ("via 200 van 846 leden") fits on a phone (Thijs, 9 Oct); the rest by bronNaam.
  */
-export function chipName<E extends { label: string; titel?: string }>(
+export function entryName<E extends { label: string; titel?: string }>(
 	entry: E,
 	node: GraphNode,
 	meta: Map<string, InstrumentMeta>
@@ -109,7 +109,7 @@ export function chipName<E extends { label: string; titel?: string }>(
 
 /** The row of Gekozen of the page's own bron drawn alone: no netwerk to switch it off in. */
 export const ownRow = (node: GraphNode, id: string, meta: Map<string, InstrumentMeta>) =>
-	chipName(
+	entryName(
 		{ id, label: '', collection: node.collection, on: true, alone: false, fixed: true, node },
 		node,
 		meta

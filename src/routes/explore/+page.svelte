@@ -110,7 +110,7 @@
 	import {
 		bronNaam,
 		bronFullName,
-		chipName,
+		entryName,
 		ownRow,
 		buttonName,
 		buttonTitle
@@ -1534,7 +1534,7 @@
 		loadFocus(id).catch((e) => showFocusError(e, id));
 	}
 
-	const chipNaam = (e: NetwerkEntry, node: GraphNode) => chipName(e, node, $instrumentMetaStore);
+	const chipNaam = (e: NetwerkEntry, node: GraphNode) => entryName(e, node, $instrumentMetaStore);
 
 	function setNetwerk(n: Netwerk, also: ParamPatch = {}) {
 		// What the reader composes is kept for the next visit; a link's netwerk is not.
