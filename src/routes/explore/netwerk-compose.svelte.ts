@@ -290,6 +290,9 @@ export class NetwerkComposer {
 		return level;
 	}
 
+	/** The chosen bronnen that were on when last drawn. */
+	#on: ReadonlySet<string> = new Set();
+
 	#draw(n: Netwerk, results: Settled[], final = true) {
 		const participants: { response: NodeResponse }[] = [];
 		const found: { id: string; response: NodeResponse }[] = [];
@@ -311,10 +314,13 @@ export class NetwerkComposer {
 		});
 		if (participants.length === 1)
 			participants[0] = { response: withinCap(participants[0].response, NEIGHBORHOOD_CAP) };
-		// A shorter reach than the last one lets the farther bronnen go: the canvas starts anew.
+		// A shorter reach than the last one lets the farther bronnen go, and a bron that left takes
+		// what its steps brought (B89): the canvas starts anew.
 		const level = this.#levelOf(n, found);
-		const shorter = level < this.#level;
+		const on = new Set(n.ids.filter((id) => isOn(n, id)));
+		const shorter = level < this.#level || [...this.#on].some((id) => !on.has(id));
 		this.#level = level;
+		this.#on = on;
 		if (shorter) {
 			this.#reached.clear();
 			this.reach = null;

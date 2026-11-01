@@ -159,5 +159,8 @@
 			max-width: 100%;
 			margin: 0;
 		}
+		.kind {
+			min-height: 44px;
+		}
 	}
 </style>
