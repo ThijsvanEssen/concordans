@@ -82,7 +82,7 @@ test('no chosen bron shows its key, after a 502 and Opnieuw either (N6)', async 
 test('a relation switched off stays in the address and after a reload, with one bron (N7)', async ({
 	page
 }) => {
-	await page.goto(`${ARTICLE}?mode=netwerk`);
+	await page.goto(`${ARTICLE}?mode=netwerk&doek=sigma`);
 	const noemt = (await legend(page)).getByRole('button', { name: /^Aanhaling/ });
 	await expect(noemt).toHaveAttribute('aria-pressed', 'true');
 	await noemt.click();

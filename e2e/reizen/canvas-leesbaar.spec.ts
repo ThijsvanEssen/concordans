@@ -9,7 +9,7 @@ const lijst = (page: Page) => page.locator('.canvas-node-list a');
 const hullNames = (page: Page) => page.locator('.hull-label');
 
 test('a ministerie in focus stands on its canvas, its name on its hull (N5)', async ({ page }) => {
-	await page.goto('/ministeries/bzk?mode=netwerk');
+	await page.goto('/ministeries/bzk?mode=netwerk&doek=sigma');
 	await expect(lijst(page).first()).toHaveText(
 		'Binnenlandse Zaken en Koninkrijksrelaties, Ministerie'
 	);
@@ -39,7 +39,7 @@ test('a wet with nothing of it drawn is an ordinary bron with its name, no empty
 test('each bron of the canvas has a name of its own, the uitspraken folded (N4)', async ({
 	page
 }) => {
-	await page.goto('/uitspraken/ECLI:NL:HR:2009:BH2815?mode=netwerk');
+	await page.goto('/uitspraken/ECLI:NL:HR:2009:BH2815?mode=netwerk&doek=sigma');
 	await expect(lijst(page).filter({ hasText: /^\d+ uitspraken, groep$/ })).toHaveCount(1);
 	const namen = await lijst(page).allTextContents();
 	expect(namen.length).toBeGreaterThan(1);

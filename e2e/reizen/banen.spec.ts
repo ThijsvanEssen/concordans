@@ -253,10 +253,15 @@ test('the button Netwerk draws what a link with netwerk= draws (B84)', async ({ 
 	expect(await numbers(page)).toEqual(linked);
 });
 
-// For the switch (PLAN-doek-banen, fase 6): Omgeving draws lanes without ?doek=banen.
-test.fixme('Omgeving draws lanes without ?doek=banen', async ({ page }) => {
+test('Omgeving draws lanes without ?doek=banen', async ({ page }) => {
 	await page.goto('/wetten/BWBR0006622?mode=netwerk');
 	await expect(page.getByTestId('banen')).toBeVisible();
 	await expect(tiles(page)).toHaveCount(20);
-	await expect(page.locator('.graph-canvas canvas')).toHaveCount(0);
+	await expect(page.locator('canvas')).toHaveCount(0);
+});
+
+test('?doek=sigma is the way back to the canvas', async ({ page }) => {
+	await page.goto('/wetten/BWBR0006622?mode=netwerk&doek=sigma');
+	await expect(page.locator('canvas').first()).toBeVisible();
+	await expect(page.getByTestId('banen')).toHaveCount(0);
 });

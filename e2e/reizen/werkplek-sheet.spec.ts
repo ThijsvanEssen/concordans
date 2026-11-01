@@ -49,7 +49,7 @@ test('a wide screen: no button, the strip stands at the left in two blocks, Bron
 	await expect(strook.getByRole('region', { name: 'Weergave' })).toBeVisible();
 	await expect(strook.getByRole('heading', { name: 'Bronnen' })).toHaveCount(1);
 	await expect(strook.getByRole('heading', { name: 'Weergave' })).toHaveCount(1);
-	await expect(strook.getByRole('heading', { name: 'Soort' })).toHaveCount(0);
+	await expect(strook.getByRole('heading', { name: 'Soort', exact: true })).toHaveCount(0);
 	await expect(strook.getByRole('heading', { name: 'Lijnen' })).toHaveCount(0);
 	await expect(strook.getByRole('heading', { name: 'Tonen' })).toHaveCount(1);
 });

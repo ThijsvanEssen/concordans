@@ -22,7 +22,7 @@ async function filters(page: Page) {
 test('Soort off for the kind of the chosen bronnen leaves them and the filters standing (R3-N B1)', async ({
 	page
 }) => {
-	await page.goto('/explore?netwerk=articles/bwbr0005289_162');
+	await page.goto('/explore?netwerk=articles/bwbr0005289_162&doek=sigma');
 	await openSheet(page);
 	const legend = await filters(page);
 	const articles = legend.getByRole('button', { name: /^Artikelen/ });

@@ -99,7 +99,7 @@ test.describe('on a phone', () => {
 	// The segments of a Keuze and the halves of a zoom pair are 44 px themselves, measured as
 	// drawn (live toets 27 Oct, B2: 42 px inside a 1 px frame).
 	test('the steps and the zoom buttons of the werkplek are 44 px', async ({ page }) => {
-		await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+		await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk&doek=sigma');
 		await openSheet(page);
 		const hoogtes = async (group: string) =>
 			page
@@ -135,7 +135,7 @@ test.describe('on a phone', () => {
 	test('the werkplek is 44 px to a finger, its choices whole', async ({ page }) => {
 		test.setTimeout(120_000);
 		await page.goto('/explore?netwerk=instruments/bwbr0005537');
-		await expect(page.locator('.canvas-wrap')).toBeAttached();
+		await expect(page.getByTestId('banen')).toBeAttached();
 		await page.waitForLoadState('networkidle');
 		await openSheet(page);
 		expect.soft(await kleine(page)).toEqual([]);
@@ -168,7 +168,7 @@ test.describe('on a phone', () => {
 			/citeren|Wetten|Rechtspraak|Kamerstukken/.test(k.naam)
 		);
 		expect(small).toEqual([]);
-		await page.goto(`${ARTICLE}?mode=netwerk`);
+		await page.goto(`${ARTICLE}?mode=netwerk&doek=sigma`);
 		await openSheet(page);
 		await page.waitForLoadState('networkidle');
 		await expect(

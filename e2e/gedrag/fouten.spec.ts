@@ -204,7 +204,7 @@ test('a network that cannot be drawn says so on the canvas, the bron stays, Opni
 }) => {
 	guard.allow(FAILED);
 	await failApi(page, /^\/api\/nodes\/articles\/bwbr0005289_162\/neighborhood/, 503);
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk&doek=sigma');
 	const alert = page
 		.getByRole('alert')
 		.filter({ hasText: 'Het netwerk kon niet op tijd worden geladen.' });

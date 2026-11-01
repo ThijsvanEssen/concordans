@@ -106,7 +106,7 @@ test('Netwerk opens the bron of the page big, and elsewhere begins with choosing
 	await netwerkKnop(page).click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162\?.*mode=netwerk/);
 	await expect(netwerkKnop(page)).toHaveAttribute('aria-pressed', 'true');
-	await expect(page.locator('canvas').first()).toBeVisible();
+	await expect(page.getByTestId('banen')).toBeVisible();
 
 	await page.goto('/actueel');
 	await expect(netwerkKnop(page)).toHaveAttribute('href', '/explore');

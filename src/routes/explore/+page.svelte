@@ -1783,7 +1783,7 @@
 	// Voorstellen: the lopende voorstellen of the bronnen on the canvas beside them (besluit 37).
 	const PROPOSALS = 'voorstellen';
 	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
-	// Omgeving as lanes (PLAN-doek-banen, fasen 4 en 5): behind ?doek=banen beside the canvas of now.
+	// Omgeving as lanes (PLAN-doek-banen); ?doek=sigma draws the canvas of before.
 	const lanesOn = $derived(onLanes(params) && view === 'omgeving');
 	const proposals = new Proposals(
 		store,

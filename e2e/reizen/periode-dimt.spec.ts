@@ -7,7 +7,7 @@ test('a chosen period dims the bronnen outside it and takes none from the canvas
 	touch
 }) => {
 	test.skip(touch, 'a phone opens its band in a Blad (tijdstrook-staafstrook.spec.ts)');
-	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk');
+	await page.goto('/uitspraken/ECLI:NL:HR:2019:2006?mode=netwerk&doek=sigma');
 	const canvas = page.locator('.canvas-wrap');
 	const band = page.locator('.tijdstrook .band');
 	await expect(band.locator('.deel').first()).toBeVisible();

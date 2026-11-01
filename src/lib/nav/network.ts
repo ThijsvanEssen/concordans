@@ -14,8 +14,8 @@ const WERKPLEK_PARAMS = ['mode', 'netwerk', 'uit', 'tussen', 'weergave', 'kies']
 export const readerBron = (params: URLSearchParams): string | null =>
 	params.get('focus') || parseNetwerk(params).ids[0] || null;
 
-/** The werkplek draws its Omgeving as lanes (?doek=banen, PLAN-doek-banen). */
-export const onLanes = (params: URLSearchParams): boolean => params.get('doek') === 'banen';
+/** The werkplek draws its Omgeving as lanes; ?doek=sigma is the way back while sigma is still here. */
+export const onLanes = (params: URLSearchParams): boolean => params.get('doek') !== 'sigma';
 
 /**
  * The query of what is chosen: the netwerk of `query` and the bron of the lezer (`focus`), first

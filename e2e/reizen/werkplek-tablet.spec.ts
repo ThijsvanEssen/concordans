@@ -16,13 +16,13 @@ test('the werkplek at 1024: strip, canvas and card side by side without overflow
 	await expect(strip).toBeVisible();
 	const lees = page.getByRole('link', { name: 'Lees', exact: true });
 	await expect(lees).toBeVisible();
-	const canvas = page.locator('canvas').first();
-	await expect(canvas).toBeAttached();
+	const lanes = page.getByTestId('banen');
+	await expect(lanes).toBeVisible();
 
-	const [s, c, k] = await Promise.all([strip, canvas, lees].map((l) => l.boundingBox()));
-	// Left to right: the strip, then the canvas, then the card; none over another.
+	const [s, c, k] = await Promise.all([strip, lanes, lees].map((l) => l.boundingBox()));
+	// Left to right: the strip, then the lanes; the card lies over their right side.
 	expect(s!.x + s!.width).toBeLessThanOrEqual(c!.x + 1);
-	expect(k!.x).toBeGreaterThanOrEqual(c!.x + c!.width - 1);
+	expect(k!.x).toBeGreaterThan(c!.x);
 	expect(
 		await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
 	).toBeLessThanOrEqual(0);

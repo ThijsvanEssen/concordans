@@ -269,8 +269,8 @@ const GEVALLEN: Record<string, Geval> = {
 		run: async (page) => {
 			await page.goto(NETWERK);
 			await expect(lijst(page).nth(1)).toBeAttached();
-			// A bron, not a group: a group is not added by a key.
-			const bron = lijst(page).and(page.locator('a:not([aria-haspopup])')).first();
+			// A bron, not a group: a group is not added by a key. Not the first: that is the chosen one.
+			const bron = lijst(page).and(page.locator('a:not([aria-haspopup])')).nth(1);
 			await bron.focus();
 			await page.keyboard.press('n');
 			await expect(regel(page)).toHaveText(/(toegevoegd aan|uit) het netwerk/);

@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
 const NETWERK =
-	'/explore?mode=netwerk&netwerk=instruments/bwbr0052875,instruments/bwbr0052872,instruments/bwbr0001854';
+	'/explore?mode=netwerk&netwerk=instruments/bwbr0052875,instruments/bwbr0052872,instruments/bwbr0001854&doek=sigma';
 const lijst = (page: Page) => page.locator('.canvas-node-list a');
 
 test('three chosen wetten, one of them very large, each stand with their articles', async ({
@@ -22,7 +22,7 @@ test('Cbw at two steps is drawn, no step greyed out, and the panel says it is no
 	page,
 	touch
 }) => {
-	await page.goto('/explore?mode=netwerk&netwerk=instruments/bwbr0052872&diepte=2');
+	await page.goto('/explore?mode=netwerk&netwerk=instruments/bwbr0052872&diepte=2&doek=sigma');
 	if (touch) await page.getByRole('button', { name: 'Weergave', exact: true }).click();
 	const stappen = page.getByRole('group', { name: 'Aantal stappen' });
 	await expect(stappen.getByRole('button', { name: '2 stappen' })).toHaveAttribute(
@@ -40,7 +40,9 @@ test('Cbw at two steps is drawn, no step greyed out, and the panel says it is no
 for (const diepte of [1, 2]) {
 	test(`Cbw at ${diepte} step(s): no dossier disc holds the wet`, async ({ page, touch }) => {
 		test.skip(touch, 'the discs are measured at one width');
-		await page.goto(`/explore?mode=netwerk&netwerk=instruments/bwbr0052872&diepte=${diepte}`);
+		await page.goto(
+			`/explore?mode=netwerk&netwerk=instruments/bwbr0052872&diepte=${diepte}&doek=sigma`
+		);
 		await expect(
 			lijst(page)
 				.filter({ hasText: /^\d+ artikelen, groep$/ })

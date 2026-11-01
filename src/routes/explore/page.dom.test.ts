@@ -225,7 +225,7 @@ describe('the Verkenner reads its state from the address', () => {
 			['&alles=1&diepte=3', 1]
 		];
 		for (const [query, depth] of cases) {
-			const v = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk${query}`);
+			const v = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma${query}`);
 			expect(seen.GraphView.depth, query).toBe(depth);
 			v.unmount();
 		}
@@ -349,7 +349,7 @@ describe('the netwerk of chosen bronnen', () => {
 	};
 
 	it('adds a bron in place, removes it as a step, and remembers it', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma`);
 		const toggle = (id: string) =>
 			(seen.GraphView.onToggleChosen as (n: ReturnType<typeof graphNode>) => void)(graphNode(id));
 		toggle(ARTICLE);
@@ -407,7 +407,7 @@ describe('the werkplek (besluit 39)', () => {
 
 	it('draws a clean link as it says, whatever is kept in this browser (N7)', async () => {
 		localStorage.setItem('concordans:netwerk', `netwerk=${MEMBER}`);
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma`);
 		expect(param('netwerk')).toBeNull();
 		expect(param('focus')).toBe(ARTICLE);
 		expect(seen.GraphView.netwerkActive).toBe(false);
@@ -419,8 +419,16 @@ describe('the werkplek (besluit 39)', () => {
 		expect(localStorage.getItem('concordans:netwerk')).toBeNull();
 	});
 
-	it('begins with the bron alone where no netwerk is kept', async () => {
+	it('on the lanes a bron alone is a netwerk of one, the address unchanged (B84)', async () => {
 		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
+		expect(param('netwerk')).toBeNull();
+		expect(seen.GraphView.expecting).toBe(1);
+		expect(seen.GraphView.netwerkActive).toBe(false);
+		expect(seen.GraphView.lanes).toBe(true);
+	});
+
+	it('begins with the bron alone where no netwerk is kept', async () => {
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma`);
 		expect(param('netwerk')).toBeNull();
 		expect(seen.GraphView.netwerkActive).toBe(false);
 	});
