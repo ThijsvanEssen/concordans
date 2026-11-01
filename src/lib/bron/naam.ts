@@ -9,7 +9,13 @@ import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
 import { bwCode } from '$lib/text/bw';
-import { dossierOwnName, dossierUitProps, dossierNumberLabel } from './dossier-naam';
+import {
+	dossierOwnName,
+	dossierUitProps,
+	dossierNumberLabel,
+	dossierVolledigeTitel,
+	officialNumber
+} from './dossier-naam';
 import type { NetwerkEntry } from '$lib/selection/netwerk';
 
 /** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
@@ -69,9 +75,16 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 export function knopNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	if (n.collection === 'dossiers') {
 		const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
-		return dossierNumberLabel(d.number);
+		return officialNumber(d.number);
 	}
 	return textOf(n.raw?.cite?.short) ?? bronNaam(n, meta);
+}
+
+/** The whole name of a bron where the wissel abbreviates it: a dossier by its number and title. */
+export function knopTitel(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+	if (n.collection !== 'dossiers') return bronFullName(n, meta);
+	const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
+	return dossierVolledigeTitel(d) ?? dossierNumberLabel(d.number);
 }
 
 /**

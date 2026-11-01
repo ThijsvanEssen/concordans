@@ -107,7 +107,13 @@
 		nodeToGraphNode,
 		syntheticNode
 	} from '$lib/graph/types';
-	import { bronNaam, bronFullName, chipNaam as chipNaamVan, knopNaam } from '$lib/bron/naam';
+	import {
+		bronNaam,
+		bronFullName,
+		chipNaam as chipNaamVan,
+		knopNaam,
+		knopTitel
+	} from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
 		padOfFocus,
@@ -200,7 +206,7 @@
 		bronRol.set(selectedNode?.collection === 'members' ? (selectedNode.raw?.props ?? null) : null);
 		const n = rijen.find((e) => e.id === lezer)?.node ?? (selectedLinkId === lezer && selectedNode);
 		const meta = $instrumentMetaStore;
-		leesNaam.set(n ? { naam: knopNaam(n, meta), titel: bronFullName(n, meta) } : null);
+		leesNaam.set(n ? { naam: knopNaam(n, meta), titel: knopTitel(n, meta) } : null);
 		return () => (bronRol.set(null), leesNaam.set(null));
 	});
 	/**
