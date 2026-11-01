@@ -93,3 +93,33 @@ export function curvedLine(
 		middle: { x: r1((p.x + 2 * c.x + q.x) / 4), y: r1((p.y + 2 * c.y + q.y) / 4) }
 	};
 }
+
+type Pt = { x: number; y: number };
+
+/** The arrowhead at the end of a path, pointing along its last run, as SVG points. */
+export function arrowHead(
+	p: { arrow: boolean; points: readonly Pt[]; width: number },
+	arrow: number
+): string | null {
+	if (!p.arrow || p.points.length < 2) return null;
+	const tip = p.points.at(-1)!;
+	const from = p.points.at(-2)!;
+	const len = headLength(p.width, arrow);
+	const d = Math.hypot(tip.x - from.x, tip.y - from.y) || 1;
+	const [ux, uy] = [(tip.x - from.x) / d, (tip.y - from.y) / d];
+	const w = (len * ARROW_WIDTH) / 2;
+	const bx = tip.x - ux * len;
+	const by = tip.y - uy * len;
+	return `${tip.x},${tip.y} ${bx - uy * w},${by + ux * w} ${bx + uy * w},${by - ux * w}`;
+}
+
+/** The middle of a path's longest run: where its label stands. */
+export function longestRunMiddle(points: readonly Pt[]) {
+	let best = { x: points[0].x, y: points[0].y, len: -1 };
+	for (let i = 1; i < points.length; i++) {
+		const [a, b] = [points[i - 1], points[i]];
+		const len = Math.hypot(b.x - a.x, b.y - a.y);
+		if (len > best.len) best = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, len };
+	}
+	return best;
+}

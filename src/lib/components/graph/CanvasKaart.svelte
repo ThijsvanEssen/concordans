@@ -8,7 +8,7 @@
 		title,
 		samenvatting,
 		kop,
-		actie,
+		action,
 		children,
 		class: className = '',
 		label,
@@ -21,7 +21,7 @@
 		/** A head of its own instead of the title (a cluster: its sign and name). */
 		kop?: Snippet;
 		/** At the right of the head (Wis alles). */
-		actie?: Snippet;
+		action?: Snippet;
 		children?: Snippet;
 		class?: string;
 		label?: string;
@@ -39,7 +39,7 @@
 			<h2 class="canvas-kaart__titel">{title}</h2>
 			{#if samenvatting}{@render samenvatting()}{/if}
 		{/if}
-		{#if actie}<span class="canvas-kaart__actie">{@render actie()}</span>{/if}
+		{#if action}<span class="canvas-kaart__actie">{@render action()}</span>{/if}
 	</div>
 	{#if children}
 		<div class="canvas-kaart__inhoud">{@render children()}</div>

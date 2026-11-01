@@ -1380,7 +1380,6 @@
 		type="button"
 		class="btn sheet-button"
 		style:--kaart-h="{cardHeight}px"
-		style:--strook-h="{stripHeight}px"
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
@@ -1406,7 +1405,7 @@
 	/>
 {/snippet}
 
-<div class="graph-view">
+<div class="graph-view" style:--strook-h="{stripHeight}px">
 	<!-- The strip at the left (besluit 39): the way back and the Weergave, the chosen bronnen,
 	     then the legend that is the filter and the period. First in the page, so a Tab reaches
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
@@ -1520,6 +1519,7 @@
 						pointed={pijl?.id ?? keyNode?.id ?? null}
 						onMark={(id) => markById(id, markeer)}
 						onOpen={(id) => markById(id, open)}
+						onUnmark={ontmarkeer}
 						onDrawn={(set) => {
 							drawn = set;
 							laneDrawn = set;
@@ -1615,12 +1615,7 @@
 						/>
 					</div>
 				{:else if $netwerkMelding}
-					<p
-						class="netwerk-melding"
-						role="status"
-						style:--kaart-h="{cardHeight}px"
-						style:--strook-h="{stripHeight}px"
-					>
+					<p class="netwerk-melding" role="status" style:--kaart-h="{cardHeight}px">
 						{$netwerkMelding.tekst}
 						{#if $netwerkMelding.terug}
 							<button
@@ -1722,6 +1717,7 @@
 				openCount={inFluxMap.get(kaartNode.id) ?? 0}
 				chosen={pinnedIds}
 				{onAdd}
+				changes={lanes}
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}

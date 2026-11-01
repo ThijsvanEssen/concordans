@@ -4,7 +4,7 @@ import {
 	byArticle,
 	sharedEnactment,
 	stageLead,
-	zonderArtikelen,
+	lawsWithoutArticles,
 	type DossierChange
 } from './changed-articles';
 
@@ -95,7 +95,7 @@ describe('changed articles', () => {
 	});
 });
 
-describe('zonderArtikelen', () => {
+describe('lawsWithoutArticles', () => {
 	it('names the laws the dossier changes that hold no changed article', () => {
 		const data = {
 			number: '36496',
@@ -135,7 +135,7 @@ describe('zonderArtikelen', () => {
 				basis: []
 			}
 		];
-		expect(zonderArtikelen(data, wijzigt).map((w) => w.name)).toEqual(['Wet goed verhuurderschap']);
-		expect(zonderArtikelen(data, [])).toEqual([]);
+		expect(lawsWithoutArticles(data, wijzigt).map((w) => w.name)).toEqual(['Wet goed verhuurderschap']);
+		expect(lawsWithoutArticles(data, [])).toEqual([]);
 	});
 });

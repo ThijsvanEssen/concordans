@@ -16,7 +16,7 @@
 		changeHead,
 		sharedEnactment,
 		stageLead,
-		zonderArtikelen,
+		lawsWithoutArticles,
 		type ChangedArticles,
 		type LegalEffectLaw
 	} from './changed-articles';
@@ -30,7 +30,7 @@
 		wijzigt?: readonly LegalEffectLaw[];
 	} = $props();
 
-	const zonder = $derived(zonderArtikelen(data, wijzigt));
+	const zonder = $derived(lawsWithoutArticles(data, wijzigt));
 
 	/** Articles shown per law before Alle. */
 	const PREVIEW = 8;

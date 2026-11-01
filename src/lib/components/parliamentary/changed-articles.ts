@@ -18,7 +18,7 @@ export type LegalEffectLaw = NonNullable<Schema<'LegalEffectDTO'>['amends']>[num
  * changed article in the data: named under Gewijzigde artikelen too, so the reader counts the
  * laws once (Thijs, 10 Oct: "single count").
  */
-export function zonderArtikelen(data: ChangedArticles, wijzigt: readonly LegalEffectLaw[]) {
+export function lawsWithoutArticles(data: ChangedArticles, wijzigt: readonly LegalEffectLaw[]) {
 	const bekend = new Set(
 		data.laws.flatMap((l) =>
 			[l.law.id?.replace(/^instruments\//, ''), l.law.bwb_id, l.law.celex]
