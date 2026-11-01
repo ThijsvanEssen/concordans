@@ -6,8 +6,8 @@
 	//
 	// A click on the canvas marks a bron (?marked) and opens its card; Lees on it reads the bron,
 	// a step of its own: Back brings the werkplek back from its address.
-	import { bronRol, leesNaam } from '$lib/nav/bron-rol';
-	import { lezerBron, metLezer, naWeghalen } from '$lib/nav/network';
+	import { bronRol, readerName } from '$lib/nav/bron-rol';
+	import { readerBron, withReader, afterRemoval } from '$lib/nav/network';
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef, bwCode } from '$lib/text/bw';
 	import { categoryLabel } from '$lib/components/explore/index/categories';
@@ -110,9 +110,10 @@
 	import {
 		bronNaam,
 		bronFullName,
-		chipNaam as chipNaamVan,
-		knopNaam,
-		knopTitel
+		chipName,
+		ownRow,
+		buttonName,
+		buttonTitle
 	} from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
 	import {
@@ -154,9 +155,9 @@
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
 	import {
-		lezerEerst,
+		readerFirst,
 		netwerkParams,
-		netwerkQueryString,
+		networkQuery,
 		parseNetwerk,
 		withAdded,
 		withRemoved,
@@ -204,10 +205,11 @@
 	// lezer (B85), from the node as it is loaded.
 	$effect(() => {
 		bronRol.set(selectedNode?.collection === 'members' ? (selectedNode.raw?.props ?? null) : null);
-		const n = rijen.find((e) => e.id === lezer)?.node ?? (selectedLinkId === lezer && selectedNode);
+		const n =
+			rows.find((e) => e.id === readerId)?.node ?? (selectedLinkId === readerId && selectedNode);
 		const meta = $instrumentMetaStore;
-		leesNaam.set(n ? { naam: knopNaam(n, meta), titel: knopTitel(n, meta) } : null);
-		return () => (bronRol.set(null), leesNaam.set(null));
+		readerName.set(n ? { name: buttonName(n, meta), title: buttonTitle(n, meta) } : null);
+		return () => (bronRol.set(null), readerName.set(null));
 	});
 	/**
 	 * A focus on its way while another bron is still selected: the reader shows its loading
@@ -340,7 +342,7 @@
 	// where the address names no bron at all (the button Netwerk on a page without one), never
 	// laid over a bron that is named.
 	leesBewaard();
-	const netwerkQuery = $derived(metLezer(netwerkQueryOf(params), mode === 'graph' ? focus : null));
+	const netwerkQuery = $derived(withReader(netwerkQueryOf(params), mode === 'graph' && focus));
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
@@ -1532,11 +1534,11 @@
 		loadFocus(id).catch((e) => showFocusError(e, id));
 	}
 
-	const chipNaam = (e: NetwerkEntry, node: GraphNode) => chipNaamVan(e, node, $instrumentMetaStore);
+	const chipNaam = (e: NetwerkEntry, node: GraphNode) => chipName(e, node, $instrumentMetaStore);
 
 	function setNetwerk(n: Netwerk, also: ParamPatch = {}) {
 		// What the reader composes is kept for the next visit; a link's netwerk is not.
-		bewaarNetwerk(n.ids.length > 0 ? netwerkQueryString(n) : null);
+		bewaarNetwerk(n.ids.length > 0 ? networkQuery(n) : null);
 		// Clearing the netwerk or removing a bron is undone with Back.
 		const shrinks = n.ids.length < netwerk.ids.length;
 		const next = netwerkParams(n);
@@ -1611,15 +1613,15 @@
 			? null
 			: focusOf(refOf(node.collection, node.key, node.raw?.props));
 	const selectedLinkId = $derived(selectedNode ? linkIdOf(selectedNode) : null);
-	const lezer = $derived(lezerBron(params));
+	const readerId = $derived(readerBron(params));
 	/** The rows of Gekozen: the netwerk, or the page's own bron drawn alone; reading, its bron. */
-	const rijen = $derived<NetwerkEntry[]>(
+	const rows = $derived<NetwerkEntry[]>(
 		netwerkActive
 			? composer.entries.map((e) =>
 					e.node ? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) } : e
 				)
 			: selectedNode && selectedLinkId
-				? [eigenRij(selectedNode, selectedLinkId, $instrumentMetaStore)]
+				? [ownRow(selectedNode, selectedLinkId, $instrumentMetaStore)]
 				: []
 	);
 	// The new bron has reached the reader (its light node or its node): the wait is over.
@@ -1637,7 +1639,7 @@
 		// While reading, the bron joins the netwerk kept for the werkplek; the button Netwerk of
 		// the top bar counts it.
 		if (mode !== 'graph') {
-			bewaarNetwerk(netwerkQueryString(withAdded(bewaard, id)));
+			bewaarNetwerk(networkQuery(withAdded(bewaard, id)));
 			return;
 		}
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
@@ -1653,31 +1655,31 @@
 		);
 	}
 	/** × on a chosen bron: the lezer goes along with the bron it shows (B85). Undone to this page. */
-	function haalWeg(id: string) {
-		const naamVan = (b: string) => kort(rijen.find((e) => e.id === b)?.label ?? 'De bron');
-		const stap = naWeghalen(netwerk, id, netwerkActive ? focus : id);
-		const tekst = `${naamVan(id)} weggehaald uit het netwerk.`;
-		const terug = page.url.pathname + page.url.search + page.url.hash;
-		const bewaardTerug = keptNetwerk();
-		const zetTerug = () => {
-			bewaarNetwerk(bewaardTerug);
-			navigate(terug, { step: true });
+	function removeBron(id: string) {
+		const nameOf = (b: string) => kort(rows.find((e) => e.id === b)?.label ?? 'De bron');
+		const step = afterRemoval(netwerk, id, netwerkActive ? focus : id);
+		const said = `${nameOf(id)} weggehaald uit het netwerk.`;
+		const back = page.url.pathname + page.url.search + page.url.hash;
+		const keptBefore = keptNetwerk();
+		const undo = () => {
+			bewaarNetwerk(keptBefore);
+			navigate(back, { step: true });
 		};
-		if (stap.lezen) {
+		if (step.read) {
 			bewaarNetwerk(null);
 			navigate(openHref(id), { step: true });
-			return announce(tekst.slice(0, -1), undefined, zetTerug);
+			return announce(said.slice(0, -1), undefined, undo);
 		}
-		setNetwerk(stap.netwerk, focus && stap.naar ? { focus: stap.naar } : {});
-		const verder = stap.naar ? ` De lezer gaat naar ${naamVan(stap.naar)}.` : '';
-		meldNetwerk(tekst + verder, zetTerug);
+		setNetwerk(step.netwerk, focus && step.next ? { focus: step.next } : {});
+		const further = step.next ? ` De lezer gaat naar ${nameOf(step.next)}.` : '';
+		meldNetwerk(said + further, undo);
 	}
 
 	function toggleChosen(node: GraphNode) {
 		const id = linkIdOf(node);
 		if (!id) return;
 		if (!netwerk.ids.includes(id)) return addToNetwerk(node);
-		haalWeg(id);
+		removeBron(id);
 	}
 
 	// Wissen leaves nothing: no chosen bronnen, no focus, no canvas, nothing remembered for
@@ -2006,7 +2008,7 @@
 			const id = focusOf(t.ref);
 			if (id) addIdToNetwerk(id, t.label || undefined);
 		},
-		remove: haalWeg,
+		remove: removeBron,
 		clear: wisAlles
 	});
 	/** Alt V with one bron opened Bron toevoegen: the bron added there shows Verband (Thijs, 30 Oct). */
@@ -2544,9 +2546,9 @@
 											bind:searching={toevoegenOpen}
 											searchingWhy={verbandAfterAdd ? 'Verband vraagt een tweede bron' : null}
 											onSearchClose={() => (verbandAfterAdd = false)}
-											entries={lezerEerst(rijen, lezer)}
-											{lezer}
-											onLezen={() => netwerkActive && bewaarNetwerk(netwerkQueryString(netwerk))}
+											entries={readerFirst(rows, readerId)}
+											reader={readerId}
+											onRead={() => netwerkActive && bewaarNetwerk(networkQuery(netwerk))}
 											loading={composer.loading}
 											expected={netwerkActive ? netwerk.ids.length : 0}
 											{telefoon}
@@ -2566,7 +2568,7 @@
 											onToggle={(id) => {
 												setNetwerk(withToggled(netwerk, id));
 											}}
-											onRemove={haalWeg}
+											onRemove={removeBron}
 											onAdd={() => selectedNode && addToNetwerk(selectedNode)}
 											onClear={wisAlles}
 										/>{/if}

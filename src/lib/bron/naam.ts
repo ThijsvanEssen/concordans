@@ -8,6 +8,7 @@ import { decisionOutcome } from '$lib/votes/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
+import { citationRecord } from '$lib/text/citation-record';
 import { bwCode } from '$lib/text/bw';
 import {
 	dossierOwnName,
@@ -16,7 +17,6 @@ import {
 	dossierVolledigeTitel,
 	officialNumber
 } from './dossier-naam';
-import type { NetwerkEntry } from '$lib/selection/netwerk';
 
 /** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
 export function bronFullName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
@@ -72,16 +72,20 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 }
 
 /** A bron on the wissel, as short as it is cited: a dossier by its number, a judgment by its citation. */
-export function knopNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+export function buttonName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	if (n.collection === 'dossiers') {
 		const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
 		return officialNumber(d.number);
 	}
-	return textOf(n.raw?.cite?.short) ?? bronNaam(n, meta);
+	const cited =
+		n.collection === 'judgments'
+			? citationRecord({ kind: 'judgment', cite: n.raw?.cite, props: n.raw?.props })
+			: null;
+	return cited?.short ?? bronNaam(n, meta);
 }
 
 /** The whole name of a bron where the wissel abbreviates it: a dossier by its number and title. */
-export function knopTitel(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+export function buttonTitle(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	if (n.collection !== 'dossiers') return bronFullName(n, meta);
 	const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
 	return dossierVolledigeTitel(d) ?? dossierNumberLabel(d.number);
@@ -91,22 +95,22 @@ export function knopTitel(n: GraphNode, meta: Map<string, InstrumentMeta>): stri
  * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
  * suffix ("via 200 van 846 leden") fits on a phone (Thijs, 9 Oct); the rest by bronNaam.
  */
-export function chipNaam(
-	e: NetwerkEntry,
+export function chipName<E extends { label: string; titel?: string }>(
+	entry: E,
 	node: GraphNode,
 	meta: Map<string, InstrumentMeta>
-): NetwerkEntry {
+): E {
 	const naam = bronNaam(node, meta);
-	const afkorting = node.raw?.props?.abbreviation;
-	return node.collection === 'factions' && typeof afkorting === 'string' && afkorting
-		? { ...e, label: afkorting, titel: naam }
-		: { ...e, label: naam };
+	const abbreviation = node.raw?.props?.abbreviation;
+	return node.collection === 'factions' && typeof abbreviation === 'string' && abbreviation
+		? { ...entry, label: abbreviation, titel: naam }
+		: { ...entry, label: naam };
 }
 
 /** The row of Gekozen of the page's own bron drawn alone: no netwerk to switch it off in. */
-export const eigenRij = (node: GraphNode, id: string, meta: Map<string, InstrumentMeta>) =>
-	chipNaam(
-		{ id, label: '', collection: node.collection, on: true, alone: false, vast: true, node },
+export const ownRow = (node: GraphNode, id: string, meta: Map<string, InstrumentMeta>) =>
+	chipName(
+		{ id, label: '', collection: node.collection, on: true, alone: false, fixed: true, node },
 		node,
 		meta
 	);

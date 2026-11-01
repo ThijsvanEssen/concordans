@@ -28,8 +28,8 @@
 
 	let {
 		entries,
-		lezer = null,
-		onLezen,
+		reader = null,
+		onRead,
 		loading = false,
 		expected = 0,
 		selection = null,
@@ -46,9 +46,9 @@
 	}: {
 		entries: NetwerkEntry[];
 		/** The bron the lezer shows: "In de lezer" on its row, Lezen on the others (B85). */
-		lezer?: string | null;
+		reader?: string | null;
 		/** A row leads to the lezer: what is chosen is kept for the way back. */
-		onLezen?: () => void;
+		onRead?: () => void;
 		loading?: boolean;
 		/** The bronnen of the netwerk asked and not yet in: their rows hold their place. */
 		expected?: number;
@@ -110,8 +110,8 @@
 							type="button"
 							class="rij__naam"
 							aria-pressed={e.on}
-							disabled={e.missing || e.vast}
-							title={e.vast
+							disabled={e.missing || e.fixed}
+							title={e.fixed
 								? undefined
 								: e.missing
 									? 'Niet gevonden'
@@ -136,15 +136,15 @@
 							{:else}
 								<span class="rij__staat">{soortVan(e)}</span>
 							{/if}
-							{#if e.id === lezer}
-								<TekstLink class="rij__lezen" href={openHref(e.id)} onclick={onLezen}
+							{#if e.id === reader}
+								<TekstLink class="rij__lezen" href={openHref(e.id)} onclick={onRead}
 									><Picto naam="tekst" size={13} />In de lezer</TekstLink
 								>
 							{:else if !e.missing}
 								<TekstLink
 									class="rij__lezen"
 									href={openHref(e.id)}
-									onclick={onLezen}
+									onclick={onRead}
 									aria-label="{e.label} lezen">Lezen</TekstLink
 								>
 							{/if}

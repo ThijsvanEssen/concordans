@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import NetwerkPanel from './NetwerkPanel.svelte';
-import { lezerEerst, type NetwerkEntry } from './netwerk';
+import { readerFirst, type NetwerkEntry } from './netwerk';
 
 const entry = (over: Partial<NetwerkEntry>): NetwerkEntry => ({
 	id: 'instruments/bwbr0005290',
@@ -32,8 +32,8 @@ describe('NetwerkPanel', () => {
 		it('one bron: In de lezer, no switch and no Wis alles', () => {
 			render(NetwerkPanel, {
 				...props,
-				entries: [{ ...wvw, vast: true }],
-				lezer: wvw.id
+				entries: [{ ...wvw, fixed: true }],
+				reader: wvw.id
 			});
 			expect(within(rij('WVW')).getByRole('link', { name: 'In de lezer' })).toBeTruthy();
 			expect(within(rij('WVW')).getByRole('button', { name: 'WVW' })).toHaveProperty(
@@ -43,7 +43,7 @@ describe('NetwerkPanel', () => {
 			expect(screen.queryByText('Wis alles')).toBeNull();
 		});
 		it('two bronnen: In de lezer on its own, Lezen on the other, each to its own text', () => {
-			render(NetwerkPanel, { ...props, entries: [wvw, cbb], lezer: wvw.id });
+			render(NetwerkPanel, { ...props, entries: [wvw, cbb], reader: wvw.id });
 			expect(within(rij('WVW')).queryByRole('link', { name: 'WVW lezen' })).toBeNull();
 			const lezen = within(rij('Cbb')).getByRole('link', { name: 'Cbb lezen' });
 			expect(lezen.getAttribute('href')).toBe('/wetten/BWBR0052875');
@@ -53,30 +53,30 @@ describe('NetwerkPanel', () => {
 			expect(screen.getAllByText('Wis alles')).toHaveLength(1);
 		});
 		it('keeps what is chosen when a row leads to the lezer', async () => {
-			const onLezen = vi.fn();
-			render(NetwerkPanel, { ...props, entries: [wvw, cbb], lezer: wvw.id, onLezen });
+			const onRead = vi.fn();
+			render(NetwerkPanel, { ...props, entries: [wvw, cbb], reader: wvw.id, onRead });
 			const link = screen.getByRole('link', { name: 'Cbb lezen' });
 			link.addEventListener('click', (e) => e.preventDefault());
 			await fireEvent.click(link);
-			expect(onLezen).toHaveBeenCalledOnce();
+			expect(onRead).toHaveBeenCalledOnce();
 		});
 		it('a long name keeps the whole name in the row', () => {
 			const lang = 'Besluit aanwijzing ambtenaren belast met opsporing ex artikel 159 WVW';
-			render(NetwerkPanel, { ...props, entries: [entry({ label: lang })], lezer: 'x/y' });
+			render(NetwerkPanel, { ...props, entries: [entry({ label: lang })], reader: 'x/y' });
 			expect(screen.getByText(lang)).toBeTruthy();
 		});
 		it('a bron not found has no way to the lezer', () => {
-			render(NetwerkPanel, { ...props, entries: [{ ...cbb, missing: true }], lezer: wvw.id });
+			render(NetwerkPanel, { ...props, entries: [{ ...cbb, missing: true }], reader: wvw.id });
 			expect(screen.queryByRole('link', { name: 'Cbb lezen' })).toBeNull();
 		});
-		it('lezerEerst: the bron of the lezer on top, also past the fold', () => {
+		it('readerFirst: the bron of the lezer on top, also past the fold', () => {
 			const rest = Array.from({ length: 7 }, (_, i) =>
 				entry({ id: `instruments/bwbr000000${i}`, label: `Wet ${i}` })
 			);
 			render(NetwerkPanel, {
 				...props,
-				entries: lezerEerst([...rest, wvw], wvw.id),
-				lezer: wvw.id
+				entries: readerFirst([...rest, wvw], wvw.id),
+				reader: wvw.id
 			});
 			expect(screen.getByRole('link', { name: 'In de lezer' })).toBeTruthy();
 		});

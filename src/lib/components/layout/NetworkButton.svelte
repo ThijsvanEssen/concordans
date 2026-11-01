@@ -11,7 +11,7 @@
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
 	import { networkState } from '$lib/nav/network';
-	import { leesNaam } from '$lib/nav/bron-rol';
+	import { readerName } from '$lib/nav/bron-rol';
 
 	const url = $derived(page.url);
 	const onBron = $derived(hasFocus(url));
@@ -51,10 +51,10 @@
 			aria-pressed={!pressed}
 			aria-keyshortcuts={pressed ? 'Alt+L' : undefined}
 			role="button"
-			aria-label={$leesNaam ? `Lezer, ${$leesNaam.titel}` : 'Lezer'}
-			title={$leesNaam?.titel ?? (pressed ? 'Terug naar de tekst' : undefined)}
+			aria-label={$readerName ? `Lezer, ${$readerName.title}` : 'Lezer'}
+			title={$readerName?.title ?? (pressed ? 'Terug naar de tekst' : undefined)}
 			><Picto naam="tekst" size={16} /><span class="lees-keuze__tekst"
-				>Lezer{#if $leesNaam}<span class="lees-keuze__naam">: {$leesNaam.naam}</span>{/if}</span
+				>Lezer{#if $readerName}<span class="lees-keuze__naam">: {$readerName.name}</span>{/if}</span
 			></a
 		>{@render networkLink('lees-keuze__knop')}
 	</div>
