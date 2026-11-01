@@ -592,7 +592,7 @@
 		}
 	}
 	.banen.has-card {
-		--card-room: var(--strook);
+		--card-room: var(--lane-card-w);
 	}
 	@media (max-width: 768px) {
 		.banen.has-card {
