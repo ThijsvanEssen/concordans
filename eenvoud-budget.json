@@ -19,7 +19,7 @@
 		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1609,
-		"src/lib/components/graph/GraphView.svelte": 2090,
+		"src/lib/components/graph/GraphView.svelte": 2138,
 		"src/lib/network/ChainView.svelte": 1147,
 		"src/lib/text/judgment-text.ts": 1108,
 		"src/lib/verbonden/Verbonden.svelte": 871,
@@ -27,7 +27,7 @@
 		"src/lib/verbonden/loaders.ts": 1511,
 		"src/routes/(main)/actueel/+page.svelte": 855,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 3021
+		"src/routes/explore/+page.svelte": 3025
 	},
 	"effects_per_svelte": {
 		"src/lib/components/explore/IndexView.svelte": 9,
@@ -42,7 +42,7 @@
 		"src/lib/components/explore/readers/DossierReader.svelte": 42,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 44,
 		"src/lib/components/explore/readers/MemberReader.svelte": 44,
-		"src/lib/components/graph/GraphView.svelte": 64,
+		"src/lib/components/graph/GraphView.svelte": 65,
 		"src/lib/verbonden/Verbonden.svelte": 41,
 		"src/routes/(main)/actueel/+page.svelte": 42,
 		"src/routes/explore/+page.svelte": 107
@@ -155,7 +155,7 @@
 		"src/lib/graph/container-membership.ts": 85,
 		"src/lib/graph/layout.ts": 115,
 		"src/lib/graph/store/compose.ts": 93,
-		"src/lib/graph/store/context.ts": 312,
+		"src/lib/graph/store/context.ts": 308,
 		"src/lib/graph/store/expansion.ts": 196,
 		"src/lib/graph/store/view-actions.ts": 117,
 		"src/lib/network/ChainView.svelte": 105,

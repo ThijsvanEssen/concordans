@@ -8,14 +8,20 @@
 // other would.
 // Pure: the view draws what this returns, with the dot, the arrow and the dash of its lijnsoort.
 import { easePath, type Pt } from '$lib/network/tree-lines';
-import { GUTTER, ITEM_GAP, PANEL, type Box, type LaneLayout, type UnitBox } from './lane-layout';
-import { hasArrow, LINE_KIND_STYLE, type Stroke } from './line-kind';
+import {
+	bundleKeys,
+	GUTTER,
+	ITEM_GAP,
+	PANEL,
+	type Box,
+	type LaneLayout,
+	type UnitBox
+} from './lane-layout';
+import { hasArrow, LINE_KIND_STYLE, LINE_KINDS, type Stroke } from './line-kind';
 import type { Scene, SceneLine } from './scene';
 
 /** Rails in a gutter stand this far apart at most. */
-const RAIL_STEP = 7;
-/** Rails of one bundle stand this part of a step apart. */
-const BUNDLE = 0.3;
+const RAIL_STEP = 10;
 /** The room between a line and the edge of what it passes. */
 const AIR = 6;
 /** Where a line arrives at a mark, this far off its edge (the arrow's tip). */
@@ -25,13 +31,12 @@ export type LanePath = {
 	id: string;
 	from: string;
 	to: string;
-	/** The bezier path, from the dot at the bron to the tip of the arrow. */
+	/** The bezier path, from the tip of the arrow back to the dot at the bron. */
 	d: string;
 	/** The skeleton of the path: its runs before the bends are eased. */
 	points: Pt[];
 	stroke: Stroke;
 	arrow: boolean;
-	/** The width of the line by the number of edges it stands for. */
 	width: number;
 };
 
@@ -52,15 +57,19 @@ type Rail = {
 	leave: number;
 	fromLeft: boolean;
 	toLeft: boolean;
-	/** Rails with one key run into one point, or out of one: side by side they run as a bundle. */
+	/**
+	 * Rails with one key run as one line: into one target with one lijnsoort, or out of one bron
+	 * with one lijnsoort (`bundle`). Lines of two lijnsoorten never share, nor lines of two bronnen
+	 * to two targets: that would hide which cites which.
+	 */
 	key: string;
 	x: number;
 };
 
 const centreY = (b: Box) => b.y + b.height / 2;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-const widthOf = (count: number) =>
-	Math.round((1.2 + Math.min(2.8, Math.log2(count) * 0.8)) * 10) / 10;
+/** Every line is as wide: how many verbindingen it stands for, its label says on hover. */
+export const LINE_WIDTH = 1.6;
 
 type Frames = { x: number; width: number }[];
 
@@ -220,13 +229,15 @@ function planBetween(
 	const inn = port(b, sideB, yb, c.frames[ib], c.columns[ib]).reverse();
 	const y1 = out.at(-1)!.y;
 	const y2 = inn[0].y;
-	const into = `in ${line.to} ${y2}`;
+	const into = `to ${line.to} ${line.kind}`;
 	if (ia === ib)
 		return {
 			line,
 			out,
 			in: inn,
-			rails: [{ gutter: ia, enter: y1, leave: y2, fromLeft: true, toLeft: true, key: into, x: 0 }]
+			rails: [
+				{ gutter: innerOf(ia), enter: y1, leave: y2, fromLeft: true, toLeft: true, key: into, x: 0 }
+			]
 		};
 	const step = ia < ib ? 1 : -1;
 	const between = [];
@@ -238,7 +249,13 @@ function planBetween(
 	const rails: Rail[] = [];
 	const dir = { fromLeft: step > 0, toLeft: step < 0, x: 0 };
 	if (between.length > 0 && yc !== y1)
-		rails.push({ gutter: first, enter: y1, leave: yc, key: `out ${line.from} ${y1}`, ...dir });
+		rails.push({
+			gutter: first,
+			enter: y1,
+			leave: yc,
+			key: `from ${line.from} ${line.kind}`,
+			...dir
+		});
 	rails.push({ gutter: last, enter: yc, leave: y2, key: into, ...dir });
 	return { line, out, in: inn, rails };
 }
@@ -354,68 +371,183 @@ function leftCost(a: Rail, b: Rail, left: number, right: number): number {
 }
 
 /**
- * The rails from left to right: each pair in the order it crosses least in. Where those orders
- * close a circle, the rail that breaks the least goes first.
+ * The bundles of a gutter from left to right: each pair in the order its rails cross least in.
+ * Where those orders close a circle, the bundle that breaks the least goes first.
  */
-function orderRails(rails: Rail[], left: number, right: number): Rail[] {
-	const cost = rails.map((a) => rails.map((b) => (a === b ? 0 : leftCost(a, b, left, right))));
+function orderBundles(bundles: Rail[][], left: number, right: number): Rail[][] {
+	const sum = (p: Rail[], q: Rail[]) =>
+		p.reduce((n, a) => n + q.reduce((m, b) => m + leftCost(a, b, left, right), 0), 0);
+	const cost = bundles.map((p) => bundles.map((q) => (p === q ? 0 : sum(p, q))));
 	/** What placing `i` left of all the rest breaks: their wish to stand left of it. */
 	const breaks = (i: number, rest: number[]) =>
-		rest.reduce((sum, j) => sum + Math.max(0, cost[i][j] - cost[j][i]), 0);
-	const rest = rails.map((_, i) => i);
-	const order: Rail[] = [];
+		rest.reduce((n, j) => n + Math.max(0, cost[i][j] - cost[j][i]), 0);
+	const rest = bundles.map((_, i) => i);
+	const order: Rail[][] = [];
 	while (rest.length > 0) {
 		let pick = 0;
 		for (let k = 1; k < rest.length; k++)
 			if (breaks(rest[k], rest) < breaks(rest[pick], rest)) pick = k;
-		order.push(rails[rest[pick]]);
+		order.push(bundles[rest[pick]]);
 		rest.splice(pick, 1);
 	}
 	return order;
 }
 
 /**
- * The x of each rail in a gutter, each pair in the order that does not cross where the other
- * would. Rails into one point (or out of one) that stand side by side run close, as a bundle.
+ * The x of each rail in a gutter, each pair of bundles in the order that does not cross where the
+ * other would. Rails with one key (a bundle) stand on one x: they run as one line.
  */
 function placeRails(rails: Rail[], left: number, right: number) {
+	const byKey = new Map<string, Rail[]>();
 	const sorted = [...rails].sort(
 		(a, b) => a.leave - b.leave || a.enter - b.enter || a.key.localeCompare(b.key)
 	);
-	const order = orderRails(sorted, left, right);
-	const gaps: number[] = order.map((r, i) =>
-		i === 0 ? 0 : r.key === order[i - 1].key ? BUNDLE : 1
-	);
-	const units = gaps.reduce((n, g) => n + g, 0);
+	for (const r of sorted) byKey.set(r.key, [...(byKey.get(r.key) ?? []), r]);
+	const order = orderBundles([...byKey.values()], left, right);
+	const units = order.length - 1;
 	const step = units > 0 ? Math.min(RAIL_STEP, (right - left - 2 * AIR) / units) : 0;
-	let x = (left + right) / 2 - (units * step) / 2;
-	order.forEach((r, i) => {
-		x += gaps[i] * step;
-		r.x = x;
+	const x0 = (left + right) / 2 - (units * step) / 2;
+	order.forEach((list, i) => {
+		for (const r of list) r.x = x0 + i * step;
 	});
 }
 
-/** The left and right edge of gutter `g`: after column g, before column g + 1 (or the canvas edge). */
+/** The rails of a column's own lines run inside its panel (`inner`): a gutter of their own. */
+const innerOf = (column: number) => -1 - column;
+
+/**
+ * The left and right edge of gutter `g`: after column g, before column g + 1 (or the canvas edge);
+ * for a column's own rails (`innerOf`), right of its units, inside its panel.
+ */
 function gutterOf(layout: LaneLayout, g: number): [number, number] {
+	if (g < 0) {
+		const col = layout.columns[-1 - g];
+		const right = col.x + col.width;
+		return [right - col.inner + PANEL / 2 + 1, right + PANEL / 2];
+	}
 	const col = layout.columns[g];
 	const next = layout.columns[g + 1];
 	const left = col.x + col.width + PANEL;
-	return [left, next ? next.x - PANEL : Math.min(layout.width, left + GUTTER / 2)];
+	return [left, next ? next.x - PANEL : Math.max(left + GUTTER / 2 - PANEL, layout.width - 8)];
 }
 
 function skeleton(p: Plan): Pt[] {
 	const pts: Pt[] = [...p.out];
 	for (const r of p.rails) pts.push({ x: r.x, y: r.enter }, { x: r.x, y: r.leave });
 	pts.push(...p.in);
-	return pts.filter(
-		(q, i) => i === 0 || Math.abs(q.x - pts[i - 1].x) + Math.abs(q.y - pts[i - 1].y) > 0.5
+	return straight(pts);
+}
+
+/**
+ * A skeleton without what adds nothing: a point on top of the one before, or in the middle of a
+ * straight run. Easing a run through a point of its own makes a bend where there is none.
+ */
+export function straight(pts: readonly Pt[]): Pt[] {
+	const out: Pt[] = [];
+	for (const q of pts) {
+		const a = out.at(-2);
+		const b = out.at(-1);
+		if (b && Math.abs(q.x - b.x) + Math.abs(q.y - b.y) <= 0.5) continue;
+		const onLine =
+			a &&
+			b &&
+			((Math.abs(a.x - b.x) < 0.5 && Math.abs(b.x - q.x) < 0.5) ||
+				(Math.abs(a.y - b.y) < 0.5 && Math.abs(b.y - q.y) < 0.5));
+		if (onLine) out[out.length - 1] = q;
+		else out.push(q);
+	}
+	return out;
+}
+
+/** The key of each rail in its gutter (`bundleKeys`); lines of the strip keep their own. */
+function bundle(plans: readonly Plan[]) {
+	const own = plans.flatMap((p) =>
+		p.rails.filter((r) => !r.key.startsWith('strip')).map((r) => ({ p, r }))
 	);
+	const keys = bundleKeys(own.map(({ p, r }) => ({ gutter: r.gutter, ...p.line })));
+	own.forEach(({ r }, i) => (r.key = keys[i]));
+}
+
+/**
+ * A bundle into one target ends in one point: the row most of its lines end in. Many lines into one
+ * wet are one line, also where they name different hoofdstukken (each its own row in the hull).
+ */
+function meet(plans: readonly Plan[]) {
+	const byKey = new Map<string, Plan[]>();
+	for (const p of plans) {
+		const last = p.rails.at(-1);
+		if (!last || !last.key.includes(' to ') || p.in.some((q) => q.y !== p.in[0]?.y)) continue;
+		byKey.set(last.key, [...(byKey.get(last.key) ?? []), p]);
+	}
+	for (const list of byKey.values()) {
+		const count = new Map<number, number>();
+		for (const p of list) count.set(p.in[0].y, (count.get(p.in[0].y) ?? 0) + 1);
+		const y = [...count].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
+		for (const p of list) {
+			p.in = p.in.map((q) => ({ ...q, y }));
+			const last = p.rails.at(-1)!;
+			p.rails[p.rails.length - 1] = { ...last, leave: y };
+		}
+	}
+}
+
+/** Where lines of several lijnsoorten end at one point, each lijnsoort its own entry, this far apart. */
+const KIND_APART = 8;
+
+/**
+ * Lines of two lijnsoorten into one point would end in one arrowhead: each lijnsoort gets its own
+ * entry beside the others (the dossiers that name a wet, and the toelichting that explains it).
+ */
+function byKind(plans: readonly Plan[]) {
+	const at = new Map<string, Plan[]>();
+	for (const p of plans) {
+		if (p.rails.length === 0 || p.in.length === 0 || p.in.some((q) => q.y !== p.in[0].y)) continue;
+		const key = `${p.line.to} ${p.in[0].y}`;
+		at.set(key, [...(at.get(key) ?? []), p]);
+	}
+	for (const list of at.values()) {
+		const kinds = [...new Set(list.map((p) => p.line.kind))].sort(
+			(a, b) => LINE_KINDS.indexOf(a) - LINE_KINDS.indexOf(b)
+		);
+		if (kinds.length < 2) continue;
+		for (const p of list) {
+			const dy = (kinds.indexOf(p.line.kind) - (kinds.length - 1) / 2) * KIND_APART;
+			p.in = p.in.map((q) => ({ ...q, y: q.y + dy }));
+			const last = p.rails.at(-1)!;
+			p.rails[p.rails.length - 1] = { ...last, leave: last.leave + dy };
+		}
+	}
+}
+
+/**
+ * A path of M, L, Q and C drawn the other way: the same curve, from its arrowhead back to its bron.
+ * A dash pattern begins where the path does, so the dashes of a bundle fall on one another.
+ */
+export function fromTheEnd(d: string): string {
+	const t = d.match(/[MLQC]|-?\d+(?:\.\d+)?/g) ?? [];
+	const parts: { c: string; v: number[] }[] = [];
+	for (let i = 0; i < t.length; ) {
+		const c = t[i++];
+		const n = c === 'Q' ? 4 : c === 'C' ? 6 : 2;
+		parts.push({ c, v: t.slice(i, i + n).map(Number) });
+		i += n;
+	}
+	const ends = parts.map((p) => p.v.slice(-2));
+	let out = `M${ends.at(-1)!.join(' ')}`;
+	for (let k = parts.length - 1; k > 0; k--) {
+		const { c, v } = parts[k];
+		const to = ends[k - 1].join(' ');
+		if (c === 'Q') out += `Q${v[0]} ${v[1]} ${to}`;
+		else if (c === 'C') out += `C${v[2]} ${v[3]} ${v[0]} ${v[1]} ${to}`;
+		else out += `L${to}`;
+	}
+	return out;
 }
 
 /** The lines of a scene on its layout. */
 export function laneLines(scene: Scene, layout: LaneLayout): LanePath[] {
 	const index = columnIndex(scene, layout);
-	const frames = layout.columns.map((c) => ({ x: c.x, width: c.width }));
+	const frames = layout.columns.map((c) => ({ x: c.x, width: c.width - c.inner }));
 	const columns = layout.columns.map((_, i) => boxesIn(layout, index, i));
 	const c: Context = { scene, layout, index, frames, columns, strip: stripRows(layout, index) };
 	const plans: Plan[] = [];
@@ -430,6 +562,9 @@ export function laneLines(scene: Scene, layout: LaneLayout): LanePath[] {
 		);
 	}
 	spread(plans, layout, index);
+	bundle(plans);
+	meet(plans);
+	byKind(plans);
 	const byGutter = new Map<number, Rail[]>();
 	for (const p of plans)
 		for (const r of p.rails) byGutter.set(r.gutter, [...(byGutter.get(r.gutter) ?? []), r]);
@@ -441,11 +576,11 @@ export function laneLines(scene: Scene, layout: LaneLayout): LanePath[] {
 			id: p.line.id,
 			from: p.line.from,
 			to: p.line.to,
-			d: easePath(points),
+			d: fromTheEnd(easePath(points)),
 			points,
 			stroke,
 			arrow: hasArrow(stroke),
-			width: widthOf(p.line.count)
+			width: LINE_WIDTH
 		};
 	});
 }

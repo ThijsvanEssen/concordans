@@ -5,6 +5,7 @@ import {
 	TONE_WINDOW,
 	contrast,
 	floorStrength,
+	laneLineColour,
 	lineStrength,
 	mixed,
 	toneStrength
@@ -117,5 +118,14 @@ describe('the tones (Netwerkcanvas, Lijnen)', () => {
 		for (const n of [1, 75])
 			for (const [x, y, min] of least)
 				expect(Math.abs(drawn(x, n) - drawn(y, n)), `${x} ${y} ${n}`).toBeGreaterThanOrEqual(min);
+	});
+});
+
+describe('a line of the lanes', () => {
+	it('holds 3:1 against the paper in every tone, the light one too', () => {
+		const paper = '#fdfdfb';
+		for (const color of ['#4b5563', '#5f6267', '#00487c', '#6a816b', '#ab618e'])
+			for (const tone of ['donker', 'middel', 'licht'] as const)
+				expect(contrast(laneLineColour(color, paper, tone), paper)).toBeGreaterThanOrEqual(3);
 	});
 });

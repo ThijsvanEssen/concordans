@@ -189,10 +189,19 @@ export function hullCandidates(
 	return { candidates, homes };
 }
 
+/** A dossier by its number, with its title where the data has one: "Dossier 31700, …". */
+function dossierLabel(c: HullCandidate): string {
+	const title = textOf(c.container?.raw?.props?.title);
+	const number = dossierNumberLabel(c.id.replace(/^dossiers\//, ''));
+	return title ? `${number}, ${title}` : number;
+}
+
 /** The name of a hull: its container's, else the dossier's number or the wet's citation title. */
 export function hullLabel(c: HullCandidate): string {
+	// A dossier the data names only by its kind ("Dossier") is named by its number and title.
+	if (c.kind === 'dossier' && (!c.container?.label || /^dossier$/i.test(c.container.label)))
+		return dossierLabel(c);
 	if (c.container) return c.container.label;
-	if (c.kind === 'dossier') return dossierNumberLabel(c.id.replace(/^dossiers\//, ''));
 	const props = c.members[0]?.raw?.props;
 	return textOf(props?.instrument_citation_title) ?? lawIdOf(props) ?? '';
 }

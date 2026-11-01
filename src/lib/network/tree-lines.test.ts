@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { crossings } from '$lib/graph/lane-lines';
-import { sample } from '$lib/test/paths';
+import { sample, slanted } from '$lib/test/paths';
 import { easePath, treeLines, type Box, type Pt, type TreeNode } from './tree-lines';
 
 // A small keten: a person on top, layers of 104 px, rails 14,5 above each layer.
@@ -167,5 +167,19 @@ describe('easePath', () => {
 		]);
 		expect(d).toContain('C');
 		expect(d).not.toContain('Q');
+	});
+});
+
+describe('easing a bend', () => {
+	it('makes no S of a short step when the line goes on level after it (the lanes)', () => {
+		// Down a rail, a step of 21 px to the left, then level on to the name: no slanted run.
+		const d = easePath([
+			{ x: 612, y: 104 },
+			{ x: 242, y: 104 },
+			{ x: 242, y: 151 },
+			{ x: 221, y: 151 },
+			{ x: 97, y: 151 }
+		]);
+		expect(slanted(d)).toEqual([]);
 	});
 });

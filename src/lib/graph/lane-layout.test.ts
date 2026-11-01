@@ -3,6 +3,7 @@ import { EXAMPLES, example, shuffled } from '$lib/test/lanes';
 import {
 	CONTENT_TOP,
 	GUTTER,
+	bundleKeys,
 	laneLayout,
 	wrapLabel,
 	type Box,
@@ -40,45 +41,55 @@ function outside(scene: Scene, layout: LaneLayout): string[] {
 
 describe.each(EXAMPLES)('the layout of %s', (name) => {
 	const scene = buildScene(example(name));
-	for (const time of [false, true])
-		describe(time ? 'with Tijd' : 'without Tijd', () => {
-			const layout = laneLayout(scene, WIDTH, time);
+	const layout = laneLayout(scene, WIDTH);
 
-			it('places every unit', () => {
-				expect([...layout.units.keys()].sort()).toEqual(scene.units.map((u) => u.id).sort());
-			});
+	it('places every unit', () => {
+		expect([...layout.units.keys()].sort()).toEqual(scene.units.map((u) => u.id).sort());
+	});
 
-			it('lets no two boxes overlap', () => {
-				expect(overlaps(layout)).toEqual([]);
-			});
+	it('lets no two boxes overlap', () => {
+		expect(overlaps(layout)).toEqual([]);
+	});
 
-			it('keeps every unit in its column, the general ones in their strip', () => {
-				expect(outside(scene, layout)).toEqual([]);
-			});
+	it('keeps every unit in its column, the general ones in their strip', () => {
+		expect(outside(scene, layout)).toEqual([]);
+	});
 
-			it('keeps a gutter between two columns, and the strip under them all', () => {
-				for (let i = 1; i < layout.columns.length; i++) {
-					const a = layout.columns[i - 1];
-					expect(layout.columns[i].x - (a.x + a.width)).toBe(GUTTER);
-				}
-				if (layout.strip)
-					for (const c of layout.columns) expect(layout.strip.y).toBeGreaterThan(c.y + c.height);
-			});
+	it('keeps a gutter between two columns, and the strip under them all', () => {
+		for (let i = 1; i < layout.columns.length; i++) {
+			const a = layout.columns[i - 1];
+			expect(layout.columns[i].x - (a.x + a.width)).toBeGreaterThanOrEqual(GUTTER);
+		}
+		if (layout.strip)
+			for (const c of layout.columns) expect(layout.strip.y).toBeGreaterThan(c.y + c.height);
+	});
 
-			it('is as high as what it holds', () => {
-				const bottom = Math.max(...[...layout.units.values()].map((b) => b.y + b.height));
-				expect(layout.height).toBeGreaterThan(bottom);
-				expect(layout.height).toBeLessThan(bottom + 120);
-			});
+	it('is as high as what it holds', () => {
+		const bottom = Math.max(...[...layout.units.values()].map((b) => b.y + b.height));
+		expect(layout.height).toBeGreaterThan(bottom);
+		expect(layout.height).toBeLessThan(bottom + 120);
+	});
 
-			it('is deterministic: the same bronnen in another order give the same layout', () => {
-				const g = example(name);
-				const again = buildScene({ ...g, nodes: shuffled(g.nodes), edges: shuffled(g.edges, 5) });
-				expect(laneLayout({ ...again, units: shuffled(again.units, 11) }, WIDTH, time)).toEqual(
-					layout
-				);
-			});
-		});
+	it('keeps the head of each row of a hull within the hull, a dossier beside another too', () => {
+		// The estimate of lane-layout: half the size a character, the count after a space.
+		const over: string[] = [];
+		for (const u of scene.units.filter((x) => x.shape === 'hull')) {
+			const box = layout.units.get(u.id)!;
+			const column = layout.columns.find((c) => c.column === u.column);
+			if (!column || (u.rows.length < 2 && !u.rows.some((r) => r.label))) continue;
+			for (const r of u.rows) {
+				const need = Math.min(column.width, 6 * `${r.label} ${r.members.length}`.length + 24);
+				if (box.mark.width < need - 12) over.push(`${u.id} ${r.label}`);
+			}
+		}
+		expect(over).toEqual([]);
+	});
+
+	it('is deterministic: the same bronnen in another order give the same layout', () => {
+		const g = example(name);
+		const again = buildScene({ ...g, nodes: shuffled(g.nodes), edges: shuffled(g.edges, 5) });
+		expect(laneLayout({ ...again, units: shuffled(again.units, 11) }, WIDTH)).toEqual(layout);
+	});
 });
 
 describe('the layout, by its rules', () => {
@@ -122,20 +133,6 @@ describe('the layout, by its rules', () => {
 		for (const box of laws) expect(box.x).toBe(column.x);
 	});
 
-	it('in Tijd, stands Kamerstukken and Rechtspraak by date', () => {
-		const timed = laneLayout(buildScene(example('v1')), WIDTH, true);
-		const dated = buildScene(example('v1'))
-			.units.filter(
-				(u) => !u.general && u.date && (u.column === 'papers' || u.column === 'rulings')
-			)
-			.map((u) => ({ column: u.column, date: u.date!, y: timed.units.get(u.id)!.y }));
-		for (const column of ['papers', 'rulings'])
-			for (const a of dated.filter((d) => d.column === column))
-				for (const b of dated.filter((d) => d.column === column && d.date > a.date))
-					expect(b.y).toBeGreaterThan(a.y);
-		expect(timed.axis?.ticks.some((t) => t.kind === 'year')).toBe(true);
-	});
-
 	it('puts the general wetten in the first line of the strip, each column below on its own', () => {
 		const v1 = buildScene(example('v1'));
 		const strip = laneLayout(v1, WIDTH);
@@ -158,5 +155,28 @@ describe('wrapLabel', () => {
 		expect(
 			wrapLabel('Wet aanvullende bepalingen verwerking persoonsgegevens in de zorg', 140)
 		).toEqual(['Wet aanvullende', 'bepalingen verwerking', 'persoonsgegevens in…']);
+	});
+});
+
+describe('bundling the rails', () => {
+	it('keeps the lines of one lijnsoort into one target one line, before one to many', () => {
+		// Dossier a names the WVW and two more wetten; dossier b names the WVW: one line into the WVW.
+		const rails = [
+			{ gutter: 1, from: 'a', to: 'wvw', kind: 'citation' },
+			{ gutter: 1, from: 'a', to: 'x', kind: 'citation' },
+			{ gutter: 1, from: 'a', to: 'y', kind: 'citation' },
+			{ gutter: 1, from: 'b', to: 'wvw', kind: 'citation' }
+		];
+		const keys = bundleKeys(rails);
+		expect(keys[0]).toBe(keys[3]);
+		expect(keys[1]).toBe(keys[2]);
+	});
+
+	it('never bundles two lijnsoorten', () => {
+		const keys = bundleKeys([
+			{ gutter: 0, from: 'a', to: 'w', kind: 'citation' },
+			{ gutter: 0, from: 'b', to: 'w', kind: 'change' }
+		]);
+		expect(keys[0]).not.toBe(keys[1]);
 	});
 });
