@@ -27,7 +27,7 @@
 	} from '$lib/components/graph/nodeSprites';
 	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
 	import { hasArrow } from '$lib/graph/line-kind';
-	import { citeLines, citeText, cut, CITE_MAX } from '$lib/network/cite-label';
+	import { citeLines, citeText, cutText, CITE_MAX } from '$lib/network/cite-label';
 	import { openHref } from '$lib/bron/href';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
 	import { KIND_WORDS, howOf, grondslagOf, linesOf, placeLayers } from '$lib/network/chain-place';
@@ -357,7 +357,7 @@
 				const parent = o && away.get(o.id);
 				const at = place.get(k.id);
 				if (!o || !parent || !at || k.parents.some((p) => here.has(p.id))) return [];
-				const label = { x: at.x, y: tops[i] + 22, text: cut(parent.name, CITE_MAX) };
+				const label = { x: at.x, y: tops[i] + 22, text: cutText(parent.name, CITE_MAX) };
 				return [{ id: k.id, o, parent, label, top: at.y - 12, look: lookOf(o, false) }];
 			})
 		);
@@ -967,7 +967,9 @@
 		fill: var(--ink);
 		text-decoration: underline;
 	}
-	.cite:focus:not(:focus-visible),
+	.cite:focus:not(:focus-visible) {
+		outline: none;
+	}
 	.stomp:focus:not(:focus-visible) {
 		outline: none;
 	}

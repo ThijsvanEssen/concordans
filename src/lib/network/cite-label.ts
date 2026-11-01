@@ -26,7 +26,7 @@ export const CITE_MAX = 27;
 const ABBR_MIN = 10;
 
 /** Text cut to `room` characters with an ellipsis, at a word where one is near. */
-export const cut = (s: string, room: number) => {
+export const cutText = (s: string, room: number) => {
 	if (s.length <= room) return s;
 	const head = s.slice(0, room - 1);
 	const space = head.lastIndexOf(' ');
@@ -54,10 +54,10 @@ export function citeText(c: ArticleCite): string {
 	for (let n = labels.length; n >= 1; n--) {
 		const text = `art. ${labels.slice(0, n).join(', ')}${more(n)}`;
 		const room = CITE_MAX - text.length - 1;
-		if (room >= Math.min(c.abbr.length, ABBR_MIN)) return `${text} ${cut(c.abbr, room)}`;
+		if (room >= Math.min(c.abbr.length, ABBR_MIN)) return `${text} ${cutText(c.abbr, room)}`;
 	}
-	const name = cut(c.abbr, ABBR_MIN);
-	return `${cut(`art. ${labels[0]}`, CITE_MAX - more(1).length - name.length - 1)}${more(1)} ${name}`;
+	const name = cutText(c.abbr, ABBR_MIN);
+	return `${cutText(`art. ${labels[0]}`, CITE_MAX - more(1).length - name.length - 1)}${more(1)} ${name}`;
 }
 
 /** The glance of a label: every article it names on a line of its own (`art. 23 lid 1 Cbb`). */
