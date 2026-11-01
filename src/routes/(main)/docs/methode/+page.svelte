@@ -95,7 +95,7 @@
 			<p>
 				Van de Eerste Kamer staat de zetelverdeling per zittingsperiode erin sinds 2003. Leden,
 				fracties en commissies staan erin zoals eerstekamer.nl ze toont sinds het eerste ophalen;
-				eerdere lidmaatschappen niet. Besluiten over wetsvoorstellen staan erin vanaf juli 2026.
+				eerdere lidmaatschappen niet. Besluiten over wetsvoorstellen staan erin vanaf juni 2015.
 			</p>
 			<p>
 				Elke bron wordt afzonderlijk opgehaald; de stand per bron staat bij
