@@ -65,7 +65,7 @@
 	aria-pressed={menu ? undefined : on}
 	aria-checked={menu ? on : undefined}
 	aria-label={naam}
-	title={title ?? label}
+	title={title ?? (wrap ? undefined : label)}
 	onclick={onToggle}
 >
 	{#if swatch}

@@ -1787,7 +1787,7 @@
 	const lanesOn = $derived(onLanes(params) && view === 'omgeving');
 	const proposals = new Proposals(
 		store,
-		() => proposalsOn,
+		() => proposalsOn || lanesOn,
 		() => inFlux.counts,
 		() => mode === 'graph' && view === 'omgeving'
 	);
@@ -2478,7 +2478,7 @@
 										}
 									: null}
 								chain={chainStart && { start: chainStart.collection, labels: !lineageStart }}
-								proposals={view === 'omgeving'
+								proposals={view === 'omgeving' && !lanesOn
 									? {
 											on: proposalsOn,
 											available: proposals.available,

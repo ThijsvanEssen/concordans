@@ -2,6 +2,7 @@
 // drawn beside them, each with a light Wijziging-lijn. Asked once such a bron is on the canvas
 // (the open-count, in-flux, names them), so the vinkje counts them; drawn while it is on, gone
 // again when it goes off.
+// On the lanes they always stand, without a vinkje: a line and a marker say what they are.
 import { untrack } from 'svelte';
 import { get } from 'svelte/store';
 import { report } from '$lib/api/errors';

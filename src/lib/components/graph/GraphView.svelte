@@ -20,7 +20,13 @@
 	import NetworkChoice from './NetworkChoice.svelte';
 	import ViewSheet from './ViewSheet.svelte';
 	import { provideWeergaveBlad } from '$lib/network/weergave-blad';
-	import { kindRows, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
+	import {
+		containersOnCanvas,
+		kindRows,
+		lightBuckets,
+		kindFocus,
+		type DrawnBron
+	} from './kind-rows';
 	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
 	import { parseNodeId } from '$lib/vocabulary';
@@ -62,7 +68,6 @@
 		momentOf,
 		type Period,
 		isContainerKind,
-		isDrawnGroup,
 		type ContainerGroup,
 		type ContainerKind
 	} from '$lib/graph/container-membership';
@@ -249,31 +254,17 @@
 	let drawn: ReadonlySet<string> = new Set();
 	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
 	let drawnBronnen = $state<DrawnBron[]>([]);
-	/**
-	 * The commissies and dossiers drawn as a ring or a point, the focus left out: each a bron of
-	 * its soort in Tonen, also a ring with no point of its own (B41).
-	 */
-	function containersDrawn(ids: readonly string[], focal: string) {
-		const shown = new Set(ids);
-		return [...containerGroups.values()].flatMap((group) => {
-			const bron = parseNodeId(group.id);
-			if (!bron || (group.kind !== 'committee' && group.kind !== 'dossier')) return [];
-			if (group.id.toLowerCase() === focal) return [];
-			if (!g.hasNode(group.id) && !isDrawnGroup(group, focusContainerId)) return [];
-			if (![...group.members].some((m) => shown.has(m))) return [];
-			const props = lookup.get(group.id)?.raw?.props ?? undefined;
-			return [
-				{
-					...bron,
-					id: group.id,
-					props,
-					filterGroup: filterGroupOf(bron.collection, bron.key, props ?? null),
-					holdsFocus: !!selection && group.members.has(selection.id),
-					point: g.hasNode(group.id)
-				}
-			];
+	const containersDrawn = (ids: readonly string[], focal: string) =>
+		containersOnCanvas({
+			ids,
+			focal,
+			groups: containerGroups,
+			focusContainerId,
+			selectionId: selection?.id ?? null,
+			hasNode: (id) => g.hasNode(id),
+			propsOf: (id) => lookup.get(id)?.raw?.props ?? undefined,
+			lanesDrawn: lanes ? drawn : null
 		});
-	}
 	function drawnBronnenOf(ids: readonly string[]): DrawnBron[] {
 		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
 		// A focus drawn as a hull (a wet, a dossier, a fractie) holds what it draws: one step.

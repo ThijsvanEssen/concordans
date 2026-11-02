@@ -1,8 +1,9 @@
 <script lang="ts">
-	// The key and the switch of the lanes in one place: a lijnsoort with its sample in the colour it
-	// has there, so that a line can be read without hovering; a click switches it, in the one state
-	// of Relatie. What is drawn, and what is switched off: that must come back here. And the markers
-	// of a changed wet: on a phone Wetten has no heads, so they alone say what they mean.
+	// The key and the switch of the lanes in one place: every lijnsoort this network holds, with its
+	// sample in the colour it has there, so that a line can be read without hovering. The tick is the
+	// switch, in the one state of Relatie, as in Tonen. The set stands still: what is off, or what no
+	// line shows now (a line shows the heaviest of a pair), stays, quieter. And the markers of a
+	// changed wet: on a phone Wetten has no heads, so they alone say what they mean.
 	import {
 		LINE_KIND_LABEL,
 		LINE_KIND_SAMPLE,
@@ -13,35 +14,45 @@
 	import { CHANGED_MARK, LAW_CHANGE_WORDS } from '$lib/graph/lane-changes';
 	import { laneLineColour } from '$lib/graph/line-strength';
 	import type { LawChange, SceneLine } from '$lib/graph/scene';
+	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import LineSample from './LineSample.svelte';
 	import { tokens } from './nodeSprites';
 
 	let {
+		kinds,
 		lines,
 		hidden,
 		onToggle,
-		changes
+		changes,
+		changesDrawn
 	}: {
+		/** What the network holds, with nothing switched off (scene `kinds`). */
+		kinds: readonly { kind: LineKind; proposed: boolean }[];
+		/** The lines drawn now. */
 		lines: readonly SceneLine[];
 		/** The lijnsoorten switched off. */
 		hidden: ReadonlySet<LineKind>;
 		onToggle: (kind: LineKind) => void;
-		/** How the wetten on the canvas change. */
+		/** How the wetten of this network change. */
 		changes: readonly LawChange[];
+		/** And which of those stand on the canvas now. */
+		changesDrawn: readonly LawChange[];
 	} = $props();
 
-	const has = (kind: LineKind, proposed: boolean) =>
+	const holds = (kind: LineKind, proposed: boolean) =>
+		kinds.some((k) => k.kind === kind && k.proposed === proposed);
+	const drawn = (kind: LineKind, proposed: boolean) =>
 		lines.some((l) => l.kind === kind && l.proposed === proposed);
 	/** Per lijnsoort its samples: a change that is only proposed has its own, one switch for both. */
 	const items = $derived(
-		LINE_KINDS.filter((kind) => hidden.has(kind) || lines.some((l) => l.kind === kind)).map(
+		LINE_KINDS.filter((kind) => hidden.has(kind) || kinds.some((k) => k.kind === kind)).map(
 			(kind) => ({
 				kind,
 				samples: [
-					...(has(kind, false) || hidden.has(kind)
+					...(holds(kind, false) || !holds(kind, true)
 						? [{ proposed: false, label: LINE_KIND_LABEL[kind] }]
 						: []),
-					...(has(kind, true) ? [{ proposed: true, label: 'Voorgestelde wijziging' }] : [])
+					...(holds(kind, true) ? [{ proposed: true, label: 'Voorgestelde wijziging' }] : [])
 				]
 			})
 		)
@@ -65,19 +76,22 @@
 				title="{LINE_KIND_LABEL[kind]} {hidden.has(kind) ? 'tonen' : 'verbergen'}"
 				onclick={() => onToggle(kind)}
 			>
+				<Vinkje aan={!hidden.has(kind)} />
 				{#each samples as { proposed, label } (label)}
-					<LineSample
-						relation={sample.relation}
-						from={sample.from}
-						colour={colourOf(kind, proposed)}
-					/>
-					<span class="word">{label}</span>
+					<span class="sample" class:stil={!drawn(kind, proposed)}>
+						<LineSample
+							relation={sample.relation}
+							from={sample.from}
+							colour={colourOf(kind, proposed)}
+						/>
+						<span class="word">{label}</span>
+					</span>
 				{/each}
 			</button>
 		</li>
 	{/each}
-	{#each marks as change (change)}
-		<li class="mark">
+	{#each marks as change, i (change)}
+		<li class="mark" class:first={i === 0} class:stil={!changesDrawn.includes(change)}>
 			<svg width="10" height="10" viewBox="-5 -5 10 10" aria-hidden="true">
 				<path class:hollow={change === 'proposed'} d={CHANGED_MARK} />
 			</svg>
@@ -97,7 +111,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0 var(--s-3);
+		gap: 0 var(--s-4);
 		width: fit-content;
 		max-width: calc(100% - 2 * var(--s-8));
 		margin: 0 0 calc(-1 * var(--s-8));
@@ -106,12 +120,12 @@
 		background: var(--paper);
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
-		color: var(--ink-2);
+		color: var(--ink);
 	}
 	.kind {
 		display: flex;
 		align-items: center;
-		gap: var(--s-2);
+		gap: var(--s-1) var(--s-2);
 		min-height: var(--s-5);
 		padding: 0;
 		border: 0;
@@ -120,24 +134,33 @@
 		color: inherit;
 		cursor: pointer;
 	}
-	.kind:hover .word {
-		text-decoration: underline;
+	.sample {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
 	}
-	/* Switched off: struck through, its sample faint; it stays, to switch on again. */
-	.kind[aria-pressed='false'] {
+	/* Off, or no line shows it now: it stays, quieter. Only the tick says which. */
+	.stil,
+	.kind[aria-pressed='false'] .sample {
 		color: var(--ink-3);
 	}
-	.kind[aria-pressed='false'] .word {
-		text-decoration: line-through;
-	}
-	.kind[aria-pressed='false'] :global(svg) {
+	.stil :global(svg),
+	.kind[aria-pressed='false'] :global(.lm) {
 		opacity: 0.35;
+	}
+	.kind:hover {
+		color: var(--ink);
 	}
 	.mark {
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
 		min-height: var(--s-5);
+	}
+	/* What a line means and what a mark on a wet means: a rule between them. */
+	.mark.first {
+		padding-left: var(--s-4);
+		border-left: 1px solid var(--rule);
 	}
 	.mark path {
 		fill: var(--ink-2);
@@ -155,6 +178,10 @@
 		}
 		.kind {
 			min-height: 44px;
+		}
+		.mark.first {
+			padding-left: 0;
+			border-left: 0;
 		}
 	}
 </style>

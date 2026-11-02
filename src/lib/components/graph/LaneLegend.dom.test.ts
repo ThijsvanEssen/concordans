@@ -10,13 +10,22 @@ function legend(
 	lines: SceneLine[],
 	hidden: LineKind[] = [],
 	changes: LawChange[] = [],
-	onToggle: (kind: LineKind) => void = () => {}
+	onToggle: (kind: LineKind) => void = () => {},
+	kinds: { kind: LineKind; proposed: boolean }[] = lines,
+	changesDrawn: LawChange[] = changes
 ) {
-	return render(LaneLegend, { lines, hidden: new Set(hidden), onToggle, changes });
+	return render(LaneLegend, {
+		kinds,
+		lines,
+		hidden: new Set(hidden),
+		onToggle,
+		changes,
+		changesDrawn
+	});
 }
 
 describe('LaneLegend', () => {
-	it('names the lijnsoorten drawn, one switch each, a proposed change beside its own', () => {
+	it('names the lijnsoorten of the network, one switch each, a proposed change beside its own', () => {
 		const { container } = legend([
 			line('citation'),
 			line('citation'),
@@ -27,7 +36,7 @@ describe('LaneLegend', () => {
 			'Wijziging Voorgestelde wijziging',
 			'Aanhaling'
 		]);
-		expect(container.querySelectorAll('.kind svg')).toHaveLength(3);
+		expect(container.querySelectorAll('.kind .lm')).toHaveLength(3);
 	});
 
 	it('switches a lijnsoort with a click, and says whether it is on', async () => {
@@ -45,9 +54,26 @@ describe('LaneLegend', () => {
 		expect(button.getAttribute('aria-pressed')).toBe('false');
 	});
 
-	it('explains the markers of the wetten, only those that stand', () => {
-		legend([line('change', true)], [], ['proposed']);
-		expect(screen.getByText('Voorgesteld')).toBeTruthy();
+	it('names the same whatever is switched: off keeps its words, under a heavier line it is quiet', () => {
+		const kinds = [
+			{ kind: 'change', proposed: true },
+			{ kind: 'citation', proposed: false }
+		] as const;
+		const names = () => screen.getAllByRole('button').map((b) => b.textContent?.trim());
+		const on = legend([line('change', true)], [], [], undefined, [...kinds]);
+		expect(names()).toEqual(['Voorgestelde wijziging', 'Aanhaling']);
+		expect(screen.getByText('Aanhaling').closest('.sample')?.classList.contains('stil')).toBe(true);
+		on.unmount();
+		legend([line('citation')], ['change'], [], undefined, [...kinds]);
+		expect(names()).toEqual(['Voorgestelde wijziging', 'Aanhaling']);
+		expect(screen.getByText('Aanhaling').closest('.sample')?.classList.contains('stil')).toBe(
+			false
+		);
+	});
+
+	it('explains the markers of the wetten, those of this network, quiet while none stands', () => {
+		legend([line('change', true)], [], ['proposed'], undefined, undefined, []);
+		expect(screen.getByText('Voorgesteld').classList.contains('stil')).toBe(true);
 		expect(screen.queryByText('Gewijzigd')).toBeNull();
 	});
 });

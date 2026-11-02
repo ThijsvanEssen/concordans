@@ -89,7 +89,12 @@ export type SceneLine = {
 	toRow: string | null;
 };
 
-export type Scene = { units: SceneUnit[]; lines: SceneLine[] };
+export type Scene = {
+	units: SceneUnit[];
+	lines: SceneLine[];
+	/** Every lijnsoort among the edges under the lines: a line shows only the heaviest of a pair. */
+	kinds: { kind: LineKind; proposed: boolean }[];
+};
 
 type SceneInput = {
 	nodes: readonly GraphNode[];
@@ -252,11 +257,18 @@ function nodeUnit(
 function baseUnits(
 	nodes: readonly GraphNode[],
 	edges: readonly GraphEdge[],
-	chosen: ReadonlySet<string>
+	chosen: ReadonlySet<string>,
+	dossiersOff: boolean
 ): { units: SceneUnit[]; unitOf: Map<string, string>; home: Map<string, string> } {
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const { candidates, homes } = hullCandidates(nodes, edges);
-	const hulls = new Map([...candidates].filter(([, c]) => stands(c, chosen)));
+	// Dossiers off in Tonen: their stukken stand loose, only a chosen dossier keeps its hull.
+	const hulls = new Map(
+		[...candidates].filter(
+			([, c]) =>
+				stands(c, chosen) && !(dossiersOff && c.kind === 'dossier' && !holdsChosen(c, chosen))
+		)
+	);
 	const home = placeInHulls(homes, hulls, chosen);
 	const units: SceneUnit[] = [];
 	const unitOf = new Map<string, string>();
@@ -410,20 +422,28 @@ export function buildScene(input: SceneInput): Scene {
 	const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id));
 	const sortedEdges = [...edges].sort((a, b) => a.id.localeCompare(b.id));
 	const chosen = new Set(input.chosen);
-	const base = baseUnits(sortedNodes, sortedEdges, chosen);
+	const dossiersOff = !!input.visibility?.hiddenKinds.has('dossiers');
+	const base = baseUnits(sortedNodes, sortedEdges, chosen, dossiersOff);
 	const linked = unitEdges(sortedNodes, sortedEdges, base.unitOf, base.home);
 	const general = markGeneral(base.units, linesBetween(base.units, linked));
 	const grouped = foldGroups(general, linesBetween(general, linked), sortedNodes);
 	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked, grouped)));
 	const lines = linesBetween(folded.units, groupEdges(linked, folded));
-	return withChange(unreached(withElsewhere(folded.units, linked, folded), lines));
+	const kinds = linked.map((e) => ({
+		kind: lineKindOf(e.edge.relation, e.fromClass),
+		proposed: e.edge.status === 'voorgesteld'
+	}));
+	return {
+		...withChange(unreached(withElsewhere(folded.units, linked, folded), lines)),
+		kinds
+	};
 }
 
 /**
  * Marks the wetten a line of Wijziging goes to, a wet that changes another not by that: enacted
  * where one line is (a publication), else proposed.
  */
-function withChange(scene: Scene): Scene {
+function withChange(scene: Omit<Scene, 'kinds'>): Omit<Scene, 'kinds'> {
 	const changes = scene.lines.filter((l) => l.kind === 'change');
 	const enacted = new Set(changes.filter((l) => !l.proposed).map((l) => l.to));
 	const proposed = new Set(changes.map((l) => l.to));

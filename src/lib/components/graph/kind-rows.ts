@@ -5,11 +5,12 @@
 // Verbonden does not list, in Verbonden's words, of the API's whole where it cut it off.
 import { refId } from '$lib/bron/href';
 import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
+import { isDrawnGroup, type ContainerGroup } from '$lib/graph/container-membership';
 import { FILTER_GROUP_LABEL, filterGroupOf, type FilterGroup } from '$lib/verbonden/filter';
 import { formatCount } from '$lib/text/getal';
 import { groupCount, type Group } from '$lib/verbonden/groups';
 import { kindLabelOn, kindOfBron, type Kind } from '$lib/verbonden/summary';
-import type { Collection } from '$lib/vocabulary';
+import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { motionOrAmendment } from '$lib/text/document-kind';
 
 /** A bron the canvas draws, a cluster's members each. */
@@ -226,6 +227,59 @@ export function kindRows(o: {
 		if (best) best.load = c;
 	}
 	return rows;
+}
+
+/**
+ * The commissies and dossiers drawn as a ring or a point, the focus left out: each a bron of its
+ * soort in Tonen, also a ring with no point of its own (B41). And on the lanes the dossiers drawn
+ * from their stukken alone, a tile or hull with no node and no group of its own.
+ */
+export function containersOnCanvas(o: {
+	ids: readonly string[];
+	focal: string;
+	groups: ReadonlyMap<string, ContainerGroup>;
+	focusContainerId: string | null;
+	selectionId: string | null;
+	hasNode: (id: string) => boolean;
+	propsOf: (id: string) => Record<string, unknown> | undefined;
+	/** What the lanes draw; null on another canvas. */
+	lanesDrawn: ReadonlySet<string> | null;
+}) {
+	const shown = new Set(o.ids);
+	const rings = [...o.groups.values()].flatMap((group) => {
+		const bron = parseNodeId(group.id);
+		if (!bron || (group.kind !== 'committee' && group.kind !== 'dossier')) return [];
+		if (group.id.toLowerCase() === o.focal) return [];
+		if (!o.hasNode(group.id) && !isDrawnGroup(group, o.focusContainerId)) return [];
+		if (![...group.members].some((m) => shown.has(m))) return [];
+		const props = o.propsOf(group.id);
+		return [
+			{
+				...bron,
+				id: group.id,
+				props,
+				filterGroup: filterGroupOf(bron.collection, bron.key, props ?? null),
+				holdsFocus: !!o.selectionId && group.members.has(o.selectionId),
+				point: o.hasNode(group.id)
+			}
+		];
+	});
+	const tiles = [...(o.lanesDrawn ?? [])].flatMap((id) => {
+		const bron = parseNodeId(id);
+		if (bron?.collection !== 'dossiers' || o.hasNode(id) || o.groups.has(id)) return [];
+		if (id.toLowerCase() === o.focal) return [];
+		return [
+			{
+				...bron,
+				id,
+				props: undefined,
+				filterGroup: filterGroupOf(bron.collection, bron.key, null),
+				holdsFocus: false,
+				point: false
+			}
+		];
+	});
+	return [...rings, ...tiles];
 }
 
 /** The count of a row: "9 van 29", or the one number when all are drawn or it is off. */

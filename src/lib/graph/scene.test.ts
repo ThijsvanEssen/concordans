@@ -4,6 +4,7 @@ import { costOf } from './store/budget';
 import { buildScene, sceneClusters, type Scene, type SceneUnit } from './scene';
 import { GROUP_MIN } from './scene-groups';
 import type { LineKind } from './line-kind';
+import type { GraphEdge, GraphNode } from './types';
 
 const scenes = new Map<Example, Scene>();
 const scene = (name: Example): Scene => {
@@ -280,5 +281,47 @@ describe('Tonen and Relatie on the scene (B51)', () => {
 			.flatMap((u) => u.members)
 			.map((id) => example('d2').nodes.find((n) => n.id === id)?.raw?.props?.kind);
 		expect(kinds).not.toContain('Voorstel van wet');
+	});
+});
+
+describe('what the legend and Tonen read of the scene', () => {
+	const wet = 'instruments/bwbr1';
+	const stuk = (n: number) =>
+		({
+			id: `documents/d${n}`,
+			key: `d${n}`,
+			collection: 'documents',
+			drawClass: 'document',
+			label: `Stuk ${n}`,
+			raw: { props: { dossier_number: '36164' } }
+		}) as unknown as GraphNode;
+	const nodes = [
+		{ id: wet, key: 'bwbr1', collection: 'instruments', drawClass: 'instrument', label: 'Wet' },
+		...[1, 2, 3, 4, 5].map(stuk)
+	] as unknown as GraphNode[];
+	const edge = (from: string, relation: string, status?: string) =>
+		({ id: `${from}-${relation}`, source: from, target: wet, relation, status }) as GraphEdge;
+	const edges = [1, 2, 3, 4, 5].flatMap((n) => [
+		edge(`documents/d${n}`, 'AMENDS', 'voorgesteld'),
+		edge(`documents/d${n}`, 'REFERS_TO')
+	]);
+	const hullOf = (s: Scene) => s.units.find((u) => u.id.startsWith('dossiers/'));
+
+	it('holds every lijnsoort under the lines, also those a heavier line covers', () => {
+		const s = buildScene({ nodes, edges, chosen: [wet] });
+		expect(new Set(s.lines.map((l) => l.kind))).toEqual(new Set(['change']));
+		expect(new Set(s.kinds.map((k) => k.kind))).toEqual(new Set(['change', 'citation']));
+	});
+
+	it('draws no dossier with Dossiers off: its stukken stay, loose', () => {
+		expect(hullOf(buildScene({ nodes, edges, chosen: [wet] }))).toBeTruthy();
+		const off = buildScene({
+			nodes,
+			edges,
+			chosen: [wet],
+			visibility: { hiddenKinds: new Set(['dossiers']), hiddenLines: new Set() }
+		});
+		expect(hullOf(off)).toBeUndefined();
+		expect(off.units.flatMap((u) => u.members)).toContain('documents/d1');
 	});
 });
