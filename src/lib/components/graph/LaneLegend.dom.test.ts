@@ -62,18 +62,20 @@ describe('LaneLegend', () => {
 		const names = () => screen.getAllByRole('button').map((b) => b.textContent?.trim());
 		const on = legend([line('change', true)], [], [], undefined, [...kinds]);
 		expect(names()).toEqual(['Voorgestelde wijziging', 'Aanhaling']);
-		expect(screen.getByText('Aanhaling').closest('.sample')?.classList.contains('stil')).toBe(true);
+		expect(screen.getByText('Aanhaling').closest('.sample')?.classList.contains('faint')).toBe(
+			true
+		);
 		on.unmount();
 		legend([line('citation')], ['change'], [], undefined, [...kinds]);
 		expect(names()).toEqual(['Voorgestelde wijziging', 'Aanhaling']);
-		expect(screen.getByText('Aanhaling').closest('.sample')?.classList.contains('stil')).toBe(
+		expect(screen.getByText('Aanhaling').closest('.sample')?.classList.contains('faint')).toBe(
 			false
 		);
 	});
 
 	it('explains the markers of the wetten, those of this network, quiet while none stands', () => {
 		legend([line('change', true)], [], ['proposed'], undefined, undefined, []);
-		expect(screen.getByText('Voorgesteld').classList.contains('stil')).toBe(true);
+		expect(screen.getByText('Voorgesteld').classList.contains('faint')).toBe(true);
 		expect(screen.queryByText('Gewijzigd')).toBeNull();
 	});
 });

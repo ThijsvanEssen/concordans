@@ -124,7 +124,7 @@
 	);
 	const annexes = $derived(canvasCounts.annexes ?? 0);
 	/** Stuksoort stands under the row of Stukken: the last that holds them. */
-	const stukkenRij = $derived(
+	const papersRow = $derived(
 		kindRowsShown?.findLast((r) => r.filterGroups.includes('stukken'))?.id
 	);
 
@@ -161,14 +161,14 @@
      to them as a list (the table of Verbonden under that kind), not as so many nodes. -->
 {#snippet alleLijst(total: number, bronnen: readonly FilterGroup[], noun: string)}
 	{#if lijstHref}
-		{@const woorden = `Alle ${formatCount(total)} ${noun.toLowerCase()}`}
-		<TekstLink class="rij__alle" href={lijstHref(bronnen)} aria-label={woorden} title={woorden}
+		{@const words = `Alle ${formatCount(total)} ${noun.toLowerCase()}`}
+		<TekstLink class="rij__alle" href={lijstHref(bronnen)} aria-label={words} title={words}
 			>{formatCount(total)}</TekstLink
 		>
 	{/if}
 {/snippet}
 
-{#snippet stuksoortRijen()}
+{#snippet sortsOfPapers()}
 	{#if stuksoorten.length > 1 || filter.stuksoort}
 		<div class="sub">
 			{#each stuksoorten as s (s)}
@@ -260,7 +260,7 @@
 							</FilterOptie>
 							{#if alle != null}{@render alleLijst(alle, r.filterGroups, r.label)}{/if}
 						</div>
-						{#if r.id === stukkenRij}{@render stuksoortRijen()}{/if}
+						{#if r.id === papersRow}{@render sortsOfPapers()}{/if}
 						{#if withCurrentMember && r.collection === 'members'}
 							<!-- The one marking of a current lid, as the canvas draws it (N13). -->
 							<p class="sleutel">
@@ -326,7 +326,7 @@
 								BRON_LABEL[alle.collection as Collection][1]
 							)}{/if}
 					</div>
-					{#if k === 'stukken'}{@render stuksoortRijen()}{/if}
+					{#if k === 'stukken'}{@render sortsOfPapers()}{/if}
 				{/each}
 				{@render tonenRest()}
 			</Sectie>

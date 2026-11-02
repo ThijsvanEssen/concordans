@@ -78,7 +78,7 @@
 			>
 				<Vinkje aan={!hidden.has(kind)} />
 				{#each samples as { proposed, label } (label)}
-					<span class="sample" class:stil={!drawn(kind, proposed)}>
+					<span class="sample" class:faint={!drawn(kind, proposed)}>
 						<LineSample
 							relation={sample.relation}
 							from={sample.from}
@@ -91,7 +91,7 @@
 		</li>
 	{/each}
 	{#each marks as change, i (change)}
-		<li class="mark" class:first={i === 0} class:stil={!changesDrawn.includes(change)}>
+		<li class="mark" class:first={i === 0} class:faint={!changesDrawn.includes(change)}>
 			<svg width="10" height="10" viewBox="-5 -5 10 10" aria-hidden="true">
 				<path class:hollow={change === 'proposed'} d={CHANGED_MARK} />
 			</svg>
@@ -140,11 +140,11 @@
 		gap: var(--s-2);
 	}
 	/* Off, or no line shows it now: it stays, quieter. Only the tick says which. */
-	.stil,
+	.faint,
 	.kind[aria-pressed='false'] .sample {
 		color: var(--ink-3);
 	}
-	.stil :global(svg),
+	.faint :global(svg),
 	.kind[aria-pressed='false'] :global(.lm) {
 		opacity: 0.35;
 	}
