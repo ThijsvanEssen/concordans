@@ -139,7 +139,7 @@ test('the werkplek opens without a shift', async ({ page }) => {
 		}).observe({ type: 'layout-shift', buffered: true });
 	});
 	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
-	await expect(page.locator('.canvas-wrap')).toBeAttached();
+	await expect(page.getByTestId('banen')).toBeAttached();
 	await page.waitForTimeout(3000);
 	const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
 	expect(cls).toBeLessThanOrEqual(0.1);

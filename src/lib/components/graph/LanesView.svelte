@@ -33,9 +33,13 @@
 		changedNumbers,
 		laneDossierNumber,
 		numberedSquares,
+		cardWidth,
+		chosenOn,
 		showBeside
 	} from '$lib/graph/lane-changes';
+	import { afterTick } from '$lib/util/after-tick';
 	import LaneCard from './LaneCard.svelte';
+	import LaneEdge from './LaneEdge.svelte';
 	import LaneLegend from './LaneLegend.svelte';
 	import LaneTiles from './LaneTiles.svelte';
 	import LanePanels from './LanePanels.svelte';
@@ -114,10 +118,11 @@
 	const paths: LanePath[] = $derived(
 		phone ? stripLines(scene, layout as StripLayout) : laneLines(scene, layout)
 	);
+	/** How wide the card over the field is: the columns make room for it (B89). */
+	let covered = $state(0);
 	const scale = $derived(
-		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, avail / layout.width))
+		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, (avail - covered) / layout.width))
 	);
-	const named = $derived(phone ? (layout as StripLayout).named : null);
 
 	$effect(() => {
 		// A hull is drawn too: its pill marks the wet or dossier it stands for.
@@ -185,13 +190,43 @@
 	);
 
 	let field = $state<HTMLElement | null>(null);
-	// The card lies over the field (Thijs, 1 nov.): what it would cover scrolls out from under it.
+	// The card lies over the field (Thijs, 1 nov.): the drawing shrinks as far as it may, and what
+	// the card would still cover scrolls out from under it.
 	$effect(() => {
-		const id = markedUnit ?? openId;
+		const open = !!(markedUnit ?? openId);
 		const f = field;
-		if (!id || !f) return;
-		const frame = requestAnimationFrame(() => showBeside(f, id));
+		void avail;
+		if (!open || !f) {
+			covered = 0;
+			return;
+		}
+		const frame = requestAnimationFrame(() => (covered = cardWidth(f)));
 		return () => cancelAnimationFrame(frame);
+	});
+	/** The units at the other end of a unit's lines, the wetten last: those are to be seen first. */
+	const linkedOf = (id: string) => {
+		const other = scene.lines.flatMap((l) => (l.from === id ? l.to : l.to === id ? l.from : []));
+		const inLaws = (u: string) => unitOf.get(u)?.column === 'laws';
+		return [...other.filter((u) => !inLaws(u)), ...other.filter(inLaws)];
+	};
+	$effect(() => {
+		const id = markedUnit ?? openUnitOn;
+		const f = field;
+		void scale;
+		if (!id || !f) return;
+		const frame = requestAnimationFrame(() => showBeside(f, id, linkedOf(id)));
+		return () => cancelAnimationFrame(frame);
+	});
+	// A card closed with its × took the focus with it: back to what opened it, as Escape leaves it.
+	$effect(() => {
+		const id = markedUnit ?? openUnitOn;
+		const chosen = id && field ? chosenOn(field, id) : null;
+		return () => {
+			afterTick(() => {
+				if (chosen?.isConnected && document.activeElement === document.body)
+					chosen.focus({ preventScroll: true });
+			});
+		};
 	});
 	// ── the look of a line ────────────────────────────────────────────────────
 	const lineColour = (p: LanePath) => {
@@ -432,7 +467,6 @@
 		{@const n = byId.get(u.members[0])}
 		{@const cx = box.mark.x + box.mark.width / 2}
 		{@const cy = box.mark.y + box.mark.height / 2}
-		{@const showName = !named || named.has(u.id) || u.focus}
 		<g
 			class="unit"
 			class:is-active={markedUnit === u.id}
@@ -463,11 +497,9 @@
 			{/if}
 			{#if u.change}{@render changedMark(u, box.mark.x + box.mark.width + 1, box.mark.y + 1)}{/if}
 			{#if phone}
-				{#if showName}
-					{#each box.text.name as line, i (i)}
-						<text class="name centre" x={cx} y={box.label.y + 11 + i * LINE}>{line}</text>
-					{/each}
-				{/if}
+				{#each box.text.name as line (line)}
+					<text class="row-name" x={box.label.x} y={cy + 4}>{line}</text>
+				{/each}
 			{:else}
 				<!-- The lines as the layout measured them (lane-layout.ts): nothing wraps again here. -->
 				{@const step = disc ? SMALL_LINE : LINE}
@@ -585,6 +617,7 @@
 		</div>
 	{/if}
 </div>
+{#if !phone}<LaneEdge {field} {covered} watch={[avail, layout, scale]} />{/if}
 {#if openUnit}
 	<LaneCard
 		unit={openUnit}
@@ -669,9 +702,6 @@
 		stroke: var(--paper);
 		stroke-width: 3px;
 		stroke-linejoin: round;
-	}
-	.name.centre {
-		text-anchor: middle;
 	}
 	.name.sub,
 	.role {

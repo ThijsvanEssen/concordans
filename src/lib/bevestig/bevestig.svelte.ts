@@ -18,6 +18,8 @@ type Confirmation = {
 	to?: { label: string; href: string };
 	/** The way back: Ongedaan maken takes the thing back. */
 	undo?: () => void;
+	/** The keyboard acted, far from the line in the order of Tab: the focus goes to Ongedaan maken. */
+	focusFrom?: HTMLElement;
 };
 
 let current = $state<Confirmation | null>(null);
@@ -57,6 +59,26 @@ export function undo() {
 	clearTimeout(timer);
 	current = null;
 	back?.();
+}
+
+/**
+ * The way back of a change to the werkplek: `announce`, and where the keyboard made the change the
+ * focus goes to Ongedaan maken: 69 stops of Tab further the line would be gone. Not from the list of
+ * bronnen, where the same key undoes it (`n`).
+ */
+export function announceUndo(text: string, undoIt: () => void) {
+	const from = typeof document === 'undefined' ? null : (document.activeElement as HTMLElement);
+	announce(text, undefined, undoIt);
+	if (current && from?.matches(':focus-visible') && !from.closest('.canvas-node-list'))
+		current.focusFrom = from;
+}
+
+/** The focus leaves the line by Escape: back to where it came from, and the line is done. */
+export function closeFocused() {
+	const from = current?.focusFrom;
+	clearTimeout(timer);
+	current = null;
+	if (from?.isConnected) from.focus();
 }
 
 /** Where the navigation shows a sign for something kept or followed since the reader was there. */

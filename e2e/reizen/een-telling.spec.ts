@@ -73,7 +73,7 @@ for (const [naam, pad] of BRONNEN) {
 		const panel = await verbonden(page);
 		expect(panel.length, 'Verbonden has soorten').toBeGreaterThan(0);
 
-		await page.goto(`${pad}?mode=netwerk`);
+		await page.goto(`${pad}?mode=netwerk&doek=sigma`);
 		const rijen = new Map(await soort(page));
 		for (const [label, count] of panel) {
 			const rij = rijen.get(label);
@@ -88,7 +88,7 @@ test('a soort cut off says of how many, in the legend and on its cluster (N2)', 
 	page,
 	touch
 }) => {
-	await page.goto('/fracties/vvd?mode=netwerk');
+	await page.goto('/fracties/vvd?mode=netwerk&doek=sigma');
 	const rijen = new Map(await soort(page));
 	expect(rijen.get('Stemmingen')).toMatch(/^[\d.]+ van [\d.]+$/);
 	// A fractie's leden of every period, and the key to its marking (N13).
@@ -110,7 +110,7 @@ test('a soort cut off says of how many, in the legend and on its cluster (N2)', 
 test('the whole of a soort cut off is its list, in the row of its count (A314)', async ({
 	page
 }) => {
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk&doek=sigma');
 	const rijen = new Map(await soort(page));
 	expect(rijen.get('Uitspraken')).toMatch(/^[\d.]+ van [\d.]+$/);
 	const legend = strip(page).getByRole('region', { name: 'Filters' });

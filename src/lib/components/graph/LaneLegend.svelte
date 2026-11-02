@@ -84,9 +84,6 @@
 			{LAW_CHANGE_WORDS[change].head}
 		</li>
 	{/each}
-	{#if hidden.has('change')}
-		<li class="note">Zonder Wijziging geen kopjes en markers bij de wetten</li>
-	{/if}
 </ul>
 
 <style>
@@ -149,15 +146,15 @@
 		fill: var(--paper);
 		stroke: var(--ink-2);
 	}
-	.note {
-		color: var(--ink-3);
-	}
 	/* A phone: Deel stands above the field; the samples above the strips, and they scroll away. */
 	@media (max-width: 768px) {
 		.kinds {
 			position: static;
 			max-width: 100%;
 			margin: 0;
+		}
+		.kind {
+			min-height: 44px;
 		}
 	}
 </style>

@@ -8,6 +8,8 @@ test('Weghalen after Toevoegen draws the canvas as it was', async ({ page, touch
 	const list = page.locator('.canvas-node-list a');
 	await expect(list.nth(1)).toBeAttached();
 	await expect.poll(() => list.count()).toBeGreaterThan(5);
+	// The second step of a netwerk comes after the first.
+	await page.waitForLoadState('networkidle');
 	const before = await list.allTextContents();
 
 	await list

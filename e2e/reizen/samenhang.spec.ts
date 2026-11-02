@@ -22,7 +22,7 @@ const drawn = (page: import('@playwright/test').Page) =>
 	page.getByRole('list', { name: /^Bronnen in het netwerk, \d+/ });
 
 test('the network draws a bron with its neighbours and lists them', async ({ page }) => {
-	await page.goto(`${ARTICLE}?mode=netwerk`);
+	await page.goto(`${ARTICLE}?mode=netwerk&doek=sigma`);
 	await expect(page.locator('canvas').first()).toBeAttached();
 	await expect(drawn(page)).toBeAttached();
 	await expect(drawn(page).getByRole('link', { name: 'Art. 6:162 BW, Artikel' })).toBeAttached();
@@ -58,7 +58,7 @@ for (const { stuk, own, votes } of [
 	{ stuk: '/kamerstukken/37020-X/53', own: /Beslisnota bij Kamerbrief over incident/, votes: 0 }
 ]) {
 	test(`the network of ${stuk} draws no stemming of its indiener elsewhere`, async ({ page }) => {
-		await page.goto(`${stuk}?mode=netwerk`);
+		await page.goto(`${stuk}?mode=netwerk&doek=sigma`);
 		await expect(drawn(page).getByRole('link', { name: own })).toBeAttached();
 		await page.waitForLoadState('networkidle');
 		const items = await drawn(page).getByRole('listitem').allInnerTexts();
@@ -72,7 +72,7 @@ for (const { stuk, own, votes } of [
 // Soort names the soorten of Verbonden and how many of each are drawn (N1): the stemmingen
 // drawn are counted, "N" or "N van M", in Stemmingen and, past its count, Overige stemmingen.
 test('the open legend counts the stemmingen drawn, the focus selected', async ({ page }) => {
-	await page.goto('/kamerstukken/36799/31?mode=netwerk');
+	await page.goto('/kamerstukken/36799/31?mode=netwerk&doek=sigma');
 	await page.waitForLoadState('networkidle');
 	const items = await drawn(page).getByRole('listitem').allInnerTexts();
 	const stemmingen = items.filter((t) => t.endsWith(', Stemming')).length;

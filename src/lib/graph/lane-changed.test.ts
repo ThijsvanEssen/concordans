@@ -96,7 +96,7 @@ describe('a changed wet on the lanes', () => {
 		const changed = laws(s).filter((u) => u.change);
 		const others = laws(s).filter((u) => !u.change && !u.focus);
 		const lastChanged = Math.max(...changed.map((u) => at(u.id).y));
-		for (const u of changed) expect(strips.named.has(u.id)).toBe(true);
+		for (const u of changed) expect(strips.units.get(u.id)!.text.name.length).toBe(1);
 		for (const u of others) expect(at(u.id).y).toBeGreaterThanOrEqual(lastChanged);
 		expect(strips.heads).toEqual([]);
 	});

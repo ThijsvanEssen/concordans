@@ -249,7 +249,9 @@ export function createGraphContext() {
 		});
 		const protect = new Set(pinned);
 		if (keep) protect.add(keep);
-		if (selected) {
+		// A chosen bron has its share of the budget: being the lezer's as well brings it no more,
+		// so the page of the bron and a link with netwerk= keep the same (B84).
+		if (selected && !pinned.has(selected.id)) {
 			protect.add(selected.id);
 			// A selected container has no edges of its own to protect its children by
 			// (they are containment, not peer edges): protect its current hull instead.

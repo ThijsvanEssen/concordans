@@ -5,7 +5,7 @@
 // as Bewaard in does. A network that could not be drawn says so on every screen, with Opnieuw,
 // until it is asked again.
 import { writable } from 'svelte/store';
-import { announce } from '$lib/bevestig/bevestig.svelte';
+import { announce, announceUndo } from '$lib/bevestig/bevestig.svelte';
 import type { LoadFailure } from '$lib/util/load.svelte';
 
 type NetwerkMelding =
@@ -24,7 +24,8 @@ export function meldNetwerk(tekst: string, terug: (() => void) | null, ms = 8000
 	if (!isPhone()) {
 		// Bevestiging closes the sentence itself before Ongedaan maken.
 		netwerkMelding.set(null);
-		announce(terug ? tekst.replace(/\.$/, '') : tekst, undefined, terug ?? undefined);
+		if (terug) announceUndo(tekst.replace(/\.$/, ''), terug);
+		else announce(tekst);
 		return;
 	}
 	netwerkMelding.set({ tekst, terug });

@@ -6,7 +6,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
 // Two wetten chosen: Boek 6 BW with its articles drawn as a hull, Gemw as a bron.
-const NETWERK = '/wetten/BWBR0005416?mode=netwerk&netwerk=instruments/bwbr0005289';
+const NETWERK = '/wetten/BWBR0005416?mode=netwerk&netwerk=instruments/bwbr0005289&doek=sigma';
 const lijst = (page: Page) => page.locator('.canvas-node-list a');
 const kaart = (page: Page) => page.locator('.strook--kaart');
 // Its name stands short at rest, in full once chosen: the pill is found by the number.
@@ -47,7 +47,7 @@ test('the card of a cluster stands in the strip at the right, not over the canva
 	touch
 }) => {
 	test.skip(touch, 'the keyboard list is the way without a pointer');
-	await page.goto('/uitspraken/ECLI:NL:HR:2009:BH2815?mode=netwerk');
+	await page.goto('/uitspraken/ECLI:NL:HR:2009:BH2815?mode=netwerk&doek=sigma');
 	const groep = lijst(page).filter({ hasText: /^\d+ uitspraken, groep$/ });
 	await expect(groep).toHaveCount(1);
 	await groep.focus();

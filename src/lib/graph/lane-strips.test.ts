@@ -56,8 +56,11 @@ describe.each(EXAMPLES)('the strips of %s', (name) => {
 			);
 	});
 
-	it('names six units at most, besides a chosen hull', () => {
-		expect(layout.named.size).toBeLessThanOrEqual(6);
+	it('names every unit outside Wie maakt, on one line (Thijs, variant A)', () => {
+		for (const u of scene.units.filter((v) => v.column !== 'makers'))
+			expect(layout.units.get(u.id)!.text.name.length, u.id).toBeGreaterThan(0);
+		for (const u of scene.units.filter((v) => v.column !== 'makers' && v.shape !== 'tiles'))
+			expect(layout.units.get(u.id)!.text.name.length, u.id).toBeLessThanOrEqual(1);
 	});
 
 	it('draws only the lines to a chosen unit', () => {
