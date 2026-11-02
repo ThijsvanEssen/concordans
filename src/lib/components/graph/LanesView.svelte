@@ -120,7 +120,6 @@
 	const scale = $derived(
 		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, (avail - covered) / layout.width))
 	);
-	const named = $derived(phone ? (layout as StripLayout).named : null);
 
 	$effect(() => {
 		// A hull is drawn too: its pill marks the wet or dossier it stands for.
@@ -453,7 +452,6 @@
 		{@const n = byId.get(u.members[0])}
 		{@const cx = box.mark.x + box.mark.width / 2}
 		{@const cy = box.mark.y + box.mark.height / 2}
-		{@const showName = !named || named.has(u.id) || u.focus}
 		<g
 			class="unit"
 			class:is-active={markedUnit === u.id}
@@ -484,11 +482,9 @@
 			{/if}
 			{#if u.change}{@render changedMark(u, box.mark.x + box.mark.width + 1, box.mark.y + 1)}{/if}
 			{#if phone}
-				{#if showName}
-					{#each box.text.name as line, i (i)}
-						<text class="name centre" x={cx} y={box.label.y + 11 + i * LINE}>{line}</text>
-					{/each}
-				{/if}
+				{#each box.text.name as line (line)}
+					<text class="row-name" x={box.label.x} y={cy + 4}>{line}</text>
+				{/each}
 			{:else}
 				<!-- The lines as the layout measured them (lane-layout.ts): nothing wraps again here. -->
 				{@const step = disc ? SMALL_LINE : LINE}
@@ -690,9 +686,6 @@
 		stroke: var(--paper);
 		stroke-width: 3px;
 		stroke-linejoin: round;
-	}
-	.name.centre {
-		text-anchor: middle;
 	}
 	.name.sub,
 	.role {

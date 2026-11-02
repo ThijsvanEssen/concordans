@@ -1,13 +1,12 @@
 // The lanes on a phone: the columns as strips from top to bottom (Wie maakt, Kamerstukken, Wetten,
 // Rechtspraak, Algemene wetten), from the design of phase 0. Wie maakt is a row of marks with one
 // line that counts them; a chosen hull stands in full with a line per row; every other unit is a
-// mark in a grid, a hull outside the focus as a disc with its count. At most NAMED units carry a
-// name under their mark (the chosen first, then the changed wetten, then the largest). Only the lines to the chosen units
-// are drawn, those of Wie maakt as one per lijnsoort. A line runs down out of what it leaves (under
-// a chosen hull, or along the edge of a cell), across in a channel (under a chosen hull, or under
-// the head of a strip) and into its target from above (a hull) or from the side (a mark in the
-// grid). Where it changes channel it goes down the free lane at the right, which no hull or cell
-// reaches: so it runs through no mark.
+// row of its own, its mark with its name on one line, a hull outside the focus as a disc with its
+// count (Thijs, 1 nov.: variant A). Only the lines to the chosen units are drawn, those of Wie maakt
+// as one per lijnsoort. A line runs down out of what it leaves (under a chosen hull, or along the
+// left edge of the rows), across in a channel (under a chosen hull, or under the head of a strip)
+// and into its target from above (a hull) or from the left (a row). Where it changes channel it
+// goes down the free lane at the right, which no hull or name reaches: so it runs through no mark.
 // Pure: the same LaneLayout as lane-layout.ts, so one view draws both.
 import { easePath, type Pt } from '$lib/network/tree-lines';
 import {
@@ -27,20 +26,22 @@ const MARGIN = 16;
 const INSET = 12;
 const HEAD = 40;
 const STRIP_GAP = 14;
-const CELL = 80;
-/** A name under a mark keeps this far from the edges of its cell, where the lines run. */
-const CELL_AIR = 4;
+/** A unit outside the focus: one line, as high as a line of tiles with air around it. */
+const UNIT_ROW = 28;
+/** Left of the mark the lines run; the widest disc with its marker ends before the name. */
+const MARK_CENTRE = 22;
+const NAME_AT = 48;
+/** A name stops before the free lane at the right, where the lines go down (`stripLines`). */
+const LANE_ROOM = 24;
 const GLYPH = 14;
 const PILL = 26;
 const ROW = 24;
 const NAME_LINE = 15;
-/** Names under a mark: at most this many units carry one. */
-const NAMED = 6;
 const CHANNEL_STEP = 6;
 const TIP = 4;
 /** Where the lines of Wie maakt come down: right of the head of the strip below. */
 const PAST_HEAD = 160;
-/** A chosen hull is at most this wide: right of it, and of the cells, the lines go down. */
+/** A chosen hull is at most this wide: right of it, and of the names, the lines go down. */
 const HULL_MAX = 260;
 /** The lines in the free lane at the right stand this far apart. */
 const LANE_STEP = 4;
@@ -53,9 +54,8 @@ const STRIP_ORDER: readonly (Column | 'general')[] = [
 	'general'
 ];
 
-/** What the strips add to a layout: which units carry a name, the channels. */
+/** What the strips add to a layout: the channels. */
 export type StripLayout = LaneLayout & {
-	named: ReadonlySet<string>;
 	/** The strip of each unit, by its place from the top. */
 	stripOf: ReadonlyMap<string, number>;
 	/** Under each chosen hull, the channel its lines run across in. */
@@ -72,17 +72,14 @@ const stripKey = (u: SceneUnit): Column | 'general' => (u.general ? 'general' : 
 /** The radius of a disc by its count, as lane-layout draws a group. */
 const discRadius = (n: number): number => (n < 10 ? 10 : n < 30 ? 12 : 15);
 
-/** A disc or a mark with its name below, centred in a cell. */
-function cellBox(u: SceneUnit, x: number, y: number, named: boolean, disc: boolean): UnitBox {
+/** A disc or a mark with its name beside it, on one line. */
+function rowBox(u: SceneUnit, x: number, y: number, width: number, disc: boolean): UnitBox {
 	const r = disc ? discRadius(u.members.length) : GLYPH / 2;
-	const cx = x + CELL / 2;
-	const mark = { x: cx - r, y, width: 2 * r, height: 2 * r };
-	const label = named
-		? { x: x + CELL_AIR, y: y + 2 * r + 4, width: CELL - 2 * CELL_AIR, height: 2 * NAME_LINE }
-		: { x: cx, y: y + 2 * r, width: 0, height: 0 };
-	const bottom = label.y + label.height;
-	const text = { name: named ? wrapLabel(u.label, label.width, 13, 2) : [], small: [] };
-	return { x, y, width: CELL, height: bottom - y, mark, label, rows: [], text };
+	const mid = y + UNIT_ROW / 2;
+	const mark = { x: x + MARK_CENTRE - r, y: mid - r, width: 2 * r, height: 2 * r };
+	const label = { x: x + NAME_AT, y, width: width - NAME_AT, height: UNIT_ROW };
+	const text = { name: wrapLabel(u.label, label.width, 13, 1), small: [] };
+	return { x, y, width, height: UNIT_ROW, mark, label, rows: [], text };
 }
 
 /** A chosen hull in full: its name in a pill, below it a line per row. */
@@ -109,23 +106,11 @@ const byWeight = (a: SceneUnit, b: SceneUnit) =>
 /** A chosen hull and tiles: on a phone they alone stand in full. */
 const isFull = (u: SceneUnit) => (u.shape === 'hull' && u.focus) || u.shape === 'tiles';
 
-/** The units that carry a name: the chosen ones, the changed wetten, the largest; NAMED at most. */
-function namedOf(scene: Scene): Set<string> {
-	const units = scene.units.filter((u) => u.column !== 'makers' && !isFull(u));
-	return new Set(
-		[...units]
-			.sort(byWeight)
-			.slice(0, NAMED)
-			.map((u) => u.id)
-	);
-}
-
 type Strip = { key: Column | 'general'; units: SceneUnit[] };
 
 /** What placing a strip needs beside it, and what it records. */
 type Place = {
 	right: number;
-	named: ReadonlySet<string>;
 	units: Map<string, UnitBox>;
 	bands: Map<string, Box>;
 	channels: Map<string, number>;
@@ -133,22 +118,18 @@ type Place = {
 	load: ReadonlyMap<string, number>;
 };
 
-/** The grid of a strip: its units in cells, a new line where the width ends. */
-function placeGrid(units: readonly SceneUnit[], y0: number, p: Place): number {
+/** The rows of a strip: the weightiest first. */
+function placeRows(units: readonly SceneUnit[], y0: number, p: Place): number {
 	const x0 = MARGIN + INSET;
-	const perLine = Math.max(1, Math.floor((p.right - x0) / CELL));
-	let [y, col, line] = [y0, 0, 0];
+	let y = y0;
 	for (const u of [...units].sort(byWeight)) {
-		if (col === perLine) [y, col, line] = [y + line + 12, 0, 0];
-		const box = cellBox(u, x0 + col * CELL, y, p.named.has(u.id), u.shape !== 'node');
-		p.units.set(u.id, box);
-		line = Math.max(line, box.height);
-		col++;
+		p.units.set(u.id, rowBox(u, x0, y, p.right - LANE_ROOM - x0, u.shape !== 'node'));
+		y += UNIT_ROW;
 	}
-	return col > 0 ? y + line : y;
+	return y;
 }
 
-/** A strip under its head: the channel of what comes in, each chosen hull in full, then the grid. */
+/** A strip under its head: the channel of what comes in, each chosen hull in full, then the rows. */
 function placeStrip(strip: Strip, index: number, top: number, p: Place): number {
 	const x0 = MARGIN + INSET;
 	const load = (key: string) => (p.load.get(key) ?? 0) * CHANNEL_STEP;
@@ -168,7 +149,7 @@ function placeStrip(strip: Strip, index: number, top: number, p: Place): number 
 		y = band.y + band.height + 10;
 	}
 	const rest = strip.units.filter((u) => !isFull(u));
-	return placeGrid(rest, y, p) + 16;
+	return placeRows(rest, y, p) + 16;
 }
 
 /** Wie maakt on a phone: a row of marks, a new row where the width ends; one line counts them. */
@@ -216,7 +197,7 @@ function upperOf(l: SceneLine, w: Where): string {
 /**
  * The channels of a line: the one it leaves in (under its chosen hull, or under the head of the
  * strip below its own) and the one it arrives in (above the chosen hull it goes to, or above the
- * grid of its strip: under the last chosen hull there, else under the head).
+ * rows of its strip: under the last chosen hull there, else under the head).
  */
 function channelsOf(l: SceneLine, w: Where): { first: string; last: string } {
 	const up = upperOf(l, w);
@@ -254,7 +235,6 @@ export function laneStrips(scene: Scene, width: number): StripLayout {
 	}
 	const p: Place = {
 		right: width - MARGIN - INSET,
-		named: namedOf(scene),
 		units: new Map(),
 		bands: new Map(),
 		channels: new Map(),
@@ -278,7 +258,6 @@ export function laneStrips(scene: Scene, width: number): StripLayout {
 		strip,
 		heads: [],
 		units: p.units,
-		named: p.named,
 		stripOf: w.stripOf,
 		bands: p.bands,
 		channels: p.channels
@@ -331,9 +310,9 @@ type Leg = {
 
 const centreX = (b: Box) => b.x + b.width / 2;
 const centreY = (b: Box) => b.y + b.height / 2;
-const isCell = (b: UnitBox) => b.rows.length === 0 && b.width === CELL;
+const isRow = (b: UnitBox) => b.rows.length === 0 && b.height === UNIT_ROW;
 
-/** Out of the upper end: a hull at a point spread over its lower edge, a cell along its right edge. */
+/** Out of the upper end: a hull at a point spread over its lower edge, a row to its left edge. */
 function outOf(box: UnitBox, slot: number, of: number): Pt[] {
 	if (box.rows.length > 0)
 		return [
@@ -342,21 +321,21 @@ function outOf(box: UnitBox, slot: number, of: number): Pt[] {
 				y: box.mark.y + box.mark.height
 			}
 		];
-	if (!isCell(box)) return [{ x: centreX(box.mark), y: box.y + box.height }];
+	if (!isRow(box)) return [{ x: centreX(box.mark), y: box.y + box.height }];
 	const y = centreY(box.mark);
 	return [
-		{ x: box.mark.x + box.mark.width + 2, y },
-		{ x: box.x + box.width - 2, y }
+		{ x: box.mark.x - 2, y },
+		{ x: box.x + 2, y }
 	];
 }
 
-/** Into the lower end: a hull at its pill, a cell from the left, along its edge. */
+/** Into the lower end: a hull at its pill, a row from the left, along its edge. */
 function inOf(box: UnitBox, near: number): Pt[] {
 	if (box.rows.length > 0) {
 		const x = Math.max(box.label.x + 24, Math.min(box.label.x + box.label.width - 24, near));
 		return [{ x, y: box.label.y - TIP }];
 	}
-	if (!isCell(box)) return [{ x: centreX(box.mark), y: box.mark.y - TIP }];
+	if (!isRow(box)) return [{ x: centreX(box.mark), y: box.mark.y - TIP }];
 	const y = centreY(box.mark);
 	return [
 		{ x: box.x + 2, y },

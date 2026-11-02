@@ -96,8 +96,11 @@ test('changed wetten stand under their heads, with a marker the legend explains'
 	await expect(page.locator('.changed-mark').first()).toBeAttached();
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
 	await expect(legend.getByText('Voorgesteld', { exact: true })).toBeVisible();
-	if (isMobile) await expect(lawHeads(page)).toHaveCount(0);
-	else await expect(lawHeads(page).first()).toHaveText('Voorgesteld');
+	if (isMobile) {
+		await expect(lawHeads(page)).toHaveCount(0);
+		// Every bron has its name, on a row of its own (Thijs, variant A).
+		await expect(page.locator('[data-unit] .row-name', { hasText: 'Jeugdwet' })).toBeVisible();
+	} else await expect(lawHeads(page).first()).toHaveText('Voorgesteld');
 });
 
 test('the legend switches a lijnsoort off and on, and the address keeps it', async ({
