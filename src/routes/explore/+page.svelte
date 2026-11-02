@@ -345,8 +345,7 @@
 	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
 	// Parsed from its own three params only, so selecting a bron does not compose again.
 	//
-	// The address is the state: a link with ?mode=netwerk draws the same in every browser. The netwerk
-	// kept in this browser is offered only where the address names no bron (the button Netwerk).
+	// The address is the state; the netwerk kept in this browser is offered only where it names no bron.
 	leesBewaard();
 	const netwerkQuery = $derived(
 		withReader(netwerkQueryOf(params), mode === 'graph' && focus, onLanes(params))
@@ -355,6 +354,7 @@
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
 	const netwerkActive = $derived(netwerk.ids.length > 0);
+	const bronAlone = $derived(onLanes(params) && !!focus && netwerk.ids.length === 1);
 
 	// What Aantal stappen shows: with a netwerk the steps of its bronnen (the most any asks), else
 	// the bron the canvas is drawn around.
@@ -2435,7 +2435,7 @@
 								{verbonden}
 								{depth}
 								{pairSteps}
-								reach={netwerkActive ? netwerkReach : reach}
+								reach={netwerkActive ? { ...netwerkReach, focal: bronAlone ? focus : '' } : reach}
 								counting={netwerkActive && (composer.loading || composer.extending)}
 								expecting={netwerkActive ? netwerk.ids.length : 0}
 								selectedEdgeId={card?.edgeId ?? null}
@@ -2447,12 +2447,12 @@
 								onMetGroep={(m) => (metGroep = m)}
 								onToggleChosen={toggleChosen}
 								onAdd={addIdToNetwerk}
-								{netwerkActive}
+								netwerkActive={netwerkActive && !bronAlone}
 								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
 								onFilter={applyFilter}
 								onDepth={setDepth}
-								lijstHref={focus && netwerk.ids.length < 2 ? lijstHref : undefined}
+								lijstHref={bronAlone || !netwerkActive ? lijstHref : undefined}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
 								lanes={lanesOn}
