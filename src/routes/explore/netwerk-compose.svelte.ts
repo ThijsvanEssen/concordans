@@ -90,6 +90,8 @@ export class NetwerkComposer {
 	cut = $state.raw<{ collection: string; total: number; kept: number }[]>([]);
 	/** The weergave Omgeving: each chosen bron with all its neighbours, not only what they share. */
 	surroundings = false;
+	/** Only the chosen bronnen's light nodes for now: the Keten is on its way, their full nodes after it. */
+	light = false;
 	/** Aantal stappen as the address says it (?diepte); null: the default of each bron. */
 	steps: number | null = null;
 	/**
@@ -156,6 +158,11 @@ export class NetwerkComposer {
 		});
 	}
 
+	/** Whether the full nodes of these bronnen are all in. */
+	hasFull(ids: readonly string[]): boolean {
+		return ids.length > 0 && ids.every((id) => this.#fullIn.has(id));
+	}
+
 	#fullOf(id: string): Promise<NodeResponse> {
 		let request = this.#full.get(id);
 		if (!request) {
@@ -206,11 +213,17 @@ export class NetwerkComposer {
 		const epoch = ++this.#epoch;
 		this.loading = true;
 		this.entries = syncOn(this.entries, n);
-		const fullRequests = Promise.allSettled(n.ids.map((id) => this.#fullOf(id)));
+		const fullRequests = this.light
+			? null
+			: Promise.allSettled(n.ids.map((id) => this.#fullOf(id)));
 		const pending = n.ids.some((id) => !this.#fullIn.has(id));
 		const lights = await Promise.allSettled(n.ids.map((id) => this.#lightOf(id)));
 		if (epoch !== this.#epoch) return;
 		if (pending) this.#draw(n, lights, false);
+		if (!fullRequests) {
+			this.loading = false;
+			return;
+		}
 		const results = await fullRequests;
 		if (epoch !== this.#epoch) return;
 		this.#draw(n, results);

@@ -154,11 +154,9 @@
 		type ChainsResponse,
 		type ChainsState
 	} from '$lib/network/linkchains';
-	import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 	import { getChains, getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
 	import { LED_BY_FOCUS, ledByRows } from '$lib/graph/led-by';
-	import { getEuLinks, getRelatedInstruments } from '$lib/api/verbonden';
 	import { formatCount } from '$lib/text/getal';
 	import { capitalize, joinAnd, textOf } from '$lib/text/words';
 	import { focusStap } from '$lib/graph/focus-stap';
@@ -192,6 +190,7 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { verbondenInView, type Panel } from './panels';
+	import { ChainData } from './chain-data.svelte';
 	import { mayShortcut } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
@@ -496,18 +495,6 @@
 					...(chainBasedOff ? (['structural'] as const) : [])
 				])
 	);
-	let chainData = $state.raw<{
-		bwb: string;
-		validity: 'in_force' | 'all';
-		delegated: Awaited<ReturnType<typeof getLawDelegatedSummary>>;
-		basis: Awaited<ReturnType<typeof getLawBasis>> | null;
-		eu: Awaited<ReturnType<typeof getEuLinks>> | null;
-	} | null>(null);
-	/** The laws that only name the keten's law in their text, asked once Noemt is on. */
-	let chainRefers = $state.raw<{
-		bwb: string;
-		items: Awaited<ReturnType<typeof getRelatedInstruments>>['items'];
-	} | null>(null);
 	let chainError = $state.raw<{ bwb: string; error: unknown } | null>(null);
 	let chainTries = $state(0);
 	const chainFailure = $derived(
@@ -515,49 +502,14 @@
 			? { what: 'De keten', error: chainError.error, retry: () => chainTries++ }
 			: null
 	);
-	$effect(() => {
-		const bwb = chainLaw;
-		const validity = chainExpired ? 'all' : 'in_force';
-		void chainTries;
-		if (!bwb) return;
-		let current = true;
-		chainError = null;
-		// The keten stands without the laws above it and without its EU acts: its own
-		// regulations are what it shows.
-		const basis = getLawBasis(bwb).catch((e) => {
-			report('Keten grondslag', e);
-			return null;
-		});
-		const eu = getEuLinks(bwb).catch((e) => {
-			if (!isNotFound(e)) report('Keten EU', e);
-			return null;
-		});
-		Promise.all([getLawDelegatedSummary(bwb, validity), basis, eu])
-			.then(([delegated, basis, eu]) => {
-				if (current) chainData = { bwb, validity, delegated, basis, eu };
-			})
-			.catch((e) => {
-				report('Keten', e);
-				if (current) chainError = { bwb, error: e };
-			});
-		return () => {
-			current = false;
-		};
-	});
-	$effect(() => {
-		const bwb = chainLaw;
-		// A law's keten only: an article or a publication names no law that refers to it.
-		if (!bwb || !chainMentions || chainArticle || chainRefers?.bwb === bwb) return;
-		let current = true;
-		getRelatedInstruments(bwb, 200)
-			.then((r) => {
-				if (current) chainRefers = { bwb, items: r.items };
-			})
-			.catch((e) => report('Keten noemt', e));
-		return () => {
-			current = false;
-		};
-	});
+	const chainData = new ChainData(
+		() => chainLaw,
+		() => (chainExpired ? 'all' : 'in_force'),
+		() => chainTries,
+		() => chainMentions && !chainArticle,
+		() => (chainError = null),
+		(bwb, error) => (chainError = { bwb, error })
+	);
 	/** Up to `max` bronnen a layer drawn, and `keep`; the rest listed under Alle N. */
 	function capLayers(layers: ChainLayer[], max: number, keep: string | null) {
 		const rest: Record<string, number> = {};
@@ -607,9 +559,18 @@
 	const chainLoading = $derived(
 		(!!lineageStart && lineageData?.id !== lineageStart.id && !chainError) ||
 			(!!chainLaw &&
-				(chainData?.bwb !== chainLaw ||
-					chainData.validity !== (chainExpired ? 'all' : 'in_force')) &&
+				(chainData.asked?.bwb !== chainLaw ||
+					chainData.asked.validity !== (chainExpired ? 'all' : 'in_force') ||
+					// Without regulations its EU acts may be all it has: no "none held" before them.
+					(!chainData.asked.delegated?.items.length && chainData.eu?.bwb !== chainLaw)) &&
 				!chainFailure)
+	);
+	/** The Keten is not drawn yet and full nodes are still to ask: the werkplek asks them after it. */
+	const chainFirst = $derived(
+		mode === 'graph' &&
+			view === 'keten' &&
+			!composer.hasFull(netwerk.ids) &&
+			(chainLoading || netwerk.ids.some((id) => !composer.entries.find((e) => e.id === id)?.node))
 	);
 	// An article's law by its name, not its id, on the keten's head.
 	$effect(() => {
@@ -622,7 +583,8 @@
 	// What shows without panning follows the room measured, at least 12; a phone's list stays short.
 	const chainOf = (mentions: boolean, max = telefoon ? 4 : Math.max(12, chainFit)) => {
 		const bwb = chainLaw;
-		if (!bwb || chainData?.bwb !== bwb) return null;
+		const asked = chainData.asked;
+		if (!bwb || asked?.bwb !== bwb) return null;
 		const id = `instruments/${bwb.toLowerCase()}`;
 		const start = chainStart;
 		// A publication by its name (Stb. 2018, 101), never its key (R3-K F11).
@@ -630,18 +592,18 @@
 			start?.collection === 'instruments'
 				? (lawName($instrumentMetaStore.get(bwb), null) ?? bronNaam(start, $instrumentMetaStore))
 				: lawName($instrumentMetaStore.get(bwb), bwb);
-		const eu = chainData.eu;
+		const eu = chainData.eu?.bwb === bwb ? chainData.eu.eu : null;
 		return chain(
 			{ id, name, abbreviation: bwCode(bwb) ?? $instrumentMetaStore.get(bwb)?.shortTitle ?? null },
-			chainData.delegated,
-			chainData.basis,
+			asked.delegated,
+			asked.basis,
 			{
 				max,
 				keep: marked,
 				kind: chainKind,
 				article: chainArticle,
 				mentions,
-				refers: chainRefers?.bwb === bwb ? chainRefers.items : null,
+				refers: chainData.refers?.bwb === bwb ? chainData.refers.items : null,
 				eu: eu
 					? {
 							implements: eu.implements.map((l) => l.instrument),
@@ -981,6 +943,7 @@
 		const panel = mode === 'read' && panelSeen ? 'verbonden' : readTab;
 		const view = { phone: telefoon, table: tableMode, panel, canvasOnly: mode === 'graph' };
 		if (node && !verbondenInView(node.collection, view)) return;
+		if (node && chainFirst) return;
 		source.load(node);
 	});
 	onDestroy(() => source.destroy());
@@ -1519,8 +1482,10 @@
 		// Aantal stappen 0 is Alleen gekozen: no surroundings. Read here, so a change of ?diepte
 		// composes again.
 		const steps = explicitDepth;
+		const light = chainFirst;
 		if (mode !== 'graph') return;
 		untrack(() => {
+			composer.light = light;
 			composer.surroundings = omgeving && steps !== 0;
 			composer.steps = steps;
 			if (n.ids.length > 0) composer.compose(n);
@@ -2337,9 +2302,9 @@
 				{hiddenKinds}
 				hiddenLines={chainHidden}
 				amending={chainModel?.amending.length ?? 0}
-				expired={chainData?.delegated?.expired_total
+				expired={chainData.asked?.delegated?.expired_total
 					? {
-							total: chainData.delegated.expired_total,
+							total: chainData.asked.delegated.expired_total,
 							shown: chainExpired,
 							onToggle: () => (chainExpired = !chainExpired)
 						}
