@@ -1758,7 +1758,7 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4) var(--s-4) var(--s-4) var(--strook-marge);
+		padding: var(--s-4) var(--strook-marge);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
