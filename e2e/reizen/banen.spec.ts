@@ -2,6 +2,7 @@
 // markers of changed wetten, the legend that switches a lijnsoort, Lezer and back, and the button
 // Netwerk that draws what a link with netwerk= draws (B84).
 import type { Locator, Page } from '@playwright/test';
+import { failApi } from '../support/api';
 import { netwerkKnop } from '../support/navigation';
 import { openSheet } from '../support/sheet';
 import { expect, test } from '../support/test';
@@ -141,6 +142,25 @@ test('a bron alone has the whole of a soort as its list, in the row of its count
 	await expect(page).toHaveURL(/[?&]soort=/);
 	await page.goBack();
 	await expect(tiles(page)).toHaveCount(20);
+});
+
+test('a second step that fails says so, the first stays, Opnieuw asks it again', async ({
+	page,
+	guard
+}) => {
+	guard.allow(/status of 503/);
+	await failApi(page, /^\/api\/nodes\/articles\/bwbr0005289_162\/neighborhood/, 503);
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?doek=banen&mode=netwerk');
+	const alert = page
+		.getByRole('alert')
+		.filter({ hasText: 'Het netwerk kon niet op tijd worden geladen.' });
+	await expect(alert).toBeVisible();
+	await expect(page.getByTestId('banen')).toBeVisible();
+
+	await page.unrouteAll({ behavior: 'ignoreErrors' });
+	await alert.getByRole('button', { name: 'Opnieuw' }).click();
+	await expect(alert).toHaveCount(0);
+	await expect(page.getByTestId('banen')).toBeVisible();
 });
 
 test('Lezer and Netwerk go there and back, the lanes as they were', async ({ page, isMobile }) => {

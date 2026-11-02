@@ -264,7 +264,11 @@ export class NetwerkComposer {
 							onCut: (capped) => this.#reached.set(`${e.id}:${e.steps}`, capped)
 						})
 						.catch((error) => {
-							if (!isAborted(error)) report('Netwerk, stappen', error);
+							if (isAborted(error)) return;
+							report('Netwerk, stappen', error);
+							// What came stays; the steps that did not are asked again (B89).
+							if (epoch === this.#epoch)
+								showNetworkFailure({ what: 'Het netwerk', error, retry: () => this.compose(n) });
 						});
 					if (epoch === this.#epoch) sum();
 				},
