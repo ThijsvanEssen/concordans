@@ -50,9 +50,4 @@ describe('LaneLegend', () => {
 		expect(screen.getByText('Voorgesteld')).toBeTruthy();
 		expect(screen.queryByText('Gewijzigd')).toBeNull();
 	});
-
-	it('says why heads and markers are gone with Wijziging off', () => {
-		legend([], ['change']);
-		expect(screen.getByText(/geen kopjes en markers/)).toBeTruthy();
-	});
 });

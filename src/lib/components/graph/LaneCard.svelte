@@ -88,7 +88,8 @@
 
 <style>
 	/* The card lies over the field, the field does not narrow (Thijs, 1 nov.): the strip of a bron's
-	   card leaves the grid while the lanes stand, above its Tijdstrook. A phone keeps its sheet.
+	   card leaves the grid while the lanes stand, above its Tijdstrook, as wide as this one and with
+	   the same room made for it (LanesView). A phone keeps its sheet.
 	   As wide as a Blad `rechts`, but on a narrow window it leaves the field some room. */
 	:global(.graph-view:has(.banen)) {
 		--lane-card-w: 400px;
@@ -120,11 +121,13 @@
 	}
 	@media (min-width: 769px) {
 		/* Deel stays in view, left of the card. */
-		:global(.graph-view:has(.lane-card) .doek-balk) {
+		:global(.graph-view:has(.lane-card) .doek-balk),
+		:global(.graph-view:has(.banen):has(.strook--kaart.is-open) .doek-balk) {
 			right: calc(var(--lane-card-w) + var(--s-3));
 		}
-		:global(.graph-view:has(.banen):has(.strook--kaart.is-open)) {
-			--card-room: var(--strook);
+		/* Doubled: over the three columns the window up to 1100 gives a card of the canvas. */
+		:global(.graph-view.graph-view:has(.banen):has(.strook--kaart.is-open)) {
+			--card-room: var(--lane-card-w);
 			grid-template-columns: var(--strook-links) minmax(0, 1fr);
 		}
 		:global(.graph-view:has(.banen) .strook--kaart) {
@@ -133,7 +136,7 @@
 			right: 0;
 			bottom: var(--strook-h, 0px);
 			z-index: calc(var(--z-float) + 1);
-			width: min(var(--strook), var(--lane-card-w));
+			width: min(var(--lane-card-w), 70%);
 			box-shadow: var(--shadow-pop);
 		}
 	}
@@ -160,6 +163,13 @@
 	}
 	.open :global(a) {
 		text-decoration: underline;
+	}
+	@media (max-width: 768px) {
+		.open :global(a) {
+			display: inline-flex;
+			align-items: center;
+			min-height: 44px;
+		}
 	}
 	.name {
 		margin: 0;

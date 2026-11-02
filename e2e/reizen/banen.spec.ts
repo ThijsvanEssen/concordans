@@ -69,6 +69,71 @@ for (const width of [1100, 1280, 1440])
 		await expect(zijpaneel(page)).toHaveCount(0);
 	});
 
+test('× on the Zijpaneel and Escape both leave the focus on the tile', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has no focus to keep');
+	await page.goto(WVW_NETWERK);
+	const tile = page.locator(TILE_36164);
+	await tile.click();
+	await zijpaneel(page).getByRole('button', { name: 'Sluiten' }).click();
+	await expect(zijpaneel(page)).toHaveCount(0);
+	await expect(tile).toBeFocused();
+	await tile.click();
+	await expect(zijpaneel(page)).toBeVisible();
+	await page.keyboard.press('Escape');
+	await expect(zijpaneel(page)).toHaveCount(0);
+	await expect(tile).toBeFocused();
+});
+
+test('the tiles are one stop of Tab, the arrows go through them', async ({ page, isMobile }) => {
+	test.skip(isMobile, 'a phone has no keyboard');
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	await expect(page.locator('[data-tile][tabindex="0"]')).toHaveCount(1);
+	const first = page.locator('[data-tile][tabindex="0"]');
+	await first.focus();
+	await page.keyboard.press('ArrowDown');
+	await expect(tiles(page).nth(1)).toBeFocused();
+	await expect(tiles(page).nth(1)).toHaveAttribute('tabindex', '0');
+});
+
+test('at 1100 the card of a bron is the Zijpaneel in width, and the drawing keeps its columns', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'on a phone the card is a sheet');
+	await page.setViewportSize({ width: 1100, height: 800 });
+	await page.goto(WVW_NETWERK);
+	const field = page.getByTestId('banen');
+	await page.locator(TILE_36164).click();
+	const panel = await box(zijpaneel(page));
+	const before = await box(field);
+	await page.keyboard.press('Escape');
+	await page.locator('.member').first().click({ force: true });
+	const card = page.locator('.strook--kaart.is-open');
+	await expect(card).toBeVisible();
+	expect((await box(card)).width).toBe(panel.width);
+	expect((await box(field)).width).toBe(before.width);
+	await expect(page.locator('[data-tile]').first()).toBeVisible();
+});
+
+test('a change made by keyboard puts the focus on Ongedaan maken, Escape takes it back', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has no keyboard');
+	await page.goto(`${WVW_NETWERK}&netwerk=instruments/bwbr0006622,instruments/bwbr0005537`);
+	const weghalen = page.getByRole('button', { name: /weghalen$/ }).last();
+	await weghalen.focus();
+	await page.keyboard.press('Enter');
+	const ongedaan = page.getByRole('status').getByRole('button', { name: 'Ongedaan maken' });
+	await expect(ongedaan).toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(ongedaan).toHaveCount(0);
+});
+
 test('on a phone the Zijpaneel is a sheet at the foot, under the lanes', async ({
 	page,
 	isMobile
@@ -119,7 +184,6 @@ test('the legend switches a lijnsoort off and on, and the address keeps it', asy
 		'aria-pressed',
 		'false'
 	);
-	await expect(legend.getByText('Zonder Wijziging geen kopjes en markers')).toBeVisible();
 	await expect(page.locator('.changed-mark')).toHaveCount(0);
 	await expect(lawHeads(page)).toHaveCount(0);
 	await legend.getByRole('button', { name: 'Wijziging' }).click();

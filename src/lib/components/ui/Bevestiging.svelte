@@ -4,13 +4,27 @@
 	// two seconds, whatever it says: Bewaard in, Gekopieerd: art. 6:162 BW; longer with a way
 	// back, and not while the pointer or the focus is in it. At the foot of the
 	// page, in the middle: the table of contents on the left is never covered.
-	import { confirmation, hold, undo } from '$lib/bevestig/bevestig.svelte';
+	import { isEscape } from '$lib/actions/keys';
+	import { closeFocused, confirmation, hold, undo } from '$lib/bevestig/bevestig.svelte';
 	import TextLink from './TekstLink.svelte';
 
 	const nu = $derived(confirmation.now);
+	let line = $state<HTMLElement | null>(null);
+	// The keyboard made the change: the focus on Ongedaan maken, Escape takes it back.
+	$effect(() => {
+		const link = nu?.focusFrom ? line?.querySelector<HTMLElement>('a, button') : null;
+		if (!link) return;
+		const esc = (e: KeyboardEvent) => {
+			if (isEscape(e)) closeFocused();
+		};
+		link.addEventListener('keydown', esc);
+		link.focus();
+		return () => link.removeEventListener('keydown', esc);
+	});
 </script>
 
 <div
+	bind:this={line}
 	class:bevestiging={!!nu}
 	class:sr-only={!nu}
 	role="status"

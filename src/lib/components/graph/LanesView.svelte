@@ -34,9 +34,12 @@
 		laneDossierNumber,
 		numberedSquares,
 		cardWidth,
+		chosenOn,
 		showBeside
 	} from '$lib/graph/lane-changes';
+	import { afterTick } from '$lib/util/after-tick';
 	import LaneCard from './LaneCard.svelte';
+	import LaneEdge from './LaneEdge.svelte';
 	import LaneLegend from './LaneLegend.svelte';
 	import LaneTiles from './LaneTiles.svelte';
 	import LanePanels from './LanePanels.svelte';
@@ -192,6 +195,7 @@
 	$effect(() => {
 		const open = !!(markedUnit ?? openId);
 		const f = field;
+		void avail;
 		if (!open || !f) {
 			covered = 0;
 			return;
@@ -212,6 +216,17 @@
 		if (!id || !f) return;
 		const frame = requestAnimationFrame(() => showBeside(f, id, linkedOf(id)));
 		return () => cancelAnimationFrame(frame);
+	});
+	// A card closed with its × took the focus with it: back to what opened it, as Escape leaves it.
+	$effect(() => {
+		const id = markedUnit ?? openUnitOn;
+		const chosen = id && field ? chosenOn(field, id) : null;
+		return () => {
+			afterTick(() => {
+				if (chosen?.isConnected && document.activeElement === document.body)
+					chosen.focus({ preventScroll: true });
+			});
+		};
 	});
 	// ── the look of a line ────────────────────────────────────────────────────
 	const lineColour = (p: LanePath) => {
@@ -602,6 +617,7 @@
 		</div>
 	{/if}
 </div>
+{#if !phone}<LaneEdge {field} {covered} watch={[avail, layout, scale]} />{/if}
 {#if openUnit}
 	<LaneCard
 		unit={openUnit}

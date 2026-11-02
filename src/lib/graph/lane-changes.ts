@@ -123,21 +123,25 @@ const around = (rects: DOMRect[]) =>
 		height: Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top))
 	});
 
+/** What stands for the bron or dossier chosen on the lanes: a card opened it, a card's end returns to it. */
+export const chosenOn = (field: HTMLElement, unit: string) =>
+	field.querySelector<SVGElement>('.member.is-active') ??
+	field.querySelector<SVGElement>('.tile.is-open') ??
+	field.querySelector<SVGElement>(`[data-unit="${CSS.escape(unit)}"]`);
+
 /**
  * Scrolls the field so that the unit marked (or its bron in it) stands beside the card over it, the
  * units at the other end of its lines with it (`linked`, the most wanted last) as far as they fit:
  * what is chosen is seen with the wet its line ends at.
  */
 export function showBeside(field: HTMLElement, unit: string, linked: readonly string[] = []) {
-	const el =
-		field.querySelector('.member.is-active') ??
-		field.querySelector('.tile.is-open') ??
-		field.querySelector(`[data-unit="${CSS.escape(unit)}"]`);
+	const el = chosenOn(field, unit);
 	if (!el) return;
 	const box = field.getBoundingClientRect();
 	const card = cardOver(field);
 	const room = (atSide(card, box) ? card!.left : box.right) - box.left - 2 * SCROLL_MARGIN;
-	const others = linked.flatMap(
+	// The wet an article stands in is the last to give way; a tile needs only itself of its hull.
+	const others = [...linked, ...(el.matches('.member') ? [unit] : [])].flatMap(
 		(id) => field.querySelector(`[data-unit="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? []
 	);
 	// All of them; else without the first, and so on, down to the unit itself.

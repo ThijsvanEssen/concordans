@@ -11,6 +11,7 @@
 	import { sortColour } from '$lib/bron/rubrieken';
 	import { capitalize } from '$lib/text/words';
 	import { laneDossierNumber } from '$lib/graph/lane-changes';
+	import { nextIndex } from '$lib/actions/menu';
 	import { oneLine, type UnitBox } from '$lib/graph/lane-layout';
 	import type { SceneUnit } from '$lib/graph/scene';
 	import type { GraphNode } from '$lib/graph/types';
@@ -68,7 +69,28 @@
 	};
 	const nameRoom = $derived(box.mark.width - 2 * PAD - TILE.width - 8);
 
+	/** The tiles are one stop of the Tab key, ↑ and ↓ go through them; the one last on keeps the stop. */
+	const tiles = $derived(unit.periods.flatMap((p) => p.units));
+	let rover = $state<string | null>(null);
+	const stop = $derived(tiles.some((u) => u.id === rover) ? rover : (tiles[0]?.id ?? null));
+	let drawn = $state<SVGGElement | null>(null);
+
 	function onkeydown(e: KeyboardEvent, u: SceneUnit) {
+		const at = nextIndex(
+			e.key,
+			tiles.findIndex((t) => t.id === u.id),
+			tiles.length
+		);
+		if (at !== null) {
+			e.preventDefault();
+			e.stopPropagation();
+			const next = tiles[at];
+			rover = next.id;
+			drawn
+				?.querySelector<SVGGElement>(`[data-tile="${CSS.escape(next.id)}"]`)
+				?.focus({ preventScroll: false });
+			return;
+		}
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 		e.preventDefault();
 		onOpen(u);
@@ -98,50 +120,55 @@
 <text class="pill-name" x={box.label.x + 10} y={box.label.y + box.label.height / 2 + 4.5}
 	>{box.text.name[0]}</text
 >
-{#each unit.periods as period (period.label)}
-	<text class="period" x={box.mark.x + PAD} y={yOf(period.label) + 4}>{period.label}</text>
-	{#each period.units as u (u.id)}
-		{@const y = yOf(u.id)}
-		<g
-			class="tile"
-			class:is-open={open === u.id}
-			role="button"
-			tabindex="0"
-			aria-label={fullName(u)}
-			aria-pressed={open === u.id}
-			data-tile={u.id}
-			onclick={() => onOpen(u)}
-			onkeydown={(e) => onkeydown(e, u)}
-		>
-			<title>{fullName(u)}</title>
-			<rect
-				class="hit"
-				x={box.mark.x + 4}
-				y={y - 12}
-				width={box.mark.width - 8}
-				height="24"
-				rx="4"
-			/>
-			<rect
-				class="plate"
-				x={box.mark.x + PAD}
-				y={y - TILE.height / 2}
-				width={TILE.width}
-				height={TILE.height}
-				rx="3"
-				stroke={colour}
-			/>
-			<text class="number" x={box.mark.x + PAD + TILE.width / 2} y={y + 4}
-				>{oneLine(officialNumber(numberOf(u)), TILE.width - 8, FONT)}</text
+<g bind:this={drawn}>
+	{#each unit.periods as period (period.label)}
+		<text class="period" x={box.mark.x + PAD} y={yOf(period.label) + 4}>{period.label}</text>
+		{#each period.units as u (u.id)}
+			{@const y = yOf(u.id)}
+			<g
+				class="tile"
+				class:is-open={open === u.id}
+				role="button"
+				tabindex={u.id === stop ? 0 : -1}
+				aria-label={fullName(u)}
+				aria-pressed={open === u.id}
+				data-tile={u.id}
+				onclick={() => {
+					rover = u.id;
+					onOpen(u);
+				}}
+				onkeydown={(e) => onkeydown(e, u)}
 			>
-			{#if names.get(u.id)}
-				<text class="name" x={box.mark.x + PAD + TILE.width + 8} y={y + 4}
-					>{oneLine(names.get(u.id)!.short, nameRoom, FONT)}</text
+				<title>{fullName(u)}</title>
+				<rect
+					class="hit"
+					x={box.mark.x + 4}
+					y={y - 12}
+					width={box.mark.width - 8}
+					height="24"
+					rx="4"
+				/>
+				<rect
+					class="plate"
+					x={box.mark.x + PAD}
+					y={y - TILE.height / 2}
+					width={TILE.width}
+					height={TILE.height}
+					rx="3"
+					stroke={colour}
+				/>
+				<text class="number" x={box.mark.x + PAD + TILE.width / 2} y={y + 4}
+					>{oneLine(officialNumber(numberOf(u)), TILE.width - 8, FONT)}</text
 				>
-			{/if}
-		</g>
+				{#if names.get(u.id)}
+					<text class="name" x={box.mark.x + PAD + TILE.width + 8} y={y + 4}
+						>{oneLine(names.get(u.id)!.short, nameRoom, FONT)}</text
+					>
+				{/if}
+			</g>
+		{/each}
 	{/each}
-{/each}
+</g>
 
 <style>
 	.hull {

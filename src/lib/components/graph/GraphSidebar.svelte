@@ -128,14 +128,18 @@
 		filter.bronnen === null || filter.bronnen.has(k);
 	/** A row of Soort is on while every kind of the bronfilter it holds is. */
 	const rowOn = (r: KindRow) => r.filterGroups.every(isOn);
+	const switchedOff = new Map<string, readonly FilterGroup[]>();
 	/** Its switch: all its kinds off, or all on again. */
 	function toggleRow(r: KindRow) {
 		const on = rowOn(r);
 		const next = new Set(filter.bronnen ?? FILTER_GROUPS);
-		for (const k of r.filterGroups) {
+		// A row holds the kinds drawn in it: hidden they leave it, and its switch brings them back.
+		const kinds = on ? r.filterGroups : [...r.filterGroups, ...(switchedOff.get(r.id) ?? [])];
+		for (const k of kinds) {
 			if (on) next.delete(k);
 			else next.add(k);
 		}
+		switchedOff.set(r.id, on ? r.filterGroups : []);
 		onFilter({ ...filter, bronnen: next.size === FILTER_GROUPS.length ? null : next });
 	}
 	const rowGroupsOff = (r: KindRow) =>
