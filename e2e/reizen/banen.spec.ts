@@ -3,6 +3,7 @@
 // Netwerk that draws what a link with netwerk= draws (B84).
 import type { Locator, Page } from '@playwright/test';
 import { netwerkKnop } from '../support/navigation';
+import { openSheet } from '../support/sheet';
 import { expect, test } from '../support/test';
 
 const WVW = '/wetten/BWBR0006622?doek=banen';
@@ -125,6 +126,21 @@ test('the legend switches a lijnsoort off and on, and the address keeps it', asy
 	await expect(page).not.toHaveURL(/[?&]uit=/);
 	await expect(page.locator('.changed-mark').first()).toBeAttached();
 	if (!isMobile) await expect(lawHeads(page).first()).toBeVisible();
+});
+
+test('a bron alone has the whole of a soort as its list, in the row of its count', async ({
+	page
+}) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	await openSheet(page);
+	const alle = page.getByRole('link', { name: /^Alle [\d.]+ stukken$/ });
+	await expect(alle).toBeVisible();
+	await alle.click();
+	await expect(page).toHaveURL(/[?&]tabel=1/);
+	await expect(page).toHaveURL(/[?&]soort=/);
+	await page.goBack();
+	await expect(tiles(page)).toHaveCount(20);
 });
 
 test('Lezer and Netwerk go there and back, the lanes as they were', async ({ page, isMobile }) => {

@@ -2452,7 +2452,7 @@
 								onClear={() => (card = null)}
 								onFilter={applyFilter}
 								onDepth={setDepth}
-								lijstHref={netwerkActive ? undefined : lijstHref}
+								lijstHref={focus && netwerk.ids.length < 2 ? lijstHref : undefined}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
 								lanes={lanesOn}
