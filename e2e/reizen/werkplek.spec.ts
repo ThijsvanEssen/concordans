@@ -3,6 +3,7 @@
 // without a reader; Lees on a marked bron is a step of its own, and Back brings the werkplek
 // back as it was, with the same chips and the same bron marked.
 import type { Page } from '@playwright/test';
+import { failApi } from '../support/api';
 import { expect, test } from '../support/test';
 import { openSheet, closeSheet } from '../support/sheet';
 import { isPhone, netwerkKnop } from '../support/navigation';
@@ -21,7 +22,13 @@ async function chips(page: Page) {
 	return chosen;
 }
 
-test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', async ({ page }) => {
+test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', async ({
+	page,
+	guard
+}) => {
+	// The second step around this stuk runs into the API's limit of 30 s, as on prod (1 Nov 2026).
+	await failApi(page, /^\/api\/nodes\/documents\/.*\/neighborhood\?.*depth=2/, 503);
+	guard.allow(/status of 503/);
 	await page.goto(`${ARTICLE}?toon=netwerk`);
 	const sketch = page.getByTestId('network-sketch');
 	const single = sketch.locator('.single').first();
@@ -33,7 +40,8 @@ test('lezer, netwerk, Lees and Back: the same chips and the same bron marked', a
 	const rij = page.getByRole('region', { name });
 	await expect(rij).toContainText(name.split(',')[0]);
 	await rij.getByRole('button', { name: 'Aan het netwerk toevoegen' }).click();
-	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 1 bron');
+	// The bron added and the bron of the lezer (B85).
+	await expect(netwerkKnop(page)).toHaveAccessibleName('Netwerk, 2 bronnen');
 
 	await netwerkKnop(page).click();
 	await expect(page).toHaveURL(/mode=netwerk&netwerk=/);

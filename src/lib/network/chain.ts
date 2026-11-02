@@ -115,6 +115,18 @@ export const parentKind = (p: ChainNode['parents'][number]): LineKind =>
 		p.relation === 'REFERS_TO' || isMention(p) ? 'judgment' : 'article'
 	);
 
+/** The words on a line of the keten: a judgment's appeal, its cassatie and its conclusie. */
+export const wordOf = (relation: Relation, layer: string) =>
+	relation === 'APPEAL_OF'
+		? layer === 'Hoge Raad'
+			? 'cassatie'
+			: 'hoger beroep'
+		: relation === 'ADVISES_ON'
+			? 'conclusie'
+			: relation === 'CONTINUES'
+				? 'zet voort'
+				: null;
+
 /**
  * What Soort and Relatie of the keten count: every bron a kind holds, those listed under an
  * "Alle N" too (so Tonen and the layer say the same number), and each line drawn as the kind it
@@ -495,8 +507,8 @@ export function chain(
 		const at = n.parents.map((p) => placeOf.get(p.id)).filter((x): x is number => x !== undefined);
 		return at.length ? Math.min(...at) : Number.POSITIVE_INFINITY;
 	};
-	const perLayer = new Map<LayerId, ChainNode[]>();
-	// A wet stands beside the law in its layer: one issued under it without a line between them;
+	const perLayer = new Map<LayerId | 'named', ChainNode[]>();
+	// A wet stands beside the law in its layer: one issued under it with its line and its label;
 	// one that only names it, or whose basis the data lacks, with its dashed line and its label
 	// (Thijs, 29 Oct: the dashed line says it names, no layer of its own). The regulations under
 	// either hang from it.
@@ -506,8 +518,7 @@ export function chain(
 	};
 	const cited = (n: ChainNode) =>
 		Math.max(0, ...n.parents.map((p) => p.named ?? p.cite?.count ?? 0));
-	const statutes: ChainNode[] = [];
-	const naming: ChainNode[] = [];
+	const onDrawing = new Set([law.id]);
 	for (const id of ['statute' as const, 'named' as const, ...REGULATION_LAYERS]) {
 		const all = nodes
 			.filter((n) => bucketOf(n) === id)
@@ -518,22 +529,22 @@ export function chain(
 					(id === 'named' ? cited(y) - cited(x) : 0) ||
 					NL.compare(x.name, y.name)
 			);
+		const first = new Set(fillOrder(all, onDrawing, keep).slice(0, max));
 		const drawn: ChainNode[] = [];
 		for (const n of all) {
-			if (drawn.length >= max && n.id !== keep) {
+			if (!first.has(n) && n.id !== keep) {
 				const slot = id === 'statute' || id === 'named' ? 'law' : id;
 				rest[slot] = (rest[slot] ?? 0) + 1;
 				(more[slot] ??= []).push(n);
 				continue;
 			}
 			drawn.push(n);
+			onDrawing.add(n.id);
 		}
-		if (id === 'statute') statutes.push(...drawn);
-		else if (id === 'named') naming.push(...drawn);
-		else if (drawn.length) perLayer.set(id, drawn);
+		perLayer.set(id, drawn);
 	}
-	for (const n of statutes) n.parents = [];
-	lawLayer.nodes.push(...statutes);
+	const naming = perLayer.get('named') ?? [];
+	lawLayer.nodes.push(...(perLayer.get('statute') ?? []));
 	// A wet that names it stands in the row Wet: beside the law, or above an AMvB or a regulation,
 	// beside the laws it rests on (B2: not in the row of the Cbb).
 	if (!isRegulation(kind)) lawLayer.nodes.push(...naming);
@@ -552,6 +563,31 @@ export function chain(
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}
 	return { layers, rest, more, total: nodes.length, amending, missing };
+}
+
+/**
+ * Who of a layer is drawn first where not all fit: what hangs under the bron marked, then one by
+ * one per parent, so a row is not filled by what hangs directly under the law and the wetten
+ * beside it keep their regulations (B86). A parent not on the drawing waits a turn: a line first.
+ */
+function fillOrder(
+	all: readonly ChainNode[],
+	onDrawing: ReadonlySet<string>,
+	keep: string | null
+): ChainNode[] {
+	const turns = new Map<string, number>();
+	const turnOf = new Map(
+		all.map((n) => {
+			if (n.parents.some((p) => p.id === keep)) return [n, -1];
+			// The last parent is the one furthest from the law.
+			const drawn = n.parents.findLast((p) => onDrawing.has(p.id))?.id;
+			const parent = drawn ?? n.parents[0]?.id ?? '';
+			const turn = turns.get(parent) ?? (drawn ? 0 : 1);
+			turns.set(parent, turn + 1);
+			return [n, turn];
+		})
+	);
+	return [...all].sort((a, b) => turnOf.get(a)! - turnOf.get(b)!);
 }
 
 /**

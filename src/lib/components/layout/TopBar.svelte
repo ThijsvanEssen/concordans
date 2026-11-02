@@ -154,6 +154,9 @@
 	}
 
 	/* The search field: a button that looks like the field it opens. */
+	.netwerk-slot {
+		flex: none;
+	}
 	.search-trigger {
 		display: inline-flex;
 		align-items: center;
@@ -201,7 +204,8 @@
 			display: none;
 		}
 	}
-	@media (max-width: 1100px) {
+	/* 1240: below it the wissel with the name of its bron leaves the field too little (B85). */
+	@media (max-width: 1240px) {
 		.topbar {
 			gap: var(--s-5);
 			padding: 0 var(--s-5);

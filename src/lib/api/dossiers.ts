@@ -30,6 +30,20 @@ export const getDossierMutations = (number: string) =>
 	);
 
 /**
+ * The title and short title of a dossier, from the cheapest answer that has them (one row of the
+ * list, 2 kB): for what names many dossiers at once. Null where the data knows none by that id.
+ */
+export const getDossierTitles = (id: string, number: string) =>
+	once(`dossiers/${number}/titles`, async () => {
+		const list = await unwrap(
+			api.GET('/api/dossiers', {
+				params: { query: { number, limit: 5, facets: false, status: 'all' } }
+			})
+		);
+		return list.items.find((d) => d.id === id) ?? null;
+	});
+
+/**
  * The articles a bill changes, per law (API 0.74.0), or null where the API knows no such
  * dossier (404).
  */

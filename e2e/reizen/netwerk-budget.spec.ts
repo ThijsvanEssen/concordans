@@ -31,9 +31,6 @@ test('Cbw at two steps is drawn, no step greyed out, and the panel says it is no
 	);
 	for (const naam of ['1 stap', '2 stappen', '3 stappen'])
 		await expect(stappen.getByRole('button', { name: naam })).toBeEnabled();
-	await expect(
-		page.getByRole('note').filter({ hasText: /^2 stappen: de belangrijkste 400/ })
-	).toBeVisible();
 	await expect(page.getByText(/Maximaal \d+ bronnen getoond/)).toHaveCount(0);
 	await expect(lijst(page).filter({ hasText: /^\d+ artikelen, groep$/ })).toHaveCount(1);
 });

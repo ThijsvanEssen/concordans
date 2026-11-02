@@ -1380,7 +1380,6 @@
 		type="button"
 		class="btn sheet-button"
 		style:--kaart-h="{cardHeight}px"
-		style:--strook-h="{stripHeight}px"
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
@@ -1397,6 +1396,7 @@
 		onToggleAnnexes={toggleAnnexes}
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
+		showLines={!lanes || !!externLines}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ?? canvasCounts}
 		hasNodes={hasNodes || !!externCounts}
@@ -1406,7 +1406,7 @@
 	/>
 {/snippet}
 
-<div class="graph-view">
+<div class="graph-view" style:--strook-h="{stripHeight}px">
 	<!-- The strip at the left (besluit 39): the way back and the Weergave, the chosen bronnen,
 	     then the legend that is the filter and the period. First in the page, so a Tab reaches
 	     them before the canvas and its zoom (keyboard audit, 10 Oct). -->
@@ -1420,7 +1420,6 @@
 					depth={view === 'verband' ? pairSteps : depth}
 					{onDepth}
 					withNetwerk={netwerkActive && view === 'omgeving'}
-					reach={externCounts ? null : reach}
 				>
 					<!-- Whatever the filter leaves drawn: the filters stay, so a kind switched off comes back. -->
 					{#if (hasNodes || midden) && !legend.counting}
@@ -1516,10 +1515,12 @@
 						edges={laneEdges}
 						chosen={laneChosen}
 						visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
+						onToggleLine={toggleLine}
 						marked={gemarkeerd?.id ?? null}
 						pointed={pijl?.id ?? keyNode?.id ?? null}
 						onMark={(id) => markById(id, markeer)}
 						onOpen={(id) => markById(id, open)}
+						onUnmark={ontmarkeer}
 						onDrawn={(set) => {
 							drawn = set;
 							laneDrawn = set;
@@ -1615,12 +1616,7 @@
 						/>
 					</div>
 				{:else if $netwerkMelding}
-					<p
-						class="netwerk-melding"
-						role="status"
-						style:--kaart-h="{cardHeight}px"
-						style:--strook-h="{stripHeight}px"
-					>
+					<p class="netwerk-melding" role="status" style:--kaart-h="{cardHeight}px">
 						{$netwerkMelding.tekst}
 						{#if $netwerkMelding.terug}
 							<button
@@ -1722,6 +1718,7 @@
 				openCount={inFluxMap.get(kaartNode.id) ?? 0}
 				chosen={pinnedIds}
 				{onAdd}
+				changes={lanes}
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
@@ -1740,7 +1737,7 @@
 	.graph-view {
 		position: relative;
 		display: grid;
-		grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
+		grid-template-columns: var(--strook-links) minmax(0, 1fr) var(--strook);
 		--strook: calc(var(--zijkolom) + 2 * var(--s-4));
 		width: 100%;
 		height: 100%;
@@ -1749,7 +1746,7 @@
 	}
 	/* The strip of the card takes room only while a bron is marked. */
 	.graph-view:not(:has(.strook--kaart.is-open)) {
-		grid-template-columns: var(--strook) minmax(0, 1fr);
+		grid-template-columns: var(--strook-links) minmax(0, 1fr);
 	}
 	.strook--kaart:not(.is-open) {
 		display: none;
@@ -1761,7 +1758,7 @@
 		background: var(--paper);
 	}
 	.strook--links {
-		padding: var(--s-4);
+		padding: var(--s-4) var(--s-4) var(--s-4) var(--strook-marge);
 		border-right: 1px solid var(--rule);
 	}
 	.strook--kaart {
@@ -1816,20 +1813,11 @@
 	   between them; the card's strip only while a bron is marked. */
 	@media (min-width: 769px) and (max-width: 1100px) {
 		.graph-view {
-			grid-template-columns: var(--strook) minmax(0, 1fr);
+			grid-template-columns: var(--strook-links) minmax(0, 1fr);
 		}
 		/* A card marked: a strip of its own, the canvas narrower, nothing covered (T10b). */
 		.graph-view:has(.strook--kaart.is-open) {
-			grid-template-columns: var(--strook) minmax(0, 1fr) var(--strook);
-		}
-		.strook--links {
-			padding: var(--s-4);
-		}
-		.strook--kaart {
-			padding: var(--s-4);
-		}
-		.strook--kaart:not(.is-open) {
-			display: none;
+			grid-template-columns: var(--strook-links) minmax(0, 1fr) var(--strook);
 		}
 	}
 	/* A phone: the canvas takes the width; the strip at the left heads it, with the filters in its

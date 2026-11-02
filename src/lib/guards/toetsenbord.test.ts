@@ -78,6 +78,11 @@ describe('the keyboard', () => {
 				'a label of a line clicked: its frame is the mark; :focus-visible keeps the ring'
 			),
 			selector(
+				'lib/network/ChainView.svelte',
+				'.stomp:focus:not(:focus-visible)',
+				'a stump clicked: the parent comes on the drawing; :focus-visible keeps the ring'
+			),
+			selector(
 				'lib/styles/basis.css',
 				"[tabindex='-1']:focus:not(:focus-visible, [data-ring])",
 				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring, and a step of Alt W (data-ring)'

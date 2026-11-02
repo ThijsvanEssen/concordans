@@ -26,10 +26,11 @@ test('a ministerie in focus stands on its canvas, its name on its hull (N5)', as
 test('a wet with nothing of it drawn is an ordinary bron with its name, no empty circle (N8)', async ({
 	page
 }) => {
-	await page.goto('/wetten/BWBR0005416?mode=netwerk&netwerk=instruments/bwbr0005289');
+	await page.goto(
+		'/explore?mode=netwerk&netwerk=instruments/bwbr0005289,instruments/bwbr0005416&diepte=0'
+	);
 	await expect(lijst(page).filter({ hasText: /, Wet$/ })).toHaveCount(2);
-	// Boek 6 BW has its articles drawn: a disc with its name. Gemw has none: a bron in the list.
-	await expect(hullNames(page).filter({ hasText: /^Boek 6 BW$/ })).toHaveCount(1);
+	// Only the chosen ones: no article of Gemw is drawn, so it is a bron in the list.
 	await expect(hullNames(page).filter({ hasText: /^Gemw$/ })).toHaveCount(0);
 	await expect(lijst(page).filter({ hasText: /^Gemw, Wet$/ })).toHaveCount(1);
 	await expect(hullNames(page).filter({ hasText: /^\s*$/ })).toHaveCount(0);

@@ -311,7 +311,7 @@ describe('the readable address', () => {
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');
 		expect(history().entries).toHaveLength(1);
 		await key('l');
-		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?mode=netwerk&diepte=3');
+		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3&mode=netwerk');
 		back();
 		await settle();
 		expect(address()).toBe('/wetten/BWBR0005537/artikel/3:2?diepte=3');

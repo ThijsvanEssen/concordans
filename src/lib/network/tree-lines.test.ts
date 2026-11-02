@@ -183,3 +183,35 @@ describe('easing a bend', () => {
 		expect(slanted(d)).toEqual([]);
 	});
 });
+
+describe('lines to a node beside its parent', () => {
+	const row = new Map<string, TreeNode>([
+		['law', node(100, 0)],
+		['both', node(400, 0)],
+		['one', node(700, 0)]
+	]);
+	const beside = (child: string, lane: number) => ({
+		id: `${child}~${lane}`,
+		parent: 'law',
+		child,
+		kind: String(lane),
+		lane
+	});
+	const drawn = treeLines(row, [beside('both', 0), beside('both', 1), beside('one', 1)], {
+		rails,
+		boxes: []
+	});
+	const by = (id: string) => drawn.find((l) => l.id === id)!;
+
+	it('runs a mention on a rail of its own, under the grondslag', () => {
+		const railOf = (id: string) => by(id).points[by(id).points.length - 2].y;
+		expect(railOf('both~1')).toBeGreaterThan(railOf('both~0'));
+		expect(railOf('one~1')).toBe(railOf('both~1'));
+	});
+
+	it('brings two lines into one wet side by side, one line straight under its name', () => {
+		expect(by('both~0').end.x).toBeLessThan(400);
+		expect(by('both~1').end.x).toBeGreaterThan(400);
+		expect(by('one~1').end.x).toBe(700);
+	});
+});

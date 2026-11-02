@@ -130,7 +130,12 @@
 	--safe-right: env(safe-area-inset-right, 0px);
 	--blad-max: 1440px;
 	--blad-tekst: 720px;
-	--zijkolom: 280px; /* the strip of the werkplek (Bronnen, Weergave, a cluster's card) is this wide */
+	--zijkolom: 280px; /* the text of a side column, a cluster's card among them */
+	--werkplek-marge: var(--s-4);
+	/* The strip of the werkplek at the left: its text starts under the logo and runs to the right
+	   margin, whatever the reader has beside it (B85). */
+	--strook-links: 340px;
+	--strook-marge: var(--s-6);
 	/* The Zijpaneel from 1800 px: in the margin beside the page, in its flow (Blad, AppShell). */
 	--paneel-breed: 560px;
 	--regel: 66ch;
@@ -169,6 +174,27 @@
 	--z-topbar: 20;
 	--z-float: 40;
 	--z-modal: 50;
+}
+
+/* The left margin of the werkplek: the Bronnen of the network begin where the contents of the
+   reader do (A208d), so that switching between them stands still. */
+@media (min-width: 1280px) {
+	:root {
+		--werkplek-marge: max(var(--s-5), calc((100vw - 1680px) / 2));
+	}
+}
+@media (min-width: 1440px) {
+	:root {
+		--werkplek-marge: max(var(--s-6), calc((100vw - 1680px) / 2));
+	}
+}
+
+/* The top bar draws closer here (Topbalk), the logo with it. */
+@media (max-width: 1240px) {
+	:root {
+		--strook-links: 320px;
+		--strook-marge: var(--s-5);
+	}
 }
 
 /* The phone has a tab bar under its page (TabBalk), of the height the pages leave free. */

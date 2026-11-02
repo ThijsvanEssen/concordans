@@ -8,24 +8,37 @@
 	// stays the way for the keyboard and a screen reader.
 	import { markOf } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
-	import { sortColour, sortLabel, sortOne, type Sort } from '$lib/bron/rubrieken';
+	import { sortColour, type Sort } from '$lib/bron/rubrieken';
 	import { formatCount } from '$lib/text/getal';
 	import { relationLabel } from '$lib/verbonden/relation-words';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { headLength, ARROW_WIDTH, DOT_RADIUS } from '$lib/graph/line-shape';
-	import { LINE_KIND_STYLE } from '$lib/graph/line-kind';
-	import { buildScene, type Column, type Scene, type SceneUnit } from '$lib/graph/scene';
-	import { laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
+	import { arrowHead, DOT_RADIUS, longestRunMiddle } from '$lib/graph/line-shape';
+	import { LINE_KIND_STYLE, type LineKind } from '$lib/graph/line-kind';
+	import { buildScene, type Scene, type SceneUnit } from '$lib/graph/scene';
+	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
-	import type { MakerLane } from '$lib/graph/roles';
 	import type { Visibility } from '$lib/graph/visibility';
 	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
 	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
 	import { laneLineColour } from '$lib/graph/line-strength';
-
+	import { getChangedArticles } from '$lib/api/dossiers';
+	import { load } from '$lib/util/load.svelte';
+	import {
+		CHANGED_MARK,
+		LAW_CHANGE_WORDS,
+		changedFirst,
+		changedNumbers,
+		laneDossierNumber,
+		numberedSquares,
+		showBeside
+	} from '$lib/graph/lane-changes';
+	import LaneCard from './LaneCard.svelte';
+	import LaneLegend from './LaneLegend.svelte';
+	import LaneTiles from './LaneTiles.svelte';
+	import LanePanels from './LanePanels.svelte';
 	let {
 		nodes,
 		edges,
@@ -36,7 +49,9 @@
 		pointed = null,
 		onMark,
 		onOpen,
-		onDrawn
+		onUnmark,
+		onDrawn,
+		onToggleLine
 	}: {
 		nodes: readonly GraphNode[];
 		edges: readonly GraphEdge[];
@@ -52,8 +67,12 @@
 		pointed?: string | null;
 		onMark: (id: string) => void;
 		onOpen: (id: string) => void;
+		/** A group's Zijpaneel opens: no bron marked beside it. */
+		onUnmark: () => void;
 		/** What the lanes draw, every bron of a unit: for the counts and the keyboard's list. */
 		onDrawn: (ids: ReadonlySet<string>) => void;
+		/** A click in the legend: Relatie of the canvas, one state with its address. */
+		onToggleLine: (l: LineKind) => void;
 	} = $props();
 
 	/** Below this width the columns stand as strips (Telefoon eerst, fase 5). */
@@ -65,30 +84,6 @@
 	const SMALL_LINE = 14;
 	const DOT = 20;
 	const DOT_LINE = 22;
-	const CONTENT_TOP = 116;
-
-	const COLUMN_TITLE: Record<Column, string> = {
-		makers: 'Wie maakt',
-		papers: 'Kamerstukken',
-		laws: 'Wetten',
-		rulings: 'Rechtspraak'
-	};
-	const COLUMN_SORT: Record<Column, Sort> = {
-		makers: 'kamerleden',
-		papers: 'stukken',
-		laws: 'wetten',
-		rulings: 'uitspraken'
-	};
-	const LANE_TITLE: Record<MakerLane, string> = {
-		government: 'Regering',
-		council: 'Raad van State',
-		parliament: 'Parlement'
-	};
-	const LANE_SORT: Record<MakerLane, Sort> = {
-		government: 'bewindspersonen',
-		council: 'kamerleden',
-		parliament: 'kamerleden'
-	};
 
 	let avail = $state(0);
 	const phone = $derived(avail > 0 && avail < PHONE);
@@ -108,6 +103,7 @@
 		for (const u of scene.units) {
 			out.set(u.id, u);
 			for (const m of u.members) out.set(m, u);
+			for (const p of u.periods) for (const d of p.units) out.set(d.id, u);
 		}
 		return out;
 	});
@@ -126,16 +122,37 @@
 	$effect(() => {
 		// A hull is drawn too: its pill marks the wet or dossier it stands for.
 		onDrawn(
-			new Set(scene.units.flatMap((u) => (u.shape === 'hull' ? [u.id, ...u.members] : u.members)))
+			new Set(
+				scene.units.flatMap((u) =>
+					u.shape === 'hull' || u.shape === 'tiles' ? [u.id, ...u.members] : u.members
+				)
+			)
 		);
 	});
 
-	// ── lit and dim ───────────────────────────────────────────────────────────
+	/** The group, or the hull without a bron of its own, whose Zijpaneel is open. */
+	let openId = $state<string | null>(null);
+	const openUnit = $derived(
+		scene.units
+			.flatMap((u) => [u, ...u.periods.flatMap((p) => p.units)])
+			.find((u) => u.id === openId) ?? null
+	);
+	/** What the Zijpaneel lights: a dossier among tiles lights their one line. */
+	const openUnitOn = $derived(openId ? (unitOf.get(openId)?.id ?? null) : null);
+	function toggleCard(u: SceneUnit) {
+		openId = openId === u.id ? null : u.id;
+		if (openId) onUnmark();
+	}
+	$effect(() => {
+		if (marked) openId = null;
+	});
+
 	let hovered = $state<string | null>(null);
 	const lit = $derived(
 		hovered ??
 			(pointed ? unitOf.get(pointed)?.id : undefined) ??
 			(marked ? unitOf.get(marked)?.id : undefined) ??
+			openUnitOn ??
 			null
 	);
 	/** The line under the pointer: it alone lit, with what it says on it. */
@@ -149,6 +166,33 @@
 	});
 	const markedUnit = $derived(marked ? (unitOf.get(marked)?.id ?? null) : null);
 
+	/** The dossier marked or open: its changed articles get a ring and, where it fits, their number. */
+	const changing = $derived.by(() => {
+		const u = openUnit ?? (marked?.startsWith('dossiers/') ? unitOf.get(marked) : null);
+		return u?.shape === 'hull' && u.column === 'papers'
+			? laneDossierNumber(u.id, u.members, (id) => byId.get(id))
+			: null;
+	});
+	const asked = load(
+		() => changing,
+		(n) => (n ? getChangedArticles(n) : Promise.resolve(null)),
+		'Banen gewijzigde artikelen'
+	);
+	const changed: ReadonlyMap<string, string> = $derived(
+		asked.state.status === 'ready' && asked.state.data
+			? changedNumbers(asked.state.data)
+			: new Map()
+	);
+
+	let field = $state<HTMLElement | null>(null);
+	// The card lies over the field (Thijs, 1 nov.): what it would cover scrolls out from under it.
+	$effect(() => {
+		const id = markedUnit ?? openId;
+		const f = field;
+		if (!id || !f) return;
+		const frame = requestAnimationFrame(() => showBeside(f, id));
+		return () => cancelAnimationFrame(frame);
+	});
 	// ── the look of a line ────────────────────────────────────────────────────
 	const lineColour = (p: LanePath) => {
 		const line = scene.lines.find((l) => l.id === p.id);
@@ -157,19 +201,6 @@
 		const t = tokens();
 		return laneLineColour(t[style.colour], t.paper, line!.proposed ? 'licht' : style.tone);
 	};
-	/** The arrowhead at the end of a path, pointing along its last run. */
-	function head(p: LanePath): string | null {
-		if (!p.arrow || p.points.length < 2) return null;
-		const tip = p.points.at(-1)!;
-		const from = p.points.at(-2)!;
-		const len = headLength(p.width, arrowLength());
-		const d = Math.hypot(tip.x - from.x, tip.y - from.y) || 1;
-		const [ux, uy] = [(tip.x - from.x) / d, (tip.y - from.y) / d];
-		const w = (len * ARROW_WIDTH) / 2;
-		const bx = tip.x - ux * len;
-		const by = tip.y - uy * len;
-		return `${tip.x},${tip.y} ${bx - uy * w},${by + ux * w} ${bx + uy * w},${by - ux * w}`;
-	}
 	/** What a line says on hover, in the words of the canvas: "haalt aan, 3 keer, voorgesteld". */
 	function lineLabel(p: LanePath): string | null {
 		const line = scene.lines.find((l) => l.id === p.id);
@@ -181,30 +212,19 @@
 		if (line.proposed) parts.push('voorgesteld');
 		return parts.join(', ');
 	}
-	/** Where a line's label stands: the middle of its longest run. */
-	function middleOf(p: LanePath) {
-		let best = { x: p.points[0].x, y: p.points[0].y, len: -1 };
-		for (let i = 1; i < p.points.length; i++) {
-			const [a, b] = [p.points[i - 1], p.points[i]];
-			const len = Math.hypot(b.x - a.x, b.y - a.y);
-			if (len > best.len) best = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, len };
-		}
-		return best;
-	}
 	const styled = $derived(
 		paths.map((p) => ({
 			...p,
 			colour: lineColour(p),
 			dash: edgeDashFor(p.stroke),
 			cap: edgeCapFor(p.stroke),
-			head: head(p),
+			head: arrowHead(p, arrowLength()),
 			label: lineLabel(p),
-			at: middleOf(p)
+			at: longestRunMiddle(p.points)
 		}))
 	);
 
 	// ── units ─────────────────────────────────────────────────────────────────
-	const nodeOf = (u: SceneUnit) => byId.get(u.members[0]);
 	/** The mark of a bron in the colour of its kind, as the canvas draws it (`markOf`). */
 	function glyphOf(n: GraphNode | undefined, sort: Sort) {
 		if (!n) return markOf('', sortColour(sort));
@@ -213,17 +233,16 @@
 	}
 	/** A hull's pill marks its wet or dossier where the canvas has it; else it lights the hull's lines. */
 	function choosePill(u: SceneUnit, read = false) {
-		if (!byId.has(u.id)) hovered = hovered === u.id ? null : u.id;
+		if (!byId.has(u.id)) toggleCard(u);
 		else if (read) onOpen(u.id);
 		else onMark(u.id);
 	}
-	const discText = (u: SceneUnit) => formatCount(u.members.length);
 	const rowCount = (n: number) => (n > 1 ? formatCount(n) : '');
 	const GAP_LINES = ['functie niet', 'in de gegevens'];
 
 	function choose(u: SceneUnit, id = u.members[0]) {
-		if (u.shape === 'node' || id !== u.members[0] || u.shape === 'hull') onMark(id);
-		else hovered = hovered === u.id ? null : u.id;
+		if (u.shape === 'group') toggleCard(u);
+		else onMark(id);
 	}
 	function onKey(e: KeyboardEvent, act: () => void) {
 		if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -232,15 +251,9 @@
 	}
 
 	/** The bronnen with no line to the chosen ones, by soort: one line under the lanes. */
-	const unlinked = $derived(
-		(Object.entries(scene.counts.unlinked) as [Sort, number][])
-			.filter(([, n]) => n > 0)
-			.map(([s, n]) => `${formatCount(n)} ${n === 1 ? sortOne(s) : sortLabel(s).toLowerCase()}`)
-			.join(', ')
-	);
-	const boxOf = (id: string): UnitBox | undefined => layout.units.get(id);
+	const changedWords = (u: SceneUnit) => (u.change ? LAW_CHANGE_WORDS[u.change].says : null);
 	const titleOf = (u: SceneUnit) =>
-		[u.label, u.role, u.breakdown].filter(Boolean).join(', ') || u.label;
+		[u.label, u.role, u.breakdown, changedWords(u)].filter(Boolean).join(', ') || u.label;
 </script>
 
 {#snippet sign(n: GraphNode | undefined, sort: Sort, x: number, y: number, size: number)}
@@ -257,18 +270,27 @@
 	/>
 {/snippet}
 
-{#snippet focusRing(box: UnitBox)}
+{#snippet changedMark(u: SceneUnit, x: number, y: number)}
+	<path
+		class="changed-mark"
+		class:hollow={u.change === 'proposed'}
+		d={CHANGED_MARK}
+		transform="translate({x} {y})"
+	/>
+{/snippet}
+
+{#snippet focusRing(box: UnitBox, air = 5)}
 	<circle
 		class="halo"
 		cx={box.mark.x + box.mark.width / 2}
 		cy={box.mark.y + box.mark.height / 2}
-		r={box.mark.width / 2 + 5}
+		r={box.mark.width / 2 + air}
 	/>
 	<circle
 		class="ring"
 		cx={box.mark.x + box.mark.width / 2}
 		cy={box.mark.y + box.mark.height / 2}
-		r={box.mark.width / 2 + 5}
+		r={box.mark.width / 2 + air}
 	/>
 {/snippet}
 
@@ -292,13 +314,13 @@
 		class="pill"
 		role="button"
 		tabindex="-1"
-		aria-label={u.label}
+		aria-label={titleOf(u)}
 		aria-pressed={markedUnit === u.id}
 		onclick={() => choosePill(u)}
 		ondblclick={() => choosePill(u, true)}
 		onkeydown={(e) => onKey(e, () => choosePill(u))}
 	>
-		<title>{u.label}</title>
+		<title>{titleOf(u)}</title>
 		<rect
 			x={box.label.x}
 			y={box.label.y}
@@ -307,8 +329,15 @@
 			rx={box.label.height / 2}
 			stroke={colour}
 		/>
-		<text class="pill-name" x={box.label.x + 10} y={box.label.y + box.label.height / 2 + 4.5}
-			>{box.text.name[0]}</text
+		{#if u.change}{@render changedMark(
+				u,
+				box.label.x + 14,
+				box.label.y + box.label.height / 2
+			)}{/if}
+		<text
+			class="pill-name"
+			x={box.label.x + 10 + (u.change ? CHANGED_ROOM : 0)}
+			y={box.label.y + box.label.height / 2 + 4.5}>{box.text.name[0]}</text
 		>
 	</g>
 	{#each u.rows as row (row.id)}
@@ -337,10 +366,14 @@
 				{#if headed}<text class="row-head" x={box.mark.x + 16} y={at.y - DOT_LINE / 2 - 5}
 						>{row.label}<tspan class="row-count" dx="6">{rowCount(row.members.length)}</tspan></text
 					>{/if}
-				{#each row.members.slice(0, 2 * perLine) as m, i (m)}
+				{@const squares = changedFirst(row.members, changed).slice(0, 2 * perLine)}
+				{@const numbered = numberedSquares(squares, changed, perLine, DOT)}
+				{#each squares as m, i (m)}
 					{@const n = byId.get(m)}
 					{@const cx = box.mark.x + 16 + (i % perLine) * DOT}
 					{@const cy = at.y - GLYPH / 2 + Math.floor(i / perLine) * DOT_LINE}
+					{@const square = { x: cx, y: cy, width: GLYPH, height: GLYPH }}
+					{@const own = chosen.includes(m) || marked === m}
 					<g
 						class="member"
 						class:is-active={marked === m}
@@ -354,11 +387,14 @@
 					>
 						<title>{n?.label ?? m}</title>
 						<rect class="hit" x={cx - 5} y={cy - 5} width={GLYPH + 10} height={GLYPH + 10} />
-						{#if chosen.includes(m) || marked === m}{@render focusRing({
-								...box,
-								mark: { x: cx, y: cy, width: GLYPH, height: GLYPH }
-							})}{/if}
+						{#if own || changed.has(m)}{@render focusRing(
+								{ ...box, mark: square },
+								own ? 5 : 2.5
+							)}{/if}
 						{@render sign(n, u.sort, cx, cy, GLYPH)}
+						{#if numbered.has(m)}<text class="number" x={cx + GLYPH / 2} y={cy - 8}
+								>{changed.get(m)}</text
+							>{/if}
 					</g>
 				{/each}
 			{/if}
@@ -367,7 +403,19 @@
 {/snippet}
 
 {#snippet unit(u: SceneUnit, box: UnitBox)}
-	{#if u.shape === 'hull' && (!phone || u.focus)}
+	{#if u.shape === 'tiles'}
+		<g
+			class="unit"
+			class:is-dim={!!lit &&
+				lit !== u.id &&
+				!paths.some((p) => touches(p) && (p.from === u.id || p.to === u.id))}
+			data-unit={u.id}
+			onpointerenter={() => (hovered = u.id)}
+			onpointerleave={() => (hovered = null)}
+		>
+			<LaneTiles unit={u} {box} open={openId} nodeOf={(id) => byId.get(id)} onOpen={toggleCard} />
+		</g>
+	{:else if u.shape === 'hull' && (!phone || u.focus)}
 		<g
 			class="unit"
 			class:is-dim={!!lit &&
@@ -381,7 +429,7 @@
 		</g>
 	{:else}
 		{@const disc = u.shape !== 'node'}
-		{@const n = nodeOf(u)}
+		{@const n = byId.get(u.members[0])}
 		{@const cx = box.mark.x + box.mark.width / 2}
 		{@const cy = box.mark.y + box.mark.height / 2}
 		{@const showName = !named || named.has(u.id) || u.focus}
@@ -395,7 +443,7 @@
 			role="button"
 			tabindex="-1"
 			aria-label={titleOf(u)}
-			aria-pressed={u.shape === 'node' ? markedUnit === u.id : lit === u.id}
+			aria-pressed={u.shape === 'node' ? markedUnit === u.id : openId === u.id}
 			onclick={() => choose(u)}
 			ondblclick={() => u.shape === 'node' && onOpen(u.members[0])}
 			onkeydown={(e) => onKey(e, () => choose(u))}
@@ -406,13 +454,14 @@
 		>
 			<title>{titleOf(u)}</title>
 			<rect class="hit" x={box.x - 4} y={box.y - 4} width={box.width + 8} height={box.height + 8} />
-			{#if u.focus || markedUnit === u.id}{@render focusRing(box)}{/if}
+			{#if u.focus || markedUnit === u.id || openId === u.id}{@render focusRing(box)}{/if}
 			{#if disc}
 				<circle class="disc" {cx} {cy} r={box.mark.width / 2} style:--tint={sortColour(u.sort)} />
-				<text class="count" x={cx} y={cy + 4}>{discText(u)}</text>
+				<text class="count" x={cx} y={cy + 4}>{formatCount(u.members.length)}</text>
 			{:else}
 				{@render sign(n, u.sort, box.mark.x, box.mark.y, GLYPH)}
 			{/if}
+			{#if u.change}{@render changedMark(u, box.mark.x + box.mark.width + 1, box.mark.y + 1)}{/if}
 			{#if phone}
 				{#if showName}
 					{#each box.text.name as line, i (i)}
@@ -458,145 +507,92 @@
 		stroke-linecap={p.cap}
 	/>
 	{#if p.head}<polygon points={p.head} fill={p.colour} />{/if}
-	<circle cx={p.points[0].x} cy={p.points[0].y} r={DOT_RADIUS * 0.75} fill={p.colour} />
+	{#if p.stroke === 'puntenIndiener'}<circle
+			cx={p.points[0].x}
+			cy={p.points[0].y}
+			r={DOT_RADIUS * 0.75}
+			fill={p.colour}
+		/>{/if}
 {/snippet}
 
-<div class="banen" bind:clientWidth={avail} data-testid="banen">
+<div
+	class="banen"
+	class:has-card={!!openUnit}
+	bind:this={field}
+	bind:clientWidth={avail}
+	data-testid="banen"
+>
+	<!-- Also with nothing left to draw: what is switched off comes back here. -->
+	{#if scene.units.length > 0 || visibility.hiddenLines.size > 0}
+		<LaneLegend
+			lines={scene.lines}
+			hidden={visibility.hiddenLines}
+			onToggle={onToggleLine}
+			changes={scene.units.flatMap((u) => u.change ?? [])}
+		/>
+	{/if}
 	{#if scene.units.length === 0}
 		<!-- No bron at all: the canvas says so itself (Nog geen bron gekozen). -->
 		{#if nodes.length > 0}<div class="leeg">
 				<p class="leeg__kop">Niets te tekenen met deze filters</p>
 			</div>{/if}
 	{:else}
-		<svg
-			class="drawing"
-			width={layout.width * scale}
-			height={layout.height * scale}
-			viewBox="0 0 {layout.width} {layout.height}"
-			role="group"
-			aria-label="Omgeving in banen"
-		>
-			{#each layout.columns as c (c.column)}
-				{#if phone}
-					<rect
-						class="panel"
-						x={c.x}
-						y={c.y}
-						width={c.width}
-						height={c.height}
-						rx="12"
-						style:--tint={sortColour(COLUMN_SORT[c.column])}
-					/>
-					<text class="col-head" x={c.x + 12} y={c.y + 22}>{COLUMN_TITLE[c.column]}</text>
-					<rect
-						class="col-bar"
-						x={c.x + 12}
-						y={c.y + 29}
-						width="120"
-						height="3"
-						rx="1.5"
-						fill={sortColour(COLUMN_SORT[c.column])}
-					/>
-				{:else}
-					<rect
-						class="panel"
-						x={c.x - 14}
-						y={CONTENT_TOP - 52}
-						width={c.width + 28}
-						height={c.height + 52 + 14}
-						rx="12"
-						style:--tint={sortColour(COLUMN_SORT[c.column])}
-					/>
-					<text class="col-head" x={c.x} y={CONTENT_TOP - 26}>{COLUMN_TITLE[c.column]}</text>
-					<rect
-						class="col-bar"
-						x={c.x}
-						y={CONTENT_TOP - 18}
-						width={c.width}
-						height="3"
-						rx="1.5"
-						fill={sortColour(COLUMN_SORT[c.column])}
-					/>
-				{/if}
-			{/each}
-			{#if layout.strip}
-				{@const s = layout.strip}
-				<rect
-					class="panel"
-					x={s.x}
-					y={s.y}
-					width={s.width}
-					height={s.height}
-					rx="12"
-					style:--tint="var(--rubriek-wetten)"
-				/>
-				<text class="col-head" x={s.x + 14} y={s.y + 24}>Algemene wetten</text>
-			{/if}
-			{#each layout.lanes as l (l.lane)}
-				<rect
-					class="lane"
-					x={l.x}
-					y={l.y}
-					width={l.width}
-					height={l.height}
-					rx="8"
-					stroke={sortColour(LANE_SORT[l.lane])}
-				/>
-				<text class="lane-head" x={l.x + 8} y={l.y + 16}>{LANE_TITLE[l.lane]}</text>
-			{/each}
-			<!-- The lines under the units; the lit ones over the rest, whole. -->
-			<g class="lines" class:is-dim={anyLit}>
-				{#each styled.filter((p) => !anyLit || !touches(p)) as p (p.id)}
-					{@render path(p)}
-				{/each}
-			</g>
-			{#if anyLit}
-				<g class="lines lines--lit">
-					{#each styled.filter(touches) as p (p.id)}
+		<!-- As wide as the drawing and the card over it: the right column scrolls out from under it. -->
+		<div class="room" style:width="calc({layout.width * scale}px + var(--card-room, 0px))">
+			<svg
+				class="drawing"
+				width={layout.width * scale}
+				height={layout.height * scale}
+				viewBox="0 0 {layout.width} {layout.height}"
+				role="group"
+				aria-label="Omgeving in banen"
+			>
+				<LanePanels {layout} {phone} {scene} />
+				<!-- The lines under the units; the lit ones over the rest, whole. -->
+				<g class="lines" class:is-dim={anyLit}>
+					{#each styled.filter((p) => !anyLit || !touches(p)) as p (p.id)}
 						{@render path(p)}
 					{/each}
 				</g>
-			{/if}
-			<!-- A finger's width along each line, unseen: a pointer on it says what the line is. -->
-			<g class="line-hits">
-				{#each styled as p (p.id)}
-					<path
-						class="line-hit"
-						d={p.d}
-						role="img"
-						aria-label={p.label ?? undefined}
-						onpointerenter={() => (hoveredLine = p.id)}
-						onpointerleave={() => (hoveredLine = null)}
-					/>
+				{#if anyLit}
+					<g class="lines lines--lit">
+						{#each styled.filter(touches) as p (p.id)}
+							{@render path(p)}
+						{/each}
+					</g>
+				{/if}
+				<!-- A finger's width along each line, unseen: a pointer on it says what the line is. -->
+				<g class="line-hits">
+					{#each styled as p (p.id)}
+						<path
+							class="line-hit"
+							d={p.d}
+							role="img"
+							aria-label={p.label ?? undefined}
+							onpointerenter={() => (hoveredLine = p.id)}
+							onpointerleave={() => (hoveredLine = null)}
+						/>
+					{/each}
+				</g>
+				{#each scene.units as u (u.id)}
+					{@const box = layout.units.get(u.id)}
+					{#if box}{@render unit(u, box)}{/if}
 				{/each}
-			</g>
-			{#each scene.units as u (u.id)}
-				{@const box = boxOf(u.id)}
-				{#if box}{@render unit(u, box)}{/if}
-			{/each}
-			{#each styled.filter((p) => p.id === hoveredLine && p.label) as p (p.id)}
-				<text class="line-label" x={p.at.x} y={p.at.y - 6}>{p.label}</text>
-			{/each}
-			{#if phone}
-				{#each layout.columns.filter((c) => c.column === 'makers') as c (c.column)}
-					{@const makers = scene.units.filter((u) => u.column === 'makers' && !u.general)}
-					{@const byLane = (['government', 'council', 'parliament'] as const)
-						.map((lane) => [lane, makers.filter((u) => u.lane === lane).length] as const)
-						.filter(([, k]) => k > 0)}
-					<text class="summary" x={c.x + 12} y={c.y + c.height - 14}
-						>{byLane
-							.map(
-								([lane, k]) =>
-									`${k} ${lane === 'council' ? LANE_TITLE[lane] : LANE_TITLE[lane].toLowerCase()}`
-							)
-							.join(', ')}</text
-					>
+				{#each styled.filter((p) => p.id === hoveredLine && p.label) as p (p.id)}
+					<text class="line-label" x={p.at.x} y={p.at.y - 6}>{p.label}</text>
 				{/each}
-			{/if}
-		</svg>
-		{#if unlinked}<p class="stil unlinked">Zonder lijn naar de gekozen bronnen: {unlinked}</p>{/if}
+			</svg>
+		</div>
 	{/if}
 </div>
+{#if openUnit}
+	<LaneCard
+		unit={openUnit}
+		nodeOf={(id) => byId.get(id)}
+		{onMark}
+		onClose={() => (openId = null)}
+	/>
+{/if}
 
 <style>
 	.banen {
@@ -609,6 +605,15 @@
 	@media (max-width: 768px) {
 		.banen {
 			padding-bottom: calc(44px + 2 * var(--s-4));
+		}
+	}
+	.banen.has-card {
+		--card-room: var(--lane-card-w);
+	}
+	@media (max-width: 768px) {
+		.banen.has-card {
+			--card-room: 0px;
+			padding-bottom: 45%;
 		}
 	}
 	.row-count {
@@ -627,28 +632,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		margin: 0 0 var(--s-2);
-	}
-	.unlinked {
-		margin: 0 var(--s-4) var(--s-6);
-	}
-	.panel {
-		fill: color-mix(in srgb, var(--tint) 4.5%, transparent);
-	}
-	.col-head {
-		font-size: var(--t-micro);
-		font-weight: 600;
-		fill: var(--ink);
-	}
-	.lane {
-		fill: var(--paper);
-		stroke-opacity: 0.35;
-	}
-	.lane-head {
-		font-size: var(--t-label);
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		fill: var(--ink-2);
 	}
 	.hull {
 		fill: color-mix(in srgb, var(--tint) 7%, transparent);
@@ -670,8 +653,7 @@
 		cursor: pointer;
 	}
 	.row-head,
-	.row-name,
-	.summary {
+	.row-name {
 		font-size: var(--t-note);
 		fill: var(--ink-2);
 	}
@@ -706,6 +688,28 @@
 		fill: color-mix(in srgb, var(--tint) 14%, var(--paper));
 		stroke: var(--tint);
 		stroke-width: 1.4px;
+	}
+	.changed-mark {
+		fill: var(--ink-2);
+		stroke: var(--paper);
+		stroke-width: 1.5px;
+		paint-order: stroke;
+		stroke-linejoin: round;
+	}
+	.changed-mark.hollow {
+		fill: var(--paper);
+		stroke: var(--ink-2);
+		stroke-width: 1px;
+	}
+	.number {
+		font-size: var(--t-label);
+		font-weight: 600;
+		fill: var(--ink);
+		text-anchor: middle;
+		paint-order: stroke;
+		stroke: var(--paper);
+		stroke-width: 3px;
+		stroke-linejoin: round;
 	}
 	.count {
 		font-size: var(--t-label);

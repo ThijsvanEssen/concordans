@@ -18,12 +18,14 @@ test('Weghalen after Toevoegen draws the canvas as it was', async ({ page, touch
 	const card = page.locator('.strook--kaart.is-open');
 	await card.getByRole('button', { name: 'Toevoegen' }).click();
 	await expect(page).toHaveURL(/netwerk=/);
-	await expect.poll(() => list.count()).toBeGreaterThan(before.length + 20);
+	// Two bronnen chosen, the bron of the page among them (B85): a netwerk, its groups folded.
+	await expect.poll(() => list.count()).toBeGreaterThan(before.length);
 
 	await card.getByRole('button', { name: 'Weghalen' }).click();
 	await expect(page).not.toHaveURL(/netwerk=/);
-	await expect.poll(() => list.count()).toBe(before.length);
-	expect((await list.allTextContents()).sort()).toEqual([...before].sort());
+	// By number: the name of a law may have grown shorter meanwhile, as its title came in.
+	const numbers = (names: string[]) => names.map((n) => n.split(' ').slice(0, 2).join(' ')).sort();
+	await expect.poll(async () => numbers(await list.allTextContents())).toEqual(numbers(before));
 });
 
 // Live toets 27 Oct (b), B2: on a phone the melding after Toevoegen stands above the button

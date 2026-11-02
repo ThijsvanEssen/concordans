@@ -18,6 +18,7 @@ import { isDrawn } from './collection-role';
 import { lineKindOf, type LineKind } from './line-kind';
 import { isCouncilAdvice, makerRole, type MakerLane } from './roles';
 import { foldGroups, markGeneral, unreached } from './scene-groups';
+import { foldTiles, type TilePeriod } from './scene-tiles';
 import {
 	HULL_MIN,
 	hullCandidates,
@@ -32,7 +33,9 @@ import { SHOW_ALL, visibleGraph, type Visibility } from './visibility';
 
 export type Column = 'makers' | 'papers' | 'laws' | 'rulings';
 
-type UnitShape = 'node' | 'hull' | 'group';
+type UnitShape = 'node' | 'hull' | 'group' | 'tiles';
+
+export type LawChange = 'enacted' | 'proposed';
 
 export type SceneUnit = {
 	/** A bron's id, a hull's container id, or `group:` and the id of its first member. */
@@ -47,6 +50,8 @@ export type SceneUnit = {
 	members: string[];
 	/** A hull's rows; empty for a bron or a group. */
 	rows: HullRow[];
+	/** Tiles: the dossiers per period, each with its own hull. */
+	periods: TilePeriod[];
 	/** The day it is placed by in Tijd: a bron's date, the first of a hull, the middle of a group. */
 	date: string | null;
 	/** It holds a chosen bron. */
@@ -63,6 +68,8 @@ export type SceneUnit = {
 	breakdown: string | null;
 	/** A group: the other units its bronnen have a line with, not drawn (only to its target). */
 	elsewhere: number;
+	/** A wet a line of Wijziging goes to, enacted or only proposed: it stands first, with a marker. */
+	change: LawChange | null;
 };
 
 export type SceneLine = {
@@ -82,14 +89,7 @@ export type SceneLine = {
 	toRow: string | null;
 };
 
-export type SceneCounts = {
-	/** Bronnen without a line to the chosen ones, by soort: one count below the canvas. */
-	unlinked: Partial<Record<Sort, number>>;
-	/** Of those, the ones only met through an activity about several dossiers, by soort. */
-	bridged: Partial<Record<Sort, number>>;
-};
-
-export type Scene = { units: SceneUnit[]; lines: SceneLine[]; counts: SceneCounts };
+export type Scene = { units: SceneUnit[]; lines: SceneLine[] };
 
 type SceneInput = {
 	nodes: readonly GraphNode[];
@@ -134,6 +134,7 @@ const blank = (
 	label,
 	members: [],
 	rows: [],
+	periods: [],
 	date: null,
 	focus: false,
 	general: false,
@@ -141,7 +142,8 @@ const blank = (
 	chamber: null,
 	gap: false,
 	breakdown: null,
-	elsewhere: 0
+	elsewhere: 0,
+	change: null
 });
 
 const holdsChosen = (c: HullCandidate, chosen: ReadonlySet<string>) =>
@@ -371,7 +373,7 @@ function bridgesOf(
 /**
  * The edges that may draw a line, by unit. An edge into a hull is no line; nor is one of a bridge
  * to a bron outside its hull draw no line either, but to who makes: that bron is only met
- * through the bridge (`bridged`).
+ * through the bridge.
  */
 function unitEdges(
 	nodes: readonly GraphNode[],
@@ -381,7 +383,6 @@ function unitEdges(
 ) {
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const bridges = bridgesOf(byId, edges, home);
-	const bridged = new Set<string>();
 	const out: UnitEdge[] = [];
 	for (const edge of edges) {
 		const a = byId.get(edge.source);
@@ -391,14 +392,11 @@ function unitEdges(
 		const to = unitOf.get(b.id);
 		if (!from || !to || from === to) continue;
 		const other = bridges.has(a.id) ? b : bridges.has(b.id) ? a : null;
-		if (other && !isMaker(other)) {
-			bridged.add(other === a ? from : to);
-			continue;
-		}
+		if (other && !isMaker(other)) continue;
 		if (!(isHullEdge(a, b, edge.relation) && home.has(a.id)))
 			out.push({ edge, from, to, fromClass: a.drawClass });
 	}
-	return { edges: out, bridged };
+	return out;
 }
 
 /** The scene of a canvas. Deterministic: the same bronnen and edges in any order give the same scene. */
@@ -414,15 +412,28 @@ export function buildScene(input: SceneInput): Scene {
 	const chosen = new Set(input.chosen);
 	const base = baseUnits(sortedNodes, sortedEdges, chosen);
 	const linked = unitEdges(sortedNodes, sortedEdges, base.unitOf, base.home);
-	const general = markGeneral(base.units, linesBetween(base.units, linked.edges));
-	const folded = foldGroups(general, linesBetween(general, linked.edges), sortedNodes);
-	const lines = linesBetween(folded.units, groupEdges(linked.edges, folded));
-	return unreached(
-		withElsewhere(folded.units, linked.edges, folded),
-		lines,
-		linked.bridged,
-		sortedNodes
-	);
+	const general = markGeneral(base.units, linesBetween(base.units, linked));
+	const grouped = foldGroups(general, linesBetween(general, linked), sortedNodes);
+	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked, grouped)));
+	const lines = linesBetween(folded.units, groupEdges(linked, folded));
+	return withChange(unreached(withElsewhere(folded.units, linked, folded), lines));
+}
+
+/**
+ * Marks the wetten a line of Wijziging goes to, a wet that changes another not by that: enacted
+ * where one line is (a publication), else proposed.
+ */
+function withChange(scene: Scene): Scene {
+	const changes = scene.lines.filter((l) => l.kind === 'change');
+	const enacted = new Set(changes.filter((l) => !l.proposed).map((l) => l.to));
+	const proposed = new Set(changes.map((l) => l.to));
+	const changeOf = (id: string): LawChange | null =>
+		enacted.has(id) ? 'enacted' : proposed.has(id) ? 'proposed' : null;
+	const units = scene.units.map((u) => ({
+		...u,
+		change: u.column === 'laws' ? changeOf(u.id) : null
+	}));
+	return { ...scene, units };
 }
 
 type Folded = ReturnType<typeof foldGroups>;

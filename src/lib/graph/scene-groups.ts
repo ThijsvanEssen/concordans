@@ -1,12 +1,11 @@
 // The folding rules of the scene (scene.ts): general wetten to their strip, four bronnen or more of
 // one soort with the same target (or one in the same column) into one group, and what has no line
 // to the chosen bronnen into one count below the canvas. Each takes units and lines and returns new ones.
-import { sortOf } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
 import { RELATIONS } from '$lib/vocabulary';
 import { filterGroupCount } from '$lib/verbonden/filter';
 import type { LineKind } from './line-kind';
-import type { Column, Scene, SceneCounts, SceneLine, SceneUnit } from './scene';
+import type { Column, Scene, SceneLine, SceneUnit } from './scene';
 import type { GraphNode } from './types';
 
 /** Bronnen of one soort with the same lines are one group from this many on. */
@@ -75,7 +74,10 @@ type Target = { id: string; column: Column; exact: string };
  * then the heaviest relation). A line between two makers (a seat in a fractie) is no target: four
  * Kamerleden who signed the moties of one dossier are one group, whatever their fractie.
  */
-function targetsOf(units: readonly SceneUnit[], lines: readonly SceneLine[]): Map<string, Target> {
+export function targetsOf(
+	units: readonly SceneUnit[],
+	lines: readonly SceneLine[]
+): Map<string, Target> {
 	const byId = new Map(units.map((u) => [u.id, u]));
 	const best = new Map<string, { line: SceneLine; other: SceneUnit; row: string | null }>();
 	for (const l of lines) {
@@ -224,32 +226,11 @@ function reachedFrom(units: readonly SceneUnit[], lines: readonly SceneLine[]): 
 	return seen;
 }
 
-/**
- * No unit without a line to the chosen bronnen: the rest is counted by soort, what was only met
- * through an activity about several dossiers apart.
- */
-export function unreached(
-	units: readonly SceneUnit[],
-	lines: readonly SceneLine[],
-	bridged: ReadonlySet<string>,
-	nodes: readonly GraphNode[]
-): Scene {
+/** No unit without a line to the chosen bronnen: the rest stays off the canvas. */
+export function unreached(units: readonly SceneUnit[], lines: readonly SceneLine[]): Scene {
 	const reached = reachedFrom(units, lines);
-	const byId = new Map(nodes.map((n) => [n.id, n]));
-	const counts: SceneCounts = { unlinked: {}, bridged: {} };
-	for (const u of units) {
-		if (reached.has(u.id)) continue;
-		const tally =
-			u.members.some((m) => bridged.has(m)) || bridged.has(u.id) ? counts.bridged : counts.unlinked;
-		for (const id of u.members) {
-			const n = byId.get(id);
-			const sort = n ? sortOf(n.collection, n.key, n.raw?.props) : u.sort;
-			tally[sort] = (tally[sort] ?? 0) + 1;
-		}
-	}
 	return {
 		units: units.filter((u) => reached.has(u.id)).sort((a, b) => a.id.localeCompare(b.id)),
-		lines: lines.filter((l) => reached.has(l.from) && reached.has(l.to)),
-		counts
+		lines: lines.filter((l) => reached.has(l.from) && reached.has(l.to))
 	};
 }

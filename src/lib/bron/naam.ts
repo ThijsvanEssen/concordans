@@ -8,8 +8,15 @@ import { decisionOutcome } from '$lib/votes/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum } from '$lib/text/datum';
+import { citationRecord } from '$lib/text/citation-record';
 import { bwCode } from '$lib/text/bw';
-import { dossierOwnName, dossierUitProps, dossierNumberLabel } from './dossier-naam';
+import {
+	dossierOwnName,
+	dossierUitProps,
+	dossierNumberLabel,
+	dossierVolledigeTitel,
+	officialNumber
+} from './dossier-naam';
 
 /** A bron written out, where `bronNaam` abbreviates: `Burgerlijk Wetboek Boek 6`, not `Boek 6 BW`. */
 export function bronFullName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
@@ -63,6 +70,50 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	const wet = textOf(p?.['instrument_abbreviation']) ?? textOf(p?.['instrument_citation_title']);
 	return wet && !n.label.includes(wet) ? `${n.label} ${wet}` : n.label;
 }
+
+/** A bron on the wissel, as short as it is cited: a dossier by its number, a judgment by its citation. */
+export function buttonName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+	if (n.collection === 'dossiers') {
+		const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
+		return officialNumber(d.number);
+	}
+	const cited =
+		n.collection === 'judgments'
+			? citationRecord({ kind: 'judgment', cite: n.raw?.cite, props: n.raw?.props })
+			: null;
+	return cited?.short ?? bronNaam(n, meta);
+}
+
+/** The whole name of a bron where the wissel abbreviates it: a dossier by its number and title. */
+export function buttonTitle(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
+	if (n.collection !== 'dossiers') return bronFullName(n, meta);
+	const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
+	return dossierVolledigeTitel(d) ?? dossierNumberLabel(d.number);
+}
+
+/**
+ * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
+ * suffix ("via 200 van 846 leden") fits on a phone (Thijs, 9 Oct); the rest by bronNaam.
+ */
+export function entryName<E extends { label: string; titel?: string }>(
+	entry: E,
+	node: GraphNode,
+	meta: Map<string, InstrumentMeta>
+): E {
+	const naam = bronNaam(node, meta);
+	const abbreviation = node.raw?.props?.abbreviation;
+	return node.collection === 'factions' && typeof abbreviation === 'string' && abbreviation
+		? { ...entry, label: abbreviation, titel: naam }
+		: { ...entry, label: naam };
+}
+
+/** The row of Gekozen of the page's own bron drawn alone: no netwerk to switch it off in. */
+export const ownRow = (node: GraphNode, id: string, meta: Map<string, InstrumentMeta>) =>
+	entryName(
+		{ id, label: '', collection: node.collection, on: true, alone: false, fixed: true, node },
+		node,
+		meta
+	);
 
 /**
  * A vote as the dossier's procedure names it, with its day and what was decided:

@@ -30,7 +30,3 @@ export function bewaarNetwerk(query: string | null): void {
 	kept.query = value;
 	writeStored(KEY, value);
 }
-
-/** How many bronnen the kept netwerk holds. */
-export const bewaardAantal = (): number =>
-	kept.query ? parseNetwerk(new URLSearchParams(kept.query)).ids.length : 0;

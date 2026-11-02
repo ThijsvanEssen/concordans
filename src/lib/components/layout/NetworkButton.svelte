@@ -3,19 +3,21 @@
 	// wissel Lezer | Netwerk, in the form of a Keuze (B48, Thijs 31 Oct: "Ja, alleen 1440"): the
 	// one pressed is where the reader is, the other leads to the text or to the werkplek with that
 	// bron. Elsewhere one button, that begins with choosing a bron. Netwerk says how many bronnen
-	// the netwerk holds while there is one ("Netwerk 2"): the way back to it stays in view. Only on
-	// a wide screen: on a phone the tab bar is the switch.
+	// the netwerk holds while there is one ("Netwerk 2"): the way back to it stays in view. Lezer
+	// names its bron, in both states so the wissel does not jump ("Lezer: WVW", B85). Only on a
+	// wide screen: on a phone the tab bar is the switch.
 	import { page } from '$app/state';
 	import { hasFocus } from '$lib/bron/href';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { count } from '$lib/text/words';
-	import { networkState } from '$lib/nav/network';
+	import { keepNetwork, networkState } from '$lib/nav/network';
+	import { readerName } from '$lib/nav/bron-rol';
 
 	const url = $derived(page.url);
 	const onBron = $derived(hasFocus(url));
 	const state = $derived(networkState(url));
 	const pressed = $derived(state.pressed);
-	const aantal = $derived(state.count);
+	const chosen = $derived(state.count);
 	const here = $derived(`${url.pathname}${url.search}${url.hash}`);
 	// The werkplek without a bron has no text to lead back to: Netwerk alone.
 	const paired = $derived(onBron || (pressed && state.href !== '/'));
@@ -26,7 +28,7 @@
 		class="{className} netwerk-knop raakvlak-knop"
 		class:is-active={pressed}
 		href={pressed && paired ? here : state.href}
-		aria-label={aantal ? `Netwerk, ${count(aantal, 'bron', 'bronnen')}` : 'Netwerk'}
+		aria-label={chosen ? `Netwerk, ${count(chosen, 'bron', 'bronnen')}` : 'Netwerk'}
 		aria-pressed={pressed}
 		aria-keyshortcuts={onBron && !pressed ? 'Alt+L' : undefined}
 		role="button"
@@ -35,8 +37,8 @@
 			: onBron
 				? 'Open deze bron in netwerk'
 				: 'Kies een bron in het netwerk'}
-		><Picto naam="netwerk-o" size={16} /><span>Netwerk</span>{#if aantal}<span
-				class="netwerk-knop__aantal">{aantal}</span
+		><Picto naam="netwerk-o" size={16} /><span>Netwerk</span>{#if chosen}<span
+				class="netwerk-knop__aantal">{chosen}</span
 			>{/if}</a
 	>
 {/snippet}
@@ -46,11 +48,15 @@
 		<a
 			class="lees-keuze__knop raakvlak-knop"
 			href={pressed ? state.href : here}
+			onclick={() => pressed && keepNetwork(url)}
 			aria-pressed={!pressed}
 			aria-keyshortcuts={pressed ? 'Alt+L' : undefined}
 			role="button"
-			title={pressed ? 'Terug naar de tekst' : undefined}
-			><Picto naam="tekst" size={16} /><span>Lezer</span></a
+			aria-label={$readerName ? `Lezer, ${$readerName.title}` : 'Lezer'}
+			title={$readerName?.title ?? (pressed ? 'Terug naar de tekst' : undefined)}
+			><Picto naam="tekst" size={16} /><span class="lees-keuze__tekst"
+				>Lezer{#if $readerName}<span class="lees-keuze__naam">: {$readerName.name}</span>{/if}</span
+			></a
 		>{@render networkLink('lees-keuze__knop')}
 	</div>
 {:else}
@@ -71,6 +77,7 @@
 	.lees-keuze {
 		box-sizing: border-box;
 		display: inline-flex;
+		white-space: nowrap;
 		height: var(--veld-h);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
@@ -86,6 +93,18 @@
 		font-weight: 500;
 		color: var(--ink);
 		text-decoration: none;
+	}
+	/* "Lezer: " is 40 px, the name 96: past that it stops, the whole name in the title. Measured
+	   beside the search field and Mijn at 1100 to 1440 (B85); narrower it does not fit. */
+	.lees-keuze__tekst {
+		max-width: 136px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	@media (max-width: 1089px) {
+		.lees-keuze__naam {
+			display: none;
+		}
 	}
 	.lees-keuze__knop:first-child {
 		border-radius: var(--r-1) 0 0 var(--r-1);

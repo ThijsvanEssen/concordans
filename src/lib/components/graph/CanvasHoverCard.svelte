@@ -24,7 +24,8 @@
 	import Bewaar from '$lib/map/Bewaar.svelte';
 	import { bewaarItem } from '$lib/map/map';
 	import OpenChanges from '$lib/proposals/OpenChanges.svelte';
-
+	import { laneDossierNumber } from '$lib/graph/lane-changes';
+	import LaneChanges from './LaneChanges.svelte';
 	let {
 		node,
 		isChosen = false,
@@ -41,6 +42,7 @@
 		openCount = 0,
 		chosen = new Set<string>(),
 		onAdd,
+		changes = false,
 		el = $bindable(null)
 	}: {
 		node: GraphNode;
@@ -69,6 +71,8 @@
 		chosen?: ReadonlySet<string>;
 		/** A voorstel of a dossier added to the netwerk, by its id. */
 		onAdd?: (id: string, name?: string) => void;
+		/** A dossier on the lanes: the articles it changes. */
+		changes?: boolean;
 		el?: HTMLElement | null;
 	} = $props();
 
@@ -236,6 +240,10 @@
 
 	{#if openCount > 0 && !node.stub}
 		<OpenChanges id={node.id} {chosen} {onAdd} />
+	{/if}
+
+	{#if changes && node.collection === 'dossiers' && !node.stub}
+		<LaneChanges number={laneDossierNumber(node.id, [node.id], () => node)} />
 	{/if}
 
 	<!-- The reader's notes, as on Bundels (Aantekening), read only: changed there. -->

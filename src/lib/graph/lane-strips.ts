@@ -2,7 +2,7 @@
 // Rechtspraak, Algemene wetten), from the design of phase 0. Wie maakt is a row of marks with one
 // line that counts them; a chosen hull stands in full with a line per row; every other unit is a
 // mark in a grid, a hull outside the focus as a disc with its count. At most NAMED units carry a
-// name under their mark (the chosen first, then the largest). Only the lines to the chosen units
+// name under their mark (the chosen first, then the changed wetten, then the largest). Only the lines to the chosen units
 // are drawn, those of Wie maakt as one per lijnsoort. A line runs down out of what it leaves (under
 // a chosen hull, or along the edge of a cell), across in a channel (under a chosen hull, or under
 // the head of a strip) and into its target from above (a hull) or from the side (a mark in the
@@ -10,7 +10,14 @@
 // reaches: so it runs through no mark.
 // Pure: the same LaneLayout as lane-layout.ts, so one view draws both.
 import { easePath, type Pt } from '$lib/network/tree-lines';
-import { wrapLabel, type Box, type LaneLayout, type UnitBox } from './lane-layout';
+import {
+	CHANGED_ROOM,
+	tilesBox,
+	wrapLabel,
+	type Box,
+	type LaneLayout,
+	type UnitBox
+} from './lane-layout';
 import { fromTheEnd, LINE_WIDTH, straight, type LanePath } from './lane-lines';
 import { hasArrow, LINE_KIND_STYLE } from './line-kind';
 import { MAKER_LANE_ORDER } from './roles';
@@ -85,20 +92,24 @@ function hullBox(u: SceneUnit, x: number, y: number, width: number): UnitBox {
 	const top = y + PILL;
 	const rows = u.rows.map((r, i) => ({ id: r.id, y: top + 14 + i * ROW }));
 	const mark = { x, y: top, width: wide, height: 8 + u.rows.length * ROW + 8 };
-	const text = { name: wrapLabel(u.label, wide - 20, 13, 1), small: [] };
+	const room = wide - 20 - (u.change ? CHANGED_ROOM : 0);
+	const text = { name: wrapLabel(u.label, room, 13, 1), small: [] };
 	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
 }
 
+const changeRank = (u: SceneUnit) => (u.change === 'enacted' ? 2 : u.change === 'proposed' ? 1 : 0);
+
 const byWeight = (a: SceneUnit, b: SceneUnit) =>
 	Number(b.focus) - Number(a.focus) ||
+	changeRank(b) - changeRank(a) ||
 	b.members.length - a.members.length ||
 	a.label.localeCompare(b.label) ||
 	a.id.localeCompare(b.id);
 
-/** A chosen hull: on a phone it alone stands in full. */
-const isFull = (u: SceneUnit) => u.shape === 'hull' && u.focus;
+/** A chosen hull and tiles: on a phone they alone stand in full. */
+const isFull = (u: SceneUnit) => (u.shape === 'hull' && u.focus) || u.shape === 'tiles';
 
-/** The units that carry a name: the chosen ones, then the largest, NAMED at most. */
+/** The units that carry a name: the chosen ones, the changed wetten, the largest; NAMED at most. */
 function namedOf(scene: Scene): Set<string> {
 	const units = scene.units.filter((u) => u.column !== 'makers' && !isFull(u));
 	return new Set(
@@ -144,7 +155,10 @@ function placeStrip(strip: Strip, index: number, top: number, p: Place): number 
 	p.channels.set(`entry:${index}`, top + HEAD);
 	let y = top + HEAD + load(`entry:${index}`);
 	for (const u of strip.units.filter(isFull)) {
-		const box = hullBox(u, x0, y, p.right - x0);
+		const box =
+			u.shape === 'tiles'
+				? tilesBox(u, x0, y, Math.min(p.right - x0, HULL_MAX))
+				: hullBox(u, x0, y, p.right - x0);
 		p.units.set(u.id, box);
 		const band = { x: x0, y: box.y + box.height, width: p.right - x0, height: 0 };
 		band.height = 10 + load(`band:${u.id}`) + load(`pass:${u.id}`);
@@ -262,6 +276,7 @@ export function laneStrips(scene: Scene, width: number): StripLayout {
 		columns,
 		lanes: [],
 		strip,
+		heads: [],
 		units: p.units,
 		named: p.named,
 		stripOf: w.stripOf,
