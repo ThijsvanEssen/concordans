@@ -224,6 +224,21 @@
 		}
 	}
 
+	/* 1040: six links, the search icon, the wissel and Mijn leave the name of the mark no room.
+	   The gaps draw closer and § stays. */
+	@media (max-width: 1040px) {
+		.topbar {
+			gap: var(--s-4);
+			padding: 0 var(--s-4);
+		}
+		.topbar-nav {
+			gap: var(--s-3);
+		}
+		.logo :global(.name) {
+			display: none;
+		}
+	}
+
 	/* A phone: the logo alone; Zoeken, Bronnen, Netwerk, Actueel and Mijn are the tab
 	   bar (TabBalk). */
 	@media (max-width: 768px) {
@@ -231,6 +246,9 @@
 			align-items: center;
 			gap: var(--s-3);
 			padding: 0 max(var(--s-4), var(--safe-right)) 0 max(var(--s-4), var(--safe-left));
+		}
+		.logo :global(.name) {
+			display: inline;
 		}
 		.topbar-nav,
 		.search-trigger,

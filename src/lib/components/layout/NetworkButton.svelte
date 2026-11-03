@@ -37,9 +37,8 @@
 			: onBron
 				? 'Open deze bron in netwerk'
 				: 'Kies een bron in het netwerk'}
-		><Picto naam="netwerk-o" size={16} /><span>Netwerk</span>{#if chosen}<span
-				class="netwerk-knop__aantal">{chosen}</span
-			>{/if}</a
+		><Picto naam="netwerk-o" size={16} /><span class="netwerk-knop__woord">Netwerk</span
+		>{#if chosen}<span class="netwerk-knop__aantal">{chosen}</span>{/if}</a
 	>
 {/snippet}
 
@@ -95,14 +94,21 @@
 		text-decoration: none;
 	}
 	/* "Lezer: " is 40 px, the name 96: past that it stops, the whole name in the title. Measured
-	   beside the search field and Mijn at 1100 to 1440 (B85); narrower it does not fit. */
+	   beside the search field and Mijn at 1120 to 1440 (B85, B87); narrower it does not fit. */
 	.lees-keuze__tekst {
 		max-width: 136px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	@media (max-width: 1089px) {
+	@media (max-width: 1119px) {
 		.lees-keuze__naam {
+			display: none;
+		}
+	}
+	/* 840: the words go, the two pictures and the count stay; the title and the name say which. */
+	@media (max-width: 840px) {
+		.lees-keuze__tekst,
+		.lees-keuze__knop .netwerk-knop__woord {
 			display: none;
 		}
 	}
