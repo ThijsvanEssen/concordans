@@ -180,13 +180,10 @@ test('the legend switches a lijnsoort off and on, and the address keeps it', asy
 	await expect(change).toHaveAttribute('aria-pressed', 'true');
 	await change.click();
 	await expect(page).toHaveURL(/[?&]uit=/);
-	await expect(legend.getByRole('button', { name: 'Wijziging' })).toHaveAttribute(
-		'aria-pressed',
-		'false'
-	);
+	await expect(change).toHaveAttribute('aria-pressed', 'false');
 	await expect(page.locator('.changed-mark')).toHaveCount(0);
 	await expect(lawHeads(page)).toHaveCount(0);
-	await legend.getByRole('button', { name: 'Wijziging' }).click();
+	await change.click();
 	await expect(change).toHaveAttribute('aria-pressed', 'true');
 	await expect(page).not.toHaveURL(/[?&]uit=/);
 	await expect(page.locator('.changed-mark').first()).toBeAttached();
@@ -264,4 +261,69 @@ test('?doek=sigma is the way back to the canvas', async ({ page }) => {
 	await page.goto('/wetten/BWBR0006622?mode=netwerk&doek=sigma');
 	await expect(page.locator('canvas').first()).toBeVisible();
 	await expect(page.getByTestId('banen')).toHaveCount(0);
+});
+
+test('the legend names the same lijnsoorten whatever is switched off', async ({ page }) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
+	const names = () => legend.getByRole('listitem').allInnerTexts();
+	const before = await names();
+	expect(before.join()).toContain('Aanhaling');
+	await legend.getByRole('button', { name: 'Voorgestelde wijziging' }).click();
+	await expect(page).toHaveURL(/[?&]uit=/);
+	expect(await names()).toEqual(before);
+});
+
+test('Tonen counts the tiles as dossiers, and Dossiers off draws none', async ({ page, touch }) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	if (touch) await openSheet(page);
+	const dossiers = page.getByRole('button', { name: /^Dossiers\b/ });
+	await expect(dossiers).toHaveText(/20 van 63/);
+	await dossiers.click();
+	await expect(dossiers).toHaveAttribute('aria-pressed', 'false');
+	await expect(tiles(page)).toHaveCount(0);
+	await expect(page).toHaveURL(/[?&]bronnen=/);
+});
+
+test('Tonen holds the stuksoorten under Stukken, and no Voorstellen', async ({ page, touch }) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	if (touch) await openSheet(page);
+	const voorstellen = page.getByRole('button', { name: /^Wetsvoorstellen\b/ });
+	await expect(voorstellen).toBeVisible();
+	await expect(voorstellen).not.toHaveAttribute('title');
+	await expect(page.getByRole('heading', { name: 'Stuksoort' })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: /^Voorstellen\b/ })).toHaveCount(0);
+	await expect(page.getByText('Lopend wetsvoorstel', { exact: true })).toHaveCount(0);
+});
+
+test('the lopende voorstellen come in late: the field keeps its size and its place', async ({
+	page,
+	touch
+}) => {
+	test.skip(touch, 'a phone scrolls the page, not the field');
+	let release = () => {};
+	const held = new Promise<void>((resolve) => (release = resolve));
+	await page.route('**/nodes/in-flux/dossiers**', async (route) => {
+		await held;
+		await route.fallback();
+	});
+	await page.setViewportSize({ width: 1280, height: 560 });
+	await page.goto('/explore?mode=netwerk&netwerk=instruments/bwbr0005416');
+	const field = page.getByTestId('banen');
+	await expect(field.locator('svg.drawing')).toBeVisible();
+	const stukken = page.getByRole('button', { name: /^Stukken\b/ });
+	await expect(stukken).toHaveText(/\d/);
+	const count = async () => Number(/(\d+)/.exec(await stukken.innerText())?.[1]);
+	const before = await count();
+	const width = await field.locator('svg.drawing').getAttribute('width');
+	await field.evaluate((el) => (el.scrollTop = 120));
+	expect(await field.evaluate((el) => el.scrollTop)).toBe(120);
+	release();
+	await expect.poll(count).toBeGreaterThan(before);
+	await page.waitForTimeout(500);
+	expect(await field.evaluate((el) => el.scrollTop)).toBe(120);
+	expect(await field.locator('svg.drawing').getAttribute('width')).toBe(width);
 });

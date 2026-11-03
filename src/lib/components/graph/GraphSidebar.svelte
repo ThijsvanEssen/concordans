@@ -123,6 +123,10 @@
 		LINE_KINDS.filter((l) => (canvasCounts.lines?.[l] ?? 0) > 0 || hiddenLines.has(l))
 	);
 	const annexes = $derived(canvasCounts.annexes ?? 0);
+	/** Stuksoort stands under the row of Stukken: the last that holds them. */
+	const papersRow = $derived(
+		kindRowsShown?.findLast((r) => r.filterGroups.includes('stukken'))?.id
+	);
 
 	const isOn = (k: (typeof FILTER_GROUPS)[number]) =>
 		filter.bronnen === null || filter.bronnen.has(k);
@@ -157,10 +161,29 @@
      to them as a list (the table of Verbonden under that kind), not as so many nodes. -->
 {#snippet alleLijst(total: number, bronnen: readonly FilterGroup[], noun: string)}
 	{#if lijstHref}
-		{@const woorden = `Alle ${formatCount(total)} ${noun.toLowerCase()}`}
-		<TekstLink class="rij__alle" href={lijstHref(bronnen)} aria-label={woorden} title={woorden}
+		{@const words = `Alle ${formatCount(total)} ${noun.toLowerCase()}`}
+		<TekstLink class="rij__alle" href={lijstHref(bronnen)} aria-label={words} title={words}
 			>{formatCount(total)}</TekstLink
 		>
+	{/if}
+{/snippet}
+
+{#snippet sortsOfPapers()}
+	{#if stuksoorten.length > 1 || filter.stuksoort}
+		<div class="sub">
+			{#each stuksoorten as s (s)}
+				{@const n = canvasCounts.stuksoorten?.[s] ?? 0}
+				<FilterOptie
+					label={STUKSOORT_LABEL[s]}
+					wrap
+					on={stuksoortOn(filter, s)}
+					onToggle={() => onFilter(toggleStuksoort(filter, s))}
+					count={n}
+					loading={counting}
+					empty={n === 0}
+				/>
+			{/each}
+		</div>
 	{/if}
 {/snippet}
 
@@ -237,6 +260,7 @@
 							</FilterOptie>
 							{#if alle != null}{@render alleLijst(alle, r.filterGroups, r.label)}{/if}
 						</div>
+						{#if r.id === papersRow}{@render sortsOfPapers()}{/if}
 						{#if withCurrentMember && r.collection === 'members'}
 							<!-- The one marking of a current lid, as the canvas draws it (N13). -->
 							<p class="sleutel">
@@ -302,31 +326,9 @@
 								BRON_LABEL[alle.collection as Collection][1]
 							)}{/if}
 					</div>
+					{#if k === 'stukken'}{@render sortsOfPapers()}{/if}
 				{/each}
 				{@render tonenRest()}
-			</Sectie>
-		{/if}
-
-		{#if stuksoorten.length > 1 || filter.stuksoort}
-			<Sectie title="Stuksoort" niveau={3} inklapbaar={false}>
-				{#each stuksoorten as s (s)}
-					{@const n = canvasCounts.stuksoorten?.[s] ?? 0}
-					<FilterOptie
-						label={STUKSOORT_LABEL[s]}
-						wrap
-						on={stuksoortOn(filter, s)}
-						onToggle={() => onFilter(toggleStuksoort(filter, s))}
-						count={n}
-						loading={counting}
-						empty={n === 0}
-					>
-						{#snippet voor()}<KindGlyph
-								vorm={s === 'wetsvoorstellen' ? 'voorstel' : 'stuk'}
-								size={11}
-								colour={sortColour('stukken')}
-							/>{/snippet}
-					</FilterOptie>
-				{/each}
 			</Sectie>
 		{/if}
 
@@ -429,5 +431,13 @@
 	}
 	.empty {
 		margin: 0;
+	}
+	/* Stuksoort under Stukken: part of that row, in the column of its name, in the ordinary weight. */
+	.sub {
+		padding-left: calc(var(--vink) + var(--s-2) + var(--optie-voor) + var(--s-2));
+	}
+	.sub > :global(.optie) {
+		font-weight: 400;
+		min-height: var(--s-5);
 	}
 </style>

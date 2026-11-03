@@ -33,7 +33,7 @@ describe('the Legenda counts', () => {
 			const { getByRole } = render(GraphSidebar, props(selectionCollection));
 			expect(getByRole('button', { name: /^Stemmingen/ }).textContent).toMatch(/49/);
 			expect(getByRole('button', { name: /^Stukken/ }).textContent).toMatch(/30/);
-			// What the stukken are is a block of its own, the stuksoort.
+			// What the stukken are stands under their row, no block of its own.
 			expect(getByRole('button', { name: /^Wetsvoorstellen/ }).textContent).toMatch(/20/);
 			expect(getByRole('button', { name: /^Toelichtingen/ }).textContent).toMatch(/10/);
 		});

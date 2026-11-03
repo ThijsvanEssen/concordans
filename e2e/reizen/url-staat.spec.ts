@@ -35,14 +35,29 @@ test('a clean link draws the same with and without a netwerk kept in this browse
 	const link = `${ARTICLE}?mode=netwerk`;
 	await page.goto(link);
 	const nodes = page.locator('.canvas-node-list');
-	await expect(nodes).toContainText('Art. 6:162 BW');
-	const clean = { url: page.url(), nodes: await nodes.innerText(), panel: await panelText(page) };
+	// The list once it stands: the neighbourhood and the lopende voorstellen come in after the bron.
+	const settled = async () => {
+		await expect(nodes).toContainText('Art. 6:162 BW');
+		let last = '';
+		await expect
+			.poll(
+				async () => {
+					const text = await nodes.innerText();
+					const same = text === last;
+					last = text;
+					return same;
+				},
+				{ intervals: [1000] }
+			)
+			.toBe(true);
+		return last;
+	};
+	const clean = { url: page.url(), nodes: await settled(), panel: await panelText(page) };
 
 	await page.evaluate((kept) => localStorage.setItem('concordans:netwerk', kept), KEPT);
 	await page.goto(link);
-	await expect(page.locator('.canvas-node-list')).toContainText('Art. 6:162 BW');
+	expect(await settled()).toBe(clean.nodes);
 	expect(page.url()).toBe(clean.url);
-	expect(await page.locator('.canvas-node-list').innerText()).toBe(clean.nodes);
 	expect(await panelText(page)).toBe(clean.panel);
 	// What was kept is still kept: it is the reader's, not this link's.
 	expect(await page.evaluate(() => localStorage.getItem('concordans:netwerk'))).toBe(KEPT);

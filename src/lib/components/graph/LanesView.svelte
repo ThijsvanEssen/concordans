@@ -91,15 +91,19 @@
 
 	let avail = $state(0);
 	const phone = $derived(avail > 0 && avail < PHONE);
-	const scene: Scene = $derived(
+	const sceneWith = (v: typeof visibility): Scene =>
 		buildScene({
 			nodes,
 			edges,
 			chosen,
-			visibility,
+			visibility: v,
 			filter,
 			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
-		})
+		});
+	const scene: Scene = $derived(sceneWith(visibility));
+	/** With no lijnsoort off: the legend names what this network holds, whatever is switched. */
+	const whole: Scene = $derived(
+		visibility.hiddenLines.size > 0 ? sceneWith({ ...visibility, hiddenLines: new Set() }) : scene
 	);
 	const byId = $derived(new Map(nodes.map((n) => [n.id, n])));
 	const unitOf = $derived.by(() => {
@@ -129,7 +133,9 @@
 		onDrawn(
 			new Set(
 				scene.units.flatMap((u) =>
-					u.shape === 'hull' || u.shape === 'tiles' ? [u.id, ...u.members] : u.members
+					u.shape === 'hull' || u.shape === 'tiles'
+						? [u.id, ...u.members, ...u.periods.flatMap((p) => p.units.map((d) => d.id))]
+						: u.members
 				)
 			)
 		);
@@ -557,10 +563,12 @@
 	<!-- Also with nothing left to draw: what is switched off comes back here. -->
 	{#if scene.units.length > 0 || visibility.hiddenLines.size > 0}
 		<LaneLegend
+			kinds={whole.kinds}
 			lines={scene.lines}
 			hidden={visibility.hiddenLines}
 			onToggle={onToggleLine}
-			changes={scene.units.flatMap((u) => u.change ?? [])}
+			changes={whole.units.flatMap((u) => u.change ?? [])}
+			changesDrawn={scene.units.flatMap((u) => u.change ?? [])}
 		/>
 	{/if}
 	{#if scene.units.length === 0}

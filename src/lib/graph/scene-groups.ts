@@ -227,7 +227,10 @@ function reachedFrom(units: readonly SceneUnit[], lines: readonly SceneLine[]): 
 }
 
 /** No unit without a line to the chosen bronnen: the rest stays off the canvas. */
-export function unreached(units: readonly SceneUnit[], lines: readonly SceneLine[]): Scene {
+export function unreached(
+	units: readonly SceneUnit[],
+	lines: readonly SceneLine[]
+): Omit<Scene, 'kinds'> {
 	const reached = reachedFrom(units, lines);
 	return {
 		units: units.filter((u) => reached.has(u.id)).sort((a, b) => a.id.localeCompare(b.id)),

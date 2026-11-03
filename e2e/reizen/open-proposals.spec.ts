@@ -23,7 +23,7 @@ test('the vinkje Voorstellen draws the voorstellen of a wet and takes them off a
 	touch
 }) => {
 	test.skip(touch, 'a phone sets it on the sheet Weergave');
-	await page.goto('/explore?mode=netwerk&netwerk=instruments/bwbr0005416');
+	await page.goto('/explore?mode=netwerk&netwerk=instruments/bwbr0005416&doek=sigma');
 	const list = page.locator('.canvas-node-list');
 	await expect(list.getByText('Gemw, Wet')).toBeAttached();
 	const vinkje = page.getByRole('button', { name: /^Voorstellen\b/ });

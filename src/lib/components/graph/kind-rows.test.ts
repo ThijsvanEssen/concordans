@@ -3,7 +3,14 @@ import type { Group } from '$lib/verbonden/groups';
 import type { Row } from '$lib/verbonden/rows';
 import { panelKinds } from '$lib/verbonden/view';
 import type { Collection } from '$lib/vocabulary';
-import { kindRows, kindRowCount, lightBuckets, kindFocus, type DrawnBron } from './kind-rows';
+import {
+	kindRows,
+	kindRowCount,
+	containersOnCanvas,
+	lightBuckets,
+	kindFocus,
+	type DrawnBron
+} from './kind-rows';
 
 const FILTER_OF: Partial<Record<Collection, Row['filterGroup']>> = {
 	judgments: 'uitspraken',
@@ -183,5 +190,29 @@ describe('lightBuckets', () => {
 			{ collection: 'decisions', total: 63600, kept: 63600 },
 			{ collection: 'members', total: 175, kept: 175 }
 		]);
+	});
+});
+
+describe('containersOnCanvas', () => {
+	const base = {
+		ids: [],
+		focal: 'dossiers/36586',
+		groups: new Map(),
+		focusContainerId: null,
+		selectionId: null,
+		hasNode: (id: string) => id === 'dossiers/1',
+		propsOf: () => undefined
+	};
+	const ids = (lanesDrawn: ReadonlySet<string> | null) =>
+		containersOnCanvas({ ...base, lanesDrawn }).map((c) => c.id);
+
+	it('counts the dossiers the lanes draw from their stukken alone, not the focus or a node', () => {
+		const drawn = new Set(['documents/a', 'dossiers/1', 'dossiers/36164', 'dossiers/36586']);
+		expect(ids(drawn)).toEqual(['dossiers/36164']);
+		expect(containersOnCanvas({ ...base, lanesDrawn: drawn })[0].filterGroup).toBe('dossiers');
+	});
+
+	it('knows of no such dossiers on another canvas', () => {
+		expect(ids(null)).toEqual([]);
 	});
 });
