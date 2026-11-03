@@ -89,6 +89,35 @@ describe('the steps of a netwerk', () => {
 		expect(composer.reach).toEqual({ depth: 3, capped: false, cap: reachCap(3) });
 	});
 
+	it('asks only the light nodes while the Keten is on its way, the full ones after it', async () => {
+		const { store, composer } = setup();
+		composer.steps = 2;
+		composer.light = true;
+		composer.compose(netwerk('members/a'));
+		await settle(composer);
+		expect(store.nodeResponse).not.toHaveBeenCalled();
+		expect(store.expandNeighborhood).not.toHaveBeenCalled();
+		composer.light = false;
+		composer.compose(netwerk('members/a'));
+		await settle(composer);
+		expect(store.nodeResponse).toHaveBeenCalledTimes(1);
+		expect(store.expandNeighborhood).toHaveBeenCalledTimes(1);
+	});
+
+	it('knows when the full nodes are in: a switch to the Keten has nothing to put off', async () => {
+		const { composer } = setup();
+		const n = netwerk('members/a');
+		expect(composer.hasFull(n.ids)).toBe(false);
+		composer.light = true;
+		composer.compose(n);
+		await settle(composer);
+		expect(composer.hasFull(n.ids)).toBe(false);
+		composer.light = false;
+		composer.compose(n);
+		await settle(composer);
+		expect(composer.hasFull(n.ids)).toBe(true);
+	});
+
 	it('says when the API cut a neighbourhood off', async () => {
 		const { composer } = setup(true);
 		composer.steps = 2;

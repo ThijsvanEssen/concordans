@@ -27,13 +27,13 @@
 		"src/lib/verbonden/loaders.ts": 1511,
 		"src/routes/(main)/actueel/+page.svelte": 855,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2995
+		"src/routes/explore/+page.svelte": 2960
 	},
 	"effects_per_svelte": {
 		"src/lib/components/explore/IndexView.svelte": 9,
 		"src/lib/components/graph/GraphView.svelte": 9,
 		"src/lib/verbonden/Verbonden.svelte": 10,
-		"src/routes/explore/+page.svelte": 32
+		"src/routes/explore/+page.svelte": 30
 	},
 	"imports_per_svelte": {
 		"src/lib/components/explore/WholeLawReader.svelte": 49,
@@ -45,7 +45,7 @@
 		"src/lib/components/graph/GraphView.svelte": 65,
 		"src/lib/verbonden/Verbonden.svelte": 41,
 		"src/routes/(main)/actueel/+page.svelte": 42,
-		"src/routes/explore/+page.svelte": 106
+		"src/routes/explore/+page.svelte": 105
 	},
 	"complexity": {
 		"src/lib/bron/describe.ts": 46,
