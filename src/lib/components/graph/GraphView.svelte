@@ -254,6 +254,7 @@
 	let drawn: ReadonlySet<string> = new Set();
 	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
 	let drawnBronnen = $state<DrawnBron[]>([]);
+	// On the lanes also a dossier or wet switched off: it keeps its count, as a soort of nodes does.
 	const containersDrawn = (ids: readonly string[], focal: string) =>
 		containersOnCanvas({
 			ids,
@@ -263,7 +264,7 @@
 			selectionId: selection?.id ?? null,
 			hasNode: (id) => g.hasNode(id),
 			propsOf: (id) => lookup.get(id)?.raw?.props ?? undefined,
-			lanesDrawn: lanes ? drawn : null
+			lanesDrawn: lanes ? new Set([...drawn, ...laneHeld]) : null
 		});
 	function drawnBronnenOf(ids: readonly string[]): DrawnBron[] {
 		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
@@ -748,6 +749,8 @@
 	let laneNodes = $state.raw<GraphNode[]>([]);
 	/** What the lanes draw, their hulls' wetten and dossiers too: those can be marked there. */
 	let laneDrawn = $state.raw<ReadonlySet<string>>(new Set());
+	/** What the lanes would draw with no kind switched off: a kind off keeps its count (Tonen). */
+	let laneHeld: ReadonlySet<string> = new Set();
 	/** A bron of the lanes by its id; a hull's wet or dossier is no node of the canvas: the store knows it. */
 	const markById = (id: string, then: (n: GraphNode) => void) => {
 		const n = lookup.get(id) ?? store.getNodeById(id);
@@ -1512,9 +1515,10 @@
 						onMark={(id) => markById(id, markeer)}
 						onOpen={(id) => markById(id, open)}
 						onUnmark={ontmarkeer}
-						onDrawn={(set) => {
+						onDrawn={(set, held) => {
 							drawn = set;
 							laneDrawn = set;
+							laneHeld = held;
 							untrack(telCanvas);
 						}}
 					/>

@@ -74,7 +74,8 @@
 		/** A group's Zijpaneel opens: no bron marked beside it. */
 		onUnmark: () => void;
 		/** What the lanes draw, every bron of a unit: for the counts and the keyboard's list. */
-		onDrawn: (ids: ReadonlySet<string>) => void;
+		/** What the lanes draw, and what they would draw with nothing switched off: the count of a kind off. */
+		onDrawn: (ids: ReadonlySet<string>, held: ReadonlySet<string>) => void;
 		/** A click in the legend: Relatie of the canvas, one state with its address. */
 		onToggleLine: (l: LineKind) => void;
 	} = $props();
@@ -131,17 +132,17 @@
 		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, (avail - covered) / layout.width))
 	);
 
-	$effect(() => {
-		// A hull is drawn too: its pill marks the wet or dossier it stands for.
-		onDrawn(
-			new Set(
-				scene.units.flatMap((u) =>
-					u.shape === 'hull' || u.shape === 'tiles'
-						? [u.id, ...u.members, ...u.periods.flatMap((p) => p.units.map((d) => d.id))]
-						: u.members
-				)
+	/** What a scene draws: a hull is drawn too, its pill marks the wet or dossier it stands for. */
+	const drawnBy = (of: Scene) =>
+		new Set(
+			of.units.flatMap((u) =>
+				u.shape === 'hull' || u.shape === 'tiles'
+					? [u.id, ...u.members, ...u.periods.flatMap((p) => p.units.map((d) => d.id))]
+					: u.members
 			)
 		);
+	$effect(() => {
+		onDrawn(drawnBy(scene), drawnBy(whole));
 	});
 
 	/** The group, or the hull without a bron of its own, whose Zijpaneel is open. */
