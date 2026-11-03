@@ -158,6 +158,7 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await expect(page).toHaveURL(/^[^?]*\/explore\?/);
 		// Esc closes it and the keys go on from the label that opened it.
 		await expect(page.locator('#leespaneel .lp-titel')).toBeFocused();
+		await expect(page.locator('#leespaneel .meta h3', { hasText: 'Verbonden' })).toBeVisible();
 		await page.keyboard.press('Escape');
 		await expect.poll(() => params(page).get('lees')).toBeNull();
 		await expect(label).toBeFocused();

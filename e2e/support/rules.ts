@@ -59,10 +59,13 @@ export const strayRed = (page: Page) =>
 export const smallTargets = (page: Page) =>
 	page.evaluate(() => {
 		const H = 22;
-		// The tab bar of a phone covers the foot of the screen: what lies under it is out of reach
-		// until it is scrolled up, as what lies past the screen.
-		const bottom =
-			innerHeight - (document.querySelector<HTMLElement>('.tabbar')?.offsetHeight ?? 0);
+		// The tab bar of a phone and the entry to Verbonden above it cover the foot of the screen:
+		// what lies under them is out of reach until it is scrolled up, as what lies past the screen.
+		const entry = document.querySelector<HTMLElement>('.entry');
+		const bottom = Math.min(
+			innerHeight - (document.querySelector<HTMLElement>('.tabbar')?.offsetHeight ?? 0),
+			entry?.offsetHeight ? entry.getBoundingClientRect().top : Infinity
+		);
 		const controls = document.querySelectorAll<HTMLElement>(
 			'button, [role="button"], [role="tab"], [role="menuitem"], [role="switch"], select, ' +
 				'input:not([type="hidden"]), summary, nav a, a.btn, a[class*="knop"]'
