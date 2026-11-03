@@ -171,7 +171,7 @@ test('on a phone the network marks Netwerk alone in the tab bar, not Bronnen bes
 	page
 }) => {
 	test.skip(!isPhone(page), 'the tab bar is a phone’s');
-	await page.goto('/wetten/BWBR0005289?mode=netwerk');
+	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
 	await expect(tabs(page).getByRole('button', { name: /^Netwerk/ })).toHaveClass(/is-active/);
 	await expect(tabs(page).locator('.tab.is-active')).toHaveCount(1);
 });
