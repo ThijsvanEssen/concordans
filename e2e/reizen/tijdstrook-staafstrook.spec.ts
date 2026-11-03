@@ -93,16 +93,24 @@ test('desktop: a hover on a year shows the count per kind', async ({ page, touch
 	await expect(root.locator('.kaart')).toBeVisible();
 });
 
-for (const width of [375, 390])
-	test(`phone at ${width}: the line at rest stands whole, with a period and what has no date`, async ({
+// The longest period, and a count of four digits: on two lines at most, each whole, within 72 px.
+for (const [width, van, tot] of [
+	[375, '2010-03-01', '2020-06-30'],
+	[390, '2010-03-01', '2020-06-30'],
+	[375, '2001-12-31', '2025-12-31'],
+	[320, '2001-12-31', '2025-12-31']
+] as const)
+	test(`phone at ${width}: the line at rest stands whole, from ${van} to ${tot}`, async ({
 		page,
 		touch
 	}) => {
 		test.skip(!touch, 'a phone');
 		await page.setViewportSize({ width, height: 812 });
-		await page.goto(`/explore?netwerk=instruments/bwbr0005290&van=2010-03-01&tot=2020-06-30`);
+		await page.goto(`/explore?netwerk=instruments/bwbr0005290&van=${van}&tot=${tot}`);
 		const root = page.locator('.tijdstrook');
 		await expect(root.locator('.micro')).toContainText('zonder datum', { timeout: 30_000 });
+		const micro = root.locator('.micro');
+		await micro.evaluate((e) => (e.textContent = '1.199 bronnen, 1.155 zonder datum'));
 		const line = await root.locator('.kop, .micro').evaluateAll((els) =>
 			els.map((e) => ({
 				whole: e.scrollWidth <= e.clientWidth,
