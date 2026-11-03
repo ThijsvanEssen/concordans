@@ -177,6 +177,7 @@
 					label={STUKSOORT_LABEL[s]}
 					wrap
 					on={stuksoortOn(filter, s)}
+					gedimd={!isOn('stukken')}
 					onToggle={() => onFilter(toggleStuksoort(filter, s))}
 					count={n}
 					loading={counting}
