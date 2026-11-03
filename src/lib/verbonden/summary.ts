@@ -102,7 +102,7 @@ const KIND_OF_SORT = Object.fromEntries(
 const REGULATIONS: KindId = 'regelingen';
 
 /** What a soort is called, as a heading and as the plural of "Alle N …": the name of its soort. */
-export const KIND_NAMES: Record<KindId, { label: string; one: string; many: string }> =
+export const SORT_NAMES: Record<KindId, { label: string; one: string; many: string }> =
 	Object.fromEntries(
 		(Object.entries(SORT_OF_KIND) as [KindId, Sort][]).map(([id, sort]) => [
 			id,
@@ -129,7 +129,7 @@ function membersLabel(selection: Collection): { label: string; one: string; many
 		return { label: 'Leden', one: 'lid', many: 'leden' };
 	if (selection === 'cabinets')
 		return { label: 'Bewindspersonen', one: 'bewindspersoon', many: 'bewindspersonen' };
-	return KIND_NAMES.members;
+	return SORT_NAMES.members;
 }
 
 /**
@@ -279,7 +279,7 @@ export function kindsOf(
 		const rows = kindRows(gs, id, selection);
 		const failed = gs.find((g) => g.failed && g.rows.length === 0);
 		if (count === 0 && rows.length === 0 && !failed) return [];
-		const label = id === 'members' ? membersLabel(selection) : KIND_NAMES[id];
+		const label = id === 'members' ? membersLabel(selection) : SORT_NAMES[id];
 		const noun = plural(count, label.one, label.many);
 		return [
 			{
@@ -330,7 +330,7 @@ export function kindOfBron(
 /** What a soort is called on the page of `selection`: as its heading in Verbonden. */
 export function kindLabelOn(id: KindId, selection: Collection): string {
 	return (
-		LABEL_ON[selection]?.[id] ?? (id === 'members' ? membersLabel(selection) : KIND_NAMES[id]).label
+		LABEL_ON[selection]?.[id] ?? (id === 'members' ? membersLabel(selection) : SORT_NAMES[id]).label
 	);
 }
 
@@ -377,7 +377,7 @@ function splitLaws(k: Kind): Kind[] {
 				: id === 'publicaties'
 					? [...rows0].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
 					: rows0;
-		const label = KIND_NAMES[id];
+		const label = SORT_NAMES[id];
 		const groups = k.groups.filter(
 			(g) => groupClass(g) === id || g.rows.some((r) => lawClass(r) === id)
 		);
@@ -406,7 +406,7 @@ function splitLaws(k: Kind): Kind[] {
  */
 function splitMembers(k: Kind, selection: Collection): Kind[] {
 	const as = (id: 'members' | 'ministers', rows: Row[], count: number): Kind => {
-		const label = KIND_NAMES[id];
+		const label = SORT_NAMES[id];
 		return {
 			...k,
 			id,

@@ -4,7 +4,7 @@ import { formatCount } from '$lib/text/getal';
 import { joinParts, plural } from '$lib/text/words';
 import type { Collection } from '$lib/vocabulary';
 import type { Group } from './groups';
-import { KIND_NAMES, kindsOf, kindsTotal, type Kind } from './summary';
+import { SORT_NAMES, kindsOf, kindsTotal, type Kind } from './summary';
 import { isOwnGroup, panelSettled } from './view';
 import type { VerbondenState } from './data-source';
 
@@ -24,7 +24,7 @@ export const largestKinds = (kinds: readonly Pick<Kind, 'id' | 'count'>[]): stri
 			.toSorted((a, b) => b.count - a.count)
 			.slice(0, LARGEST)
 			.map((k) => {
-				const { one, many } = KIND_NAMES[k.id];
+				const { one, many } = SORT_NAMES[k.id];
 				return `${formatCount(k.count)} ${plural(k.count, one, many)}`;
 			})
 	);

@@ -1,6 +1,6 @@
 // One name per soort: the names of the Verbonden groups are read from BRON_LABEL, not written twice.
 import { describe, expect, it } from 'vitest';
-import { KIND_NAMES } from '$lib/verbonden/summary';
+import { SORT_NAMES } from '$lib/verbonden/summary';
 import { BRON_LABEL, type Collection } from '$lib/vocabulary';
 import { lowerFirst } from '$lib/text/words';
 
@@ -20,18 +20,18 @@ const OF: Record<string, Collection> = {
 describe('the names of the soorten', () => {
 	it.each(Object.entries(OF))('names %s as BRON_LABEL does', (id, collection) => {
 		const [one, many] = BRON_LABEL[collection];
-		const soort = KIND_NAMES[id as keyof typeof KIND_NAMES];
+		const soort = SORT_NAMES[id as keyof typeof SORT_NAMES];
 		expect(soort.label).toBe(many);
 		expect(lowerFirst(soort.many)).toBe(lowerFirst(many));
 		expect(lowerFirst(soort.one)).toBe(lowerFirst(one));
 	});
 
 	it('names the persons by their role: Kamerleden in Parlement, bewindspersonen in Regering', () => {
-		expect(KIND_NAMES.members.label).toBe('Kamerleden');
-		expect(KIND_NAMES.ministers.label).toBe('Bewindspersonen');
+		expect(SORT_NAMES.members.label).toBe('Kamerleden');
+		expect(SORT_NAMES.ministers.label).toBe('Bewindspersonen');
 	});
 
 	it('differs only for the laws, a soort of wetten and artikelen', () => {
-		expect(KIND_NAMES.laws.label).toBe('Wetten');
+		expect(SORT_NAMES.laws.label).toBe('Wetten');
 	});
 });
