@@ -19,7 +19,7 @@
 	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
-	import type { Visibility } from '$lib/graph/visibility';
+	import { SHOW_ALL, type Visibility } from '$lib/graph/visibility';
 	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
 	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
@@ -101,9 +101,12 @@
 			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
 		});
 	const scene: Scene = $derived(sceneWith(visibility));
-	/** With no lijnsoort off: the legend names what this network holds, whatever is switched. */
+	/**
+	 * With nothing switched off, in Tonen or Relatie: the legend names what this network holds, so
+	 * that its row stands still while a filter is turned (B105).
+	 */
 	const whole: Scene = $derived(
-		visibility.hiddenLines.size > 0 ? sceneWith({ ...visibility, hiddenLines: new Set() }) : scene
+		visibility.hiddenLines.size > 0 || visibility.hiddenKinds.size > 0 ? sceneWith(SHOW_ALL) : scene
 	);
 	const byId = $derived(new Map(nodes.map((n) => [n.id, n])));
 	const unitOf = $derived.by(() => {
@@ -561,7 +564,7 @@
 	data-testid="banen"
 >
 	<!-- Also with nothing left to draw: what is switched off comes back here. -->
-	{#if scene.units.length > 0 || visibility.hiddenLines.size > 0}
+	{#if whole.kinds.length > 0 || visibility.hiddenLines.size > 0}
 		<LaneLegend
 			kinds={whole.kinds}
 			lines={scene.lines}
