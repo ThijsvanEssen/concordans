@@ -127,7 +127,7 @@ describe('Andere bron toevoegen on a bundel’s page (the coordinator’s choice
 			target: { value: 'ECLI:NL:HR:2019:1715' }
 		});
 		await settle();
-		const link = screen.getByRole('link', { name: 'Bewaar vanuit de lezer' });
+		const link = screen.getByRole('link', { name: 'Bewaren vanuit de lezer' });
 		expect(new URL(link.getAttribute('href')!, 'https://x.nl').searchParams.get('bundel')).toBe(
 			'k3j2'
 		);
@@ -142,7 +142,7 @@ describe('a reader keeping in a bundel (UX-toets A21 #1)', () => {
 		const art: MapItem = { ...lid, id: 'articles/bwbr0005290_611', at: '', kort: 'art. 7:611 BW' };
 		kaart.keepIn(other.id);
 		render(Bewaar, { item: art });
-		await fireEvent.click(screen.getByRole('button', { name: /^Bewaar in Thuiswerk/ }));
+		await fireEvent.click(screen.getByRole('button', { name: /^Bewaren in Thuiswerk/ }));
 		expect(kaart.holding(art).map((m) => m.naam)).toEqual(['Thuiswerk']);
 		expect(screen.getByRole('button', { name: /^Bewaard in Thuiswerk/ })).toBeTruthy();
 		expect(screen.getByRole('link', { name: 'Naar Thuiswerk' }).getAttribute('href')).toBe(

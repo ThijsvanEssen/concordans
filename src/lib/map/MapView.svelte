@@ -260,7 +260,7 @@
 				>{copier.label('link', 'Kopieer link')}</TekstLink
 			>
 		{:else}
-			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaar als kopie</button>
+			<button type="button" class="btn" onclick={() => onShared?.('map')}>Bewaren als kopie</button>
 		{/if}
 		<!-- An empty Mijn markeringen has nothing to take along, to empty or to delete. -->
 		{#if b.items.length || !m || !kaart.isDefault(m)}

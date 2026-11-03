@@ -15,17 +15,17 @@ test('Bewaar keeps in Mijn markeringen; the check in its list takes it out again
 	page
 }) => {
 	await keepArticle(page);
-	await page.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
-	const menu = page.getByRole('menu', { name: 'Bewaar art. 6:162 BW in bundel' });
+	await page.getByRole('button', { name: 'art. 6:162 BW: bewaren in bundel' }).click();
+	const menu = page.getByRole('menu', { name: 'art. 6:162 BW: bewaren in bundel' });
 	const loose = menu.getByRole('menuitemcheckbox', { name: 'Mijn markeringen' });
 	await expect(loose).toHaveAttribute('aria-checked', 'true');
 	await loose.click();
-	await expect(page.getByRole('button', { name: 'Bewaar', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Bewaren', exact: true })).toBeVisible();
 });
 
 test('a new bundel is named in the menu and keeps the bron at once', async ({ page }) => {
 	await page.goto(ARTICLE);
-	await page.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
+	await page.getByRole('button', { name: 'art. 6:162 BW: bewaren in bundel' }).click();
 	await page.getByRole('menuitem', { name: 'Nieuwe bundel' }).click();
 	const name = page.getByRole('textbox', { name: 'Naam van de nieuwe bundel' });
 	await expect(name).toBeFocused();
@@ -39,14 +39,14 @@ test('a new bundel is named in the menu and keeps the bron at once', async ({ pa
 
 test('a lid is kept in a chosen bundel from its menu, with its anchor', async ({ page }) => {
 	await page.goto(ARTICLE);
-	await page.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
+	await page.getByRole('button', { name: 'art. 6:162 BW: bewaren in bundel' }).click();
 	await page.getByRole('menuitem', { name: 'Nieuwe bundel' }).click();
 	const name = page.getByRole('textbox', { name: 'Naam van de nieuwe bundel' });
 	await name.fill('Onrechtmatige daad');
 	await name.press('Enter');
 
 	await page.getByRole('button', { name: 'art. 6:162 lid 2 BW: citeren, bewaren' }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar in bundel…' }).click();
+	await page.getByRole('menuitem', { name: 'Bewaren in bundel…' }).click();
 	await expect(page.getByRole('menuitemcheckbox').first()).toBeFocused();
 	await page.getByRole('menuitemcheckbox', { name: 'Onrechtmatige daad' }).click();
 	await expect(page.getByRole('menuitemcheckbox', { name: 'Onrechtmatige daad' })).toHaveAttribute(
@@ -135,7 +135,7 @@ test('two tabs keep at the same time and each sees what the other kept', async (
 	const note = one.getByRole('textbox', { name: 'Aantekening bij Mijn markeringen' });
 	await note.fill('Onderzoeksvraag: aansprakelijkheid');
 	await two.goto(ARTICLE);
-	await two.getByRole('button', { name: 'Bewaar art. 6:162 BW in bundel' }).click();
+	await two.getByRole('button', { name: 'art. 6:162 BW: bewaren in bundel' }).click();
 	await two.getByRole('menuitem', { name: 'Nieuwe bundel' }).click();
 	await two.getByRole('textbox', { name: 'Naam van de nieuwe bundel' }).fill('Tweede');
 	await two.keyboard.press('Enter');
@@ -159,7 +159,7 @@ test('a shared link opens the bundel in a browser that has none', async ({ conte
 	await fresh.goto(new URL(link!).pathname + new URL(link!).hash);
 	await expect(fresh.getByRole('heading', { level: 1 })).toBeVisible();
 	await expect(fresh.getByText('Gedeelde bundel, via een link')).toBeVisible();
-	await expect(fresh.getByRole('button', { name: 'Bewaar als kopie' })).toBeVisible();
+	await expect(fresh.getByRole('button', { name: 'Bewaren als kopie' })).toBeVisible();
 	await expect(fresh.getByRole('link', { name: 'art. 6:162 lid 2 BW' })).toBeVisible();
 	await expect(
 		fresh.getByRole('link', { name: /^HR 20 december 2019, .*r\.o\. 5\.3\.2$/ })
@@ -237,7 +237,7 @@ test('arceer words of a lid and see them again in the bundel', async ({ page, to
 	// Its note, written in the menu, stands under the lid at rest (O4 step 6).
 	await page.getByRole('menuitem', { name: 'Aantekening', exact: true }).click();
 	await page.getByRole('textbox', { name: /^Aantekening bij/ }).fill('Ook ongeschreven recht');
-	await page.getByRole('button', { name: 'Bewaar aantekening' }).click();
+	await page.getByRole('menu').getByRole('button', { name: 'Bewaren', exact: true }).click();
 	const note = page.locator('[data-plaats="lid-2"] .noot').getByRole('button', {
 		name: 'Ook ongeschreven recht'
 	});

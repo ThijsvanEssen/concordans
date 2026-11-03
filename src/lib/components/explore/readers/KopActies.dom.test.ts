@@ -9,10 +9,10 @@ const item = bewaarItem('articles/bwbr0005289_162', { kort: 'art. 6:162 BW' });
 describe('KopActies', () => {
 	it('shows Bewaar as a framed button with the choice of map joined to it', async () => {
 		render(KopActies, { bewaar: item, wat: 'lid 2' });
-		const knop = screen.getByRole('button', { name: 'Bewaar lid 2' });
+		const knop = screen.getByRole('button', { name: 'Lid 2 bewaren' });
 		expect(knop.classList.contains('btn')).toBe(true);
 		expect(knop.getAttribute('aria-pressed')).toBe('false');
-		expect(screen.getByRole('button', { name: /^Bewaar art\. 6:162 BW in bundel/ })).toBeTruthy();
+		expect(screen.getByRole('button', { name: /^art\. 6:162 BW: bewaren in bundel/ })).toBeTruthy();
 
 		await fireEvent.click(knop);
 		await tick();

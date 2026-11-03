@@ -24,10 +24,10 @@ const MENUS: Case[] = [
 	},
 	{ name: 'Citeer', url: ARTICLE, opener: 'Citeer', menu: /^Citeer art\. 6:162 BW/ },
 	{
-		name: 'Bewaar in bundel',
+		name: 'Bewaren in bundel',
 		url: ARTICLE,
-		opener: 'Bewaar art. 6:162 BW in bundel',
-		menu: /^Bewaar art\. 6:162 BW in bundel$/
+		opener: 'art. 6:162 BW: bewaren in bundel',
+		menu: /^art\. 6:162 BW: bewaren in bundel$/
 	},
 	{
 		name: 'a rechtsoverweging',

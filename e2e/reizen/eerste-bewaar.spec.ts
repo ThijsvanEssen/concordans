@@ -9,7 +9,7 @@ test('the first Bewaar gives a notice that stays; Escape closes it; the second B
 	page
 }) => {
 	await page.goto(ARTICLE);
-	const bewaar = page.getByRole('button', { name: 'Bewaar', exact: true });
+	const bewaar = page.getByRole('button', { name: 'Bewaren', exact: true });
 	await bewaar.click();
 
 	const melding = page.getByRole('status').filter({ hasText: 'Dit staat alleen in deze browser' });
@@ -29,14 +29,14 @@ test('the first Bewaar gives a notice that stays; Escape closes it; the second B
 
 	// Once per session: the next Bewaar gives the line of a few seconds.
 	await page.getByRole('button', { name: 'art. 6:162 lid 2 BW: citeren, bewaren' }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar in Mijn markeringen' }).click();
+	await page.getByRole('menuitem', { name: 'Bewaren in Mijn markeringen' }).click();
 	await expect(page.getByRole('status')).toContainText('Bewaard in Mijn markeringen');
 	await expect(page.getByText('Dit staat alleen in deze browser')).toHaveCount(0);
 });
 
 test('Exporteer saves the bundels as a file and ends the notice', async ({ page }) => {
 	await page.goto(ARTICLE);
-	await page.getByRole('button', { name: 'Bewaar', exact: true }).click();
+	await page.getByRole('button', { name: 'Bewaren', exact: true }).click();
 	const melding = page.getByRole('status').filter({ hasText: 'Dit staat alleen in deze browser' });
 	const download = page.waitForEvent('download');
 	await melding.getByRole('button', { name: 'Exporteer' }).click();

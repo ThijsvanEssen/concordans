@@ -1,7 +1,8 @@
 // The labels of the buttons and text links: each stands in the table Knoppen of docs/woorden.md,
 // in the one form of the norm. An action on the bron of the page is said in the imperative
-// (Bewaar, Volg, Citeer), a control of a panel, a list or a dialog in the infinitive (Wissen,
-// Sluiten, Toevoegen); the rest is a name or a place.
+// (Volg, Citeer), a control of a panel, a list or a dialog in the infinitive (Wissen, Sluiten,
+// Toevoegen), and Bewaren everywhere (Thijs, 3 Nov), its place or form after it; the rest is a name
+// or a place.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -53,6 +54,6 @@ describe('the labels of the buttons (docs/woorden.md, Knoppen)', () => {
 
 	it('has no imperative among the controls: Wissen, not Wis', () => {
 		for (const [label, vorm] of tabel)
-			if (vorm === 'onbepaald') expect(label, label).toMatch(/en$/);
+			if (vorm === 'onbepaald') expect(label, label).toMatch(/en$|^Bewaren /);
 	});
 });

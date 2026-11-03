@@ -43,7 +43,7 @@
 				<li>De gevolgde onderwerpen, met de dag van het vorige bezoek.</li>
 				<li>De bundels, met hun aantekeningen.</li>
 				<li>
-					Per sessie: of de melding bij de eerste Bewaar al is getoond. Dit verdwijnt als het
+					Per sessie: of de melding bij de eerste keer Bewaren al is getoond. Dit verdwijnt als het
 					tabblad sluit.
 				</li>
 			</ul>
