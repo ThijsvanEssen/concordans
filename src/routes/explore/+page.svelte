@@ -2629,8 +2629,8 @@
 					class:mobile-hidden={readTab === 'verbonden'}
 					data-wacht={contentsPending || undefined}
 				>
-					<ConnectedEntry bind:tab={readTab} connected={verbonden} selection={selectedNode} />
 					{@render reader()}
+					<ConnectedEntry bind:tab={readTab} connected={verbonden} selection={selectedNode} />
 				</div>
 				<div
 					class="col col--panel"
