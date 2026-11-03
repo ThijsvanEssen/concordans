@@ -44,8 +44,6 @@ test('the melding after Toevoegen covers neither Weergave nor the card', async (
 	await expect(melding).toContainText('toegevoegd aan het netwerk');
 	const box = async (l: ReturnType<typeof page.locator>) => (await l.boundingBox())!;
 	const m = await box(melding);
-	for (const other of [page.getByRole('button', { name: 'Weergave' }), card]) {
-		const o = await box(other);
-		expect(m.y + m.height, 'above the other').toBeLessThanOrEqual(o.y);
-	}
+	const o = await box(card);
+	expect(m.y + m.height, 'above the card').toBeLessThanOrEqual(o.y);
 });

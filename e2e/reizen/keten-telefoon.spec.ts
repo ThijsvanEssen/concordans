@@ -29,6 +29,21 @@ test('The card of the others is a framed button of a finger’s height', async (
 	expect(border).not.toBe('rgba(0, 0, 0, 0)');
 });
 
+test('Weergave stands in one place in every weergave, over nothing (R3)', async ({ page }) => {
+	const knop = page.getByRole('button', { name: 'Weergave', exact: true });
+	const plek = async (url: string) => {
+		await page.goto(url);
+		await expect(knop).toBeVisible();
+		return (await knop.boundingBox())!;
+	};
+	const wvw = '/explore?mode=netwerk&netwerk=instruments/bwbr0006622';
+	const omgeving = await plek(wvw);
+	const keten = await plek(`${wvw}&weergave=keten`);
+	expect({ x: omgeving.x, y: omgeving.y }).toEqual({ x: keten.x, y: keten.y });
+	const bar = (await page.locator('.control-bar').boundingBox())!;
+	expect(omgeving.y + omgeving.height).toBeLessThanOrEqual(bar.y + bar.height);
+});
+
 test('Weergave stands in the bar above the list, over none of its rows (B48)', async ({ page }) => {
 	await page.goto('/leden/rob-jetten?mode=netwerk&weergave=keten');
 	const list = page.locator('.chain .list');

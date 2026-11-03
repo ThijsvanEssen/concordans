@@ -318,8 +318,10 @@
 				aria-label="Periode, {words}, {short}. Wijzig"
 				onclick={() => (blad = true)}
 			>
-				<span class="kop">{words}</span>
-				<span class="micro">{short}</span>
+				<span class="regel">
+					<span class="kop">{words}</span>
+					<span class="micro">{short}</span>
+				</span>
 				<span class="mini" aria-hidden="true">
 					<span class="kolommen">
 						{#each years as y (y.jaar)}
@@ -626,16 +628,21 @@
 		padding: var(--s-1) var(--s-4);
 	}
 	.rust {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		column-gap: var(--s-2);
-		align-items: baseline;
+		display: block;
 		width: 100%;
 		padding: 0;
 		border: 0;
 		background: none;
 		text-align: left;
 		font: inherit;
+	}
+	/* The period and its count on one line, or on two where they do not fit, never cut off; the
+	   bars are low enough that the strip stays within 72 px with two. */
+	.rust .regel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		column-gap: var(--s-2);
 	}
 	.rust .kop {
 		font-size: var(--t-micro);
@@ -644,21 +651,18 @@
 		font-size: var(--t-label);
 	}
 	.rust .mini {
-		grid-column: 1 / -1;
 		display: block;
 		position: relative;
-		height: 20px;
-		margin-top: var(--s-1);
+		height: var(--s-4);
 		border-radius: var(--r-1);
 		background: var(--paper-2);
-		--hoog: 16px;
+		--hoog: var(--s-3);
 	}
 	.rust .mini .kolommen {
 		display: flex;
 	}
 	.rust :global(.as) {
-		grid-column: 1 / -1;
-		height: 12px;
+		height: var(--s-3);
 		margin-top: var(--s-1);
 	}
 	.rust :global(.as span) {
