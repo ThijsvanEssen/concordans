@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
+	import { ignore } from '$lib/api/errors';
 	import { centre, clearOfZijpaneel, landing } from '$lib/network/chain-reveal.svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
@@ -440,7 +441,7 @@
 			clearOfZijpaneel(e.currentTarget as Element, pan, async (px) => {
 				asked = px;
 				await tick();
-			}).catch(() => {});
+			}).catch(ignore('Keten, label vrij van het Zijpaneel'));
 	}
 	/** Room at the end of the drawing while the Zijpaneel lies over it (B76). */
 	let asked = $state(0);
