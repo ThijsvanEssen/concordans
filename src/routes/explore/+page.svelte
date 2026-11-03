@@ -44,6 +44,7 @@
 	import {
 		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
+		setNodeCap,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
@@ -337,6 +338,8 @@
 	// All verbindingen as a table, in Lezen.
 	const tableMode = $derived(params.get('tabel') === '1');
 	const explicitDepth = $derived(explicitDepthOf(params));
+	// ?grens=800: a trial of how many places the canvas keeps (default 400); read before composing.
+	$effect.pre(() => setNodeCap(params.get('grens')));
 	// All the focus's direct neighbours (?alles=1, Thijs 10 Oct: "maak het mogelijk om alles te
 	// laden, misschien zonder het tweede en derde niveau"): one step, up to ALLES_GRENS.
 	const alles = $derived(params.get('alles') === '1');

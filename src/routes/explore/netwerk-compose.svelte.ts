@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
 import { inPool } from '$lib/api/pool';
-import { NEIGHBORHOOD_CAP, SOFT_NODE_CAP, type GraphStore } from '$lib/graph/store/types';
+import { NEIGHBORHOOD_CAP, nodeCap, type GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { countOn, syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
@@ -73,11 +73,11 @@ export const REACH_MAX = 6;
 
 /**
  * Per request, the share of the canvas's room one chosen bron takes (at least 50). The room is
- * one budget, SOFT_NODE_CAP places shared by the chosen bronnen, and a group that folds costs
+ * one budget, the node cap (400, or ?grens) places shared by the chosen bronnen, and a group that folds costs
  * one: so a request may bring more than it can show, and the budget picks the most important.
  */
 export const reachCap = (bronnen: number) =>
-	Math.max(50, Math.floor(SOFT_NODE_CAP / Math.max(1, bronnen)));
+	Math.max(50, Math.floor(nodeCap() / Math.max(1, bronnen)));
 
 export class NetwerkComposer {
 	/** The chosen bronnen as the panel Netwerk lists them. */

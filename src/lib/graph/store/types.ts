@@ -96,6 +96,15 @@ export const DEFAULT_FILTERS: GraphFilters = {
 // next to the selection.
 export const SOFT_NODE_CAP = 400;
 
+let nodeCapNow = SOFT_NODE_CAP;
+/** The cap in force: the soft cap, or the one `?grens=` asks for (a trial of the banen). */
+export const nodeCap = () => nodeCapNow;
+/** `?grens=800`: a whole number from 50 to 2000 replaces the cap; anything else restores it. */
+export function setNodeCap(asked: string | null): void {
+	const n = Number(asked);
+	nodeCapNow = asked !== null && Number.isInteger(n) && n >= 50 && n <= 2000 ? n : SOFT_NODE_CAP;
+}
+
 export type GraphStore = {
 	nodes: Readable<GraphNode[]>;
 	edges: Readable<GraphEdge[]>;

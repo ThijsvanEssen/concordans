@@ -24,7 +24,7 @@ import {
 	type GraphEdge,
 	type GraphNode
 } from '../types';
-import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
+import { DEFAULT_FILTERS, nodeCap, type GraphFilters } from './types';
 import { canvasClusters, hullOfLaw, isCanvasNode } from '../canvas-clusters';
 import { buildScene, sceneClusters } from '../scene';
 import { isDrawn } from '../collection-role';
@@ -234,7 +234,7 @@ export function createGraphContext() {
 	 */
 	const trimToCap = (keep?: string) => {
 		// A cluster only lowers the cost: no more nodes than the cap is within it already.
-		if (nodes.size <= SOFT_NODE_CAP) return;
+		if (nodes.size <= nodeCap()) return;
 		const selected = get(selectionStore);
 		const groups = containers.current();
 		const view = [...nodes.values()];
@@ -270,7 +270,7 @@ export function createGraphContext() {
 			ids: [...nodes.keys()],
 			edges: drawn,
 			order: (id) => insertedAt.get(id) ?? 0,
-			cap: SOFT_NODE_CAP,
+			cap: nodeCap(),
 			chosen: [...pinned],
 			hullOf: (id) => hullOfLaw(nodes.get(id), groups),
 			core: network.core,
