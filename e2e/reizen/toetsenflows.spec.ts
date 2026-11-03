@@ -7,17 +7,24 @@ import { COMMANDS } from '../../src/lib/keys/register';
 
 const GRONDWET = '/explore?netwerk=instruments/bwbr0001840';
 const AWB = 'instruments/bwbr0005537';
+/** Twice DEBOUNCE_MS of src/lib/search/lanes.ts. */
+const PAST_DEBOUNCE = 300;
 const canvas = (page: Page) => page.getByRole('application', { name: /^Netwerk\./ });
 const focusIn = (page: Page, selector: string) =>
 	page.evaluate((s) => !!document.activeElement?.closest(s), selector);
 const params = (page: Page) => new URL(page.url()).searchParams;
 
-/** ⌘K with `line` typed: the rows Doen (Hier before anything is typed), the first chosen. */
+/**
+ * ⌘K with `line` typed: the rows Doen (Hier before anything is typed), the first chosen. Past the
+ * debounce, so the search of the line is asked: Enter before it asks nothing, and a line without
+ * fixtures would fail only on a busy machine (B92).
+ */
 async function palette(page: Page, line: string, group = line ? 'Doen' : 'Hier') {
 	await page.keyboard.press('ControlOrMeta+k');
 	const field = page.getByRole('dialog').getByRole('combobox');
 	await expect(field).toBeFocused();
 	await field.fill(line);
+	await page.waitForTimeout(PAST_DEBOUNCE);
 	const rows = page.getByRole('group', { name: group }).getByRole('option');
 	await expect(rows.first()).toBeVisible();
 	return { rows, chosen: page.getByRole('dialog').getByRole('option', { selected: true }) };

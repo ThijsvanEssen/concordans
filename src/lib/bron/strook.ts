@@ -179,6 +179,23 @@ export function countParts(
 	return parts;
 }
 
+/**
+ * The count of a phone at rest, whole on its one line: "189 bronnen, 4 zonder datum". The Blad
+ * has it by kind (`countParts`, `undatedText`).
+ */
+export function shortCount(
+	counts: ReadonlyMap<StripKind, number>,
+	changes: number,
+	undated: readonly Collection[]
+): string {
+	const dated = [...counts.values()].reduce((a, b) => a + b, changes);
+	const without = undated.filter(undatedNoun).length;
+	return [
+		...(dated ? [count(dated, 'bron', 'bronnen')] : []),
+		...(without ? [`${without} zonder datum`] : [])
+	].join(', ');
+}
+
 type AxisYear = { jaar: number; align: 'start' | 'mid' | 'end' };
 
 /**

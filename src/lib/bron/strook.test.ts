@@ -4,6 +4,7 @@ import {
 	busiest,
 	countedAs,
 	countParts,
+	shortCount,
 	sumPeriod,
 	kindOf,
 	perYear,
@@ -43,6 +44,18 @@ describe('the strip numbers', () => {
 			stripDate({ kind: 'wet', date_published: '1991-12-18' }, 'instruments', 'instruments/bwbr1')
 		).toBeNull();
 		expect(stripDate({ date: '2020-02-02' }, 'judgments', 'judgments/x')).toBe('2020-02-02');
+	});
+	it('says the count of a phone at rest in one short line', () => {
+		const per = new Map([
+			['rechtspraak', 2],
+			['kamerstukken', 1]
+		] as const);
+		expect(shortCount(per, 1, ['documents', 'articles', 'articles'])).toBe(
+			'4 bronnen, 3 zonder datum'
+		);
+		expect(shortCount(new Map([['wetten', 1]]), 0, [])).toBe('1 bron');
+		expect(shortCount(new Map(), 0, ['articles'])).toBe('1 zonder datum');
+		expect(shortCount(new Map(), 0, [])).toBe('');
 	});
 	it('says what has no day by what it is', () => {
 		expect(undatedText([])).toBeNull();

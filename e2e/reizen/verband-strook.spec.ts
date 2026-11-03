@@ -2,12 +2,19 @@
 // so it differs from the wet of the same name; a phone has the button "Verband, N stappen" and
 // rows of a finger's height; the strip dates a publication by its day of publication, counts
 // as Tonen does and says what has no date.
+import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
 const BW7 = 'instruments/bwbr0005290';
 const WET = 'instruments/bwbr0049889';
 const DOSSIER = 'dossiers/36496';
 const STB = ['stb_2024_200', 'stb_2021_100', 'stb_2018_100'].map((k) => `instruments/${k}`);
+
+/** The count per kind: on a phone it stands in the Blad behind the strip. */
+async function tellingPerSoort(page: Page, touch: boolean) {
+	if (touch) await page.locator('.tijdstrook .rust').click();
+	return (touch ? page.getByRole('dialog', { name: 'Periode' }) : page).locator('.telling');
+}
 
 test('Verband names a dossier by its number, not as the wet of the same name', async ({
 	page,
@@ -60,16 +67,15 @@ test('the strip dates a publication by its day of publication and calls it a pub
 	await page.goto(`/explore?netwerk=${STB.join(',')}`);
 	const strook = page.locator('.tijdstrook');
 	await expect(strook).toBeVisible({ timeout: 30_000 });
-	// A phone says the count on its one button, wider it stands in the strip.
-	const telling = strook.locator('.telling, .micro').first();
-	await expect(telling).toContainText(/publicaties?/);
+	// A phone says the count per kind in the Blad, wider it stands in the strip.
+	await expect(await tellingPerSoort(page, touch)).toContainText(/publicaties?/);
 	if (!touch) await expect(strook.locator('[data-wijziging]').first()).toBeVisible();
 });
 
-test('the strip counts what Tonen counts and names what has no date', async ({ page }) => {
+test('the strip counts what Tonen counts and names what has no date', async ({ page, touch }) => {
 	await page.goto(`/explore?netwerk=${BW7}`);
-	const telling = page.locator('.tijdstrook .telling, .tijdstrook .micro').first();
-	await expect(telling).toBeVisible({ timeout: 30_000 });
+	await expect(page.locator('.tijdstrook')).toBeVisible({ timeout: 30_000 });
+	const telling = await tellingPerSoort(page, touch);
 	// What has no date is said by what it is, not as a number of "zonder jaar".
 	await expect(telling).toContainText(/artikelen.* zonder datum/);
 	await expect(telling).not.toContainText('zonder jaar');

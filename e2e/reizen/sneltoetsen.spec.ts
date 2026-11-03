@@ -5,6 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { SHORTCUTS } from '../../src/lib/keys/register';
+import { API_ORIGIN } from '../support/api';
 
 const LEZER = '/wetten/BWBR0005289/artikel/6:162';
 const NETWERK = `${LEZER}?mode=netwerk`;
@@ -321,6 +322,20 @@ for (const t of TE_TESTEN) {
 		await geval!.run(page);
 	});
 }
+
+// Two bronnen in the address and the key before their answers: Verband, not Bron toevoegen (B88).
+test('Alt V while the two bronnen load goes to Verband', async ({ page, context, touch }) => {
+	test.skip(touch, 'a phone has no keyboard');
+	await context.route(`${API_ORIGIN}/**`, async (route) => {
+		await new Promise((done) => setTimeout(done, 1_000));
+		await route.fallback();
+	});
+	await page.goto(`${GRONDWET},instruments/bwbr0005537`);
+	await expect(canvas(page)).toBeVisible();
+	await page.keyboard.press('Alt+KeyV');
+	await expect(page).toHaveURL(/weergave=verband/);
+	await expect(page.getByRole('dialog', { name: 'Bron toevoegen' })).toHaveCount(0);
+});
 
 test('every key of the register has its case', async ({ touch }) => {
 	test.skip(touch, 'once is enough');

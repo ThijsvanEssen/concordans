@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
+	countOn,
 	syncOn,
 	between,
 	isOn,
@@ -51,6 +52,21 @@ describe('the netwerk in the URL', () => {
 const neighbor = (collection: string, key: string, props: Record<string, unknown> = {}) =>
 	({ collection, key, props, relation: 'AUTHORED', direction: 'outbound' }) as unknown as Neighbor;
 const lawOf = (n: Neighbor) => (n.props?.bwb_id as string | undefined) ?? null;
+
+describe('countOn', () => {
+	const entry = (id: string, missing = false) =>
+		({ id, label: id, collection: 'instruments', on: true, alone: false, missing }) as const;
+	const n = {
+		ids: ['instruments/a', 'instruments/b', 'instruments/c'],
+		uit: new Set(['instruments/c'])
+	};
+	it('counts what the address has on, before the entries are in', () => {
+		expect(countOn(n, [])).toBe(2);
+	});
+	it('leaves out a bron the API does not know', () => {
+		expect(countOn(n, [entry('instruments/a'), entry('instruments/b', true)])).toBe(1);
+	});
+});
 
 describe('what joins the chosen bronnen', () => {
 	const jetten: Participant = {

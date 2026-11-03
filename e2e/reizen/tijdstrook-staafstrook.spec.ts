@@ -93,6 +93,31 @@ test('desktop: a hover on a year shows the count per kind', async ({ page, touch
 	await expect(root.locator('.kaart')).toBeVisible();
 });
 
+for (const width of [375, 390])
+	test(`phone at ${width}: the line at rest stands whole, with a period and what has no date`, async ({
+		page,
+		touch
+	}) => {
+		test.skip(!touch, 'a phone');
+		await page.setViewportSize({ width, height: 812 });
+		await page.goto(`/explore?netwerk=instruments/bwbr0005290&van=2010-03-01&tot=2020-06-30`);
+		const root = page.locator('.tijdstrook');
+		await expect(root.locator('.micro')).toContainText('zonder datum', { timeout: 30_000 });
+		const line = await root.locator('.kop, .micro').evaluateAll((els) =>
+			els.map((e) => ({
+				whole: e.scrollWidth <= e.clientWidth,
+				lines: Math.round(
+					e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight)
+				)
+			}))
+		);
+		expect(line).toEqual([
+			{ whole: true, lines: 1 },
+			{ whole: true, lines: 1 }
+		]);
+		expect((await root.boundingBox())!.height).toBeLessThanOrEqual(72);
+	});
+
 test('phone: a tap on the strip opens a Blad with grips of 44 px and the quick choices', async ({
 	page,
 	touch

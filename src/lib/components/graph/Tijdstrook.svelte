@@ -13,6 +13,7 @@
 		CHANGE_COLOUR,
 		busiest,
 		countParts,
+		shortCount,
 		undatedText,
 		sumPeriod,
 		perYear,
@@ -143,6 +144,7 @@
 		...countParts(counts.per, counts.changes),
 		...(undatedWords ? [{ text: undatedWords }] : [])
 	]);
+	const short = $derived(shortCount(counts.per, counts.changes, undated));
 	const words = $derived(
 		fromDay || toDay ? periodInWords(fromDay ?? '', toDay ?? '', today) : `${first} tot ${last}`
 	);
@@ -313,11 +315,11 @@
 				type="button"
 				class="rust"
 				aria-haspopup="dialog"
-				aria-label="Periode, {words}. Wijzig"
+				aria-label="Periode, {words}, {short}. Wijzig"
 				onclick={() => (blad = true)}
 			>
 				<span class="kop">{words}</span>
-				<span class="micro">{parts.map((d) => d.text).join(', ')}</span>
+				<span class="micro">{short}</span>
 				<span class="mini" aria-hidden="true">
 					<span class="kolommen">
 						{#each years as y (y.jaar)}
@@ -639,9 +641,6 @@
 		font-size: var(--t-micro);
 	}
 	.rust .micro {
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
 		font-size: var(--t-label);
 	}
 	.rust .mini {
