@@ -28,7 +28,13 @@
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
-	import type { Collection, Relation } from '$lib/vocabulary';
+	import {
+		type Collection,
+		type Relation,
+		AMENDING_RELATIONS,
+		NODE_TYPES,
+		parseNodeId
+	} from '$lib/vocabulary';
 	import type { NeighborhoodAnswer } from '$lib/graph/store/types';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
@@ -106,7 +112,6 @@
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
-	import { AMENDING_RELATIONS, NODE_TYPES, parseNodeId } from '$lib/vocabulary';
 	import {
 		articleOf,
 		drawClassOf,
