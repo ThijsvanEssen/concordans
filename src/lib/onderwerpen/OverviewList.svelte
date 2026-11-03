@@ -90,7 +90,7 @@
 		verworpen: 'verworpen',
 		overig: 'zonder uitkomst'
 	};
-	const SOORT_LABEL: Record<string, string> = {
+	const KIND_NAMES: Record<string, string> = {
 		Motie: 'Motie',
 		'Brief regering': 'Brief regering',
 		toezegging: 'Toezegging'
@@ -232,7 +232,7 @@
 					<span class="rij__datum">{korteDatum(i.date)}</span>
 					<div class="rij__tekst">
 						<span class="rij__soort"
-							>{SOORT_LABEL[i.kind] ?? i.kind}{i.dossier?.number
+							>{KIND_NAMES[i.kind] ?? i.kind}{i.dossier?.number
 								? `, ${dossierLabel(i.dossier)}`
 								: ''}</span
 						>

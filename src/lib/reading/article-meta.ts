@@ -4,7 +4,6 @@ import { getArticleHistory } from '$lib/api/articles';
 import { ifExists } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
 import { getLegislativeHistory } from '$lib/api/verbonden';
-import { peildatumVersions } from '$lib/components/explore/peildatum';
 import { wordingsOf } from '$lib/text/version-diff';
 import { SORT_OF_KIND, type Kind } from '$lib/verbonden/summary';
 import type { ArticleTextData } from './blocks';
@@ -30,20 +29,18 @@ export function billOf(e: HistoryEntry) {
 /** The soort as `?bronnen=` of the article's page names it. */
 export const kindFilter = (id: Kind['id']) => SORT_OF_KIND[id];
 
-/** Geldigheid: quick answers, shown first. */
-export async function articleStand(a: ArticleTextData, signal: AbortSignal) {
+/** Geldigheid: its versions, the day of its text and the official one. */
+export async function articleValidity(a: ArticleTextData) {
 	const route = articleRoute(a.key);
-	const [history, lawDays] = await Promise.all([
-		route ? ifExists(getArticleHistory(route.bwbId, route.articleNumber)) : null,
-		a.bwb_id ? ifExists(peildatumVersions(a.bwb_id, signal)) : null
-	]);
+	const history = route
+		? await ifExists(getArticleHistory(route.bwbId, route.articleNumber))
+		: null;
 	const wordings = wordingsOf(history?.versions ?? []);
 	const current = inForce(wordings);
 	return {
 		wordings,
 		since: current?.from ?? null,
-		officialUrl: current?.first.official_url ?? null,
-		lawDays: lawDays ?? []
+		officialUrl: current?.first.official_url ?? null
 	};
 }
 

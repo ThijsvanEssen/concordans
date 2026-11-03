@@ -196,8 +196,8 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { verbondenInView, type Panel } from './panels';
-	import LeesTabs from './LeesTabs.svelte';
-	import VerbondenIngang from './VerbondenIngang.svelte';
+	import ReadTabs from './ReadTabs.svelte';
+	import ConnectedEntry from './ConnectedEntry.svelte';
 	import { mayShortcut } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
@@ -2604,7 +2604,7 @@
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
 					<div class="lees-tabs">
-						<LeesTabs bind:tab={readTab} {verbonden} selection={selectedNode} />
+						<ReadTabs bind:tab={readTab} connected={verbonden} selection={selectedNode} />
 					</div>
 					{#if withContents}
 						<button
@@ -2629,7 +2629,7 @@
 					class:mobile-hidden={readTab === 'verbonden'}
 					data-wacht={contentsPending || undefined}
 				>
-					<VerbondenIngang bind:tab={readTab} {verbonden} selection={selectedNode} />
+					<ConnectedEntry bind:tab={readTab} connected={verbonden} selection={selectedNode} />
 					{@render reader()}
 				</div>
 				<div

@@ -30,7 +30,7 @@
 	import { citeLines, citeText, cutText, CITE_MAX } from '$lib/network/cite-label';
 	import { openHref } from '$lib/bron/href';
 	import { treeLines, type TreeNode } from '$lib/network/tree-lines';
-	import { KIND_WORDS, howOf, grondslagOf, linesOf, placeLayers } from '$lib/network/chain-place';
+	import { KIND_NAMES, howOf, grondslagOf, linesOf, placeLayers } from '$lib/network/chain-place';
 	import { sectionColour } from '$lib/network/person-layers';
 	import { EDGE_WEIGHT, type DrawClass } from '$lib/graph/types';
 	import { sideScroll } from '$lib/actions/side-scroll';
@@ -467,7 +467,7 @@
 	const otherText = (l: ChainLayer) => {
 		if (open.has(l.id)) return 'Minder';
 		const n = rest[l.id] ?? 0;
-		const [one, many] = KIND_WORDS[l.id] ?? ['bron', 'bronnen'];
+		const [one, many] = KIND_NAMES[l.id] ?? ['bron', 'bronnen'];
 		return `${formatCount(n)} andere ${n === 1 ? one : many}`;
 	};
 	const outside = (k: ChainNode) => isOutside(k, period);

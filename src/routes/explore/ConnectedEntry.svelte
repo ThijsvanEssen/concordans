@@ -5,20 +5,19 @@
 	// Verbonden has been opened: it stays lazy.
 	import type { GraphNode } from '$lib/graph/types';
 	import { afterTick } from '$lib/util/after-tick';
-	import type { VerbondenState } from '$lib/verbonden/data-source';
-	import { ingangOf } from '$lib/verbonden/ingang';
+	import { entryOf, type Connections } from '$lib/verbonden/entry';
 	import { panel } from '$lib/verbonden/panel-groups.svelte';
 	import { panelSettled } from '$lib/verbonden/view';
 	import type { Panel } from './panels';
 
 	let {
 		tab = $bindable(),
-		verbonden,
+		connected,
 		selection
-	}: { tab: Panel; verbonden: VerbondenState; selection: GraphNode } = $props();
+	}: { tab: Panel; connected: Connections; selection: GraphNode } = $props();
 
-	const ingang = $derived(ingangOf(verbonden, selection.collection, selection.id, panel.groups));
-	const wacht = $derived(selection.collection === 'articles' && !panelSettled(verbonden));
+	const entry = $derived(entryOf(connected, selection.collection, selection.id, panel.groups));
+	const pending = $derived(selection.collection === 'articles' && !panelSettled(connected));
 
 	function open() {
 		tab = 'verbonden';
@@ -29,20 +28,20 @@
 	}
 </script>
 
-{#if ingang}
-	<button type="button" class="ingang" onclick={open}>
-		<span class="ingang__tekst">{ingang.line}</span><span aria-hidden="true">›</span>
+{#if entry}
+	<button type="button" class="entry" onclick={open}>
+		<span class="entry__text">{entry.line}</span><span aria-hidden="true">›</span>
 	</button>
-{:else if wacht}
-	<div class="ingang ingang--plek" aria-hidden="true"></div>
+{:else if pending}
+	<div class="entry entry--held" aria-hidden="true"></div>
 {/if}
 
 <style>
-	.ingang {
+	.entry {
 		display: none;
 	}
 	@media (max-width: 768px) {
-		.ingang {
+		.entry {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
@@ -60,11 +59,11 @@
 			color: var(--ink-2);
 			cursor: pointer;
 		}
-		.ingang--plek {
+		.entry--held {
 			border-bottom-color: transparent;
 			cursor: default;
 		}
-		.ingang__tekst {
+		.entry__text {
 			min-width: 0;
 		}
 	}

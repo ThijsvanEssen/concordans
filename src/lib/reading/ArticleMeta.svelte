@@ -7,16 +7,15 @@
 	import { onDestroy } from 'svelte';
 	import { getNode } from '$lib/api/records';
 	import type { GraphNode } from '$lib/graph/types';
-	import {
-		LOAD_FAILED,
-		createVerbondenSource,
-		type VerbondenState
-	} from '$lib/verbonden/data-source';
+	import { LOAD_FAILED, createVerbondenSource } from '$lib/verbonden/data-source';
+	import type { Connections } from '$lib/verbonden/entry';
 	import { kindsTotal } from '$lib/verbonden/summary';
 	import { panelKinds, panelSettled } from '$lib/verbonden/view';
 	import { goto } from '$app/navigation';
 	import { inView } from '$lib/actions/in-view';
+	import { ifExists } from '$lib/api/errors';
 	import { bronHref } from '$lib/bron/href';
+	import { peildatumVersions } from '$lib/components/explore/peildatum';
 	import WholeLawReaderPeildatum from '$lib/components/explore/WholeLawReaderPeildatum.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -27,15 +26,23 @@
 	import { formatCount } from '$lib/text/getal';
 	import { statusOf } from '$lib/text/validity';
 	import { load } from '$lib/util/load.svelte';
-	import { articleBills, articleStand, kindFilter } from './article-meta';
+	import { articleBills, articleValidity, kindFilter } from './article-meta';
 	import type { ArticleTextData } from './blocks';
 
 	let { article, path }: { article: ArticleTextData; path: string } = $props();
 
 	let seen = $state(false);
-	const standOf = load(
+	const standing = load(
 		() => (seen ? article.key : null),
-		(key, signal) => (key ? articleStand(article, signal) : Promise.resolve(null)),
+		async (key, signal) => {
+			if (!key) return null;
+			const bwb = article.bwb_id;
+			const [validity, lawDays] = await Promise.all([
+				articleValidity(article),
+				bwb ? ifExists(peildatumVersions(bwb, signal)) : null
+			]);
+			return { ...validity, lawDays: lawDays ?? [] };
+		},
 		'Zijpaneel, geldigheid'
 	);
 	const bills = load(
@@ -45,23 +52,23 @@
 	);
 
 	const source = createVerbondenSource({ nodeResponse: getNode });
-	let verbonden = $state<VerbondenState | null>(null);
-	source.subscribe((v) => (verbonden = v));
+	let connected = $state<Connections | null>(null);
+	source.subscribe((v) => (connected = v));
 	onDestroy(() => source.destroy());
 	$effect(() => {
 		if (seen)
 			source.load({ id: article.id, key: article.key, collection: 'articles' } as GraphNode);
 	});
 	const kinds = $derived(
-		verbonden && panelSettled(verbonden)
-			? panelKinds(verbonden, 'articles')
+		connected && panelSettled(connected)
+			? panelKinds(connected, 'articles')
 					.filter((k) => k.count > 0)
 					.toSorted((x, y) => y.count - x.count)
 			: []
 	);
 
 	const status = $derived(statusOf(article.validity));
-	const stand = $derived(status?.text ?? (article.validity ? 'Geldend recht' : null));
+	const holding = $derived(status?.text ?? (article.validity ? 'Geldend recht' : null));
 	const host = (url: string) => new URL(url).hostname.replace(/^www\./, '');
 	const choose = (day: string) => goto(day ? `${path}?peildatum=${day}` : path);
 	const versionsHref = (wordings: { from: string | null }[]) =>
@@ -70,12 +77,12 @@
 
 <section class="meta" aria-label="Gegevens van het artikel" use:inView={() => (seen = true)}>
 	{#if seen}
-		<LoadState state={standOf.state} what="De geldigheid" retry={standOf.retry} form="block">
+		<LoadState state={standing.state} what="De geldigheid" retry={standing.retry} form="block">
 			{#snippet children(data)}
 				<h3 class="kop">Geldigheid</h3>
-				<Feiten rijen>
-					<Veld label="Stand" value={stand} nodig>
-						{#if status}<Validity validity={article.validity} />{:else}{stand}{/if}
+				<Feiten rows>
+					<Veld label="Stand" value={holding} nodig>
+						{#if status}<Validity validity={article.validity} />{:else}{holding}{/if}
 					</Veld>
 					{#if !status}
 						<Veld label="Tekst sinds" value={data?.since ? langeDatum(data.since) : null} nodig />
@@ -94,19 +101,21 @@
 					</Veld>
 					<Veld label="Officiële tekst" value={data?.officialUrl} nodig>
 						{#if data?.officialUrl}
-							<a href={data.officialUrl} target="_blank" rel="noopener">{host(data.officialUrl)}</a>
+							<a href={data.officialUrl} target="_blank" rel="external noopener"
+								>{host(data.officialUrl)}</a
+							>
 						{/if}
 					</Veld>
 				</Feiten>
 			{/snippet}
 		</LoadState>
-		{#if verbonden?.failed}
+		{#if connected?.failed}
 			<LoadState state={LOAD_FAILED} what="De verbindingen" plural retry={() => source.reload()} />
 		{:else if kinds.length}
 			<h3 class="kop kop--tel">
 				<span>Verbonden</span><span class="tel">{formatCount(kindsTotal(kinds))}</span>
 			</h3>
-			<Feiten rijen>
+			<Feiten rows>
 				{#each kinds as k (k.id)}
 					<Veld label={k.label} value={k.count}>
 						<a href="{path}?bronnen={kindFilter(k.id)}" data-sveltekit-noscroll

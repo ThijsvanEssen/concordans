@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { largestKinds } from './ingang';
+import { largestKinds } from './entry';
 
 describe('largestKinds', () => {
 	it('names the two largest, largest first', () => {
