@@ -167,6 +167,15 @@ test('on a phone Netwerk is a tab of 44 px, not in the top bar, and the tab bar 
 	await expect(page).toHaveURL(/\/actueel$/);
 });
 
+test('on a phone the network marks Netwerk alone in the tab bar, not Bronnen beside it', async ({
+	page
+}) => {
+	test.skip(!isPhone(page), 'the tab bar is a phone’s');
+	await page.goto('/wetten/BWBR0005289?mode=netwerk');
+	await expect(tabs(page).getByRole('button', { name: /^Netwerk/ })).toHaveClass(/is-active/);
+	await expect(tabs(page).locator('.tab.is-active')).toHaveCount(1);
+});
+
 test('on a wide screen there is no tab bar', async ({ page }) => {
 	test.skip(isPhone(page), 'the bar is a wide screen’s');
 	await page.goto('/actueel');

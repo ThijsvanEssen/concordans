@@ -69,6 +69,10 @@ test('a regulation whose parent is not on the drawing has a stump with its name;
 	await expect(stumps.first()).toBeAttached();
 	await expect(stumps.first()).toHaveAttribute('aria-label', /, staat niet op het doek$/);
 	const count = await stumps.count();
+	const parentName = (await stumps.first().getAttribute('aria-label'))?.replace(
+		/, staat niet op het doek$/,
+		''
+	);
 	await stumps.first().focus();
 	await page.keyboard.press('Enter');
 	await expect(page).toHaveURL(/kies=instruments/);
@@ -77,4 +81,13 @@ test('a regulation whose parent is not on the drawing has a stump with its name;
 		page.locator(`svg.drawing path.line[data-parent="${parent}"]`).first()
 	).toBeAttached();
 	await expect(stumps).not.toHaveCount(count);
+	// B90: the drawing pans to where the parent landed; it does not stay at the left.
+	const landed = page.locator('svg.drawing g.node', { has: page.getByText(parentName!) }).first();
+	await expect
+		.poll(async () => {
+			const box = await landed.boundingBox();
+			const pan = await page.locator('.chain .pan').boundingBox();
+			return box && pan ? box.x >= pan.x && box.x + box.width <= pan.x + pan.width : false;
+		})
+		.toBe(true);
 });

@@ -1,3 +1,8 @@
+<script module lang="ts">
+	/** The stump just chosen: the keten is drawn anew for its parent, so it outlives the drawing. */
+	const landing = $state({ id: '' });
+</script>
+
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
@@ -84,6 +89,8 @@
 		others?: readonly {
 			id: string;
 			name: string;
+			/** Written out, where `name` abbreviates: "Cyberbeveiligingsbesluit" for "Cbb". */
+			fullName: string;
 			collection: string;
 			onOpen: (() => void) | null;
 		}[];
@@ -478,6 +485,22 @@
 		centredFor = key;
 		pan.scrollTo({ left: Math.max(0, at * scale - avail / 2), behavior: 'instant' });
 	});
+	/**
+	 * A stump chosen draws its parent, somewhere else on the row: the drawing pans to it once it
+	 * stands there, so the reader sees where it landed (B90).
+	 */
+	function chooseStump(parent: ChainNode) {
+		landing.id = parent.id;
+		onChoose(parent);
+	}
+	$effect(() => {
+		const at = landing.id ? place.get(landing.id)?.x : undefined;
+		if (!pan || at === undefined) return;
+		landing.id = '';
+		const to = Math.max(0, at * scale - avail / 2);
+		const el = pan;
+		requestAnimationFrame(() => el.scrollTo({ left: to, behavior: 'smooth' }));
+	});
 	const panned = (el: HTMLElement) => {
 		const set = () => el.style.setProperty('--sx', `${el.scrollLeft}px`);
 		el.addEventListener('scroll', set, { passive: true });
@@ -577,9 +600,11 @@
 			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
 			{#if notHere.length}<span class="ook"
 					>Ook gekozen, niet in deze keten: {#each notHere as o, i (o.id)}{#if i},
-						{/if}{#if o.onOpen}<TekstLink onclick={o.onOpen} title="De keten van {o.name}"
-								>{o.name}</TekstLink
-							>{:else}{o.name}{/if}{/each}</span
+						{/if}{@const label =
+							o.fullName === o.name ? o.name : `${o.fullName} (${o.name})`}{#if o.onOpen}<TekstLink
+								onclick={o.onOpen}
+								title="De keten van {o.fullName}">{label}</TekstLink
+							>{:else}{label}{/if}{/each}</span
 				>{/if}
 			{#if gap}<p class="gap">{gap}</p>{/if}
 			{#if expired?.total}<TekstLink onclick={expired.onToggle} aria-pressed={expired.shown}
@@ -669,10 +694,10 @@
 					role="button"
 					tabindex="0"
 					aria-label="{t.parent.name}, staat niet op het doek"
-					onclick={() => onChoose(t.parent)}
+					onclick={() => chooseStump(t.parent)}
 					onkeydown={(e) => {
 						hover.keys();
-						press(e, () => onChoose(t.parent));
+						press(e, () => chooseStump(t.parent));
 					}}
 					onpointerenter={(e) => {
 						hover.pointer(e.pointerType);

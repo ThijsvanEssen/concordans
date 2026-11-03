@@ -2322,6 +2322,7 @@
 					.map((n) => ({
 						id: n.id,
 						name: bronNaam(n, $instrumentMetaStore),
+						fullName: bronFullName(n, $instrumentMetaStore),
 						collection: n.collection,
 						onOpen: withChain(n) ? () => (chainFrom = n.id) : null
 					}))}

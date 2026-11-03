@@ -88,7 +88,7 @@
 	<button
 		type="button"
 		class="tab"
-		class:is-active={sheet ? sheet === 'bronnen' : source !== null}
+		class:is-active={sheet ? sheet === 'bronnen' : source !== null && !network.pressed}
 		data-sheet="bronnen"
 		aria-expanded={sheet === 'bronnen'}
 		onclick={(e) => toggle('bronnen', e)}
