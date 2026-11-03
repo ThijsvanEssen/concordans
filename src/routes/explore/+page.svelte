@@ -28,7 +28,13 @@
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
-	import type { Collection, Relation } from '$lib/vocabulary';
+	import {
+		type Collection,
+		type Relation,
+		AMENDING_RELATIONS,
+		NODE_TYPES,
+		parseNodeId
+	} from '$lib/vocabulary';
 	import type { NeighborhoodAnswer } from '$lib/graph/store/types';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { inView } from '$lib/actions/in-view';
@@ -106,7 +112,6 @@
 	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
-	import { AMENDING_RELATIONS, NODE_TYPES, parseNodeId } from '$lib/vocabulary';
 	import {
 		articleOf,
 		drawClassOf,
@@ -136,7 +141,6 @@
 	import { keyEcli } from '$lib/text/ecli';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import type { Option } from '$lib/components/ui/option';
 	import {
 		chain,
 		chainTally,
@@ -191,6 +195,8 @@
 	} from './explore-url';
 	import { verbondenInView, type Panel } from './panels';
 	import { ChainData } from './chain-data.svelte';
+	import ReadTabs from './ReadTabs.svelte';
+	import ConnectedEntry from './ConnectedEntry.svelte';
 	import { mayShortcut } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
@@ -1841,10 +1847,6 @@
 
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
 	let readTab = $state<Panel>('tekst');
-	const READ_CHOICE: Option<Panel>[] = [
-		{ waarde: 'tekst', label: 'Tekst' },
-		{ waarde: 'verbonden', label: 'Verbonden' }
-	];
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -2567,13 +2569,7 @@
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
 					<div class="lees-tabs">
-						<Keuze
-							vol
-							label="Tekst of Verbonden"
-							opties={READ_CHOICE}
-							waarde={readTab}
-							onSelect={(w) => (readTab = w)}
-						/>
+						<ReadTabs bind:tab={readTab} connected={verbonden} selection={selectedNode} />
 					</div>
 					{#if withContents}
 						<button
@@ -2599,6 +2595,7 @@
 					data-wacht={contentsPending || undefined}
 				>
 					{@render reader()}
+					<ConnectedEntry bind:tab={readTab} connected={verbonden} selection={selectedNode} />
 				</div>
 				<div
 					class="col col--panel"

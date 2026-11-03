@@ -4,16 +4,20 @@
 	import type { Snippet } from 'svelte';
 
 	let {
-		klein = false,
+		small = false,
 		strip = false,
+		rows = false,
 		label,
 		children
 	}: {
 		/** Labels as wide as their text and values in the sans, for a short list. */
-		klein?: boolean;
+		small?: boolean;
 		/** The facts under a head (ReaderHead `kenmerken`): each label over its value, the cells
-		 * side by side with a hairline between them; on a phone the short list of `klein`. */
+		 * side by side with a hairline between them; on a phone the short list of `small`. */
 		strip?: boolean;
+		/** A row per fact, the label at the left and the value at the right, on a phone too: a
+		 * narrow column (Zijpaneel). */
+		rows?: boolean;
 		/** What the list is, for a screen reader: `Kenmerken`. */
 		label?: string;
 		children: Snippet;
@@ -28,7 +32,7 @@
 		</dl>
 	</div>
 {:else}
-	<dl class="feiten" class:klein aria-label={label}>
+	<dl class="feiten" class:small class:rows aria-label={label}>
 		{@render children()}
 	</dl>
 {/if}
@@ -51,21 +55,31 @@
 		font-size: var(--t-body-2);
 		color: var(--ink);
 	}
-	.klein {
+	.small {
 		grid-template-columns: max-content minmax(0, 1fr);
 		line-height: var(--lh-snug);
 	}
-	.klein :global(dd) {
+	.small :global(dd) {
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		overflow-wrap: anywhere;
 	}
+	.rows {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-3);
+		line-height: var(--lh-snug);
+	}
+	.rows :global(dd) {
+		font-size: var(--t-meta);
+		text-align: right;
+	}
 	/* On a phone a long label (a function) would take the column from its value: label over value. */
 	@media (max-width: 640px) {
-		.klein {
+		.small {
 			grid-template-columns: minmax(0, 1fr);
 		}
-		.klein :global(.field + .field dt) {
+		.small :global(.field + .field dt) {
 			margin-top: var(--s-2);
 		}
 	}

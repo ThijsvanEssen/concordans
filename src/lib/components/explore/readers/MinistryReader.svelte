@@ -84,7 +84,7 @@
 							<h4 class="cabinet__name">
 								<BronLink ref={`cabinets/${c.key}`}>{capitalize(c.name ?? '')}</BronLink>
 							</h4>
-							<Feiten klein>
+							<Feiten small>
 								{#each c.posts as post, i (i)}
 									{@const sinceDay = since(post.from_date, c.from_date)}
 									<Veld

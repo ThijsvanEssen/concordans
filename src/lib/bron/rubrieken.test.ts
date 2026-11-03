@@ -17,7 +17,7 @@ import { lineage } from '$lib/network/lineage';
 import { clusterHeading, clustersOf, CLUSTER_MAX_LOOSE } from '$lib/selection/cluster';
 import { kindRowCount, type KindRow } from '$lib/components/graph/kind-rows';
 import { FILTER_GROUP_LABEL, FILTER_GROUPS, filterGroupOf } from '$lib/verbonden/filter';
-import { SOORT_LABEL, kindLabelOn, kindOfBron, kindsOf } from '$lib/verbonden/summary';
+import { SORT_NAMES, kindLabelOn, kindOfBron, kindsOf } from '$lib/verbonden/summary';
 import type { Group } from '$lib/verbonden/groups';
 import type { Row } from '$lib/verbonden/rows';
 import {
@@ -382,7 +382,7 @@ describe.each(BRONNEN_TABEL)('a $naam', (b) => {
 		expect(kind, 'a kind of Verbonden').not.toBeNull();
 		// A dossier, a kabinet and the rest are named as the soort; on its own page a commissie's leden
 		// stand as Leden, which is the one group of a person that is not a soort.
-		expect(SOORT_LABEL[kind!].label).toBe(b.label);
+		expect(SORT_NAMES[kind!].label).toBe(b.label);
 		expect(kindLabelOn(kind!, 'dossiers')).toBe(b.label);
 	});
 

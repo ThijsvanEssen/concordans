@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { capitalize } from '$lib/text/words';
 	import NavKolom from './NavKolom.svelte';
+	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
+	import { narrowGroups, narrowItems, tocLabel, inToc, type TocGroup as Group } from './law-toc';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked; after them its
-	// bijlagen with a text of their own; on a bijlage the same, the bijlage marked.
+	// bijlagen with a text of their own; on a bijlage the same, the bijlage marked. The path to
+	// where the reader is stands open, the rest closed; a field finds a name in the contents.
 	import { lawAnnexes, lawArticles, type LawAnnex, type LawArticle } from '$lib/bron/law-articles';
 	import { parseAnchor } from '$lib/text/anchor';
 	import { articleAnchor, layersOf } from '$lib/text/division';
@@ -29,15 +31,8 @@
 	/** An article with the anchor of each layer of its place in the whole law. */
 	type Item = LawArticle;
 
-	type Group = {
-		/** Its anchor in the whole law: `deel-hoofdstuk-3`. */
-		id: string;
-		label: string;
-		title: string | null;
-		type: string;
-		items: Item[];
-		children: Group[];
-	};
+	/** From this many entries a law's contents have a field: a short list is read at a glance. */
+	const FIELD_FROM = 10;
 
 	const currentBwb = $derived.by(() => {
 		if (selection?.collection === 'articles' || selection?.collection === 'annexes')
@@ -71,11 +66,6 @@
 			? lawCitationRecord(currentBwb, lawDetail.state.data, meta).heading
 			: null;
 	});
-
-	const groupLabel = (g: Group) => {
-		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalize(g.type) : '');
-		return g.title ? `${label} ${g.title}` : label;
-	};
 
 	// The Lezen table of contents is always the whole law, whatever the graph holds; the
 	// list is the one the place line above the article reads ($lib/api/law-articles).
@@ -144,6 +134,23 @@
 	);
 	const groups = $derived(shaped.length > 0 ? buildGroups(shaped) : null);
 
+	// The field: what is typed narrows the contents of this law, every division left open.
+	let query = $state('');
+	$effect(() => {
+		void currentBwb;
+		query = '';
+	});
+	const searching = $derived(query.trim().length > 0);
+	const shownGroups = $derived(groups && searching ? narrowGroups(groups, query) : groups);
+	const shownItems = $derived(searching ? narrowItems(shaped, query) : shaped);
+	const annexName = (a: LawAnnex) => (a.title ? `${a.name} ${a.title}` : a.name);
+	const shownAnnexes = $derived(
+		searching ? annexes.filter((a) => inToc(annexName(a), query)) : annexes
+	);
+	const nothingFound = $derived(
+		searching && !(groups ? shownGroups?.length : shownItems.length) && !shownAnnexes.length
+	);
+
 	const selectedKey = $derived(selection?.key ?? null);
 
 	let navEl = $state<HTMLElement | null>(null);
@@ -172,7 +179,7 @@
 		currentBwb ? { collection: 'instruments' as const, key: lawNodeKey(currentBwb) } : null
 	);
 	const onLaw = $derived(selection?.collection === 'instruments');
-	const deelHref = (id: string) =>
+	const partHref = (id: string) =>
 		onLaw
 			? `${page.url.pathname}${page.url.search}#${encodeURIComponent(id)}`
 			: lawRef
@@ -194,7 +201,7 @@
 	);
 
 	/** The group opens with its link; the anchor already in the URL scrolls there again. */
-	function openDeel(e: MouseEvent, id: string) {
+	function openPart(e: MouseEvent, id: string) {
 		const link = e.currentTarget as HTMLElement;
 		const group = link.closest('details');
 		if (group) group.open = true;
@@ -207,13 +214,13 @@
 	// On the law itself, the place its anchor names (#deel-hoofdstuk-3, #artikel-658) is
 	// marked and its groups open, as an article is from its own page.
 	const anker = $derived(onLaw ? decodeURIComponent(page.url.hash.slice(1)) : '');
-	const ankerArtikel = $derived.by(() => {
+	const anchorArticle = $derived.by(() => {
 		const a = parseAnchor(anker);
 		return a?.kind === 'article' ? a.number : null;
 	});
 	// On the law the article at the top of the text (K3), else the one its anchor names.
-	const hereNumber = $derived(onLaw ? (lawPosition.of(currentBwb) ?? ankerArtikel) : null);
-	const isHier = (it: LawArticle) =>
+	const hereNumber = $derived(onLaw ? (lawPosition.of(currentBwb) ?? anchorArticle) : null);
+	const isHere = (it: LawArticle) =>
 		it.key === selectedKey || (hereNumber !== null && it.articleNumber === hereNumber);
 
 	// On the law an article opens in place, in the whole law (K3); from an article, its own.
@@ -231,11 +238,11 @@
 		);
 		if (el) scrollInReader(el);
 	}
-	const inDeel = (g: Group) => !!g.id && (anker === g.id || anker.startsWith(`${g.id}-`));
+	const inPart = (g: Group) => !!g.id && (anker === g.id || anker.startsWith(`${g.id}-`));
 
 	function containsSelected(g: Group): boolean {
 		if (!selectedKey) return false;
-		if (inDeel(g) || g.items.some(isHier)) return true;
+		if (inPart(g) || g.items.some(isHere)) return true;
 		return g.children.some(containsSelected);
 	}
 
@@ -255,8 +262,8 @@
 	<li>
 		<a
 			class="nav-kolom__rij"
-			class:is-active={isHier(item)}
-			aria-current={item.key === selectedKey ? 'page' : isHier(item) ? 'location' : undefined}
+			class:is-active={isHere(item)}
+			aria-current={item.key === selectedKey ? 'page' : isHere(item) ? 'location' : undefined}
 			href={articleHref(item)}
 			data-sveltekit-noscroll
 			title={item.label}
@@ -267,9 +274,9 @@
 
 {#snippet groupBlock(g: Group, depth: number)}
 	{@const selected = containsSelected(g)}
-	{@const shouldOpen = selectedKey ? selected : depth > 0}
+	{@const shouldOpen = searching || (selectedKey ? selected : depth > 0)}
 	{@const level = Math.min(depth, 3)}
-	{@const href = g.id ? deelHref(g.id) : null}
+	{@const href = g.id ? partHref(g.id) : null}
 	<details
 		class="group depth-{level}"
 		open={shouldOpen}
@@ -292,11 +299,11 @@
 					{href}
 					data-sveltekit-noscroll
 					onkeydown={groupKey}
-					title={groupLabel(g)}
-					onclick={(e) => openDeel(e, g.id)}>{groupLabel(g)}</a
+					title={tocLabel(g)}
+					onclick={(e) => openPart(e, g.id)}>{tocLabel(g)}</a
 				>
 			{:else}
-				<span class="group__label" title={groupLabel(g)}>{groupLabel(g)}</span>
+				<span class="group__label" title={tocLabel(g)}>{tocLabel(g)}</span>
 			{/if}
 		</summary>
 		{#if g.items.length > 0}
@@ -322,30 +329,51 @@
 	<NavKolom title={navTitle} titleHref={lawHref} bind:el={navEl}>
 		{#if articleList.state.status !== 'ready'}
 			<LoadState state={articleList.state} what="De inhoudsopgave" retry={articleList.retry} />
-		{:else if groups}
-			<div class="tree">
-				{#each groups as g, i (i)}
-					{@render groupBlock(g, 0)}
-				{/each}
-			</div>
 		{:else}
-			<ol class="list">
-				{#each items as item, i (i)}
-					{@render itemRow(item)}
-				{/each}
-			</ol>
+			{#if items.length + annexes.length >= FIELD_FROM}
+				<div class="field">
+					<Tekstveld
+						bind:value={query}
+						type="search"
+						placeholder="Zoek in de inhoud"
+						label="Zoek in de inhoud"
+						autocomplete="off"
+						spellcheck="false"
+						onkeydown={(e) => {
+							if (e.key === 'Escape' && searching) {
+								e.stopPropagation();
+								query = '';
+							}
+						}}
+					/>
+				</div>
+			{/if}
+			{#if nothingFound}
+				<p class="nav-kolom__note" role="status">Niet in de inhoud van deze wet.</p>
+			{:else if shownGroups}
+				<div class="tree">
+					{#each shownGroups as g, i (i)}
+						{@render groupBlock(g, 0)}
+					{/each}
+				</div>
+			{:else}
+				<ol class="list">
+					{#each shownItems as item, i (i)}
+						{@render itemRow(item)}
+					{/each}
+				</ol>
+			{/if}
 		{/if}
-		{#if articleList.state.status === 'ready' && annexes.length > 0}
+		{#if articleList.state.status === 'ready' && shownAnnexes.length > 0}
 			<ol class="list annexes" aria-label="Bijlagen">
-				{#each annexes as annex (annex.key)}
+				{#each shownAnnexes as annex (annex.key)}
 					<li>
 						<a
 							class="nav-kolom__rij"
 							class:is-active={annex.key === selectedKey}
 							aria-current={annex.key === selectedKey ? 'page' : undefined}
 							href={bronHref({ collection: 'annexes', key: annex.key })}
-							title={annex.title ? `${annex.name} ${annex.title}` : annex.name}
-							>{annex.title ? `${annex.name} ${annex.title}` : annex.name}</a
+							title={annexName(annex)}>{annexName(annex)}</a
 						>
 					</li>
 				{/each}
@@ -355,6 +383,17 @@
 {/if}
 
 <style>
+	/* The field stays in view while the column scrolls: on paper, so the rows go under it. */
+	.field {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		padding: 0 var(--s-3) var(--s-2);
+		background: var(--paper);
+	}
+	.field :global(input) {
+		width: 100%;
+	}
 	.list {
 		list-style: none;
 		margin: 0;
