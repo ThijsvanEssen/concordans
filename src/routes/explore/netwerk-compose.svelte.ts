@@ -9,7 +9,7 @@ import { getDossierKey } from '$lib/api/dossiers';
 import { inPool } from '$lib/api/pool';
 import { NEIGHBORHOOD_CAP, SOFT_NODE_CAP, type GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
-import { syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
+import { countOn, syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
 import { parseNodeId, type Relation } from '$lib/vocabulary';
 import { depthFor } from './explore-url';
@@ -135,6 +135,11 @@ export class NetwerkComposer {
 		this.#reached.clear();
 		this.#level = 0;
 		this.reach = null;
+	}
+
+	/** How many chosen bronnen are on, by the address: a key pressed while they load counts them. */
+	countOn(n: Netwerk) {
+		return countOn(n, this.entries);
 	}
 
 	/** Forget every node asked, for a canvas cleared with the store. */

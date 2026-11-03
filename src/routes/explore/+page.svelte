@@ -438,8 +438,8 @@
 				!!n && !n.id.startsWith('synth:') && all.findIndex((o) => o?.id === n.id) === i
 		)
 	);
-	/** Verband compares bronnen: it is offered from two chosen ones, the page's bron counting. */
-	const verbandPossible = $derived(chainChosen.length >= 2);
+	/** Verband compares two chosen bronnen, the page's counting; also while they load (B88). */
+	const verbandPossible = $derived(Math.max(chainChosen.length, composer.countOn(netwerk)) >= 2);
 	const chainStart = $derived.by(() => {
 		if (mode !== 'graph' || view !== 'keten') return null;
 		const from = chainChosen.find((n) => n.id === chainFrom && withChain(n));

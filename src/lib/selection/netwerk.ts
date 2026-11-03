@@ -72,6 +72,10 @@ export const readerFirst = (entries: NetwerkEntry[], reader: string | null): Net
 
 export const isOn = (n: Netwerk, id: string) => n.ids.includes(id) && !n.uit.has(id);
 
+/** How many chosen bronnen are on, by the address: before they load, and without one the API does not know. */
+export const countOn = (n: Netwerk, entries: readonly NetwerkEntry[]) =>
+	n.ids.filter((id) => isOn(n, id) && !entries.some((e) => e.id === id && e.missing)).length;
+
 export function withAdded(n: Netwerk, ...ids: string[]): Netwerk {
 	const uit = new Set(n.uit);
 	for (const id of ids) uit.delete(id);
