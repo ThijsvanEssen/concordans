@@ -136,7 +136,6 @@
 	import { keyEcli } from '$lib/text/ecli';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import type { Option } from '$lib/components/ui/option';
 	import {
 		chain,
 		chainTally,
@@ -192,6 +191,8 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { verbondenInView, type Panel } from './panels';
+	import LeesTabs from './LeesTabs.svelte';
+	import VerbondenIngang from './VerbondenIngang.svelte';
 	import { mayShortcut } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
@@ -1876,10 +1877,6 @@
 
 	/** On a phone the tab of the read view: the text or Verbonden (A197-a, R3-L F4). */
 	let readTab = $state<Panel>('tekst');
-	const READ_CHOICE: Option<Panel>[] = [
-		{ waarde: 'tekst', label: 'Tekst' },
-		{ waarde: 'verbonden', label: 'Verbonden' }
-	];
 	$effect(() => {
 		void selectedNode?.id;
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
@@ -2602,13 +2599,7 @@
 				     R3-L F4); on a tablet they stand beside each other. The contents open as a sheet. -->
 				<nav class="mobile-tabs" class:mobile-tabs--tabs={!withContents} aria-label="Panelen">
 					<div class="lees-tabs">
-						<Keuze
-							vol
-							label="Tekst of Verbonden"
-							opties={READ_CHOICE}
-							waarde={readTab}
-							onSelect={(w) => (readTab = w)}
-						/>
+						<LeesTabs bind:tab={readTab} {verbonden} selection={selectedNode} />
 					</div>
 					{#if withContents}
 						<button
@@ -2633,6 +2624,7 @@
 					class:mobile-hidden={readTab === 'verbonden'}
 					data-wacht={contentsPending || undefined}
 				>
+					<VerbondenIngang bind:tab={readTab} {verbonden} selection={selectedNode} />
 					{@render reader()}
 				</div>
 				<div

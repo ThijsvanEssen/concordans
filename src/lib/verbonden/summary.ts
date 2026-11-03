@@ -66,7 +66,7 @@ const KIND_OF: Partial<Record<Collection, KindId>> = {
 };
 
 /** The soort (indeling.ts) of each kind of Verbonden: its name, its rubriek and its order. */
-const SORT_OF_KIND: Record<KindId, Sort> = {
+export const SORT_OF_KIND: Record<KindId, Sort> = {
 	laws: 'wetten',
 	['regelingen']: 'wetten',
 	lawArticles: 'artikelen',

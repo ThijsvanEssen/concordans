@@ -124,7 +124,7 @@ const EMPTY = { id: null, groups: [], loading: false, failed: false };
 /** A failed load of the verbindingen, for LoadState to say in the panel and the table. */
 export const LOAD_FAILED = { status: 'error', error: null } as const satisfies LoadState<never>;
 
-export function createVerbondenSource(store: GraphStore): VerbondenSource {
+export function createVerbondenSource(store: Pick<GraphStore, 'nodeResponse'>): VerbondenSource {
 	let options = DEFAULT_LOADER_OPTIONS;
 	const state = writable<VerbondenState>({ ...EMPTY, options });
 	/** What the API counts per bucket of the current bron (`bucketTotals`), as soon as known. */

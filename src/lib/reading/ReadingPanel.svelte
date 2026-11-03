@@ -12,6 +12,7 @@
 	import { MediaQuery } from 'svelte/reactivity';
 	import { page } from '$app/state';
 	import Blad from '$lib/components/ui/Blad.svelte';
+	import ArticleMeta from './ArticleMeta.svelte';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { plainClick } from '$lib/actions/klik';
@@ -370,6 +371,10 @@
 			{#snippet children(list)}
 				{#if !stacked}
 					{@render blocks(list?.[0]?.blocks ?? [], read.at)}
+					{#if loaded}<ArticleMeta
+							article={loaded}
+							path={loaded.path ?? pageOf(read, loaded)}
+						/>{/if}
 				{:else}
 					{#each reads as r, i (r.key)}
 						{@const a = list?.[i] ?? null}

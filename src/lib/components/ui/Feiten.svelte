@@ -6,6 +6,7 @@
 	let {
 		klein = false,
 		strip = false,
+		rijen = false,
 		label,
 		children
 	}: {
@@ -14,6 +15,9 @@
 		/** The facts under a head (ReaderHead `kenmerken`): each label over its value, the cells
 		 * side by side with a hairline between them; on a phone the short list of `klein`. */
 		strip?: boolean;
+		/** A row per fact, the label at the left and the value at the right, on a phone too: a
+		 * narrow column (Zijpaneel). */
+		rijen?: boolean;
 		/** What the list is, for a screen reader: `Kenmerken`. */
 		label?: string;
 		children: Snippet;
@@ -28,7 +32,7 @@
 		</dl>
 	</div>
 {:else}
-	<dl class="feiten" class:klein aria-label={label}>
+	<dl class="feiten" class:klein class:rijen aria-label={label}>
 		{@render children()}
 	</dl>
 {/if}
@@ -59,6 +63,16 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		overflow-wrap: anywhere;
+	}
+	.rijen {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-3);
+		line-height: var(--lh-snug);
+	}
+	.rijen :global(dd) {
+		font-size: var(--t-meta);
+		text-align: right;
 	}
 	/* On a phone a long label (a function) would take the column from its value: label over value. */
 	@media (max-width: 640px) {
