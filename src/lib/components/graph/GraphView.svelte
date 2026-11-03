@@ -1365,12 +1365,10 @@
 		</div>{/if}
 {/snippet}
 
-<!-- A phone: at the foot of the canvas, left; the zoom is in the bar above it. -->
 {#snippet sheetButton()}
 	<button
 		type="button"
 		class="btn sheet-button"
-		style:--kaart-h="{cardHeight}px"
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
@@ -1422,11 +1420,11 @@
 		</aside>
 	</ViewSheet>
 	<div class="graph-main">
-		<!-- On a phone Deel, the zoom and over a weergave of its own Weergave in a bar above the
-		     drawing: over it they covered its bronnen and the rows of a list (UX-toets T10b, B48). -->
+		<!-- On a phone Weergave, Deel and the zoom in a bar above the drawing, in every weergave:
+		     over it they covered its bronnen and the rows of a list (UX-toets T10b, B48, R3). -->
 		<div class="control-bar">
+			{@render sheetButton()}
 			{#if midden}
-				{@render sheetButton()}
 				{@render controls(zoomBy(1.25), zoomBy(0.8), () => (middleScale = 1), middenZoom)}
 			{:else}
 				{@render controls(
@@ -1640,7 +1638,6 @@
 			/>
 		</div>
 	</div>
-	{#if !midden}{@render sheetButton()}{/if}
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
@@ -1834,17 +1831,11 @@
 			min-width: 0;
 			margin: 0;
 		}
-		/* Weergave: at the foot of the canvas, left, a finger high; the sheet is its own. */
+		/* Weergave: a finger high; the sheet is its own. */
 		.sheet-button {
-			position: absolute;
-			left: var(--s-3);
-			/* Above the Tijdstrook, or the card where it stands higher: over neither. */
-			bottom: calc(var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)));
-			z-index: var(--z-float);
 			display: inline-flex;
 			align-items: center;
 			min-height: var(--veld-h-raak);
-			box-shadow: var(--shadow-pop);
 		}
 		.graph-main {
 			flex: 1;
@@ -1875,8 +1866,7 @@
 			border-bottom: 1px solid var(--rule);
 		}
 		.control-bar > .doek-balk,
-		.control-bar > .zoom,
-		.control-bar > .sheet-button {
+		.control-bar > .zoom {
 			position: static;
 			flex-direction: row;
 			gap: var(--s-2);
@@ -2084,10 +2074,8 @@
 		position: absolute;
 		left: var(--s-3);
 		right: calc(var(--s-3) + 40px + var(--s-2));
-		/* Above the Weergave button, which stands above the card (--kaart-h): covering neither. */
-		bottom: calc(
-			var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)) + var(--veld-h-raak) + var(--s-2)
-		);
+		/* Above the Tijdstrook, or the card where it stands higher: over neither. */
+		bottom: calc(var(--s-3) + max(var(--kaart-h, 0px), var(--strook-h, 0px)));
 		z-index: var(--z-float);
 		display: none;
 		flex-wrap: wrap;
