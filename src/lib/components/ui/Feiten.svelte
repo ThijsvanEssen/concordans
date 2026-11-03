@@ -4,16 +4,16 @@
 	import type { Snippet } from 'svelte';
 
 	let {
-		klein = false,
+		small = false,
 		strip = false,
 		rows = false,
 		label,
 		children
 	}: {
 		/** Labels as wide as their text and values in the sans, for a short list. */
-		klein?: boolean;
+		small?: boolean;
 		/** The facts under a head (ReaderHead `kenmerken`): each label over its value, the cells
-		 * side by side with a hairline between them; on a phone the short list of `klein`. */
+		 * side by side with a hairline between them; on a phone the short list of `small`. */
 		strip?: boolean;
 		/** A row per fact, the label at the left and the value at the right, on a phone too: a
 		 * narrow column (Zijpaneel). */
@@ -32,7 +32,7 @@
 		</dl>
 	</div>
 {:else}
-	<dl class="feiten" class:klein class:rows aria-label={label}>
+	<dl class="feiten" class:small class:rows aria-label={label}>
 		{@render children()}
 	</dl>
 {/if}

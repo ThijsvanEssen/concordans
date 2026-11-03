@@ -330,8 +330,7 @@ export function kindOfBron(
 /** What a soort is called on the page of `selection`: as its heading in Verbonden. */
 export function kindLabelOn(id: KindId, selection: Collection): string {
 	return (
-		LABEL_ON[selection]?.[id] ??
-		(id === 'members' ? membersLabel(selection) : KIND_NAMES[id]).label
+		LABEL_ON[selection]?.[id] ?? (id === 'members' ? membersLabel(selection) : KIND_NAMES[id]).label
 	);
 }
 

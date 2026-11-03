@@ -336,7 +336,7 @@
 
 			{#if ek}
 				<Sectie title={CHAMBER_NAME.EK}>
-					<Feiten klein>
+					<Feiten small>
 						<Veld label="Fractie" value={ek.faction}>
 							<BronLink ref={{ collection: 'factions', key: ek.faction ?? '' }}
 								>{fractieNaam({ key: ek.faction, abbreviation: ek.abbreviation })}</BronLink
