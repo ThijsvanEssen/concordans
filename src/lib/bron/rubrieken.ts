@@ -111,8 +111,8 @@ export function sortOf(
 	relation?: string | null
 ): Sort {
 	// A judgment is rechtspraak, also of the Hof van Justitie or the EHRM (ECLI:EU, ECLI:CE).
-	if (collection !== 'judgments' && isInternational({ key, props: props ?? undefined }))
-		return 'internationaal';
+	if (collection === 'judgments') return 'uitspraken';
+	if (isInternational({ key, props: props ?? undefined })) return 'internationaal';
 	switch (collection) {
 		case 'articles':
 		case 'article_versions':
@@ -125,8 +125,6 @@ export function sortOf(
 			return props?.celex || /^celex/i.test(key) || /verdrag/i.test(String(props?.kind ?? ''))
 				? 'internationaal'
 				: 'wetten';
-		case 'judgments':
-			return 'uitspraken';
 		case 'documents':
 			return 'stukken';
 		case 'decisions':
