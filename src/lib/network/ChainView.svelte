@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { tick } from 'svelte';
-	import { ignore } from '$lib/api/errors';
-	import { centre, clearOfZijpaneel, landing } from '$lib/network/chain-reveal.svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -437,18 +434,16 @@
 		e.stopPropagation();
 		hover.close();
 		openInPanel(l.citeArticles);
-		if (pan)
-			clearOfZijpaneel(e.currentTarget as Element, pan, async (px) => {
-				asked = px;
-				await tick();
-			}).catch(ignore('Keten, label vrij van het Zijpaneel'));
+		// The drawing has room for the panel (.panel-over); the label pans clear of it (B76).
+		const label = e.currentTarget as Element;
+		requestAnimationFrame(() =>
+			label.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' })
+		);
 	}
-	/** Room at the end of the drawing while the Zijpaneel lies over it (B76). */
-	let asked = $state(0);
-	const panelRoom = $derived(readOpen().length ? asked : 0);
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
 	let pan = $state<HTMLElement | null>(null);
 	let centredFor = '';
+	const centred = (x: number) => Math.max(0, x * scale - avail / 2);
 	// A drawing wider than the screen opens on the bron it is about, not on its left edge.
 	$effect(() => {
 		const root = start ?? shown.find((l) => l.id === 'law')?.nodes[0]?.id;
@@ -456,20 +451,20 @@
 		const key = `${root}:${shown.length}:${Math.round(width)}`;
 		if (!pan || at === undefined || key === centredFor || width <= avail) return;
 		centredFor = key;
-		pan.scrollTo({ left: centre(at, scale, avail), behavior: 'instant' });
+		pan.scrollTo({ left: centred(at), behavior: 'instant' });
 	});
 	/** A stump chosen draws its parent elsewhere on the row: the drawing pans to it (B90). */
+	let landing = $state('');
 	function chooseStump(parent: ChainNode) {
-		landing.id = parent.id;
+		landing = parent.id;
 		onChoose(parent);
 	}
 	$effect(() => {
-		const at = landing.id ? place.get(landing.id)?.x : undefined;
+		const at = landing ? place.get(landing)?.x : undefined;
 		if (!pan || at === undefined) return;
-		landing.id = '';
+		landing = '';
 		const el = pan;
-		const left = centre(at, scale, avail);
-		requestAnimationFrame(() => el.scrollTo({ left, behavior: 'smooth' }));
+		requestAnimationFrame(() => el.scrollTo({ left: centred(at), behavior: 'smooth' }));
 	});
 	const panned = (el: HTMLElement) => {
 		const set = () => el.style.setProperty('--sx', `${el.scrollLeft}px`);
@@ -586,11 +581,11 @@
 	{/if}
 	<div
 		class="pan"
+		class:panel-over={readOpen().length > 0}
 		data-zijscroll
 		bind:this={pan}
 		use:sideScroll
 		use:panned
-		style:padding-inline-end={panelRoom ? `${panelRoom}px` : undefined}
 	>
 		<svg
 			class="drawing"
@@ -925,6 +920,13 @@
 		overflow-x: auto;
 		scroll-padding-inline: var(--s-8);
 		scrollbar-width: none;
+	}
+	/* The Zijpaneel lies over the right of the page: the drawing has room for it at its end. */
+	@media (min-width: 769px) and (max-width: 1799px) {
+		.pan.panel-over {
+			padding-inline-end: var(--paneel-over);
+			scroll-padding-inline-end: calc(var(--paneel-over) + var(--s-4));
+		}
 	}
 	.drawing {
 		display: block;

@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
 import { getDossierKey } from '$lib/api/dossiers';
 import { inPool } from '$lib/api/pool';
-import { NEIGHBORHOOD_CAP, nodeCap, type GraphStore } from '$lib/graph/store/types';
+import { NEIGHBORHOOD_CAP, SOFT_NODE_CAP, type GraphStore } from '$lib/graph/store/types';
 import { nodeToGraphNode } from '$lib/graph/types';
 import { countOn, syncOn, isOn, type Netwerk, type NetwerkEntry } from '$lib/selection/netwerk';
 import { showNetworkFailure } from '$lib/stores/netwerk-melding';
@@ -76,8 +76,8 @@ export const REACH_MAX = 6;
  * one budget, the node cap (400, or ?grens) places shared by the chosen bronnen, and a group that folds costs
  * one: so a request may bring more than it can show, and the budget picks the most important.
  */
-export const reachCap = (bronnen: number) =>
-	Math.max(50, Math.floor(nodeCap() / Math.max(1, bronnen)));
+export const reachCap = (bronnen: number, room = SOFT_NODE_CAP) =>
+	Math.max(50, Math.floor(room / Math.max(1, bronnen)));
 
 export class NetwerkComposer {
 	/** The chosen bronnen as the panel Netwerk lists them. */
@@ -105,6 +105,7 @@ export class NetwerkComposer {
 	composed = false;
 
 	#store: GraphStore;
+	#room: number;
 	#view: () => CanvasView | null;
 	#epoch = 0;
 	/** The first composition grows out of the current canvas instead of starting anew. */
@@ -117,8 +118,9 @@ export class NetwerkComposer {
 	/** How far the last composition went: 0 only the chosen, 1 their surroundings, n steps. */
 	#level = 0;
 
-	constructor(store: GraphStore, view: () => CanvasView | null) {
+	constructor(store: GraphStore, view: () => CanvasView | null, room = SOFT_NODE_CAP) {
 		this.#store = store;
+		this.#room = room;
 		this.#view = view;
 	}
 
@@ -253,7 +255,7 @@ export class NetwerkComposer {
 		});
 		const asked = new Set(ends.map((e) => `${e.id}:${e.steps}`));
 		for (const k of this.#reached.keys()) if (!asked.has(k)) this.#reached.delete(k);
-		const cap = reachCap(Math.min(ends.length, REACH_MAX));
+		const cap = reachCap(Math.min(ends.length, REACH_MAX), this.#room);
 		const todo = ends.slice(0, REACH_MAX).filter((e) => !this.#reached.has(`${e.id}:${e.steps}`));
 		const sum = () => {
 			const done = ends.filter((e) => this.#reached.has(`${e.id}:${e.steps}`));

@@ -4,8 +4,8 @@ import { createCompose } from './store/compose';
 import { createExpansion } from './store/expansion';
 import { createViewActions } from './store/view-actions';
 
-export function createGraphStore(): GraphStore {
-	const ctx = createGraphContext();
+export function createGraphStore(opts: { cap?: number } = {}): GraphStore {
+	const ctx = createGraphContext(opts);
 	const netwerk = createCompose(ctx);
 	const view = createViewActions(ctx);
 

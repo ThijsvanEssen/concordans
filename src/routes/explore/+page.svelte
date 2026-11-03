@@ -44,7 +44,7 @@
 	import {
 		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
-		setNodeCap,
+		capFrom,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
@@ -210,9 +210,11 @@
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
 
 	// One store for the lifetime of this page, so it survives mode switches.
-	const store = createGraphStore();
+	// ?grens=800 is a trial: the places the canvas keeps (400), read once, at the page's start.
+	const cap = capFrom(page.url.searchParams.get('grens'));
+	const store = createGraphStore({ cap });
 	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts).
-	const composer = new NetwerkComposer(store, () => graphView);
+	const composer = new NetwerkComposer(store, () => graphView, cap);
 
 	let selectedNode = $state<GraphNode | null>(null);
 	// The Topbalk marks a person by their current role, and the wissel names the bron of the
@@ -338,7 +340,6 @@
 	// All verbindingen as a table, in Lezen.
 	const tableMode = $derived(params.get('tabel') === '1');
 	const explicitDepth = $derived(explicitDepthOf(params));
-	const capAsked = $derived(params.get('grens'));
 	// All the focus's direct neighbours (?alles=1, Thijs 10 Oct: "maak het mogelijk om alles te
 	// laden, misschien zonder het tweede en derde niveau"): one step, up to ALLES_GRENS.
 	const alles = $derived(params.get('alles') === '1');
@@ -1491,8 +1492,6 @@
 		// composes again.
 		const steps = explicitDepth;
 		const light = chainFirst;
-		// ?grens=800: a trial of how many places the canvas keeps (default 400).
-		setNodeCap(capAsked);
 		if (mode !== 'graph') return;
 		untrack(() => {
 			composer.light = light;

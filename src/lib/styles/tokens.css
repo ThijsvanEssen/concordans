@@ -138,6 +138,8 @@
 	--strook-marge: var(--s-6);
 	/* The Zijpaneel from 1800 px: in the margin beside the page, in its flow (Blad, AppShell). */
 	--paneel-breed: 560px;
+	/* The Zijpaneel below 1800 px: over the right of the page (Blad, the keten's room for it). */
+	--paneel-over: 400px;
 	--regel: 66ch;
 	/* The column before the content: the number and date of a list row (IndexRow), where the
 	   titles of every list start; the term in a reader (Behoort bij, partijen, Voor and Tegen). */
