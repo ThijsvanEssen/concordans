@@ -385,13 +385,15 @@ function bridgesOf(
 /**
  * The edges that may draw a line, by unit. An edge into a hull is no line; nor is one of a bridge
  * to a bron outside its hull draw no line either, but to who makes: that bron is only met
- * through the bridge.
+ * through the bridge. A lijnsoort that is off draws none, also where an edge that holds a bron in
+ * its hull leads to another one (B51).
  */
 function unitEdges(
 	nodes: readonly GraphNode[],
 	edges: readonly GraphEdge[],
 	unitOf: ReadonlyMap<string, string>,
-	home: ReadonlyMap<string, string>
+	home: ReadonlyMap<string, string>,
+	hiddenLines: ReadonlySet<LineKind>
 ) {
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const bridges = bridgesOf(byId, edges, home);
@@ -403,6 +405,7 @@ function unitEdges(
 		const from = unitOf.get(a.id);
 		const to = unitOf.get(b.id);
 		if (!from || !to || from === to) continue;
+		if (hiddenLines.has(lineKindOf(edge.relation, a.drawClass))) continue;
 		const other = bridges.has(a.id) ? b : bridges.has(b.id) ? a : null;
 		if (other && !isMaker(other)) continue;
 		if (!(isHullEdge(a, b, edge.relation) && home.has(a.id)))
@@ -424,7 +427,13 @@ export function buildScene(input: SceneInput): Scene {
 	const chosen = new Set(input.chosen);
 	const dossiersOff = !!input.visibility?.hiddenKinds.has('dossiers');
 	const base = baseUnits(sortedNodes, sortedEdges, chosen, dossiersOff);
-	const linked = unitEdges(sortedNodes, sortedEdges, base.unitOf, base.home);
+	const linked = unitEdges(
+		sortedNodes,
+		sortedEdges,
+		base.unitOf,
+		base.home,
+		input.visibility?.hiddenLines ?? SHOW_ALL.hiddenLines
+	);
 	const general = markGeneral(base.units, linesBetween(base.units, linked));
 	const grouped = foldGroups(general, linesBetween(general, linked), sortedNodes);
 	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked, grouped)));
