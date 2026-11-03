@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
@@ -432,7 +433,39 @@
 		e.stopPropagation();
 		hover.close();
 		openInPanel(l.citeArticles);
+		keepInView(e.currentTarget as Element).catch(() => {});
 	}
+	/**
+	 * The Zijpaneel lies over the right of the drawing: the label just clicked stays clear of it.
+	 * The drawing gets room at its end as wide as the panel and pans by what the label was under;
+	 * on a narrow screen the panel is a sheet and the page scrolls the label above it.
+	 */
+	let panelRoom = $state(0);
+	async function keepInView(label: Element) {
+		// The panel comes with the address: wait for it, a second at most.
+		let panel: HTMLElement | null = null;
+		for (let i = 0; i < 20 && !panel; i++) {
+			await new Promise((done) => setTimeout(done, 50));
+			panel = document.getElementById(PANEL_ID);
+		}
+		if (!panel || !pan) return;
+		await new Promise((done) => requestAnimationFrame(done));
+		const l = label.getBoundingClientRect();
+		const p = panel.getBoundingClientRect();
+		const view = pan.getBoundingClientRect();
+		const gap = 16;
+		if (p.left > view.left + view.width / 4 && p.left < view.right) {
+			panelRoom = view.right - p.left;
+			await tick();
+			const hidden = l.right + gap - p.left;
+			if (hidden > 0) pan.scrollBy({ left: hidden, behavior: 'smooth' });
+		} else if (p.top > 0 && p.top < window.innerHeight && l.bottom + gap > p.top) {
+			window.scrollBy({ top: l.bottom + gap - p.top, behavior: 'smooth' });
+		}
+	}
+	$effect(() => {
+		if (readOpen().length === 0) panelRoom = 0;
+	});
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
 	let pan = $state<HTMLElement | null>(null);
 	let centredFor = '';
@@ -556,7 +589,14 @@
 				>{/if}
 		</div>
 	{/if}
-	<div class="pan" data-zijscroll bind:this={pan} use:sideScroll use:panned>
+	<div
+		class="pan"
+		data-zijscroll
+		bind:this={pan}
+		use:sideScroll
+		use:panned
+		style:padding-inline-end={panelRoom ? `${panelRoom}px` : undefined}
+	>
 		<svg
 			class="drawing"
 			style:width="{width * scale}px"

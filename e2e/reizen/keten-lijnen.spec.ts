@@ -294,6 +294,16 @@ test('Cbw: the label on a line is a link; Tab reaches it, hover shows the articl
 	await expect(label).toHaveClass(/is-open/);
 	await expect(label).toHaveAttribute('aria-expanded', 'true');
 	await expect(page.getByRole('group', { name: 'Keten' })).toBeVisible();
+	// B76: the clicked label does not lie under the Zijpaneel; the drawing pans clear of it.
+	if (await label.isVisible()) {
+		await expect
+			.poll(async () => {
+				const l = await label.boundingBox();
+				const z = await p.boundingBox();
+				return l && z ? z.x - (l.x + l.width) : -1;
+			})
+			.toBeGreaterThanOrEqual(0);
+	}
 });
 
 test('Cbw: a label that names one lid opens its article at that lid, marked', async ({ page }) => {
