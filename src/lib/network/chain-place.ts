@@ -95,7 +95,7 @@ export const linesOf = (s: string, max = 22) => {
 };
 
 /** The kind of what a layer holds, for its card of the others: "4 andere wetten". */
-export const KIND_NAMES: Record<string, [string, string]> = {
+export const KIND_WORDS: Record<string, [string, string]> = {
 	basis: ['wet', 'wetten'],
 	law: ['wet', 'wetten'],
 	named: ['wet', 'wetten'],
