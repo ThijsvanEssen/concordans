@@ -203,8 +203,8 @@
 					<dl>
 						<dt>Bewaren</dt>
 						<dd>
-							Kies Bewaar bij een artikel, uitspraak of stuk. Het komt in Mijn markeringen of in een
-							bundel die je kiest.
+							Kies Bewaren bij een artikel, uitspraak of stuk. Het komt in Mijn markeringen of in
+							een bundel die je kiest.
 						</dd>
 						<dt>Waar</dt>
 						<dd>
@@ -234,7 +234,7 @@
 									>
 								{:else}
 									<button type="button" class="btn" onclick={() => fileDone(f, 'map')}
-										>Bewaar</button
+										>Bewaren</button
 									>
 								{/if}
 								<RijActies naam={f.naam ?? 'Bundel uit bestand'} onClose={() => (choosing = null)}>
@@ -260,7 +260,7 @@
 													onclick={() => {
 														close();
 														fileDone(f, 'map');
-													}}>Bewaar als nieuwe bundel</button
+													}}>Bewaren als nieuwe bundel</button
 												>
 											{:else if target}
 												<button

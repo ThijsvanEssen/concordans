@@ -192,7 +192,7 @@
 						(e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
 				}}
 			/>
-			<button type="submit" class="tekstmenu__item">Bewaar aantekening</button>
+			<button type="submit" class="tekstmenu__item">Bewaren</button>
 		</form>
 	{:else if fragment?.shade}
 		{@const shade = fragment.shade}
@@ -250,7 +250,7 @@
 					onclick={() => {
 						kaart.keep(bewaar, into.id);
 						sluit();
-					}}>Bewaar in {into.naam}</button
+					}}>Bewaren in {into.naam}</button
 				>
 				<button
 					type="button"
@@ -258,7 +258,7 @@
 					role="menuitem"
 					onclick={() => {
 						choose();
-					}}>Bewaar in bundel…</button
+					}}>Bewaren in bundel…</button
 				>
 			{/if}
 		</div>

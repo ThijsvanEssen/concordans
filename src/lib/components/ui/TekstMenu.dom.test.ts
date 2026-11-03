@@ -71,8 +71,8 @@ describe('TekstMenu', () => {
 	});
 
 	it('names its button once, without a colon and nothing after it (UX-toets A21 #6)', () => {
-		render(TekstMenu, { label: 'Bewaar art. 1 Sv in bundel', tekst: '' });
-		expect(screen.getByRole('button', { name: 'Bewaar art. 1 Sv in bundel' })).toBeTruthy();
+		render(TekstMenu, { label: 'art. 1 Sv: bewaren in bundel', tekst: '' });
+		expect(screen.getByRole('button', { name: 'art. 1 Sv: bewaren in bundel' })).toBeTruthy();
 		cleanup();
 		render(TekstMenu, { label: 'Meer bij Thuiswerk', tekst: 'Meer' });
 		expect(screen.getByRole('button', { name: 'Meer bij Thuiswerk' })).toBeTruthy();

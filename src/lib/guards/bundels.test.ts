@@ -156,7 +156,7 @@ describe('the overview, a list that opens in place (bundels-ux 2a, decision 20A)
 	it('shows a bundel from a file as a row, marked, with Bewaar and its ⋯', () => {
 		const o = overview();
 		expect(o).toMatch(/<BundleRow\b[^>]*mark="uit bestand"/);
-		for (const label of ['Niet openen', 'Vervang ', 'Toevoegen aan ', 'Bewaar als nieuwe bundel'])
+		for (const label of ['Niet openen', 'Vervang ', 'Toevoegen aan ', 'Bewaren als nieuwe bundel'])
 			expect(o).toContain(label);
 		// One of this browser's bundels again (its id): Vervang is the choice in sight (A14 #5).
 		expect(o).toMatch(/\{#if sameId\(f\) && target\}\s*<button[\s\S]*?>Vervang<\/button/);
@@ -169,7 +169,7 @@ describe('a shared link, read as a bundel’s page (bundels-ux 2c, decision 20A)
 			/<MapView\b[^>]*(\{shared\}|shared=)/
 		);
 		const v = bron('lib/map/MapView.svelte');
-		expect(v).toMatch(/>Bewaar als kopie<\/button/);
+		expect(v).toMatch(/>Bewaren als kopie<\/button/);
 		for (const label of ['Toevoegen aan …', 'Niet bewaren']) expect(v).toContain(label);
 	});
 

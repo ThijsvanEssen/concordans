@@ -9,7 +9,7 @@ test('Bewaar says where it went, marks Bundels until visited, and marks the lid'
 	page
 }) => {
 	await page.goto(ARTICLE);
-	await page.getByRole('button', { name: 'Bewaar', exact: true }).click();
+	await page.getByRole('button', { name: 'Bewaren', exact: true }).click();
 
 	const status = page.getByRole('status');
 	await expect(status).toContainText('Bewaard in Mijn markeringen');
@@ -36,7 +36,7 @@ test('Bewaar says where it went, marks Bundels until visited, and marks the lid'
 test('a kept lid carries the bar in the text', async ({ page }) => {
 	await page.goto(ARTICLE);
 	await page.getByRole('button', { name: 'art. 6:162 lid 2 BW: citeren, bewaren' }).click();
-	await page.getByRole('menuitem', { name: 'Bewaar in Mijn markeringen' }).click();
+	await page.getByRole('menuitem', { name: 'Bewaren in Mijn markeringen' }).click();
 	await expect(page.getByRole('status')).toContainText('Bewaard in Mijn markeringen');
 	await expect(page.locator('.plaats-bewaard')).toHaveCount(1);
 });
@@ -87,7 +87,7 @@ test('Ongedaan maken takes the bron out of the bundel again, and the line waits 
 	page
 }) => {
 	await page.goto(ARTICLE);
-	await page.getByRole('button', { name: 'Bewaar', exact: true }).click();
+	await page.getByRole('button', { name: 'Bewaren', exact: true }).click();
 	const status = page.getByRole('status');
 	await expect(status).toContainText('Bewaard in Mijn markeringen. Ongedaan maken');
 	// The pointer in the line holds it past the seconds it would stand.
@@ -95,7 +95,7 @@ test('Ongedaan maken takes the bron out of the bundel again, and the line waits 
 	await page.waitForTimeout(6000);
 	await expect(status).toContainText('Ongedaan maken');
 	await status.getByRole('button', { name: 'Ongedaan maken' }).click();
-	await expect(page.getByRole('button', { name: 'Bewaar', exact: true })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Bewaren', exact: true })).toBeVisible();
 	await expect(status).toHaveText('');
 });
 

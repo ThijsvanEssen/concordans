@@ -141,7 +141,7 @@
 	{#if known}
 		<p class="in-concordans">
 			<span>In Concordans: {knownLabel}</span>
-			<TekstLink href={inBundle(known.path)}>Bewaar vanuit de lezer</TekstLink>
+			<TekstLink href={inBundle(known.path)}>Bewaren vanuit de lezer</TekstLink>
 		</p>
 	{/if}
 	<p class="knoppen">

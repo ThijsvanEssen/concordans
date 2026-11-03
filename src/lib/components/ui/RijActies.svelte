@@ -84,7 +84,7 @@
 				aria-label={bewaard
 					? `${naam}: bewaard in ${namesOf(held)}`
 					: `${naam}: bewaren in ${into.naam}`}
-				title={bewaard ? `Bewaard in ${namesOf(held)}` : `Bewaar in ${into.naam}`}
+				title={bewaard ? `Bewaard in ${namesOf(held)}` : `Bewaren in ${into.naam}`}
 				onclick={() => (bewaard ? (bundlesOpen = !bundlesOpen) : kaart.keep(kept, into.id))}
 				><Picto naam={bewaard ? 'bewaard' : 'bewaar'} /></button
 			>

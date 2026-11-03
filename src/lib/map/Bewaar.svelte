@@ -1,10 +1,10 @@
 <script lang="ts">
 	// Kept or not: a framed button in a reader's head, as Citeer beside it (Thijs, 10 Oct: "een
 	// kader"). Its glyph is the bookmark of RijActies, open or filled: an action, not a box.
-	// "Bewaar lid 3" where it names a place; "Bewaard in <bundel>" (or "in 3 bundels") as soon as
+	// "Lid 3 bewaren" where it names a place; "Bewaard in <bundel>" (or "in 3 bundels") as soon as
 	// any bundel holds it (DS Bewaar). Bewaar
 	// keeps in Mijn markeringen. A reader opened from a bundel (Andere bron toevoegen) keeps
-	// in that bundel for the session and says so: "Bewaar in <bundel>", with the way back to
+	// in that bundel for the session and says so: "Bewaren in <bundel>", with the way back to
 	// it and Klaar beside it, until the reader ends it (UX-toets A21 #1). Bewaard takes nothing out: it opens the caret's menu, the bundels with a tick at each
 	// that holds it, where a click puts it in or takes it out of that one (BundleChecklist,
 	// decision 20A, UX-toets A14).
@@ -16,6 +16,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { bundlePageHref } from './page';
 	import { formatCount } from '$lib/text/getal';
+	import { capitalize } from '$lib/text/words';
 
 	let {
 		item,
@@ -32,7 +33,7 @@
 	const aan = $derived(keeping ? held.some((m) => m.id === keeping.id) : held.length > 0);
 	const into = $derived(kaart.keepsIn);
 	const titel = $derived(
-		aan ? `${item.kort}: bewaard in ${namesOf(held)}` : `${item.kort}: in ${into.naam} bewaren`
+		aan ? `${item.kort}: bewaard in ${namesOf(held)}` : `${item.kort}: bewaren in ${into.naam}`
 	);
 	/** Where it is kept, said in the button: the bundel it keeps in, else the one that holds it. */
 	const place = $derived(
@@ -64,9 +65,9 @@
 		onclick={() => (aan ? (open = true) : kaart.keep(item, into.id))}
 		><Picto naam={aan ? 'bewaard' : 'bewaar'} />{aan
 			? `Bewaard in ${place}`
-			: `Bewaar${wat ? ` ${wat}` : ''}${place ? ` in ${place}` : ''}`}</button
+			: `${wat ? `${capitalize(wat)} bewaren` : 'Bewaren'}${place ? ` in ${place}` : ''}`}</button
 	>
-	<TekstMenu rechts label="Bewaar {item.kort} in bundel" tekst="" bind:open>
+	<TekstMenu rechts label="{item.kort}: bewaren in bundel" tekst="" bind:open>
 		{#snippet inhoud(close)}<BundleChecklist {item} {close} />{/snippet}
 	</TekstMenu>
 </span>

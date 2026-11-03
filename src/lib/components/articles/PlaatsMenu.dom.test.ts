@@ -18,13 +18,13 @@ describe('PlaatsMenu, Bewaar in bundel…', () => {
 	it('opens the bundels with their ticks and keeps the lid in the one chosen', async () => {
 		kaart.nieuw('Thuiswerk', []);
 		open();
-		expect(screen.getByRole('menuitem', { name: 'Bewaar in Mijn markeringen' })).toBeTruthy();
+		expect(screen.getByRole('menuitem', { name: 'Bewaren in Mijn markeringen' })).toBeTruthy();
 
-		await fireEvent.click(screen.getByRole('menuitem', { name: 'Bewaar in bundel…' }));
+		await fireEvent.click(screen.getByRole('menuitem', { name: 'Bewaren in bundel…' }));
 		await tick();
 		await tick();
 		const thuis = screen.getByRole('menuitemcheckbox', { name: 'Thuiswerk' });
-		expect(screen.queryByRole('menuitem', { name: /^Bewaar in/ })).toBeNull();
+		expect(screen.queryByRole('menuitem', { name: /^Bewaren in/ })).toBeNull();
 		expect(document.activeElement?.getAttribute('role')).toBe('menuitemcheckbox');
 
 		await fireEvent.click(thuis);

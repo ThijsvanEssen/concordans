@@ -51,7 +51,7 @@
 						ga daarna verder.
 					</li>
 					<li>
-						Bewaar wat je nodig hebt met <strong>Bewaar</strong> in een Bundel, onder Mijn, en deel de
+						Bewaar wat je nodig hebt met <strong>Bewaren</strong> in een Bundel, onder Mijn, en deel de
 						link.
 					</li>
 				</ol>
@@ -242,7 +242,7 @@
 				<p>
 					Een Bundel bewaart bronnen die je nodig hebt: artikelen, uitspraken, Kamerstukken en
 					andere bronnen, met een aantekening bij elke bron, bij een groep en bij de bundel zelf.
-					<strong>Bewaar</strong>, bij een artikel, een overweging of een rij in Verbonden, zet de
+					<strong>Bewaren</strong>, bij een artikel, een overweging of een rij in Verbonden, zet de
 					bron in Mijn markeringen. <strong>Nieuwe bundel</strong>, bij Bundels onder Mijn, begint
 					een eigen bundel met een onderzoeksvraag.
 				</p>

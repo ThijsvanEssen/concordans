@@ -127,7 +127,7 @@ for (const [soort, pad] of SOORTEN) {
 
 		// 7. Bewaar is the first of the actions.
 		const eerste = page.locator('.kop-acties').locator('button, a.btn').first();
-		await expect(eerste).toContainText('Bewaar');
+		await expect(eerste).toContainText('Bewaren');
 
 		// 8. On a phone the title is the first thing, within the first 360 px.
 		if (touch) {
