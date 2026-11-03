@@ -19,24 +19,24 @@ import { keepPaths } from './kept-paths';
 describe('a readable address', () => {
 	it('reads the official identifier from the path', () => {
 		expect(parsePad('/uitspraken/ECLI:NL:HR:2019:2006')).toEqual({
-			soort: 'uitspraak',
+			kind: 'uitspraak',
 			ecli: 'ECLI:NL:HR:2019:2006'
 		});
 		expect(parsePad('/wetten/BWBR0005289/artikel/6:162')).toEqual({
-			soort: 'artikel',
-			wet: 'BWBR0005289',
-			nummer: '6:162'
+			kind: 'artikel',
+			law: 'BWBR0005289',
+			number: '6:162'
 		});
-		expect(parsePad('/dossiers/36600-VIII')).toEqual({ soort: 'dossier', nummer: '36600-VIII' });
+		expect(parsePad('/dossiers/36600-VIII')).toEqual({ kind: 'dossier', number: '36600-VIII' });
 		expect(parsePad('/kamerstukken/36799/31')).toEqual({
-			soort: 'kamerstuk',
+			kind: 'kamerstuk',
 			dossier: '36799',
-			nummer: '31'
+			number: '31'
 		});
 	});
 
 	it('opens an EU act by its CELEX number in the Verkenner, on its node', () => {
-		expect(parsePad('/wetten/32022L2555')).toEqual({ soort: 'wet', wet: '32022L2555' });
+		expect(parsePad('/wetten/32022L2555')).toEqual({ kind: 'wet', law: '32022L2555' });
 		expect(isExplorePath('/wetten/32022L2555')).toBe(true);
 		expect(focusIn(new URL('https://concordans.nl/wetten/32022L2555'))).toBe(
 			'instruments/32022l2555'
@@ -47,27 +47,27 @@ describe('a readable address', () => {
 	});
 
 	it('reads a cabinet, a fractie, a commissie and a toezegging, and gives them back', () => {
-		expect(parsePad('/kabinetten/rutte_iv')).toEqual({ soort: 'kabinet', key: 'rutte_iv' });
-		expect(parsePad('/ministeries/jenv')).toEqual({ soort: 'ministry', key: 'jenv' });
-		expect(focusOfPad({ soort: 'ministry', key: 'jenv' })).toBe('ministries/jenv');
+		expect(parsePad('/kabinetten/rutte_iv')).toEqual({ kind: 'kabinet', key: 'rutte_iv' });
+		expect(parsePad('/ministeries/jenv')).toEqual({ kind: 'ministry', key: 'jenv' });
+		expect(focusOfPad({ kind: 'ministry', key: 'jenv' })).toBe('ministries/jenv');
 		expect(padOfFocus('ministries/jenv')).toBe('/ministeries/jenv');
 		expect(parsePad('/fracties/ek_democraten_1966')).toEqual({
-			soort: 'fractie',
+			kind: 'fractie',
 			key: 'ek_democraten_1966'
 		});
 		expect(parsePad('/commissies/buhaos-2021')).toEqual({
-			soort: 'commissie',
+			kind: 'commissie',
 			slug: 'buhaos-2021'
 		});
 		expect(parsePad('/toezeggingen/tz202609-124')).toEqual({
-			soort: 'toezegging',
-			nummer: 'TZ202609-124'
+			kind: 'toezegging',
+			number: 'TZ202609-124'
 		});
 		expect(parsePad('/kabinetten/Rutte IV')).toBeNull();
 		expect(parsePad('/toezeggingen/124')).toBeNull();
-		expect(focusOfPad({ soort: 'kabinet', key: 'jetten' })).toBe('cabinets/jetten');
-		expect(focusOfPad({ soort: 'fractie', key: 'd66' })).toBe('factions/d66');
-		expect(focusOfPad({ soort: 'commissie', slug: 'szw' })).toBeNull();
+		expect(focusOfPad({ kind: 'kabinet', key: 'jetten' })).toBe('cabinets/jetten');
+		expect(focusOfPad({ kind: 'fractie', key: 'd66' })).toBe('factions/d66');
+		expect(focusOfPad({ kind: 'commissie', slug: 'szw' })).toBeNull();
 		expect(padOfFocus('cabinets/rutte_iv')).toBe('/kabinetten/rutte_iv');
 		expect(padOfFocus('factions/d66')).toBe('/fracties/d66');
 		expect(padOfFocus('committees/b18e', '/commissies/szw')).toBe('/commissies/szw');
@@ -78,10 +78,10 @@ describe('a readable address', () => {
 		// A stemming by its key (Back-end #2, SEO PR 2): /stemmingen/<key>.
 		expect(padOfFocus('decisions/decision_6312')).toBe('/stemmingen/decision_6312');
 		expect(parsePad('/stemmingen/decision_6312')).toEqual({
-			soort: 'stemming',
+			kind: 'stemming',
 			key: 'decision_6312'
 		});
-		expect(focusOfPad({ soort: 'stemming', key: 'decision_6312' })).toBe('decisions/decision_6312');
+		expect(focusOfPad({ kind: 'stemming', key: 'decision_6312' })).toBe('decisions/decision_6312');
 		// A dossier is named by its number; its node key is the API's, with the path it gives.
 		expect(padOfFocus('dossiers/36496')).toBe('/dossiers/36496');
 		expect(padOfFocus('dossiers/36600-VIII')).toBe('/dossiers/36600-VIII');
@@ -90,7 +90,7 @@ describe('a readable address', () => {
 	});
 
 	it('reads a lid by its slug, and gives a lid its address from its slug', () => {
-		expect(parsePad('/leden/rob-jetten')).toEqual({ soort: 'lid', slug: 'rob-jetten' });
+		expect(parsePad('/leden/rob-jetten')).toEqual({ kind: 'lid', slug: 'rob-jetten' });
 		expect(parsePad('/leden/Rob Jetten')).toBeNull();
 		expect(padOfFocus('members/49be', '/leden/rob-jetten')).toBe('/leden/rob-jetten');
 		expect(padOfFocus('members/49be')).toBeNull();
@@ -98,10 +98,10 @@ describe('a readable address', () => {
 
 	it('reads a publication by series, year and number', () => {
 		expect(parsePad('/stb/2026/94')).toEqual({
-			soort: 'publicatie',
+			kind: 'publicatie',
 			reeks: 'stb',
 			jaar: '2026',
-			nummer: '94'
+			number: '94'
 		});
 		expect(parsePad('/stb/26/94')).toBeNull();
 		// Its key is its id at officielebekendmakingen.nl.
@@ -111,18 +111,18 @@ describe('a readable address', () => {
 	});
 
 	it('reads a law by its BWB id, and names it so', () => {
-		expect(parsePad('/wetten/BWBR0005537')).toEqual({ soort: 'wet', wet: 'BWBR0005537' });
-		expect(parsePad('/wetten/bwbr0005537')).toEqual({ soort: 'wet', wet: 'BWBR0005537' });
+		expect(parsePad('/wetten/BWBR0005537')).toEqual({ kind: 'wet', law: 'BWBR0005537' });
+		expect(parsePad('/wetten/bwbr0005537')).toEqual({ kind: 'wet', law: 'BWBR0005537' });
 		expect(parsePad('/wetten/Awb')).toBeNull();
 		expect(padOfFocus('instruments/bwbr0005537')).toBe('/wetten/BWBR0005537');
-		expect(focusOfPad({ soort: 'wet', wet: 'BWBR0005537' })).toBe('instruments/bwbr0005537');
+		expect(focusOfPad({ kind: 'wet', law: 'BWBR0005537' })).toBe('instruments/bwbr0005537');
 	});
 
 	it('reads the letter of a stuk of the Eerste Kamer', () => {
 		expect(parsePad('/kamerstukken/36600-VIII/ab')).toEqual({
-			soort: 'kamerstuk',
+			kind: 'kamerstuk',
 			dossier: '36600-VIII',
-			nummer: 'AB'
+			number: 'AB'
 		});
 	});
 
@@ -142,16 +142,16 @@ describe('a readable address', () => {
 	});
 
 	it('writes the path with its colons as they are', () => {
-		expect(padHref({ soort: 'artikel', wet: 'BWBR0005537', nummer: '3:4' })).toBe(
+		expect(padHref({ kind: 'artikel', law: 'BWBR0005537', number: '3:4' })).toBe(
 			'/wetten/BWBR0005537/artikel/3:4'
 		);
 	});
 
 	it('names a judgment and a dossier without a request', () => {
-		expect(focusOfPad({ soort: 'uitspraak', ecli: 'ECLI:NL:HR:2019:2006' })).toBe(
+		expect(focusOfPad({ kind: 'uitspraak', ecli: 'ECLI:NL:HR:2019:2006' })).toBe(
 			'judgments/ecli_nl_hr_2019_2006'
 		);
-		expect(focusOfPad({ soort: 'dossier', nummer: '36600-VIII' })).toBe('dossiers/36600-VIII');
+		expect(focusOfPad({ kind: 'dossier', number: '36600-VIII' })).toBe('dossiers/36600-VIII');
 		expect(focusIn(new URL('http://x/uitspraken/ECLI:NL:HR:2019:2006?lezen=1'))).toBe(
 			'judgments/ecli_nl_hr_2019_2006'
 		);
@@ -187,7 +187,7 @@ describe('the address of a focus', () => {
 
 	it('remembers an address it looked up, both ways', () => {
 		remember('/kamerstukken/36799/31', 'documents/1501fbca');
-		expect(focusOfPad({ soort: 'kamerstuk', dossier: '36799', nummer: '31' })).toBe(
+		expect(focusOfPad({ kind: 'kamerstuk', dossier: '36799', number: '31' })).toBe(
 			'documents/1501fbca'
 		);
 		expect(padOfFocus('documents/1501fbca')).toBe('/kamerstukken/36799/31');
@@ -311,7 +311,7 @@ describe('the key of a judgment', () => {
 });
 
 describe('lookUp', () => {
-	const artikel = { soort: 'artikel', wet: 'BWBR0005537', nummer: '3:4' } as const;
+	const artikel = { kind: 'artikel', law: 'BWBR0005537', number: '3:4' } as const;
 	const vooraf = {
 		'/api/articles/{bwb_id}/{article_number}': { article: {} },
 		'/api/articles/{bwb_id}/{article_number}/history': { versions: [] },
@@ -360,8 +360,8 @@ describe('lookUp', () => {
 			'/api/dossiers/{number}/documents': { items: [] },
 			'/api/lookup': fail(404)
 		});
-		await lookUp({ soort: 'artikel', wet: 'BWBR0005290', nummer: '7:611' });
-		await lookUp({ soort: 'artikel', wet: 'BWBR0005290', nummer: '7:612' });
+		await lookUp({ kind: 'artikel', law: 'BWBR0005290', number: '7:611' });
+		await lookUp({ kind: 'artikel', law: 'BWBR0005290', number: '7:612' });
 		await vi.waitFor(() =>
 			expect(fake.asked('/api/dossiers/{number}/documents')).toEqual([
 				{ path: { number: '34372' }, query: { limit: 200 } }
@@ -374,7 +374,7 @@ describe('lookUp', () => {
 			'/api/lookup': { collection: 'documents', key: 'kst-36600-vii-147' },
 			'/api/documents/{key}': {}
 		});
-		expect(await lookUp({ soort: 'kamerstuk', dossier: '36600-VII', nummer: '147' })).toBe(
+		expect(await lookUp({ kind: 'kamerstuk', dossier: '36600-VII', number: '147' })).toBe(
 			'documents/kst-36600-vii-147'
 		);
 		expect(fake.asked('/api/documents/{key}')).toEqual([{ path: { key: 'kst-36600-vii-147' } }]);
@@ -400,7 +400,7 @@ describe('focusUitPagina', () => {
 
 	it('gives the focus for the address the page was served for', async () => {
 		pagina('/leden/rob-jetten', 'members/49be3576', '/leden/rob-jetten');
-		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
+		expect(focusUitPagina({ kind: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
 	});
 
 	it('gives nothing after a step in the app to another address', async () => {
@@ -409,37 +409,37 @@ describe('focusUitPagina', () => {
 			'judgments/ecli_nl_hr_2019_2006',
 			'/kamerstukken/36600-VII/147'
 		);
-		expect(focusUitPagina({ soort: 'kamerstuk', dossier: '36600-VII', nummer: '147' })).toBeNull();
+		expect(focusUitPagina({ kind: 'kamerstuk', dossier: '36600-VII', number: '147' })).toBeNull();
 		// Nothing wrong is remembered for the Kamerstuk's address either.
 		expect(padOfFocus('judgments/ecli_nl_hr_2019_2006')).not.toBe('/kamerstukken/36600-VII/147');
 	});
 
 	it('gives the focus once: back on the first address later, the lookup speaks', async () => {
 		pagina('/leden/rob-jetten', 'members/49be3576', '/leden/rob-jetten');
-		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
-		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBeNull();
+		expect(focusUitPagina({ kind: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
+		expect(focusUitPagina({ kind: 'lid', slug: 'rob-jetten' })).toBeNull();
 	});
 });
 
 describe('every kind of address', () => {
 	// One of each, typed so that a new kind of address needs one here.
-	const ONE: { [S in Pad['soort']]: Extract<Pad, { soort: S }> } = {
-		uitspraak: { soort: 'uitspraak', ecli: 'ECLI:BE:CASS:2020:ARR.20201015.1F.6' },
-		artikel: { soort: 'artikel', wet: 'BWBR0005289', nummer: '6:162' },
-		wet: { soort: 'wet', wet: '32022L2555' },
-		dossier: { soort: 'dossier', nummer: '36455-(R2188)' },
-		kamerstuk: { soort: 'kamerstuk', dossier: '36600-VIII', nummer: 'AB' },
-		publicatie: { soort: 'publicatie', reeks: 'stcrt', jaar: '2026', nummer: '17140' },
-		lid: { soort: 'lid', slug: 'rob-jetten' },
-		kabinet: { soort: 'kabinet', key: 'rutte_iv' },
-		ministry: { soort: 'ministry', key: 'jenv' },
-		fractie: { soort: 'fractie', key: 'ek_democraten_1966' },
-		commissie: { soort: 'commissie', slug: 'buhaos-2021' },
-		toezegging: { soort: 'toezegging', nummer: 'TZ202609-124' },
-		stemming: { soort: 'stemming', key: 'decision_154df5db_64e5_414a_9cd1_3967aab7de58' },
-		zaak: { soort: 'zaak', nummer: '2025Z15468' },
-		activiteit: { soort: 'activiteit', nummer: '2026A01323' },
-		bijlage: { soort: 'bijlage', wet: 'BWBR0002741', label: '2.A' }
+	const ONE: { [S in Pad['kind']]: Extract<Pad, { kind: S }> } = {
+		uitspraak: { kind: 'uitspraak', ecli: 'ECLI:BE:CASS:2020:ARR.20201015.1F.6' },
+		artikel: { kind: 'artikel', law: 'BWBR0005289', number: '6:162' },
+		wet: { kind: 'wet', law: '32022L2555' },
+		dossier: { kind: 'dossier', number: '36455-(R2188)' },
+		kamerstuk: { kind: 'kamerstuk', dossier: '36600-VIII', number: 'AB' },
+		publicatie: { kind: 'publicatie', reeks: 'stcrt', jaar: '2026', number: '17140' },
+		lid: { kind: 'lid', slug: 'rob-jetten' },
+		kabinet: { kind: 'kabinet', key: 'rutte_iv' },
+		ministry: { kind: 'ministry', key: 'jenv' },
+		fractie: { kind: 'fractie', key: 'ek_democraten_1966' },
+		commissie: { kind: 'commissie', slug: 'buhaos-2021' },
+		toezegging: { kind: 'toezegging', number: 'TZ202609-124' },
+		stemming: { kind: 'stemming', key: 'decision_154df5db_64e5_414a_9cd1_3967aab7de58' },
+		zaak: { kind: 'zaak', number: '2025Z15468' },
+		activiteit: { kind: 'activiteit', number: '2026A01323' },
+		bijlage: { kind: 'bijlage', law: 'BWBR0002741', label: '2.A' }
 	};
 
 	it.each(Object.values(ONE))('reads back the address it writes: %o', (pad) => {

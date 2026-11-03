@@ -56,8 +56,8 @@ export function focusUitPagina(pad: Pad): string | null {
 
 /** An article's address as the API numbers it (162 for BW 6:162); null for another bron. */
 const apiArticle = (pad: Pad) =>
-	pad.soort === 'artikel'
-		? { wet: pad.wet.toUpperCase(), nummer: apiNumber(pad.wet, pad.nummer) }
+	pad.kind === 'artikel'
+		? { wet: pad.law.toUpperCase(), nummer: apiNumber(pad.law, pad.number) }
 		: null;
 
 /**

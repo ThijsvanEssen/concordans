@@ -34,8 +34,8 @@ export function keepPaths(data: unknown, depth = 0) {
 		if (target && pad && target.collection !== 'dossiers') {
 			remember(padHref(pad), id);
 			// The text of an article named here can stand in the reader before its node.
-			if (pad.soort === 'artikel')
-				onthoudArtikel(target.key, pad.wet.toUpperCase(), apiNumber(pad.wet, pad.nummer));
+			if (pad.kind === 'artikel')
+				onthoudArtikel(target.key, pad.law.toUpperCase(), apiNumber(pad.law, pad.number));
 		}
 	}
 	for (const value of Object.values(data)) {
@@ -51,7 +51,7 @@ function articleAddress(d: object): string | null {
 	const { collection, bwb_id: wet, article_number: nummer } = d as Record<string, unknown>;
 	const named = collection === 'articles' && !('path' in d);
 	if (!named || typeof wet !== 'string' || typeof nummer !== 'string') return null;
-	return padHref({ soort: 'artikel', wet, nummer: bookNumber(wet, nummer) });
+	return padHref({ kind: 'artikel', law: wet, number: bookNumber(wet, nummer) });
 }
 
 onAnswer((data) => {

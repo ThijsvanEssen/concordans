@@ -50,7 +50,7 @@ export const preloadReader = (collection: Collection) =>
 	(collection === 'articles' ? articleReader : readerOf(collection)).load();
 
 /** The collection a readable address names, where its kind says it without a request. */
-const COLLECTION_OF_PAD: Partial<Record<Pad['soort'], Collection>> = {
+const COLLECTION_OF_PAD: Partial<Record<Pad['kind'], Collection>> = {
 	uitspraak: 'judgments',
 	artikel: 'articles',
 	wet: 'instruments',
@@ -66,5 +66,4 @@ const COLLECTION_OF_PAD: Partial<Record<Pad['soort'], Collection>> = {
 	stemming: 'decisions',
 	activiteit: 'activities'
 };
-export const collectionOfPad = (pad: Pad): Collection | null =>
-	COLLECTION_OF_PAD[pad.soort] ?? null;
+export const collectionOfPad = (pad: Pad): Collection | null => COLLECTION_OF_PAD[pad.kind] ?? null;

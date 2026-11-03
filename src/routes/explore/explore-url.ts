@@ -111,30 +111,30 @@ export function besideJudgment(beside: ReturnType<typeof parseNodeId>): GraphNod
  */
 /** The law of an address of an article or a bijlage, by its id: the way to it from a 404. */
 export const lawOfPad = (p: Pad): string | null =>
-	p.soort === 'artikel' || p.soort === 'bijlage' ? p.wet : null;
+	p.kind === 'artikel' || p.kind === 'bijlage' ? p.law : null;
 
 export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = () => null): string {
-	switch (p.soort) {
+	switch (p.kind) {
 		case 'artikel':
-			return `Artikel ${p.nummer} van ${enactedLawPlace(p.wet) ?? lawNameOf(p.wet) ?? p.wet}`;
+			return `Artikel ${p.number} van ${enactedLawPlace(p.law) ?? lawNameOf(p.law) ?? p.law}`;
 		case 'wet':
-			return enactedLawPlace(p.wet) ?? lawNameOf(p.wet) ?? `Wet ${p.wet}`;
+			return enactedLawPlace(p.law) ?? lawNameOf(p.law) ?? `Wet ${p.law}`;
 		case 'kamerstuk':
 			return (
 				citationRecord({
 					kind: 'kamerstuk',
-					chamber: /^\d/.test(p.nummer) ? 'TK' : 'EK',
+					chamber: /^\d/.test(p.number) ? 'TK' : 'EK',
 					dossier_number: p.dossier,
-					number: p.nummer
+					number: p.number
 				})?.short ?? padHref(p)
 			);
 		case 'dossier':
-			return dossierNumberLabel(p.nummer);
+			return dossierNumberLabel(p.number);
 		case 'uitspraak':
 			return p.ecli;
 		case 'publicatie':
 			return (
-				citationRecord({ kind: 'publication', series: p.reeks, year: p.jaar, number: p.nummer })
+				citationRecord({ kind: 'publication', series: p.reeks, year: p.jaar, number: p.number })
 					?.short ?? padHref(p)
 			);
 		case 'lid':
@@ -142,13 +142,13 @@ export function nameOfPad(p: Pad, lawNameOf: (bwb: string) => string | null = ()
 		case 'commissie':
 			return `Commissie ${p.slug}`;
 		case 'toezegging':
-			return `Toezegging ${p.nummer}`;
+			return `Toezegging ${p.number}`;
 		case 'zaak':
-			return `Zaak ${p.nummer}`;
+			return `Zaak ${p.number}`;
 		case 'bijlage':
-			return `Bijlage ${p.label} van ${p.wet}`;
+			return `Bijlage ${p.label} van ${p.law}`;
 		case 'activiteit':
-			return `Activiteit ${p.nummer}`;
+			return `Activiteit ${p.number}`;
 		case 'kabinet':
 			return `Kabinet ${p.key}`;
 		case 'ministry':

@@ -69,28 +69,28 @@ describe('besideJudgment', () => {
 
 describe('nameOfPad', () => {
 	it('names what a readable address names', () => {
-		expect(nameOfPad({ soort: 'artikel', wet: 'BWBR0005537', nummer: '3:4' })).toBe(
+		expect(nameOfPad({ kind: 'artikel', law: 'BWBR0005537', number: '3:4' })).toBe(
 			'Artikel 3:4 van BWBR0005537'
 		);
-		expect(nameOfPad({ soort: 'publicatie', reeks: 'stb', jaar: '2026', nummer: '94' })).toBe(
+		expect(nameOfPad({ kind: 'publicatie', reeks: 'stb', jaar: '2026', number: '94' })).toBe(
 			'Stb. 2026, 94'
 		);
-		expect(nameOfPad({ soort: 'lid', slug: 'rob-jetten' })).toBe('Lid rob-jetten');
-		expect(nameOfPad({ soort: 'dossier', nummer: '37020-XVI' })).toBe('Dossier 37020 XVI');
-		expect(nameOfPad({ soort: 'uitspraak', ecli: 'ECLI:NL:HR:2005:AU3313' })).toBe(
+		expect(nameOfPad({ kind: 'lid', slug: 'rob-jetten' })).toBe('Lid rob-jetten');
+		expect(nameOfPad({ kind: 'dossier', number: '37020-XVI' })).toBe('Dossier 37020 XVI');
+		expect(nameOfPad({ kind: 'uitspraak', ecli: 'ECLI:NL:HR:2005:AU3313' })).toBe(
 			'ECLI:NL:HR:2005:AU3313'
 		);
 		// A law of the Staatsblad the BWB does not hold, and its article, by its publication.
-		expect(nameOfPad({ soort: 'wet', wet: 'STB-2026-56' })).toBe('Stb. 2026, 56');
+		expect(nameOfPad({ kind: 'wet', law: 'STB-2026-56' })).toBe('Stb. 2026, 56');
 		// A law the page knows by its name, not by its BWB id (B23).
 		const bw6 = (bwb: string) => (bwb === 'BWBR0005289' ? 'Burgerlijk Wetboek Boek 6' : null);
-		expect(nameOfPad({ soort: 'artikel', wet: 'BWBR0005289', nummer: '6:163' }, bw6)).toBe(
+		expect(nameOfPad({ kind: 'artikel', law: 'BWBR0005289', number: '6:163' }, bw6)).toBe(
 			'Artikel 6:163 van Burgerlijk Wetboek Boek 6'
 		);
 		// Never a path or a key of the data (B28).
-		expect(nameOfPad({ soort: 'wet', wet: 'BWBR9999999' })).toBe('Wet BWBR9999999');
-		expect(nameOfPad({ soort: 'stemming', key: 'decision_154df5db' })).toBe('Deze stemming');
-		expect(nameOfPad({ soort: 'artikel', wet: 'STB-2026-56', nummer: '2.8.6' })).toBe(
+		expect(nameOfPad({ kind: 'wet', law: 'BWBR9999999' })).toBe('Wet BWBR9999999');
+		expect(nameOfPad({ kind: 'stemming', key: 'decision_154df5db' })).toBe('Deze stemming');
+		expect(nameOfPad({ kind: 'artikel', law: 'STB-2026-56', number: '2.8.6' })).toBe(
 			'Artikel 2.8.6 van Stb. 2026, 56'
 		);
 	});
