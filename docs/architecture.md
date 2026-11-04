@@ -51,7 +51,7 @@ Every bron opens in Tekst, also at its bare address (besluit 32). The groups of 
 
 ## Data flow
 
-1. A readable address is parsed by `parsePad` (`bron/address.ts`). A judgment, dossier, cabinet or fractie names its focus directly; an article, Kamerstuk, publication, lid, commissie or toezegging is looked up once through `/api/lookup`. An old `/explore?focus=…` link is rewritten to the readable address once the bron is known.
+1. A readable address is parsed by `parsePad` (`bron/address.ts`). A judgment, dossier, cabinet or fractie names its focus directly; an article, Kamerstuk, publication, lid, commissie or toezegging is looked up once through `/api/lookup`. A `/explore?focus=…` opened before its address is known is rewritten to the readable address once the bron is known.
 2. The effect on the focus fetches the bron through `GraphStore` and selects it; in Netwerk the neighbourhood around it is loaded and pruned ([`graph-system.md`](graph-system.md)).
 3. `GraphView` renders the store; `KindReader` picks the reader by collection ([`readers.md`](readers.md)); Verbonden reads the same node record as the canvas.
 4. Every link to a bron is `bronHref`, so every step is a navigation and the browser history is the history of bronnen.

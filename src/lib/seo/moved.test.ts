@@ -18,10 +18,9 @@ describe('movedAddress', () => {
 		expect(at('/zoeken?q=huur')).toBeNull();
 	});
 
-	it('leaves a bron and any other address alone; moves the bundels of before', () => {
+	it('leaves a bron and any other address alone', () => {
 		expect(at('/wetten/BWBR0005289')).toBeNull();
 		expect(at('/actueel')).toBeNull();
-		expect(at('/gemarkeerd#m=abc')).toBe('/bundels#m=abc');
 	});
 
 	it('lists only paths that are no bron, each to a list the index has', () => {

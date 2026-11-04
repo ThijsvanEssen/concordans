@@ -62,9 +62,9 @@ describe('the Netwerk button', () => {
 		);
 		// The bron marked on the canvas is not the bron of the lezer (B85).
 		expect(networkHref(at('/explore?netwerk=articles/a,articles/b&kies=articles/b'))).toBe(
-			'/explore?focus=articles%2Fa'
+			'/explore?focus=articles/a'
 		);
-		expect(networkHref(at('/explore?netwerk=articles/a'))).toBe('/explore?focus=articles%2Fa');
+		expect(networkHref(at('/explore?netwerk=articles/a'))).toBe('/explore?focus=articles/a');
 		expect(networkHref(at('/explore'))).toBe('/');
 		// The netwerk the reader composed stands in the address; a bron alone stays alone.
 		expect(networkHref(at(article), 'netwerk=articles%2Fa&uit=members%2Fx')).toBe(

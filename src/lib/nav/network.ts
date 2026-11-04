@@ -2,7 +2,7 @@
 // opens the werkplek with that bron as its beginning, or with the netwerk the reader composed
 // (kept in this browser) written into the address beside it; anywhere else it opens the
 // werkplek, which begins with choosing a bron.
-import { exploreUrl } from '$lib/bron/address';
+import { exploreHref, exploreUrl } from '$lib/bron/address';
 import { hasFocus, modeOf, NETWORK_MODE } from '$lib/bron/href';
 import { networkQuery, parseNetwerk, withRemoved, type Netwerk } from '$lib/selection/netwerk';
 import { bewaarNetwerk, keptNetwerk } from '$lib/selection/bewaard.svelte';
@@ -71,7 +71,7 @@ function textHref(url: URL): string {
 		return `${to.pathname}${to.search}${to.hash}`;
 	}
 	const id = readerBron(url.searchParams);
-	return id ? `/explore?focus=${encodeURIComponent(id)}${url.hash}` : '/';
+	return id ? exploreHref(new URLSearchParams({ focus: id }), url.hash) : '/';
 }
 
 /**

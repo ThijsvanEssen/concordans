@@ -4,7 +4,6 @@
 // spa-routes.json: the server reads the built copy, moved.json beside index.html, and answers
 // a 301 (B17); the app moves the address in the bar before it reads it, when the server did not.
 import moved from './moved.json';
-import { movedBundleAddress } from '$lib/map/page';
 
 const MOVED: Readonly<Record<string, string>> = moved;
 
@@ -17,7 +16,7 @@ export const SEARCH_FRAGMENT = 'zoeken';
  */
 export function movedAddress(url: URL): string | null {
 	const target = MOVED[url.pathname.replace(/(.)\/$/, '$1')];
-	if (!target) return movedBundleAddress(url);
+	if (!target) return null;
 	const to = new URL(target, url);
 	for (const [k, v] of url.searchParams) to.searchParams.append(k, v);
 	return `${to.pathname}${to.search}${url.hash || to.hash}`;

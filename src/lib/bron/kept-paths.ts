@@ -3,9 +3,9 @@
 import { onAnswer } from '$lib/api/client';
 import { onthoudArtikel } from '$lib/api/articles';
 import { apiNumber, bookNumber } from '$lib/text/bw';
-import { parseNodeId } from '$lib/vocabulary';
+import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { onthoudTitel } from './titels.svelte';
-import { keptPath, padHref, parsePad, remember } from './address';
+import { keptPath, padHref, parsePad, remember, type Pad } from './address';
 
 /**
  * The addresses the API gives (`path` beside `id`, on every bron it returns), kept as if
@@ -18,20 +18,13 @@ export function keepPaths(data: unknown, depth = 0) {
 		for (const item of data) keepPaths(item, depth + 1);
 		return;
 	}
-	const { path, key, member_key } = data as Record<string, unknown>;
-	// A person is named by the key of the lid beside their address, without an id: a cabinet's
-	// bewindspersonen, a stuk's indieners, the lid of a toezegging (UX-toets 0.79.47, #51).
-	const lidKey = member_key ?? key;
-	const id =
-		(data as { id?: unknown }).id ??
-		(typeof path === 'string' && path.startsWith('/leden/') && typeof lidKey === 'string'
-			? `members/${lidKey}`
-			: undefined);
+	const { path, key, member_key, collection } = data as Record<string, unknown>;
 	const address = typeof path === 'string' ? path : articleAddress(data);
-	if (typeof id === 'string' && address && keptPath(id) !== address) {
+	const pad = address ? parsePad(address) : null;
+	const id = (data as { id?: unknown }).id ?? idOf(pad, collection, member_key ?? key);
+	if (typeof id === 'string' && address && pad && keptPath(id) !== address) {
 		const target = parseNodeId(id);
-		const pad = parsePad(address);
-		if (target && pad && target.collection !== 'dossiers') {
+		if (target && target.collection !== 'dossiers') {
 			remember(padHref(pad), id);
 			// The text of an article named here can stand in the reader before its node.
 			if (pad.soort === 'artikel')
@@ -41,6 +34,27 @@ export function keepPaths(data: unknown, depth = 0) {
 	for (const value of Object.values(data)) {
 		if (value && typeof value === 'object') keepPaths(value, depth + 1);
 	}
+}
+
+/** The collection of a bron that a list gives by its key and `path` only, by what its address is. */
+const COLLECTION_OF: Partial<Record<Pad['soort'], Collection>> = {
+	lid: 'members',
+	toezegging: 'commitments',
+	activiteit: 'activities',
+	commissie: 'committees',
+	zaak: 'cases'
+};
+
+/**
+ * The id of a bron an answer gives without one: its `collection` and key (a stuk of a list), or
+ * the key of a row that is only its `path` and key (a toezegging, an activiteit, a person
+ * beside their address: a cabinet's bewindspersonen, a stuk's indieners, UX-toets 0.79.47, #51).
+ */
+function idOf(pad: Pad | null, collection: unknown, key: unknown): string | undefined {
+	if (typeof key !== 'string') return undefined;
+	if (typeof collection === 'string') return `${collection}/${key}`;
+	const own = pad && COLLECTION_OF[pad.soort];
+	return own ? `${own}/${key}` : undefined;
 }
 
 /**

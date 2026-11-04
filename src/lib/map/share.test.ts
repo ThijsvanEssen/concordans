@@ -30,7 +30,7 @@ const map = {
 
 /** The link as the page copies it. */
 const linkOf = async (m: typeof map) =>
-	new URL(`/gemarkeerd${await shareFragment(m)}`, 'https://concordans.nl');
+	new URL(`/bundels${await shareFragment(m)}`, 'https://concordans.nl');
 
 describe('the link of a map', () => {
 	it('carries the map in its fragment and comes back the same', async () => {
@@ -70,7 +70,7 @@ describe('the link of a map', () => {
 		const url = await linkOf(map);
 		// What a request carries: the address without its fragment.
 		const sent = url.href.slice(0, url.href.indexOf('#'));
-		expect(sent).toBe('https://concordans.nl/gemarkeerd');
+		expect(sent).toBe('https://concordans.nl/bundels');
 		expect(url.search).toBe('');
 		// And the fragment itself is no readable text: deflated, in base64url.
 		for (const word of ['Drie', 'RSI', 'Aansprakelijkheid', 'bwbr0005289', 'Urgenda'])

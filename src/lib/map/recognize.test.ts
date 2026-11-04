@@ -61,7 +61,7 @@ describe('a pasted source Concordans holds', () => {
 		expect(recognize('https://example.org/x', 'https://example.org')).toBeNull();
 		expect(recognize('Asser/Hartkamp & Sieburgh 6-IV 2019/45')).toBeNull();
 		expect(recognize('https://www.navigator.nl/document/abc')).toBeNull();
-		expect(recognize('https://concordans.nl/gemarkeerd')).toBeNull();
+		expect(recognize('https://concordans.nl/bundels')).toBeNull();
 		expect(recognize('')).toBeNull();
 	});
 });

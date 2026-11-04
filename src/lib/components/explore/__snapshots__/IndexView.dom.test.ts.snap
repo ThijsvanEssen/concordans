@@ -201,9 +201,9 @@ exports[`Bronnen, list by list > commitments ? > view 1`] = `
   "regel": "Zoeken",
   "richting": null,
   "rijen": [
-    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458",
-    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad",
-    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790",
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /toezeggingen/TZ202610-132",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /toezeggingen/TZ202610-141",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /toezeggingen/TZ202610-136",
   ],
   "volgorde": [
     "Datum (gekozen)",
@@ -297,9 +297,9 @@ exports[`Bronnen, list by list > commitments ?status=Openstaand&overdue=1&kabine
   "regel": "Zoeken",
   "richting": null,
   "rijen": [
-    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /explore?focus=commitments/0ce0711d_0f70_4a6e_b863_ed7fa0948458",
-    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /explore?focus=commitments/1764f942_f9c9_4a23_9da2_038e0abd2cad",
-    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /explore?focus=commitments/207e4c20_5f93_4b44_a37d_d4935b077790",
+    "De Kamer ontvangt aan het einde van het eerste kwartaal van 2027 een update over toegankelijk onderwijs voor studenten met een ondersteuningsbehoefte. -> /toezeggingen/TZ202610-132",
+    "De Kamer ontvangt over een halfjaar concrete informatie over de manieren om de besteding van de bekostiging transparanter te maken. -> /toezeggingen/TZ202610-141",
+    "De staatssecretaris informeert in het voorjaar van 2027 de Kamer over de resultaten van de bereikbaarheidsanalyse en de uitkomsten van de gesprekken die gevoerd zijn met de sector en de verschillende regio's. -> /toezeggingen/TZ202610-136",
   ],
   "volgorde": [
     "Datum",

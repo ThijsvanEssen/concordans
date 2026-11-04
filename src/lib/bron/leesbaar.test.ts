@@ -210,6 +210,19 @@ describe('the address of a focus', () => {
 		expect(padOfFocus('dossiers/k1')).toBeNull();
 	});
 
+	it('takes the address of a row of a list that gives its key and path but no id', () => {
+		keepPaths({
+			items: [
+				{ key: 'c0ffee', number: 'TZ202610-132', path: '/toezeggingen/TZ202610-132' },
+				{ key: 'a1b2', number: '2026A04374', path: '/activiteiten/2026A04374' },
+				{ key: 'd0c5', collection: 'documents', path: '/kamerstukken/21501-20/2461' }
+			]
+		});
+		expect(padOfFocus('commitments/c0ffee')).toBe('/toezeggingen/TZ202610-132');
+		expect(padOfFocus('activities/a1b2')).toBe('/activiteiten/2026A04374');
+		expect(padOfFocus('documents/d0c5')).toBe('/kamerstukken/21501-20/2461');
+	});
+
 	it("writes an article's address where the answer names its law and number but no path (Licht toe)", () => {
 		keepPaths({
 			explains: [

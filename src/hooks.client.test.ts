@@ -49,7 +49,7 @@ describe('the outer boundary', () => {
 	});
 });
 
-describe('an address of the bundels of before (decision 19)', () => {
+describe('a bare collection that moved', () => {
 	const at = (href: string) => {
 		const replaceState = vi.fn();
 		moveAddress(
@@ -59,19 +59,17 @@ describe('an address of the bundels of before (decision 19)', () => {
 		return replaceState.mock.calls.map((c) => c[2]);
 	};
 
-	it('puts the address of now in the bar on loading, a shared link’s fragment with it', () => {
-		expect(at('/gemarkeerd#m=abc')).toEqual(['/bundels#m=abc']);
-		expect(at('/gemarkeerd/bundel?id=k3j2')).toEqual(['/bundels/k3j2']);
+	it('puts its list in the bar on loading, and leaves any other address alone', () => {
+		expect(at('/wetten')).toEqual(['/explore?mode=index&kind=instruments']);
 		expect(at('/bundels/k3j2')).toEqual([]);
 	});
 
-	it('serves an address of before by its page of now within the app', () => {
+	it('serves it by its page of now within the app', () => {
 		const to = (href: string) =>
 			reroute({ url: new URL(href, 'https://concordans.nl'), fetch } as Parameters<
 				typeof reroute
 			>[0]);
-		expect(to('/gemarkeerd')).toBe('/bundels');
-		expect(to('/gemarkeerd/bundel?id=k3j2')).toBe('/bundels/k3j2');
+		expect(to('/wetten')).toBe('/explore');
 		expect(to('/actueel')).toBeUndefined();
 	});
 });
