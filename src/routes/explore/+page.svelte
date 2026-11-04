@@ -44,6 +44,7 @@
 	import {
 		DEFAULT_FILTERS,
 		NEIGHBORHOOD_CAP,
+		capFrom,
 		type NeighborhoodReach
 	} from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/bron/law-articles';
@@ -209,9 +210,11 @@
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
 
 	// One store for the lifetime of this page, so it survives mode switches.
-	const store = createGraphStore();
+	// ?grens=800 is a trial: the places the canvas keeps (400), read once, at the page's start.
+	const cap = capFrom(page.url.searchParams.get('grens'));
+	const store = createGraphStore({ cap });
 	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts).
-	const composer = new NetwerkComposer(store, () => graphView);
+	const composer = new NetwerkComposer(store, () => graphView, cap);
 
 	let selectedNode = $state<GraphNode | null>(null);
 	// The Topbalk marks a person by their current role, and the wissel names the bron of the
@@ -2319,6 +2322,7 @@
 					.map((n) => ({
 						id: n.id,
 						name: bronNaam(n, $instrumentMetaStore),
+						fullName: bronFullName(n, $instrumentMetaStore),
 						collection: n.collection,
 						onOpen: withChain(n) ? () => (chainFrom = n.id) : null
 					}))}

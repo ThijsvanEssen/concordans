@@ -109,7 +109,7 @@ function budgetClusters(o: {
  * derived nodes and edges. Loader modules receive this object and never
  * create their own copies.
  */
-export function createGraphContext() {
+export function createGraphContext({ cap = SOFT_NODE_CAP }: { cap?: number } = {}) {
 	const nodes = new Map<string, GraphNode>();
 	const edges = new Map<string, GraphEdge>();
 	/** Expansion responses by node id. */
@@ -234,7 +234,7 @@ export function createGraphContext() {
 	 */
 	const trimToCap = (keep?: string) => {
 		// A cluster only lowers the cost: no more nodes than the cap is within it already.
-		if (nodes.size <= SOFT_NODE_CAP) return;
+		if (nodes.size <= cap) return;
 		const selected = get(selectionStore);
 		const groups = containers.current();
 		const view = [...nodes.values()];
@@ -270,7 +270,7 @@ export function createGraphContext() {
 			ids: [...nodes.keys()],
 			edges: drawn,
 			order: (id) => insertedAt.get(id) ?? 0,
-			cap: SOFT_NODE_CAP,
+			cap,
 			chosen: [...pinned],
 			hullOf: (id) => hullOfLaw(nodes.get(id), groups),
 			core: network.core,

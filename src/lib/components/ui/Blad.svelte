@@ -239,7 +239,7 @@
 	}
 	.sheet[data-place='rechts'] {
 		inset: var(--balk-h) 0 0 auto;
-		width: 400px;
+		width: var(--paneel-over);
 		max-width: 100vw;
 		border-left: 1px solid var(--rule-strong);
 	}

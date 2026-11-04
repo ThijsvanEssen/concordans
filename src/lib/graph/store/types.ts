@@ -96,6 +96,15 @@ export const DEFAULT_FILTERS: GraphFilters = {
 // next to the selection.
 export const SOFT_NODE_CAP = 400;
 
+/**
+ * `?grens=800`, a trial of how many places the canvas keeps: a whole number from 50 to 2000
+ * replaces the soft cap for the store made at the page's start; anything else leaves it.
+ */
+export const capFrom = (asked: string | null): number => {
+	const n = Number(asked);
+	return asked !== null && Number.isInteger(n) && n >= 50 && n <= 2000 ? n : SOFT_NODE_CAP;
+};
+
 export type GraphStore = {
 	nodes: Readable<GraphNode[]>;
 	edges: Readable<GraphEdge[]>;

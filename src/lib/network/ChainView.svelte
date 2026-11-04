@@ -83,6 +83,8 @@
 		others?: readonly {
 			id: string;
 			name: string;
+			/** Written out, where `name` abbreviates: "Cyberbeveiligingsbesluit" for "Cbb". */
+			fullName: string;
 			collection: string;
 			onOpen: (() => void) | null;
 		}[];
@@ -432,10 +434,16 @@
 		e.stopPropagation();
 		hover.close();
 		openInPanel(l.citeArticles);
+		// The drawing has room for the panel (.panel-over); the label pans clear of it (B76).
+		const label = e.currentTarget as Element;
+		requestAnimationFrame(() =>
+			label.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' })
+		);
 	}
 	/** The labels and the Alle of the layers stay in view while the drawing pans under them. */
 	let pan = $state<HTMLElement | null>(null);
 	let centredFor = '';
+	const centred = (x: number) => Math.max(0, x * scale - avail / 2);
 	// A drawing wider than the screen opens on the bron it is about, not on its left edge.
 	$effect(() => {
 		const root = start ?? shown.find((l) => l.id === 'law')?.nodes[0]?.id;
@@ -443,7 +451,20 @@
 		const key = `${root}:${shown.length}:${Math.round(width)}`;
 		if (!pan || at === undefined || key === centredFor || width <= avail) return;
 		centredFor = key;
-		pan.scrollTo({ left: Math.max(0, at * scale - avail / 2), behavior: 'instant' });
+		pan.scrollTo({ left: centred(at), behavior: 'instant' });
+	});
+	/** A stump chosen draws its parent elsewhere on the row: the drawing pans to it (B90). */
+	let landing = $state('');
+	function chooseStump(parent: ChainNode) {
+		landing = parent.id;
+		onChoose(parent);
+	}
+	$effect(() => {
+		const at = landing ? place.get(landing)?.x : undefined;
+		if (!pan || at === undefined) return;
+		landing = '';
+		const el = pan;
+		requestAnimationFrame(() => el.scrollTo({ left: centred(at), behavior: 'smooth' }));
 	});
 	const panned = (el: HTMLElement) => {
 		const set = () => el.style.setProperty('--sx', `${el.scrollLeft}px`);
@@ -544,9 +565,11 @@
 			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
 			{#if notHere.length}<span class="ook"
 					>Ook gekozen, niet in deze keten: {#each notHere as o, i (o.id)}{#if i},
-						{/if}{#if o.onOpen}<TekstLink onclick={o.onOpen} title="De keten van {o.name}"
-								>{o.name}</TekstLink
-							>{:else}{o.name}{/if}{/each}</span
+						{/if}{@const label =
+							o.fullName === o.name ? o.name : `${o.fullName} (${o.name})`}{#if o.onOpen}<TekstLink
+								onclick={o.onOpen}
+								title="De keten van {o.fullName}">{label}</TekstLink
+							>{:else}{label}{/if}{/each}</span
 				>{/if}
 			{#if gap}<p class="gap">{gap}</p>{/if}
 			{#if expired?.total}<TekstLink onclick={expired.onToggle} aria-pressed={expired.shown}
@@ -556,7 +579,14 @@
 				>{/if}
 		</div>
 	{/if}
-	<div class="pan" data-zijscroll bind:this={pan} use:sideScroll use:panned>
+	<div
+		class="pan"
+		class:panel-over={readOpen().length > 0}
+		data-zijscroll
+		bind:this={pan}
+		use:sideScroll
+		use:panned
+	>
 		<svg
 			class="drawing"
 			style:width="{width * scale}px"
@@ -629,10 +659,10 @@
 					role="button"
 					tabindex="0"
 					aria-label="{t.parent.name}, staat niet op het doek"
-					onclick={() => onChoose(t.parent)}
+					onclick={() => chooseStump(t.parent)}
 					onkeydown={(e) => {
 						hover.keys();
-						press(e, () => onChoose(t.parent));
+						press(e, () => chooseStump(t.parent));
 					}}
 					onpointerenter={(e) => {
 						hover.pointer(e.pointerType);
@@ -890,6 +920,18 @@
 		overflow-x: auto;
 		scroll-padding-inline: var(--s-8);
 		scrollbar-width: none;
+	}
+	/* The Zijpaneel lies over the right of the page: the drawing has room for it at its end. */
+	.pan.panel-over {
+		padding-inline-end: var(--paneel-over);
+		scroll-padding-inline-end: calc(var(--paneel-over) + var(--s-4));
+	}
+	/* From 1800 px the panel stands in the page's flow: the page gives it its room. */
+	@media (min-width: 1800px) {
+		.pan.panel-over {
+			padding-inline-end: 0;
+			scroll-padding-inline-end: var(--s-8);
+		}
 	}
 	.drawing {
 		display: block;
