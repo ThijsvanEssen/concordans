@@ -94,13 +94,13 @@
 		text-decoration: none;
 	}
 	/* "Lezer: " is 40 px, the name 96: past that it stops, the whole name in the title. Measured
-	   beside the search field and Mijn at 1120 to 1440 (B85, B87); narrower it does not fit. */
+	   beside the search field and Mijn at 1140 to 1440 (B85, B87); narrower it does not fit. */
 	.lees-keuze__tekst {
 		max-width: 136px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	@media (max-width: 1119px) {
+	@media (max-width: 1139px) {
 		.lees-keuze__naam {
 			display: none;
 		}
