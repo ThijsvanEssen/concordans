@@ -38,7 +38,7 @@ export function keepPaths(data: unknown, depth = 0) {
 
 /** The collection of a bron that a list gives by its key and `path` only, by what its address is. */
 function collectionOfAddress(pad: Pad): Collection | null {
-	switch (pad.soort) {
+	switch (pad.kind) {
 		case 'lid':
 			return 'members';
 		case 'toezegging':
