@@ -21,7 +21,7 @@ export function keepPaths(data: unknown, depth = 0) {
 	const { path, key, member_key, collection } = data as Record<string, unknown>;
 	const address = typeof path === 'string' ? path : articleAddress(data);
 	const pad = address ? parsePad(address) : null;
-	const id = (data as { id?: unknown }).id ?? idOf(pad, collection, member_key ?? key);
+	const id = (data as { id?: unknown }).id ?? idFrom(pad, collection, member_key ?? key);
 	if (typeof id === 'string' && address && pad && keptPath(id) !== address) {
 		const target = parseNodeId(id);
 		if (target && target.collection !== 'dossiers') {
@@ -37,23 +37,23 @@ export function keepPaths(data: unknown, depth = 0) {
 }
 
 /** The collection of a bron that a list gives by its key and `path` only, by what its address is. */
-const COLLECTION_OF: Partial<Record<Pad['soort'], Collection>> = {
-	lid: 'members',
-	toezegging: 'commitments',
-	activiteit: 'activities',
-	commissie: 'committees',
-	zaak: 'cases'
-};
+const COLLECTION_BY_ADDRESS = new Map<Pad['soort'], Collection>([
+	['lid', 'members'],
+	['toezegging', 'commitments'],
+	['activiteit', 'activities'],
+	['commissie', 'committees'],
+	['zaak', 'cases']
+]);
 
 /**
  * The id of a bron an answer gives without one: its `collection` and key (a stuk of a list), or
  * the key of a row that is only its `path` and key (a toezegging, an activiteit, a person
  * beside their address: a cabinet's bewindspersonen, a stuk's indieners, UX-toets 0.79.47, #51).
  */
-function idOf(pad: Pad | null, collection: unknown, key: unknown): string | undefined {
+function idFrom(pad: Pad | null, collection: unknown, key: unknown): string | undefined {
 	if (typeof key !== 'string') return undefined;
 	if (typeof collection === 'string') return `${collection}/${key}`;
-	const own = pad && COLLECTION_OF[pad.soort];
+	const own = pad && COLLECTION_BY_ADDRESS.get(pad.soort);
 	return own ? `${own}/${key}` : undefined;
 }
 

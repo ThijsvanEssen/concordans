@@ -5,9 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { bron, overtreders, plek } from '$lib/test/bronnen';
 
 describe('the name and the address of the bundels (decision 19)', () => {
-	it('says Bundels, never Gemarkeerd; the address of before only where it moves', () => {
-		expect(overtreders((t) => /\bGemarkeerd\b/.test(t))).toEqual([]);
-		expect(overtreders((t) => /\/gemarkeerd\b/.test(t), [plek('lib/map/page.ts')])).toEqual([]);
+	it('says Bundels, never Gemarkeerd', () => {
+		expect(overtreders((t) => /\bGemarkeerd\b|\/gemarkeerd\b/.test(t))).toEqual([]);
 	});
 
 	it('names the menu item Bundels, without a count', () => {
