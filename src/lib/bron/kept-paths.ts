@@ -37,13 +37,22 @@ export function keepPaths(data: unknown, depth = 0) {
 }
 
 /** The collection of a bron that a list gives by its key and `path` only, by what its address is. */
-const COLLECTION_BY_ADDRESS = new Map<Pad['soort'], Collection>([
-	['lid', 'members'],
-	['toezegging', 'commitments'],
-	['activiteit', 'activities'],
-	['commissie', 'committees'],
-	['zaak', 'cases']
-]);
+function collectionOfAddress(pad: Pad): Collection | null {
+	switch (pad.soort) {
+		case 'lid':
+			return 'members';
+		case 'toezegging':
+			return 'commitments';
+		case 'activiteit':
+			return 'activities';
+		case 'commissie':
+			return 'committees';
+		case 'zaak':
+			return 'cases';
+		default:
+			return null;
+	}
+}
 
 /**
  * The id of a bron an answer gives without one: its `collection` and key (a stuk of a list), or
@@ -53,7 +62,7 @@ const COLLECTION_BY_ADDRESS = new Map<Pad['soort'], Collection>([
 function idFrom(pad: Pad | null, collection: unknown, key: unknown): string | undefined {
 	if (typeof key !== 'string') return undefined;
 	if (typeof collection === 'string') return `${collection}/${key}`;
-	const own = pad && COLLECTION_BY_ADDRESS.get(pad.soort);
+	const own = pad && collectionOfAddress(pad);
 	return own ? `${own}/${key}` : undefined;
 }
 
