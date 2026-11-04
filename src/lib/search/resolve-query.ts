@@ -67,8 +67,8 @@ export function resolvedOf(data: Schema<'ResolveResponse'> | null | undefined): 
 function refOfMatch(match: Schema<'ResolveMatch'>): BronRef | null {
 	if (match.collection !== 'dossiers') return { collection: match.collection, key: match.key };
 	const pad = parsePad(match.path ?? '');
-	return pad?.soort === 'dossier'
-		? { collection: 'dossiers', key: match.key, number: pad.nummer }
+	return pad?.kind === 'dossier'
+		? { collection: 'dossiers', key: match.key, number: pad.number }
 		: null;
 }
 

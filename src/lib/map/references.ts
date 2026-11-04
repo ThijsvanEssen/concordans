@@ -50,7 +50,7 @@ function ofArticle(m: RegExpExecArray): NoteReference | null {
 		name: `artikel ${place} ${law}`,
 		start: m.index,
 		end: m.index + text.length,
-		path: bwb ? padHref({ soort: 'artikel', wet: bwb, nummer: number }) + lidAnchor(lid) : null,
+		path: bwb ? padHref({ kind: 'artikel', law: bwb, number }) + lidAnchor(lid) : null,
 		...(bwb ? {} : { query: { law, number, lid } })
 	};
 }
@@ -61,7 +61,7 @@ const ofEcli = (m: RegExpExecArray): NoteReference => ({
 	name: m[0],
 	start: m.index,
 	end: m.index + m[0].length,
-	path: padHref({ soort: 'uitspraak', ecli: m[0] })
+	path: padHref({ kind: 'uitspraak', ecli: m[0] })
 });
 
 function ofKamerstuk(m: RegExpExecArray): NoteReference {
@@ -78,7 +78,7 @@ function ofKamerstuk(m: RegExpExecArray): NoteReference {
 		name: cited?.short ?? text,
 		start: m.index,
 		end: m.index + text.length,
-		path: padHref({ soort: 'kamerstuk', dossier, nummer: number })
+		path: padHref({ kind: 'kamerstuk', dossier, number })
 	};
 }
 
@@ -128,8 +128,7 @@ export async function lookUpReferences(
 			const number = String(d?.props?.article_number ?? '');
 			if (law && number)
 				out[key] =
-					padHref({ soort: 'artikel', wet: law, nummer: bookNumber(law, number) }) +
-					lidAnchor(q.lid);
+					padHref({ kind: 'artikel', law, number: bookNumber(law, number) }) + lidAnchor(q.lid);
 		})
 	);
 	return out;

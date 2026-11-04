@@ -8,9 +8,9 @@ import type { Pad } from './address';
 
 /** The citation an address of a law by name stands for (`art. 1:1 WFT`); null for an id. */
 export function citedByName(pad: Pad): string | null {
-	if (pad.soort === 'artikel' && !isLawId(pad.wet))
-		return `${articleRef(null, pad.nummer)} ${pad.wet}`;
-	if (pad.soort === 'wet' && !isLawId(pad.wet)) return pad.wet;
+	if (pad.kind === 'artikel' && !isLawId(pad.law))
+		return `${articleRef(null, pad.number)} ${pad.law}`;
+	if (pad.kind === 'wet' && !isLawId(pad.law)) return pad.law;
 	return null;
 }
 
@@ -19,6 +19,6 @@ export async function pathByName(pad: Pad, signal?: AbortSignal): Promise<string
 	const cited = citedByName(pad);
 	if (!cited) return null;
 	const answer = await resolveQuery(cited, signal);
-	const kind = pad.soort === 'artikel' ? 'article' : 'instrument';
+	const kind = pad.kind === 'artikel' ? 'article' : 'instrument';
 	return answer.kind === kind ? (answer.match?.path ?? null) : null;
 }

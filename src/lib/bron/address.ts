@@ -37,22 +37,22 @@ import { onForget } from '$lib/util/forget';
 import { enactedLawOfKey, lawNodeKey, STB_LAW } from '$lib/text/enacted-law';
 
 export type Pad =
-	| { soort: 'uitspraak'; ecli: string }
-	| { soort: 'artikel'; wet: string; nummer: string }
-	| { soort: 'wet'; wet: string }
-	| { soort: 'dossier'; nummer: string }
-	| { soort: 'kamerstuk'; dossier: string; nummer: string }
-	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string }
-	| { soort: 'lid'; slug: string }
-	| { soort: 'kabinet'; key: string }
-	| { soort: 'ministry'; key: string }
-	| { soort: 'fractie'; key: string }
-	| { soort: 'commissie'; slug: string }
-	| { soort: 'toezegging'; nummer: string }
-	| { soort: 'stemming'; key: string }
-	| { soort: 'zaak'; nummer: string }
-	| { soort: 'activiteit'; nummer: string }
-	| { soort: 'bijlage'; wet: string; label: string };
+	| { kind: 'uitspraak'; ecli: string }
+	| { kind: 'artikel'; law: string; number: string }
+	| { kind: 'wet'; law: string }
+	| { kind: 'dossier'; number: string }
+	| { kind: 'kamerstuk'; dossier: string; number: string }
+	| { kind: 'publicatie'; reeks: Reeks; jaar: string; number: string }
+	| { kind: 'lid'; slug: string }
+	| { kind: 'kabinet'; key: string }
+	| { kind: 'ministry'; key: string }
+	| { kind: 'fractie'; key: string }
+	| { kind: 'commissie'; slug: string }
+	| { kind: 'toezegging'; number: string }
+	| { kind: 'stemming'; key: string }
+	| { kind: 'zaak'; number: string }
+	| { kind: 'activiteit'; number: string }
+	| { kind: 'bijlage'; law: string; label: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
 type Reeks = 'stb' | 'stcrt' | 'trb';
@@ -94,8 +94,8 @@ const ANNEX_LABEL = /^[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/i;
 /** The number of a stuk: a figure in the Tweede Kamer, letters in the Eerste (`A`, `AB`). */
 const PAPER_NUMBER = /^(\d+|[A-Z]{1,3})$/i;
 
-type AddressKind = Pad['soort'];
-type PadOf<S extends AddressKind> = Extract<Pad, { soort: S }>;
+type AddressKind = Pad['kind'];
+type PadOf<S extends AddressKind> = Extract<Pad, { kind: S }>;
 
 /**
  * One kind of address: how it reads from the segments of a path, how it is written, what
@@ -121,30 +121,30 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 	uitspraak: {
 		read: (p) => {
 			const ecli = single(p, 'uitspraken', ECLI);
-			return ecli ? { soort: 'uitspraak', ecli: ecli.toUpperCase() } : null;
+			return ecli ? { kind: 'uitspraak', ecli: ecli.toUpperCase() } : null;
 		},
 		write: (pad) => `/uitspraken/${keep(pad.ecli)}`,
 		lookup: (pad) => ({ kind: 'judgment', ecli: pad.ecli }),
 		focus: (pad) => `judgments/${ecliKey(pad.ecli)}`,
 		fromKey: ({ collection, key }) => {
 			const ecli = collection === 'judgments' ? keyEcli(key) : null;
-			return ecli ? { soort: 'uitspraak', ecli } : null;
+			return ecli ? { kind: 'uitspraak', ecli } : null;
 		}
 	},
 	wet: {
 		read: (p) => {
 			const wet =
 				single(p, 'wetten', BWB) ?? single(p, 'wetten', CELEX) ?? single(p, 'wetten', STB_LAW);
-			return wet ? { soort: 'wet', wet: wet.toUpperCase() } : null;
+			return wet ? { kind: 'wet', law: wet.toUpperCase() } : null;
 		},
-		write: (pad) => `/wetten/${e(pad.wet)}`,
-		lookup: (pad) => ({ kind: 'law', id: pad.wet }),
-		focus: (pad) => `instruments/${lawNodeKey(pad.wet)}`,
+		write: (pad) => `/wetten/${e(pad.law)}`,
+		lookup: (pad) => ({ kind: 'law', id: pad.law }),
+		focus: (pad) => `instruments/${lawNodeKey(pad.law)}`,
 		fromKey: ({ collection, key }) => {
 			if (collection !== 'instruments') return null;
-			if (BWB.test(key) || CELEX.test(key)) return { soort: 'wet', wet: key.toUpperCase() };
+			if (BWB.test(key) || CELEX.test(key)) return { kind: 'wet', law: key.toUpperCase() };
 			const enacted = enactedLawOfKey(key);
-			return enacted ? { soort: 'wet', wet: enacted } : null;
+			return enacted ? { kind: 'wet', law: enacted } : null;
 		}
 	},
 	bijlage: {
@@ -154,53 +154,53 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 			!rest.length &&
 			BWB.test(wet) &&
 			ANNEX_LABEL.test(label)
-				? { soort: 'bijlage', wet: wet.toUpperCase(), label: label.toUpperCase() }
+				? { kind: 'bijlage', law: wet.toUpperCase(), label: label.toUpperCase() }
 				: null,
-		write: (pad) => `/wetten/${e(pad.wet)}/bijlage/${e(pad.label)}`,
-		lookup: (pad) => ({ kind: 'annex', law: pad.wet, label: pad.label })
+		write: (pad) => `/wetten/${e(pad.law)}/bijlage/${e(pad.label)}`,
+		lookup: (pad) => ({ kind: 'annex', law: pad.law, label: pad.label })
 	},
 	artikel: {
 		read: ([first, wet, b, nummer, ...rest]) =>
 			first === 'wetten' && b === 'artikel' && !rest.length && wet && nummer
-				? { soort: 'artikel', wet: wet.toUpperCase(), nummer }
+				? { kind: 'artikel', law: wet.toUpperCase(), number: nummer }
 				: null,
-		write: (pad) => `/wetten/${e(pad.wet)}/artikel/${keep(pad.nummer)}`,
-		lookup: (pad) => ({ kind: 'article', law: pad.wet, number: pad.nummer })
+		write: (pad) => `/wetten/${e(pad.law)}/artikel/${keep(pad.number)}`,
+		lookup: (pad) => ({ kind: 'article', law: pad.law, number: pad.number })
 	},
 	zaak: {
 		read: (p) => {
 			const nummer = single(p, 'zaken', CASE_NUMBER);
-			return nummer ? { soort: 'zaak', nummer: nummer.toUpperCase() } : null;
+			return nummer ? { kind: 'zaak', number: nummer.toUpperCase() } : null;
 		},
-		write: (pad) => `/zaken/${pad.nummer}`,
-		lookup: (pad) => ({ kind: 'case', number: pad.nummer })
+		write: (pad) => `/zaken/${pad.number}`,
+		lookup: (pad) => ({ kind: 'case', number: pad.number })
 	},
 	activiteit: {
 		read: (p) => {
 			const nummer = single(p, 'activiteiten', ACTIVITY_NUMBER);
-			return nummer ? { soort: 'activiteit', nummer: nummer.toUpperCase() } : null;
+			return nummer ? { kind: 'activiteit', number: nummer.toUpperCase() } : null;
 		},
-		write: (pad) => `/activiteiten/${pad.nummer}`,
-		lookup: (pad) => ({ kind: 'activity', number: pad.nummer })
+		write: (pad) => `/activiteiten/${pad.number}`,
+		lookup: (pad) => ({ kind: 'activity', number: pad.number })
 	},
 	dossier: {
 		read: (p) => {
 			const nummer = single(p, 'dossiers', DOSSIER);
-			return nummer ? { soort: 'dossier', nummer: nummer.toUpperCase() } : null;
+			return nummer ? { kind: 'dossier', number: nummer.toUpperCase() } : null;
 		},
-		write: (pad) => `/dossiers/${e(pad.nummer)}`,
-		lookup: (pad) => ({ kind: 'dossier', number: pad.nummer }),
+		write: (pad) => `/dossiers/${e(pad.number)}`,
+		lookup: (pad) => ({ kind: 'dossier', number: pad.number }),
 		// The front end names a dossier by its number (36600-VIII), not its key (36600_viii).
-		focus: (pad) => `dossiers/${pad.nummer}`,
+		focus: (pad) => `dossiers/${pad.number}`,
 		fromKey: ({ collection, key }) =>
 			collection === 'dossiers' && DOSSIER.test(key)
-				? { soort: 'dossier', nummer: key.toUpperCase() }
+				? { kind: 'dossier', number: key.toUpperCase() }
 				: null
 	},
 	lid: {
 		read: (p) => {
 			const slug = single(p, 'leden', LID_SLUG);
-			return slug ? { soort: 'lid', slug } : null;
+			return slug ? { kind: 'lid', slug } : null;
 		},
 		write: (pad) => `/leden/${pad.slug}`,
 		lookup: (pad) => ({ kind: 'member', id: pad.slug })
@@ -208,40 +208,40 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 	kabinet: {
 		read: (p) => {
 			const key = single(p, 'kabinetten', KEY);
-			return key ? { soort: 'kabinet', key } : null;
+			return key ? { kind: 'kabinet', key } : null;
 		},
 		write: (pad) => `/kabinetten/${pad.key}`,
 		lookup: (pad) => ({ kind: 'cabinet', id: pad.key }),
 		focus: (pad) => `cabinets/${pad.key}`,
 		fromKey: ({ collection, key }) =>
-			collection === 'cabinets' && KEY.test(key) ? { soort: 'kabinet', key } : null
+			collection === 'cabinets' && KEY.test(key) ? { kind: 'kabinet', key } : null
 	},
 	ministry: {
 		read: (p) => {
 			const key = single(p, 'ministeries', KEY);
-			return key ? { soort: 'ministry', key } : null;
+			return key ? { kind: 'ministry', key } : null;
 		},
 		write: (pad) => `/ministeries/${pad.key}`,
 		lookup: (pad) => ({ kind: 'ministry', id: pad.key }),
 		focus: (pad) => `ministries/${pad.key}`,
 		fromKey: ({ collection, key }) =>
-			collection === 'ministries' && KEY.test(key) ? { soort: 'ministry', key } : null
+			collection === 'ministries' && KEY.test(key) ? { kind: 'ministry', key } : null
 	},
 	fractie: {
 		read: (p) => {
 			const key = single(p, 'fracties', KEY);
-			return key ? { soort: 'fractie', key } : null;
+			return key ? { kind: 'fractie', key } : null;
 		},
 		write: (pad) => `/fracties/${pad.key}`,
 		lookup: (pad) => ({ kind: 'faction', id: pad.key }),
 		focus: (pad) => `factions/${pad.key}`,
 		fromKey: ({ collection, key }) =>
-			collection === 'factions' && KEY.test(key) ? { soort: 'fractie', key } : null
+			collection === 'factions' && KEY.test(key) ? { kind: 'fractie', key } : null
 	},
 	commissie: {
 		read: (p) => {
 			const slug = single(p, 'commissies', KEY);
-			return slug ? { soort: 'commissie', slug } : null;
+			return slug ? { kind: 'commissie', slug } : null;
 		},
 		write: (pad) => `/commissies/${pad.slug}`,
 		lookup: (pad) => ({ kind: 'committee', id: pad.slug })
@@ -249,53 +249,53 @@ const ADDRESS_RULES: { [S in AddressKind]: AddressRule<S> } = {
 	toezegging: {
 		read: (p) => {
 			const nummer = single(p, 'toezeggingen', TOEZEGGING);
-			return nummer ? { soort: 'toezegging', nummer: nummer.toUpperCase() } : null;
+			return nummer ? { kind: 'toezegging', number: nummer.toUpperCase() } : null;
 		},
-		write: (pad) => `/toezeggingen/${pad.nummer}`,
-		lookup: (pad) => ({ kind: 'commitment', number: pad.nummer })
+		write: (pad) => `/toezeggingen/${pad.number}`,
+		lookup: (pad) => ({ kind: 'commitment', number: pad.number })
 	},
 	stemming: {
 		read: (p) => {
 			const key = single(p, 'stemmingen', KEY);
-			return key ? { soort: 'stemming', key } : null;
+			return key ? { kind: 'stemming', key } : null;
 		},
 		write: (pad) => `/stemmingen/${pad.key}`,
 		focus: (pad) => `decisions/${pad.key}`,
 		fromKey: ({ collection, key }) =>
-			collection === 'decisions' && KEY.test(key) ? { soort: 'stemming', key } : null
+			collection === 'decisions' && KEY.test(key) ? { kind: 'stemming', key } : null
 	},
 	publicatie: {
 		read: ([reeks, jaar, nummer, ...rest]) =>
 			SERIES.includes(reeks) && !rest.length && /^\d{4}$/.test(jaar) && /^\d+$/.test(nummer)
-				? { soort: 'publicatie', reeks: reeks as Reeks, jaar, nummer }
+				? { kind: 'publicatie', reeks: reeks as Reeks, jaar, number: nummer }
 				: null,
-		write: (pad) => `/${pad.reeks}/${pad.jaar}/${pad.nummer}`,
+		write: (pad) => `/${pad.reeks}/${pad.jaar}/${pad.number}`,
 		// Its key is its id at officielebekendmakingen.nl: stb_2026_94 is /stb/2026/94.
 		fromKey: ({ collection, key }) => {
 			const m = PUBLICATION_KEY.exec(key);
 			return collection === 'instruments' && m
-				? { soort: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], nummer: m[3] }
+				? { kind: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], number: m[3] }
 				: null;
 		},
 		lookup: (pad) => ({
 			kind: 'publication',
 			series: pad.reeks,
 			year: pad.jaar,
-			number: pad.nummer
+			number: pad.number
 		})
 	},
 	kamerstuk: {
 		read: ([first, dossier, nummer, ...rest]) =>
 			first === 'kamerstukken' && !rest.length && DOSSIER.test(dossier) && PAPER_NUMBER.test(nummer)
-				? { soort: 'kamerstuk', dossier: dossier.toUpperCase(), nummer: nummer.toUpperCase() }
+				? { kind: 'kamerstuk', dossier: dossier.toUpperCase(), number: nummer.toUpperCase() }
 				: null,
-		write: (pad) => `/kamerstukken/${e(pad.dossier)}/${e(pad.nummer)}`,
-		lookup: (pad) => ({ kind: 'document', dossier: pad.dossier, number: pad.nummer })
+		write: (pad) => `/kamerstukken/${e(pad.dossier)}/${e(pad.number)}`,
+		lookup: (pad) => ({ kind: 'document', dossier: pad.dossier, number: pad.number })
 	}
 };
 
 /** The description of a pad's kind, typed by that kind. */
-const ruleOf = <S extends AddressKind>(pad: PadOf<S>) => ADDRESS_RULES[pad.soort] as AddressRule<S>;
+const ruleOf = <S extends AddressKind>(pad: PadOf<S>) => ADDRESS_RULES[pad.kind] as AddressRule<S>;
 const RULES = Object.values(ADDRESS_RULES) as AddressRule<AddressKind>[];
 
 /** The readable address in a path, or null for any other page. */
