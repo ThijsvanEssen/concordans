@@ -316,6 +316,31 @@ test('Tonen holds the stuksoorten under Stukken, and no Voorstellen', async ({ p
 	await expect(page.getByText('Lopend wetsvoorstel', { exact: true })).toHaveCount(0);
 });
 
+test('Stukken off switches its stuksoorten off too, and on again brings the choice back', async ({
+	page,
+	touch
+}) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	if (touch) await openSheet(page);
+	const rows = ['Wetsvoorstellen', 'Toelichtingen', 'Overige'].map((n) =>
+		page.getByRole('button', { name: new RegExp(`^${n}\\b`) })
+	);
+	const stukken = page.getByRole('button', { name: /^Stukken\b/ });
+	// One soort chosen away before: it must stay away after the round trip.
+	await rows[1].click();
+	await expect(rows[1]).toHaveAttribute('aria-pressed', 'false');
+	await stukken.click();
+	for (const r of rows) {
+		await expect(r).toHaveAttribute('aria-pressed', 'false');
+		await expect(r.locator('.vinkje.is-active')).toHaveCount(0);
+	}
+	await stukken.click();
+	await expect(rows[0]).toHaveAttribute('aria-pressed', 'true');
+	await expect(rows[1]).toHaveAttribute('aria-pressed', 'false');
+	await expect(rows[2]).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('the lopende voorstellen come in late: the field keeps its size and its place', async ({
 	page,
 	touch

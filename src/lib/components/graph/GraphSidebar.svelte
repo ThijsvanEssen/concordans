@@ -176,7 +176,7 @@
 				<FilterOptie
 					label={STUKSOORT_LABEL[s]}
 					wrap
-					on={stuksoortOn(filter, s)}
+					on={isOn('stukken') && stuksoortOn(filter, s)}
 					gedimd={!isOn('stukken')}
 					onToggle={() => onFilter(toggleStuksoort(filter, s))}
 					count={n}
