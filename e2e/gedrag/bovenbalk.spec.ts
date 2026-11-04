@@ -44,6 +44,6 @@ for (const [naam, url] of [
 			});
 		}
 		for (let width = 320; width <= 1480; width += 20) await past(page, width);
-		for (const width of [768, 769, 840, 841, 1040, 1041, 1139, 1140, 1240, 1241, 1439, 1440])
+		for (const width of [768, 769, 860, 861, 1040, 1041, 1139, 1140, 1240, 1241, 1439, 1440])
 			await past(page, width);
 	});

@@ -105,8 +105,8 @@
 			display: none;
 		}
 	}
-	/* 840: the words go, the two pictures and the count stay; the title and the name say which. */
-	@media (max-width: 840px) {
+	/* 860: the words go, the two pictures and the count stay; the title and the name say which. */
+	@media (max-width: 860px) {
 		.lees-keuze__tekst,
 		.lees-keuze__knop .netwerk-knop__woord {
 			display: none;
