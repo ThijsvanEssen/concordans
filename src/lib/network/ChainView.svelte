@@ -922,10 +922,15 @@
 		scrollbar-width: none;
 	}
 	/* The Zijpaneel lies over the right of the page: the drawing has room for it at its end. */
-	@media (min-width: 769px) and (max-width: 1799px) {
+	.pan.panel-over {
+		padding-inline-end: var(--paneel-over);
+		scroll-padding-inline-end: calc(var(--paneel-over) + var(--s-4));
+	}
+	/* From 1800 px the panel stands in the page's flow: the page gives it its room. */
+	@media (min-width: 1800px) {
 		.pan.panel-over {
-			padding-inline-end: var(--paneel-over);
-			scroll-padding-inline-end: calc(var(--paneel-over) + var(--s-4));
+			padding-inline-end: 0;
+			scroll-padding-inline-end: var(--s-8);
 		}
 	}
 	.drawing {
