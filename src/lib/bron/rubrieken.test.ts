@@ -26,6 +26,7 @@ import {
 	rubriekOf,
 	rubriekOfSort,
 	sortLabel,
+	sortOf,
 	sortOne,
 	sortsFrom,
 	type Rubriek,
@@ -708,5 +709,12 @@ describe('the clusters', () => {
 		});
 		expect(kindRowCount(row(9, 29), true)).toBe('9 van 29');
 		expect(kindRowCount(row(29, null), true)).toBe('29');
+	});
+});
+
+describe('een uitspraak van een Europees hof', () => {
+	it('is rechtspraak, geen Europese of internationale bron', () => {
+		expect(sortOf('judgments', 'ecli_eu_c_2014_238', { source: 'cjeu' })).toBe('uitspraken');
+		expect(sortOf('judgments', 'ecli_ce_echr_2019_0101', { source: 'echr' })).toBe('uitspraken');
 	});
 });

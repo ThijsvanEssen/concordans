@@ -4,7 +4,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { failApi } from '../support/api';
 import { netwerkKnop } from '../support/navigation';
-import { openSheet } from '../support/sheet';
+import { closeSheet, openSheet } from '../support/sheet';
 import { expect, test } from '../support/test';
 
 const WVW = '/wetten/BWBR0006622?doek=banen';
@@ -273,6 +273,23 @@ test('the legend names the same lijnsoorten whatever is switched off', async ({ 
 	await legend.getByRole('button', { name: 'Voorgestelde wijziging' }).click();
 	await expect(page).toHaveURL(/[?&]uit=/);
 	expect(await names()).toEqual(before);
+});
+
+test('the legend and the field stand still when Stukken goes off', async ({ page, touch }) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
+	const names = () => legend.getByRole('listitem').allInnerTexts();
+	const top = async () => (await box(page.locator('svg.drawing'))).y;
+	const before = { names: await names(), top: await top() };
+	expect(before.names.join()).toContain('Aanhaling');
+	if (touch) await openSheet(page);
+	await page.getByRole('button', { name: /^Stukken\b/ }).click();
+	await expect(page).toHaveURL(/[?&]bronnen=/);
+	if (touch) await closeSheet(page);
+	await expect(legend).toBeVisible();
+	expect(await names()).toEqual(before.names);
+	expect(await top()).toBeCloseTo(before.top, 0);
 });
 
 test('Tonen counts the tiles as dossiers, and Dossiers off draws none', async ({ page, touch }) => {

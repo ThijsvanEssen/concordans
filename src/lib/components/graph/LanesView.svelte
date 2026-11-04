@@ -19,7 +19,7 @@
 	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
 	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
-	import type { Visibility } from '$lib/graph/visibility';
+	import { SHOW_ALL, type Visibility } from '$lib/graph/visibility';
 	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
 	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
@@ -74,7 +74,8 @@
 		/** A group's Zijpaneel opens: no bron marked beside it. */
 		onUnmark: () => void;
 		/** What the lanes draw, every bron of a unit: for the counts and the keyboard's list. */
-		onDrawn: (ids: ReadonlySet<string>) => void;
+		/** What the lanes draw, and what they would draw with nothing switched off: the count of a kind off. */
+		onDrawn: (ids: ReadonlySet<string>, held: ReadonlySet<string>) => void;
 		/** A click in the legend: Relatie of the canvas, one state with its address. */
 		onToggleLine: (l: LineKind) => void;
 	} = $props();
@@ -101,9 +102,12 @@
 			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
 		});
 	const scene: Scene = $derived(sceneWith(visibility));
-	/** With no lijnsoort off: the legend names what this network holds, whatever is switched. */
+	/**
+	 * With nothing switched off, in Tonen or Relatie: the legend names what this network holds, so
+	 * that its row stands still while a filter is turned (B105).
+	 */
 	const whole: Scene = $derived(
-		visibility.hiddenLines.size > 0 ? sceneWith({ ...visibility, hiddenLines: new Set() }) : scene
+		visibility.hiddenLines.size > 0 || visibility.hiddenKinds.size > 0 ? sceneWith(SHOW_ALL) : scene
 	);
 	const byId = $derived(new Map(nodes.map((n) => [n.id, n])));
 	const unitOf = $derived.by(() => {
@@ -128,17 +132,17 @@
 		phone || avail === 0 ? 1 : Math.max(MIN_SCALE, Math.min(1, (avail - covered) / layout.width))
 	);
 
-	$effect(() => {
-		// A hull is drawn too: its pill marks the wet or dossier it stands for.
-		onDrawn(
-			new Set(
-				scene.units.flatMap((u) =>
-					u.shape === 'hull' || u.shape === 'tiles'
-						? [u.id, ...u.members, ...u.periods.flatMap((p) => p.units.map((d) => d.id))]
-						: u.members
-				)
+	/** What a scene draws: a hull is drawn too, its pill marks the wet or dossier it stands for. */
+	const drawnBy = (of: Scene) =>
+		new Set(
+			of.units.flatMap((u) =>
+				u.shape === 'hull' || u.shape === 'tiles'
+					? [u.id, ...u.members, ...u.periods.flatMap((p) => p.units.map((d) => d.id))]
+					: u.members
 			)
 		);
+	$effect(() => {
+		onDrawn(drawnBy(scene), drawnBy(whole));
 	});
 
 	/** The group, or the hull without a bron of its own, whose Zijpaneel is open. */
@@ -561,7 +565,7 @@
 	data-testid="banen"
 >
 	<!-- Also with nothing left to draw: what is switched off comes back here. -->
-	{#if scene.units.length > 0 || visibility.hiddenLines.size > 0}
+	{#if whole.kinds.length > 0 || visibility.hiddenLines.size > 0}
 		<LaneLegend
 			kinds={whole.kinds}
 			lines={scene.lines}

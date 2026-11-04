@@ -1,9 +1,9 @@
 // The Legenda counts what is drawn, with a bron selected too, open as closed (besluit 29):
 // the focus's direct verbindingen are in Verbonden, not counted again here.
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { cleanup, render } from '@testing-library/svelte';
 import GraphSidebar from './GraphSidebar.svelte';
-import { EMPTY_FILTER } from '$lib/verbonden/filter';
+import { EMPTY_FILTER, FILTER_GROUPS } from '$lib/verbonden/filter';
 import { DEFAULT_LOADER_OPTIONS } from '$lib/verbonden/loaders';
 
 const props = (_selectionCollection: 'documents' | null) => ({
@@ -37,6 +37,25 @@ describe('the Legenda counts', () => {
 			expect(getByRole('button', { name: /^Wetsvoorstellen/ }).textContent).toMatch(/20/);
 			expect(getByRole('button', { name: /^Toelichtingen/ }).textContent).toMatch(/10/);
 		});
+});
+
+describe('the stuksoorten under a Stukken that is off (B105)', () => {
+	const off = { ...EMPTY_FILTER, bronnen: new Set(FILTER_GROUPS.filter((k) => k !== 'stukken')) };
+	const dim = (name: RegExp, filter: typeof EMPTY_FILTER) => {
+		cleanup();
+		return render(GraphSidebar, { ...props(null), filter })
+			.getByRole('button', { name })
+			.classList.contains('is-dim');
+	};
+
+	it('stand grey, their ticks not claiming a show', () => {
+		expect(dim(/^Wetsvoorstellen/, off)).toBe(true);
+		expect(dim(/^Toelichtingen/, off)).toBe(true);
+	});
+
+	it('stand in ink while Stukken is on', () => {
+		expect(dim(/^Wetsvoorstellen/, EMPTY_FILTER)).toBe(false);
+	});
 });
 
 // Keten keys its own drawing under Tonen and Relatie (B53): the bron it starts from in ink, and
