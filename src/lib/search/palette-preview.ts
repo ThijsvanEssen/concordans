@@ -75,6 +75,10 @@ function placesOfBron(
 	return [...new Set(lines.filter((l): l is string => !!l && l !== bron.label))];
 }
 
+/** Its name: the label of the row; for a bron named by what was typed, the name its card gives. */
+const nameOfBron = (bron: ChosenBron, loaded: PreviewRest | null): string =>
+	(bron.unnamed && loaded?.card?.title) || bron.label;
+
 /** The passage: the words found in the row, else what has come in; a person is no passage. */
 function passageOfBron(
 	snippet: Segment[] | null,
@@ -101,7 +105,7 @@ export function previewOfBron(
 	const expired = (shown && shown.expired) || expiredTitle(collection, bron.expiredOn, now);
 	return {
 		kind: kindOfBron(bron, collection, loaded ? loaded.card : null),
-		name: (bron.unnamed && loaded?.card?.title) || bron.label,
+		name: nameOfBron(bron, loaded),
 		status: statusOfBron(bron, collection, expired),
 		places: placesOfBron(bron, collection, shown ? shown.context : undefined, person, loaded),
 		passage: passageOfBron(snippet, person, loaded)
