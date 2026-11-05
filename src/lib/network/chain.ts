@@ -1,7 +1,8 @@
 // The weergave Keten of the werkplek (besluit 39, mockup A197-c): a law, the articles it gives
 // powers in, and the regulations issued under them, in layers from top to bottom: AMvB,
-// ministeriële regeling, beleidsregel, the rest. Above the law, the laws its own preamble names
-// (a regulation's grondslag). From /api/instruments/{bwb}/delegated and /basis; pure, so the
+// ministeriële regeling, beleidsregel, the rest, and at the bottom the wetten that only name it.
+// Above the law, the laws its own preamble names (a regulation's grondslag). From
+// /api/instruments/{bwb}/delegated and /basis; pure, so the
 // drawing on a wide screen and the list on a phone read one model.
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
@@ -31,7 +32,8 @@ export type LayerId =
 	| 'kb'
 	| 'ministerial'
 	| 'policy'
-	| 'other';
+	| 'other'
+	| 'named';
 
 const LAYER_LABEL: Record<LayerId, string> = {
 	eu: 'EU-recht',
@@ -43,7 +45,8 @@ const LAYER_LABEL: Record<LayerId, string> = {
 	amvb: 'AMvB',
 	ministerial: 'Ministeriële regeling',
 	policy: 'Beleidsregel',
-	other: 'Overige regelingen'
+	other: 'Overige regelingen',
+	named: 'Noemt'
 };
 
 /** The order of the layers of regulations under the articles. */
@@ -254,6 +257,10 @@ const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
 	further: []
 });
 
+/** Came with `related-instruments`: after those of the first answer, which keep their place. */
+const late = (n: ChainNode) => (n.parents.every((p) => p.relation === 'REFERS_TO') ? 1 : 0);
+const cited = (n: ChainNode) => Math.max(0, ...n.parents.map((p) => p.named ?? p.cite?.count ?? 0));
+
 /**
  * The layers of the keten of `wet` (its summary), from what /delegated, /basis and /eu-links
  * give. Up to `max` regulations a layer, and `keep`; the rest are listed apart (`more`), not
@@ -450,10 +457,10 @@ export function chain(
 			);
 	// The laws that only name this one in their text: mentions, without a label, for the API
 	// gives how many articles they name, not which (a count reads as an article number, B48); not
-	// a law the keten draws above it already (the Cbw over the Cbb).
+	// a law the keten draws already (the Cbw over the Cbb): its first answer said how it hangs.
 	const above = new Set((basis?.items ?? []).map((b) => b.instrument.id));
 	for (const r of mentions ? (refers ?? []) : []) {
-		if (!/^(?:wet|rijkswet)$/i.test(r.kind ?? '') || above.has(r.id)) continue;
+		if (!/^(?:wet|rijkswet)$/i.test(r.kind ?? '') || above.has(r.id) || byId.has(r.id)) continue;
 		take(
 			{
 				instrument: {
@@ -507,33 +514,33 @@ export function chain(
 		const at = n.parents.map((p) => placeOf.get(p.id)).filter((x): x is number => x !== undefined);
 		return at.length ? Math.min(...at) : Number.POSITIVE_INFINITY;
 	};
-	const perLayer = new Map<LayerId | 'named', ChainNode[]>();
-	// A wet stands beside the law in its layer: one issued under it with its line and its label;
-	// one that only names it, or whose basis the data lacks, with its dashed line and its label
-	// (Thijs, 29 Oct: the dashed line says it names, no layer of its own). The regulations under
-	// either hang from it.
-	const bucketOf = (n: ChainNode): LayerId | 'named' => {
+	const perLayer = new Map<LayerId, ChainNode[]>();
+	// A wet stands beside the law in its layer: one issued under it, one whose basis the data
+	// lacks, and one regulations hang from. A wet that only names the law stands in Noemt, under
+	// all the rest (Thijs, 5 Nov): `related-instruments` comes late, and what stands stays put.
+	const carrying = new Set(nodes.flatMap((n) => n.parents.map((p) => p.id)));
+	const bucketOf = (n: ChainNode): LayerId => {
 		const id = layerOf(n.kind);
-		return id === 'statute' && n.parents.every(isMention) ? 'named' : id;
+		return id === 'statute' && !carrying.has(n.id) && n.parents.every((p) => p.way === 'mentioned')
+			? 'named'
+			: id;
 	};
-	const cited = (n: ChainNode) =>
-		Math.max(0, ...n.parents.map((p) => p.named ?? p.cite?.count ?? 0));
 	const onDrawing = new Set([law.id]);
-	for (const id of ['statute' as const, 'named' as const, ...REGULATION_LAYERS]) {
+	for (const id of ['statute' as const, ...REGULATION_LAYERS, 'named' as const]) {
 		const all = nodes
 			.filter((n) => bucketOf(n) === id)
 			.sort(
 				(x, y) =>
 					keyOf(x) - keyOf(y) ||
 					// Those that name most of the law's articles first.
-					(id === 'named' ? cited(y) - cited(x) : 0) ||
+					(id === 'named' ? late(x) - late(y) || cited(y) - cited(x) : 0) ||
 					NL.compare(x.name, y.name)
 			);
 		const first = new Set(fillOrder(all, onDrawing, keep).slice(0, max));
 		const drawn: ChainNode[] = [];
 		for (const n of all) {
 			if (!first.has(n) && n.id !== keep) {
-				const slot = id === 'statute' || id === 'named' ? 'law' : id;
+				const slot = id === 'statute' ? 'law' : id;
 				rest[slot] = (rest[slot] ?? 0) + 1;
 				(more[slot] ??= []).push(n);
 				continue;
@@ -543,12 +550,7 @@ export function chain(
 		}
 		perLayer.set(id, drawn);
 	}
-	const naming = perLayer.get('named') ?? [];
 	lawLayer.nodes.push(...(perLayer.get('statute') ?? []));
-	// A wet that names it stands in the row Wet: beside the law, or above an AMvB or a regulation,
-	// beside the laws it rests on (B2: not in the row of the Cbb).
-	if (!isRegulation(kind)) lawLayer.nodes.push(...naming);
-	else if (naming.length) placeNaming(layers, lawLayer, naming);
 	if (eu?.implementedBy.length)
 		layers.push({
 			id: 'implementation',
@@ -558,11 +560,13 @@ export function chain(
 				eu.implementedBy.map((i) => euNode(i, [{ id: law.id, way: 'delegates' }]))
 			)
 		});
-	for (const id of REGULATION_LAYERS) {
+	for (const id of [...REGULATION_LAYERS, 'named' as const]) {
 		const list = perLayer.get(id);
 		if (list?.length) layers.push({ id, label: LAYER_LABEL[id], nodes: list });
 	}
-	return { layers, rest, more, total: nodes.length, amending, missing };
+	// What only names the law does not count: its keten holds what it did before they came.
+	const total = nodes.filter((n) => bucketOf(n) !== 'named').length;
+	return { layers, rest, more, total, amending, missing };
 }
 
 /**
@@ -588,22 +592,6 @@ function fillOrder(
 		})
 	);
 	return [...all].sort((a, b) => turnOf.get(a)! - turnOf.get(b)!);
-}
-
-/**
- * The wetten that name a regulation: beside the laws it rests on, else in a row Wet of their own
- * above it: not 'basis' where the data has no grondslag, which says it has one, nor a row of
- * AMvB's (the Cbb over a Cyberbeveiligingsregeling, B71).
- */
-function placeNaming(layers: ChainLayer[], lawLayer: ChainLayer, naming: ChainNode[]) {
-	const row = layers.find((l) => l.id === 'basis');
-	if (row?.nodes.every((n) => layerOf(n.kind) === 'statute')) row.nodes.push(...naming);
-	else
-		layers.splice(layers.indexOf(row ?? lawLayer), 0, {
-			id: 'statute',
-			label: LAYER_LABEL.statute,
-			nodes: naming
-		});
 }
 
 /** The period of the strip, its bounds as days; either may be open. */

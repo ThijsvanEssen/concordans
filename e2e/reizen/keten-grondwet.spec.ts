@@ -1,5 +1,5 @@
 // The keten of the Grondwet: Noemt is on from the start, a wet that only names the law in its
-// text (Kieswet, Wet op de Raad van State) beside it in the layer Wet, with a dashed line; switched off, a
+// text (Kieswet, Wet op de Raad van State) in the layer Noemt, with a dashed line; switched off, a
 // regulation under a regulation that only names the law goes with it, and a missing basis_kind
 // is no grondslag (the Proclamatie).
 import type { Page } from '@playwright/test';
@@ -20,6 +20,8 @@ test('without Noemt the Grondwet keten holds no regulation that hangs only under
 	await expect(page.getByText('Koninklijk besluit', { exact: true }).first()).toBeAttached();
 	await noemt(page);
 	await expect(page.getByText('Kieswet')).toHaveCount(0);
+	// No heading Noemt over nothing.
+	await expect(page.locator('.chain').getByText(/^noemt$/i)).toHaveCount(0);
 	const text = await ketenText(page);
 	expect(text).not.toContain('Defensieregeling');
 	expect(text).not.toContain('Proclamatie houdende');
@@ -64,7 +66,7 @@ test('a regulation whose parent is not on the drawing has a stump with its name;
 	isMobile
 }) => {
 	test.skip(isMobile, 'a list on a phone');
-	await page.goto(GRONDWET);
+	await page.goto('/explore?netwerk=instruments/bwbr0006622&weergave=keten');
 	const stumps = page.locator('svg.drawing .stomp');
 	await expect(stumps.first()).toBeAttached();
 	await expect(stumps.first()).toHaveAttribute('aria-label', /, staat niet op het doek$/);
@@ -82,7 +84,7 @@ test('a regulation whose parent is not on the drawing has a stump with its name;
 	).toBeAttached();
 	await expect(stumps).not.toHaveCount(count);
 	// B90: the drawing pans to where the parent landed; it does not stay at the left.
-	const landed = page.locator('svg.drawing g.node', { has: page.getByText(parentName!) }).first();
+	const landed = page.locator(`svg.drawing g.node[aria-label="${parentName}"]`);
 	await expect
 		.poll(async () => {
 			const box = await landed.boundingBox();
