@@ -151,23 +151,32 @@
 	/** Room above the first layer: its label and Alle stand clear of the Deel button at the top right. */
 	const TOP = 64;
 	const LEFT = 120;
+	/** Labels stacked over a bron push its row down: the heading, pinned, passes over them all. */
+	const lifts = $derived(
+		shown.map((l) => {
+			const here = (id: string) => l.nodes.some((n) => n.id === id);
+			const most = l.nodes.map((k) => k.parents.filter((p) => p.cite && !here(p.id)).length);
+			return STACK * Math.max(0, ...most.map((n) => n - 1));
+		})
+	);
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
 	 * ever lies over the rail under its layer.
 	 */
 	const rowHeights = $derived(
-		shown.map((l) => {
+		shown.map((l, i) => {
 			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
 			// A wet with two lines beside the law: their labels under each other.
 			const here = (id: string) => l.nodes.some((n) => n.id === id);
 			const two = l.nodes.some((k) => k.parents.filter((p) => p.cite && here(p.id)).length > 1);
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58) + (two ? STACK + 4 : 0);
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58) + (two ? STACK + 4 : 0) + lifts[i];
 		})
 	);
 	/** Where each layer begins. */
 	const tops = $derived(
 		rowHeights.map((_, i) => TOP + rowHeights.slice(0, i).reduce((a, b) => a + b, 0))
 	);
+	const rowTops = $derived(tops.map((t, i) => t + lifts[i]));
 	const height = $derived(TOP + rowHeights.reduce((a, b) => a + b, 0));
 	/** The room of a node in its layer, for the length of its name's lines: at most 22 characters (Keten). */
 	const charsFor = (n: number) =>
@@ -181,7 +190,7 @@
 		Math.ceil((Math.max(...linesOf(k.name, charsFor(n)).map((r) => r.length)) * CHAR) / 2) + 8;
 	/** Where each node stands (chain-place.ts). */
 	const place = $derived(
-		placeLayers(shown, { rest, tops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
+		placeLayers(shown, { rest, tops: rowTops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
 	);
 	/** The drawing with Noemt, whose last bron and "N andere" may stand past the rest. */
 	const fullWidth = $derived.by(() => {
@@ -299,15 +308,17 @@
 			if (!byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`)?.beside)
 				out.set(e.o.id, (out.get(e.o.id) ?? 0) + 1);
 		const stacked = new Map<string, number>();
-		const nextAt = (e: (typeof edges)[number]) => {
-			const i = stacked.get(e.k.id) ?? 0;
-			if (e.o.cite) stacked.set(e.k.id, i + 1);
+		// Under its names or over its sign: two stacks, which do not push each other.
+		const nextAt = (e: (typeof edges)[number], place: string) => {
+			const key = `${e.k.id}:${place}`;
+			const i = stacked.get(key) ?? 0;
+			if (e.o.cite) stacked.set(key, i + 1);
 			return STACK * i;
 		};
 		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
-			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y + nextAt(e) };
+			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y + nextAt(e, 'under') };
 			if (e.many && out.get(e.o.id) === 1) return { x: r.tip.x, y: r.tip.y + 17 };
-			return { x: r.end.x, y: r.end.y - 20 - nextAt(e) };
+			return { x: r.end.x, y: r.end.y - 20 - nextAt(e, 'over') };
 		};
 		return edges.flatMap((e) => {
 			const r = byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`);
@@ -368,7 +379,7 @@
 				const parent = o && away.get(o.id);
 				const at = place.get(k.id);
 				if (!o || !parent || !at || k.parents.some((p) => here.has(p.id))) return [];
-				const label = { x: at.x, y: tops[i] + 22, text: cutText(parent.name, CITE_MAX) };
+				const label = { x: at.x, y: rowTops[i] + 22, text: cutText(parent.name, CITE_MAX) };
 				return [{ id: k.id, o, parent, label, top: at.y - 12, look: lookOf(o, false) }];
 			})
 		);
@@ -812,7 +823,7 @@
 				     others last (Variant C: two squares, "4 andere wetten"). -->
 				{#if rest[layer.id]}
 					{@const x = Math.max(...layer.nodes.map((k) => place.get(k.id)?.x ?? 0)) + SLOT}
-					{@const y = tops[i] + DROP}
+					{@const y = rowTops[i] + DROP}
 					{@const words = linesOf(otherText(layer), 22)}
 					<g
 						class="others"
