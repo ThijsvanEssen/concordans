@@ -1238,11 +1238,11 @@
 	/** The canvas and the cards over it (see the markup). */
 	let buhne = $state<HTMLDivElement | null>(null);
 
-	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
-	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
-	let sheetOpen = $state(false);
+	/** A phone: the bronnen and filters in a sheet, open for the weergave it opened in (B111). */
+	let sheetFor = $state<string | null>(null);
+	const sheetOpen = $derived(sheetFor === view);
 	provideWeergaveBlad({
-		open: () => (sheetOpen = true),
+		open: () => (sheetFor = view),
 		get isOpen() {
 			return sheetOpen;
 		}
@@ -1252,7 +1252,7 @@
 	let cardHeight = $state(0);
 	let stripHeight = $state(0);
 	function closeSheet() {
-		sheetOpen = false;
+		sheetFor = null;
 		sheetOpener?.focus();
 	}
 
@@ -1373,7 +1373,7 @@
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
-		onclick={() => (sheetOpen = !sheetOpen)}>Weergave</button
+		onclick={() => (sheetFor = sheetOpen ? null : view)}>Weergave</button
 	>
 {/snippet}
 
