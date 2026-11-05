@@ -39,6 +39,8 @@
 	import { plainClick } from '$lib/actions/klik';
 	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import MentionsLink from '$lib/network/MentionsLink.svelte';
+	import { fullWidthOf, liftsOf, sharing, widthOf } from '$lib/network/chain-room';
 	import {
 		isMention,
 		isOutside,
@@ -127,11 +129,10 @@
 	let avail = $state(760);
 	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
 	const SLOT = 192;
+	const LEFT = 120;
 	/** Noemt comes late: the rest is placed as if it were not there, and it takes what room it needs. */
 	const fixed = $derived(shown.filter((l) => l.id !== 'named'));
-	const width = $derived(
-		Math.max(avail, ...fixed.map((l) => LEFT + 24 + (l.nodes.length + (rest[l.id] ? 1 : 0)) * SLOT))
-	);
+	const width = $derived(widthOf(fixed, rest, avail, { left: LEFT, slot: SLOT }));
 	$effect(() => {
 		room = avail;
 	});
@@ -150,15 +151,7 @@
 	const INK_EDGE = 2;
 	/** Room above the first layer: its label and Alle stand clear of the Deel button at the top right. */
 	const TOP = 64;
-	const LEFT = 120;
-	/** Labels stacked over a bron push its row down: the heading, pinned, passes over them all. */
-	const lifts = $derived(
-		shown.map((l) => {
-			const here = (id: string) => l.nodes.some((n) => n.id === id);
-			const most = l.nodes.map((k) => k.parents.filter((p) => p.cite && !here(p.id)).length);
-			return STACK * Math.max(0, ...most.map((n) => n - 1));
-		})
-	);
+	const lifts = $derived(liftsOf(shown, STACK));
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
 	 * ever lies over the rail under its layer.
@@ -181,8 +174,6 @@
 	/** The room of a node in its layer, for the length of its name's lines: at most 22 characters (Keten). */
 	const charsFor = (n: number) =>
 		Math.min(22, Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7)));
-	/** How many share a layer's width: in Noemt each has its slot, however many come. */
-	const sharing = (l: ChainLayer) => (l.id === 'named' ? 1 : l.nodes.length);
 	/** About what a character of a name takes, in px. */
 	const CHAR = 6;
 	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
@@ -192,12 +183,7 @@
 	const place = $derived(
 		placeLayers(shown, { rest, tops: rowTops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
 	);
-	/** The drawing with Noemt, whose last bron and "N andere" may stand past the rest. */
-	const fullWidth = $derived.by(() => {
-		const named = shown.find((l) => l.id === 'named');
-		const xs = named?.nodes.map((k) => place.get(k.id)?.x ?? 0) ?? [];
-		return Math.max(width, ...xs.map((x) => x + SLOT * (rest.named ? 2 : 1)));
-	});
+	const fullWidth = $derived(fullWidthOf(shown, rest, place, width, SLOT));
 	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
 	const infoOf = $derived.by(() => {
 		const m = new Map<string, { lines: string[] }>();
@@ -310,9 +296,8 @@
 		const stacked = new Map<string, number>();
 		// Under its names or over its sign: two stacks, which do not push each other.
 		const nextAt = (e: (typeof edges)[number], place: string) => {
-			const key = `${e.k.id}:${place}`;
-			const i = stacked.get(key) ?? 0;
-			if (e.o.cite) stacked.set(key, i + 1);
+			const i = stacked.get(e.k.id + place) ?? 0;
+			if (e.o.cite) stacked.set(e.k.id + place, i + 1);
 			return STACK * i;
 		};
 		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
@@ -580,7 +565,7 @@
 		</div>
 	{:else if loading}
 		<SlowLoad label="Keten laden…" visible />
-	{:else if gap || expired?.total || outsideCount || notHere.length}
+	{:else if gap || expired?.total || outsideCount || notHere.length || head.some((l) => l.id === 'law')}
 		<div class="kop">
 			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
 			{#if notHere.length}<span class="ook"
@@ -597,6 +582,7 @@
 						? 'Zonder vervallen regelingen'
 						: `Ook ${formatCount(expired.total)} vervallen ${plural(expired.total, 'regeling', 'regelingen')}`}</TekstLink
 				>{/if}
+			<MentionsLink layer={shown.find((l) => l.id === 'named')} rest={rest.named} />
 		</div>
 	{/if}
 	<div
@@ -721,6 +707,7 @@
 					{@const info = infoOf.get(k.id)}
 					<g
 						class="node"
+						data-layer={layer.id}
 						class:is-active={chosen === k.id}
 						class:is-dim={outside(k)}
 						role="button"
@@ -827,6 +814,7 @@
 					{@const words = linesOf(otherText(layer), 22)}
 					<g
 						class="others"
+						data-layer={layer.id}
 						role="button"
 						tabindex="0"
 						aria-expanded={open.has(layer.id)}
@@ -1076,6 +1064,7 @@
 	}
 	.kop {
 		position: absolute;
+		z-index: 1;
 		top: var(--s-3);
 		left: var(--s-5);
 		display: flex;
