@@ -2,8 +2,9 @@
 	// The network of the bron in Verbonden, above its soorten (besluit 32): the bron in
 	// the middle, each verbinding a line. A bron on its own opens in place under the drawing, its
 	// row of Verbonden, the bron one step further (besluit 39); a group (a count in a circle)
-	// opens its group in the panel below. The legend is one line that counts what is drawn
-	// (besluit 29.3). The way to the werkplek is Open in netwerk in the head of Verbonden.
+	// opens its group in the panel below. No line under it counts what is drawn: that differs per
+	// width, the head of Verbonden counts (B111). The way to the werkplek is Open in netwerk in the
+	// head of Verbonden.
 	import { VORMEN } from '$lib/bron/vormen';
 	import { kindColour } from '$lib/bron/kleur';
 	import { formatCount } from '$lib/text/getal';
@@ -146,6 +147,7 @@
 			.filter((h) => h.line)
 			.map((h) => ({ id: h.id, ...lineTo(h.line!, h.x, h.y, h.r, 1, false) }))
 	);
+	/** What is drawn, for a screen reader: the drawing's name. */
 	const caption = $derived(drawnCount(sketch));
 </script>
 
@@ -281,8 +283,6 @@
 			</g>
 		{/each}
 	</svg>
-	<!-- One line that counts what is drawn (Netwerkschets, Tekst). -->
-	<figcaption class="caption">{caption}</figcaption>
 </figure>
 
 <style>
@@ -362,14 +362,5 @@
 	.cluster:focus-visible circle:not(.hit) {
 		outline: 2px solid var(--focus);
 		outline-offset: 2px;
-	}
-	/* One line that counts what is drawn. */
-	.caption {
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		line-height: 18px;
-		text-align: center;
-		color: var(--ink-3);
 	}
 </style>

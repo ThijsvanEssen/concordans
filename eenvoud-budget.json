@@ -19,7 +19,7 @@
 		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1609,
-		"src/lib/components/graph/GraphView.svelte": 2107,
+		"src/lib/components/graph/GraphView.svelte": 2106,
 		"src/lib/network/ChainView.svelte": 1182,
 		"src/lib/text/judgment-text.ts": 1108,
 		"src/lib/verbonden/Verbonden.svelte": 871,
@@ -71,7 +71,7 @@
 		"src/lib/components/graph/CanvasNodeList.svelte": 16,
 		"src/lib/components/graph/GraphCanvas.svelte": 33,
 		"src/lib/components/graph/GraphView.svelte": 59,
-		"src/lib/components/graph/canvas-count.ts": 33,
+		"src/lib/components/graph/canvas-count.ts": 30,
 		"src/lib/components/graph/canvas-names.ts": 16,
 		"src/lib/components/graph/hulls.ts": 45,
 		"src/lib/components/graph/kind-rows.ts": 25,
@@ -164,7 +164,7 @@
 		"src/lib/text/judgment-text.ts": 95,
 		"src/lib/verbonden/data-source.ts": 418,
 		"src/lib/verbonden/loaders.ts": 90,
-		"src/lib/verbonden/sketch.ts": 292,
+		"src/lib/verbonden/sketch.ts": 291,
 		"src/routes/(main)/actueel/+page.svelte": 163,
 		"src/routes/explore/+page.svelte": 91
 	}

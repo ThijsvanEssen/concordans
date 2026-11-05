@@ -31,6 +31,10 @@ export const LINE_H = 14;
 export const WIDTH = 360;
 const R_SINGLE = 118;
 const R_CLUSTER = 128;
+/** Where neighbouring circles on their arc would touch, every other one stands this much further out. */
+const STAGGER = 50;
+/** The least room between two circles. */
+const CIRCLE_GAP = 6;
 const MARGIN = 16;
 /** The width of a character of a name at 12 px, to keep a name inside the drawing. */
 const CHAR_WIDTH = 7;
@@ -322,6 +326,29 @@ function cutsRim(box: Box, d: { x: number; y: number; r: number }): boolean {
  * it is a container with members (`context.centreKind`), the law of an article (`context.home`),
  * and a dossier of the bronnen with the stukken that name it in their props.
  */
+/**
+ * Where each circle stands round the middle, at its angle: on the arc under the bronnen, where
+ * neighbours would touch (the courts of 6:162 BW, B111), every other one further out.
+ */
+function arcOf(
+	circles: readonly { count: number }[],
+	at: readonly number[],
+	r: number,
+	arc: boolean
+) {
+	const crowded =
+		arc &&
+		circles.some((b, i) => {
+			if (i === 0) return false;
+			const chord = 2 * r * Math.sin(rad(at[i] - at[i - 1]) / 2);
+			return chord < radius(b.count) + radius(circles[i - 1].count) + CIRCLE_GAP;
+		});
+	return circles.map((_, i) => {
+		const ring = crowded && i % 2 === 1 ? r + STAGGER : r;
+		return { x: ring * Math.cos(rad(at[i])), y: ring * Math.sin(rad(at[i])) };
+	});
+}
+
 export function sketch(
 	groups: readonly SketchGroup[],
 	centerName = '',
@@ -417,10 +444,9 @@ export function sketch(
 			joined: hull !== null
 		};
 	};
-	looseC.forEach((b, i) => {
-		const a = rad(clusterAngles[i]);
-		clusters.push(makeCircle(b, cx + R_C * Math.cos(a), R_C * Math.sin(a), null, true));
-	});
+	arcOf(looseC, clusterAngles, R_C, both).forEach((p, i) =>
+		clusters.push(makeCircle(looseC[i], cx + p.x, p.y, null, true))
+	);
 	inCentreC.forEach((b, i) => {
 		const p = centreBlob!.pos[inCentreS.length + i];
 		clusters.push(makeCircle(b, cx + p.x, p.y, 'centre', true));

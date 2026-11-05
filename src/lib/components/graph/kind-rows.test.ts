@@ -147,6 +147,20 @@ describe('Soort reads Verbonden (N1)', () => {
 		expect(r.find((x) => x.label === 'Activiteiten')).toMatchObject({ drawn: 1, total: 72 });
 	});
 
+	it('counts what the lanes draw now: a row on whose bronnen a filter hides says "0 van" (B116)', () => {
+		const drawn = [bron('documents', 'd1'), bron('members', 'm1')];
+		const r = kindRows({
+			focus: { collection: 'dossiers', key: '36410' },
+			kinds,
+			groups: dossier,
+			drawn,
+			shown: new Set()
+		});
+		expect(kindRowCount(r[0], true)).toBe('0 van 146');
+		// A soort Verbonden has not: of what the lanes would draw.
+		expect(kindRowCount(r.at(-1)!, true)).toBe('0 van 1');
+	});
+
 	it('says the whole of a kind switched off', () => {
 		const [papers] = rows([]);
 		expect(kindRowCount(papers, false)).toBe('146');

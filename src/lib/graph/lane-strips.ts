@@ -25,6 +25,10 @@ import type { Column, Scene, SceneLine, SceneUnit } from './scene';
 const MARGIN = 16;
 const INSET = 12;
 const HEAD = 40;
+/** The bar under the name of a strip (LanePanels). */
+const HEAD_BAR = 120;
+/** Between the edge of a strip and its head: there a line runs down out of a row, past the heads. */
+const DESCENT = MARGIN + 4;
 const STRIP_GAP = 14;
 /** A unit outside the focus: one line, as high as a line of tiles with air around it. */
 const UNIT_ROW = 28;
@@ -45,6 +49,14 @@ const PAST_HEAD = 160;
 const HULL_MAX = 260;
 /** The lines in the free lane at the right stand this far apart. */
 const LANE_STEP = 4;
+
+/** The head of a strip, its name with the bar under it: no line runs through it (B108). */
+export const stripHead = (strip: Box): Box => ({
+	x: strip.x + INSET,
+	y: strip.y + 8,
+	width: HEAD_BAR,
+	height: 26
+});
 
 const STRIP_ORDER: readonly (Column | 'general')[] = [
 	'makers',
@@ -312,7 +324,7 @@ const centreX = (b: Box) => b.x + b.width / 2;
 const centreY = (b: Box) => b.y + b.height / 2;
 const isRow = (b: UnitBox) => b.rows.length === 0 && b.height === UNIT_ROW;
 
-/** Out of the upper end: a hull at a point spread over its lower edge, a row to its left edge. */
+/** Out of the upper end: a hull at a point spread over its lower edge, a row past its left edge. */
 function outOf(box: UnitBox, slot: number, of: number): Pt[] {
 	if (box.rows.length > 0)
 		return [
@@ -325,7 +337,7 @@ function outOf(box: UnitBox, slot: number, of: number): Pt[] {
 	const y = centreY(box.mark);
 	return [
 		{ x: box.mark.x - 2, y },
-		{ x: box.x + 2, y }
+		{ x: DESCENT, y }
 	];
 }
 

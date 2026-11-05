@@ -3,7 +3,7 @@ import { EXAMPLES, example, shuffled } from '$lib/test/lanes';
 import type { Pt } from '$lib/network/tree-lines';
 import { sample, slanted } from '$lib/test/paths';
 import type { Box } from './lane-layout';
-import { laneStrips, stripLines } from './lane-strips';
+import { laneStrips, stripHead, stripLines } from './lane-strips';
 import { buildScene } from './scene';
 
 /** A phone. */
@@ -85,6 +85,14 @@ describe.each(EXAMPLES)('the strips of %s', (name) => {
 			}
 		}
 		expect([...new Set(hits)]).toEqual([]);
+	});
+
+	it('runs no line through the head of a strip (B108)', () => {
+		const heads = [...layout.columns, ...(layout.strip ? [layout.strip] : [])].map(stripHead);
+		const hits = stripLines(scene, layout).filter((line) =>
+			sample(line.d).some((q) => heads.some((h) => inside(q, h)))
+		);
+		expect(hits.map((l) => l.id)).toEqual([]);
 	});
 
 	it('is deterministic: the same bronnen in another order give the same strips', () => {
