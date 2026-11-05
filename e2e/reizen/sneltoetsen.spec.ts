@@ -43,6 +43,19 @@ async function zoekveld(page: Page) {
 	return { field, results };
 }
 
+/** ⌘K with a bron typed, the first row chosen: the keys of the right column work on it. */
+async function bronInPalet(page: Page) {
+	await page.keyboard.press('ControlOrMeta+k');
+	const field = page.getByRole('dialog').getByRole('combobox');
+	await expect(field).toBeFocused();
+	await field.fill('awb');
+	await expect(page.getByRole('dialog').getByRole('option').first()).toBeVisible({
+		timeout: 30_000
+	});
+	await page.keyboard.press('ArrowDown');
+	await expect(page.getByRole('dialog').getByRole('option', { selected: true })).toHaveCount(1);
+}
+
 const GEVALLEN: Record<string, Geval> = {
 	search: {
 		run: async (page) => {
@@ -92,6 +105,24 @@ const GEVALLEN: Record<string, Geval> = {
 			await expect(page.getByRole('dialog', { name: 'Sneltoetsen' })).toBeVisible();
 			await page.keyboard.press('Escape');
 			await expect(page.getByRole('dialog')).toHaveCount(0);
+		}
+	},
+	'palette-netwerk': {
+		run: async (page) => {
+			await page.goto('/docs');
+			await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+			await bronInPalet(page);
+			await page.keyboard.press('Alt+KeyN');
+			await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);
+		}
+	},
+	'palette-toevoegen': {
+		run: async (page) => {
+			await page.goto('/explore?netwerk=instruments/bwbr0001840');
+			await expect(page.getByRole('application', { name: /^Netwerk\./ })).toBeVisible();
+			await bronInPalet(page);
+			await page.keyboard.press('Alt+KeyT');
+			await expect(page).toHaveURL(/netwerk=.*bwbr0005537/);
 		}
 	},
 	'search-results': {

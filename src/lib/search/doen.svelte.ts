@@ -2,11 +2,15 @@
 // can be done here before anything is typed. The first row stands chosen, so Enter does it; ↓
 // past the last goes on into the results, ↑ above the first result comes back.
 import { parseCommand, type Parsed } from '$lib/keys/commands';
-import { COMMANDS } from '$lib/keys/register';
+import { COMMANDS, isCombo, SHORTCUTS } from '$lib/keys/register';
 import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelte';
 import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
+import { hasChain } from '$lib/network/lineage';
+import { collectionOfBron } from './palette-preview';
 import type { SearchSession } from './session.svelte';
+
+const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 export class PaletteActions {
 	/** The line as typed, the word included; the search gets what is left (searchTextOf). */
@@ -58,7 +62,7 @@ export class PaletteActions {
 			if (at < rows.length - 1) this.#choose(at + 1);
 			else if (search.rowCount > 0) {
 				this.#choose(null);
-				search.point(0);
+				search.chooseFirst();
 			}
 		} else if (e.key === 'ArrowUp' && at !== null) this.#choose(Math.max(0, at - 1));
 		else if (e.key === 'ArrowUp' && rows.length && (!search.rowCount || search.active === 0))
@@ -71,11 +75,6 @@ export class PaletteActions {
 
 	point(at: number) {
 		this.#choose(at);
-	}
-
-	/** The keys left the rows (the pointer onto a result). */
-	leave() {
-		if (this.at !== null) this.#choose(null);
 	}
 
 	/** Does `row`: one that cannot, or that is what stands, does nothing; `done` closes ⌘K. */
@@ -101,12 +100,35 @@ export class PaletteActions {
 		}
 	}
 
-	/** What else ⌘K can do with a bron: the words that take one, done with it (the right column). */
+	/**
+	 * What else ⌘K can do with a bron: the words that take one, done with it (the right column).
+	 * The column names the bron: each says only its word, and its key. Keten only where it has one.
+	 */
 	actionsFor(target: Target): DoRow[] {
+		const collection = collectionOfBron(target);
+		const chain = !!collection && hasChain(collection);
 		return COMMANDS.filter((c) => c.arg === 'bron' && !c.sign)
 			.concat(COMMANDS.filter((c) => c.arg === 'bron' && c.sign))
-			.flatMap((command) => rowsFor({ command, rest: target.label, only: false }, target))
+			.filter((c) => c.id !== 'keten' || chain)
+			.flatMap((command) =>
+				rowsFor({ command, rest: target.label, only: false }, target).map((row) => ({
+					...row,
+					label: capitalize(command.words[0]),
+					key: command.key
+				}))
+			)
 			.filter((r) => r.run && !r.why);
+	}
+
+	/** The key of one of those actions, on the bron the keys are on: true where it did it. */
+	keyOfAction(e: KeyboardEvent, target: Target, done: () => void): boolean {
+		const isKeyOf = (r: DoRow) =>
+			SHORTCUTS.find((s) => s.id === r.key)?.keys.some((combo) => isCombo(e, combo));
+		const row = this.actionsFor(target).find(isKeyOf);
+		if (!row) return false;
+		e.preventDefault();
+		this.do(row, done);
+		return true;
 	}
 
 	/** A result chosen while the word asks for a bron: the command does its work on it. */

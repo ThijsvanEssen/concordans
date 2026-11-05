@@ -108,12 +108,32 @@ export const SHORTCUTS: readonly Shortcut[] = [
 		handler: 'close'
 	},
 	{
+		id: 'palette-netwerk',
+		kind: 'focus',
+		context: 'zoeken',
+		keys: [letterKey('N', ALT)],
+		join: 'together',
+		description: 'Het netwerk van de gekozen bron in ⌘K',
+		handler: 'palette',
+		focusIn: 'in ⌘K'
+	},
+	{
+		id: 'palette-toevoegen',
+		kind: 'focus',
+		context: 'zoeken',
+		keys: [letterKey('T', ALT)],
+		join: 'together',
+		description: 'De gekozen bron in ⌘K aan het netwerk toevoegen',
+		handler: 'palette',
+		focusIn: 'in ⌘K'
+	},
+	{
 		id: 'search-results',
 		kind: 'focus',
 		context: 'zoeken',
 		keys: [arrow('Up', '↑'), arrow('Down', '↓'), { code: 'Enter', cap: 'Enter' }],
 		join: 'together',
-		description: 'Door de zoekresultaten; Enter opent er een',
+		description: 'Door de zoekresultaten; Enter opent de gekozen rij, zonder keuze de zoekpagina',
 		handler: 'Search',
 		focusIn: 'in het zoekveld'
 	},
@@ -378,6 +398,7 @@ export const COMMANDS: readonly Command[] = [
 		sign: '+',
 		context: 'netwerk',
 		arg: 'bron',
+		key: 'palette-toevoegen',
 		description: 'De bron die je typt aan het netwerk toevoegen: + wwke',
 		flow: 'F5'
 	},
@@ -403,6 +424,7 @@ export const COMMANDS: readonly Command[] = [
 		short: ['nw'],
 		context: 'overal',
 		arg: 'bron',
+		key: 'palette-netwerk',
 		description: 'Het netwerk van de bron die je typt',
 		flow: 'F18'
 	}

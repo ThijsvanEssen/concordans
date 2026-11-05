@@ -46,9 +46,9 @@ export type Preview = {
 	/** The dossier a stuk belongs to: `Dossier 36496, Wet betaalbare huur`. */
 	dossier?: string | null;
 	/** Who submitted a stuk: `Ingediend door B. Madlener (PVV), mede namens …`. */
-	wie?: string | null;
+	submitters?: string | null;
 	/** The vote on a motie or amendement: `Aangenomen, 137 voor en 13 tegen`. */
-	uitslag?: string | null;
+	outcome?: string | null;
 	/** A line the reference adds: the definition a citation's words name. */
 	extra?: string | null;
 };
@@ -60,7 +60,7 @@ export const PREVIEW_CHARS = 400;
  * The first sentence of a text: up to the first full stop that is followed by a capital and
  * does not close a usual abbreviation (`art.`, `mr.`, `r.o.`, `o.a.`).
  */
-export function eersteZin(s: string | null): string | null {
+export function firstSentence(s: string | null): string | null {
 	if (!s) return null;
 	const re = /[.!?](?=\s+[\p{Lu}"'(])/gu;
 	for (let m = re.exec(s); m; m = re.exec(s)) {
@@ -153,7 +153,7 @@ export function previewFromNode(
 				title: judgmentHeading(props, name, cite),
 				// Cited by its ECLI, the title carries the day already: HR 25 augustus 2026.
 				date: textOf(props.ecli) ? null : langeDatum(textOf(props.date)) || null,
-				lines: clip(eersteZin(textOf(props.summary)))
+				lines: clip(firstSentence(textOf(props.summary)))
 			};
 		}
 		case 'dossiers': {
@@ -203,7 +203,7 @@ export function previewFromNode(
 							short_title: textOf(props.dossier_short_title)
 						})
 					: null,
-				wie: indieners(props.actors)
+				submitters: indieners(props.actors)
 			};
 		}
 		case 'members':
@@ -313,7 +313,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 			.filter((p) => p.primary_case_id === caseId && (p.passed != null || textOf(p.decision_text)))
 			.sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')));
 		const laatste = eigen.at(-1);
-		return laatste ? { ...preview, uitslag: uitslagVan(laatste) } : preview;
+		return laatste ? { ...preview, outcome: uitslagVan(laatste) } : preview;
 	}
 	if (collection === 'judgments' && isOverwegingAnker(at)) {
 		// At an r.o., the overweging the reference means, not the summary (the detail the

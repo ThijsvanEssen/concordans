@@ -1,5 +1,5 @@
 // One search: the query, a request per lane and what each answered, and what the list makes
-// of it (the rows, the Beste treffer, the states) with what Enter opens. Search.svelte draws
+// of it (the rows, the states) with what Enter opens. Search.svelte draws
 // it; `connect` asks again whenever the query, the period or the scope changes.
 //
 // Each lane on its own (lanes.ts): its group waits or fails alone, and Opnieuw asks
@@ -19,7 +19,7 @@ import {
 	type Lane,
 	type SearchKind
 } from './lanes';
-import { bestEarly, bestIdOf, bySection, groupOrder, hitName, slots } from './present';
+import { bestIdOf, bySection, groupOrder, hitName, slots } from './present';
 import { narrowerWords } from './results';
 import {
 	choicesOf,
@@ -39,8 +39,7 @@ type LaneStatus = 'done' | 'loading' | 'failed';
 /** What a lane's answer says beside its hits (API 0.80.5; absent on an older API). */
 type Answer = {
 	term: string;
-	/** The API names a `best` at all: an older API does not, and the Enter stays as it was. */
-	named: boolean;
+	/** The hit the query names: what a word with a bron (`keten awb`) does its work on. */
 	best: string | null;
 	/** `any`: no hit held every word, the hits hold some of them. */
 	matched: 'all' | 'any';
@@ -50,7 +49,6 @@ type Answer = {
 
 const noAnswer = (): Answer => ({
 	term: '',
-	named: false,
 	best: null,
 	matched: 'all',
 	leftOut: []
@@ -113,7 +111,7 @@ export class SearchSession {
 	fullFor = $state('');
 	/** The kinds searched, in the order their groups stand. */
 	kinds = $state<readonly SearchKind[]>(SEARCH_KINDS);
-	/** The row Enter opens: the first before any key. */
+	/** The row the keys are on, once they chose one, or the pointer is on (`enterRow`, `shownRow`). */
 	active = $state(0);
 
 	lanes = $state(Object.fromEntries(LANES.map((l) => [l.id, idle()])) as Record<LaneId, LaneState>);
@@ -121,8 +119,6 @@ export class SearchSession {
 	waiting = $state(Object.fromEntries(LANES.map((l) => [l.id, false])) as Record<LaneId, boolean>);
 	/** The query the resolving lane answered; '' before the first answer. */
 	answered = $state('');
-	/** A citation the API did not confirm: its row is gone and the results stay. */
-	unresolved = $state('');
 	/** "AVG", which the API confirmed as a law. */
 	confirmed = $state<{ term: string; target: Resolved } | null>(null);
 	/**
@@ -140,10 +136,6 @@ export class SearchSession {
 	outside = $state('');
 	/** What the search of each kind reads, as the answers say it (`searched`, API 0.79.67). */
 	searched = $state<Partial<Record<SearchKind, Schema<'SearchedDTO'>>>>({});
-	/** The one hit above the groups, set once the lead lane (the fast one) is in and kept when
-	 * a slower lane comes (#52). With an API that names the `best`, only that hit; else the
-	 * best by score. Only where the lead lane names none does a slower lane still deliver it. */
-	best = $state<{ kind: SearchKind; hit: Hit } | null>(null);
 
 	readonly q = $derived(this.query.trim());
 	readonly request = $derived<SearchRequest>({
@@ -162,7 +154,7 @@ export class SearchSession {
 
 	// The groups stand in one order, the order of the kinds, whichever answer comes first
 	// (UX-toets 0.79.47, #52): a group that comes later takes its own place and moves none of
-	// the others. The best answer is the Beste treffer above them.
+	// the others.
 	readonly groups = $derived(
 		this.kinds
 			.map((kind) => ({ kind, hits: bySection(this.hitsOf(kind)) }))
@@ -174,11 +166,9 @@ export class SearchSession {
 	readonly answers = $derived(
 		LANES.map((l) => this.lanes[l.id].answer).filter((a) => a.term === this.q)
 	);
-	/** The API says what the query names (`best`); else the older Enter stands. */
-	readonly names = $derived(this.answers.some((a) => a.named));
 	/**
-	 * The id Enter may open: the best of the lane that resolves, else of another lane, else
-	 * the one hit the query names exactly (`exact`) over the lanes; none for words.
+	 * The id the query names: the best of the lane that resolves, else of another lane, else
+	 * the one hit it names exactly (`exact`) over the lanes; none for words.
 	 */
 	readonly bestId = $derived.by((): string | null => {
 		const lane = LANES.find((l) => l.kinds.some((k) => this.kinds.includes(k)));
@@ -201,20 +191,6 @@ export class SearchSession {
 	);
 	/** Words of the query to try alone where it found nothing: the longer ones, at most three. */
 	readonly narrower = $derived(narrowerWords(this.q));
-	/** The first lane in scope: its answer brings the Beste treffer. */
-	readonly lead = $derived(
-		this.inScope.find((l) => !!l.kinds.length) ?? { ...LANES[0], kinds: [] as SearchKind[] }
-	);
-	/** The lead lane has answered this query. */
-	readonly leadIn = $derived(
-		this.answered === this.q &&
-			this.lanes[this.lead.id].answer.term === this.q &&
-			!this.waiting[this.lead.id]
-	);
-	/** The place of the Beste treffer is held while it is still to come. */
-	readonly bestComing = $derived(
-		!this.best && !this.allIn && (this.groups.length > 0 || this.leadIn) && this.q.length >= 2
-	);
 	/** The kinds whose group says "laden…" while their lane waits. */
 	readonly loadingKinds = $derived(
 		new Set(
@@ -236,7 +212,7 @@ export class SearchSession {
 	);
 	/** The groups in the one order, with the places of those still coming (#52). */
 	readonly shown = $derived(
-		slots(this.order, this.groups, this.best, (kind) => !!this.q && this.loadingKinds.has(kind))
+		slots(this.order, this.groups, (kind) => !!this.q && this.loadingKinds.has(kind))
 	);
 	readonly hits = $derived(this.shown.flatMap((g) => g.hits));
 	readonly rowOfHit = $derived(new Map(this.hits.map((hit, i) => [hit.id, this.offset + i])));
@@ -246,25 +222,34 @@ export class SearchSession {
 	readonly choicesMore = $derived(
 		this.choicesFor?.term === this.q ? this.choicesFor.total - this.choices.length : 0
 	);
-	/** The notation the query is, as the API read it: its row, before the hits. */
-	readonly citation = $derived(
-		this.q && this.q !== this.unresolved && this.choices.length === 0
-			? (this.#ofQuery(this.resolvedWith)?.notation ?? null)
-			: null
+	/** What the API read in the query, where it is no citation of several articles. */
+	readonly #read = $derived(
+		this.q && this.choices.length === 0 ? this.#ofQuery(this.resolvedWith) : null
 	);
+	/** The bron the query cites exactly, as the API named it: none for a citation it does not know. */
+	readonly cited = $derived(this.#read?.notation ? this.#read.target : null);
+	/** The notation of that citation. */
+	readonly citation = $derived(this.cited ? (this.#read?.notation ?? null) : null);
 	readonly bare = $derived(
 		!this.citation && this.choices.length === 0 && this.confirmed?.term === this.q
 			? this.confirmed.target
 			: null
 	);
-	/** Rows the keys move over: the choices or the citation first, then every hit. */
-	readonly offset = $derived(this.choices.length || (this.citation || this.bare ? 1 : 0));
+	/**
+	 * The row above the groups: a citation; a law by its name only in a field that picks, as
+	 * elsewhere the group Wetten leads and a page of results follows.
+	 */
+	readonly lead = $derived(this.cited ?? (this.#results ? null : this.bare));
+	/** Rows the keys move over: the choices or the lead first, then every hit. */
+	readonly offset = $derived(this.choices.length || (this.lead ? 1 : 0));
 	readonly rowCount = $derived(this.offset + this.hits.length);
-	/** A row stands chosen before a key: the Beste treffer, a citation, or the older API's first. */
-	readonly preselects = $derived(!this.names || this.best !== null || this.offset > 0);
+	/** A hit the query names, once it stands among the hits. */
+	readonly named = $derived(this.hits.find((h) => h.id === this.bestId) ?? null);
+	/** What Enter opens stands chosen before a key: a citation, or in a field that picks any first row. */
+	readonly preselects = $derived(!!this.cited || (!this.#results && this.offset > 0));
 
-	/** A citation the API does not know: said where its row was, not dropped without a word. */
-	readonly notFound = $derived(this.unresolved !== '' && this.unresolved === this.q);
+	/** A citation the API does not know: said at once, and no row that looks like a bron. */
+	readonly notFound = $derived(!!this.#read?.notation && !this.cited);
 	readonly chamber = $derived(chamberOf(this.q));
 	// A regeling named by its title that the API does not know ("Omgevingswet"): the network
 	// holds a selection of laws, and the hits only mention it.
@@ -306,8 +291,8 @@ export class SearchSession {
 			// Never "Geen resultaten" while the live mode left kinds out.
 			this.moreKinds.size === 0 &&
 			this.hits.length === 0 &&
-			!this.citation &&
-			!this.bare &&
+			!this.lead &&
+			!this.notFound &&
 			!this.outsideLaw
 	);
 	/** The field turns: the fast kinds on their way. */
@@ -342,8 +327,17 @@ export class SearchSession {
 	};
 	/** The first ↓ confirms the preselected row instead of skipping it. */
 	#moved = $state(false);
-	// An Enter before the answer waits for it (#79): the article the moment the API confirms
-	// it, else the first row once every answer is in and the Beste treffer stands above.
+	/**
+	 * With a page of results the pointer chooses nothing for Enter (Thijs, 5 Nov: "Nee,
+	 * zoekpagina"): on the row `active` it lights it and the right column shows it.
+	 */
+	#pointed = $state(false);
+	/** The row Enter opens: chosen with the keys, or standing chosen before a key; else none. */
+	readonly enterRow = $derived(this.#moved ? this.active : this.preselects ? 0 : null);
+	/** The row the right column shows: the one the pointer is on, else the one Enter opens. */
+	readonly shownRow = $derived(this.#pointed ? this.active : this.enterRow);
+	// In a field that picks an Enter before the answer waits for it (#79): the article the moment
+	// the API confirms it, else the first row once every answer is in.
 	readonly #earlyEnter = new EarlyEnter(() => this.enter());
 
 	readonly #results?: (q: string, from: string, to: string) => void;
@@ -371,26 +365,20 @@ export class SearchSession {
 			const request = this.request;
 			untrack(() => this.ask(request));
 		});
-		// The one before stands while the next query is under way; a query too short for any
-		// answer clears it. Set once the lead lane is in and kept when a slower lane comes, so the
-		// top does not change under the pointer.
-		$effect(() => {
-			if (this.leadIn) this.best = this.#bestOf(this.groups);
-			else if (this.groups.length === 0) this.best = null;
-		});
 		$effect(() => {
 			void this.q;
 			void this.answered;
 			this.active = 0;
 			this.#moved = false;
+			this.#pointed = false;
 		});
 		$effect(() =>
 			this.#earlyEnter.answer(
 				this.q,
 				this.bare !== null ||
-					(!!this.#ofQuery(this.resolvedWith)?.target &&
-						!!this.#ofQuery(this.resolvedWith)?.notation) ||
-					this.allIn
+					this.cited !== null ||
+					this.allIn ||
+					(!!this.#results && this.answered === this.q)
 			)
 		);
 		$effect(() => () => this.stop());
@@ -429,44 +417,30 @@ export class SearchSession {
 		}
 	}
 
-	/** The Beste treffer: the hit the API names, else (an older API) the best by score. */
-	#bestOf(groups: { kind: SearchKind; hits: Hit[] }[]): { kind: SearchKind; hit: Hit } | null {
-		return bestEarly(
-			{ kinds: this.lead.kinds, answer: this.lanes[this.lead.id].answer },
-			groups,
-			this.answers,
-			this.allIn
-		);
-	}
-
 	/** Is the row the one a key now acts on? Not before a key, where nothing is preselected. */
 	isActive(row: number): boolean {
-		return this.active === row && (this.#moved || this.preselects);
+		return this.enterRow === row;
 	}
 
-	/** What Enter opens now, the active row; false where there is nothing to open yet. */
+	/** Is the pointer on the row, without it being chosen for Enter? */
+	isPointed(row: number): boolean {
+		return this.#pointed && this.active === row;
+	}
+
+	/** What Enter does now; false where there is nothing to open yet. */
 	enter(): boolean {
-		const { active, choices, citation, bare, offset } = this;
+		if (this.#results && !this.#moved) return this.#enterUnchosen(this.#results);
+		const { active, choices, lead, offset } = this;
 		if (active < choices.length) this.#open(choices[active].ref, choices[active].at);
-		else if (citation && active === 0) this.openCitation();
-		else if (bare && active === 0) this.#open(bare.ref, bare.at);
-		// A hit opens only when the list answers what is typed: the first row once every answer
-		// is in (#118), a row the reader chose at once.
-		else if (
-			this.answered === this.q &&
-			(this.#moved || (this.allIn && this.preselects)) &&
-			this.hits[active - offset]
-		)
+		else if (lead && active === 0) this.#open(lead.ref, lead.at);
+		// A hit opens only when the list answers what is typed.
+		else if (this.answered === this.q && this.#moved && this.hits[active - offset])
 			this.#open(hitName(this.hits[active - offset]), null);
-		// Words name nothing: Enter goes to the page of results (besluit 31); where there is none
-		// (a panel that picks, a scope) it keeps the list and chooses its first row, a second
-		// Enter opens it (besluit 30).
+		// Where there is no page of results (a panel that picks, a scope) Enter chooses the first
+		// row, a second Enter opens it (besluit 30).
 		else if (this.answered === this.q && this.allIn && this.hits.length > 0) {
-			if (this.#results) this.#results(this.q, this.from, this.to);
-			else {
-				this.active = offset;
-				this.#moved = true;
-			}
+			this.active = offset;
+			this.#moved = true;
 		} else if (
 			this.answered === this.q &&
 			this.allIn &&
@@ -475,10 +449,21 @@ export class SearchSession {
 			// Nothing in the live list: the whole query in full, which also tries any word of it.
 			this.askInFull();
 			return false;
-		} else if (this.answered === this.q && this.allIn && this.#results && this.q.trim()) {
-			// Nothing even in full: the page of results says so, with the way on (T6).
-			this.#results(this.q, this.from, this.to);
 		} else return false;
+		return true;
+	}
+
+	/**
+	 * Nothing chosen: a citation the API recognises opens (Thijs, 5 Nov: "Ja, direct openen"), all
+	 * else goes to the page of results at once. Every notation holds a digit, so only a query with
+	 * one waits for the answer that says what it cites.
+	 */
+	#enterUnchosen(results: (q: string, from: string, to: string) => void): boolean {
+		const { q, cited } = this;
+		if (!q) return false;
+		if (this.answered !== q && q.length >= FAST_MIN_CHARS && /\d/.test(q)) return false;
+		if (cited) this.#open(cited.ref, cited.at);
+		else results(q, this.from, this.to);
 		return true;
 	}
 
@@ -489,27 +474,32 @@ export class SearchSession {
 
 	down() {
 		this.#earlyEnter.forget();
-		if (this.#moved) this.active = Math.min(this.active + 1, this.rowCount - 1);
-		this.#moved = true;
+		if (this.#moved || this.#pointed) this.active = Math.min(this.active + 1, this.rowCount - 1);
+		this.#chooseActive();
 	}
 
 	up() {
 		this.#earlyEnter.forget();
 		this.active = Math.max(this.active - 1, 0);
-		this.#moved = true;
+		this.#chooseActive();
 	}
 
-	/** The pointer moved onto a row. */
+	/** The keys come into the list from above it, on its first row. */
+	chooseFirst() {
+		this.active = 0;
+		this.#chooseActive();
+	}
+
+	/** The pointer moved onto a row: in a field that picks that chooses it. */
 	point(row: number) {
 		this.active = row;
-		this.#moved = true;
+		this.#moved = !this.#results;
+		this.#pointed = !!this.#results;
 	}
 
-	/** The citation's bron, as the API named it; "staat niet in de gegevens" where it named none. */
-	openCitation() {
-		const target = this.#ofQuery(this.resolvedWith)?.target;
-		if (target) this.#open(target.ref, target.at);
-		else this.unresolved = this.q;
+	#chooseActive() {
+		this.#moved = true;
+		this.#pointed = false;
 	}
 
 	/** What the API answered for this query, not an earlier one. */
@@ -586,7 +576,6 @@ export class SearchSession {
 				const cut = lane.full ? [] : query.types.filter((k) => r.partial?.[k]);
 				const answer: Answer = {
 					term,
-					named: 'best' in r,
 					best: r.best ?? null,
 					matched: r.matched ?? 'all',
 					leftOut: r.left_out ?? []

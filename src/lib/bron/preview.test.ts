@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fail, fakeApi, slow } from '$lib/test/fakeApi';
 import {
 	PREVIEW_CHARS,
-	eersteZin,
+	firstSentence,
 	indieners,
 	loadPreview,
 	previewFromNode,
@@ -107,19 +107,19 @@ describe('previewFromNode', () => {
 		expect(p.dossier).toBe(
 			'Dossier 36496 Wijziging van de Wet goed verhuurderschap (Wet betaalbare huur)'
 		);
-		expect(p.wie).toBe('Ingediend door B. Madlener (PVV), mede namens H. de Jong (GL-PvdA)');
+		expect(p.submitters).toBe('Ingediend door B. Madlener (PVV), mede namens H. de Jong (GL-PvdA)');
 	});
 });
 
 describe('preview helpers', () => {
 	it('takes the first sentence past the usual abbreviations', () => {
-		expect(eersteZin('Onrechtmatige daad (art. 6:162 BW). Causaal verband.')).toBe(
+		expect(firstSentence('Onrechtmatige daad (art. 6:162 BW). Causaal verband.')).toBe(
 			'Onrechtmatige daad (art. 6:162 BW).'
 		);
-		expect(eersteZin('Zie r.o. 4.3 en mr. Jansen. Tweede zin.')).toBe(
+		expect(firstSentence('Zie r.o. 4.3 en mr. Jansen. Tweede zin.')).toBe(
 			'Zie r.o. 4.3 en mr. Jansen.'
 		);
-		expect(eersteZin('Eén zin zonder punt')).toBe('Eén zin zonder punt');
+		expect(firstSentence('Eén zin zonder punt')).toBe('Eén zin zonder punt');
 	});
 
 	it('names the indieners and the vote as the source gives them', () => {

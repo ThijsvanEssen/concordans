@@ -27,7 +27,7 @@
 		"src/lib/verbonden/loaders.ts": 1511,
 		"src/routes/(main)/actueel/+page.svelte": 855,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2961
+		"src/routes/explore/+page.svelte": 2958
 	},
 	"effects_per_svelte": {
 		"src/lib/components/explore/IndexView.svelte": 9,
@@ -100,7 +100,7 @@
 		"src/lib/network/shared.ts": 16,
 		"src/lib/onderwerpen/overzicht.ts": 17,
 		"src/lib/search/present.ts": 63,
-		"src/lib/search/session.svelte.ts": 22,
+		"src/lib/search/session.svelte.ts": 16,
 		"src/lib/selection/cluster.ts": 17,
 		"src/lib/selection/netwerk.ts": 19,
 		"src/lib/text/anchor.ts": 19,

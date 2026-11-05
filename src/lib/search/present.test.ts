@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import type { Collection } from '$lib/vocabulary';
 import {
 	expiredTitle,
-	bestEarly,
-	bestHit,
 	around,
 	bySection,
 	chamberOfHit,
@@ -418,67 +415,6 @@ describe('a vote as a hit', () => {
 	});
 });
 
-describe('bestHit', () => {
-	type H = Schema<'SearchResultItem'>;
-	const hit = (id: string, collection: string, score: number) =>
-		({ id, key: id, collection, display_name: id, score }) as unknown as H;
-	const group = (kind: Collection, ...hits: H[]) => ({ kind, hits });
-
-	it('leads with the rule where it scores nearly as well: huurverhoging', () => {
-		const best = bestHit([
-			group('documents', hit('kamervragen', 'documents', 0.25)),
-			group('dossiers', hit('36511', 'dossiers', 0.25)),
-			group('articles', hit('7:248', 'articles', 0.1), hit('7:253', 'articles', 0.1))
-		]);
-		expect(best?.hit.id).toBe('7:248');
-	});
-
-	it('keeps a name that fits far better on top: a fractie for PVV', () => {
-		const best = bestHit([
-			group('factions', hit('pvv', 'factions', 0.75)),
-			group('articles', hit('art', 'articles', 0.1))
-		]);
-		expect(best?.hit.id).toBe('pvv');
-	});
-
-	it('takes an identifier first, and says nothing for one group', () => {
-		expect(
-			bestHit([
-				group('articles', hit('art', 'articles', 0.5)),
-				group('judgments', hit('ecli', 'judgments', 1))
-			])?.hit.id
-		).toBe('ecli');
-		expect(bestHit([group('articles', hit('art', 'articles', 0.5))])).toBeNull();
-	});
-});
-
-describe('bestEarly', () => {
-	type H = Schema<'SearchResultItem'>;
-	const hit = (id: string, collection: string, score: number) =>
-		({ id, key: id, collection, display_name: id, score }) as unknown as H;
-	const group = (kind: Collection, ...hits: H[]) => ({ kind, hits });
-	const lead = (best: string | null) => ({
-		kinds: ['instruments', 'factions'] as Collection[],
-		answer: { named: true, best }
-	});
-	const groups = [
-		group('instruments', hit('wet', 'instruments', 0.5)),
-		group('articles', hit('art', 'articles', 1))
-	];
-
-	it('takes the pick of the lead lane at once and keeps it when a slower lane names another', () => {
-		const answers = [lead('wet').answer, { named: true, best: 'art' }];
-		expect(bestEarly(lead('wet'), groups, answers, false)?.hit.id).toBe('wet');
-		expect(bestEarly(lead('wet'), groups, answers, true)?.hit.id).toBe('wet');
-	});
-
-	it('leaves a slower lane to deliver it only when the lead names none, and only once all are in', () => {
-		const answers = [lead(null).answer, { named: true, best: 'art' }];
-		expect(bestEarly(lead(null), groups, answers, false)).toBeNull();
-		expect(bestEarly(lead(null), groups, answers, true)?.hit.id).toBe('art');
-	});
-});
-
 describe('citeertitel', () => {
 	it('names a bill by its citation title, the long title below (Z5)', () => {
 		const maak = (h: Partial<Hit> & Pick<Hit, 'collection' | 'key'>): Hit =>
@@ -515,40 +451,23 @@ describe('citeertitel', () => {
 describe('slots (UX-toets 0.79.47, #52)', () => {
 	const ORDER = ['instruments', 'articles', 'judgments', 'dossiers'] as const;
 	const h = (id: string) => ({ id });
-	const kinds = (v: { kind: string; best: boolean; pending: boolean }[]) =>
-		v.map((x) => (x.best ? 'beste' : x.pending ? `${x.kind}…` : x.kind));
+	const kinds = (v: { kind: string; pending: boolean }[]) =>
+		v.map((x) => (x.pending ? `${x.kind}…` : x.kind));
 
 	it('keeps one order whichever answer comes first', () => {
-		const vroeg = slots(ORDER, [{ kind: 'judgments', hits: [h('j')] }], null);
-		const laat = slots(
-			ORDER,
-			[
-				{ kind: 'dossiers', hits: [h('d')] },
-				{ kind: 'judgments', hits: [h('j')] },
-				{ kind: 'articles', hits: [h('a')] }
-			],
-			null
-		);
+		const vroeg = slots(ORDER, [{ kind: 'judgments', hits: [h('j')] }]);
+		const laat = slots(ORDER, [
+			{ kind: 'dossiers', hits: [h('d')] },
+			{ kind: 'judgments', hits: [h('j')] },
+			{ kind: 'articles', hits: [h('a')] }
+		]);
 		expect(kinds(vroeg)).toEqual(['judgments']);
 		expect(kinds(laat)).toEqual(['articles', 'judgments', 'dossiers']);
 	});
 
 	it('holds the place of a group still coming', () => {
-		const v = slots(ORDER, [{ kind: 'dossiers', hits: [h('d')] }], null, (k) => k === 'judgments');
+		const v = slots(ORDER, [{ kind: 'dossiers', hits: [h('d')] }], (k) => k === 'judgments');
 		expect(kinds(v)).toEqual(['judgments…', 'dossiers']);
-	});
-
-	it('puts the Beste treffer on top, out of its own group', () => {
-		const v = slots(
-			ORDER,
-			[
-				{ kind: 'articles', hits: [h('a1'), h('a2')] },
-				{ kind: 'dossiers', hits: [h('d')] }
-			],
-			{ kind: 'articles', hit: h('a1') }
-		);
-		expect(kinds(v)).toEqual(['beste', 'articles', 'dossiers']);
-		expect(v[1].hits.map((x) => x.id)).toEqual(['a2']);
 	});
 });
 

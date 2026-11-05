@@ -7,6 +7,7 @@
 	let {
 		id,
 		active,
+		pointed = false,
 		href,
 		citation = false,
 		onchoose,
@@ -15,6 +16,8 @@
 	}: {
 		id: string;
 		active: boolean;
+		/** The pointer is on it: it lights, without being what a key acts on. */
+		pointed?: boolean;
 		/** Where the row leads; without, a click is its only way. */
 		href?: string;
 		/** A row for what the query cites: its kind and title on one line. */
@@ -30,7 +33,7 @@
 		{id}
 		class="row"
 		class:row--citation={citation}
-		class:is-active={active}
+		class:is-active={active || pointed}
 		role="option"
 		tabindex="-1"
 		aria-selected={active}
@@ -48,7 +51,7 @@
 		{id}
 		class="row"
 		class:row--citation={citation}
-		class:is-active={active}
+		class:is-active={active || pointed}
 		role="option"
 		tabindex="-1"
 		aria-selected={active}

@@ -21,13 +21,12 @@
 	import { expiredTitle, groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
-	import { NOTATION_COLLECTION } from './resolve-query';
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
 	import DoenRows from './DoenRows.svelte';
 	import PalettePreview from './PalettePreview.svelte';
 	import PaletteColumns from './PaletteColumns.svelte';
-	import { rowTarget, topTarget } from './targets';
+	import { rowBron, topTarget } from './targets';
 	import { PaletteActions } from './doen.svelte';
 	import { searchTextOf } from '$lib/keys/commands';
 	import type { Snippet } from 'svelte';
@@ -112,9 +111,9 @@
 	const target = $derived(topTarget(search));
 	// An Enter on a row Doen that waited for the search: done once the bron is found.
 	$effect(() => doen.settle(() => onOpen?.()));
-	/** The bron of the result the keys are on: the right column shows what it can do. */
+	/** The bron of the result the keys or the pointer are on: the right column shows it. */
 	const atBron = $derived(
-		doen.at === null && search.isActive(search.active) ? rowTarget(search, search.active) : null
+		doen.at === null && search.shownRow !== null ? rowBron(search, search.shownRow) : null
 	);
 	/** Two columns: in ⌘K, not in a field that picks. */
 	const columns = $derived(overlay && !onSelect);
@@ -135,6 +134,7 @@
 
 	function onkeydown(e: KeyboardEvent) {
 		if (doen.key(e, search, () => onOpen?.())) return;
+		if (atBron && doen.keyOfAction(e, atBron, () => onOpen?.())) return;
 		if (e.key === 'ArrowDown' && search.rowCount > 0) {
 			e.preventDefault();
 			search.down();
@@ -155,7 +155,6 @@
 	const placeOf = (e: PointerEvent) => `${e.screenX},${e.screenY}`;
 	const pointAt = (row: number) => (e: PointerEvent) => {
 		if (placeOf(e) !== pointerAt) {
-			doen.leave();
 			search.point(row);
 		}
 	};
@@ -210,8 +209,8 @@
 			aria-autocomplete="list"
 			aria-activedescendant={doen.at !== null
 				? `${uid}-doen-${doen.at}`
-				: search.rowCount > 0 && search.isActive(search.active)
-					? rowId(search.active)
+				: search.rowCount > 0 && search.enterRow !== null
+					? rowId(search.enterRow)
 					: undefined}
 			{placeholder}
 			autocomplete="off"
@@ -292,6 +291,7 @@
 						<SearchOption
 							id={rowId(i)}
 							active={isActive(i)}
+							pointed={search.isPointed(i)}
 							citation
 							href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
 							onchoose={() => open(choice.ref, choice.at)}
@@ -313,99 +313,51 @@
 						</p>
 					{/if}
 				</div>
-			{:else if search.citation}
-				<!-- The bron the API named, else the kind of the notation ("36799, nr. 31" a stuk). -->
-				{@const kind =
-					(search.resolvedWith?.term === search.q
-						? search.resolvedWith.target?.ref.collection
-						: null) ?? NOTATION_COLLECTION[search.citation.kind]}
-				<!-- The name from the source once the answer has it, not the query as typed. -->
-				{@const name =
-					(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
-					search.q}
-				{@const expired =
-					search.resolvedWith?.term === search.q
-						? expiredTitle(kind, search.resolvedWith.target?.expiredOn)
-						: null}
-				<SearchOption
-					id={rowId(0)}
-					active={doen.at === null && search.active === 0}
-					citation
-					onchoose={() => search.openCitation()}
-					onpoint={pointAt(0)}
-				>
-					<span class="row-kind"
-						><KindGlyph collection={kind} />{#if !startsWithKind(name, bronLabel(kind))}
-							{bronLabel(kind)}{/if}</span
-					>
-					<span class="row-title">{name}</span>
-					{#if expired}<span class="row-context"
-							><span class="row-expired" title={expired}>vervallen</span></span
-						>{/if}
-					<span class="kbd" aria-hidden="true">↵</span>
-				</SearchOption>
-			{:else if search.bare}
-				{@const bare = search.bare}
-				{@const name = bare.label ?? search.q}
-				{@const expired = expiredTitle(bare.ref.collection, bare.expiredOn)}
+			{:else if search.lead}
+				{@const lead = search.lead}
+				{@const name = lead.label ?? search.q}
+				{@const expired = expiredTitle(lead.ref.collection, lead.expiredOn)}
 				<!-- A link like the hits: its target is known, so a new tab can open it. -->
 				<SearchOption
 					id={rowId(0)}
-					active={doen.at === null && search.active === 0}
+					active={isActive(0)}
+					pointed={search.isPointed(0)}
 					citation
-					href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
-					onchoose={() => open(bare.ref, bare.at)}
+					href={bronHref(lead.ref, { at: lead.at, keepNetwerk: false })}
+					onchoose={() => open(lead.ref, lead.at)}
 					onpoint={pointAt(0)}
 				>
 					<span class="row-kind"
 						><KindGlyph
-							collection={bare.ref.collection}
-						/>{#if !startsWithKind(name, bronLabel(bare.ref.collection))}
-							{bronLabel(bare.ref.collection)}{/if}</span
+							collection={lead.ref.collection}
+						/>{#if !startsWithKind(name, bronLabel(lead.ref.collection))}
+							{bronLabel(lead.ref.collection)}{/if}</span
 					>
 					<span class="row-title">{name}</span>
 					{#if expired}<span class="row-context"
 							><span class="row-expired" title={expired}>vervallen</span></span
 						>{/if}
-					<span class="kbd" aria-hidden="true">↵</span>
+					{#if isActive(0)}<span class="kbd" aria-hidden="true">↵</span>{/if}
 				</SearchOption>
 			{/if}
 
-			{#if search.bestComing}
-				<!-- The place of the Beste treffer, from the first answer on (#52). -->
-				<div class="group group--beste" role="group" aria-labelledby="{uid}-beste-komt">
-					<div class="group-label" id="{uid}-beste-komt">
-						Beste treffer <span class="laden">laden…</span>
-					</div>
-				</div>
-			{/if}
-			{#each search.shown as group (group.best ? 'beste' : group.kind)}
-				{@const gid = group.best ? 'beste' : group.kind}
-				<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
-				{@const neighbours = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
-				<div
-					class="group"
-					class:group--beste={group.best}
-					role="group"
-					aria-labelledby="{uid}-{gid}"
-				>
-					<div class="group-label" id="{uid}-{gid}">
-						<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
-						{#if group.best}Beste treffer, <KindGlyph collection={group.kind} />
-							{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
-							{groupLabel(group.kind)}{/if}
+			{#each search.shown as group (group.kind)}
+				<div class="group" role="group" aria-labelledby="{uid}-{group.kind}">
+					<div class="group-label" id="{uid}-{group.kind}">
+						<KindGlyph collection={group.kind} />
+						{groupLabel(group.kind)}
 						{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
-						{#if !group.best && search.partialKinds.has(group.kind)}
+						{#if search.partialKinds.has(group.kind)}
 							<span class="deel">treffers met een deel van de woorden</span>
 						{/if}
 					</div>
-					{#if !picker && !group.best && searchedLine(search.searched[group.kind])}
+					{#if !picker && searchedLine(search.searched[group.kind])}
 						<!-- What its search reads, so a hit not found is not taken for one not there. -->
 						<p class="gezocht"><Coverage searched={search.searched[group.kind]} /></p>
 					{/if}
 					{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 						{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
-						{@const shown = presentHit(hit, search.q, neighbours)}
+						{@const shown = presentHit(hit, search.q, group.hits)}
 						{@const section = sectionOf(hit)}
 						{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
 							<div class="section" role="presentation">{section}</div>
@@ -413,6 +365,7 @@
 						<SearchOption
 							id={rowId(i)}
 							active={isActive(i)}
+							pointed={search.isPointed(i)}
 							href={bronHref(hitName(hit), { keepNetwerk: false })}
 							onchoose={() => open(hitName(hit), null, shown.title)}
 							onpoint={pointAt(i)}
@@ -509,14 +462,15 @@
 			{/if}
 		</div>
 		{#snippet aside()}
-			{#if doen.at !== null || atBron}
-				<PalettePreview
-					row={doen.at !== null ? doen.rows[doen.at] : null}
-					bron={atBron?.label ?? null}
-					actions={atBron ? doen.actionsFor(atBron) : []}
-					ondo={(row) => doen.do(row, () => onOpen?.())}
-				/>
-			{/if}
+			<PalettePreview
+				row={doen.at !== null ? doen.rows[doen.at] : null}
+				bron={atBron}
+				actions={atBron ? doen.actionsFor(atBron) : []}
+				query={search.q}
+				opens={search.shownRow === search.enterRow}
+				cited={search.cited ? (search.cited.label ?? search.q) : null}
+				ondo={(row) => doen.do(row, () => onOpen?.())}
+			/>
 		{/snippet}
 	</PaletteColumns>
 </div>

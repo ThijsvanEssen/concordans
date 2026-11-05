@@ -17,15 +17,7 @@
 	import { selectOptions, type FacetGroup } from '$lib/components/explore/index/facets';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { LANES, SEARCH_KINDS, type SearchKind } from '$lib/search/lanes';
-	import {
-		bySection,
-		groupLabel,
-		groupOrder,
-		bestEarly,
-		sectionOf,
-		slots
-	} from '$lib/search/present';
-	import { bronLabel } from '$lib/vocabulary';
+	import { bySection, groupLabel, groupOrder, sectionOf, slots } from '$lib/search/present';
 	import {
 		courtLabel,
 		judgmentFacets,
@@ -109,28 +101,12 @@
 	const judgments = $derived(judgmentFacets(results.hitsOf('judgments')));
 	// The groups stand in the order of the typeahead (groupOrder): by the fast lane alone, so
 	// the slow ones (the text, the judgments) come in under their places, each holding its
-	// place with "Laden…", and move none. The Beste treffer stands above as soon as the lead
-	// lane (the fast one) is in, and no slower lane replaces it.
+	// place with "Laden…", and move none.
 	const order = $derived(
 		groupOrder(
 			kinds,
 			LANES[0].kinds.map((kind) => ({ kind, hits: hitsOf(kind) }))
 		)
-	);
-	const lead = $derived(LANES.find((l) => l.kinds.some((k) => kinds.includes(k))) ?? LANES[0]);
-	const leadIn = $derived(results.lanes[lead.id].status !== 'loading');
-	const best = $derived(
-		!chosen && leadIn
-			? bestEarly(
-					{ kinds: lead.kinds, answer: results.lanes[lead.id] },
-					groups,
-					results.answers,
-					results.done
-				)
-			: null
-	);
-	const bestComing = $derived(
-		!chosen && !results.done && !best && (groups.length > 0 || leadIn) && q.length >= 2
 	);
 	const waiting = $derived(
 		new Set(
@@ -139,7 +115,7 @@
 			)
 		)
 	);
-	const shown = $derived(slots(order, groups, best, (kind) => q.length >= 2 && waiting.has(kind)));
+	const shown = $derived(slots(order, groups, (kind) => q.length >= 2 && waiting.has(kind)));
 
 	const groupsOfFacets = $derived.by((): FacetGroup[] => {
 		const out: FacetGroup[] = [
@@ -261,24 +237,8 @@
 			<p class="stil weggelaten">Weggelaten: {leftOut.join(', ')}</p>
 		{/if}
 
-		{#if bestComing}
-			<Sectie id="beste-treffer-laden" title="Beste treffer" inklapbaar={false}>
-				<SlowLoad label="Laden…" visible />
-			</Sectie>
-		{/if}
-
-		{#each shown as slot (slot.best ? 'beste' : slot.kind)}
-			{#if slot.best}
-				<Sectie id="beste-treffer" title="Beste treffer, {bronLabel(slot.kind)}" inklapbaar={false}>
-					<div class="rijen">
-						<ResultRow
-							hit={slot.hits[0]}
-							{q}
-							neighbours={groups.find((g) => g.kind === slot.kind)?.hits ?? slot.hits}
-						/>
-					</div>
-				</Sectie>
-			{:else if slot.pending}
+		{#each shown as slot (slot.kind)}
+			{#if slot.pending}
 				<Sectie id="groep-{slot.kind}-laden" title={groupLabel(slot.kind)} inklapbaar={false}>
 					<SlowLoad label="Laden…" visible />
 				</Sectie>

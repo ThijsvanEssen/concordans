@@ -52,6 +52,7 @@ const LABEL: Record<ViewId, string> = {
 	keten: 'Keten'
 };
 
+const NO_CHAIN = 'Keten is er bij een wet, artikel, uitspraak, fractie of persoon';
 const NEEDS_TWO = 'Verband vraagt een tweede bron: typ verband en een bron';
 
 function viewRow(w: Werkplek, to: ViewId, why: string | null): DoRow {
@@ -71,9 +72,7 @@ function viewRows(w: Werkplek, p: Parsed, target: Target | null): DoRow[] {
 	if (id === 'omgeving') return w.graph ? [viewRow(w, 'omgeving', null)] : [];
 	if (id === 'keten')
 		// `keten awb` opens the Awb's own: the doer of every page (lib/keys/doen-overal.ts).
-		return p.rest
-			? []
-			: [viewRow(w, 'keten', w.chainPossible ? null : 'Keten is er bij een wet of een artikel')];
+		return p.rest ? [] : [viewRow(w, 'keten', w.chainPossible ? null : NO_CHAIN)];
 	if (id !== 'verband') return [];
 	if (!p.rest) return [viewRow(w, 'verband', w.verbandPossible ? null : NEEDS_TWO)];
 	return [
@@ -205,7 +204,7 @@ function hereRows(w: Werkplek): DoRow[] {
 		? [
 				viewRow(w, 'omgeving', null),
 				viewRow(w, 'verband', w.verbandPossible ? null : NEEDS_TWO),
-				viewRow(w, 'keten', w.chainPossible ? null : 'Keten is er bij een wet of een artikel')
+				viewRow(w, 'keten', w.chainPossible ? null : NO_CHAIN)
 			]
 		: w.chainPossible
 			? [viewRow(w, 'keten', null)]
