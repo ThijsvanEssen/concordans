@@ -140,10 +140,8 @@
 	// The count of the period, in words; the bronnen without a year stand in it, never placed.
 	const counts = $derived(sumPeriod(years, range.van, range.tot));
 	const undatedWords = $derived(undatedText(undated));
-	const parts = $derived([
-		...countParts(counts.per, counts.changes),
-		...(undatedWords ? [{ text: undatedWords }] : [])
-	]);
+	const datedParts = $derived(countParts(counts.per, counts.changes));
+	const parts = $derived([...datedParts, ...(undatedWords ? [{ text: undatedWords }] : [])]);
 	const short = $derived(shortCount(counts.per, counts.changes, undated));
 	const words = $derived(
 		fromDay || toDay ? periodInWords(fromDay ?? '', toDay ?? '', today) : `${first} tot ${last}`
@@ -171,9 +169,11 @@
 {#snippet telling()}
 	<p class="telling" aria-live="polite">
 		{#each parts as d, i (d.text)}<span
-				>{#if 'change' in d && d.change}{@render ruit()}{/if}{d.text}{i < parts.length - 1
-					? ', '
-					: ''}</span
+				>{#if 'change' in d && d.change}{@render ruit()}{/if}{d.text}{i === parts.length - 1
+					? ''
+					: i === datedParts.length - 1
+						? '; '
+						: ', '}</span
 			>{/each}
 	</p>
 {/snippet}
@@ -222,12 +222,8 @@
 				style:left="clamp(0px, calc({plek(cardYear.jaar + 0.5)}% - 92px), calc(100% - 184px))"
 			>
 				<p class="kaart-kop">{cardYear.jaar}</p>
-				{#each cardYear.parts.filter((d) => d.n > 0) as d (d.id)}
-					{@const k = STRIP_KINDS.find((s) => s.id === d.id)!}
-					<p class="kaart-rij">
-						<i class="teken" style:background={k.colour}></i>{d.n}
-						{d.n === 1 ? k.one : k.many}
-					</p>
+				{#each cardYear.words as d (d.id)}
+					<p class="kaart-rij"><i class="teken" style:background={d.colour}></i>{d.text}</p>
 				{/each}
 				{#each cardYear.changes as w (w)}
 					<p class="kaart-rij">{@render ruit()}{w}</p>

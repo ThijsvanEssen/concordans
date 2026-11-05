@@ -34,6 +34,32 @@ describe('the strip numbers', () => {
 			'1 publicatie'
 		]);
 	});
+	it('calls only a document a stuk: the others share its colour, not its name', () => {
+		const stippen = [
+			...Array.from({ length: 103 }, () => ({ jaar: 2024.5, collection: 'documents' as const })),
+			...Array.from({ length: 41 }, () => ({ jaar: 2024.5, collection: 'activities' as const })),
+			...Array.from({ length: 41 }, () => ({ jaar: 2024.5, collection: 'decisions' as const }))
+		];
+		const [year] = perYear(stippen, 2024, 2024);
+		expect(year.total).toBe(185);
+		expect(year.parts.find((d) => d.id === 'kamerstukken')!.n).toBe(185);
+		expect(year.words.map((w) => w.text)).toEqual([
+			'103 stukken',
+			'41 activiteiten',
+			'41 stemmingen'
+		]);
+		expect(new Set(year.words.map((w) => w.colour)).size).toBe(1);
+		const { per } = sumPeriod([year], 2024, 2024);
+		expect(countParts(per, 0).map((p) => p.text)).toEqual([
+			'103 stukken',
+			'41 activiteiten',
+			'41 stemmingen'
+		]);
+		expect(shortCount(per, 0, [])).toBe('185 bronnen');
+		expect(undatedText(['activities', 'commitments', 'commitments', 'dossiers'])).toBe(
+			'zonder datum: 1 dossier, 1 activiteit en 2 toezeggingen'
+		);
+	});
 	it('dates a publication by the day it was published, a law by none', () => {
 		const stb = { kind: 'publicatie', date_published: '2024-07-01' };
 		expect(stripDate(stb, 'instruments', 'instruments/stb_2024_200')).toBe('2024-07-01');
@@ -47,22 +73,22 @@ describe('the strip numbers', () => {
 	});
 	it('says the count of a phone at rest in one short line', () => {
 		const per = new Map([
-			['rechtspraak', 2],
-			['kamerstukken', 1]
+			['uitspraken', 2],
+			['stukken', 1]
 		] as const);
 		expect(shortCount(per, 1, ['documents', 'articles', 'articles'])).toBe(
-			'4 bronnen, 3 zonder datum'
+			'4 bronnen; zonder datum: 3'
 		);
 		expect(shortCount(new Map([['wetten', 1]]), 0, [])).toBe('1 bron');
-		expect(shortCount(new Map(), 0, ['articles'])).toBe('1 zonder datum');
+		expect(shortCount(new Map(), 0, ['articles'])).toBe('zonder datum: 1');
 		expect(shortCount(new Map(), 0, [])).toBe('');
 	});
 	it('says what has no day by what it is', () => {
 		expect(undatedText([])).toBeNull();
 		expect(
 			undatedText(['documents', ...Array<'articles'>(200).fill('articles'), 'instruments'])
-		).toBe('1 wet, 200 artikelen en 1 stuk zonder datum');
-		expect(undatedText(['articles'])).toBe('1 artikel zonder datum');
+		).toBe('zonder datum: 1 wet, 200 artikelen en 1 stuk');
+		expect(undatedText(['articles'])).toBe('zonder datum: 1 artikel');
 	});
 	it('puts every collection of the canvas in one kind or none', () => {
 		expect(kindOf('articles')).toBe('wetten');
@@ -75,7 +101,7 @@ describe('the strip numbers', () => {
 		expect(countedAs('members', post)).toBe('ministries');
 		expect(countedAs('members', {})).toBe('members');
 		expect(undatedText(['ministries', 'cabinets', 'members'])).toBe(
-			'1 parlementsbron en 2 regeringsbronnen zonder datum'
+			'zonder datum: 1 parlementsbron en 2 regeringsbronnen'
 		);
 	});
 	it('names the first and last year always and never two names touching', () => {

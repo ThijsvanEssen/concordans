@@ -8,28 +8,13 @@ import { rubriekOf } from './rubrieken';
 
 type StripKind = 'wetten' | 'rechtspraak' | 'kamerstukken' | 'parlement' | 'regering';
 
-/** The order a bar is stacked in, from the base; the words as the hover and the count say them. */
-export const STRIP_KINDS: readonly {
-	id: StripKind;
-	one: string;
-	many: string;
-	colour: string;
-}[] = [
-	{ id: 'wetten', one: 'wet', many: 'wetten', colour: kindColour('instruments') },
-	{ id: 'rechtspraak', one: 'uitspraak', many: 'uitspraken', colour: kindColour('judgments') },
-	{ id: 'kamerstukken', one: 'stuk', many: 'stukken', colour: kindColour('documents') },
-	{
-		id: 'parlement',
-		one: 'parlementsbron',
-		many: 'parlementsbronnen',
-		colour: kindColour('members')
-	},
-	{
-		id: 'regering',
-		one: 'regeringsbron',
-		many: 'regeringsbronnen',
-		colour: kindColour('ministries')
-	}
+/** The order a bar is stacked in, from the base. */
+export const STRIP_KINDS: readonly { id: StripKind; colour: string }[] = [
+	{ id: 'wetten', colour: kindColour('instruments') },
+	{ id: 'rechtspraak', colour: kindColour('judgments') },
+	{ id: 'kamerstukken', colour: kindColour('documents') },
+	{ id: 'parlement', colour: kindColour('members') },
+	{ id: 'regering', colour: kindColour('ministries') }
 ];
 
 /**
@@ -88,31 +73,84 @@ export function stripDate(
 	return publication ? textOf(props?.date_published) : null;
 }
 
-/** What a bron without a date is called in the count: kinds of the strip, and the two besides. */
-const UNDATED_NOUNS = [
-	{ id: 'wetten', one: 'wet', many: 'wetten' },
-	{ id: 'artikelen', one: 'artikel', many: 'artikelen' },
-	{ id: 'bijlagen', one: 'bijlage', many: 'bijlagen' },
-	{ id: 'rechtspraak', one: 'uitspraak', many: 'uitspraken' },
-	{ id: 'kamerstukken', one: 'stuk', many: 'stukken' },
-	{ id: 'parlement', one: 'parlementsbron', many: 'parlementsbronnen' },
-	{ id: 'regering', one: 'regeringsbron', many: 'regeringsbronnen' }
-] as const;
-
-const undatedNoun = (c: Collection) =>
-	c === 'articles' ? 'artikelen' : c === 'annexes' ? 'bijlagen' : kindOf(c);
-
-/** "1 wet, 200 artikelen en 1 stuk zonder datum": what has no day, by what it is. */
-export function undatedText(collections: readonly Collection[]): string | null {
-	const n = new Map<string, number>();
-	for (const c of collections) {
-		const noun = undatedNoun(c);
-		if (noun) n.set(noun, (n.get(noun) ?? 0) + 1);
+/**
+ * What a bron is called in the count, in the order of the bar: only a document is a stuk, as in
+ * Tonen; an activiteit or a stemming shares the colour of the Kamerstukken, not their name.
+ */
+const NOUNS = [
+	{ id: 'wetten', one: 'wet', many: 'wetten', of: ['instruments'], kind: 'wetten' },
+	{ id: 'artikelen', one: 'artikel', many: 'artikelen', of: ['articles'], kind: 'wetten' },
+	{ id: 'bijlagen', one: 'bijlage', many: 'bijlagen', of: ['annexes'], kind: 'wetten' },
+	{
+		id: 'uitspraken',
+		one: 'uitspraak',
+		many: 'uitspraken',
+		of: ['judgments'],
+		kind: 'rechtspraak'
+	},
+	{ id: 'stukken', one: 'stuk', many: 'stukken', of: ['documents'], kind: 'kamerstukken' },
+	{ id: 'dossiers', one: 'dossier', many: 'dossiers', of: ['dossiers'], kind: 'kamerstukken' },
+	{
+		id: 'activiteiten',
+		one: 'activiteit',
+		many: 'activiteiten',
+		of: ['activities'],
+		kind: 'kamerstukken'
+	},
+	{
+		id: 'stemmingen',
+		one: 'stemming',
+		many: 'stemmingen',
+		of: ['decisions'],
+		kind: 'kamerstukken'
+	},
+	{ id: 'kamerzaken', one: 'Kamerzaak', many: 'Kamerzaken', of: ['cases'], kind: 'kamerstukken' },
+	{
+		id: 'toezeggingen',
+		one: 'toezegging',
+		many: 'toezeggingen',
+		of: ['commitments'],
+		kind: 'kamerstukken'
+	},
+	{
+		id: 'parlement',
+		one: 'parlementsbron',
+		many: 'parlementsbronnen',
+		of: ['members', 'factions', 'committees'],
+		kind: 'parlement'
+	},
+	{
+		id: 'regering',
+		one: 'regeringsbron',
+		many: 'regeringsbronnen',
+		of: ['cabinets', 'ministries'],
+		kind: 'regering'
 	}
-	const items = UNDATED_NOUNS.filter((d) => n.has(d.id)).map((d) =>
-		count(n.get(d.id)!, d.one, d.many)
-	);
-	return items.length ? `${joinAnd(items)} zonder datum` : null;
+] as const satisfies readonly {
+	id: string;
+	one: string;
+	many: string;
+	of: readonly Collection[];
+	kind: StripKind;
+}[];
+
+type NounId = (typeof NOUNS)[number]['id'];
+
+const nounOf = (c: Collection) =>
+	NOUNS.find((d) => (d.of as readonly Collection[]).includes(c)) ?? null;
+
+const inWords = (counts: ReadonlyMap<NounId, number>) =>
+	NOUNS.filter((d) => counts.get(d.id)).map((d) => count(counts.get(d.id)!, d.one, d.many));
+
+/** "zonder datum: 1 wet, 200 artikelen en 1 stuk": what has no day, by what it is. */
+export function undatedText(collections: readonly Collection[]): string | null {
+	const n = new Map<NounId, number>();
+	for (const c of collections) {
+		const noun = nounOf(c);
+		if (noun) n.set(noun.id, (n.get(noun.id) ?? 0) + 1);
+	}
+	const items = inWords(n);
+	return items.length ? `zonder datum: ${joinAnd(items)}` : null;
 }
 
 /** A bron on the strip: its year as a fraction, its kind; a wetswijziging is named instead. */
@@ -122,6 +160,9 @@ type Year = {
 	jaar: number;
 	/** Per kind, in the stacking order. */
 	parts: { id: StripKind; n: number }[];
+	/** What they are called, with the colour of their kind: the card of the year says these. */
+	words: { id: NounId; text: string; colour: string }[];
+	counts: Map<NounId, number>;
 	total: number;
 	/** The wetswijzigingen of the year, by name. */
 	changes: string[];
@@ -132,6 +173,8 @@ export function perYear(stippen: readonly Stip[], first: number, last: number): 
 	const years: Year[] = Array.from({ length: last - first + 1 }, (_, i) => ({
 		jaar: first + i,
 		parts: STRIP_KINDS.map((k) => ({ id: k.id, n: 0 })),
+		words: [],
+		counts: new Map(),
 		total: 0,
 		changes: []
 	}));
@@ -145,7 +188,16 @@ export function perYear(stippen: readonly Stip[], first: number, last: number): 
 		const kind = kindOf(s.collection);
 		if (!kind) continue;
 		y.parts.find((d) => d.id === kind)!.n++;
+		const noun = nounOf(s.collection);
+		if (noun) y.counts.set(noun.id, (y.counts.get(noun.id) ?? 0) + 1);
 		y.total++;
+	}
+	for (const y of years) {
+		y.words = NOUNS.filter((d) => y.counts.get(d.id)).map((d) => ({
+			id: d.id,
+			text: count(y.counts.get(d.id)!, d.one, d.many),
+			colour: STRIP_KINDS.find((k) => k.id === d.kind)!.colour
+		}));
 	}
 	return years;
 }
@@ -153,47 +205,43 @@ export function perYear(stippen: readonly Stip[], first: number, last: number): 
 /** The busiest year in view: the scale of the bars is relative to it, so none overflows. */
 export const busiest = (years: readonly Year[]) => Math.max(1, ...years.map((y) => y.total));
 
-/** The sum of the years from `van` to `tot`, per kind, and the changes. */
+/** The sum of the years from `van` to `tot`, per name, and the changes. */
 export function sumPeriod(years: readonly Year[], van: number, tot: number) {
-	const per = new Map<StripKind, number>();
+	const per = new Map<NounId, number>();
 	let changes = 0;
 	for (const y of years) {
 		if (y.jaar < van || y.jaar > tot) continue;
-		for (const d of y.parts) per.set(d.id, (per.get(d.id) ?? 0) + d.n);
+		for (const [id, n] of y.counts) per.set(id, (per.get(id) ?? 0) + n);
 		changes += y.changes.length;
 	}
 	return { per, changes };
 }
 
-/** "239 uitspraken, 36 stukken": the kinds in the order of the bar, a kind without bronnen left out. */
+/** "239 uitspraken, 36 stukken, 4 stemmingen": in the order of the bar, a name without bronnen left out. */
 export function countParts(
-	counts: ReadonlyMap<StripKind, number>,
+	counts: ReadonlyMap<NounId, number>,
 	changes: number
 ): { text: string; change?: boolean }[] {
-	const parts: { text: string; change?: boolean }[] = [];
-	for (const k of STRIP_KINDS) {
-		const n = counts.get(k.id) ?? 0;
-		if (n) parts.push({ text: `${count(n, k.one, k.many)}` });
-	}
+	const parts: { text: string; change?: boolean }[] = inWords(counts).map((text) => ({ text }));
 	if (changes) parts.push({ text: `${count(changes, 'publicatie', 'publicaties')}`, change: true });
 	return parts;
 }
 
 /**
- * The count of a phone at rest, whole on its one line: "189 bronnen, 4 zonder datum". The Blad
+ * The count of a phone at rest, whole on its one line: "187 bronnen; zonder datum: 8". The Blad
  * has it by kind (`countParts`, `undatedText`).
  */
 export function shortCount(
-	counts: ReadonlyMap<StripKind, number>,
+	counts: ReadonlyMap<NounId, number>,
 	changes: number,
 	undated: readonly Collection[]
 ): string {
 	const dated = [...counts.values()].reduce((a, b) => a + b, changes);
-	const without = undated.filter(undatedNoun).length;
+	const without = undated.filter(nounOf).length;
 	return [
 		...(dated ? [count(dated, 'bron', 'bronnen')] : []),
-		...(without ? [`${without} zonder datum`] : [])
-	].join(', ');
+		...(without ? [`zonder datum: ${without}`] : [])
+	].join('; ');
 }
 
 type AxisYear = { jaar: number; align: 'start' | 'mid' | 'end' };

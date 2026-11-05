@@ -110,7 +110,7 @@ for (const [width, van, tot] of [
 		const root = page.locator('.tijdstrook');
 		await expect(root.locator('.micro')).toContainText('zonder datum', { timeout: 30_000 });
 		const micro = root.locator('.micro');
-		await micro.evaluate((e) => (e.textContent = '1.199 bronnen, 1.155 zonder datum'));
+		await micro.evaluate((e) => (e.textContent = '1.199 bronnen; zonder datum: 1.155'));
 		const line = await root.locator('.kop, .micro').evaluateAll((els) =>
 			els.map((e) => ({
 				whole: e.scrollWidth <= e.clientWidth,
