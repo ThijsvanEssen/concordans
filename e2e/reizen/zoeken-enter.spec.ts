@@ -37,6 +37,13 @@ const emptyPage = (page: Page) =>
 		})
 	);
 
+/**
+ * The rows stand still: a live answer that left kinds out has the query asked again in full, and
+ * the group Wetten of that answer comes in above the rows, whenever a loaded machine gets to it.
+ */
+const steadyList = (page: Page) =>
+	patchApi(page, /\/api\/search/, (body) => named(body, { partial: {} }));
+
 /** ⌘K open, its field focused. */
 async function palette(page: Page) {
 	await page.goto('/wetten');
@@ -133,6 +140,7 @@ test('⌘K: the right column says what Enter does, and shows the row chosen with
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has the one column');
+	await steadyList(page);
 	const { dialog, field } = await palette(page);
 	await field.fill('onrechtmatige daad');
 	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
@@ -189,6 +197,7 @@ test('⌘K: the pointer shows a row in the column, a click opens it, Enter searc
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has no pointer and no column');
+	await steadyList(page);
 	const { dialog, field } = await palette(page);
 	await field.fill('onrechtmatige daad');
 	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
@@ -212,6 +221,7 @@ test('the pointer and then ↓: the next row stands chosen, and the column says 
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has no pointer');
+	await steadyList(page);
 	const { dialog, field } = await palette(page);
 	await field.fill('onrechtmatige daad');
 	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
