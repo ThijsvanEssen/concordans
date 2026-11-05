@@ -12,9 +12,9 @@ One component, `src/lib/search/Search.svelte`, in three places: on the start pag
 
 ## Citations
 
-The `resolved` part of the search answer says what the query cites: the notation the API read in it (`notation`: an ECLI, a BWB id, a CELEX number, a publication `Stb. 2026, 94`, a dossier or a Kamerstuk `36799, nr. 31`, an article `Sr 287` or `art. 6:162 BW`, a toezegging `TZ202603-130`), the bron it names (`match`), or the articles a citation can mean (`alternatives`: `artikel 3 BW`). A notation gets a first row above the hits; the search parses nothing itself (`src/lib/search/resolve-query.ts`).
+The `resolved` part of the search answer says what the query cites: the notation the API read in it (`notation`: an ECLI, a BWB id, a CELEX number, a publication `Stb. 2026, 94`, a dossier or a Kamerstuk `36799, nr. 31`, an article `Sr 287` or `art. 6:162 BW`, a toezegging `TZ202603-130`), the bron it names (`match`), or the articles a citation can mean (`alternatives`: `artikel 3 BW`). A notation with a bron gets a first row above the hits; the search parses nothing itself (`src/lib/search/resolve-query.ts`).
 
-Choosing that row opens the bron the API named; where it named none the row goes, the search says the citation is not in the data, and the hits stay. The lid or onderdeel of a citation becomes the fragment (`parseQualifier` and `anchorOf` in `src/lib/text/qualifier.ts`).
+Choosing that row opens the bron the API named. Where it named none there is no row: the search says the citation is not in the data, and the hits stay. The lid or onderdeel of a citation becomes the fragment (`parseQualifier` and `anchorOf` in `src/lib/text/qualifier.ts`).
 
 ## Opening
 

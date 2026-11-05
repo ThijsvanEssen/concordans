@@ -488,12 +488,12 @@ describe('Enter and the citations', () => {
 			answer({}, { resolved: { ...none.resolved, kind: 'none', match: null } })
 		);
 		await settle();
-		expect(s.citation?.kind).toBe('dossier');
+		expect(s.notFound).toBe(true);
+		expect(s.citation).toBe(null);
+		expect(s.rowCount).toBe(0);
 		s.pressEnter();
 		await settle();
 		expect(opened).toEqual([]);
-		expect(s.notFound).toBe(true);
-		expect(s.citation).toBe(null);
 		stop();
 	});
 
@@ -595,8 +595,8 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 			)
 		);
 		await settle();
-		expect(s.citation).not.toBeNull();
-		expect(s.isActive(0)).toBe(false);
+		expect(s.notFound).toBe(true);
+		expect(s.rowCount).toBe(0);
 		expect(results).toEqual(['6:9999 BW']);
 		expect(opened).toEqual([]);
 		stop();
@@ -671,7 +671,7 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		stop();
 	});
 
-	it('a law by its abbreviation stands unchosen: Enter the page of results, ↓ and Enter its law', async () => {
+	it('a law by its abbreviation has no row above the groups: Enter the page of results', async () => {
 		const { of } = api();
 		const { s, opened, results, stop } = session(undefined, true);
 		await type(s, 'AVG');
@@ -688,12 +688,11 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		);
 		await settle();
 		expect(s.bare).not.toBeNull();
-		expect(s.isActive(0)).toBe(false);
+		expect(s.lead).toBeNull();
+		expect(s.rowCount).toBe(1);
 		s.pressEnter();
 		expect(results).toEqual(['AVG']);
-		s.down();
-		s.pressEnter();
-		expect(opened).toEqual([{ collection: 'instruments', key: 'bwbr0040940' }]);
+		expect(opened).toEqual([]);
 		stop();
 	});
 

@@ -21,7 +21,6 @@
 	import { expiredTitle, groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
-	import { NOTATION_COLLECTION } from './resolve-query';
 	import { SearchSession } from './session.svelte';
 	import SearchOption from './SearchOption.svelte';
 	import DoenRows from './DoenRows.svelte';
@@ -314,55 +313,24 @@
 						</p>
 					{/if}
 				</div>
-			{:else if search.citation}
-				<!-- The bron the API named, else the kind of the notation ("36799, nr. 31" a stuk). -->
-				{@const kind =
-					(search.resolvedWith?.term === search.q
-						? search.resolvedWith.target?.ref.collection
-						: null) ?? NOTATION_COLLECTION[search.citation.kind]}
-				<!-- The name from the source once the answer has it, not the query as typed. -->
-				{@const name =
-					(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
-					search.q}
-				{@const expired =
-					search.resolvedWith?.term === search.q
-						? expiredTitle(kind, search.resolvedWith.target?.expiredOn)
-						: null}
-				<SearchOption
-					id={rowId(0)}
-					active={isActive(0)}
-					citation
-					onchoose={() => search.openCitation()}
-					onpoint={pointAt(0)}
-				>
-					<span class="row-kind"
-						><KindGlyph collection={kind} />{#if !startsWithKind(name, bronLabel(kind))}
-							{bronLabel(kind)}{/if}</span
-					>
-					<span class="row-title">{name}</span>
-					{#if expired}<span class="row-context"
-							><span class="row-expired" title={expired}>vervallen</span></span
-						>{/if}
-					{#if isActive(0)}<span class="kbd" aria-hidden="true">↵</span>{/if}
-				</SearchOption>
-			{:else if search.bare}
-				{@const bare = search.bare}
-				{@const name = bare.label ?? search.q}
-				{@const expired = expiredTitle(bare.ref.collection, bare.expiredOn)}
+			{:else if search.lead}
+				{@const lead = search.lead}
+				{@const name = lead.label ?? search.q}
+				{@const expired = expiredTitle(lead.ref.collection, lead.expiredOn)}
 				<!-- A link like the hits: its target is known, so a new tab can open it. -->
 				<SearchOption
 					id={rowId(0)}
 					active={isActive(0)}
 					citation
-					href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
-					onchoose={() => open(bare.ref, bare.at)}
+					href={bronHref(lead.ref, { at: lead.at, keepNetwerk: false })}
+					onchoose={() => open(lead.ref, lead.at)}
 					onpoint={pointAt(0)}
 				>
 					<span class="row-kind"
 						><KindGlyph
-							collection={bare.ref.collection}
-						/>{#if !startsWithKind(name, bronLabel(bare.ref.collection))}
-							{bronLabel(bare.ref.collection)}{/if}</span
+							collection={lead.ref.collection}
+						/>{#if !startsWithKind(name, bronLabel(lead.ref.collection))}
+							{bronLabel(lead.ref.collection)}{/if}</span
 					>
 					<span class="row-title">{name}</span>
 					{#if expired}<span class="row-context"

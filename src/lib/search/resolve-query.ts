@@ -5,7 +5,6 @@
 import { withBook } from '$lib/text/bw';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/ref';
-import type { Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { parsePad } from '$lib/bron/address';
 
@@ -40,19 +39,6 @@ export function lawTitle(query: string): string | null {
 	if (q.split(' ').length > 8 || /[0-9]:/.test(q)) return null;
 	return LAW_END.test(q) || LAW_START.test(q) ? q : null;
 }
-
-/** What a citation row is marked as before the API names its bron: the kind of its notation. */
-export const NOTATION_COLLECTION: Record<Notation['kind'], Collection> = {
-	ecli: 'judgments',
-	ljn: 'judgments',
-	bwb: 'instruments',
-	celex: 'instruments',
-	publication: 'instruments',
-	dossier: 'dossiers',
-	document: 'documents',
-	article: 'articles',
-	commitment: 'commitments'
-};
 
 /**
  * The bron an answer of the API names, as /api/search gives it with `resolve=true` (API 0.74,

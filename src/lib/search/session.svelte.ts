@@ -119,8 +119,6 @@ export class SearchSession {
 	waiting = $state(Object.fromEntries(LANES.map((l) => [l.id, false])) as Record<LaneId, boolean>);
 	/** The query the resolving lane answered; '' before the first answer. */
 	answered = $state('');
-	/** A citation the API did not confirm: its row is gone and the results stay. */
-	unresolved = $state('');
 	/** "AVG", which the API confirmed as a law. */
 	confirmed = $state<{ term: string; target: Resolved } | null>(null);
 	/**
@@ -224,31 +222,34 @@ export class SearchSession {
 	readonly choicesMore = $derived(
 		this.choicesFor?.term === this.q ? this.choicesFor.total - this.choices.length : 0
 	);
-	/** The notation the query is, as the API read it: its row, before the hits. */
-	readonly citation = $derived(
-		this.q && this.q !== this.unresolved && this.choices.length === 0
-			? (this.#ofQuery(this.resolvedWith)?.notation ?? null)
-			: null
+	/** What the API read in the query, where it is no citation of several articles. */
+	readonly #read = $derived(
+		this.q && this.choices.length === 0 ? this.#ofQuery(this.resolvedWith) : null
 	);
+	/** The bron the query cites exactly, as the API named it: none for a citation it does not know. */
+	readonly cited = $derived(this.#read?.notation ? this.#read.target : null);
+	/** The notation of that citation. */
+	readonly citation = $derived(this.cited ? (this.#read?.notation ?? null) : null);
 	readonly bare = $derived(
 		!this.citation && this.choices.length === 0 && this.confirmed?.term === this.q
 			? this.confirmed.target
 			: null
 	);
-	/** Rows the keys move over: the choices or the citation first, then every hit. */
-	readonly offset = $derived(this.choices.length || (this.citation || this.bare ? 1 : 0));
+	/**
+	 * The row above the groups: a citation; a law by its name only in a field that picks, as
+	 * elsewhere the group Wetten leads and a page of results follows.
+	 */
+	readonly lead = $derived(this.cited ?? (this.#results ? null : this.bare));
+	/** Rows the keys move over: the choices or the lead first, then every hit. */
+	readonly offset = $derived(this.choices.length || (this.lead ? 1 : 0));
 	readonly rowCount = $derived(this.offset + this.hits.length);
 	/** A hit the query names, once it stands among the hits. */
 	readonly named = $derived(this.hits.find((h) => h.id === this.bestId) ?? null);
-	/** The bron the query cites exactly, as the API named it: none for a citation it does not know. */
-	readonly cited = $derived(
-		this.citation ? (this.#ofQuery(this.resolvedWith)?.target ?? null) : null
-	);
 	/** What Enter opens stands chosen before a key: a citation, or in a field that picks any first row. */
 	readonly preselects = $derived(!!this.cited || (!this.#results && this.offset > 0));
 
-	/** A citation the API does not know: said where its row was, not dropped without a word. */
-	readonly notFound = $derived(this.unresolved !== '' && this.unresolved === this.q);
+	/** A citation the API does not know: said at once, and no row that looks like a bron. */
+	readonly notFound = $derived(!!this.#read?.notation && !this.cited);
 	readonly chamber = $derived(chamberOf(this.q));
 	// A regeling named by its title that the API does not know ("Omgevingswet"): the network
 	// holds a selection of laws, and the hits only mention it.
@@ -290,8 +291,8 @@ export class SearchSession {
 			// Never "Geen resultaten" while the live mode left kinds out.
 			this.moreKinds.size === 0 &&
 			this.hits.length === 0 &&
-			!this.citation &&
-			!this.bare &&
+			!this.lead &&
+			!this.notFound &&
 			!this.outsideLaw
 	);
 	/** The field turns: the fast kinds on their way. */
@@ -365,8 +366,7 @@ export class SearchSession {
 			this.#earlyEnter.answer(
 				this.q,
 				this.bare !== null ||
-					(!!this.#ofQuery(this.resolvedWith)?.target &&
-						!!this.#ofQuery(this.resolvedWith)?.notation) ||
+					this.cited !== null ||
 					this.allIn ||
 					(!!this.#results && this.answered === this.q)
 			)
@@ -420,10 +420,9 @@ export class SearchSession {
 	/** What Enter does now; false where there is nothing to open yet. */
 	enter(): boolean {
 		if (this.#results && !this.#moved) return this.#enterUnchosen(this.#results);
-		const { active, choices, citation, bare, offset } = this;
+		const { active, choices, lead, offset } = this;
 		if (active < choices.length) this.#open(choices[active].ref, choices[active].at);
-		else if (citation && active === 0) this.openCitation();
-		else if (bare && active === 0) this.#open(bare.ref, bare.at);
+		else if (lead && active === 0) this.#open(lead.ref, lead.at);
 		// A hit opens only when the list answers what is typed.
 		else if (this.answered === this.q && this.#moved && this.hits[active - offset])
 			this.#open(hitName(this.hits[active - offset]), null);
@@ -479,13 +478,6 @@ export class SearchSession {
 	point(row: number) {
 		this.active = row;
 		this.#moved = true;
-	}
-
-	/** The citation's bron, as the API named it; "staat niet in de gegevens" where it named none. */
-	openCitation() {
-		const target = this.#ofQuery(this.resolvedWith)?.target;
-		if (target) this.#open(target.ref, target.at);
-		else this.unresolved = this.q;
 	}
 
 	/** What the API answered for this query, not an earlier one. */

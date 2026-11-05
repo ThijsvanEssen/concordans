@@ -17,9 +17,7 @@ const ofHit = (hit: Hit, q: string): Target => ({
 export function topTarget(search: SearchSession): Target | null {
 	const choice = search.choices[0];
 	if (choice) return { ref: choice.ref, label: choice.label ?? search.q };
-	const cited =
-		search.resolvedWith?.term === search.q && search.citation ? search.resolvedWith.target : null;
-	const named = cited ?? search.bare;
+	const named = search.cited ?? search.bare;
 	if (named) return { ref: named.ref, label: named.label ?? search.q };
 	const hit = search.named ?? (search.answered === search.q ? search.hits[0] : undefined);
 	return hit ? ofHit(hit, search.q) : null;
@@ -45,10 +43,7 @@ const ofResolved = (r: Resolved, q: string): ChosenBron => ({
 export function rowBron(search: SearchSession, i: number): ChosenBron | null {
 	const choice = search.choices[i];
 	if (choice) return ofResolved(choice, search.q);
-	if (i < search.offset) {
-		const named = search.bare ?? (search.citation ? search.resolvedWith?.target : null);
-		return named ? ofResolved(named, search.q) : null;
-	}
+	if (i < search.offset) return search.lead ? ofResolved(search.lead, search.q) : null;
 	const hit = search.hits[i - search.offset];
 	return hit ? { ...ofHit(hit, search.q), hit } : null;
 }

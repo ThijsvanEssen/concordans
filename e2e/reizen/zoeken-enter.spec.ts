@@ -69,10 +69,51 @@ test('a citation that does not exist: Enter goes to the page of results', async 
 		})
 	);
 	const { field, results } = await searchFor(page, '6:162 BW');
-	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
+	await expect(results.getByRole('status')).toContainText('"6:162 BW"');
+	await expect(results.getByRole('option')).toHaveCount(0);
 	await emptyPage(page);
 	await field.press('Enter');
 	await expect(page).toHaveURL(/\/zoeken\?q=6%3A162(%20|\+)BW/);
+});
+
+test('a law by its name: no row above the groups, the group Wetten leads', async ({ page }) => {
+	const law = {
+		id: 'instruments/bwbr0006299',
+		key: 'bwbr0006299',
+		collection: 'instruments',
+		display_name: 'Politiewet 1993'
+	};
+	await page.route(apiPath(/\/api\/search/), (route) =>
+		route.fulfill({
+			status: 200,
+			headers: { ...CORS, 'content-type': 'application/json' },
+			body: JSON.stringify(
+				named({
+					q: 'Politiewet',
+					types: [],
+					total: 1,
+					results: { instruments: [law] },
+					searched: {},
+					resolved: {
+						match: {
+							kind: 'instrument',
+							collection: 'instruments',
+							key: law.key,
+							display_name: law.display_name
+						},
+						notation: null
+					}
+				})
+			)
+		})
+	);
+	const { field, results } = await searchFor(page, 'Politiewet');
+	await expect(results.getByRole('option')).toHaveCount(1);
+	await expect(results.getByRole('group', { name: /Wetten/ }).getByRole('option')).toHaveCount(1);
+	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
+	await emptyPage(page);
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/zoeken\?q=Politiewet/);
 });
 
 test('words: Enter goes to the page of results, no row chosen, no hit above the groups', async ({
