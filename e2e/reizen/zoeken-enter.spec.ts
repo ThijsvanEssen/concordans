@@ -1,6 +1,6 @@
-// Enter in the search jumps only for what the query names exactly (besluit 30): a citation,
-// an identifier, a law by its name. Words keep the list open. The API that says so (`best`,
-// `exact`, `matched`, 0.80.5) is not live yet: its fields are added to the recorded answers.
+// Enter in the search with nothing chosen goes to the page of results of what is typed, whatever
+// it names (Thijs, 5 Nov); a row chosen with the keys opens. The fields the API adds (`best`,
+// `exact`, `matched`, 0.80.5) are added to the recorded answers.
 import type { Page } from '@playwright/test';
 import { apiPath, CORS, patchApi } from '../support/api';
 import { expect, test } from '../support/test';
@@ -28,7 +28,19 @@ async function searchFor(page: Page, q: string) {
 	return { field, results };
 }
 
-test('an exact article: Enter opens it', async ({ page }) => {
+/** The page of results asks the whole query in full: nothing recorded, so it is answered here. */
+const emptyPage = (page: Page) =>
+	page.route(apiPath(/limit=50/), (route) =>
+		route.fulfill({
+			status: 200,
+			headers: { ...CORS, 'content-type': 'application/json' },
+			body: JSON.stringify(named({ q: '', types: [], total: 0, results: {}, searched: {} }))
+		})
+	);
+
+test('an exact article: Enter goes to the page of results, ↓ and Enter opens it', async ({
+	page
+}) => {
 	await patchApi(page, /\/api\/search/, (body) => {
 		const articles = ((body.results as Record<string, Hit[]>)?.articles ?? []) as Hit[];
 		const exact = articles.find((h) => h.key.endsWith('_art162'));
@@ -37,26 +49,65 @@ test('an exact article: Enter opens it', async ({ page }) => {
 		return named(body, { best: exact.id });
 	});
 	const { results } = await searchFor(page, '6:162 BW');
+	await expect(results.getByRole('option').first()).toBeVisible({ timeout: 30_000 });
+	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
+	await page.keyboard.press('ArrowDown');
 	await expect(results.getByRole('option', { selected: true })).toContainText('6:162');
 	await page.keyboard.press('Enter');
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
+
+	const { field } = await searchFor(page, '6:162 BW');
+	await emptyPage(page);
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/zoeken\?q=6%3A162(%20|\+)BW/);
 });
 
-test('words name nothing: Enter goes to the page of results (besluit 31)', async ({ page }) => {
+test('words: Enter goes to the page of results, no row chosen, no hit above the groups', async ({
+	page
+}) => {
 	await patchApi(page, /\/api\/search/, (body) => named(body));
 	const { field, results } = await searchFor(page, 'huurverhoging');
 	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
 	await expect(results.getByText('Beste treffer')).toHaveCount(0);
-	// The page of results asks the whole query in full: nothing recorded, so it is answered here.
-	await page.route(apiPath(/limit=50/), (route) =>
-		route.fulfill({
-			status: 200,
-			headers: { ...CORS, 'content-type': 'application/json' },
-			body: JSON.stringify(named({ q: '', types: [], total: 0, results: {}, searched: {} }))
-		})
-	);
+	await emptyPage(page);
 	await field.press('Enter');
 	await expect(page).toHaveURL(/\/zoeken\?q=huurverhoging/);
+});
+
+test('⌘K: the right column says what Enter does, and shows the row chosen without moving', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has the one column');
+	await page.goto('/wetten');
+	const dialog = page.getByRole('dialog', { name: 'Zoekvenster' });
+	const field = dialog.getByRole('combobox');
+	await expect(async () => {
+		if (!(await field.count())) await page.keyboard.press('ControlOrMeta+k');
+		await expect(field).toBeFocused({ timeout: 1000 });
+	}).toPass();
+	await field.fill('onrechtmatige daad');
+	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	await expect(results.getByRole('option').first()).toBeVisible({ timeout: 30_000 });
+	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
+	await expect(preview).toContainText('zoekt "onrechtmatige daad" op de zoekpagina');
+	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
+	const before = (await dialog.boundingBox())!;
+
+	await page.keyboard.press('ArrowDown');
+	const chosen = results.getByRole('option', { selected: true });
+	await expect(chosen).toHaveCount(1);
+	await expect(preview).toContainText(/Enter\s+opent/);
+	await expect(preview).not.toContainText('zoekpagina');
+	for (const action of ['Keten', 'Netwerk'])
+		await expect(preview.getByRole('button', { name: action, exact: true })).toBeVisible();
+	await expect(preview).toContainText('Alt');
+	expect((await dialog.boundingBox())!.height).toBe(before.height);
+
+	// The key of an action does it on the row chosen.
+	await page.keyboard.press('Alt+KeyN');
+	await expect(page).toHaveURL(/mode=netwerk/);
 });
 
 test('hits with only some of the words say so', async ({ page }) => {

@@ -3,7 +3,7 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 
-/** The results of a query, once the slow lanes (best result, judgments) are in. */
+/** The results of a query, once the slow lanes (the text, judgments) are in. */
 async function search(page: Page, q: string) {
 	await page.goto('/');
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -14,14 +14,13 @@ async function search(page: Page, q: string) {
 	return results;
 }
 
-test('search lists its lanes; words that name nothing get no Beste treffer', async ({ page }) => {
+test('search lists its lanes, and no hit stands above them', async ({ page }) => {
 	const results = await search(page, 'onrechtmatige daad');
 	for (const lane of ['Wetten', 'Dossiers', 'Stemmingen'])
 		await expect(results.getByRole('group', { name: lane })).toBeVisible();
 	// The article of the slow text lane stands in its own group.
 	await expect(results.getByRole('option', { name: /6:162/ }).first()).toBeVisible();
-	// The API names no hit for words, however they match (`best` null): no row above the groups.
-	await expect(results.getByRole('group', { name: /^Beste treffer/ })).toHaveCount(0);
+	await expect(results.getByText('Beste treffer')).toHaveCount(0);
 });
 
 test('the period stands under the field before typing, as wide as it: nothing moves', async ({

@@ -37,17 +37,17 @@
 		'Rij'
 	);
 	const geladen = $derived(preview.state.status === 'ready' ? preview.state.data : null);
-	const heeftTekst = $derived(!!(geladen?.lines || geladen?.uitslag || geladen?.dossier));
+	const heeftTekst = $derived(!!(geladen?.lines || geladen?.outcome || geladen?.dossier));
 </script>
 
 <div class="inhoud">
 	{#if glimp && !heeftTekst}{@render glimp()}{/if}
 	<LoadState state={preview.state} what="De inhoud" retry={preview.retry}>
 		{#snippet children(p)}
-			{#if p?.lines || p?.uitslag || p?.dossier}
+			{#if p?.lines || p?.outcome || p?.dossier}
 				{#if p.dossier}<p class="stil">{p.dossier}</p>{/if}
 				{#if p.lines}<p class="tekst">{p.lines}</p>{/if}
-				{#if p.uitslag}<p class="tekst">{p.uitslag}</p>{/if}
+				{#if p.outcome}<p class="tekst">{p.outcome}</p>{/if}
 			{:else if !glimp}
 				<p class="stil"><Coverage noText /></p>
 			{/if}

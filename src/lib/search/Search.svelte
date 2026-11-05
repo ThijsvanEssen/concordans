@@ -27,7 +27,7 @@
 	import DoenRows from './DoenRows.svelte';
 	import PalettePreview from './PalettePreview.svelte';
 	import PaletteColumns from './PaletteColumns.svelte';
-	import { rowTarget, topTarget } from './targets';
+	import { rowBron, topTarget } from './targets';
 	import { PaletteActions } from './doen.svelte';
 	import { searchTextOf } from '$lib/keys/commands';
 	import type { Snippet } from 'svelte';
@@ -112,9 +112,9 @@
 	const target = $derived(topTarget(search));
 	// An Enter on a row Doen that waited for the search: done once the bron is found.
 	$effect(() => doen.settle(() => onOpen?.()));
-	/** The bron of the result the keys are on: the right column shows what it can do. */
+	/** The bron of the result the keys are on: the right column shows it and what it can do. */
 	const atBron = $derived(
-		doen.at === null && search.isActive(search.active) ? rowTarget(search, search.active) : null
+		doen.at === null && search.isActive(search.active) ? rowBron(search, search.active) : null
 	);
 	/** Two columns: in ⌘K, not in a field that picks. */
 	const columns = $derived(overlay && !onSelect);
@@ -135,6 +135,7 @@
 
 	function onkeydown(e: KeyboardEvent) {
 		if (doen.key(e, search, () => onOpen?.())) return;
+		if (atBron && doen.keyOfAction(e, atBron, () => onOpen?.())) return;
 		if (e.key === 'ArrowDown' && search.rowCount > 0) {
 			e.preventDefault();
 			search.down();
@@ -329,7 +330,7 @@
 						: null}
 				<SearchOption
 					id={rowId(0)}
-					active={doen.at === null && search.active === 0}
+					active={isActive(0)}
 					citation
 					onchoose={() => search.openCitation()}
 					onpoint={pointAt(0)}
@@ -342,7 +343,7 @@
 					{#if expired}<span class="row-context"
 							><span class="row-expired" title={expired}>vervallen</span></span
 						>{/if}
-					<span class="kbd" aria-hidden="true">↵</span>
+					{#if isActive(0)}<span class="kbd" aria-hidden="true">↵</span>{/if}
 				</SearchOption>
 			{:else if search.bare}
 				{@const bare = search.bare}
@@ -351,7 +352,7 @@
 				<!-- A link like the hits: its target is known, so a new tab can open it. -->
 				<SearchOption
 					id={rowId(0)}
-					active={doen.at === null && search.active === 0}
+					active={isActive(0)}
 					citation
 					href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
 					onchoose={() => open(bare.ref, bare.at)}
@@ -367,45 +368,27 @@
 					{#if expired}<span class="row-context"
 							><span class="row-expired" title={expired}>vervallen</span></span
 						>{/if}
-					<span class="kbd" aria-hidden="true">↵</span>
+					{#if isActive(0)}<span class="kbd" aria-hidden="true">↵</span>{/if}
 				</SearchOption>
 			{/if}
 
-			{#if search.bestComing}
-				<!-- The place of the Beste treffer, from the first answer on (#52). -->
-				<div class="group group--beste" role="group" aria-labelledby="{uid}-beste-komt">
-					<div class="group-label" id="{uid}-beste-komt">
-						Beste treffer <span class="laden">laden…</span>
-					</div>
-				</div>
-			{/if}
-			{#each search.shown as group (group.best ? 'beste' : group.kind)}
-				{@const gid = group.best ? 'beste' : group.kind}
-				<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
-				{@const neighbours = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
-				<div
-					class="group"
-					class:group--beste={group.best}
-					role="group"
-					aria-labelledby="{uid}-{gid}"
-				>
-					<div class="group-label" id="{uid}-{gid}">
-						<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
-						{#if group.best}Beste treffer, <KindGlyph collection={group.kind} />
-							{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
-							{groupLabel(group.kind)}{/if}
+			{#each search.shown as group (group.kind)}
+				<div class="group" role="group" aria-labelledby="{uid}-{group.kind}">
+					<div class="group-label" id="{uid}-{group.kind}">
+						<KindGlyph collection={group.kind} />
+						{groupLabel(group.kind)}
 						{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
-						{#if !group.best && search.partialKinds.has(group.kind)}
+						{#if search.partialKinds.has(group.kind)}
 							<span class="deel">treffers met een deel van de woorden</span>
 						{/if}
 					</div>
-					{#if !picker && !group.best && searchedLine(search.searched[group.kind])}
+					{#if !picker && searchedLine(search.searched[group.kind])}
 						<!-- What its search reads, so a hit not found is not taken for one not there. -->
 						<p class="gezocht"><Coverage searched={search.searched[group.kind]} /></p>
 					{/if}
 					{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 						{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
-						{@const shown = presentHit(hit, search.q, neighbours)}
+						{@const shown = presentHit(hit, search.q, group.hits)}
 						{@const section = sectionOf(hit)}
 						{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
 							<div class="section" role="presentation">{section}</div>
@@ -509,14 +492,13 @@
 			{/if}
 		</div>
 		{#snippet aside()}
-			{#if doen.at !== null || atBron}
-				<PalettePreview
-					row={doen.at !== null ? doen.rows[doen.at] : null}
-					bron={atBron?.label ?? null}
-					actions={atBron ? doen.actionsFor(atBron) : []}
-					ondo={(row) => doen.do(row, () => onOpen?.())}
-				/>
-			{/if}
+			<PalettePreview
+				row={doen.at !== null ? doen.rows[doen.at] : null}
+				bron={atBron}
+				actions={atBron ? doen.actionsFor(atBron) : []}
+				query={search.q}
+				ondo={(row) => doen.do(row, () => onOpen?.())}
+			/>
 		{/snippet}
 	</PaletteColumns>
 </div>

@@ -18,7 +18,7 @@ Choosing that row opens the bron the API named; where it named none the row goes
 
 ## Opening
 
-A hit or a resolved citation opens `bronHref(ref, { at })`, at its readable address: from the start page in Tekst where the bron has a text, inside the Verkenner in the current view. ↑ and ↓ move over the rows; Enter opens the active one. Escape clears the field, or closes the dialog.
+A hit or a resolved citation opens `bronHref(ref, { at })`, at its readable address: from the start page in Tekst where the bron has a text, inside the Verkenner in the current view. ↑ and ↓ move over the rows; Enter opens the row chosen, with nothing chosen it goes to `/zoeken?q=` (`docs/bediening.md`). Escape clears the field, or closes the dialog.
 
 ## Adding a searchable type
 

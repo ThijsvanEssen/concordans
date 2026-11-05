@@ -2,11 +2,13 @@
 // can be done here before anything is typed. The first row stands chosen, so Enter does it; ↓
 // past the last goes on into the results, ↑ above the first result comes back.
 import { parseCommand, type Parsed } from '$lib/keys/commands';
-import { COMMANDS } from '$lib/keys/register';
+import { COMMANDS, isCombo, SHORTCUTS } from '$lib/keys/register';
 import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelte';
 import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
 import type { SearchSession } from './session.svelte';
+
+const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 export class PaletteActions {
 	/** The line as typed, the word included; the search gets what is left (searchTextOf). */
@@ -101,12 +103,32 @@ export class PaletteActions {
 		}
 	}
 
-	/** What else ⌘K can do with a bron: the words that take one, done with it (the right column). */
+	/**
+	 * What else ⌘K can do with a bron: the words that take one, done with it (the right column).
+	 * The column names the bron: each says only its word, and its key.
+	 */
 	actionsFor(target: Target): DoRow[] {
 		return COMMANDS.filter((c) => c.arg === 'bron' && !c.sign)
 			.concat(COMMANDS.filter((c) => c.arg === 'bron' && c.sign))
-			.flatMap((command) => rowsFor({ command, rest: target.label, only: false }, target))
+			.flatMap((command) =>
+				rowsFor({ command, rest: target.label, only: false }, target).map((row) => ({
+					...row,
+					label: capitalize(command.words[0]),
+					key: command.key
+				}))
+			)
 			.filter((r) => r.run && !r.why);
+	}
+
+	/** The key of one of those actions, on the bron the keys are on: true where it did it. */
+	keyOfAction(e: KeyboardEvent, target: Target, done: () => void): boolean {
+		const isKeyOf = (r: DoRow) =>
+			SHORTCUTS.find((s) => s.id === r.key)?.keys.some((combo) => isCombo(e, combo));
+		const row = this.actionsFor(target).find(isKeyOf);
+		if (!row) return false;
+		e.preventDefault();
+		this.do(row, done);
+		return true;
 	}
 
 	/** A result chosen while the word asks for a bron: the command does its work on it. */
