@@ -8,6 +8,7 @@ import { untrack } from 'svelte';
 import { search } from '$lib/api/search';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/ref';
+import { uniqueBy } from '$lib/util/unique';
 import { EarlyEnter } from './enter.svelte';
 import { chamberOf } from './kamer';
 import {
@@ -111,8 +112,6 @@ export class SearchSession {
 	fullFor = $state('');
 	/** The kinds searched, in the order their groups stand. */
 	kinds = $state<readonly SearchKind[]>(SEARCH_KINDS);
-	/** The row the keys are on, once they chose one, or the pointer is on (`enterRow`, `shownRow`). */
-	active = $state(0);
 
 	lanes = $state(Object.fromEntries(LANES.map((l) => [l.id, idle()])) as Record<LaneId, LaneState>);
 	/** The lanes asked for the query and not yet in: from the ask on, the pause included (#118). */
@@ -214,7 +213,12 @@ export class SearchSession {
 	readonly shown = $derived(
 		slots(this.order, this.groups, (kind) => !!this.q && this.loadingKinds.has(kind))
 	);
-	readonly hits = $derived(this.shown.flatMap((g) => g.hits));
+	readonly hits = $derived(
+		uniqueBy(
+			this.shown.flatMap((g) => g.hits),
+			(hit) => hit.id
+		)
+	);
 	readonly rowOfHit = $derived(new Map(this.hits.map((hit, i) => [hit.id, this.offset + i])));
 
 	/** "Artikel 3 BW" in Boek 1, 3, 6 …: a row each, in place of the citation row. */
@@ -325,13 +329,27 @@ export class SearchSession {
 		to: '',
 		fullFor: ''
 	};
+	/**
+	 * The bron the keys or the pointer are on, not its place: an answer that comes in later moves
+	 * the rows, and what was chosen stays chosen. Once it has left the list it no longer counts.
+	 */
+	#on = $state<{ row: string; by: 'keys' | 'pointer' } | null>(null);
+	/** Every row by what it stands for, in the order of the list. */
+	readonly #rows = $derived([
+		...this.choices.map((choice) => `choice:${choice.ref.key}`),
+		...(this.lead ? ['lead'] : []),
+		...this.hits.map((hit) => hit.id)
+	]);
+	readonly #at = $derived(this.#on ? this.#rows.indexOf(this.#on.row) : -1);
+	/** The row the keys or the pointer are on (`enterRow`, `shownRow`); else the first. */
+	readonly active = $derived(Math.max(this.#at, 0));
 	/** The first ↓ confirms the preselected row instead of skipping it. */
-	#moved = $state(false);
+	readonly #moved = $derived(this.#at >= 0 && this.#on?.by === 'keys');
 	/**
 	 * With a page of results the pointer chooses nothing for Enter (Thijs, 5 Nov: "Nee,
 	 * zoekpagina"): on the row `active` it lights it and the right column shows it.
 	 */
-	#pointed = $state(false);
+	readonly #pointed = $derived(this.#at >= 0 && this.#on?.by === 'pointer');
 	/** The row Enter opens: chosen with the keys, or standing chosen before a key; else none. */
 	readonly enterRow = $derived(this.#moved ? this.active : this.preselects ? 0 : null);
 	/** The row the right column shows: the one the pointer is on, else the one Enter opens. */
@@ -367,10 +385,7 @@ export class SearchSession {
 		});
 		$effect(() => {
 			void this.q;
-			void this.answered;
-			this.active = 0;
-			this.#moved = false;
-			this.#pointed = false;
+			this.#on = null;
 		});
 		$effect(() =>
 			this.#earlyEnter.answer(
@@ -439,8 +454,7 @@ export class SearchSession {
 		// Where there is no page of results (a panel that picks, a scope) Enter chooses the first
 		// row, a second Enter opens it (besluit 30).
 		else if (this.answered === this.q && this.allIn && this.hits.length > 0) {
-			this.active = offset;
-			this.#moved = true;
+			this.#choose(offset);
 		} else if (
 			this.answered === this.q &&
 			this.allIn &&
@@ -474,32 +488,28 @@ export class SearchSession {
 
 	down() {
 		this.#earlyEnter.forget();
-		if (this.#moved || this.#pointed) this.active = Math.min(this.active + 1, this.rowCount - 1);
-		this.#chooseActive();
+		const onRow = this.#moved || this.#pointed;
+		this.#choose(onRow ? Math.min(this.active + 1, this.rowCount - 1) : this.active);
 	}
 
 	up() {
 		this.#earlyEnter.forget();
-		this.active = Math.max(this.active - 1, 0);
-		this.#chooseActive();
+		this.#choose(Math.max(this.active - 1, 0));
 	}
 
 	/** The keys come into the list from above it, on its first row. */
 	chooseFirst() {
-		this.active = 0;
-		this.#chooseActive();
+		this.#choose(0);
 	}
 
 	/** The pointer moved onto a row: in a field that picks that chooses it. */
 	point(row: number) {
-		this.active = row;
-		this.#moved = !this.#results;
-		this.#pointed = !!this.#results;
+		this.#choose(row, this.#results ? 'pointer' : 'keys');
 	}
 
-	#chooseActive() {
-		this.#moved = true;
-		this.#pointed = false;
+	#choose(row: number, by: 'keys' | 'pointer' = 'keys') {
+		const key = this.#rows[row];
+		this.#on = key === undefined ? null : { row: key, by };
 	}
 
 	/** What the API answered for this query, not an earlier one. */

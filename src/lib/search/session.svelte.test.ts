@@ -724,6 +724,101 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		stop();
 	});
 
+	describe('an answer that comes in after the choice', () => {
+		const ARTICLE_A = hit('articles', 'a');
+		const ARTICLE_B = hit('articles', 'b');
+		const LAW = hit('instruments', 'huurwet');
+
+		/** The articles in, the fast lane still out, and ↓ on the row given. */
+		async function chosenBeforeLaws(presses = 1) {
+			const { of } = api();
+			const session_ = session(undefined, true);
+			await type(session_.s, 'huur');
+			await vi.advanceTimersByTimeAsync(300);
+			of('articles').answer(answer({ articles: [ARTICLE_A, ARTICLE_B] }));
+			await settle();
+			for (let n = 0; n < presses; n++) session_.s.down();
+			flushSync();
+			return { of, ...session_ };
+		}
+
+		it('Enter opens the bron that was chosen, in its new place', async () => {
+			const { of, s, opened, results, stop } = await chosenBeforeLaws(2);
+			expect(s.isActive(1)).toBe(true);
+			of('instruments').answer(answer({ instruments: [LAW] }));
+			await settle();
+			expect(s.isActive(2)).toBe(true);
+			s.pressEnter();
+			expect(opened).toEqual([ARTICLE_B.id]);
+			expect(results).toEqual([]);
+			stop();
+		});
+
+		it('an Enter pressed before that answer opens the same bron once it is in', async () => {
+			const { of, s, opened, results, stop } = await chosenBeforeLaws();
+			s.pressEnter();
+			expect(opened).toEqual([]);
+			of('instruments').answer(answer({ instruments: [LAW] }));
+			await settle();
+			expect(opened).toEqual([ARTICLE_A.id]);
+			expect(results).toEqual([]);
+			stop();
+		});
+
+		it('↓ goes on from the bron where it stands now', async () => {
+			const { of, s, opened, stop } = await chosenBeforeLaws();
+			of('instruments').answer(answer({ instruments: [LAW] }));
+			await settle();
+			s.down();
+			s.pressEnter();
+			expect(opened).toEqual([ARTICLE_B.id]);
+			stop();
+		});
+
+		it('a bron that leaves the list leaves the choice: Enter the page of results', async () => {
+			const { of, s, opened, results, stop } = await chosenBeforeLaws();
+			of('instruments').answer(answer({ instruments: [LAW] }));
+			await settle();
+			s.retry('text');
+			await vi.advanceTimersByTimeAsync(150);
+			of('articles').answer(answer({ articles: [ARTICLE_B] }));
+			await settle();
+			expect(s.enterRow).toBe(null);
+			s.pressEnter();
+			expect(results).toEqual(['huur']);
+			expect(opened).toEqual([]);
+			stop();
+		});
+
+		it('the row the pointer is on moves along, and still chooses nothing', async () => {
+			const { of, s, opened, results, stop } = await chosenBeforeLaws(0);
+			s.point(1);
+			of('instruments').answer(answer({ instruments: [LAW] }));
+			await settle();
+			expect(s.isPointed(2)).toBe(true);
+			s.pressEnter();
+			expect(results).toEqual(['huur']);
+			expect(opened).toEqual([]);
+			stop();
+		});
+
+		it('in a field that picks too', async () => {
+			const { of } = api();
+			const { s, opened, stop } = session();
+			await type(s, 'huur');
+			await vi.advanceTimersByTimeAsync(300);
+			of('articles').answer(answer({ articles: [ARTICLE_A, ARTICLE_B] }));
+			await settle();
+			s.point(1);
+			of('instruments').answer(answer({ instruments: [LAW] }));
+			await settle();
+			expect(s.isActive(2)).toBe(true);
+			s.pressEnter();
+			expect(opened).toEqual([ARTICLE_B.id]);
+			stop();
+		});
+	});
+
 	it('goes nowhere with nothing typed', () => {
 		api();
 		const { s, results, stop } = session(undefined, true);
