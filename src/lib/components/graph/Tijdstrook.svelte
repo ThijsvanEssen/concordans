@@ -222,12 +222,8 @@
 				style:left="clamp(0px, calc({plek(cardYear.jaar + 0.5)}% - 92px), calc(100% - 184px))"
 			>
 				<p class="kaart-kop">{cardYear.jaar}</p>
-				{#each cardYear.parts.filter((d) => d.n > 0) as d (d.id)}
-					{@const k = STRIP_KINDS.find((s) => s.id === d.id)!}
-					<p class="kaart-rij">
-						<i class="teken" style:background={k.colour}></i>{d.n}
-						{d.n === 1 ? k.one : k.many}
-					</p>
+				{#each cardYear.words as d (d.id)}
+					<p class="kaart-rij"><i class="teken" style:background={d.colour}></i>{d.text}</p>
 				{/each}
 				{#each cardYear.changes as w (w)}
 					<p class="kaart-rij">{@render ruit()}{w}</p>

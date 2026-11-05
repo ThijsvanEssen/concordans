@@ -34,6 +34,32 @@ describe('the strip numbers', () => {
 			'1 publicatie'
 		]);
 	});
+	it('calls only a document a stuk: the others share its colour, not its name', () => {
+		const stippen = [
+			...Array.from({ length: 103 }, () => ({ jaar: 2024.5, collection: 'documents' as const })),
+			...Array.from({ length: 41 }, () => ({ jaar: 2024.5, collection: 'activities' as const })),
+			...Array.from({ length: 41 }, () => ({ jaar: 2024.5, collection: 'decisions' as const }))
+		];
+		const [year] = perYear(stippen, 2024, 2024);
+		expect(year.total).toBe(185);
+		expect(year.parts.find((d) => d.id === 'kamerstukken')!.n).toBe(185);
+		expect(year.words.map((w) => w.text)).toEqual([
+			'103 stukken',
+			'41 activiteiten',
+			'41 stemmingen'
+		]);
+		expect(new Set(year.words.map((w) => w.colour)).size).toBe(1);
+		const { per } = sumPeriod([year], 2024, 2024);
+		expect(countParts(per, 0).map((p) => p.text)).toEqual([
+			'103 stukken',
+			'41 activiteiten',
+			'41 stemmingen'
+		]);
+		expect(shortCount(per, 0, [])).toBe('185 bronnen');
+		expect(undatedText(['activities', 'commitments', 'commitments', 'dossiers'])).toBe(
+			'1 dossier, 1 activiteit en 2 toezeggingen zonder datum'
+		);
+	});
 	it('dates a publication by the day it was published, a law by none', () => {
 		const stb = { kind: 'publicatie', date_published: '2024-07-01' };
 		expect(stripDate(stb, 'instruments', 'instruments/stb_2024_200')).toBe('2024-07-01');
@@ -47,8 +73,8 @@ describe('the strip numbers', () => {
 	});
 	it('says the count of a phone at rest in one short line', () => {
 		const per = new Map([
-			['rechtspraak', 2],
-			['kamerstukken', 1]
+			['uitspraken', 2],
+			['stukken', 1]
 		] as const);
 		expect(shortCount(per, 1, ['documents', 'articles', 'articles'])).toBe(
 			'4 bronnen, 3 zonder datum'
