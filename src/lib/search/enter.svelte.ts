@@ -1,6 +1,7 @@
-// Enter right after typing comes before the answer it should open (#79). It is kept for its
-// query and done once that answer is in: the article a bare citation names the moment the
-// API confirms it, the first row once every answer is in. A changed query drops it.
+// Enter right after typing can come before the answer it should open (#79). It is kept for its
+// query and done once that answer is in: the article a bare citation names the moment the API
+// confirms it; in a field without a page of results the first row once every answer is in. A
+// changed query drops it.
 
 export class EarlyEnter {
 	/** The query whose Enter waits for its answer; '' for none. */

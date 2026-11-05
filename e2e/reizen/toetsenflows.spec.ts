@@ -68,7 +68,7 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		// The right column says what the chosen row does, and its key.
 		const preview = page.getByRole('complementary', { name: 'Voorbeeld' });
 		await expect(preview).toContainText('Weergave Keten');
-		await expect(preview).toContainText('Enter doet dit');
+		await expect(preview).toContainText('Enter voert dit uit');
 		await page.keyboard.press('ArrowDown');
 		await expect(chosen).toContainText('Aantal stappen');
 		await page.keyboard.press('ArrowUp');
@@ -147,9 +147,9 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await palette(page, 'keten awb');
 		await expect(page.getByRole('dialog').getByRole('option').nth(1)).toBeVisible();
 		await page.keyboard.press('ArrowDown');
-		await expect(page.getByRole('complementary', { name: 'Voorbeeld' })).toContainText(
-			'Netwerk van'
-		);
+		const preview = page.getByRole('complementary', { name: 'Voorbeeld' });
+		await expect(preview.getByRole('button', { name: 'Netwerk', exact: true })).toBeVisible();
+		await expect(preview.getByRole('button', { name: 'Keten', exact: true })).toBeVisible();
 		await page.keyboard.press('Escape');
 		await doe(page, 'nw awb', 'Netwerk van Algemene wet bestuursrecht');
 		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);

@@ -141,7 +141,7 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
-	it('names the Beste treffer only once every lane is in, in the one order of the groups', async () => {
+	it('holds the place of a group still coming, in the one order of the groups', async () => {
 		const { of } = api();
 		const { s, stop } = session();
 		await type(s, 'huur');
@@ -150,8 +150,6 @@ describe('the lanes of a search', () => {
 		);
 		of('articles').answer(answer({ articles: [hit('articles', 'art', 1)] }));
 		await settle();
-		expect(s.best).toBe(null);
-		expect(s.bestComing).toBe(true);
 		// The judgments' group holds its place while they come.
 		expect(s.shown.map((g) => [g.kind, g.pending])).toEqual([
 			['instruments', false],
@@ -161,7 +159,6 @@ describe('the lanes of a search', () => {
 		of('judgments').answer(answer({ judgments: [] }));
 		await settle();
 		expect(s.allIn).toBe(true);
-		expect(s.best?.hit.id).toBe('instruments/huurwet');
 		stop();
 	});
 
@@ -257,15 +254,9 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
-	it('names the Beste treffer once, after the answers in full, where it asks in full by itself (#118)', async () => {
+	it('waits for the answers in full where it asks in full by itself (#118)', async () => {
 		const { asked, of } = api();
 		const { s, opened, stop } = session();
-		const named: (string | undefined)[] = [];
-		const watch = $effect.root(() => {
-			$effect(() => {
-				if (s.best) named.push(s.best.hit.id);
-			});
-		});
 		await type(s, 'huur');
 		of('articles').answer(answer({ articles: [hit('articles', 'live', 1)] }));
 		of('judgments').answer(answer({ judgments: [] }));
@@ -278,7 +269,6 @@ describe('the lanes of a search', () => {
 		// The fast lane asked again, in full: the lanes are not in until that answer is, also
 		// while it waits. The text and the judgments, asked in full at once, are not asked twice.
 		expect(s.allIn).toBe(false);
-		expect(s.best).toBe(null);
 		s.pressEnter();
 		await settle();
 		expect(opened).toEqual([]);
@@ -290,9 +280,9 @@ describe('the lanes of a search', () => {
 			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { resolved: null })
 		);
 		await settle();
-		expect(named).toEqual(['instruments/huurwet']);
-		expect(opened).toEqual(['instruments/huurwet']);
-		watch();
+		// A field without a page of results: the first row stands chosen, a second Enter opens it.
+		expect(s.isActive(0)).toBe(true);
+		expect(opened).toEqual([]);
 		stop();
 	});
 
@@ -310,8 +300,8 @@ describe('the lanes of a search', () => {
 		expect(opened).toEqual([]);
 		of('judgments').answer(answer({ judgments: [hit('judgments', 'arrest', 3)] }));
 		await settle();
-		expect(s.best?.hit.id).toBe('instruments/huurwet');
-		expect(opened).toEqual(['instruments/huurwet']);
+		expect(s.isActive(0)).toBe(true);
+		expect(opened).toEqual([]);
 		stop();
 	});
 
@@ -329,7 +319,7 @@ describe('the lanes of a search', () => {
 });
 
 describe('Enter and the citations', () => {
-	it('opens the first row once every answer is in, for an Enter before the answer (#79)', async () => {
+	it('chooses the first row once every answer is in, for an Enter before the answer (#79)', async () => {
 		const { of } = api();
 		const { s, opened, stop } = session();
 		await type(s, 'huur');
@@ -341,6 +331,9 @@ describe('Enter and the citations', () => {
 		expect(opened).toEqual([]);
 		of('judgments').answer(answer({ judgments: [] }));
 		await settle();
+		expect(s.isActive(0)).toBe(true);
+		expect(opened).toEqual([]);
+		s.pressEnter();
 		expect(opened).toEqual(['instruments/huurwet']);
 		stop();
 	});
@@ -495,12 +488,12 @@ describe('Enter and the citations', () => {
 			answer({}, { resolved: { ...none.resolved, kind: 'none', match: null } })
 		);
 		await settle();
-		expect(s.citation?.kind).toBe('dossier');
+		expect(s.notFound).toBe(true);
+		expect(s.citation).toBe(null);
+		expect(s.rowCount).toBe(0);
 		s.pressEnter();
 		await settle();
 		expect(opened).toEqual([]);
-		expect(s.notFound).toBe(true);
-		expect(s.citation).toBe(null);
 		stop();
 	});
 
@@ -536,7 +529,7 @@ describe('Enter and the citations', () => {
 	});
 });
 
-describe('Enter and the best the API names (besluit 30)', () => {
+describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 	/** Every lane answers: the fast kinds `fast`, the others nothing, each with `more`. */
 	async function answerAll(
 		of: (kind: SearchKind) => Asked,
@@ -550,20 +543,231 @@ describe('Enter and the best the API names (besluit 30)', () => {
 		await settle();
 	}
 
-	it('opens the best the API names: a citation of an article is exact', async () => {
+	const ARTICLE = { ...hit('articles', 'bwbr0005289_boek6_art162'), exact: true };
+
+	const CITED = {
+		resolved: {
+			match: {
+				kind: 'article',
+				collection: 'articles',
+				key: 'bwbr0005289_boek6_art162'
+			},
+			notation: { kind: 'article', value: '6:162 BW' }
+		}
+	};
+
+	it('opens a citation the API recognises, and it stands chosen for that', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		of('instruments').answer(answer({ instruments: [] }, CITED));
+		await settle();
+		expect(s.isActive(0)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0005289_boek6_art162' }]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('an Enter before the answer waits for it where the query holds a digit', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		s.pressEnter();
+		expect(results).toEqual([]);
+		of('instruments').answer(answer({ instruments: [] }, CITED));
+		await settle();
+		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0005289_boek6_art162' }]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('a citation that does not exist goes to the page of results, also after waiting', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:9999 BW');
+		s.pressEnter();
+		expect(results).toEqual([]);
+		of('instruments').answer(
+			answer(
+				{ instruments: [] },
+				{ resolved: { match: null, notation: { kind: 'article', value: '6:9999 BW' } } }
+			)
+		);
+		await settle();
+		expect(s.notFound).toBe(true);
+		expect(s.rowCount).toBe(0);
+		expect(results).toEqual(['6:9999 BW']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('a failed answer does not hold an Enter with a digit', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '36764');
+		s.pressEnter();
+		of('instruments').answer(fail(500));
+		await settle();
+		expect(results).toEqual(['36764']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('a digit too short to ask about goes to the page of results at once', async () => {
+		api();
+		const { s, results, stop } = session(undefined, true);
+		await type(s, '3');
+		s.pressEnter();
+		expect(results).toEqual(['3']);
+		stop();
+	});
+
+	it('goes to the page of results for a hit the API names, and a chosen row opens', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'artikel 6:162 BW');
+		await answerAll(of, { instruments: [] }, { best: ARTICLE.id }, { articles: [ARTICLE] });
+		expect(s.isActive(0)).toBe(false);
+		s.pressEnter();
+		expect(results).toEqual(['artikel 6:162 BW']);
+		expect(opened).toEqual([]);
+		s.down();
+		expect(s.isActive(0)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([ARTICLE.id]);
+		expect(results).toHaveLength(1);
+		stop();
+	});
+
+	it('goes to the page of results before any answer is in', async () => {
+		api();
+		const { s, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		s.pressEnter();
+		expect(results).toEqual(['huur']);
+		stop();
+	});
+
+	const HUUR = [hit('instruments', 'huurwet'), hit('instruments', 'huurprijzen')];
+
+	it('the pointer chooses nothing for Enter: it shows the row, Enter the page of results', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.point(1);
+		expect(s.isPointed(1)).toBe(true);
+		expect(s.shownRow).toBe(1);
+		expect(s.isActive(1)).toBe(false);
+		expect(s.enterRow).toBe(null);
+		s.pressEnter();
+		expect(results).toEqual(['huur']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('takes back a row chosen with the keys, once the pointer moves', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.down();
+		s.point(1);
+		expect(s.isActive(0)).toBe(false);
+		s.pressEnter();
+		expect(results).toEqual(['huur']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('↓ goes on from the row the pointer is on, and that one opens', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.point(0);
+		s.down();
+		expect(s.isPointed(1)).toBe(false);
+		expect(s.isActive(1)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([HUUR[1].id]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('a citation stays what Enter opens, with the pointer on another row', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		of('instruments').answer(answer({ instruments: HUUR }, CITED));
+		await settle();
+		s.point(2);
+		expect(s.isPointed(2)).toBe(true);
+		expect(s.isActive(0)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0005289_boek6_art162' }]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('where there is no page of results the pointer does choose', async () => {
 		const { of } = api();
 		const { s, opened, stop } = session();
-		await type(s, 'artikel 6:162 BW');
-		const article = { ...hit('articles', 'bwbr0005289_boek6_art162'), exact: true };
-		await answerAll(
-			of,
-			{ instruments: [hit('instruments', 'bw')] },
-			{ best: article.id },
-			{ articles: [article] }
-		);
-		expect(s.best?.hit.id).toBe(article.id);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.point(1);
+		expect(s.isActive(1)).toBe(true);
+		expect(s.isPointed(1)).toBe(false);
 		s.pressEnter();
-		expect(opened).toEqual([article.id]);
+		expect(opened).toEqual([HUUR[1].id]);
+		stop();
+	});
+
+	it('goes nowhere with nothing typed', () => {
+		api();
+		const { s, results, stop } = session(undefined, true);
+		s.pressEnter();
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('forgets the row chosen when the query changes', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: [hit('instruments', 'huurwet')] }, { best: null });
+		s.down();
+		await type(s, 'huurr');
+		expect(s.isActive(0)).toBe(false);
+		s.pressEnter();
+		expect(results).toEqual(['huurr']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('a law by its abbreviation has no row above the groups: Enter the page of results', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'AVG');
+		of('instruments').answer(
+			answer(
+				{ instruments: [hit('instruments', 'uavg')] },
+				{
+					resolved: {
+						match: { kind: 'instrument', collection: 'instruments', key: 'bwbr0040940' },
+						notation: null
+					}
+				}
+			)
+		);
+		await settle();
+		expect(s.bare).not.toBeNull();
+		expect(s.lead).toBeNull();
+		expect(s.rowCount).toBe(1);
+		s.pressEnter();
+		expect(results).toEqual(['AVG']);
+		expect(opened).toEqual([]);
 		stop();
 	});
 
@@ -583,34 +787,14 @@ describe('Enter and the best the API names (besluit 30)', () => {
 		stop();
 	});
 
-	it('goes to the page of results where nothing is found, even in full (T6)', async () => {
-		const { of, asked } = api();
+	it('goes to the page of results where nothing is found (T6)', async () => {
+		const { of } = api();
 		const { s, opened, results, stop } = session(undefined, true);
 		await type(s, 'zzzzzz');
 		await answerAll(of, { instruments: [] }, { best: null, matched: 'all' }, { articles: [] });
-		const before = asked.length;
 		s.pressEnter();
-		await vi.advanceTimersByTimeAsync(150);
-		flushSync();
-		// The whole query is asked in full; a second Enter waits for that answer, which is empty too.
-		s.pressEnter();
-		await vi.advanceTimersByTimeAsync(150);
-		for (const a of asked.slice(before)) a.answer(answer({}, { best: null, matched: 'all' }));
-		await settle();
 		expect(results).toEqual(['zzzzzz']);
 		expect(opened).toEqual([]);
-		stop();
-	});
-
-	it('still opens the best the API names, with a page of results at hand', async () => {
-		const { of } = api();
-		const { s, opened, results, stop } = session(undefined, true);
-		await type(s, 'artikel 6:162 BW');
-		const article = { ...hit('articles', 'bwbr0005289_boek6_art162'), exact: true };
-		await answerAll(of, { instruments: [] }, { best: article.id }, { articles: [article] });
-		s.pressEnter();
-		expect(opened).toEqual([article.id]);
-		expect(results).toEqual([]);
 		stop();
 	});
 
@@ -624,7 +808,6 @@ describe('Enter and the best the API names (besluit 30)', () => {
 			{ best: null, matched: 'all' },
 			{ articles: [hit('articles', 'reparatiewet_ix')] }
 		);
-		expect(s.best).toBeNull();
 		expect(s.isActive(0)).toBe(false);
 		s.pressEnter();
 		expect(opened).toEqual([]);
@@ -634,9 +817,9 @@ describe('Enter and the best the API names (besluit 30)', () => {
 		stop();
 	});
 
-	it('takes the one exact hit over the lanes where no lane names a best', async () => {
+	it('knows the hit the query names, for a word with a bron: the one exact over the lanes', async () => {
 		const { of } = api();
-		const { s, opened, stop } = session();
+		const { s, stop } = session();
 		await type(s, 'kelderluik');
 		await answerAll(
 			of,
@@ -644,19 +827,10 @@ describe('Enter and the best the API names (besluit 30)', () => {
 			{ best: null },
 			{ articles: [{ ...hit('articles', 'a'), exact: true }, hit('articles', 'b')] }
 		);
-		expect(s.bestId).toBe('articles/a');
-		s.pressEnter();
-		expect(opened).toEqual(['articles/a']);
-		stop();
-	});
-
-	it('keeps the older Enter where the API names no best at all', async () => {
-		const { of } = api();
-		const { s, opened, stop } = session();
-		await type(s, 'huur');
-		await answerAll(of, { instruments: [hit('instruments', 'huurwet')] }, {});
-		s.pressEnter();
-		expect(opened).toEqual(['instruments/huurwet']);
+		expect(s.named?.id).toBe('articles/a');
+		// It stands in its own group, and is no row chosen.
+		expect(s.shown.flatMap((g) => g.hits).map((h) => h.id)).toEqual(['articles/a', 'articles/b']);
+		expect(s.isActive(0)).toBe(false);
 		stop();
 	});
 
@@ -703,10 +877,8 @@ describe('the order of the groups', () => {
 			})
 		);
 		await settle();
-		const order = () => s.shown.map((x) => (x.best ? 'beste' : x.kind));
-		// The Beste treffer stands as the fast lane is in; its group gives the hit up.
-		expect(order().slice(0, 3)).toEqual(['beste', 'articles', 'judgments']);
-		expect(s.best?.hit.id).toBe('members/yesilgoz');
+		const order = () => s.shown.map((x) => x.kind);
+		expect(order()[0]).toBe('members');
 		const before = order();
 		of('articles').answer(answer({ articles: [hit('articles', 'a', 0.1)] }));
 		await settle();
@@ -714,61 +886,7 @@ describe('the order of the groups', () => {
 		expect(order().filter((k) => before.includes(k))).toEqual(
 			before.filter((k) => order().includes(k))
 		);
-		expect(order()[0]).toBe('beste');
-		expect(s.best?.hit.id).toBe('members/yesilgoz');
-		stop();
-	});
-});
-
-describe('the Beste treffer comes with the fast lane', () => {
-	it('stands as soon as the fast lane is in, and no slow lane replaces it or moves the list', async () => {
-		const { of } = api();
-		const { s, stop } = session();
-		await type(s, 'huur');
-		of('instruments').answer(
-			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { best: 'instruments/huurwet' })
-		);
-		await settle();
-		expect(s.allIn).toBe(false);
-		expect(s.best?.hit.id).toBe('instruments/huurwet');
-		expect(s.bestComing).toBe(false);
-		const before = s.shown.map((x) => (x.best ? 'beste' : x.kind));
-		// The text lane names a better hit later: the Beste treffer stays, nothing shifts.
-		of('articles').answer(
-			answer({ articles: [hit('articles', 'art', 9)] }, { best: 'articles/art' })
-		);
-		await settle();
-		expect(s.best?.hit.id).toBe('instruments/huurwet');
-		expect(s.shown[0]).toMatchObject({ best: true });
-		expect(s.shown.map((x) => (x.best ? 'beste' : x.kind)).slice(0, before.length - 1)).toEqual(
-			before.slice(0, before.length - 1)
-		);
-		of('judgments').answer(answer({ judgments: [hit('judgments', 'j', 9)] }, { best: null }));
-		await settle();
-		expect(s.allIn).toBe(true);
-		expect(s.best?.hit.id).toBe('instruments/huurwet');
-		stop();
-	});
-
-	it('holds the place of the Beste treffer where the fast lane has none, and a slow lane may fill it', async () => {
-		const { of } = api();
-		const { s, stop } = session();
-		await type(s, 'stikstofbeleid');
-		of('instruments').answer(answer({ instruments: [] }, { best: null }));
-		await settle();
-		expect(s.best).toBe(null);
-		expect(s.bestComing).toBe(true);
-		of('articles').answer(
-			answer({ articles: [hit('articles', 'art', 1)] }, { best: 'articles/art' })
-		);
-		await settle();
-		// Still the place held: the judgments are on their way.
-		expect(s.best).toBe(null);
-		expect(s.bestComing).toBe(true);
-		of('judgments').answer(answer({ judgments: [] }, { best: null }));
-		await settle();
-		expect(s.best?.hit.id).toBe('articles/art');
-		expect(s.bestComing).toBe(false);
+		expect(order()[0]).toBe('members');
 		stop();
 	});
 });

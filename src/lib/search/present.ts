@@ -492,12 +492,9 @@ export function groupOrder<K extends Collection>(
 	return [...up, ...kinds.filter((k) => !up.includes(k))];
 }
 
-/** What a lane's answer says about the best hit: whether the API names one, and which. */
-type BestAnswer = { named: boolean; best: string | null };
-
 /** The id the query names: what the API named, else the one hit it names exactly. */
 export function bestIdOf(
-	answers: readonly BestAnswer[],
+	answers: readonly { best: string | null }[],
 	groups: readonly { hits: Hit[] }[]
 ): string | null {
 	const named = answers.find((a) => a.best);
@@ -506,96 +503,22 @@ export function bestIdOf(
 	return exact.length === 1 ? exact[0].id : null;
 }
 
-/** The Beste treffer: the hit the API names, else (an older API) the best by score. */
-function pickBest<G extends { kind: Collection; hits: Hit[] }>(
-	groups: G[],
-	answers: readonly BestAnswer[]
-): { kind: G['kind']; hit: Hit } | null {
-	if (!answers.some((a) => a.named)) return bestHit(groups);
-	const id = bestIdOf(answers, groups);
-	for (const g of groups) {
-		const hit = g.hits.find((h) => h.id === id);
-		if (hit) return { kind: g.kind, hit };
-	}
-	return null;
-}
-
-/**
- * The Beste treffer as soon as the lead lane (the fast one, or the first in scope) is in: its
- * own pick, which a slower lane never replaces or moves. Only where the lead lane names none
- * does a slower lane still deliver it, once every lane is in (`allIn`); until then none, and
- * the place stays held. Pass the groups of every lane; the lead lane's are taken from them.
- */
-export function bestEarly<G extends { kind: Collection; hits: Hit[] }>(
-	lead: { kinds: readonly Collection[]; answer: BestAnswer },
-	groups: G[],
-	answers: readonly BestAnswer[],
-	allIn: boolean
-): { kind: G['kind']; hit: Hit } | null {
-	const own = pickBest(
-		groups.filter((g) => lead.kinds.includes(g.kind)),
-		[lead.answer]
-	);
-	if (own) return own;
-	return allIn ? pickBest(groups, answers) : null;
-}
-
-/** The score from which a hit is the identifier asked for (an ECLI, a BWB id, a number). */
-const IDENTIFIER_SCORE = 1;
-
-/** How much lower a law's or an article's best hit may score and still come first. */
-const LAW_MARGIN = 0.25;
-const LAW: readonly Collection[] = ['articles', 'instruments'];
-
-/**
- * The one hit above all groups (Thijs, 8 Oct: "Beste treffer"): an identifier where one
- * matches; else an article or a law where its best hit scores nearly as well as the best of
- * all (within LAW_MARGIN), so "huurverhoging" leads with the rule and not with Kamervragen;
- * else the best hit of all. None for a single group, which says it already.
- */
-export function bestHit<G extends { kind: Collection; hits: Hit[] }>(
-	groups: G[]
-): { kind: G['kind']; hit: Hit } | null {
-	if (groups.length < 2) return null;
-	const all = groups.flatMap((g) => g.hits.map((hit) => ({ kind: g.kind, hit })));
-	if (!all.length) return null;
-	const score = (x: { hit: Hit }) => x.hit.score ?? 0;
-	const top = Math.max(...all.map(score));
-	const first = (xs: typeof all) =>
-		xs.reduce<(typeof all)[number] | null>((m, x) => (!m || score(x) > score(m) ? x : m), null);
-	const id = all.find((x) => score(x) >= IDENTIFIER_SCORE);
-	if (id) return id;
-	const law = first(LAW.flatMap((k) => all.filter((x) => x.kind === k && score(x) > 0)));
-	if (law && score(law) >= top - LAW_MARGIN) return law;
-	return first(orderGroups(groups).flatMap((g) => all.filter((x) => x.kind === g.kind)));
-}
-
-/** A place in the list of a search: a group of hits, the Beste treffer, or a group still coming. */
-export type Slot<K, H> = { kind: K; hits: H[]; best: boolean; pending: boolean };
+/** A place in the list of a search: a group of hits, or a group still coming. */
+export type Slot<K, H> = { kind: K; hits: H[]; pending: boolean };
 
 /**
  * The groups of a search in one order, whichever answer comes first (UX-toets 0.79.47, #52):
- * the Beste treffer on top (out of its own group), then each kind in `order` that has hits,
- * or whose answer is still coming (`pending`, an empty place with its heading). A group that
- * comes later takes its own place and moves none of the others.
+ * each kind in `order` that has hits, or whose answer is still coming (`pending`, an empty place
+ * with its heading). A group that comes later takes its own place and moves none of the others.
  */
-export function slots<K, H extends { id: string }>(
+export function slots<K, H>(
 	order: readonly K[],
 	groups: readonly { kind: K; hits: H[] }[],
-	best: { kind: K; hit: H } | null,
 	pending: (kind: K) => boolean = () => false
 ): Slot<K, H>[] {
-	const top: Slot<K, H>[] = best
-		? [{ kind: best.kind, hits: [best.hit], best: true, pending: false }]
-		: [];
-	return [
-		...top,
-		...order.flatMap((kind): Slot<K, H>[] => {
-			const hits = (groups.find((g) => g.kind === kind)?.hits ?? []).filter(
-				(h) => h.id !== best?.hit.id
-			);
-			if (hits.length) return [{ kind, hits, best: false, pending: false }];
-			return pending(kind) ? [{ kind, hits: [], best: false, pending: true }] : [];
-		})
-	];
+	return order.flatMap((kind): Slot<K, H>[] => {
+		const hits = groups.find((g) => g.kind === kind)?.hits ?? [];
+		if (hits.length) return [{ kind, hits, pending: false }];
+		return pending(kind) ? [{ kind, hits: [], pending: true }] : [];
+	});
 }
