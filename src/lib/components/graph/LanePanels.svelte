@@ -6,6 +6,7 @@
 	import { sortColour } from '$lib/bron/rubrieken';
 	import { COLUMN_SORT, COLUMN_TITLE, LANE_SORT, LANE_TITLE } from '$lib/graph/lane-columns';
 	import { CONTENT_TOP, type LaneLayout } from '$lib/graph/lane-layout';
+	import { HEAD_BAR } from '$lib/graph/lane-strips';
 	import type { Scene } from '$lib/graph/scene';
 
 	let { layout, phone, scene }: { layout: LaneLayout; phone: boolean; scene: Scene } = $props();
@@ -27,7 +28,7 @@
 			class="col-bar"
 			x={c.x + 12}
 			y={c.y + 29}
-			width="120"
+			width={HEAD_BAR}
 			height="3"
 			rx="1.5"
 			fill={sortColour(COLUMN_SORT[c.column])}
