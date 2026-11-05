@@ -100,7 +100,7 @@
 		"src/lib/network/shared.ts": 16,
 		"src/lib/onderwerpen/overzicht.ts": 17,
 		"src/lib/search/present.ts": 63,
-		"src/lib/search/session.svelte.ts": 17,
+		"src/lib/search/session.svelte.ts": 16,
 		"src/lib/selection/cluster.ts": 17,
 		"src/lib/selection/netwerk.ts": 19,
 		"src/lib/text/anchor.ts": 19,
