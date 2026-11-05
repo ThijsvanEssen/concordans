@@ -26,7 +26,8 @@ import {
 	dossierOwnName,
 	dossierUitProps,
 	dossierVolledigeTitel,
-	dossierNumberLabel
+	dossierNumberLabel,
+	dossierNummerVanSleutel
 } from './dossier-naam';
 import { eersteIndiener, isEersteIndiener } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
@@ -276,7 +277,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	const key = id.slice(slash + 1);
 	if (!isCollection(collection)) return null;
 	if (collection === 'dossiers') {
-		const data = await ifExists(getDossier(key));
+		const data = await ifExists(getDossier(dossierNummerVanSleutel(key)));
 		return data
 			? previewFromNode('dossiers', data.title ?? null, {
 					label: data.number,
