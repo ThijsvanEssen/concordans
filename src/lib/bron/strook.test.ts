@@ -57,7 +57,7 @@ describe('the strip numbers', () => {
 		]);
 		expect(shortCount(per, 0, [])).toBe('185 bronnen');
 		expect(undatedText(['activities', 'commitments', 'commitments', 'dossiers'])).toBe(
-			'1 dossier, 1 activiteit en 2 toezeggingen zonder datum'
+			'zonder datum: 1 dossier, 1 activiteit en 2 toezeggingen'
 		);
 	});
 	it('dates a publication by the day it was published, a law by none', () => {
@@ -77,18 +77,18 @@ describe('the strip numbers', () => {
 			['stukken', 1]
 		] as const);
 		expect(shortCount(per, 1, ['documents', 'articles', 'articles'])).toBe(
-			'4 bronnen, 3 zonder datum'
+			'4 bronnen; zonder datum: 3'
 		);
 		expect(shortCount(new Map([['wetten', 1]]), 0, [])).toBe('1 bron');
-		expect(shortCount(new Map(), 0, ['articles'])).toBe('1 zonder datum');
+		expect(shortCount(new Map(), 0, ['articles'])).toBe('zonder datum: 1');
 		expect(shortCount(new Map(), 0, [])).toBe('');
 	});
 	it('says what has no day by what it is', () => {
 		expect(undatedText([])).toBeNull();
 		expect(
 			undatedText(['documents', ...Array<'articles'>(200).fill('articles'), 'instruments'])
-		).toBe('1 wet, 200 artikelen en 1 stuk zonder datum');
-		expect(undatedText(['articles'])).toBe('1 artikel zonder datum');
+		).toBe('zonder datum: 1 wet, 200 artikelen en 1 stuk');
+		expect(undatedText(['articles'])).toBe('zonder datum: 1 artikel');
 	});
 	it('puts every collection of the canvas in one kind or none', () => {
 		expect(kindOf('articles')).toBe('wetten');
@@ -101,7 +101,7 @@ describe('the strip numbers', () => {
 		expect(countedAs('members', post)).toBe('ministries');
 		expect(countedAs('members', {})).toBe('members');
 		expect(undatedText(['ministries', 'cabinets', 'members'])).toBe(
-			'1 parlementsbron en 2 regeringsbronnen zonder datum'
+			'zonder datum: 1 parlementsbron en 2 regeringsbronnen'
 		);
 	});
 	it('names the first and last year always and never two names touching', () => {

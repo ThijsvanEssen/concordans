@@ -140,10 +140,8 @@
 	// The count of the period, in words; the bronnen without a year stand in it, never placed.
 	const counts = $derived(sumPeriod(years, range.van, range.tot));
 	const undatedWords = $derived(undatedText(undated));
-	const parts = $derived([
-		...countParts(counts.per, counts.changes),
-		...(undatedWords ? [{ text: undatedWords }] : [])
-	]);
+	const datedParts = $derived(countParts(counts.per, counts.changes));
+	const parts = $derived([...datedParts, ...(undatedWords ? [{ text: undatedWords }] : [])]);
 	const short = $derived(shortCount(counts.per, counts.changes, undated));
 	const words = $derived(
 		fromDay || toDay ? periodInWords(fromDay ?? '', toDay ?? '', today) : `${first} tot ${last}`
@@ -171,9 +169,11 @@
 {#snippet telling()}
 	<p class="telling" aria-live="polite">
 		{#each parts as d, i (d.text)}<span
-				>{#if 'change' in d && d.change}{@render ruit()}{/if}{d.text}{i < parts.length - 1
-					? ', '
-					: ''}</span
+				>{#if 'change' in d && d.change}{@render ruit()}{/if}{d.text}{i === parts.length - 1
+					? ''
+					: i === datedParts.length - 1
+						? '; '
+						: ', '}</span
 			>{/each}
 	</p>
 {/snippet}

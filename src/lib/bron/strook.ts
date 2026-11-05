@@ -142,7 +142,7 @@ const nounOf = (c: Collection) =>
 const inWords = (counts: ReadonlyMap<NounId, number>) =>
 	NOUNS.filter((d) => counts.get(d.id)).map((d) => count(counts.get(d.id)!, d.one, d.many));
 
-/** "1 wet, 200 artikelen en 1 stuk zonder datum": what has no day, by what it is. */
+/** "zonder datum: 1 wet, 200 artikelen en 1 stuk": what has no day, by what it is. */
 export function undatedText(collections: readonly Collection[]): string | null {
 	const n = new Map<NounId, number>();
 	for (const c of collections) {
@@ -150,7 +150,7 @@ export function undatedText(collections: readonly Collection[]): string | null {
 		if (noun) n.set(noun.id, (n.get(noun.id) ?? 0) + 1);
 	}
 	const items = inWords(n);
-	return items.length ? `${joinAnd(items)} zonder datum` : null;
+	return items.length ? `zonder datum: ${joinAnd(items)}` : null;
 }
 
 /** A bron on the strip: its year as a fraction, its kind; a wetswijziging is named instead. */
@@ -228,7 +228,7 @@ export function countParts(
 }
 
 /**
- * The count of a phone at rest, whole on its one line: "189 bronnen, 4 zonder datum". The Blad
+ * The count of a phone at rest, whole on its one line: "187 bronnen; zonder datum: 8". The Blad
  * has it by kind (`countParts`, `undatedText`).
  */
 export function shortCount(
@@ -240,8 +240,8 @@ export function shortCount(
 	const without = undated.filter(nounOf).length;
 	return [
 		...(dated ? [count(dated, 'bron', 'bronnen')] : []),
-		...(without ? [`${without} zonder datum`] : [])
-	].join(', ');
+		...(without ? [`zonder datum: ${without}`] : [])
+	].join('; ');
 }
 
 type AxisYear = { jaar: number; align: 'start' | 'mid' | 'end' };

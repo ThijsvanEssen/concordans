@@ -77,6 +77,6 @@ test('the strip counts what Tonen counts and names what has no date', async ({ p
 	await expect(page.locator('.tijdstrook')).toBeVisible({ timeout: 30_000 });
 	const telling = await tellingPerSoort(page, touch);
 	// What has no date is said by what it is, not as a number of "zonder jaar".
-	await expect(telling).toContainText(/artikelen.* zonder datum/);
+	await expect(telling).toContainText(/zonder datum: .*artikelen/);
 	await expect(telling).not.toContainText('zonder jaar');
 });
