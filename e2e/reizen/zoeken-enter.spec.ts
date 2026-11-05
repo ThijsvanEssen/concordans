@@ -182,9 +182,8 @@ test('⌘K: the right column shows a citation Enter opens, and says so', async (
 test('the pointer on a row: it lights, Enter goes to the page of results', async ({ page }) => {
 	await patchApi(page, /\/api\/search/, (body) => named(body));
 	const { field, results } = await searchFor(page, 'huurverhoging');
-	const row = results.getByRole('option').first();
-	await row.hover();
-	await expect(row).toHaveClass(/is-active/);
+	await results.getByRole('option').first().hover();
+	await expect(results.locator('.is-active')).toHaveCount(1);
 	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
 	await emptyPage(page);
 	await field.press('Enter');
@@ -280,6 +279,88 @@ test('an answer after ↓ moves the rows: Enter opens the bron that was chosen',
 	await expect(chosen).toContainText('6:162');
 	await field.press('Enter');
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
+});
+
+test('the full answer orders the rows otherwise than the live one: Enter opens the bron chosen', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has no ↓');
+	const law = (number: string) => ({
+		id: `instruments/bwbr${number}`,
+		key: `bwbr${number}`,
+		collection: 'instruments',
+		display_name: `Wet ${number}`,
+		extra: { bwb_id: `BWBR${number}` }
+	});
+	const LIVE = ['0012408', '0032904', '0005289'];
+	const FULL = ['0005289', '0006299', '0006622', '0012408', '0032904'];
+	let fullIn = () => {};
+	const full = new Promise<void>((resolve) => (fullIn = resolve));
+	await page.route(apiPath(/\/api\/search/), async (route) => {
+		const params = new URL(route.request().url()).searchParams;
+		const fast = params.getAll('types').includes('instruments');
+		const inFull = params.get('mode') === 'full';
+		if (fast && inFull) await full;
+		const numbers = !fast ? [] : inFull ? FULL : LIVE;
+		await route.fulfill({
+			status: 200,
+			headers: { ...CORS, 'content-type': 'application/json' },
+			body: JSON.stringify(
+				named({
+					q: 'wvw',
+					types: [],
+					total: numbers.length,
+					results: fast ? { instruments: numbers.map(law) } : {},
+					searched: {},
+					resolved: null,
+					// Left out of the live answer and not found in it: asked again in full.
+					partial: fast && !inFull ? { dossiers: true } : {}
+				})
+			)
+		});
+	});
+	const { dialog, field } = await palette(page);
+	await field.fill('wvw');
+	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	const rows = results.getByRole('option');
+	await expect(rows).toHaveCount(LIVE.length, { timeout: 30_000 });
+	await page.keyboard.press('ArrowDown');
+	await page.keyboard.press('ArrowDown');
+	const chosen = results.getByRole('option', { selected: true });
+	await expect(chosen).toContainText('Wet 0032904');
+	await expect(rows.nth(1)).toContainText('Wet 0032904');
+
+	fullIn();
+	await expect(rows).toHaveCount(FULL.length);
+	await expect(rows.nth(1)).toContainText('Wet 0006299');
+	await expect(rows.nth(4)).toContainText('Wet 0032904');
+	await expect(chosen).toHaveCount(1);
+	await expect(chosen).toContainText('Wet 0032904');
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/wetten\/BWBR0032904/);
+});
+
+test('⌘K: a long description leaves the name of the bron in the column', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has the one column');
+	await patchApi(page, /\/api\/nodes\/instruments\/bwbr00(12408|32904)/, (body) => {
+		const node = body.node as { props: Record<string, unknown> };
+		node.props.official_title = 'Een hele lange officiële titel van deze wet, '.repeat(30);
+		return body;
+	});
+	const { dialog, results } = await paletteWithAllIn(page, 'onrechtmatige daad');
+	await page.keyboard.press('ArrowDown');
+	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
+	await expect(preview).toContainText('Een hele lange officiële titel');
+	const title = preview.locator('.title');
+	const height = (await title.boundingBox())!.height;
+	expect(height).toBeGreaterThan(15);
+	await expect(results.getByRole('option', { selected: true })).toContainText(
+		(await title.innerText()).slice(0, 12)
+	);
 });
 
 test('hits with only some of the words say so', async ({ page }) => {

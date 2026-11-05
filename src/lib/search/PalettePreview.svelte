@@ -113,18 +113,20 @@
 		<div class="bron">
 			<p class="kind">{data.kind}</p>
 			<p class="title">{data.name}</p>
-			{#if data.status}<p class="line">{data.status}</p>{/if}
-			{#each data.places as line (line)}<p class="line quiet">{line}</p>{/each}
-			<!-- The place of the passage is held, also while it comes and where there is none. -->
-			<div class="passage">
-				{#if data.passage}
-					<p>
-						{#each data.passage as part, n (n)}{#if part.mark}<mark>{part.text}</mark
-								>{:else}{part.text}{/if}{/each}
-					</p>
-				{:else if loading}
-					<p class="quiet" role="status">laden…</p>
-				{/if}
+			<!-- Its place is held, also while the passage comes and where there is none. -->
+			<div class="rest">
+				{#if data.status}<p class="line">{data.status}</p>{/if}
+				{#each data.places as line (line)}<p class="line quiet">{line}</p>{/each}
+				<div class="passage">
+					{#if data.passage}
+						<p>
+							{#each data.passage as part, n (n)}{#if part.mark}<mark>{part.text}</mark
+									>{:else}{part.text}{/if}{/each}
+						</p>
+					{:else if loading}
+						<p class="quiet" role="status">laden…</p>
+					{/if}
+				</div>
 			</div>
 		</div>
 		<div class="foot">
@@ -185,6 +187,7 @@
 		color: var(--ink-3);
 	}
 	.title {
+		flex-shrink: 0;
 		margin: 0 0 var(--s-2);
 		font-size: var(--t-body-2);
 		font-weight: 600;
@@ -200,16 +203,18 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	.passage {
+	.rest {
 		flex: 1;
 		min-height: 0;
-		margin-top: var(--s-2);
 		overflow: hidden;
+		/* Text longer than its place fades out, not cut through a line. */
+		mask-image: linear-gradient(to bottom, black calc(100% - 2em), transparent);
+	}
+	.passage {
+		margin-top: var(--s-2);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
-		/* Text longer than its place fades out, not cut through a line. */
-		mask-image: linear-gradient(to bottom, black calc(100% - 2em), transparent);
 	}
 	.passage p {
 		margin: 0;
