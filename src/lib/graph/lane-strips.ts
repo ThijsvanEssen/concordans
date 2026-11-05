@@ -26,7 +26,7 @@ const MARGIN = 16;
 const INSET = 12;
 const HEAD = 40;
 /** The bar under the name of a strip (LanePanels). */
-export const HEAD_BAR = 120;
+const HEAD_BAR = 120;
 /** Between the edge of a strip and its head: there a line runs down out of a row, past the heads. */
 const DESCENT = MARGIN + 4;
 const STRIP_GAP = 14;

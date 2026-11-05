@@ -6,7 +6,7 @@
 	import { sortColour } from '$lib/bron/rubrieken';
 	import { COLUMN_SORT, COLUMN_TITLE, LANE_SORT, LANE_TITLE } from '$lib/graph/lane-columns';
 	import { CONTENT_TOP, type LaneLayout } from '$lib/graph/lane-layout';
-	import { HEAD_BAR } from '$lib/graph/lane-strips';
+	import { stripHead } from '$lib/graph/lane-strips';
 	import type { Scene } from '$lib/graph/scene';
 
 	let { layout, phone, scene }: { layout: LaneLayout; phone: boolean; scene: Scene } = $props();
@@ -14,6 +14,7 @@
 
 {#each layout.columns as c (c.column)}
 	{#if phone}
+		{@const head = stripHead(c)}
 		<rect
 			class="panel"
 			x={c.x}
@@ -23,12 +24,12 @@
 			rx="12"
 			style:--tint={sortColour(COLUMN_SORT[c.column])}
 		/>
-		<text class="col-head" x={c.x + 12} y={c.y + 22}>{COLUMN_TITLE[c.column]}</text>
+		<text class="col-head" x={head.x} y={c.y + 22}>{COLUMN_TITLE[c.column]}</text>
 		<rect
 			class="col-bar"
-			x={c.x + 12}
+			x={head.x}
 			y={c.y + 29}
-			width={HEAD_BAR}
+			width={head.width}
 			height="3"
 			rx="1.5"
 			fill={sortColour(COLUMN_SORT[c.column])}
