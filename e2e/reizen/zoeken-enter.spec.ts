@@ -37,12 +37,15 @@ const emptyPage = (page: Page) =>
 		})
 	);
 
-/**
- * The rows stand still: a live answer that left kinds out has the query asked again in full, and
- * the group Wetten of that answer comes in above the rows, whenever a loaded machine gets to it.
- */
-const steadyList = (page: Page) =>
-	patchApi(page, /\/api\/search/, (body) => named(body, { partial: {} }));
+/** ⌘K with `q` typed and every answer in: the live answer has Wetten asked again in full. */
+async function paletteWithAllIn(page: Page, q: string) {
+	const { dialog, field } = await palette(page);
+	await field.fill(q);
+	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	await expect(results.getByRole('group', { name: /Wetten/ })).toBeVisible({ timeout: 30_000 });
+	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	return { dialog, field, results };
+}
 
 /** ⌘K open, its field focused. */
 async function palette(page: Page) {
@@ -140,12 +143,7 @@ test('⌘K: the right column says what Enter does, and shows the row chosen with
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has the one column');
-	await steadyList(page);
-	const { dialog, field } = await palette(page);
-	await field.fill('onrechtmatige daad');
-	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
-	await expect(results.getByRole('option').first()).toBeVisible({ timeout: 30_000 });
-	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	const { dialog, results } = await paletteWithAllIn(page, 'onrechtmatige daad');
 	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
 	await expect(preview).toContainText('zoekt "onrechtmatige daad" op de zoekpagina');
 	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
@@ -155,6 +153,7 @@ test('⌘K: the right column says what Enter does, and shows the row chosen with
 	const chosen = results.getByRole('option', { selected: true });
 	await expect(chosen).toHaveCount(1);
 	await expect(preview).toContainText(/Enter\s+opent/);
+	await expect(preview).not.toContainText('laden…');
 	await expect(preview).not.toContainText('zoekpagina');
 	for (const action of ['Keten', 'Netwerk'])
 		await expect(preview.getByRole('button', { name: action, exact: true })).toBeVisible();
@@ -197,15 +196,12 @@ test('⌘K: the pointer shows a row in the column, a click opens it, Enter searc
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has no pointer and no column');
-	await steadyList(page);
-	const { dialog, field } = await palette(page);
-	await field.fill('onrechtmatige daad');
-	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
-	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	const { dialog, field, results } = await paletteWithAllIn(page, 'onrechtmatige daad');
 	const row = results.getByRole('option').first();
 	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
 	await row.hover();
 	await expect(row).toHaveClass(/is-active/);
+	await expect(preview).not.toContainText('laden…');
 	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
 	await expect(row).not.toContainText('↵');
 	await expect(preview.getByRole('button', { name: 'Netwerk', exact: true })).toBeVisible();
@@ -221,11 +217,7 @@ test('the pointer and then ↓: the next row stands chosen, and the column says 
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has no pointer');
-	await steadyList(page);
-	const { dialog, field } = await palette(page);
-	await field.fill('onrechtmatige daad');
-	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
-	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	const { dialog, results } = await paletteWithAllIn(page, 'onrechtmatige daad');
 	const rows = results.getByRole('option');
 	await rows.first().hover();
 	await page.keyboard.press('ArrowDown');
@@ -233,6 +225,61 @@ test('the pointer and then ↓: the next row stands chosen, and the column says 
 	await expect(rows.first()).not.toHaveClass(/is-active/);
 	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
 	await expect(preview).toContainText(/Enter\s+opent/);
+	await expect(preview).not.toContainText('laden…');
+});
+
+test('an answer after ↓ moves the rows: Enter opens the bron that was chosen', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has no ↓');
+	const article = {
+		id: 'articles/bwbr0005289_162',
+		key: 'bwbr0005289_162',
+		collection: 'articles',
+		display_name: 'Artikel 6:162 BW',
+		extra: { bwb_id: 'BWBR0005289', number: '6:162' }
+	};
+	const law = {
+		id: 'instruments/bwbr0006299',
+		key: 'bwbr0006299',
+		collection: 'instruments',
+		display_name: 'Politiewet 1993'
+	};
+	let lawsIn = () => {};
+	const laws = new Promise<void>((resolve) => (lawsIn = resolve));
+	await page.route(apiPath(/\/api\/search/), async (route) => {
+		const types = new URL(route.request().url()).searchParams.getAll('types').join(',');
+		const fast = types.includes('instruments');
+		if (fast) await laws;
+		const results = fast
+			? { instruments: [law] }
+			: types.includes('articles')
+				? { articles: [article] }
+				: {};
+		await route.fulfill({
+			status: 200,
+			headers: { ...CORS, 'content-type': 'application/json' },
+			body: JSON.stringify(
+				named({ q: 'onrechtmatig', types: [], total: 1, results, searched: {}, resolved: null })
+			)
+		});
+	});
+	const { field } = await palette(page);
+	await field.fill('onrechtmatig');
+	const dialog = page.getByRole('dialog', { name: 'Zoekvenster' });
+	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	await expect(results.getByRole('option')).toHaveCount(1, { timeout: 30_000 });
+	await page.keyboard.press('ArrowDown');
+	const chosen = results.getByRole('option', { selected: true });
+	await expect(chosen).toContainText('6:162');
+
+	lawsIn();
+	await expect(results.getByRole('option')).toHaveCount(2);
+	await expect(results.getByRole('option').first()).toContainText('Politiewet');
+	await expect(chosen).toContainText('6:162');
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
 });
 
 test('hits with only some of the words say so', async ({ page }) => {
