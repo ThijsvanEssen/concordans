@@ -88,10 +88,6 @@
 	.kaart :global(.sketch) {
 		margin: 0;
 	}
-	/* The count of the legend is for Verbonden; here the drawing speaks for itself. */
-	.kaart :global(.caption) {
-		display: none;
-	}
 	figcaption {
 		display: flex;
 		flex-wrap: wrap;

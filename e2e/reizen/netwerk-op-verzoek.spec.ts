@@ -41,9 +41,13 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 	const figure = sketch(page);
 	// The judgments that cite 6:162 come per instantie, once their counts are in.
 	await expect(figure.getByRole('button', { name: /^[\d.]+ Hoge Raad$/ })).toBeAttached();
-	// The legend and the drawing stand from one state: the bronnen on their own are read from it.
-	await expect(figure.locator('figcaption')).toContainText('groepen');
-	const own = /^([\d.]+) bron(?:nen)?, /.exec(await figure.locator('figcaption').innerText());
+	// No line under the drawing counts it (B111); its name does, for a screen reader, from the
+	// same state as the drawing: the bronnen on their own are read from it.
+	await expect(figure.locator('figcaption')).toHaveCount(0);
+	const drawing = figure.locator('svg[role="group"]');
+	await expect(drawing).toHaveAttribute('aria-label', /groepen/);
+	const said = async () => (await drawing.getAttribute('aria-label'))!.replace(/^.*?: (?=\d)/, '');
+	const own = /^([\d.]+) bron(?:nen)?, /.exec(await said());
 	const singles = own ? Number(own[1].replaceAll('.', '')) : 0;
 	const circles = figure.locator('g.cluster');
 	const groups = await circles.count();
@@ -56,7 +60,7 @@ test('beyond 40 bronnen a group is one circle with its count, and the legend cou
 	const nl = (n: number) => n.toLocaleString('nl-NL').replaceAll('.', '\\.');
 	// 7 bronnen, 3 groepen van 6.507 uitspraken
 	const legend = `${singles ? `${singles} bron(?:nen)?, ` : ''}${groups} groepen? van ${nl(total)} \\w+`;
-	await expect(figure.locator('figcaption')).toHaveText(new RegExp(`^\\s*${legend}\\s*$`));
+	expect(await said()).toMatch(new RegExp(`^${legend}$`));
 	// What is drawn is what the heading counts: the bronnen on their own and the groups together.
 	await expect(verbonden(page).locator('.head__count')).toHaveText(
 		new RegExp(`^${nl(singles + total)} verbindingen$`)
