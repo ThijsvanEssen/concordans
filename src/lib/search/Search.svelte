@@ -18,7 +18,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { notHeld, searchedLine } from '$lib/text/coverage';
 	import { conceptOf, resultsHref } from './results';
-	import { expiredTitle, groupLabel, hitName, presentHit, sectionOf } from './present';
+	import { expiredTitle, expiredWord, groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
 	import { SearchSession } from './session.svelte';
@@ -213,6 +213,7 @@
 					? rowId(search.enterRow)
 					: undefined}
 			{placeholder}
+			enterkeyhint="search"
 			autocomplete="off"
 			spellcheck="false"
 		/>
@@ -301,7 +302,7 @@
 								>{choice.label ?? naamVanId(nodeId(choice.ref.collection, choice.ref.key))}</span
 							>
 							{#if expired}<span class="row-context"
-									><span class="row-expired" title={expired}>vervallen</span></span
+									><span class="row-expired" title={expired}>{expiredWord(expired)}</span></span
 								>{/if}
 							{#if isActive(i)}<span class="kbd" aria-hidden="true">↵</span>{/if}
 						</SearchOption>
@@ -335,14 +336,19 @@
 					>
 					<span class="row-title">{name}</span>
 					{#if expired}<span class="row-context"
-							><span class="row-expired" title={expired}>vervallen</span></span
+							><span class="row-expired" title={expired}>{expiredWord(expired)}</span></span
 						>{/if}
 					{#if isActive(0)}<span class="kbd" aria-hidden="true">↵</span>{/if}
 				</SearchOption>
 			{/if}
 
 			{#each search.shown as group (group.kind)}
-				<div class="group" role="group" aria-labelledby="{uid}-{group.kind}">
+				<div
+					class="group"
+					class:group--wacht={group.pending}
+					role="group"
+					aria-labelledby="{uid}-{group.kind}"
+				>
 					<div class="group-label" id="{uid}-{group.kind}">
 						<KindGlyph collection={group.kind} />
 						{groupLabel(group.kind)}
@@ -389,7 +395,7 @@
 										? ` ${shown.context}`
 										: shown.context}{#if shown.expired}{shown.context ? ', ' : ''}<span
 											class="row-expired"
-											title={shown.expired}>vervallen</span
+											title={shown.expired}>{expiredWord(shown.expired)}</span
 										>{/if}</span
 								>{/if}
 						</SearchOption>
@@ -469,6 +475,7 @@
 				query={search.q}
 				opens={search.shownRow === search.enterRow}
 				cited={search.cited ? (search.cited.label ?? search.q) : null}
+				waits={search.enterWaits}
 				ondo={(row) => doen.do(row, () => onOpen?.())}
 			/>
 		{/snippet}
@@ -693,6 +700,11 @@
 		line-height: var(--lh-snug);
 	}
 
+	/* A group still coming holds the room of its rows (LIMIT, two lines each), so the groups
+	   under it do not move when they come in. */
+	.group--wacht {
+		min-height: 25rem;
+	}
 	.group-label .laden {
 		margin-left: var(--s-2);
 		color: var(--ink-3);

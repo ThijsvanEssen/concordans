@@ -209,9 +209,30 @@ export class SearchSession {
 			LANES[0].kinds.map((kind) => ({ kind, hits: this.hitsOf(kind) }))
 		)
 	);
-	/** The groups in the one order, with the places of those still coming (#52). */
+	/**
+	 * The fast lane has answered this query for good: in, failed or not asked. A live answer that
+	 * found nothing is not in yet, as the same lane asks again in full (#askInFullIfNothing).
+	 */
+	readonly #fastIn = $derived.by(() => {
+		const fast = LANES[0];
+		const state = this.lanes[fast.id];
+		if (!this.inScope.some((l) => l.id === fast.id) || failed(state.status)) return true;
+		if (state.answer.term !== this.q) return false;
+		const again = this.fullFor === this.q && state.partial.term === this.q;
+		return !(again && state.partial.kinds.length > 0);
+	});
+	/**
+	 * The groups in the one order, with the places of those still coming (#52). The groups of the
+	 * fast lane go first: until it is in, what came of the slower lanes for this query waits, and
+	 * the list of the query before stays, so a group never comes in above one already shown
+	 * (UX-toets 5 Nov: Artikelen 150 px down when Wetten came in).
+	 */
 	readonly shown = $derived(
-		slots(this.order, this.groups, (kind) => !!this.q && this.loadingKinds.has(kind))
+		this.#fastIn
+			? slots(this.order, this.groups, (kind) => !!this.q && this.loadingKinds.has(kind))
+			: this.groups
+					.filter((g) => this.lanes[LANE_OF[g.kind]].answer.term !== this.q)
+					.map((g) => ({ ...g, pending: false }))
 	);
 	readonly hits = $derived(
 		uniqueBy(
@@ -251,6 +272,11 @@ export class SearchSession {
 	readonly named = $derived(this.hits.find((h) => h.id === this.bestId) ?? null);
 	/** What Enter opens stands chosen before a key: a citation, or in a field that picks any first row. */
 	readonly preselects = $derived(!!this.cited || (!this.#results && this.offset > 0));
+
+	/** Enter with nothing chosen waits for the answer that says whether the query cites a bron. */
+	readonly enterWaits = $derived(
+		this.answered !== this.q && this.q.length >= FAST_MIN_CHARS && /\d/.test(this.q)
+	);
 
 	/** A citation the API does not know: said at once, and no row that looks like a bron. */
 	readonly notFound = $derived(!!this.#read?.notation && !this.cited);
@@ -474,8 +500,7 @@ export class SearchSession {
 	 */
 	#enterUnchosen(results: (q: string, from: string, to: string) => void): boolean {
 		const { q, cited } = this;
-		if (!q) return false;
-		if (this.answered !== q && q.length >= FAST_MIN_CHARS && /\d/.test(q)) return false;
+		if (!q || this.enterWaits) return false;
 		if (cited) this.#open(cited.ref, cited.at);
 		else results(q, this.from, this.to);
 		return true;

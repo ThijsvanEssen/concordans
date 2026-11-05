@@ -101,7 +101,7 @@ export function previewOfBron(
 	const expired = (shown && shown.expired) || expiredTitle(collection, bron.expiredOn, now);
 	return {
 		kind: kindOfBron(bron, collection, loaded ? loaded.card : null),
-		name: bron.label,
+		name: (bron.unnamed && loaded?.card?.title) || bron.label,
 		status: statusOfBron(bron, collection, expired),
 		places: placesOfBron(bron, collection, shown ? shown.context : undefined, person, loaded),
 		passage: passageOfBron(snippet, person, loaded)
@@ -145,8 +145,20 @@ export function loadPalettePreview(bron: ChosenBron): Promise<PreviewRest> {
 	});
 }
 
-/** "de wet", "het artikel": what Enter opens, in words. */
-export function whatOpens(collection: Collection): string {
+/** The kinds of regeling that take `het`: het koninklijk besluit, het verdrag. */
+const NEUTER_KINDS =
+	/^(koninklijk besluit|rijksbesluit|reglement|(bilateraal |multilateraal )?verdrag)/;
+
+/**
+ * "de wet", "het artikel": what Enter opens, in words. A regeling by its own kind, `kind` as
+ * the column heads it (UX-toets 5 Nov: a beleidsregel opened as "de wet").
+ */
+export function whatOpens(collection: Collection, kind?: string | null): string {
+	if (collection === 'instruments' && kind) {
+		// "AMvB" keeps its capitals, "Beleidsregel" reads "beleidsregel".
+		const word = /^\p{Lu}\p{Ll}/u.test(kind) ? kind[0].toLowerCase() + kind.slice(1) : kind;
+		return `${NEUTER_KINDS.test(word) ? 'het' : 'de'} ${word}`;
+	}
 	const neuter = ['articles', 'dossiers', 'documents', 'cabinets', 'ministries'];
 	return `${neuter.includes(collection) ? 'het' : 'de'} ${bronLabel(collection).toLowerCase()}`;
 }

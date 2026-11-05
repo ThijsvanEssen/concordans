@@ -157,12 +157,12 @@ export function previewFromNode(
 			};
 		}
 		case 'dossiers': {
-			// As its reader heads it: "Dossier, Kamerstuk 36764", the name it is known by, the
-			// long title under it.
+			// "Dossier 36764", which names its kind once (UX-toets 5 Nov: "Dossier, Dossier 36600
+			// VII"), the name it is known by, the long title under it.
 			const { outcome, current_phase } = props;
 			const d = dossierUitProps(props);
 			return {
-				kicker: d.number ? `${kind}, ${dossierNumberLabel(d.number)}` : kind,
+				kicker: d.number ? dossierNumberLabel(d.number) : kind,
 				title: dossierOwnName(d) ?? name,
 				date: langeDatum(textOf(props.opened_on)) || null,
 				lines: dossierStatus({

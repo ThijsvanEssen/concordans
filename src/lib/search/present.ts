@@ -242,6 +242,9 @@ export function expiredTitle(
 	return `${collection === 'instruments' ? 'Ingetrokken' : 'Vervallen'} ${asOfDate(day)}`;
 }
 
+/** The word a row marks it with: `ingetrokken` of a law, `vervallen` of an article (expiredTitle). */
+export const expiredWord = (title: string): string => title.split(' ')[0].toLowerCase();
+
 function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Presented {
 	const snippet = typeof hit.snippet === 'string' ? hit.snippet.trim() : '';
 	switch (hit.collection) {
