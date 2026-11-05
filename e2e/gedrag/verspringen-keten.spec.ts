@@ -101,6 +101,13 @@ for (const [name, url] of [
 			: page.locator('g.node[data-layer="named"]').first();
 		await expect(focused).toBeFocused();
 		await expect(focused).toBeInViewport();
+		// And Tab to the next of the layer, in view too.
+		await page.keyboard.press('Tab');
+		const next = touch
+			? page.locator('.list__layer[aria-label="Noemt"] .list__row').nth(1)
+			: page.locator('g.node[data-layer="named"]').nth(1);
+		await expect(next).toBeFocused();
+		await expect(next).toBeInViewport();
 	});
 
 test('with Noemt off there is no Genoemd in, and nothing above it moved for it', async ({
@@ -116,9 +123,21 @@ test('with Noemt off there is no Genoemd in, and nothing above it moved for it',
 			: page.locator('svg.drawing .layer-label', { hasText: 'AMVB' })
 		).boundingBox();
 	const before = (await amvb())!.y;
+	const naarCount = page.getByRole('button', { name: NAAR_NOEMT }).innerText();
 	await noemt(page);
 	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveCount(0);
 	if (touch) expect((await amvb())!.y).toBe(before);
+	// Back on: the same count, the layer again, nothing else moved.
+	const count = await naarCount;
+	await noemt(page);
+	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveText(count);
+	await expect(
+		page
+			.locator('.list__head, svg.drawing .layer-label')
+			.filter({ hasText: /^noemt$/i })
+			.first()
+	).toBeAttached();
+	expect((await amvb())!.y).toBe(before);
 });
 
 test('a law without a wet that names it has no heading Noemt', async ({ page }) => {

@@ -1,5 +1,6 @@
 // The heading of a layer of the keten is pinned: as the drawing pans it passes over every label
 // of its row. Labels stacked over one regulation keep clear of it, wherever the drawing stands.
+// The links above the keten keep clear of each other: on a phone each has a finger's 44 px.
 import { expect, test } from '../support/test';
 
 for (const [name, bwb] of [
@@ -37,3 +38,28 @@ for (const [name, bwb] of [
 		});
 		expect(touching).toEqual([]);
 	});
+
+test('on a phone each link above the keten has a target of 44 px of its own', async ({
+	page,
+	touch
+}) => {
+	test.skip(!touch, 'a finger');
+	await page.goto('/explore?netwerk=instruments/bwbr0006622&weergave=keten');
+	const links = [
+		page.getByRole('button', { name: /^Ook \d+ vervallen/ }),
+		page.getByRole('button', { name: /^Genoemd in/ })
+	];
+	for (const link of links) {
+		await expect(link).toBeVisible();
+		const taken = await link.evaluate((el) => {
+			const r = el.getBoundingClientRect();
+			const x = r.x + r.width / 2;
+			const middle = r.y + r.height / 2;
+			const others: number[] = [];
+			for (let dy = -21; dy <= 21; dy++)
+				if (!el.contains(document.elementFromPoint(x, middle + dy))) others.push(dy);
+			return others;
+		});
+		expect(taken, await link.innerText()).toEqual([]);
+	}
+});
