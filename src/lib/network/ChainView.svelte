@@ -369,14 +369,6 @@
 			})
 		);
 	});
-	/** Per bron, the labels on the lines it hangs by and its stump: the keyboard meets them by it. */
-	const citesOf = $derived(
-		Map.groupBy(
-			lines.filter((l) => l.cite),
-			(l) => l.child
-		)
-	);
-	const stumpOf = $derived(new Map(stumps.map((t) => [t.id, t] as const)));
 	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
 	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
 	// In the keten of a person each layer wears the colour of its rubriek (person-layers.ts).
@@ -423,26 +415,12 @@
 		hover.enter();
 	};
 	const card = $derived(hover.open ? target : null);
-	/** The width of a label as drawn, measured: its frame fits it in any font and zoom. */
+	/** The width of a label as drawn, spacing and all, measured: its frame fits it in any font and zoom. */
 	const citeWidths = new SvelteMap<string, number>();
 	const measure = (el: SVGTextElement, text: string) => {
 		const take = (t: string) => {
-			const n = el.getComputedTextLength();
-			if (n > 0 && citeWidths.get(t) !== n) citeWidths.set(t, n);
-		};
-		take(text);
-		document.fonts?.ready.then(
-			() => take(text),
-			() => {}
-		);
-		return { update: take };
-	};
-	/** The width of a layer's label as drawn, spacing and all: its rim of paper fits it. */
-	const labelWidths = new SvelteMap<string, number>();
-	const measureLabel = (el: SVGTextElement, text: string) => {
-		const take = (t: string) => {
 			const n = el.getBBox().width;
-			if (n > 0 && labelWidths.get(t) !== n) labelWidths.set(t, n);
+			if (n > 0 && citeWidths.get(t) !== n) citeWidths.set(t, n);
 		};
 		take(text);
 		document.fonts?.ready.then(
@@ -728,22 +706,23 @@
 				{@const label = layer.label.toUpperCase()}
 				<g class="pin">
 					<rect
-						class="layer-rim"
+						fill="var(--paper)"
 						x="20"
 						y={tops[i] - 13}
-						width={(labelWidths.get(label) ?? label.length * 8) + 8}
+						width={(citeWidths.get(label) ?? label.length * 8) + 8}
 						height="15"
 					/>
-					<text class="layer-label" x="24" y={tops[i] - 2} use:measureLabel={label}>{label}</text>
+					<text class="layer-label" x="24" y={tops[i] - 2} use:measure={label}>{label}</text>
 				</g>
 			{/each}
 			{#each shown as layer, i (layer.id)}
 				{#each layer.nodes as k (k.id)}
 					<!-- The keyboard goes bron by bron, from the top: the labels of the lines it hangs
 					     by and its stump, then the bron (B121: the law no longer the 54th stop). -->
-					{#each citesOf.get(k.id) ?? [] as l (l.id)}{@render citeLabel(l)}{/each}
-					{@const t = stumpOf.get(k.id)}
-					{#if t}{@render stumpLabel(t)}{/if}
+					{#each lines.filter((l) => l.cite && l.child === k.id) as l (l.id)}{@render citeLabel(
+							l
+						)}{/each}
+					{#each stumps.filter((t) => t.id === k.id) as t (t.id)}{@render stumpLabel(t)}{/each}
 					{@const p = place.get(k.id)!}
 					{@const v = vormOf(k)}
 					{@const info = infoOf.get(k.id)}
@@ -960,8 +939,10 @@
 	.failure {
 		margin: var(--s-5);
 	}
-	/* A click marks the bron with its frame (.sel); the keyboard keeps its ring. */
-	.node:focus:not(:focus-visible) {
+	/* A click marks the bron or label with its frame; the keyboard keeps its ring. */
+	.node:focus:not(:focus-visible),
+	.cite:focus:not(:focus-visible),
+	.stomp:focus:not(:focus-visible) {
 		outline: none;
 	}
 	/* The edge that fades as it pans stays clear of the layer labels, pinned at 24 px. */
@@ -1001,24 +982,8 @@
 		letter-spacing: 0.06em;
 		fill: var(--ink-3);
 	}
-	.layer-rim {
-		fill: var(--paper);
-	}
-	.others {
-		cursor: pointer;
-	}
-	.others:hover .name {
-		fill: var(--ink);
-		text-decoration: underline;
-	}
 	.rest {
 		margin: 0 var(--s-5) var(--s-4);
-	}
-	.rest ul {
-		margin: 0;
-		padding: 0 0 0 var(--s-3);
-		list-style: none;
-		border-left: 2px solid var(--rule);
 	}
 	.alle {
 		margin-top: var(--s-1);
@@ -1048,9 +1013,6 @@
 		stroke: var(--rule-strong);
 		stroke-width: 1;
 	}
-	.cite .hit {
-		fill: transparent;
-	}
 	@media (pointer: coarse), (max-width: 768px) {
 		.cite .hit {
 			height: calc(44px / var(--sc));
@@ -1062,12 +1024,6 @@
 		fill: var(--ink);
 		text-decoration: underline;
 	}
-	.cite:focus:not(:focus-visible) {
-		outline: none;
-	}
-	.stomp:focus:not(:focus-visible) {
-		outline: none;
-	}
 	.cite:focus-visible .frame,
 	.stomp:focus-visible .frame {
 		outline: 2px solid var(--focus);
@@ -1078,9 +1034,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-note);
 		fill: var(--ink-2);
-	}
-	.stomp {
-		cursor: pointer;
 	}
 	/* Landed: the Zijpaneel shows its article; the wash and an ink rim. */
 	.cite.is-open .frame {
@@ -1098,10 +1051,6 @@
 	/* Another chosen bron in this keten: its frame, dashed (the marked one's is whole). */
 	.sel--ander {
 		stroke-dasharray: 3 2;
-	}
-	.name--ander {
-		font-weight: 600;
-		fill: var(--ink);
 	}
 	/* No longer in force: drawn faint, its title says since when. */
 	.vervallen {
@@ -1121,7 +1070,9 @@
 	.hit {
 		fill: transparent;
 	}
-	.node {
+	.node,
+	.others,
+	.stomp {
 		cursor: pointer;
 	}
 	.sel {
@@ -1139,11 +1090,13 @@
 		stroke-linejoin: round;
 	}
 	.name--law,
+	.name--ander,
 	.node.is-active .name {
 		font-weight: 600;
 		fill: var(--ink);
 	}
-	.node:hover .name {
+	.node:hover .name,
+	.others:hover .name {
 		fill: var(--ink);
 		text-decoration: underline;
 	}
@@ -1179,6 +1132,7 @@
 		font-weight: 600;
 		color: var(--ink-3);
 	}
+	.rest ul,
 	.list ul {
 		margin: 0;
 		padding: 0 0 0 var(--s-3);

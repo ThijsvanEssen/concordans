@@ -49,7 +49,7 @@ describe('Keten', () => {
 			chain.indexOf('{#snippet stumpLabel')
 		);
 		const svg = chain.slice(chain.indexOf('<svg'), chain.indexOf('</svg>'));
-		expect(svg).toMatch(/\{@render citeLabel\(l\)\}/);
+		expect(svg).toMatch(/\{@render citeLabel\(\s*l\s*\)\}/);
 		expect(label).toMatch(/<a\s+class="cite"\s+href=\{l\.citeHref/);
 		expect(label).toMatch(/onfocus=\{\(e\) => citeGlance\(/);
 		expect(chain).not.toMatch(/<g class="cite">/);
