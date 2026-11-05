@@ -31,6 +31,10 @@ export const LINE_H = 14;
 export const WIDTH = 360;
 const R_SINGLE = 118;
 const R_CLUSTER = 128;
+/** Where neighbouring circles on their arc would touch, every other one stands this much further out. */
+const STAGGER = 50;
+/** The least room between two circles. */
+const CIRCLE_GAP = 6;
 const MARGIN = 16;
 /** The width of a character of a name at 12 px, to keep a name inside the drawing. */
 const CHAR_WIDTH = 7;
@@ -417,9 +421,19 @@ export function sketch(
 			joined: hull !== null
 		};
 	};
+	// On the arc under the bronnen many circles touch (the courts of 6:162 BW, B111): then every
+	// other one stands on a ring further out, between its neighbours.
+	const crowded =
+		both &&
+		looseC.some((b, i) => {
+			if (i === 0) return false;
+			const chord = 2 * R_C * Math.sin(rad(clusterAngles[i] - clusterAngles[i - 1]) / 2);
+			return chord < radius(b.count) + radius(looseC[i - 1].count) + CIRCLE_GAP;
+		});
 	looseC.forEach((b, i) => {
 		const a = rad(clusterAngles[i]);
-		clusters.push(makeCircle(b, cx + R_C * Math.cos(a), R_C * Math.sin(a), null, true));
+		const r = crowded && i % 2 === 1 ? R_C + STAGGER : R_C;
+		clusters.push(makeCircle(b, cx + r * Math.cos(a), r * Math.sin(a), null, true));
 	});
 	inCentreC.forEach((b, i) => {
 		const p = centreBlob!.pos[inCentreS.length + i];
