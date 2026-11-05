@@ -254,9 +254,8 @@
 	let drawn: ReadonlySet<string> = new Set();
 	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
 	let drawnBronnen = $state<DrawnBron[]>([]);
-	/** On the lanes, the bronnen they draw now: a row on counts these, not what a kind off would draw. */
-	let shownIds = $state.raw<ReadonlySet<string> | null>(null);
-	/** `held`: on the lanes also what they would draw with nothing switched off (B105). */
+	/** What the lanes draw now, for a row on; `held` adds what they would with nothing off (B105). */
+	let shownIds = $state.raw<ReadonlySet<string> | undefined>();
 	const containersDrawn = (ids: readonly string[], focal: string, held = true) =>
 		containersOnCanvas({
 			ids,
@@ -331,7 +330,7 @@
 			groups: v.groups,
 			chain: ids,
 			drawn: drawnBronnen,
-			shown: shownIds ?? undefined,
+			shown: shownIds,
 			buckets: reach?.buckets ?? lightBuckets(v.buckets)
 		});
 	});
@@ -363,16 +362,11 @@
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
-		shownIds = lanes ? new Set(drawnBronnenOf(geteld.drawnIds, false).map((b) => b.id)) : null;
+		shownIds = lanes ? new Set(drawnBronnenOf(geteld.drawnIds, false).map((b) => b.id)) : undefined;
 		telJaren();
 		// The keyboard's list sorts what is drawn: only a change sorts it again.
-		if (
-			!sameIds(
-				untrack(() => drawnIds),
-				geteld.drawnIds
-			)
-		)
-			drawnIds = geteld.drawnIds;
+		const before = untrack(() => drawnIds);
+		if (!sameIds(before, geteld.drawnIds)) drawnIds = geteld.drawnIds;
 	}
 
 	$effect(() => {

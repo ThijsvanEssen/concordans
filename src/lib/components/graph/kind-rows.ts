@@ -100,6 +100,13 @@ function ownRow(
 	return g ? `eigen:${g.id}` : null;
 }
 
+/** What a row counts drawn now (`shown`, the lanes), and of what: its whole, else all it holds. */
+function drawnNow(d: readonly DrawnBron[], total: number | null, shown?: ReadonlySet<string>) {
+	const now = shown ? d.filter((b) => shown.has(b.id)).length : d.length;
+	const whole = total ?? (now < d.length ? d.length : null);
+	return { drawn: now, total: whole != null && whole > now ? whole : null };
+}
+
 /**
  * The rows of Soort around `focus`. Every drawn bron counts once: in its own content, else in
  * the soort of Verbonden that lists it, else in the soort it is of.
@@ -111,8 +118,7 @@ export function kindRows(o: {
 	groups: readonly Group[];
 	chain?: ReadonlySet<string>;
 	drawn: readonly DrawnBron[];
-	/** Of `drawn`, what the canvas draws now (the lanes): a row counts these, so that a row on
-	 * whose bronnen a filter hides says so ("0 van 68", B116). Without it, all of `drawn`. */
+	/** Of `drawn`, what the lanes draw now: a row on counts these ("0 van 68", B116). */
 	shown?: ReadonlySet<string>;
 	buckets?: readonly Bucket[];
 }): KindRow[] {
@@ -176,13 +182,10 @@ export function kindRows(o: {
 		collection: Collection | null
 	): KindRow => {
 		const d = drawnBy.get(id) ?? [];
-		const now = shown ? d.filter((b) => shown.has(b.id)).length : d.length;
-		const whole = total ?? (now < d.length ? d.length : null);
 		return {
 			id,
 			label,
-			drawn: now,
-			total: whole != null && whole > now ? whole : null,
+			...drawnNow(d, total, shown),
 			filterGroups: filterGroupsOf([...rows, ...d], collection),
 			collection: collection ?? d[0]?.collection ?? null,
 			load: null

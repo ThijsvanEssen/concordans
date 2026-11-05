@@ -45,6 +45,19 @@ export const NO_COUNTS: CanvasCounts = {
 	lines: {}
 };
 
+/** One more of `k`, or `n` more. */
+function add<K extends string>(to: Partial<Record<K, number>>, k: K, n = 1) {
+	to[k] = (to[k] ?? 0) + n;
+}
+
+type Period = { from: string | null; to: string | null };
+
+/** Whether a dated bron lies outside the years of the bronfilter. */
+const outsideOf = (period: Period | null | undefined, day: string | null) =>
+	!!period &&
+	day !== null &&
+	((period.from !== null && day < period.from) || (period.to !== null && day > period.to));
+
 export function countCanvas(o: {
 	graph: Graph;
 	/** The bronnen the canvas draws. */
@@ -53,7 +66,7 @@ export function countCanvas(o: {
 	hiddenKinds: ReadonlySet<HiddenKind>;
 	rechter: Rechter | null;
 	/** The years of the bronfilter: a dated bron outside them is not counted per kind. */
-	period?: { from: string | null; to: string | null } | null;
+	period?: Period | null;
 	/** The bronnen hidden with their grouping (`metGroepVerborgen`). */
 	verborgen: ReadonlyMap<string, ContainerKind>;
 	hiddenLines: ReadonlySet<LineKind>;
@@ -78,11 +91,7 @@ export function countCanvas(o: {
 		const other = attrs.drawClass === 'other' && !attrs.anchor;
 		if (other) annexes++;
 		const dated = typeof attrs.date === 'string' ? attrs.date : null;
-		const outsidePeriod = (day: string | null) =>
-			!!o.period &&
-			day !== null &&
-			((o.period.from !== null && day < o.period.from) ||
-				(o.period.to !== null && day > o.period.to));
+		const outsidePeriod = (day: string | null) => outsideOf(o.period, day);
 		const outside = id !== selectionId && outsidePeriod(dated);
 		// A group counts the members inside the period, as the strip does (not its whole size).
 		const memberDates = Array.isArray(attrs.memberDates)
@@ -92,40 +101,37 @@ export function countCanvas(o: {
 			? memberDates.filter((day) => !outsidePeriod(day)).length
 			: ((attrs.members as number | undefined) ?? 1);
 		if (kind && !other && !outside) {
-			kinds[kind] = (kinds[kind] ?? 0) + inside;
-			if (drawn.has(id)) drawnKinds[kind] = (drawnKinds[kind] ?? 0) + inside;
+			add(kinds, kind, inside);
+			if (drawn.has(id)) add(drawnKinds, kind, inside);
 		}
-		if (attrs.stuksoort && !other) {
-			const s = attrs.stuksoort as Stuksoort;
-			stuksoorten[s] = (stuksoorten[s] ?? 0) + ((attrs.members as number | undefined) ?? 1);
-		}
+		if (attrs.stuksoort && !other)
+			add(stuksoorten, attrs.stuksoort as Stuksoort, (attrs.members as number | undefined) ?? 1);
 		if (drawn.has(id)) {
 			drawnIds.push(id);
 			nodes++;
 			const vorm = attrs.vorm as Vorm | undefined;
-			if (vorm && !attrs.anchor) vormen[vorm] = (vormen[vorm] ?? 0) + 1;
+			if (vorm && !attrs.anchor) add(vormen, vorm);
 		}
 		if (!kind || attrs.anchor) return;
 		const otherCourt = rechter && attrs.collection === 'judgments' && attrs.rechter !== rechter;
 		const hiddenFacet =
 			!!attrs.stuksoort && hiddenKinds.has(`stuksoort:${attrs.stuksoort}` as HiddenKind);
 		if (id !== selectionId && (hiddenKinds.has(kind) || hiddenFacet || otherCourt)) return;
-		bronnen[kind] = (bronnen[kind] ?? 0) + 1;
+		add(bronnen, kind);
 		const groep = verborgen.get(id);
 		if (!groep) return;
 		const m = (metGroep[kind] ??= { count: 0, van: 0, groepen: [] });
 		m.count++;
 		if (!m.groepen.includes(groep)) m.groepen.push(groep);
 	});
-	for (const { filterGroup } of o.rings ?? []) kinds[filterGroup] = (kinds[filterGroup] ?? 0) + 1;
-	for (const { filterGroup } of o.ringsShown ?? o.rings ?? [])
-		drawnKinds[filterGroup] = (drawnKinds[filterGroup] ?? 0) + 1;
+	for (const r of o.rings ?? []) add(kinds, r.filterGroup);
+	for (const r of o.ringsShown ?? o.rings ?? []) add(drawnKinds, r.filterGroup);
 	const lines: CanvasCounts['lines'] = {};
 	graph.forEachEdge((_id, attrs, src, tgt) => {
 		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;
 		const relation = attrs.relation as Relation;
 		const kind = lineKindOf(relation, graph.getNodeAttribute(src, 'drawClass') as DrawClass);
-		lines[kind] = (lines[kind] ?? 0) + 1;
+		add(lines, kind);
 		if (o.hiddenLines.has(kind)) return;
 		edges++;
 	});
