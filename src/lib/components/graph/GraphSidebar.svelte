@@ -71,6 +71,7 @@
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			kinds?: Partial<Record<FilterGroup, number>>;
+			drawnKinds?: Partial<Record<FilterGroup, number>>;
 			stuksoorten?: Partial<Record<Stuksoort, number>>;
 			lines?: Partial<Record<LineKind, number>>;
 			annexes?: number;
@@ -288,6 +289,9 @@
 			<Sectie title="Tonen" niveau={3} inklapbaar={false}>
 				{#each kinds as k (k)}
 					{@const n = totals[k] ?? 0}
+					<!-- On, what is drawn now: a row whose bronnen a filter hides says so (B116). -->
+					{@const nu =
+						isOn(k) && canvasCounts.drawnKinds ? Math.min(n, canvasCounts.drawnKinds[k] ?? 0) : n}
 					{@const groepen = metGroepUit(k)}
 					{@const cut = cuts[k]}
 					{@const alle = cut && lijstHref && !counting ? cut : null}
@@ -304,12 +308,14 @@
 									? groepen.forEach((g) => onToggleGroup?.(g))
 									: onFilter(toggleFilterGroup(filter, k))}
 							count={alle
-								? `${formatCount(n)} van`
+								? `${formatCount(nu)} van`
 								: cut
-									? `${formatCount(n)} van ${formatCount(cut.total)}`
-									: n}
+									? `${formatCount(nu)} van ${formatCount(cut.total)}`
+									: nu < n
+										? `${formatCount(nu)} van ${formatCount(n)}`
+										: n}
 							naam={alle
-								? `${FILTER_GROUP_LABEL[k]} ${formatCount(n)} van ${formatCount(alle.total)}`
+								? `${FILTER_GROUP_LABEL[k]} ${formatCount(nu)} van ${formatCount(alle.total)}`
 								: undefined}
 							loading={counting}
 							empty={n === 0}

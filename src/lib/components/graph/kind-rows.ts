@@ -111,9 +111,12 @@ export function kindRows(o: {
 	groups: readonly Group[];
 	chain?: ReadonlySet<string>;
 	drawn: readonly DrawnBron[];
+	/** Of `drawn`, what the canvas draws now (the lanes): a row counts these, so that a row on
+	 * whose bronnen a filter hides says so ("0 van 68", B116). Without it, all of `drawn`. */
+	shown?: ReadonlySet<string>;
 	buckets?: readonly Bucket[];
 }): KindRow[] {
-	const { focus, kinds, drawn } = o;
+	const { focus, kinds, drawn, shown } = o;
 	const chain = o.chain ?? new Set<string>();
 	const buckets = o.buckets ?? [];
 	const kern = o.groups.filter((g) => isKernGroep(focus.collection, g));
@@ -173,11 +176,13 @@ export function kindRows(o: {
 		collection: Collection | null
 	): KindRow => {
 		const d = drawnBy.get(id) ?? [];
+		const now = shown ? d.filter((b) => shown.has(b.id)).length : d.length;
+		const whole = total ?? (now < d.length ? d.length : null);
 		return {
 			id,
 			label,
-			drawn: d.length,
-			total: total != null && total > d.length ? total : null,
+			drawn: now,
+			total: whole != null && whole > now ? whole : null,
 			filterGroups: filterGroupsOf([...rows, ...d], collection),
 			collection: collection ?? d[0]?.collection ?? null,
 			load: null

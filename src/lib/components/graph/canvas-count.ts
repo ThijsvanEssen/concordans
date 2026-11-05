@@ -14,6 +14,8 @@ export type CanvasCounts = {
 	nodes: number;
 	edges: number;
 	kinds: Partial<Record<FilterGroup, number>>;
+	/** Per kind, what the canvas draws of it now: fewer than `kinds` where a filter hides them. */
+	drawnKinds?: Partial<Record<FilterGroup, number>>;
 	/** The stukken among them, per stuksoort: the block Stuksoort of Tonen. */
 	stuksoorten?: Partial<Record<Stuksoort, number>>;
 	/** The shapes drawn, for the legend: every shape on the canvas has its line there. */
@@ -57,12 +59,15 @@ export function countCanvas(o: {
 	hiddenLines: ReadonlySet<LineKind>;
 	/** The commissies and dossiers drawn as a ring with no point of their own: one bron each. */
 	rings?: readonly { filterGroup: FilterGroup }[];
+	/** Of those, the ones drawn now; without it, all of `rings`. */
+	ringsShown?: readonly { filterGroup: FilterGroup }[];
 }): { counts: CanvasCounts; drawnIds: string[] } {
 	const { graph, drawn, selectionId, hiddenKinds, rechter, verborgen } = o;
 	let nodes = 0;
 	let edges = 0;
 	let annexes = 0;
 	const kinds: CanvasCounts['kinds'] = {};
+	const drawnKinds: CanvasCounts['kinds'] = {};
 	const stuksoorten: NonNullable<CanvasCounts['stuksoorten']> = {};
 	const vormen: CanvasCounts['vormen'] = {};
 	const metGroep: CanvasCounts['metGroep'] = {};
@@ -86,7 +91,10 @@ export function countCanvas(o: {
 		const inside = memberDates
 			? memberDates.filter((day) => !outsidePeriod(day)).length
 			: ((attrs.members as number | undefined) ?? 1);
-		if (kind && !other && !outside) kinds[kind] = (kinds[kind] ?? 0) + inside;
+		if (kind && !other && !outside) {
+			kinds[kind] = (kinds[kind] ?? 0) + inside;
+			if (drawn.has(id)) drawnKinds[kind] = (drawnKinds[kind] ?? 0) + inside;
+		}
 		if (attrs.stuksoort && !other) {
 			const s = attrs.stuksoort as Stuksoort;
 			stuksoorten[s] = (stuksoorten[s] ?? 0) + ((attrs.members as number | undefined) ?? 1);
@@ -110,6 +118,8 @@ export function countCanvas(o: {
 		if (!m.groepen.includes(groep)) m.groepen.push(groep);
 	});
 	for (const { filterGroup } of o.rings ?? []) kinds[filterGroup] = (kinds[filterGroup] ?? 0) + 1;
+	for (const { filterGroup } of o.ringsShown ?? o.rings ?? [])
+		drawnKinds[filterGroup] = (drawnKinds[filterGroup] ?? 0) + 1;
 	const lines: CanvasCounts['lines'] = {};
 	graph.forEachEdge((_id, attrs, src, tgt) => {
 		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;
@@ -121,7 +131,7 @@ export function countCanvas(o: {
 	});
 	for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
 	return {
-		counts: { nodes, edges, kinds, stuksoorten, vormen, metGroep, annexes, lines },
+		counts: { nodes, edges, kinds, drawnKinds, stuksoorten, vormen, metGroep, annexes, lines },
 		drawnIds
 	};
 }
