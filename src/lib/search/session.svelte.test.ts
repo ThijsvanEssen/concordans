@@ -545,7 +545,85 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 
 	const ARTICLE = { ...hit('articles', 'bwbr0005289_boek6_art162'), exact: true };
 
-	it('goes to the page of results for what names a bron too, and a chosen row opens', async () => {
+	const CITED = {
+		resolved: {
+			match: {
+				kind: 'article',
+				collection: 'articles',
+				key: 'bwbr0005289_boek6_art162'
+			},
+			notation: { kind: 'article', value: '6:162 BW' }
+		}
+	};
+
+	it('opens a citation the API recognises, and it stands chosen for that', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		of('instruments').answer(answer({ instruments: [] }, CITED));
+		await settle();
+		expect(s.isActive(0)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0005289_boek6_art162' }]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('an Enter before the answer waits for it where the query holds a digit', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		s.pressEnter();
+		expect(results).toEqual([]);
+		of('instruments').answer(answer({ instruments: [] }, CITED));
+		await settle();
+		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0005289_boek6_art162' }]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('a citation that does not exist goes to the page of results, also after waiting', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:9999 BW');
+		s.pressEnter();
+		expect(results).toEqual([]);
+		of('instruments').answer(
+			answer(
+				{ instruments: [] },
+				{ resolved: { match: null, notation: { kind: 'article', value: '6:9999 BW' } } }
+			)
+		);
+		await settle();
+		expect(s.citation).not.toBeNull();
+		expect(s.isActive(0)).toBe(false);
+		expect(results).toEqual(['6:9999 BW']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('a failed answer does not hold an Enter with a digit', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '36764');
+		s.pressEnter();
+		of('instruments').answer(fail(500));
+		await settle();
+		expect(results).toEqual(['36764']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('a digit too short to ask about goes to the page of results at once', async () => {
+		api();
+		const { s, results, stop } = session(undefined, true);
+		await type(s, '3');
+		s.pressEnter();
+		expect(results).toEqual(['3']);
+		stop();
+	});
+
+	it('goes to the page of results for a hit the API names, and a chosen row opens', async () => {
 		const { of } = api();
 		const { s, opened, results, stop } = session(undefined, true);
 		await type(s, 'artikel 6:162 BW');
@@ -593,7 +671,7 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		stop();
 	});
 
-	it('a citation stands unchosen too: Enter the page of results, ↓ and Enter its bron', async () => {
+	it('a law by its abbreviation stands unchosen: Enter the page of results, ↓ and Enter its law', async () => {
 		const { of } = api();
 		const { s, opened, results, stop } = session(undefined, true);
 		await type(s, 'AVG');

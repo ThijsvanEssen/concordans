@@ -240,8 +240,12 @@ export class SearchSession {
 	readonly rowCount = $derived(this.offset + this.hits.length);
 	/** A hit the query names, once it stands among the hits. */
 	readonly named = $derived(this.hits.find((h) => h.id === this.bestId) ?? null);
-	/** A field that picks has no page of results: there a citation stands chosen before a key. */
-	readonly preselects = $derived(!this.#results && this.offset > 0);
+	/** The bron the query cites exactly, as the API named it: none for a citation it does not know. */
+	readonly cited = $derived(
+		this.citation ? (this.#ofQuery(this.resolvedWith)?.target ?? null) : null
+	);
+	/** What Enter opens stands chosen before a key: a citation, or in a field that picks any first row. */
+	readonly preselects = $derived(!!this.cited || (!this.#results && this.offset > 0));
 
 	/** A citation the API does not know: said where its row was, not dropped without a word. */
 	readonly notFound = $derived(this.unresolved !== '' && this.unresolved === this.q);
@@ -363,7 +367,8 @@ export class SearchSession {
 				this.bare !== null ||
 					(!!this.#ofQuery(this.resolvedWith)?.target &&
 						!!this.#ofQuery(this.resolvedWith)?.notation) ||
-					this.allIn
+					this.allIn ||
+					(!!this.#results && this.answered === this.q)
 			)
 		);
 		$effect(() => () => this.stop());
@@ -414,11 +419,7 @@ export class SearchSession {
 
 	/** What Enter does now; false where there is nothing to open yet. */
 	enter(): boolean {
-		// Nothing chosen: the page of results of what is typed (Thijs, 5 Nov), whatever it names.
-		if (this.#results && !this.#moved) {
-			if (this.q) this.#results(this.q, this.from, this.to);
-			return !!this.q;
-		}
+		if (this.#results && !this.#moved) return this.#enterUnchosen(this.#results);
 		const { active, choices, citation, bare, offset } = this;
 		if (active < choices.length) this.#open(choices[active].ref, choices[active].at);
 		else if (citation && active === 0) this.openCitation();
@@ -440,6 +441,20 @@ export class SearchSession {
 			this.askInFull();
 			return false;
 		} else return false;
+		return true;
+	}
+
+	/**
+	 * Nothing chosen: a citation the API recognises opens (Thijs, 5 Nov: "Ja, direct openen"), all
+	 * else goes to the page of results at once. Every notation holds a digit, so only a query with
+	 * one waits for the answer that says what it cites.
+	 */
+	#enterUnchosen(results: (q: string, from: string, to: string) => void): boolean {
+		const { q, cited } = this;
+		if (!q) return false;
+		if (this.answered !== q && q.length >= FAST_MIN_CHARS && /\d/.test(q)) return false;
+		if (cited) this.#open(cited.ref, cited.at);
+		else results(q, this.from, this.to);
 		return true;
 	}
 

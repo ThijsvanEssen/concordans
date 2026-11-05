@@ -1,5 +1,5 @@
-// Enter in the search with nothing chosen goes to the page of results of what is typed, whatever
-// it names (Thijs, 5 Nov); a row chosen with the keys opens. The fields the API adds (`best`,
+// Enter in the search with nothing chosen goes to the page of results of what is typed; a citation
+// the API recognises opens, as a row chosen with the keys does (Thijs, 5 Nov). The fields the API adds (`best`,
 // `exact`, `matched`, 0.80.5) are added to the recorded answers.
 import type { Page } from '@playwright/test';
 import { apiPath, CORS, patchApi } from '../support/api';
@@ -38,25 +38,39 @@ const emptyPage = (page: Page) =>
 		})
 	);
 
-test('an exact article: Enter goes to the page of results, ↓ and Enter opens it', async ({
-	page
-}) => {
-	await patchApi(page, /\/api\/search/, (body) => {
-		const articles = ((body.results as Record<string, Hit[]>)?.articles ?? []) as Hit[];
-		const exact = articles.find((h) => h.key.endsWith('_art162'));
-		if (!exact) return named(body);
-		exact.exact = true;
-		return named(body, { best: exact.id });
-	});
-	const { results } = await searchFor(page, '6:162 BW');
-	await expect(results.getByRole('option').first()).toBeVisible({ timeout: 30_000 });
-	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
-	await page.keyboard.press('ArrowDown');
-	await expect(results.getByRole('option', { selected: true })).toContainText('6:162');
-	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
+/** ⌘K open, its field focused. */
+async function palette(page: Page) {
+	await page.goto('/wetten');
+	const dialog = page.getByRole('dialog', { name: 'Zoekvenster' });
+	const field = dialog.getByRole('combobox');
+	await expect(async () => {
+		if (!(await field.count())) await page.keyboard.press('ControlOrMeta+k');
+		await expect(field).toBeFocused({ timeout: 1000 });
+	}).toPass();
+	return { dialog, field };
+}
 
-	const { field } = await searchFor(page, '6:162 BW');
+test('an exact article: Enter opens it, the row stands chosen', async ({ page }) => {
+	await patchApi(page, /\/api\/search/, (body) => named(body));
+	const { field, results } = await searchFor(page, '6:162 BW');
+	await expect(results.getByRole('option', { selected: true })).toContainText('6:162', {
+		timeout: 30_000
+	});
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
+});
+
+test('a citation that does not exist: Enter goes to the page of results', async ({ page }) => {
+	await patchApi(page, /\/api\/search/, (body) =>
+		named(body, {
+			results: {},
+			searched: {},
+			partial: {},
+			resolved: { match: null, notation: { kind: 'article', value: '6:162 BW' } }
+		})
+	);
+	const { field, results } = await searchFor(page, '6:162 BW');
+	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
 	await emptyPage(page);
 	await field.press('Enter');
 	await expect(page).toHaveURL(/\/zoeken\?q=6%3A162(%20|\+)BW/);
@@ -79,13 +93,7 @@ test('⌘K: the right column says what Enter does, and shows the row chosen with
 	isMobile
 }) => {
 	test.skip(isMobile, 'a phone has the one column');
-	await page.goto('/wetten');
-	const dialog = page.getByRole('dialog', { name: 'Zoekvenster' });
-	const field = dialog.getByRole('combobox');
-	await expect(async () => {
-		if (!(await field.count())) await page.keyboard.press('ControlOrMeta+k');
-		await expect(field).toBeFocused({ timeout: 1000 });
-	}).toPass();
+	const { dialog, field } = await palette(page);
 	await field.fill('onrechtmatige daad');
 	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
 	await expect(results.getByRole('option').first()).toBeVisible({ timeout: 30_000 });
@@ -108,6 +116,20 @@ test('⌘K: the right column says what Enter does, and shows the row chosen with
 	// The key of an action does it on the row chosen.
 	await page.keyboard.press('Alt+KeyN');
 	await expect(page).toHaveURL(/mode=netwerk/);
+});
+
+test('⌘K: the right column shows a citation Enter opens, and says so', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has the one column');
+	const { dialog, field } = await palette(page);
+	await field.fill('6:162 BW');
+	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
+	await expect(preview).toContainText(/Enter\s+opent/, { timeout: 30_000 });
+	await expect(preview).not.toContainText('zoekpagina');
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
 });
 
 test('hits with only some of the words say so', async ({ page }) => {

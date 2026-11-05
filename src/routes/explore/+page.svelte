@@ -149,7 +149,7 @@
 		type ChainLayer,
 		type ChainNode
 	} from '$lib/network/chain';
-	import { LINEAGE, lineage } from '$lib/network/lineage';
+	import { hasChain, LINEAGE, lineage } from '$lib/network/lineage';
 	import { verbandModel, type DirectLink } from '$lib/network/shared';
 	import { pairOf, resolveChoice } from '$lib/network/pairs';
 	import {
@@ -428,10 +428,7 @@
 	 * that is a law or an article (R3-N B3: /explore?netwerk=instruments/… said "alleen bij een
 	 * wet" for a law).
 	 */
-	/** A bron with a keten: a law or an article, or one of the kinds of lineage.ts. */
-	const withChain = (n: GraphNode | null | undefined) =>
-		!!n &&
-		(n.collection === 'instruments' || n.collection === 'articles' || !!LINEAGE[n.collection]);
+	const withChain = (n: GraphNode | null | undefined) => !!n && hasChain(n.collection);
 	/** Another chosen bron the keten was opened from ("Ook gekozen"), by its canvas id. */
 	let chainFrom = $state<string | null>(null);
 	/** The bronnen chosen besides the page's: in the keten marked, else named beside it. */

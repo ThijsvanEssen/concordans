@@ -26,6 +26,10 @@ export const LINEAGE: Partial<Record<Collection, readonly Relation[]>> = {
 	members: ['MEMBER_OF', 'SERVED_IN']
 };
 
+/** Whether a kind of bron has a keten: a law or an article, or one of the kinds above. */
+export const hasChain = (collection: Collection): boolean =>
+	collection === 'instruments' || collection === 'articles' || !!LINEAGE[collection];
+
 /** One step further from a node: where its neighbour stands, before (-1) or after (+1). */
 const STEP: Partial<Record<Relation, { outbound: number; inbound: number }>> = {
 	// A judgment that appeals another comes after it; the conclusie comes before the arrest.

@@ -6,6 +6,8 @@ import { COMMANDS, isCombo, SHORTCUTS } from '$lib/keys/register';
 import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelte';
 import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
+import { hasChain } from '$lib/network/lineage';
+import { collectionOfBron } from './palette-preview';
 import type { SearchSession } from './session.svelte';
 
 const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
@@ -105,11 +107,14 @@ export class PaletteActions {
 
 	/**
 	 * What else ⌘K can do with a bron: the words that take one, done with it (the right column).
-	 * The column names the bron: each says only its word, and its key.
+	 * The column names the bron: each says only its word, and its key. Keten only where it has one.
 	 */
 	actionsFor(target: Target): DoRow[] {
+		const collection = collectionOfBron(target);
+		const chain = !!collection && hasChain(collection);
 		return COMMANDS.filter((c) => c.arg === 'bron' && !c.sign)
 			.concat(COMMANDS.filter((c) => c.arg === 'bron' && c.sign))
+			.filter((c) => c.id !== 'keten' || chain)
 			.flatMap((command) =>
 				rowsFor({ command, rest: target.label, only: false }, target).map((row) => ({
 					...row,
