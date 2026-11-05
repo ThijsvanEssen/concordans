@@ -39,6 +39,8 @@
 	import { plainClick } from '$lib/actions/klik';
 	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import MentionsLink from '$lib/network/MentionsLink.svelte';
+	import { fullWidthOf, liftsOf, sharing, widthOf } from '$lib/network/chain-room';
 	import {
 		isMention,
 		isOutside,
@@ -127,11 +129,10 @@
 	let avail = $state(760);
 	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
 	const SLOT = 192;
+	const LEFT = 120;
 	/** Noemt comes late: the rest is placed as if it were not there, and it takes what room it needs. */
 	const fixed = $derived(shown.filter((l) => l.id !== 'named'));
-	const width = $derived(
-		Math.max(avail, ...fixed.map((l) => LEFT + 24 + (l.nodes.length + (rest[l.id] ? 1 : 0)) * SLOT))
-	);
+	const width = $derived(widthOf(fixed, rest, avail, { left: LEFT, slot: SLOT }));
 	$effect(() => {
 		room = avail;
 	});
@@ -150,30 +151,29 @@
 	const INK_EDGE = 2;
 	/** Room above the first layer: its label and Alle stand clear of the Deel button at the top right. */
 	const TOP = 64;
-	const LEFT = 120;
+	const lifts = $derived(liftsOf(shown, STACK));
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
 	 * ever lies over the rail under its layer.
 	 */
 	const rowHeights = $derived(
-		shown.map((l) => {
+		shown.map((l, i) => {
 			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
 			// A wet with two lines beside the law: their labels under each other.
 			const here = (id: string) => l.nodes.some((n) => n.id === id);
 			const two = l.nodes.some((k) => k.parents.filter((p) => p.cite && here(p.id)).length > 1);
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58) + (two ? STACK + 4 : 0);
+			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58) + (two ? STACK + 4 : 0) + lifts[i];
 		})
 	);
 	/** Where each layer begins. */
 	const tops = $derived(
 		rowHeights.map((_, i) => TOP + rowHeights.slice(0, i).reduce((a, b) => a + b, 0))
 	);
+	const rowTops = $derived(tops.map((t, i) => t + lifts[i]));
 	const height = $derived(TOP + rowHeights.reduce((a, b) => a + b, 0));
 	/** The room of a node in its layer, for the length of its name's lines: at most 22 characters (Keten). */
 	const charsFor = (n: number) =>
 		Math.min(22, Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7)));
-	/** How many share a layer's width: in Noemt each has its slot, however many come. */
-	const sharing = (l: ChainLayer) => (l.id === 'named' ? 1 : l.nodes.length);
 	/** About what a character of a name takes, in px. */
 	const CHAR = 6;
 	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
@@ -181,14 +181,9 @@
 		Math.ceil((Math.max(...linesOf(k.name, charsFor(n)).map((r) => r.length)) * CHAR) / 2) + 8;
 	/** Where each node stands (chain-place.ts). */
 	const place = $derived(
-		placeLayers(shown, { rest, tops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
+		placeLayers(shown, { rest, tops: rowTops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
 	);
-	/** The drawing with Noemt, whose last bron and "N andere" may stand past the rest. */
-	const fullWidth = $derived.by(() => {
-		const named = shown.find((l) => l.id === 'named');
-		const xs = named?.nodes.map((k) => place.get(k.id)?.x ?? 0) ?? [];
-		return Math.max(width, ...xs.map((x) => x + SLOT * (rest.named ? 2 : 1)));
-	});
+	const fullWidth = $derived(fullWidthOf(shown, rest, place, width, SLOT));
 	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
 	const infoOf = $derived.by(() => {
 		const m = new Map<string, { lines: string[] }>();
@@ -299,15 +294,16 @@
 			if (!byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`)?.beside)
 				out.set(e.o.id, (out.get(e.o.id) ?? 0) + 1);
 		const stacked = new Map<string, number>();
-		const nextAt = (e: (typeof edges)[number]) => {
-			const i = stacked.get(e.k.id) ?? 0;
-			if (e.o.cite) stacked.set(e.k.id, i + 1);
+		// Under its names or over its sign: two stacks, which do not push each other.
+		const nextAt = (e: (typeof edges)[number], place: string) => {
+			const i = stacked.get(e.k.id + place) ?? 0;
+			if (e.o.cite) stacked.set(e.k.id + place, i + 1);
 			return STACK * i;
 		};
 		const citeAtOf = (e: (typeof edges)[number], r: (typeof routed)[number]) => {
-			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y + nextAt(e) };
+			if (r.beside) return { x: r.end.x, y: r.points[r.points.length - 2].y + nextAt(e, 'under') };
 			if (e.many && out.get(e.o.id) === 1) return { x: r.tip.x, y: r.tip.y + 17 };
-			return { x: r.end.x, y: r.end.y - 20 - nextAt(e) };
+			return { x: r.end.x, y: r.end.y - 20 - nextAt(e, 'over') };
 		};
 		return edges.flatMap((e) => {
 			const r = byId.get(`${e.o.id}~${e.k.id}~${e.o.way}`);
@@ -368,7 +364,7 @@
 				const parent = o && away.get(o.id);
 				const at = place.get(k.id);
 				if (!o || !parent || !at || k.parents.some((p) => here.has(p.id))) return [];
-				const label = { x: at.x, y: tops[i] + 22, text: cutText(parent.name, CITE_MAX) };
+				const label = { x: at.x, y: rowTops[i] + 22, text: cutText(parent.name, CITE_MAX) };
 				return [{ id: k.id, o, parent, label, top: at.y - 12, look: lookOf(o, false) }];
 			})
 		);
@@ -569,7 +565,7 @@
 		</div>
 	{:else if loading}
 		<SlowLoad label="Keten laden…" visible />
-	{:else if gap || expired?.total || outsideCount || notHere.length}
+	{:else if gap || expired?.total || outsideCount || notHere.length || head.some((l) => l.id === 'law')}
 		<div class="kop">
 			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
 			{#if notHere.length}<span class="ook"
@@ -586,6 +582,7 @@
 						? 'Zonder vervallen regelingen'
 						: `Ook ${formatCount(expired.total)} vervallen ${plural(expired.total, 'regeling', 'regelingen')}`}</TekstLink
 				>{/if}
+			<MentionsLink layer={shown.find((l) => l.id === 'named')} rest={rest.named} />
 		</div>
 	{/if}
 	<div
@@ -710,6 +707,7 @@
 					{@const info = infoOf.get(k.id)}
 					<g
 						class="node"
+						data-layer={layer.id}
 						class:is-active={chosen === k.id}
 						class:is-dim={outside(k)}
 						role="button"
@@ -812,10 +810,11 @@
 				     others last (Variant C: two squares, "4 andere wetten"). -->
 				{#if rest[layer.id]}
 					{@const x = Math.max(...layer.nodes.map((k) => place.get(k.id)?.x ?? 0)) + SLOT}
-					{@const y = tops[i] + DROP}
+					{@const y = rowTops[i] + DROP}
 					{@const words = linesOf(otherText(layer), 22)}
 					<g
 						class="others"
+						data-layer={layer.id}
 						role="button"
 						tabindex="0"
 						aria-expanded={open.has(layer.id)}
@@ -1065,6 +1064,7 @@
 	}
 	.kop {
 		position: absolute;
+		z-index: 1;
 		top: var(--s-3);
 		left: var(--s-5);
 		display: flex;

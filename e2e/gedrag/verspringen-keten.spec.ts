@@ -3,10 +3,12 @@
 // What stands stays where it is: the layers, the law, the regulations. At 1440 and on a phone.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
+import { noemt } from '../support/noemt';
 
 const WVW = '/explore?netwerk=instruments/bwbr0006622&weergave=keten';
 const GRONDWET = '/explore?netwerk=instruments/bwbr0001840&weergave=keten';
 const LATE = 2_000;
+const NAAR_NOEMT = /^Genoemd in \d+ wet(ten)?$/;
 
 /** Where every layer heading, and on a wide screen every bron, stands (page coordinates). */
 const standing = (page: Page) =>
@@ -36,11 +38,12 @@ for (const [name, url] of [
 		touch
 	}) => {
 		if (!touch) await page.setViewportSize({ width: 1440, height: 900 });
-		let answered = false;
+		// At least LATE, and until what stands is measured, however slow the machine.
+		let measured = () => {};
+		const held = new Promise<void>((done) => (measured = done));
 		await page.route(/\/related-instruments\b/, async (route) => {
-			await new Promise((done) => setTimeout(done, LATE));
+			await Promise.all([held, new Promise((done) => setTimeout(done, LATE))]);
 			await route.fallback();
-			answered = true;
 		});
 		await page.goto(url);
 		await expect(page.getByText('AMvB', { exact: false }).first()).toBeAttached();
@@ -49,8 +52,8 @@ for (const [name, url] of [
 			: page.locator('svg.drawing .layer-label', { hasText: 'AMVB' });
 		await expect(amvb).toBeVisible();
 		await page.waitForTimeout(500);
-		expect(answered, 'measured before the late answer').toBe(false);
 		const before = await standing(page);
+		measured();
 		const noemt = touch
 			? page.locator('.list__head', { hasText: 'Noemt' })
 			: page.locator('svg.drawing .layer-label', { hasText: 'NOEMT' });
@@ -63,7 +66,60 @@ for (const [name, url] of [
 		const heads = Object.entries(after).filter(([k]) => k.startsWith('kop '));
 		const lowest = heads.reduce((a, b) => (a[1][1] > b[1][1] ? a : b));
 		expect(lowest[0]).toBe('kop noemt');
+		await expect(page.getByRole('button', { name: NAAR_NOEMT })).toBeVisible();
 	});
+
+for (const [name, url] of [
+	['WVW', WVW],
+	['Grondwet', GRONDWET]
+] as const)
+	test(`Genoemd in of the ${name} keten counts the layer Noemt and takes you there`, async ({
+		page,
+		touch
+	}) => {
+		if (!touch) await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto(url);
+		const naar = page.getByRole('button', { name: NAAR_NOEMT });
+		await expect(naar).toBeVisible();
+		// What the layer draws, and those under its "N andere".
+		const layer = touch ? page.locator('.list__layer[aria-label="Noemt"]') : null;
+		const drawn = layer
+			? await layer.locator('.list__row').count()
+			: await page.locator('g.node[data-layer="named"]').count();
+		const other = layer ? layer.locator('.alle') : page.locator('.others[data-layer="named"]');
+		const others = (await other.count()) ? parseInt((await other.textContent())!) : 0;
+		const shown = parseInt((await naar.innerText()).replace(/\D/g, ''));
+		expect(shown).toBe(drawn + others);
+		await naar.click();
+		const head = touch
+			? page.locator('.list__head', { hasText: 'Noemt' })
+			: page.locator('svg.drawing .layer-label', { hasText: 'NOEMT' });
+		await expect(head).toBeInViewport();
+		// The keyboard goes on from its first bron.
+		const focused = touch
+			? page.locator('.list__layer[aria-label="Noemt"] .list__row').first()
+			: page.locator('g.node[data-layer="named"]').first();
+		await expect(focused).toBeFocused();
+		await expect(focused).toBeInViewport();
+	});
+
+test('with Noemt off there is no Genoemd in, and nothing above it moved for it', async ({
+	page,
+	touch
+}) => {
+	if (!touch) await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(WVW);
+	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toBeVisible();
+	const amvb = () =>
+		(touch
+			? page.locator('.list__head', { hasText: 'AMvB' })
+			: page.locator('svg.drawing .layer-label', { hasText: 'AMVB' })
+		).boundingBox();
+	const before = (await amvb())!.y;
+	await noemt(page);
+	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveCount(0);
+	if (touch) expect((await amvb())!.y).toBe(before);
+});
 
 test('a law without a wet that names it has no heading Noemt', async ({ page }) => {
 	await page.route(/\/related-instruments\b/, (route) =>
@@ -80,4 +136,5 @@ test('a law without a wet that names it has no heading Noemt', async ({ page }) 
 	await expect(
 		page.locator('.list__head, svg.drawing .layer-label').filter({ hasText: /^noemt$/i })
 	).toHaveCount(0);
+	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveCount(0);
 });
