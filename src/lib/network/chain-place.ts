@@ -16,6 +16,10 @@ type Measures = {
 	halfOf: (k: ChainNode, n: number) => number;
 };
 
+/** The slot of the j-th bron of Noemt: 0, 1, -1, 2, -2…, with `before` slots to the left. */
+const outward = (j: number, before: number) =>
+	j > 2 * before ? j - before : j % 2 ? (j + 1) / 2 : -j / 2;
+
 /**
  * Each node's row is its layer's; across, it stands under what it hangs from (the mean of its
  * parents' places), kept apart by a node's room and within the width, so the lines run down
@@ -30,12 +34,25 @@ export function placeLayers(layers: readonly ChainLayer[], o: Measures) {
 	// aside, so the line does not run through its name.
 	const rowOf = new Map<string, number>();
 	layers.forEach((l, i) => l.nodes.forEach((k) => rowOf.set(k.id, i)));
+	// Noemt comes late: its lines make no bron above it step aside.
 	const bypassed = (i: number) =>
 		layers
 			.slice(i + 1)
-			.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
+			.some(
+				(l) =>
+					l.id !== 'named' && l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i))
+			);
 	layers.forEach((layer, i) => {
 		const n = layer.nodes.length;
+		// Noemt fills out from under its law, a slot each: what comes late stands beyond what stands.
+		if (layer.id === 'named') {
+			const from = m.get(layer.nodes[0].parents[0]?.id)?.x ?? (left + end) / 2;
+			const before = Math.max(0, Math.floor((from - left - o.slot / 2) / o.slot));
+			layer.nodes.forEach((k, j) =>
+				m.set(k.id, { x: from + outward(j, before) * o.slot, y: o.tops[i] + o.drop })
+			);
+			return;
+		}
 		// "N andere" stands a slot past the last: its room is kept.
 		const right = o.rest[layer.id] ? end - o.slot : end;
 		// Apart by a slot at most; a layer without a place above it is centred on the drawing.
