@@ -33,9 +33,13 @@
 
 <style>
 	@media (max-width: 768px) {
+		/* A row of a finger's 44 px, clear of the target of the link above it. */
 		.mentions-link {
+			display: flex;
 			flex-basis: 100%;
-			min-height: var(--s-5);
+			align-items: center;
+			min-height: calc(var(--s-6) + var(--s-3));
+			margin-top: var(--s-2);
 		}
 	}
 </style>
