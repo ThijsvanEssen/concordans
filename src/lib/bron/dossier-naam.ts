@@ -48,7 +48,10 @@ export const dossierNumberLabel = (number: string, kamer?: 'EK' | 'TK' | null) =
  * (the route answers 422 to the key, B124). A number stays as it is.
  */
 export const dossierNummerVanSleutel = (key: string) =>
-	key.trim().replace(/[\s_]+/g, '-').toUpperCase();
+	key
+		.trim()
+		.replace(/[\s_]+/g, '-')
+		.toUpperCase();
 
 /**
  * A dossier's number as the Kamer writes it, with its suffix: "36600-VII", the one way to read
