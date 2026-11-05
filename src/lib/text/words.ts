@@ -1,6 +1,7 @@
 // The small turns of Dutch every line of Concordans takes, in one place: a node prop read as
 // text, a capital, a count with its noun, "a, b en c", a kind without its group, a text cut
 // with "…", and a word made safe for a pattern.
+import { formatCount } from './getal';
 
 /** A node prop (untyped in the API schema) as text, trimmed; null when it is none or blank. */
 export const textOf = (value: unknown): string | null =>
@@ -15,9 +16,9 @@ export const lowerFirst = (s: string): string => s.charAt(0).toLowerCase() + s.s
 /** The noun for `n`: `zetel` for one, `zetels` for any other number. */
 export const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
 
-/** `1 zetel`, `22 zetels`. */
+/** `1 zetel`, `22 zetels`, `1.199 bronnen` (B111). */
 export const count = (n: number, one: string, many: string): string =>
-	`${n} ${plural(n, one, many)}`;
+	`${formatCount(n)} ${plural(n, one, many)}`;
 
 export type Part = string | number | null | undefined | false;
 
