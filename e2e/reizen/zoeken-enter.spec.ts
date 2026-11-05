@@ -6,7 +6,6 @@ import { apiPath, CORS, patchApi } from '../support/api';
 import { expect, test } from '../support/test';
 
 type Body = Record<string, unknown>;
-type Hit = Body & { id: string; key: string };
 
 /** An answer as the new API gives it: `best` named (null for none), the rest as given. */
 const named = (body: Body, more: Body = {}): Body => ({
