@@ -73,3 +73,28 @@ test('on a phone the sheet closes on the weergave chosen, the keten in sight (B1
 	await expect(page.locator('.chain .list__row').first()).toBeVisible();
 	await expect(weergave).toBeFocused();
 });
+
+test('on a phone the links over the keten are 44 px to a finger (B111, B116)', async ({
+	page,
+	touch
+}) => {
+	test.skip(!touch, 'a phone');
+	await page.goto(`${WVW}&weergave=keten`);
+	await expect(page.locator('.chain .list__row').first()).toBeVisible();
+	const links = page.locator('.chain .kop').getByRole('button');
+	await expect(links.first()).toBeVisible();
+	const hoogtes = await links.evaluateAll((els) =>
+		els.map((el) => {
+			// The target as a finger meets it: the link and the shared target around it (.raakvlak).
+			const q = el.getBoundingClientRect();
+			const x = q.left + q.width / 2;
+			const in_ = (y: number) => el.contains(document.elementFromPoint(x, y));
+			let up = 0;
+			while (up < 40 && in_(q.top - up - 0.5)) up++;
+			let down = 0;
+			while (down < 40 && in_(q.bottom + down + 0.5)) down++;
+			return { naam: el.textContent?.trim(), hoogte: q.height + up + down };
+		})
+	);
+	for (const h of hoogtes) expect.soft(h.hoogte, h.naam).toBeGreaterThanOrEqual(43.5);
+});

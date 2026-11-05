@@ -101,8 +101,14 @@ for (const [name, url] of [
 			: page.locator('g.node[data-layer="named"]').first();
 		await expect(focused).toBeFocused();
 		await expect(focused).toBeInViewport();
-		// And Tab to the next of the layer, in view too.
+		// And Tab to the next of the layer, in view too; in the drawing the labels of its lines
+		// come first, each in view (B121).
 		await page.keyboard.press('Tab');
+		if (!touch)
+			for (let i = 0; i < 4 && (await page.locator('a.cite:focus').count()); i++) {
+				await expect(page.locator('a.cite:focus')).toBeInViewport();
+				await page.keyboard.press('Tab');
+			}
 		const next = touch
 			? page.locator('.list__layer[aria-label="Noemt"] .list__row').nth(1)
 			: page.locator('g.node[data-layer="named"]').nth(1);
