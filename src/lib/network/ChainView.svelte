@@ -127,10 +127,11 @@
 	let avail = $state(760);
 	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
 	const SLOT = 192;
-	const need = $derived(
-		Math.max(0, ...shown.map((l) => LEFT + 24 + (l.nodes.length + (rest[l.id] ? 1 : 0)) * SLOT))
+	/** Noemt comes late: the rest is placed as if it were not there, and it takes what room it needs. */
+	const fixed = $derived(shown.filter((l) => l.id !== 'named'));
+	const width = $derived(
+		Math.max(avail, ...fixed.map((l) => LEFT + 24 + (l.nodes.length + (rest[l.id] ? 1 : 0)) * SLOT))
 	);
-	const width = $derived(Math.max(avail, need));
 	$effect(() => {
 		room = avail;
 	});
@@ -171,6 +172,8 @@
 	/** The room of a node in its layer, for the length of its name's lines: at most 22 characters (Keten). */
 	const charsFor = (n: number) =>
 		Math.min(22, Math.max(12, Math.floor(Math.max(200, width - LEFT - 24) / Math.max(1, n) / 7)));
+	/** How many share a layer's width: in Noemt each has its slot, however many come. */
+	const sharing = (l: ChainLayer) => (l.id === 'named' ? 1 : l.nodes.length);
 	/** About what a character of a name takes, in px. */
 	const CHAR = 6;
 	/** Half the width of a name's widest line, with some air: a name never leaves the drawing. */
@@ -180,13 +183,19 @@
 	const place = $derived(
 		placeLayers(shown, { rest, tops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
 	);
+	/** The drawing with Noemt, whose last bron and "N andere" may stand past the rest. */
+	const fullWidth = $derived.by(() => {
+		const named = shown.find((l) => l.id === 'named');
+		const xs = named?.nodes.map((k) => place.get(k.id)?.x ?? 0) ?? [];
+		return Math.max(width, ...xs.map((x) => x + SLOT * (rest.named ? 2 : 1)));
+	});
 	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
 	const infoOf = $derived.by(() => {
 		const m = new Map<string, { lines: string[] }>();
 		for (const l of shown)
 			for (const k of l.nodes)
 				m.set(k.id, {
-					lines: linesOf(k.name, charsFor(l.nodes.length))
+					lines: linesOf(k.name, charsFor(sharing(l)))
 				});
 		return m;
 	});
@@ -202,7 +211,7 @@
 			for (const k of l.nodes) {
 				const p = place.get(k.id);
 				if (!p) continue;
-				const half = halfOf(k, l.nodes.length);
+				const half = halfOf(k, sharing(l));
 				const at = p.x - half;
 				out.push({
 					id: k.id,
@@ -448,7 +457,7 @@
 	$effect(() => {
 		const root = start ?? shown.find((l) => l.id === 'law')?.nodes[0]?.id;
 		const at = root ? place.get(root)?.x : undefined;
-		const key = `${root}:${shown.length}:${Math.round(width)}`;
+		const key = `${root}:${fixed.length}:${Math.round(width)}`;
 		if (!pan || at === undefined || key === centredFor || width <= avail) return;
 		centredFor = key;
 		pan.scrollTo({ left: centred(at), behavior: 'instant' });
@@ -589,9 +598,9 @@
 	>
 		<svg
 			class="drawing"
-			style:width="{width * scale}px"
+			style:width="{fullWidth * scale}px"
 			style:--sc={scale}
-			viewBox="0 0 {width} {height}"
+			viewBox="0 0 {fullWidth} {height}"
 			role="group"
 			aria-label="Keten"
 		>
@@ -600,7 +609,7 @@
 				<line
 					class="rail"
 					x1="20"
-					x2={width - 20}
+					x2={fullWidth - 20}
 					y1={tops[i] + rowHeights[i] - 14.5}
 					y2={tops[i] + rowHeights[i] - 14.5}
 				/>

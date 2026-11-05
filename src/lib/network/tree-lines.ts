@@ -191,7 +191,7 @@ const GUTTER = LEVEL * (MAX_LEVEL + 1) + 2;
 /**
  * A line to a node in the parent's own layer (a wet that only names the law, beside it): down
  * from under the parent's name, along under the names of the layer, up to under the child's.
- * To a node in a layer above (a wet that names an AMvB, in the row Wet): up from the parent's
+ * To a node in a layer above (an AMvB under a ministerial regulation): up from the parent's
  * sign, along the gutter above its layer, up to under the child's name. A child with two such
  * lines (art. 14 its grondslag, art. 21 only named) has them side by side.
  */
