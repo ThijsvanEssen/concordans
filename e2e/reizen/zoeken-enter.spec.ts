@@ -172,6 +172,59 @@ test('⌘K: the right column shows a citation Enter opens, and says so', async (
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
 });
 
+test('the pointer on a row: it lights, Enter goes to the page of results', async ({ page }) => {
+	await patchApi(page, /\/api\/search/, (body) => named(body));
+	const { field, results } = await searchFor(page, 'huurverhoging');
+	const row = results.getByRole('option').first();
+	await row.hover();
+	await expect(row).toHaveClass(/is-active/);
+	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
+	await emptyPage(page);
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/zoeken\?q=huurverhoging/);
+});
+
+test('⌘K: the pointer shows a row in the column, a click opens it, Enter searches', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has no pointer and no column');
+	const { dialog, field } = await palette(page);
+	await field.fill('onrechtmatige daad');
+	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	const row = results.getByRole('option').first();
+	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
+	await row.hover();
+	await expect(row).toHaveClass(/is-active/);
+	await expect(results.getByRole('option', { selected: true })).toHaveCount(0);
+	await expect(row).not.toContainText('↵');
+	await expect(preview.getByRole('button', { name: 'Netwerk', exact: true })).toBeVisible();
+	await expect(preview).toContainText('zoekt "onrechtmatige daad" op de zoekpagina');
+	await expect(preview).not.toContainText(/Enter\s+opent/);
+	await emptyPage(page);
+	await field.press('Enter');
+	await expect(page).toHaveURL(/\/zoeken\?q=onrechtmatige/);
+});
+
+test('the pointer and then ↓: the next row stands chosen, and the column says Enter opens it', async ({
+	page,
+	isMobile
+}) => {
+	test.skip(isMobile, 'a phone has no pointer');
+	const { dialog, field } = await palette(page);
+	await field.fill('onrechtmatige daad');
+	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	await expect(results.getByRole('group', { name: /laden…$/ })).toHaveCount(0, { timeout: 30_000 });
+	const rows = results.getByRole('option');
+	await rows.first().hover();
+	await page.keyboard.press('ArrowDown');
+	await expect(rows.nth(1)).toHaveAttribute('aria-selected', 'true');
+	await expect(rows.first()).not.toHaveClass(/is-active/);
+	const preview = dialog.getByRole('complementary', { name: 'Voorbeeld' });
+	await expect(preview).toContainText(/Enter\s+opent/);
+});
+
 test('hits with only some of the words say so', async ({ page }) => {
 	await patchApi(page, /\/api\/search/, (body) =>
 		named(body, { matched: 'any', left_out: ['de'], words: ['toezeggingen', 'pensioenen'] })

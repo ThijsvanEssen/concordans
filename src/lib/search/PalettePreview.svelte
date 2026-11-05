@@ -24,6 +24,8 @@
 		bron = null,
 		actions = [],
 		query = '',
+		opens = true,
+		cited = null,
 		ondo
 	}: {
 		/** A row Doen or Hier the keys are on. */
@@ -34,6 +36,10 @@
 		actions?: readonly DoRow[];
 		/** Else what Enter searches for; '' where there is no page of results to go to. */
 		query?: string;
+		/** Enter opens that bron; not where only the pointer is on it. */
+		opens?: boolean;
+		/** The citation Enter opens then, by its name. */
+		cited?: string | null;
 		ondo: (row: DoRow) => void;
 	} = $props();
 
@@ -122,7 +128,13 @@
 			</div>
 		</div>
 		<div class="foot">
-			<p class="line"><kbd>Enter</kbd> opent {whatOpens(collection)} {where}</p>
+			{#if opens}
+				<p class="line"><kbd>Enter</kbd> opent {whatOpens(collection)} {where}</p>
+			{:else if cited}
+				<p class="line"><kbd>Enter</kbd> opent {cited}</p>
+			{:else}
+				<p class="line"><kbd>Enter</kbd> zoekt "{query}" op de zoekpagina</p>
+			{/if}
 			{#if actions.length}
 				<ul class="actions">
 					{#each actions as a (a.id)}

@@ -62,7 +62,7 @@ export class PaletteActions {
 			if (at < rows.length - 1) this.#choose(at + 1);
 			else if (search.rowCount > 0) {
 				this.#choose(null);
-				search.point(0);
+				search.chooseFirst();
 			}
 		} else if (e.key === 'ArrowUp' && at !== null) this.#choose(Math.max(0, at - 1));
 		else if (e.key === 'ArrowUp' && rows.length && (!search.rowCount || search.active === 0))
@@ -75,11 +75,6 @@ export class PaletteActions {
 
 	point(at: number) {
 		this.#choose(at);
-	}
-
-	/** The keys left the rows (the pointer onto a result). */
-	leave() {
-		if (this.at !== null) this.#choose(null);
 	}
 
 	/** Does `row`: one that cannot, or that is what stands, does nothing; `done` closes ⌘K. */

@@ -111,9 +111,9 @@
 	const target = $derived(topTarget(search));
 	// An Enter on a row Doen that waited for the search: done once the bron is found.
 	$effect(() => doen.settle(() => onOpen?.()));
-	/** The bron of the result the keys are on: the right column shows it and what it can do. */
+	/** The bron of the result the keys or the pointer are on: the right column shows it. */
 	const atBron = $derived(
-		doen.at === null && search.isActive(search.active) ? rowBron(search, search.active) : null
+		doen.at === null && search.shownRow !== null ? rowBron(search, search.shownRow) : null
 	);
 	/** Two columns: in ⌘K, not in a field that picks. */
 	const columns = $derived(overlay && !onSelect);
@@ -155,7 +155,6 @@
 	const placeOf = (e: PointerEvent) => `${e.screenX},${e.screenY}`;
 	const pointAt = (row: number) => (e: PointerEvent) => {
 		if (placeOf(e) !== pointerAt) {
-			doen.leave();
 			search.point(row);
 		}
 	};
@@ -210,8 +209,8 @@
 			aria-autocomplete="list"
 			aria-activedescendant={doen.at !== null
 				? `${uid}-doen-${doen.at}`
-				: search.rowCount > 0 && search.isActive(search.active)
-					? rowId(search.active)
+				: search.rowCount > 0 && search.enterRow !== null
+					? rowId(search.enterRow)
 					: undefined}
 			{placeholder}
 			autocomplete="off"
@@ -292,6 +291,7 @@
 						<SearchOption
 							id={rowId(i)}
 							active={isActive(i)}
+							pointed={search.isPointed(i)}
 							citation
 							href={bronHref(choice.ref, { at: choice.at, keepNetwerk: false })}
 							onchoose={() => open(choice.ref, choice.at)}
@@ -321,6 +321,7 @@
 				<SearchOption
 					id={rowId(0)}
 					active={isActive(0)}
+					pointed={search.isPointed(0)}
 					citation
 					href={bronHref(lead.ref, { at: lead.at, keepNetwerk: false })}
 					onchoose={() => open(lead.ref, lead.at)}
@@ -364,6 +365,7 @@
 						<SearchOption
 							id={rowId(i)}
 							active={isActive(i)}
+							pointed={search.isPointed(i)}
 							href={bronHref(hitName(hit), { keepNetwerk: false })}
 							onchoose={() => open(hitName(hit), null, shown.title)}
 							onpoint={pointAt(i)}
@@ -465,6 +467,8 @@
 				bron={atBron}
 				actions={atBron ? doen.actionsFor(atBron) : []}
 				query={search.q}
+				opens={search.shownRow === search.enterRow}
+				cited={search.cited ? (search.cited.label ?? search.q) : null}
 				ondo={(row) => doen.do(row, () => onOpen?.())}
 			/>
 		{/snippet}

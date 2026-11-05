@@ -649,6 +649,81 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		stop();
 	});
 
+	const HUUR = [hit('instruments', 'huurwet'), hit('instruments', 'huurprijzen')];
+
+	it('the pointer chooses nothing for Enter: it shows the row, Enter the page of results', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.point(1);
+		expect(s.isPointed(1)).toBe(true);
+		expect(s.shownRow).toBe(1);
+		expect(s.isActive(1)).toBe(false);
+		expect(s.enterRow).toBe(null);
+		s.pressEnter();
+		expect(results).toEqual(['huur']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('takes back a row chosen with the keys, once the pointer moves', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.down();
+		s.point(1);
+		expect(s.isActive(0)).toBe(false);
+		s.pressEnter();
+		expect(results).toEqual(['huur']);
+		expect(opened).toEqual([]);
+		stop();
+	});
+
+	it('↓ goes on from the row the pointer is on, and that one opens', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.point(0);
+		s.down();
+		expect(s.isPointed(1)).toBe(false);
+		expect(s.isActive(1)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([HUUR[1].id]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('a citation stays what Enter opens, with the pointer on another row', async () => {
+		const { of } = api();
+		const { s, opened, results, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		of('instruments').answer(answer({ instruments: HUUR }, CITED));
+		await settle();
+		s.point(2);
+		expect(s.isPointed(2)).toBe(true);
+		expect(s.isActive(0)).toBe(true);
+		s.pressEnter();
+		expect(opened).toEqual([{ collection: 'articles', key: 'bwbr0005289_boek6_art162' }]);
+		expect(results).toEqual([]);
+		stop();
+	});
+
+	it('where there is no page of results the pointer does choose', async () => {
+		const { of } = api();
+		const { s, opened, stop } = session();
+		await type(s, 'huur');
+		await answerAll(of, { instruments: HUUR }, { best: null });
+		s.point(1);
+		expect(s.isActive(1)).toBe(true);
+		expect(s.isPointed(1)).toBe(false);
+		s.pressEnter();
+		expect(opened).toEqual([HUUR[1].id]);
+		stop();
+	});
+
 	it('goes nowhere with nothing typed', () => {
 		api();
 		const { s, results, stop } = session(undefined, true);

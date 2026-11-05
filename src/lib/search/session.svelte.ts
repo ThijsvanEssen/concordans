@@ -111,7 +111,7 @@ export class SearchSession {
 	fullFor = $state('');
 	/** The kinds searched, in the order their groups stand. */
 	kinds = $state<readonly SearchKind[]>(SEARCH_KINDS);
-	/** The row the keys are on, once they chose one (`isActive`). */
+	/** The row the keys are on, once they chose one, or the pointer is on (`enterRow`, `shownRow`). */
 	active = $state(0);
 
 	lanes = $state(Object.fromEntries(LANES.map((l) => [l.id, idle()])) as Record<LaneId, LaneState>);
@@ -327,6 +327,15 @@ export class SearchSession {
 	};
 	/** The first ↓ confirms the preselected row instead of skipping it. */
 	#moved = $state(false);
+	/**
+	 * With a page of results the pointer chooses nothing for Enter (Thijs, 5 Nov: "Nee,
+	 * zoekpagina"): on the row `active` it lights it and the right column shows it.
+	 */
+	#pointed = $state(false);
+	/** The row Enter opens: chosen with the keys, or standing chosen before a key; else none. */
+	readonly enterRow = $derived(this.#moved ? this.active : this.preselects ? 0 : null);
+	/** The row the right column shows: the one the pointer is on, else the one Enter opens. */
+	readonly shownRow = $derived(this.#pointed ? this.active : this.enterRow);
 	// In a field that picks an Enter before the answer waits for it (#79): the article the moment
 	// the API confirms it, else the first row once every answer is in.
 	readonly #earlyEnter = new EarlyEnter(() => this.enter());
@@ -361,6 +370,7 @@ export class SearchSession {
 			void this.answered;
 			this.active = 0;
 			this.#moved = false;
+			this.#pointed = false;
 		});
 		$effect(() =>
 			this.#earlyEnter.answer(
@@ -409,12 +419,12 @@ export class SearchSession {
 
 	/** Is the row the one a key now acts on? Not before a key, where nothing is preselected. */
 	isActive(row: number): boolean {
-		return this.active === row && (this.#moved || this.preselects);
+		return this.enterRow === row;
 	}
 
-	/** Whether the reader chose a row: with the keys or the pointer, for what is typed. */
-	get chosen(): boolean {
-		return this.#moved;
+	/** Is the pointer on the row, without it being chosen for Enter? */
+	isPointed(row: number): boolean {
+		return this.#pointed && this.active === row;
 	}
 
 	/** What Enter does now; false where there is nothing to open yet. */
@@ -464,20 +474,32 @@ export class SearchSession {
 
 	down() {
 		this.#earlyEnter.forget();
-		if (this.#moved) this.active = Math.min(this.active + 1, this.rowCount - 1);
-		this.#moved = true;
+		if (this.#moved || this.#pointed) this.active = Math.min(this.active + 1, this.rowCount - 1);
+		this.#chooseActive();
 	}
 
 	up() {
 		this.#earlyEnter.forget();
 		this.active = Math.max(this.active - 1, 0);
-		this.#moved = true;
+		this.#chooseActive();
 	}
 
-	/** The pointer moved onto a row. */
+	/** The keys come into the list from above it, on its first row. */
+	chooseFirst() {
+		this.active = 0;
+		this.#chooseActive();
+	}
+
+	/** The pointer moved onto a row: in a field that picks that chooses it. */
 	point(row: number) {
 		this.active = row;
+		this.#moved = !this.#results;
+		this.#pointed = !!this.#results;
+	}
+
+	#chooseActive() {
 		this.#moved = true;
+		this.#pointed = false;
 	}
 
 	/** What the API answered for this query, not an earlier one. */
