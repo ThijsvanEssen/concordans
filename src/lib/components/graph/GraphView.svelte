@@ -1255,6 +1255,13 @@
 		sheetOpen = false;
 		sheetOpener?.focus();
 	}
+	// A weergave chosen in the sheet is what the reader came for: the sheet closes on it (B111).
+	let sheetView = view;
+	$effect(() => {
+		if (view === sheetView) return;
+		sheetView = view;
+		if (untrack(() => sheetOpen)) closeSheet();
+	});
 
 	// ── The tijdstrook ──────────────────────────────────────────────────────────
 	// Every bron on the canvas with a date, whatever the period: the strip shows what lies

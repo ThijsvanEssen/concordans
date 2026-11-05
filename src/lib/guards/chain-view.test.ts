@@ -43,9 +43,15 @@ describe('Keten', () => {
 		expect(chainTs).not.toMatch(/id: 'article'/);
 	});
 	it('draws the label on a line as a link with a glance, never as dead text', () => {
+		// Drawn by the bron it stands at (B121): the snippet, rendered in the drawing.
+		const label = chain.slice(
+			chain.indexOf('{#snippet citeLabel'),
+			chain.indexOf('{#snippet stumpLabel')
+		);
 		const svg = chain.slice(chain.indexOf('<svg'), chain.indexOf('</svg>'));
-		expect(svg).toMatch(/<a\s+class="cite"\s+href=\{l\.citeHref/);
-		expect(svg).toMatch(/onfocus=\{\(e\) => citeGlance\(/);
-		expect(svg).not.toMatch(/<g class="cite">/);
+		expect(svg).toMatch(/\{@render citeLabel\(l\)\}/);
+		expect(label).toMatch(/<a\s+class="cite"\s+href=\{l\.citeHref/);
+		expect(label).toMatch(/onfocus=\{\(e\) => citeGlance\(/);
+		expect(chain).not.toMatch(/<g class="cite">/);
 	});
 });

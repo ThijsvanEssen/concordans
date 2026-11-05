@@ -2,7 +2,8 @@
 // of their law behind them (`art. 19, 23 lid 1, 28 Cbb`). Past 27 characters the line names the
 // first and how many more, its law still behind them (`art. 3, 16, 17 +6 Cbw`), never a count
 // alone: "4 art." read as article 4 (Thijs, 29 Oct). A law without an abbreviation is cut to the
-// room left (`art. 1 Besluit loonbegrip…`, B48). The glance on hover gives them all. One place:
+// room left (`art. 1 Besluit loonbegrip…`, B48), past the first article where that must: two
+// labels never read alike for the cut (B116). The glance on hover gives them all. One place:
 // the drawing, the list on a phone and the glance read it here.
 import { basisArticles, grondslagArtikelen, type BasisArticle } from '$lib/text/delegaties';
 import { NL } from '$lib/text/collator';
@@ -56,6 +57,11 @@ export function citeText(c: ArticleCite): string {
 		const room = CITE_MAX - text.length - 1;
 		if (room >= Math.min(c.abbr.length, ABBR_MIN)) return `${text} ${cutText(c.abbr, room)}`;
 	}
+	// The first article whole where its law keeps two letters: `lid 4 onder a` and `onder b` read
+	// apart, where `art. 4.20 lid…` made them one (B116).
+	const first = `art. ${labels[0]}${more(1)}`;
+	const left = CITE_MAX - first.length - 1;
+	if (left >= 3) return `${first} ${cutText(c.abbr, left)}`;
 	const name = cutText(c.abbr, ABBR_MIN);
 	return `${cutText(`art. ${labels[0]}`, CITE_MAX - more(1).length - name.length - 1)}${more(1)} ${name}`;
 }

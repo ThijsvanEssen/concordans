@@ -369,6 +369,14 @@
 			})
 		);
 	});
+	/** Per bron, the labels on the lines it hangs by and its stump: the keyboard meets them by it. */
+	const citesOf = $derived(
+		Map.groupBy(
+			lines.filter((l) => l.cite),
+			(l) => l.child
+		)
+	);
+	const stumpOf = $derived(new Map(stumps.map((t) => [t.id, t] as const)));
 	// Each bron drawn as the canvas and the legend draw its kind: one shape and one colour per
 	// kind (vormen.ts, kleur.ts), so Soort is the key to this drawing too.
 	// In the keten of a person each layer wears the colour of its rubriek (person-layers.ts).
@@ -421,6 +429,20 @@
 		const take = (t: string) => {
 			const n = el.getComputedTextLength();
 			if (n > 0 && citeWidths.get(t) !== n) citeWidths.set(t, n);
+		};
+		take(text);
+		document.fonts?.ready.then(
+			() => take(text),
+			() => {}
+		);
+		return { update: take };
+	};
+	/** The width of a layer's label as drawn, spacing and all: its rim of paper fits it. */
+	const labelWidths = new SvelteMap<string, number>();
+	const measureLabel = (el: SVGTextElement, text: string) => {
+		const take = (t: string) => {
+			const n = el.getBBox().width;
+			if (n > 0 && labelWidths.get(t) !== n) labelWidths.set(t, n);
 		};
 		take(text);
 		document.fonts?.ready.then(
@@ -543,6 +565,86 @@
 	{#if l.word}<text class="line-word" x={l.wordAt.x} y={l.wordAt.y}>{l.word}</text>{/if}
 {/snippet}
 
+{#snippet citeLabel(l: (typeof lines)[number])}
+	{@const w = Math.ceil(citeWidths.get(l.cite!) ?? l.cite!.length * 6.3) + 16}
+	{@const on = landed(l)}
+	<a
+		class="cite"
+		href={l.citeHref ?? undefined}
+		class:is-open={on}
+		aria-label={l.citeLines.join(', ')}
+		aria-expanded={l.citeArticles.length ? on : undefined}
+		aria-controls={on ? PANEL_ID : undefined}
+		onclick={(e) => openCite(e, l)}
+		onpointerenter={(e) => {
+			hover.pointer(e.pointerType);
+			citeGlance(l, e.currentTarget);
+		}}
+		onpointerleave={() => hover.leave()}
+		onkeydown={() => hover.keys()}
+		onfocus={(e) => citeGlance(l, e.currentTarget)}
+		onblur={() => hover.leave()}
+	>
+		<rect
+			class="frame"
+			x={l.citeAt.x - w / 2}
+			y={l.citeAt.y - 10}
+			width={w}
+			height="20"
+			rx="2"
+			stroke-dasharray={l.mentioned ? '2 2' : undefined}
+		/>
+		<!-- A finger's 44 px, unseen. -->
+		<rect class="hit" x={l.citeAt.x - w / 2} y={l.citeAt.y - 10} width={w} height="20" />
+		<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle" use:measure={l.cite!}
+			>{l.cite}</text
+		>
+	</a>
+{/snippet}
+
+{#snippet stumpLabel(t: (typeof stumps)[number])}
+	{@const w = Math.ceil(citeWidths.get(t.label.text) ?? t.label.text.length * 6.3) + 16}
+	<g
+		class="stomp"
+		role="button"
+		tabindex="0"
+		aria-label="{t.parent.name}, staat niet op het doek"
+		onclick={() => chooseStump(t.parent)}
+		onkeydown={(e) => {
+			hover.keys();
+			press(e, () => chooseStump(t.parent));
+		}}
+		onpointerenter={(e) => {
+			hover.pointer(e.pointerType);
+			stumpGlance(t, e.currentTarget);
+		}}
+		onpointerleave={() => hover.leave()}
+		onfocus={(e) => stumpGlance(t, e.currentTarget)}
+		onblur={() => hover.leave()}
+	>
+		<path
+			d="M{t.label.x} {t.label.y + 10}L{t.label.x} {t.top}"
+			fill="none"
+			stroke={t.look.colour}
+			stroke-width={t.look.width}
+			stroke-dasharray={t.look.dash}
+			stroke-linecap={t.look.cap}
+		/>
+		<rect
+			class="frame"
+			x={t.label.x - w / 2}
+			y={t.label.y - 10}
+			width={w}
+			height="20"
+			rx="2"
+			stroke-dasharray={isMention(t.o) ? '2 2' : undefined}
+		/>
+		<text x={t.label.x} y={t.label.y + 4} text-anchor="middle" use:measure={t.label.text}
+			>{t.label.text}</text
+		>
+	</g>
+{/snippet}
+
 {#snippet allButton(layer: ChainLayer)}
 	<button
 		type="button"
@@ -602,7 +704,6 @@
 			aria-label="Keten"
 		>
 			{#each shown as layer, i (layer.id)}
-				<text class="layer-label pin" x="24" y={tops[i] - 2}>{layer.label.toUpperCase()}</text>
 				<line
 					class="rail"
 					x1="20"
@@ -621,87 +722,28 @@
 			{#each lines.filter((l) => l.lit) as l (l.id)}
 				<g>{@render stroke(l)}</g>
 			{/each}
-			<!-- The articles on a line, on a rim of paper over the lines. -->
-			{#each lines.filter((l) => l.cite) as l (l.id)}
-				{@const w = Math.ceil(citeWidths.get(l.cite!) ?? l.cite!.length * 6.3) + 16}
-				{@const on = landed(l)}
-				<a
-					class="cite"
-					href={l.citeHref ?? undefined}
-					class:is-open={on}
-					aria-label={l.citeLines.join(', ')}
-					aria-expanded={l.citeArticles.length ? on : undefined}
-					aria-controls={on ? PANEL_ID : undefined}
-					onclick={(e) => openCite(e, l)}
-					onpointerenter={(e) => {
-						hover.pointer(e.pointerType);
-						citeGlance(l, e.currentTarget);
-					}}
-					onpointerleave={() => hover.leave()}
-					onkeydown={() => hover.keys()}
-					onfocus={(e) => citeGlance(l, e.currentTarget)}
-					onblur={() => hover.leave()}
-				>
+			<!-- The label of each layer on a rim of paper over the lines: a stem passing under it
+			     never runs through its letters (B111). -->
+			{#each shown as layer, i (layer.id)}
+				{@const label = layer.label.toUpperCase()}
+				<g class="pin">
 					<rect
-						class="frame"
-						x={l.citeAt.x - w / 2}
-						y={l.citeAt.y - 10}
-						width={w}
-						height="20"
-						rx="2"
-						stroke-dasharray={l.mentioned ? '2 2' : undefined}
+						class="layer-rim"
+						x="20"
+						y={tops[i] - 13}
+						width={(labelWidths.get(label) ?? label.length * 8) + 8}
+						height="15"
 					/>
-					<!-- A finger's 44 px, unseen. -->
-					<rect class="hit" x={l.citeAt.x - w / 2} y={l.citeAt.y - 10} width={w} height="20" />
-					<text x={l.citeAt.x} y={l.citeAt.y + 4} text-anchor="middle" use:measure={l.cite!}
-						>{l.cite}</text
-					>
-				</a>
-			{/each}
-			{#each stumps as t (t.id)}
-				{@const w = Math.ceil(citeWidths.get(t.label.text) ?? t.label.text.length * 6.3) + 16}
-				<g
-					class="stomp"
-					role="button"
-					tabindex="0"
-					aria-label="{t.parent.name}, staat niet op het doek"
-					onclick={() => chooseStump(t.parent)}
-					onkeydown={(e) => {
-						hover.keys();
-						press(e, () => chooseStump(t.parent));
-					}}
-					onpointerenter={(e) => {
-						hover.pointer(e.pointerType);
-						stumpGlance(t, e.currentTarget);
-					}}
-					onpointerleave={() => hover.leave()}
-					onfocus={(e) => stumpGlance(t, e.currentTarget)}
-					onblur={() => hover.leave()}
-				>
-					<path
-						d="M{t.label.x} {t.label.y + 10}L{t.label.x} {t.top}"
-						fill="none"
-						stroke={t.look.colour}
-						stroke-width={t.look.width}
-						stroke-dasharray={t.look.dash}
-						stroke-linecap={t.look.cap}
-					/>
-					<rect
-						class="frame"
-						x={t.label.x - w / 2}
-						y={t.label.y - 10}
-						width={w}
-						height="20"
-						rx="2"
-						stroke-dasharray={isMention(t.o) ? '2 2' : undefined}
-					/>
-					<text x={t.label.x} y={t.label.y + 4} text-anchor="middle" use:measure={t.label.text}
-						>{t.label.text}</text
-					>
+					<text class="layer-label" x="24" y={tops[i] - 2} use:measureLabel={label}>{label}</text>
 				</g>
 			{/each}
 			{#each shown as layer, i (layer.id)}
 				{#each layer.nodes as k (k.id)}
+					<!-- The keyboard goes bron by bron, from the top: the labels of the lines it hangs
+					     by and its stump, then the bron (B121: the law no longer the 54th stop). -->
+					{#each citesOf.get(k.id) ?? [] as l (l.id)}{@render citeLabel(l)}{/each}
+					{@const t = stumpOf.get(k.id)}
+					{#if t}{@render stumpLabel(t)}{/if}
 					{@const p = place.get(k.id)!}
 					{@const v = vormOf(k)}
 					{@const info = infoOf.get(k.id)}
@@ -958,6 +1000,9 @@
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		fill: var(--ink-3);
+	}
+	.layer-rim {
+		fill: var(--paper);
 	}
 	.others {
 		cursor: pointer;
