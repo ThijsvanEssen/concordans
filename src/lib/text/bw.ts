@@ -3,20 +3,15 @@
 // "artikel 162 Burgerlijk Wetboek Boek 6".
 
 import { capitalize } from './words';
+import bwBooks from './bw-books.json';
 
-/** The boeken of the Burgerlijk Wetboek and their BWB ids. */
-export const BW_BOOKS: Record<string, string> = {
-	'1': 'BWBR0002656',
-	'2': 'BWBR0003045',
-	'3': 'BWBR0005291',
-	'4': 'BWBR0002761',
-	'5': 'BWBR0005288',
-	'6': 'BWBR0005289',
-	'7': 'BWBR0005290',
-	'7a': 'BWBR0006000',
-	'8': 'BWBR0005034',
-	'10': 'BWBR0030068'
-};
+/**
+ * The boeken of the Burgerlijk Wetboek and their BWB ids, by book in lower case (`7a`): a copy
+ * of the API's code families (`families.BW` of `/api/aliases`), made by `npm run sync:bw`.
+ */
+export const BW_BOOKS: Record<string, string> = Object.fromEntries(
+	Object.entries(bwBooks).map(([book, id]) => [book.toLowerCase(), id])
+);
 
 const BOOK_OF: Record<string, string> = Object.fromEntries(
 	Object.entries(BW_BOOKS).map(([book, id]) => [id, book.toUpperCase()])
