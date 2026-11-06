@@ -30,7 +30,10 @@ export type ChosenBron = Target & {
 	/** Where it is a citation: its position and the day it no longer holds. */
 	at?: string | null;
 	expiredOn?: string | null;
-	/** Its label is the query typed ("36600-VII"): the name its card gives says it better. */
+	/**
+	 * Its label is the query typed ("36600-VII") or the title of its tab (Recent): the name its
+	 * card gives says it better.
+	 */
 	unnamed?: boolean;
 };
 

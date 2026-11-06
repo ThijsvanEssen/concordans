@@ -105,6 +105,12 @@ describe('the keten of a law', () => {
 		} as never;
 		const k = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis);
 		expect(k.layers.map((l) => l.id)).toEqual(['basis', 'law']);
+		// A law under a law: the layer above is Grondslag, not a second Wet (UX-toets 5 Nov).
+		expect(k.layers.map((l) => l.label)).toEqual(['Grondslag', 'Wet']);
+		const amvb = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis, {
+			kind: 'amvb'
+		});
+		expect(amvb.layers.map((l) => l.label)).toEqual(['Wet', 'AMvB']);
 		expect(k.layers[1].nodes[0].parents).toEqual([
 			{
 				id: 'instruments/bwbr0010346',

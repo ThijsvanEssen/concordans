@@ -262,6 +262,17 @@ const late = (n: ChainNode) => (n.parents.every((p) => p.relation === 'REFERS_TO
 const cited = (n: ChainNode) => Math.max(0, ...n.parents.map((p) => p.named ?? p.cite?.count ?? 0));
 
 /**
+ * The heading of the laws above: their one kind (Wet), else Grondslag; Grondslag too where their
+ * kind is that of the law under them, so no heading stands twice (UX-toets 5 Nov: the Awb under
+ * the Grondwet, two layers WET).
+ */
+function basisLabel(items: Basis['items'], lawLabel: string): string {
+	const kinds = new Set(items.map((b) => kindName(b.kind)));
+	const one = kinds.size === 1 ? [...kinds][0] : null;
+	return one && one !== lawLabel ? one : LAYER_LABEL.basis;
+}
+
+/**
  * The layers of the keten of `wet` (its summary), from what /delegated, /basis and /eu-links
  * give. Up to `max` regulations a layer, and `keep`; the rest are listed apart (`more`), not
  * drawn.
@@ -361,12 +372,12 @@ export function chain(
 		});
 		return out.length ? out : [{ id, way: fallback }];
 	};
+	const lawLabel = kindName(kind) ?? LAYER_LABEL.law;
 	if (basis?.items.length) {
 		// The laws above a regulation: more than five are one "Alle N".
-		const kinds = new Set(basis.items.map((b) => kindName(b.kind)));
 		layers.push({
 			id: 'basis',
-			label: (kinds.size === 1 && [...kinds][0]) || LAYER_LABEL.basis,
+			label: basisLabel(basis.items, lawLabel),
 			nodes: capped(
 				'basis',
 				basis.items.map((b) => ({
@@ -389,7 +400,7 @@ export function chain(
 	}
 	const lawLayer: ChainLayer = {
 		id: 'law',
-		label: kindName(kind) ?? LAYER_LABEL.law,
+		label: lawLabel,
 		nodes: [
 			{
 				id: law.id,

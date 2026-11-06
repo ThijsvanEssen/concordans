@@ -50,9 +50,12 @@
 	/** Keys walk fast over a list: a row the keys only pass asks nothing. */
 	const REST_MS = 120;
 
-	/** The bron shown: the one of a row of Recent, else of the result the keys are on. */
+	/**
+	 * The bron shown: the one of a row of Recent, else of the result the keys are on. A row of
+	 * Recent is named as its tab was ("36600 VII Begroting …"): its card names it better.
+	 */
 	const shown = $derived<ChosenBron | null>(
-		row ? (row.bron ? { ref: row.bron, label: row.label } : null) : bron
+		row ? (row.bron ? { ref: row.bron, label: row.label, unnamed: true } : null) : bron
 	);
 	let loaded = $state.raw<{ bron: ChosenBron; rest: PreviewRest | null } | null>(null);
 	const rest = $derived(loaded?.bron === shown ? loaded.rest : null);
