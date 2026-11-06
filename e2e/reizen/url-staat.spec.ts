@@ -35,22 +35,12 @@ test('a clean link draws the same with and without a netwerk kept in this browse
 	const link = `${ARTICLE}?mode=netwerk`;
 	await page.goto(link);
 	const nodes = page.locator('.canvas-node-list');
-	// The list once it stands: the neighbourhood and the lopende voorstellen come in after the bron.
+	// The list once it stands: the neighbourhood comes in after the bron, and the list says it is
+	// busy until then (aria-busy), however long that takes under load.
 	const settled = async () => {
 		await expect(nodes).toContainText('Art. 6:162 BW');
-		let last = '';
-		await expect
-			.poll(
-				async () => {
-					const text = await nodes.innerText();
-					const same = text === last;
-					last = text;
-					return same;
-				},
-				{ intervals: [1000] }
-			)
-			.toBe(true);
-		return last;
+		await expect(nodes).not.toHaveAttribute('aria-busy');
+		return nodes.innerText();
 	};
 	const clean = { url: page.url(), nodes: await settled(), panel: await panelText(page) };
 
