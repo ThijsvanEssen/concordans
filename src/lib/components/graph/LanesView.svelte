@@ -18,7 +18,7 @@
 	import { buildScene, type Scene, type SceneUnit } from '$lib/graph/scene';
 	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
-	import { laneStrips, stripLines, type StripLayout } from '$lib/graph/lane-strips';
+	import { laneStrips, STRIP_ROW, stripLines, type StripLayout } from '$lib/graph/lane-strips';
 	import { SHOW_ALL, type Visibility } from '$lib/graph/visibility';
 	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
@@ -400,6 +400,14 @@
 					onclick={() => onMark(holdsChosen ?? row.members[0])}
 					onkeydown={(e) => onKey(e, () => onMark(holdsChosen ?? row.members[0]))}
 				>
+					<!-- The whole line is the target, up to the next (B95): no gap between two rows. -->
+					<rect
+						class="hit"
+						x={box.mark.x}
+						y={at.y - STRIP_ROW / 2}
+						width={box.mark.width}
+						height={STRIP_ROW}
+					/>
 					{@render sign(first, u.sort, box.mark.x + 16, at.y - 7, GLYPH)}
 					<text class="row-name" x={box.mark.x + 38} y={at.y + 4}
 						>{row.label || u.label}<tspan class="row-count" dx="6"
@@ -497,7 +505,14 @@
 			onblur={() => (hovered = null)}
 		>
 			<title>{titleOf(u)}</title>
-			<rect class="hit" x={box.x - 4} y={box.y - 4} width={box.width + 8} height={box.height + 8} />
+			<!-- A phone's row is a line of its own: its target is the whole line, touching the next (B95). -->
+			<rect
+				class="hit"
+				x={box.x - 4}
+				y={phone ? box.y : box.y - 4}
+				width={box.width + 8}
+				height={phone ? box.height : box.height + 8}
+			/>
 			{#if u.focus || markedUnit === u.id || openId === u.id}{@render focusRing(box)}{/if}
 			{#if disc}
 				<circle class="disc" {cx} {cy} r={box.mark.width / 2} style:--tint={sortColour(u.sort)} />

@@ -39,7 +39,8 @@ const NAME_AT = 48;
 const LANE_ROOM = 24;
 const GLYPH = 14;
 const PILL = 26;
-const ROW = 24;
+/** A row of a chosen hull: its line, and the target of a finger (LanesView), whole and touching the next. */
+export const STRIP_ROW = 24;
 const NAME_LINE = 15;
 const CHANNEL_STEP = 6;
 const TIP = 4;
@@ -99,8 +100,8 @@ function hullBox(u: SceneUnit, x: number, y: number, width: number): UnitBox {
 	const wide = Math.min(width, HULL_MAX);
 	const label = { x, y, width: wide, height: PILL - 4 };
 	const top = y + PILL;
-	const rows = u.rows.map((r, i) => ({ id: r.id, y: top + 14 + i * ROW }));
-	const mark = { x, y: top, width: wide, height: 8 + u.rows.length * ROW + 8 };
+	const rows = u.rows.map((r, i) => ({ id: r.id, y: top + 14 + i * STRIP_ROW }));
+	const mark = { x, y: top, width: wide, height: 8 + u.rows.length * STRIP_ROW + 8 };
 	const room = wide - 20 - (u.change ? CHANGED_ROOM : 0);
 	const text = { name: wrapLabel(u.label, room, 13, 1), small: [] };
 	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
