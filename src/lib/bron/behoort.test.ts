@@ -493,6 +493,24 @@ describe('a translation and a dossier', () => {
 	});
 });
 
+describe('a dossier asked by its key', () => {
+	// The route answers 422 to a node key (`36600_vii`): both callers that fall back to the key
+	// ask by its number (live, 6 Nov: GET /api/dossiers/36600_vii on the netwerk page).
+	it('asks the band of a dossier without props by its number', async () => {
+		const { requests } = fakeApi({ '/api/dossiers/{number}': { number: '36600-VII' } });
+		const l = { node: { key: '36600_vii', labels: ['TK'] }, neighbors: { total: 0, buckets: [] } };
+		const regel = behoort('dossiers', {}, l as never).regels.find((r) => r.id === 'kamer');
+		await regel?.laad?.();
+		expect(requests.map((r) => r.params.path?.number)).toEqual(['36600-VII']);
+	});
+
+	it('asks the kern of a dossier without props by its number', async () => {
+		const { requests } = fakeApi({ '/api/dossiers/{number}': { number: '36600-VII' } });
+		await lazeKernIds('dossiers', '36600_vii', {});
+		expect(requests.map((r) => r.params.path?.number)).toEqual(['36600-VII']);
+	});
+});
+
 describe('lazeKernIds', () => {
 	it('fails where the dossier fails', async () => {
 		fakeApi({ '/api/dossiers/{number}': fail(500) });

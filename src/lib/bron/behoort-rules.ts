@@ -20,7 +20,7 @@ import { fractiePeriodes } from './fractie-periode';
 import { kernVanZaak, stukkenInDezelfdeZaak } from '$lib/verbonden/zaak';
 import { onAgendaOnly } from '$lib/text/toezegging';
 import type { Collection } from '$lib/vocabulary';
-import { dossierNummer } from './dossier-naam';
+import { dossierNummer, dossierNummerVanSleutel } from './dossier-naam';
 import {
 	inbound,
 	layerOf,
@@ -186,7 +186,7 @@ function treatedInLines(c: Context): Regel[] {
 	const kamers = chamberOf(c);
 	// The dossier to ask: its number, else its key (a lookup, not a name).
 	const lookup = c.light?.node.key ?? null;
-	const nummer = dossierNummer(c.props) ?? lookup;
+	const nummer = dossierNummer(c.props) ?? (lookup ? dossierNummerVanSleutel(lookup) : null);
 	return [
 		{
 			id: 'kamer',
