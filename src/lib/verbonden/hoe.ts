@@ -103,6 +103,24 @@ export function plaatsIn(
 }
 
 /** Where an edge comes from by its `basis`, where it has no `reason`. */
+/** Where a judgment's link to an article comes from when only its metadata names it. */
+const HERKOMST_RECHTSPRAAK = 'Wetsverwijzing van rechtspraak.nl';
+
+/** Whether only a judgment's metadata names the article (`origin`), with no passage to show. */
+const alleenMetadata = (row: Row, edge: Record<string, unknown>, citaat: unknown): boolean =>
+	Array.isArray(edge.origin) &&
+	edge.origin.length === 1 &&
+	edge.origin[0] === 'metadata' &&
+	!citaat &&
+	!row.snippet &&
+	!row.match;
+
+/** A judgment whose metadata names the article, not its text: one row without a place. */
+const viaMetadata = ({ row, edge, inbound, citaat, regel }: HoeContext): Hoe | null =>
+	inbound && row.ref.collection === 'judgments' && alleenMetadata(row, edge, citaat)
+		? regel('Rechtspraak noemt dit artikel', null, HERKOMST_RECHTSPRAAK)
+		: null;
+
 const HERKOMST_BASIS: Partial<Record<string, string>> = {
 	subject: 'Onderwerp van het Kamerstuk',
 	text: 'Tekst van de brief',
@@ -296,7 +314,7 @@ const HOE: Partial<Record<Relation, (c: HoeContext) => Hoe | null | undefined>> 
 			HERKOMST_BASIS[textOf(edge.basis) ?? ''] ?? null
 		);
 	},
-	REFERS_TO: verwijzing,
+	REFERS_TO: (c) => viaMetadata(c) ?? verwijzing(c),
 	// A fractie's vote on the decision: `Tegen, 7 zetels`.
 	VOTED: ({ edge, inbound, regel }) => {
 		const keuze = textOf(edge.choice);

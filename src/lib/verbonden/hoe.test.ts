@@ -8,6 +8,7 @@ import {
 } from '$lib/vocabulary';
 import { capitalize } from '$lib/text/words';
 import catalogus from '$lib/api/relations.json';
+import { rowsOfCitedBy } from './cited-by';
 import { hoeVan, kleineLetter, publicatie } from './hoe';
 import {
 	CHANGE_HEAD,
@@ -744,5 +745,35 @@ describe('the words of a change', () => {
 		);
 		expect(changeAround('AMENDS', 'articles', '1 artikel')).toBe('wijzigt 1 artikel');
 		expect(changeAround('REPEALS', 'instruments', 'de wet')).toBe('trekt de wet in');
+	});
+});
+
+describe('a judgment only its metadata links to the article (B60)', () => {
+	const item = (origin: string[], passage: boolean) =>
+		({
+			judgment: { key: 'ecli_nl_hr_2001_ab1234', display_name: 'HR 1 januari 2001' },
+			leden: [],
+			onderdelen: [],
+			aanhef: false,
+			paragraph_id: passage ? 'p1' : null,
+			paragraph_number: passage ? '3.4' : null,
+			text: passage ? 'artikel 3' : null,
+			snippet: passage ? 'zie artikel 3' : null,
+			confidence: passage ? 1 : null,
+			origin
+		}) as never;
+
+	it('says Rechtspraak noemt dit artikel, without a place', () => {
+		const h = hoeVan(rowsOfCitedBy([item(['metadata'], false)])[0], 'articles');
+		expect([h?.werkwoord, h?.rest, h?.herkomst]).toEqual([
+			'Rechtspraak noemt dit artikel',
+			null,
+			'Wetsverwijzing van rechtspraak.nl'
+		]);
+	});
+
+	it('keeps the place where the text names it too', () => {
+		const h = hoeVan(rowsOfCitedBy([item(['text', 'metadata'], true)])[0], 'articles');
+		expect(h?.werkwoord).not.toBe('Rechtspraak noemt dit artikel');
 	});
 });
