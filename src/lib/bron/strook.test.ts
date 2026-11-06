@@ -9,8 +9,10 @@ import {
 	kindOf,
 	perYear,
 	stripDate,
-	undatedText
+	undatedText,
+	STRIP_KINDS
 } from './strook';
+import { rubriekOf } from './rubrieken';
 
 describe('the strip numbers', () => {
 	it('counts per year and kind, changes apart', () => {
@@ -34,31 +36,57 @@ describe('the strip numbers', () => {
 			'1 publicatie'
 		]);
 	});
-	it('calls only a document a stuk: the others share its colour, not its name', () => {
+	it('counts as Tonen: an activiteit under Parlement, a stemming under Kamerstukken (B97)', () => {
+		// Dossier 36496: 103 stukken, 42 activiteiten, 41 stemmingen with a day.
 		const stippen = [
 			...Array.from({ length: 103 }, () => ({ jaar: 2024.5, collection: 'documents' as const })),
-			...Array.from({ length: 41 }, () => ({ jaar: 2024.5, collection: 'activities' as const })),
+			...Array.from({ length: 42 }, () => ({ jaar: 2024.5, collection: 'activities' as const })),
 			...Array.from({ length: 41 }, () => ({ jaar: 2024.5, collection: 'decisions' as const }))
 		];
 		const [year] = perYear(stippen, 2024, 2024);
-		expect(year.total).toBe(185);
-		expect(year.parts.find((d) => d.id === 'kamerstukken')!.n).toBe(185);
+		expect(year.total).toBe(186);
+		expect(year.parts.find((d) => d.id === 'kamerstukken')!.n).toBe(144);
+		expect(year.parts.find((d) => d.id === 'parlement')!.n).toBe(42);
 		expect(year.words.map((w) => w.text)).toEqual([
 			'103 stukken',
-			'41 activiteiten',
-			'41 stemmingen'
+			'41 stemmingen',
+			'42 activiteiten'
 		]);
-		expect(new Set(year.words.map((w) => w.colour)).size).toBe(1);
+		expect(new Set(year.words.map((w) => w.colour)).size).toBe(2);
 		const { per } = sumPeriod([year], 2024, 2024);
 		expect(countParts(per, 0).map((p) => p.text)).toEqual([
 			'103 stukken',
-			'41 activiteiten',
-			'41 stemmingen'
+			'41 stemmingen',
+			'42 activiteiten'
 		]);
-		expect(shortCount(per, 0, [])).toBe('185 bronnen');
+		expect(shortCount(per, 0, [])).toBe('186 bronnen');
 		expect(undatedText(['activities', 'commitments', 'commitments', 'dossiers'])).toBe(
-			'zonder datum: 1 dossier, 1 activiteit en 2 toezeggingen'
+			'zonder datum: 1 dossier, 2 toezeggingen en 1 activiteit'
 		);
+	});
+	it('takes the kind of every collection from the rubriek of Tonen', () => {
+		const collections = [
+			'instruments',
+			'articles',
+			'annexes',
+			'judgments',
+			'documents',
+			'dossiers',
+			'activities',
+			'decisions',
+			'cases',
+			'commitments',
+			'members',
+			'factions',
+			'committees',
+			'cabinets',
+			'ministries'
+		] as const;
+		for (const c of collections) expect(kindOf(c)).toBe(rubriekOf(c, '', null));
+		for (const c of collections) {
+			const word = perYear([{ jaar: 2024, collection: c }], 2024, 2024)[0].words[0];
+			expect(word.colour, c).toBe(STRIP_KINDS.find((k) => k.id === kindOf(c))!.colour);
+		}
 	});
 	it('dates a publication by the day it was published, a law by none', () => {
 		const stb = { kind: 'publicatie', date_published: '2024-07-01' };
