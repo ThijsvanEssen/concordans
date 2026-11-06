@@ -2,7 +2,7 @@
 // returns, so no layer (a hull, a group, a line, a count) shows a bron or a line the filter hides.
 // Tonen hides soorten and stuksoorten; Relatie hides lijnsoorten. A hidden wet or dossier takes
 // its hull along: the articles of a hidden wet and the stukken of a hidden dossier go with it.
-import { sortOf, stuksoortOf } from '$lib/bron/rubrieken';
+import { sortOf, stuksoortOf, type Sort } from '$lib/bron/rubrieken';
 import type { HiddenKind } from '$lib/verbonden/filter';
 import { lineKindOf, type LineKind } from './line-kind';
 import { isHullEdge } from './scene-hulls';
@@ -21,9 +21,13 @@ export const SHOW_ALL: Visibility = { hiddenKinds: new Set(), hiddenLines: new S
  * Whether Tonen hides a bron by its own soort: a stuk also by its stuksoort, an article also by the
  * soort of its wet (when that wet is not on the canvas itself).
  */
-function isHiddenKind(node: GraphNode, hidden: ReadonlySet<HiddenKind>): boolean {
+function isHiddenKind(
+	node: GraphNode,
+	hidden: ReadonlySet<HiddenKind>,
+	makers: ReadonlyMap<string, Sort>
+): boolean {
 	const props = node.raw?.props;
-	if (hidden.has(sortOf(node.collection, node.key, props))) return true;
+	if (hidden.has(makers.get(node.id) ?? sortOf(node.collection, node.key, props))) return true;
 	if (node.collection === 'documents') return hidden.has(`stuksoort:${stuksoortOf(props)}`);
 	const law = lawIdOf(props);
 	return node.drawClass === 'article' && !!law && hidden.has(sortOf('instruments', law, props));
@@ -33,9 +37,10 @@ function isHiddenKind(node: GraphNode, hidden: ReadonlySet<HiddenKind>): boolean
 function hiddenIds(
 	nodes: readonly GraphNode[],
 	edges: readonly GraphEdge[],
-	hidden: ReadonlySet<HiddenKind>
+	hidden: ReadonlySet<HiddenKind>,
+	makers: ReadonlyMap<string, Sort>
 ): Set<string> {
-	const out = new Set(nodes.filter((n) => isHiddenKind(n, hidden)).map((n) => n.id));
+	const out = new Set(nodes.filter((n) => isHiddenKind(n, hidden, makers)).map((n) => n.id));
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	for (const e of edges)
 		if (out.has(e.target) && isHullEdge(byId.get(e.source), byId.get(e.target), e.relation))
@@ -45,14 +50,16 @@ function hiddenIds(
 
 /**
  * The bronnen and edges Tonen and Relatie leave: an edge only between two bronnen that stay, and
- * of a lijnsoort that is on unless it puts a bron in its hull (that draws no line).
+ * of a lijnsoort that is on unless it puts a bron in its hull (that draws no line). A person goes
+ * by their soort on the canvas (`makerSorts`) where it is given.
  */
 export function visibleGraph(
 	nodes: readonly GraphNode[],
 	edges: readonly GraphEdge[],
-	visibility: Visibility
+	visibility: Visibility,
+	makers: ReadonlyMap<string, Sort> = new Map()
 ): { nodes: GraphNode[]; edges: GraphEdge[] } {
-	const hidden = hiddenIds(nodes, edges, visibility.hiddenKinds);
+	const hidden = hiddenIds(nodes, edges, visibility.hiddenKinds, makers);
 	const kept = nodes.filter((n) => !hidden.has(n.id));
 	const byId = new Map(kept.map((n) => [n.id, n]));
 	const shown = (e: GraphEdge) => {

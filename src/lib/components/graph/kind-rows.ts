@@ -143,7 +143,7 @@ export function kindRows(o: {
 	for (const b of drawn) {
 		const own = ownRow(focus, kern, contents, chain, b);
 		if (b.direct === false && !own) {
-			const kind = kindOfBron(b.collection, b.key, b.props);
+			const kind = kindOfBron(b.collection, b.key, b.props, b.filterGroup);
 			toRest(
 				`verder:${kind ?? b.filterGroup}`,
 				kind ? kindLabelOn(kind, focus.collection) : FILTER_GROUP_LABEL[b.filterGroup],
@@ -152,7 +152,7 @@ export function kindRows(o: {
 			continue;
 		}
 		const listed = kinds.find((k) => rowIds.get(k.id)?.has(b.id))?.id;
-		const kind = listed ?? kindOfBron(b.collection, b.key, b.props);
+		const kind = listed ?? kindOfBron(b.collection, b.key, b.props, b.filterGroup);
 		if (own) add(own, b);
 		else if (listed) add(listed, b);
 		else if (kind && kindIds.has(kind)) perKind.set(kind, [...(perKind.get(kind) ?? []), b]);

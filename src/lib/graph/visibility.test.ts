@@ -5,6 +5,7 @@ import { EXAMPLES, example } from '$lib/test/lanes';
 import { SORTS, STUKSOORTEN, sortOf, stuksoortOf } from '$lib/bron/rubrieken';
 import type { HiddenKind } from '$lib/verbonden/filter';
 import { LINE_KINDS } from './line-kind';
+import { makerSorts } from './roles';
 import { buildScene, type Scene } from './scene';
 import type { GraphEdge, GraphNode } from './types';
 import { SHOW_ALL, visibleGraph, type Visibility } from './visibility';
@@ -27,15 +28,16 @@ describe.each(EXAMPLES)('Relatie on %s', (name) => {
 });
 
 describe.each(EXAMPLES)('Tonen on %s', (name) => {
-	const nodes = example(name).nodes;
-	const soortOf = (n: GraphNode) => sortOf(n.collection, n.key, n.raw?.props);
+	const { nodes, edges } = example(name);
+	// A person by their role on the day of their first stuk on the canvas (B122).
+	const makers = makerSorts(nodes, edges);
+	const soortOf = (n: GraphNode) => makers.get(n.id) ?? sortOf(n.collection, n.key, n.raw?.props);
 
 	it.each(SORTS)('%s off: no bron of that soort stays, no hull of it', (sort) => {
 		const s = build(name, { hiddenKinds: off(sort) });
 		const ids = idsOf(s);
 		expect(nodes.filter((n) => soortOf(n) === sort && ids.has(n.id))).toEqual([]);
-		// A person is placed by their role in Wie maakt, which may differ from their soort.
-		expect(s.units.filter((u) => u.sort === sort && u.column !== 'makers')).toEqual([]);
+		expect(s.units.filter((u) => u.sort === sort)).toEqual([]);
 	});
 
 	it.each(STUKSOORTEN)('stuksoort %s off: no stuk of it', (soort) => {

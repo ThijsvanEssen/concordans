@@ -2,12 +2,16 @@
 // drawn comes from the canvas itself (GraphCanvas `onDrawn`: the filter, the years, the
 // strays); the count per kind is before the filter, so the sidebar says what the filter hides.
 import type Graph from 'graphology';
+import { kindColour } from '$lib/bron/kleur';
+import { sortColour } from '$lib/bron/rubrieken';
+import { makerSorts } from '$lib/graph/roles';
+import { filterGroupOf } from '$lib/verbonden/filter';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Vorm } from '$lib/bron/vormen';
 import type { FilterGroup, HiddenKind, Rechter } from '$lib/verbonden/filter';
 import type { Stuksoort } from '$lib/bron/rubrieken';
 import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
-import type { DrawClass } from '$lib/graph/types';
+import type { DrawClass, GraphEdge, GraphNode } from '$lib/graph/types';
 import type { Relation } from '$lib/vocabulary';
 
 export type CanvasCounts = {
@@ -44,6 +48,22 @@ export const NO_COUNTS: CanvasCounts = {
 	annexes: 0,
 	lines: {}
 };
+
+/**
+ * The kind and colour of each bron on the canvas, as Tonen counts and hides it: a person by their
+ * role on the day of their first stuk on the canvas (`makerSorts`, B122), as the lanes place them.
+ */
+export function canvasKinds(nodes: readonly GraphNode[], edges: readonly GraphEdge[]) {
+	const makers = makerSorts(nodes, edges);
+	return {
+		kindOf: (n: GraphNode): FilterGroup =>
+			makers.get(n.id) ?? filterGroupOf(n.collection, n.key, n.raw?.props ?? null),
+		colourOf: (n: GraphNode): string => {
+			const sort = makers.get(n.id);
+			return sort ? sortColour(sort) : kindColour(n.collection, null, n.raw?.props);
+		}
+	};
+}
 
 /** One more of `k`, or `n` more. */
 function add<K extends string>(to: Partial<Record<K, number>>, k: K, n = 1) {

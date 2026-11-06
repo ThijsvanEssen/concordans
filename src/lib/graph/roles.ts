@@ -2,9 +2,13 @@
 // those on the day of the first stuk they signed on the canvas (`government_functions`), else a
 // seat in the Eerste Kamer (`ek`); who signed the advies of the Raad van State stands in its lane.
 // Where the data has no function for the person, the scene marks a gap and fills nothing in.
-import { isMinister, sortOf } from '$lib/bron/rubrieken';
+// Tonen counts and hides a person by that same lane (`makerSorts`): who signed the advies of the
+// Raad van State, or held a post only before the stuk, is no bewindspersoon there (B122).
+import { isMinister, sortOf, type Sort } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
-import type { GraphNode } from './types';
+import { LANE_SORT } from './lane-columns';
+import { lineKindOf } from './line-kind';
+import type { GraphEdge, GraphNode } from './types';
 
 export type MakerLane = 'government' | 'council' | 'parliament';
 
@@ -55,8 +59,34 @@ const latestFunction = (props: Record<string, unknown>) =>
  * Whether a stuk is the advies of the Raad van State, by its kind. The advies with the nader
  * rapport is the government's answer to it, signed by the minister.
  */
-export const isCouncilAdvice = (kind: string | null): boolean =>
+const isCouncilAdvice = (kind: string | null): boolean =>
 	!!kind && /^advies\b.*raad van state\s*$/i.test(kind);
+
+/** The day of a bron, as the scene reads it. */
+export const dayOf = (node: GraphNode | undefined): string | null =>
+	textOf(node?.raw?.props?.date)?.slice(0, 10) ?? null;
+
+/** The first day each person signed a stuk on the canvas, and who signed an advies of the RvS. */
+export function signatures(nodes: ReadonlyMap<string, GraphNode>, edges: readonly GraphEdge[]) {
+	const first = new Map<string, string>();
+	const council = new Set<string>();
+	for (const e of edges) {
+		const from = nodes.get(e.source);
+		const to = nodes.get(e.target);
+		if (
+			from?.collection !== 'members' ||
+			!to ||
+			lineKindOf(e.relation, from.drawClass) !== 'submitter'
+		)
+			continue;
+		const day = dayOf(to);
+		if (day && (!first.has(from.id) || day < first.get(from.id)!)) first.set(from.id, day);
+		if (isCouncilAdvice(textOf(to.raw?.props?.kind))) council.add(from.id);
+	}
+	return { first, council };
+}
+
+export type Signatures = ReturnType<typeof signatures>;
 
 type MakerFacts = {
 	/** The day of the first stuk the person signed on the canvas. */
@@ -87,4 +117,31 @@ export function makerRole(node: GraphNode, facts: MakerFacts): MakerRole {
 	const sort = sortOf(node.collection, node.key, node.raw?.props);
 	const government = sort === 'ministeries' || sort === 'kabinetten';
 	return { lane: government ? 'government' : 'parliament', role: null, chamber: null, gap: false };
+}
+
+/** The facts of one person from the signatures of the canvas. */
+export const factsOf = (
+	id: string,
+	signed: Signatures,
+	ministryName: (key: string) => string = (key) => key.toUpperCase()
+): MakerFacts => ({
+	firstDay: signed.first.get(id) ?? null,
+	council: signed.council.has(id),
+	ministryName
+});
+
+/**
+ * The soort of each person on the canvas by their lane (`makerRole`): a bewindspersoon only with a
+ * post on the day of their first stuk there, never by the advies of the Raad van State.
+ */
+export function makerSorts(
+	nodes: readonly GraphNode[],
+	edges: readonly GraphEdge[]
+): Map<string, Sort> {
+	const signed = signatures(new Map(nodes.map((n) => [n.id, n])), edges);
+	const out = new Map<string, Sort>();
+	for (const n of nodes)
+		if (n.collection === 'members')
+			out.set(n.id, LANE_SORT[makerRole(n, factsOf(n.id, signed)).lane]);
+	return out;
 }

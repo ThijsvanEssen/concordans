@@ -15,7 +15,7 @@
 	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder, stepPointer } from './canvas-keys';
-	import { countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
+	import { canvasKinds, countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
 	import ViewSheet from './ViewSheet.svelte';
@@ -61,7 +61,6 @@
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import { vormVanBron } from '$lib/bron/vormen';
-	import { kindColour } from '$lib/bron/kleur';
 	import {
 		containerIdFor,
 		formerMembers,
@@ -78,7 +77,6 @@
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
 		FILTER_GROUPS,
-		filterGroupOf,
 		hiddenKindsOf,
 		rechterOf,
 		type VerbondenFilter
@@ -281,7 +279,7 @@
 			if (!n || n.anchor || n.id.toLowerCase() === focal || drawClassOf(n.collection) === 'other')
 				return;
 			const props = n.raw?.props ?? undefined;
-			const filterGroup = filterGroupOf(n.collection, n.key, props ?? null);
+			const filterGroup = kinds.kindOf(n);
 			out.push({ id: n.id, collection: n.collection, key: n.key, props, filterGroup, direct });
 		};
 		for (const id of ids) {
@@ -738,6 +736,7 @@
 	// them. Shown in full (`expanded`) until the reader folds them again or the focus moves.
 	let rawNodes: GraphNode[] = [];
 	let rawEdges: GraphEdge[] = [];
+	let kinds = canvasKinds([], []);
 	let clusters = $state<Cluster[]>([]);
 	const clusterById = new Map<string, Cluster>();
 	let expanded = $state<ReadonlySet<string>>(new Set());
@@ -840,6 +839,7 @@
 		}
 		const toDraw = [...rawNodes.filter((n) => !folded.has(n.id)), ...clusters.map(clusterNode)];
 		nameAll(toDraw.filter(isCanvasNode));
+		kinds = canvasKinds(rawNodes, rawEdges);
 		drawNodes(toDraw);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
@@ -1014,11 +1014,7 @@
 			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
 			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
 			const repealed = isRepealed(n);
-			const colour = repealed
-				? tokens().ink3
-				: pinnedIds.has(n.id)
-					? undefined
-					: kindColour(n.collection, null, n.raw?.props);
+			const colour = repealed ? tokens().ink3 : pinnedIds.has(n.id) ? undefined : kinds.colourOf(n);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
 				cluster: isClusterId(n.id),
@@ -1032,7 +1028,7 @@
 				drawClass: n.drawClass,
 				vorm,
 				collection: n.collection,
-				filterGroup: filterGroupOf(n.collection, n.key, n.raw?.props ?? null),
+				filterGroup: kinds.kindOf(n),
 				stuksoort: n.collection === 'documents' ? stuksoortOf(n.raw?.props) : null,
 				// The court of a judgment, as the bronfilter's rechter reads it.
 				rechter:

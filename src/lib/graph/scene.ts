@@ -13,10 +13,19 @@
 import { laneFiltered, type LaneFilter } from './lane-filter';
 import { rubriekOfSort, sortOf, type Rubriek, type Sort } from '$lib/bron/rubrieken';
 import { textOf } from '$lib/text/words';
+import { LANE_SORT } from './lane-columns';
 import { nodeId, RELATIONS, type Relation } from '$lib/vocabulary';
 import { isDrawn } from './collection-role';
 import { lineKindOf, type LineKind } from './line-kind';
-import { isCouncilAdvice, makerRole, type MakerLane } from './roles';
+import {
+	dayOf,
+	factsOf,
+	makerRole,
+	makerSorts,
+	signatures,
+	type MakerLane,
+	type Signatures
+} from './roles';
 import { foldGroups, markGeneral, unreached } from './scene-groups';
 import { foldTiles, type TilePeriod } from './scene-tiles';
 import {
@@ -122,9 +131,6 @@ const columnOfRubriek = (rubriek: Rubriek): Column =>
 const columnOfSort = (sort: Sort): Column =>
 	sort === 'activiteiten' ? 'papers' : columnOfRubriek(rubriekOfSort(sort));
 
-const dayOf = (node: GraphNode | undefined): string | null =>
-	textOf(node?.raw?.props?.date)?.slice(0, 10) ?? null;
-
 const blank = (
 	id: string,
 	shape: UnitShape,
@@ -212,29 +218,9 @@ function smallLaw(c: HullCandidate, article: GraphNode): SceneUnit {
 	};
 }
 
-/** The first day each person signed a stuk on the canvas, and who signed an advies of the RvS. */
-function signatures(nodes: ReadonlyMap<string, GraphNode>, edges: readonly GraphEdge[]) {
-	const first = new Map<string, string>();
-	const council = new Set<string>();
-	for (const e of edges) {
-		const from = nodes.get(e.source);
-		const to = nodes.get(e.target);
-		if (
-			from?.collection !== 'members' ||
-			!to ||
-			lineKindOf(e.relation, from.drawClass) !== 'submitter'
-		)
-			continue;
-		const day = dayOf(to);
-		if (day && (!first.has(from.id) || day < first.get(from.id)!)) first.set(from.id, day);
-		if (isCouncilAdvice(textOf(to.raw?.props?.kind))) council.add(from.id);
-	}
-	return { first, council };
-}
-
 function nodeUnit(
 	node: GraphNode,
-	signed: ReturnType<typeof signatures>,
+	signed: Signatures,
 	ministryName: (key: string) => string
 ): SceneUnit {
 	const unit: SceneUnit = {
@@ -243,13 +229,8 @@ function nodeUnit(
 		date: dayOf(node)
 	};
 	if (unit.column !== 'makers') return unit;
-	const role = makerRole(node, {
-		firstDay: signed.first.get(node.id) ?? null,
-		council: signed.council.has(node.id),
-		ministryName
-	});
-	const person = node.collection === 'members' && role.lane !== 'council';
-	const sort = !person ? unit.sort : role.lane === 'government' ? 'bewindspersonen' : 'kamerleden';
+	const role = makerRole(node, factsOf(node.id, signed, ministryName));
+	const sort = node.collection === 'members' ? LANE_SORT[role.lane] : unit.sort;
 	return { ...unit, ...role, sort };
 }
 
@@ -258,7 +239,8 @@ function baseUnits(
 	nodes: readonly GraphNode[],
 	edges: readonly GraphEdge[],
 	chosen: ReadonlySet<string>,
-	dossiersOff: boolean
+	dossiersOff: boolean,
+	signed: Signatures
 ): { units: SceneUnit[]; unitOf: Map<string, string>; home: Map<string, string> } {
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const { candidates, homes } = hullCandidates(nodes, edges);
@@ -282,7 +264,6 @@ function baseUnits(
 		units.push(smallLaw(c, c.members[0]));
 		for (const id of [c.id, c.members[0].id]) unitOf.set(id, c.id);
 	}
-	const signed = signatures(byId, edges);
 	const ministryName = (key: string) =>
 		textOf(byId.get(nodeId('ministries', key))?.raw?.props?.abbreviation) ?? key.toUpperCase();
 	for (const node of nodes) {
@@ -421,12 +402,19 @@ export function buildScene(input: SceneInput): Scene {
 		: input.nodes;
 	const named = input.nameOf ? inFilter.map((n) => ({ ...n, label: input.nameOf!(n) })) : inFilter;
 	const drawn = named.filter((n) => !isVersionCollection(n.collection));
-	const { nodes, edges } = visibleGraph(drawn, input.edges, input.visibility ?? SHOW_ALL);
+	// A person's role is that on the day of their first stuk on the canvas, also one Tonen hides.
+	const signed = signatures(new Map(drawn.map((n) => [n.id, n])), input.edges);
+	const { nodes, edges } = visibleGraph(
+		drawn,
+		input.edges,
+		input.visibility ?? SHOW_ALL,
+		makerSorts(drawn, input.edges)
+	);
 	const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id));
 	const sortedEdges = [...edges].sort((a, b) => a.id.localeCompare(b.id));
 	const chosen = new Set(input.chosen);
 	const dossiersOff = !!input.visibility?.hiddenKinds.has('dossiers');
-	const base = baseUnits(sortedNodes, sortedEdges, chosen, dossiersOff);
+	const base = baseUnits(sortedNodes, sortedEdges, chosen, dossiersOff, signed);
 	const linked = unitEdges(
 		sortedNodes,
 		sortedEdges,
