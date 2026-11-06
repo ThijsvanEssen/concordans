@@ -92,7 +92,7 @@ export type ChainNode = {
 		way: ParentWay;
 		relation?: Relation;
 		cite?: ArticleCite;
-		/** A law that names it in its text: how many of its articles, for the order; no label. */
+		/** A law that names it in its text: how many of its articles, for the order. */
 		named?: number;
 	}[];
 	/** The regulations issued under it in turn, one level down. */
@@ -240,6 +240,7 @@ type Referring = Pick<
 	| 'kind'
 	| 'date_in_force'
 	| 'inbound_cited_count'
+	| 'inbound_cited_articles'
 >;
 
 const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
@@ -256,6 +257,37 @@ const euNode = (i: EuInstrument, parents: ChainNode['parents']): ChainNode => ({
 	parents,
 	further: []
 });
+
+/**
+ * A law that names the one drawn in its text, as a mention under it: the articles of that law
+ * it names on the line (`art. 56, 57 Gw`, B48), never a count ("2 art." reads as article 2).
+ */
+const referringItem = (
+	r: Referring,
+	lawId: string,
+	lawAbbr: string
+): [Pick<Item, 'instrument' | 'kind' | 'date_in_force' | 'expired_on'>, ChainNode['parents']] => [
+	{
+		instrument: {
+			...r,
+			title: naamVanId(r.id, r.display_name ?? r.citation_title),
+			short_title: null,
+			abbreviation: null
+		} as unknown as Summary,
+		kind: r.kind,
+		date_in_force: r.date_in_force,
+		expired_on: null
+	},
+	[
+		{
+			id: lawId,
+			way: 'mentioned',
+			relation: 'REFERS_TO',
+			named: r.inbound_cited_count,
+			cite: citeOf(r.inbound_cited_articles, lawAbbr) ?? undefined
+		}
+	]
+];
 
 /** Came with `related-instruments`: after those of the first answer, which keep their place. */
 const late = (n: ChainNode) => (n.parents.every((p) => p.relation === 'REFERS_TO') ? 1 : 0);
@@ -455,26 +487,12 @@ export function chain(
 				sub,
 				parentsOf(item.instrument.id, sub.articles, abbrOf(item.instrument), wayOf(sub.basis_kind))
 			);
-	// The laws that only name this one in their text: mentions, without a label, for the API
-	// gives how many articles they name, not which (a count reads as an article number, B48); not
-	// a law the keten draws already (the Cbw over the Cbb): its first answer said how it hangs.
+	// The laws that only name this one in their text, as mentions; not a law the keten draws
+	// already (the Cbw over the Cbb): its first answer said how it hangs.
 	const above = new Set((basis?.items ?? []).map((b) => b.instrument.id));
 	for (const r of mentions ? (refers ?? []) : []) {
 		if (!/^(?:wet|rijkswet)$/i.test(r.kind ?? '') || above.has(r.id) || byId.has(r.id)) continue;
-		take(
-			{
-				instrument: {
-					...r,
-					title: naamVanId(r.id, r.display_name ?? r.citation_title),
-					short_title: null,
-					abbreviation: null
-				} as unknown as Summary,
-				kind: r.kind,
-				date_in_force: r.date_in_force,
-				expired_on: null
-			},
-			[{ id: law.id, way: 'mentioned', relation: 'REFERS_TO', named: r.inbound_cited_count }]
-		);
+		take(...referringItem(r, law.id, lawAbbr));
 	}
 	// Without the mentions, only what rests on the law is part of its keten: a regulation under
 	// a regulation that is left out goes with it, unless a power given leads to it another way.
@@ -495,7 +513,7 @@ export function chain(
 			node.parents = node.parents.filter((p) => p.way === 'delegates' && alive.has(p.id));
 	// What it rests on, said on a phone's row: the articles of each law with its abbreviation.
 	for (const node of nodes) {
-		// A law that names it in its text: the law it names, no count.
+		// A law that names it in its text: the articles it names, else the law; never a count.
 		const said = (way: ParentWay) =>
 			node.parents
 				.flatMap(({ way: w, cite: c, relation }) =>
