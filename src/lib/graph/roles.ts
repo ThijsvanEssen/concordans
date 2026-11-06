@@ -59,7 +59,7 @@ const latestFunction = (props: Record<string, unknown>) =>
  * Whether a stuk is the advies of the Raad van State, by its kind. The advies with the nader
  * rapport is the government's answer to it, signed by the minister.
  */
-export const isCouncilAdvice = (kind: string | null): boolean =>
+const isCouncilAdvice = (kind: string | null): boolean =>
 	!!kind && /^advies\b.*raad van state\s*$/i.test(kind);
 
 /** The day of a bron, as the scene reads it. */
