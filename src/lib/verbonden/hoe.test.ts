@@ -526,6 +526,7 @@ describe('the line of a reference', () => {
 					inbound_cited_count: inbound_count,
 					outbound_count,
 					outbound_cited_count: outbound_count,
+					inbound_cited_articles: [],
 					based_on: false
 				},
 				'BWBR0052872',
@@ -599,6 +600,7 @@ describe('the line of a reference', () => {
 					inbound_cited_count: 3,
 					outbound_count: 0,
 					outbound_cited_count: 0,
+					inbound_cited_articles: [],
 					based_on: true,
 					basis
 				},
