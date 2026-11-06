@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeApi } from '$lib/test/fakeApi';
-import { geteld, nogTeTellen, telling, WACHTEN } from './decisions';
+import { WAITS } from './counted';
+import { geteld, nogTeTellen, telling } from './decisions';
 
 const antwoorden: unknown[] = [];
 let fake: ReturnType<typeof fakeApi>;
@@ -30,15 +31,17 @@ describe('decisions still being counted', () => {
 	it('asks once more, a moment later, and gives the counted answer', async () => {
 		antwoorden.push(pagina(null, true), pagina(12, false));
 		const r = geteld({ q: ['stikstof'], limit: 1 });
-		await vi.advanceTimersByTimeAsync(WACHTEN[0]);
+		await vi.advanceTimersByTimeAsync(WAITS[0]);
 		expect((await r).total).toBe(12);
 		expect(asked()).toBe(2);
+		// Past the browser's cache, which keeps the partial answer (B127).
+		expect(fake.requests.map((q) => q.cache)).toEqual([undefined, 'reload']);
 	});
 
 	it('asks again, later each time, until the counts come', async () => {
 		antwoorden.push(pagina(null, true), pagina(null, true), pagina(null, true), pagina(40, false));
 		const r = geteld({ q: ['algoritme'] });
-		await vi.advanceTimersByTimeAsync(WACHTEN[0] + WACHTEN[1] + WACHTEN[2]);
+		await vi.advanceTimersByTimeAsync(WAITS[0] + WAITS[1] + WAITS[2]);
 		expect((await r).total).toBe(40);
 		expect(asked()).toBe(4);
 	});
@@ -47,7 +50,7 @@ describe('decisions still being counted', () => {
 		antwoorden.push(pagina(null, true), pagina(null, true));
 		const ac = new AbortController();
 		const r = geteld({ q: ['a'] }, ac.signal);
-		await vi.advanceTimersByTimeAsync(WACHTEN[0]);
+		await vi.advanceTimersByTimeAsync(WAITS[0]);
 		ac.abort();
 		await expect(r).rejects.toBeDefined();
 		expect(asked()).toBe(2);

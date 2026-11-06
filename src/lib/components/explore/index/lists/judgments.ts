@@ -14,8 +14,7 @@ import {
 } from '$lib/vocabulary';
 import type { FacetGroup } from '../facets';
 import { COURT_GROUPS, MIXED_TIERS, SOURCE_OF_TIER } from '../courts';
-import { faceted } from '../faceted';
-import type { FacetsOf } from '$lib/api/lists';
+import { countedTotal, faceted, type Counted } from '../faceted';
 import JudgmentRows from '../rows/JudgmentRows.svelte';
 import JudgmentYears from '../rows/JudgmentYears.svelte';
 import { areaTree, keepChosen, sourceFacet, type Area } from './areas';
@@ -23,7 +22,7 @@ import { PAGE, defineList, type ListContext, type SortDef } from './list';
 import type { IndexParams } from './params';
 
 type Row = Schema<'JudgmentListItemDTO'>;
-export type JudgmentsState = { facets: FacetsOf<'/api/judgments'> };
+export type JudgmentsState = Counted<'/api/judgments'>;
 type Context = ListContext<Row, JudgmentsState>;
 
 const query = (p: IndexParams, sort: SortDef) => ({
@@ -205,8 +204,8 @@ export const judgments = defineList<Row, JudgmentsState, ReturnType<typeof query
 	needs: ['coverage'],
 	period: () => ({ label: 'Periode', unit: 'year' }),
 	query,
-	load: (q, offset, signal, apart, set) =>
-		faceted('/api/judgments', q, apart, (f) => set({ facets: f.facets ?? null }))(offset, signal),
+	load: (q, offset, signal, apart, set) => faceted('/api/judgments', q, apart, set)(offset, signal),
+	total: countedTotal,
 	facets: (ctx) => [
 		// The groups of courts under Instantie, each under its own heading in its menu.
 		...courtGroups(ctx),

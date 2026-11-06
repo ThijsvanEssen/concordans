@@ -3,16 +3,15 @@ import type { Schema } from '$lib/api/types';
 import { formatCount } from '$lib/text/getal';
 import { choiceOf, facetOptions } from '$lib/util/choice';
 import { OUTCOME_LABEL, PHASES, type Outcome } from '$lib/votes/stages';
-import { faceted } from '../faceted';
+import { countedTotal, faceted, type Counted } from '../faceted';
 import { OPEN_STATUS } from '../government';
-import type { FacetsOf } from '$lib/api/lists';
 import { ministryName } from '../ministries.svelte';
 import DossierRows from '../rows/DossierRows.svelte';
 import { PAGE, defineList, facetMap, toggle, type SortDef } from './list';
 import type { IndexParams } from './params';
 
 type Row = Schema<'DossierSummaryDTO'>;
-type State = { facets: FacetsOf<'/api/dossiers'> };
+type State = Counted<'/api/dossiers'>;
 
 const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
 
@@ -58,8 +57,8 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 	// its period (Thijs, 9 Oct).
 	period: () => ({ label: 'Geopend', unit: 'date' }),
 	query,
-	load: (q, offset, signal, apart, set) =>
-		faceted('/api/dossiers', q, apart, (f) => set({ facets: f.facets ?? null }))(offset, signal),
+	load: (q, offset, signal, apart, set) => faceted('/api/dossiers', q, apart, set)(offset, signal),
+	total: countedTotal,
 	facets: ({ p, state, patch }) => {
 		const kindCounts = facetMap(state.facets?.kind);
 		const phaseCounts = facetMap(state.facets?.phase);

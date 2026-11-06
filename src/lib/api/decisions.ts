@@ -1,18 +1,14 @@
 // /api/decisions counts its total and facets per set of filters, once per change of the data
-// (API 0.79.41). A set not counted yet waits 3 s for them, then answers with the whole page,
-// `total` null, empty facets and `partial`; a later question has them. The page shows at
-// once; the counts are asked for again, a little later each time, until they come.
+// (API 0.79.41): the page shows at once; the counts are asked again until they come (counted).
 import { api, unwrap } from './client';
+import { freshInit, untilCounted } from './counted';
 import type { operations } from './generated/openapi-types';
 
 type Query = NonNullable<operations['list_decisions_api_decisions_get']['parameters']['query']>;
 type Antwoord = Awaited<ReturnType<typeof besluiten>>;
 
-/** The waits before each new question: a big set can take many seconds to count. */
-export const WACHTEN = [1500, 3000, 6000, 12000];
-
-export const besluiten = (query: Query, signal?: AbortSignal) =>
-	unwrap(api.GET('/api/decisions', { params: { query }, signal }));
+export const besluiten = (query: Query, signal?: AbortSignal, fresh = false) =>
+	unwrap(api.GET('/api/decisions', { params: { query }, signal, ...freshInit(fresh) }));
 
 /**
  * A page after the first, or a page of a list nobody counts: without facets, so the API
@@ -25,33 +21,15 @@ export const decisionsPage = (query: Query, offset: number, signal?: AbortSignal
 export const nogTeTellen = (r: Pick<Antwoord, 'total' | 'partial'>) =>
 	r.partial === true && r.total === null;
 
-const wacht = (ms: number, signal?: AbortSignal) =>
-	new Promise<void>((klaar, mis) => {
-		const t = setTimeout(klaar, ms);
-		signal?.addEventListener('abort', () => {
-			clearTimeout(t);
-			mis(signal.reason);
-		});
-	});
-
 /**
- * The same question again, later each time, until its counts come: the counted answer, or
- * the last one still counting after the last wait; null where it needed none. The signal
- * (a new filter) ends the asking.
+ * The same question again until its counts come: the counted answer, or the last one still
+ * counting after the last wait; null where it needed none.
  */
-export async function telling(r: Antwoord, query: Query, signal?: AbortSignal) {
-	if (!nogTeTellen(r)) return null;
-	let laatst = r;
-	for (const ms of WACHTEN) {
-		await wacht(ms, signal);
-		laatst = await besluiten(query, signal);
-		if (!nogTeTellen(laatst)) break;
-	}
-	return laatst;
-}
+export const telling = async (r: Antwoord, query: Query, signal?: AbortSignal) =>
+	nogTeTellen(r)
+		? untilCounted((fresh) => besluiten(query, signal, fresh), nogTeTellen, signal, r)
+		: null;
 
 /** For a question that is about its counts (limit 1, the facets): the counted answer. */
-export async function geteld(query: Query, signal?: AbortSignal): Promise<Antwoord> {
-	const r = await besluiten(query, signal);
-	return (await telling(r, query, signal)) ?? r;
-}
+export const geteld = (query: Query, signal?: AbortSignal): Promise<Antwoord> =>
+	untilCounted((fresh) => besluiten(query, signal, fresh), nogTeTellen, signal);

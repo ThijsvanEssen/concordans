@@ -2,14 +2,13 @@
 import type { Schema } from '$lib/api/types';
 import { choiceOf } from '$lib/util/choice';
 import { COMMITMENT_STATUSES, commitmentStatusLabel } from '../government';
-import { faceted } from '../faceted';
-import type { FacetsOf } from '$lib/api/lists';
+import { countedTotal, faceted, type Counted } from '../faceted';
 import CommitmentRows from '../rows/CommitmentRows.svelte';
 import { PAGE, defineList, flag, toggle, type SortDef } from './list';
 import type { IndexParams } from './params';
 
 type Row = Schema<'CommitmentDTO'>;
-type State = { facets: FacetsOf<'/api/commitments'> };
+type State = Counted<'/api/commitments'>;
 
 const query = (p: IndexParams, sort: SortDef) => ({
 	cabinet: p.cabinet || undefined,
@@ -48,7 +47,8 @@ export const commitments = defineList<Row, State, ReturnType<typeof query>>({
 					until: p.to || undefined
 				},
 	load: (q, offset, signal, apart, set) =>
-		faceted('/api/commitments', q, apart, (f) => set({ facets: f.facets ?? null }))(offset, signal),
+		faceted('/api/commitments', q, apart, set)(offset, signal),
+	total: countedTotal,
 	facets: ({ p, state, page, shared, patch }) => {
 		/** The number of commitments in each state, under the other filters. */
 		const counts =
