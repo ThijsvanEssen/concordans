@@ -80,7 +80,9 @@ describe('the soort of a person on the canvas (B122)', () => {
 	});
 
 	it('Tonen names him one step further by that soort too (kind-rows)', () => {
-		expect(kindOfBron('members', graaf.key, graaf.raw?.props, 'kamerleden')).toBe('members');
-		expect(kindOfBron('members', graaf.key, graaf.raw?.props)).toBe('ministers');
+		expect(kindOfBron('members', graaf.key, graaf.raw?.props ?? undefined, 'kamerleden')).toBe(
+			'members'
+		);
+		expect(kindOfBron('members', graaf.key, graaf.raw?.props ?? undefined)).toBe('ministers');
 	});
 });
