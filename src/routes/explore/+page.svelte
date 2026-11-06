@@ -210,7 +210,7 @@
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
 
 	// One store for the lifetime of this page, so it survives mode switches.
-	// ?grens=800 is a trial: the places the canvas keeps (400), read once, at the page's start.
+	// ?grens=600 is a trial: the places the canvas keeps (1000), read once, at the page's start.
 	const cap = capFrom(page.url.searchParams.get('grens'));
 	const store = createGraphStore({ cap });
 	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts).

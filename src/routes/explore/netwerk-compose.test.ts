@@ -2,7 +2,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import { NEIGHBORHOOD_CAP } from '$lib/graph/store/types';
-import { NetwerkComposer, REACH_MAX, reachCap, withinCap } from './netwerk-compose.svelte';
+import {
+	NetwerkComposer,
+	REACH_MAX,
+	reachCap,
+	STEPS_CAP_MAX,
+	withinCap
+} from './netwerk-compose.svelte';
 
 vi.mock('$lib/api/records', () => ({
 	getNodeFirst: vi.fn(async (collection: string, key: string) => responseOf(collection, key))
@@ -123,7 +129,7 @@ describe('the steps of a netwerk', () => {
 		composer.steps = 2;
 		composer.compose(netwerk('members/a'));
 		await settle(composer);
-		expect(composer.reach).toMatchObject({ depth: 2, capped: true, cap: 400 });
+		expect(composer.reach).toMatchObject({ depth: 2, capped: true, cap: 1000 });
 	});
 
 	it('takes the default of each bron when the address says nothing: a dossier stays at one step', async () => {
@@ -176,10 +182,16 @@ describe('the steps of a netwerk', () => {
 	});
 
 	it('shares the room: a quarter of it for four, never under 50, all of it for one', () => {
-		expect(reachCap(1)).toBe(400);
-		expect(reachCap(3)).toBe(133);
-		expect(reachCap(4)).toBe(100);
-		expect(reachCap(6)).toBe(66);
+		expect(reachCap(1)).toBe(1000);
+		expect(reachCap(3)).toBe(333);
+		expect(reachCap(4)).toBe(250);
+		expect(reachCap(6)).toBe(166);
 		expect(reachCap(40)).toBe(50);
+	});
+
+	it('asks no more of one neighbourhood than the API keeps beyond the first step', () => {
+		expect(reachCap(1, 2000)).toBe(STEPS_CAP_MAX);
+		expect(reachCap(2, 2000)).toBe(STEPS_CAP_MAX);
+		expect(reachCap(4, 2000)).toBe(500);
 	});
 });

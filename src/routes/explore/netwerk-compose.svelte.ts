@@ -71,13 +71,16 @@ export function withinCap(response: NodeResponse, cap: number): NodeResponse {
  */
 export const REACH_MAX = 6;
 
+/** The most nodes the API keeps of one neighbourhood of more than one step (`cap`, 422 above). */
+export const STEPS_CAP_MAX = 1000;
+
 /**
  * Per request, the share of the canvas's room one chosen bron takes (at least 50). The room is
- * one budget, the node cap (400, or ?grens) places shared by the chosen bronnen, and a group that folds costs
+ * one budget, the node cap (1000, or ?grens) places shared by the chosen bronnen, and a group that folds costs
  * one: so a request may bring more than it can show, and the budget picks the most important.
  */
 export const reachCap = (bronnen: number, room = SOFT_NODE_CAP) =>
-	Math.max(50, Math.floor(room / Math.max(1, bronnen)));
+	Math.min(STEPS_CAP_MAX, Math.max(50, Math.floor(room / Math.max(1, bronnen))));
 
 export class NetwerkComposer {
 	/** The chosen bronnen as the panel Netwerk lists them. */
