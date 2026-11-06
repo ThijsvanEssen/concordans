@@ -314,16 +314,19 @@ function lawClassOf(c: string, key: string, props: Record<string, unknown> | und
 /**
  * The soort of one bron, as Verbonden would list it: by its collection, the laws by what they
  * are (Artikelen, Europees en internationaal, Publicaties). The legend of the werkplek names a
- * bron Verbonden does not list (one step further, a soort Verbonden has no group for) by it.
+ * bron Verbonden does not list (one step further, a soort Verbonden has no group for) by it; a
+ * person there by their soort on the canvas (`sort`, B122), else by their posts.
  */
 export function kindOfBron(
 	collection: string,
 	key: string,
-	props?: Record<string, unknown>
+	props?: Record<string, unknown>,
+	sort?: Sort
 ): KindId | null {
 	const k = KIND_OF[collection as Collection];
 	if (k === 'laws') return lawClassOf(collection, key, props);
-	if (k === 'members') return isMinister(props) ? 'ministers' : 'members';
+	if (k === 'members')
+		return (sort ?? sortOf(collection, key, props)) === 'bewindspersonen' ? 'ministers' : 'members';
 	return k ?? null;
 }
 
