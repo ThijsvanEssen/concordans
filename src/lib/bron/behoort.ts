@@ -10,7 +10,7 @@ import { ifExists } from '$lib/api/errors';
 import { getDossier } from '$lib/api/dossiers';
 import type { Collection } from '$lib/vocabulary';
 import { layerOf, type Behoort, type Regel } from './behoort-layer';
-import { dossierNummer } from './dossier-naam';
+import { dossierNummer, dossierNummerVanSleutel } from './dossier-naam';
 import { procesgangIds } from './behoort-procesgang';
 import { BANDS, kernOf, type BucketLine, type Context } from './behoort-rules';
 
@@ -55,7 +55,7 @@ export async function lazeKernIds(
 ): Promise<string[]> {
 	if (collection === 'judgments') return procesgangIds(key);
 	if (collection !== 'dossiers') return [];
-	const nummer = dossierNummer(props) ?? key;
+	const nummer = dossierNummer(props) ?? dossierNummerVanSleutel(key);
 	const d = await ifExists(getDossier(nummer));
 	const e = d?.legal_effect;
 	return [...(e?.amends ?? []), ...(e?.implements ?? [])].map((w) => `instruments/${w.key}`);

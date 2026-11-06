@@ -48,6 +48,10 @@ describe('plural and count', () => {
 		expect(plural(n, 'zetel', 'zetels')).toBe(word);
 		expect(count(n, 'zetel', 'zetels')).toBe(`${n} ${word}`);
 	});
+
+	it('writes a count of thousands with its point, as everywhere else (B111)', () => {
+		expect(count(1199, 'bron', 'bronnen')).toBe('1.199 bronnen');
+	});
 });
 
 describe('joinParts', () => {

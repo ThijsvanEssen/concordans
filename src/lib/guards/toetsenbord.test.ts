@@ -69,18 +69,8 @@ describe('the keyboard', () => {
 			),
 			selector(
 				'lib/network/ChainView.svelte',
-				'.node:focus:not(:focus-visible)',
-				'a bron of the keten clicked: its frame marks it; :focus-visible keeps the ring'
-			),
-			selector(
-				'lib/network/ChainView.svelte',
-				'.cite:focus:not(:focus-visible)',
-				'a label of a line clicked: its frame is the mark; :focus-visible keeps the ring'
-			),
-			selector(
-				'lib/network/ChainView.svelte',
-				'.stomp:focus:not(:focus-visible)',
-				'a stump clicked: the parent comes on the drawing; :focus-visible keeps the ring'
+				'.node:focus:not(:focus-visible), .cite:focus:not(:focus-visible), .stomp:focus:not(:focus-visible)',
+				'a bron, label or stump of the keten clicked: its frame marks it, or the parent comes on the drawing; :focus-visible keeps the ring'
 			),
 			selector(
 				'lib/styles/basis.css',

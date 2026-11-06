@@ -198,12 +198,11 @@ describe('Verbonden', () => {
 		expect(kop.querySelector('a.btn')?.getAttribute('href')).toBe('/x?mode=netwerk');
 	});
 
-	it('draws each bron on its own up to forty, counted under the drawing', () => {
+	it('draws each bron on its own up to forty, counted in its name, no line under it (B111)', () => {
 		paneel(ROWS, { tekst: true, networkHref: '/x' });
 		const figuur = screen.getByTestId('network-sketch');
-		expect(figuur.querySelector('figcaption')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-			'2 bronnen'
-		);
+		expect(figuur.querySelector('figcaption')).toBeNull();
+		expect(figuur.querySelector('svg')?.getAttribute('aria-label')).toMatch(/: 2 bronnen$/);
 		const namen = [...figuur.querySelectorAll('.single title')].map((t) => t.textContent);
 		expect(namen).toEqual([
 			'Hoge Raad, 20 december 2019',

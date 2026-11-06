@@ -138,6 +138,41 @@ describe('the network on request', () => {
 			}
 	});
 
+	it('lets no two circles overlap, also with the courts of 6:162 BW beside bronnen (B111)', () => {
+		const courts: [string, number][] = [
+			['Hoge Raad', 1094],
+			['Raad van State', 79],
+			['Centrale Raad van Beroep', 99],
+			['College van Beroep voor het bedrijfsleven', 61],
+			['Gerechtshoven', 2366],
+			['Rechtbanken', 6575],
+			['Hof van Justitie EU', 2],
+			['Overige instanties', 216]
+		];
+		const uitspraken = {
+			...group('judgments', 10492, 'judgments', 25),
+			parts: courts.map(([label, count], i) => ({
+				tier: i === courts.length - 1 ? null : ('hoge_raad' as const),
+				label,
+				count
+			}))
+		};
+		const s = sketch(
+			[group('a', 13, 'articles'), uitspraken, group('k', 161, 'documents', 25)],
+			'Art. 6:162 BW'
+		);
+		expect(s.clusters.length).toBeGreaterThanOrEqual(9);
+		for (const [i, a] of s.clusters.entries())
+			for (const b of s.clusters.slice(i + 1))
+				expect(Math.hypot(a.x - b.x, a.y - b.y), `${a.label} ${b.label}`).toBeGreaterThan(
+					a.r + b.r
+				);
+		for (const b of s.clusters) {
+			expect(b.x - b.r, b.label).toBeGreaterThanOrEqual(0);
+			expect(b.x + b.r, b.label).toBeLessThanOrEqual(WIDTH);
+		}
+	});
+
 	it('stands inside its height', () => {
 		const s = sketch([group('a', 13, 'articles'), group('u', 6507, 'judgments', 25)]);
 		for (const p of [...s.singles, ...s.clusters]) {

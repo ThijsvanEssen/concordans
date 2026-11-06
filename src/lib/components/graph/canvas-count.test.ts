@@ -40,6 +40,23 @@ describe('countCanvas', () => {
 		expect(counts.kinds).toEqual({ stukken: 4 });
 		expect(counts.metGroep).toEqual({ stukken: { count: 1, van: 4, groepen: ['dossier'] } });
 	});
+
+	it('counts per kind what is drawn now, a ring drawn now too (B116)', () => {
+		const ring = { filterGroup: 'dossiers' as const };
+		const { counts } = countCanvas({
+			graph: canvas(),
+			drawn: new Set(['f', 'in']),
+			selectionId: 'f',
+			hiddenKinds: new Set(),
+			rechter: null,
+			verborgen: new Map(),
+			hiddenLines: new Set(),
+			rings: [ring, ring],
+			ringsShown: []
+		});
+		expect(counts.kinds).toEqual({ stukken: 4, dossiers: 2 });
+		expect(counts.drawnKinds).toEqual({ stukken: 2 });
+	});
 });
 
 describe('sameIds', () => {

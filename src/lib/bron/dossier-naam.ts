@@ -44,6 +44,16 @@ export const dossierNumberLabel = (number: string, kamer?: 'EK' | 'TK' | null) =
 	`Dossier${kamer === 'EK' ? ' I' : ''} ${officialNumber(number)}`;
 
 /**
+ * The number the dossier routes ask for, from a node key or a number: `36600_vii` → `36600-VII`
+ * (the route answers 422 to the key, B124). A number stays as it is.
+ */
+export const dossierNummerVanSleutel = (key: string) =>
+	key
+		.trim()
+		.replace(/[\s_]+/g, '-')
+		.toUpperCase();
+
+/**
  * A dossier's number as the Kamer writes it, with its suffix: "36600-VII", the one way to read
  * it from props. The source gives it as `label`; else `number` and `suffix` apart ("36600",
  * "VII"); `number` alone dropped the suffix (UX-toets 10 Oct: "Over 36600 Vaststelling van de

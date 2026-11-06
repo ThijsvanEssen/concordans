@@ -13,6 +13,7 @@ import { getDossier } from '$lib/api/dossiers';
 import { memberToGraphNode, syntheticNode, type GraphNode } from '$lib/graph/types';
 import type { Collection } from '$lib/vocabulary';
 import { keyEcli } from '$lib/text/ecli';
+import { dossierNummerVanSleutel } from './dossier-naam';
 
 export const headOfMember = (m: Schema<'MemberDetailDTO'>): GraphNode => memberToGraphNode(m);
 
@@ -65,7 +66,7 @@ export function kopNode(collection: Collection, key: string): Promise<GraphNode>
 		case 'instruments':
 			return getInstrumentDetail(enactedLawOfKey(key) ?? key.toUpperCase()).then(headOfLaw);
 		case 'dossiers':
-			return getDossier(key).then(headOfDossier);
+			return getDossier(dossierNummerVanSleutel(key)).then(headOfDossier);
 		case 'articles':
 			return getArticleDetailByKey(key)?.then(kopVanArtikel) ?? null;
 		default:

@@ -254,7 +254,9 @@
 	let drawn: ReadonlySet<string> = new Set();
 	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
 	let drawnBronnen = $state<DrawnBron[]>([]);
-	const containersDrawn = (ids: readonly string[], focal: string) =>
+	/** What the lanes draw now, for a row on; `held` adds what they would with nothing off (B105). */
+	let shownIds = $state.raw<ReadonlySet<string> | undefined>();
+	const containersDrawn = (ids: readonly string[], focal: string, held = true) =>
 		containersOnCanvas({
 			ids,
 			focal,
@@ -263,9 +265,9 @@
 			selectionId: selection?.id ?? null,
 			hasNode: (id) => g.hasNode(id),
 			propsOf: (id) => lookup.get(id)?.raw?.props ?? undefined,
-			lanesDrawn: lanes ? new Set([...drawn, ...laneHeld]) : null
+			lanesDrawn: lanes ? new Set(held ? [...drawn, ...laneHeld] : drawn) : null
 		});
-	function drawnBronnenOf(ids: readonly string[]): DrawnBron[] {
+	function drawnBronnenOf(ids: readonly string[], held = true): DrawnBron[] {
 		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
 		// A focus drawn as a hull (a wet, a dossier, a fractie) holds what it draws: one step.
 		const focus = g.findNode(
@@ -290,7 +292,7 @@
 		}
 		// A commissie or dossier drawn as a ring or a point is one bron of its soort (B41).
 		const counted = new Set(out.map((b) => b.id));
-		for (const { holdsFocus, point, ...ring } of containersDrawn(ids, focal))
+		for (const { holdsFocus, point, ...ring } of containersDrawn(ids, focal, held))
 			if (!counted.has(ring.id))
 				out.push({
 					...ring,
@@ -328,6 +330,7 @@
 			groups: v.groups,
 			chain: ids,
 			drawn: drawnBronnen,
+			shown: shownIds,
 			buckets: reach?.buckets ?? lightBuckets(v.buckets)
 		});
 	});
@@ -344,6 +347,7 @@
 			houd: (id) => id === selection?.id
 		});
 		onMetGroep?.(verborgen);
+		const focalId = (selection?.id ?? '').toLowerCase();
 		const geteld = countCanvas({
 			graph: g,
 			drawn,
@@ -353,21 +357,16 @@
 			period: yearPeriod,
 			verborgen,
 			hiddenLines: filters.hiddenLines,
-			rings: containersDrawn([...drawn], (selection?.id ?? '').toLowerCase()).filter(
-				(r) => !r.point
-			)
+			rings: containersDrawn([...drawn], focalId).filter((r) => !r.point),
+			ringsShown: containersDrawn([...drawn], focalId, false).filter((r) => !r.point)
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
+		shownIds = lanes ? new Set(drawnBronnenOf(geteld.drawnIds, false).map((b) => b.id)) : undefined;
 		telJaren();
 		// The keyboard's list sorts what is drawn: only a change sorts it again.
-		if (
-			!sameIds(
-				untrack(() => drawnIds),
-				geteld.drawnIds
-			)
-		)
-			drawnIds = geteld.drawnIds;
+		const before = untrack(() => drawnIds);
+		if (!sameIds(before, geteld.drawnIds)) drawnIds = geteld.drawnIds;
 	}
 
 	$effect(() => {
@@ -1238,11 +1237,11 @@
 	/** The canvas and the cards over it (see the markup). */
 	let buhne = $state<HTMLDivElement | null>(null);
 
-	// Below 1101 px the filters of the strip open under a button Filter, over the canvas.
-	/** A phone: the bronnen and filters in a sheet behind the button at the foot of the canvas. */
-	let sheetOpen = $state(false);
+	/** A phone: the bronnen and filters in a sheet, open for the weergave it opened in (B111). */
+	let sheetFor = $state<string | null>(null);
+	const sheetOpen = $derived(sheetFor === view);
 	provideWeergaveBlad({
-		open: () => (sheetOpen = true),
+		open: () => (sheetFor = view),
 		get isOpen() {
 			return sheetOpen;
 		}
@@ -1252,7 +1251,7 @@
 	let cardHeight = $state(0);
 	let stripHeight = $state(0);
 	function closeSheet() {
-		sheetOpen = false;
+		sheetFor = null;
 		sheetOpener?.focus();
 	}
 
@@ -1373,7 +1372,7 @@
 		aria-haspopup="dialog"
 		aria-expanded={sheetOpen}
 		bind:this={sheetOpener}
-		onclick={() => (sheetOpen = !sheetOpen)}>Weergave</button
+		onclick={() => (sheetFor = sheetOpen ? null : view)}>Weergave</button
 	>
 {/snippet}
 

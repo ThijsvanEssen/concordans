@@ -64,7 +64,7 @@ test('een bron zonder afkorting: de knop kapt af, de hele naam in de tooltip', a
 
 for (const [soort, pad, knop] of [
 	['dossier', '/dossiers/36702', 'Lezer: 36702'],
-	['uitspraak', '/uitspraken/ECLI:NL:RBDHA:2024:14069', 'Lezer: Rb. Den Haag 30 augustus 2024'],
+	['uitspraak', '/uitspraken/ECLI:NL:RBDHA:2024:14069', 'Lezer: Rb. Den Haag 30 aug. 2024'],
 	['artikel', '/wetten/BWBR0006622/artikel/8', 'Lezer: Art. 8 WVW']
 ] as const)
 	test(`een ${soort}: de korte naam op de knop, één rij, ook met een tweede bron`, async ({

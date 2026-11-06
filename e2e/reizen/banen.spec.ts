@@ -304,6 +304,20 @@ test('Tonen counts the tiles as dossiers, and Dossiers off draws none', async ({
 	await expect(page).toHaveURL(/[?&]bronnen=/);
 });
 
+test('with Stukken off no tile is drawn, and Dossiers says 0 of its whole (B116)', async ({
+	page,
+	touch
+}) => {
+	await page.goto(WVW_NETWERK);
+	await expect(tiles(page)).toHaveCount(20);
+	if (touch) await openSheet(page);
+	const dossiers = page.getByRole('button', { name: /^Dossiers\b/ });
+	await page.getByRole('button', { name: /^Stukken\b/ }).click();
+	await expect(tiles(page)).toHaveCount(0);
+	await expect(dossiers).toHaveAttribute('aria-pressed', 'true');
+	await expect(dossiers).toHaveText(/\b0 van 63\b/);
+});
+
 test('Tonen holds the stuksoorten under Stukken, and no Voorstellen', async ({ page, touch }) => {
 	await page.goto(WVW_NETWERK);
 	await expect(tiles(page)).toHaveCount(20);

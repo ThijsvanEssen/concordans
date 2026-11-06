@@ -7,7 +7,7 @@ import { describeBronShort, UNNAMED } from '$lib/bron/describe';
 import { decisionOutcome } from '$lib/votes/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
-import { langeDatum } from '$lib/text/datum';
+import { langeDatum, shortDatesIn } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
 import { bwCode } from '$lib/text/bw';
 import {
@@ -71,7 +71,8 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	return wet && !n.label.includes(wet) ? `${n.label} ${wet}` : n.label;
 }
 
-/** A bron on the wissel, as short as it is cited: a dossier by its number, a judgment by its citation. */
+/** A bron on the wissel, as short as it is cited: a dossier by its number, a judgment by its citation,
+ * its date short as Gekozen writes it (B123). */
 export function buttonName(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	if (n.collection === 'dossiers') {
 		const d = dossierUitProps({ display_name: n.raw?.display_name, ...n.raw?.props }, n.key);
@@ -81,7 +82,7 @@ export function buttonName(n: GraphNode, meta: Map<string, InstrumentMeta>): str
 		n.collection === 'judgments'
 			? citationRecord({ kind: 'judgment', cite: n.raw?.cite, props: n.raw?.props })
 			: null;
-	return cited?.short ?? bronNaam(n, meta);
+	return shortDatesIn(cited?.short ?? bronNaam(n, meta));
 }
 
 /** The whole name of a bron where the wissel abbreviates it: a dossier by its number and title. */

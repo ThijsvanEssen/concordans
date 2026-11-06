@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { dossierLabel, dossierName } from './dossier-naam';
+import { dossierLabel, dossierName, dossierNummerVanSleutel } from './dossier-naam';
+
+describe('dossierNummerVanSleutel', () => {
+	it('turns a node key into the number the dossier routes ask for', () => {
+		expect(dossierNummerVanSleutel('36600_vii')).toBe('36600-VII');
+		expect(dossierNummerVanSleutel('36600')).toBe('36600');
+	});
+
+	it('leaves a number as it is', () => {
+		expect(dossierNummerVanSleutel('36600-VII')).toBe('36600-VII');
+	});
+});
 
 describe('dossierLabel', () => {
 	const d = (short_title: string | null, title: string | null) => ({
