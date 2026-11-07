@@ -99,6 +99,10 @@
 		() => overlay && !onSelect,
 		() => target
 	);
+	// The abbreviations are asked when ⌘K opens, not with a page.
+	$effect(() => {
+		if (overlay && !onSelect) doen.aliases.load();
+	});
 	$effect.pre(() => {
 		search.query = searchTextOf(doen.line, doen.parsed);
 	});

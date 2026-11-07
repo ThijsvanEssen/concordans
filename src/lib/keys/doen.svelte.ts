@@ -28,6 +28,8 @@ export type DoRow = {
 	/** The state it stands in now: shown, not done again. */
 	now?: boolean;
 	run?: () => void;
+	/** A suggestion, not an answer: Enter does not choose it; the keys can reach it. */
+	suggest?: boolean;
 	/** In place of `run`: the field gets this text, to type the rest ("+ "). */
 	fill?: string;
 };
