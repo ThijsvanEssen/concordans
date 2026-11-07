@@ -227,7 +227,7 @@ test('the pointer and then ↓: the next row stands chosen, and the column says 
 	await expect(preview).not.toContainText('laden…');
 });
 
-test('an answer after ↓ moves the rows: Enter opens the bron that was chosen', async ({
+test('a slower answer after ↓ comes in under the rows: Enter opens the bron that was chosen', async ({
 	page,
 	isMobile
 }) => {
@@ -240,17 +240,18 @@ test('an answer after ↓ moves the rows: Enter opens the bron that was chosen',
 		extra: { bwb_id: 'BWBR0005289', number: '6:162' }
 	};
 	const law = {
-		id: 'instruments/bwbr0006299',
-		key: 'bwbr0006299',
+		id: 'instruments/bwbr0032904',
+		key: 'bwbr0032904',
 		collection: 'instruments',
-		display_name: 'Politiewet 1993'
+		display_name: 'Politiewet 1993',
+		extra: { bwb_id: 'BWBR0032904' }
 	};
-	let lawsIn = () => {};
-	const laws = new Promise<void>((resolve) => (lawsIn = resolve));
+	let articlesIn = () => {};
+	const articles = new Promise<void>((resolve) => (articlesIn = resolve));
 	await page.route(apiPath(/\/api\/search/), async (route) => {
 		const types = new URL(route.request().url()).searchParams.getAll('types').join(',');
 		const fast = types.includes('instruments');
-		if (fast) await laws;
+		if (!fast && types.includes('articles')) await articles;
 		const results = fast
 			? { instruments: [law] }
 			: types.includes('articles')
@@ -268,20 +269,21 @@ test('an answer after ↓ moves the rows: Enter opens the bron that was chosen',
 	await field.fill('onrechtmatig');
 	const dialog = page.getByRole('dialog', { name: 'Zoekvenster' });
 	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
+	// The slower lanes wait for the fast one; once it is in, the rows stay where they are.
 	await expect(results.getByRole('option')).toHaveCount(1, { timeout: 30_000 });
 	await page.keyboard.press('ArrowDown');
 	const chosen = results.getByRole('option', { selected: true });
-	await expect(chosen).toContainText('6:162');
+	await expect(chosen).toContainText('Politiewet');
 
-	lawsIn();
+	articlesIn();
 	await expect(results.getByRole('option')).toHaveCount(2);
 	await expect(results.getByRole('option').first()).toContainText('Politiewet');
-	await expect(chosen).toContainText('6:162');
+	await expect(chosen).toContainText('Politiewet');
 	await field.press('Enter');
-	await expect(page).toHaveURL(/\/wetten\/BWBR0005289\/artikel\/6:162/);
+	await expect(page).toHaveURL(/\/wetten\/BWBR0032904/);
 });
 
-test('the full answer orders the rows otherwise than the live one: Enter opens the bron chosen', async ({
+test('the rows wait for the full answer, not for the live one: Enter opens the bron chosen', async ({
 	page,
 	isMobile
 }) => {
@@ -324,18 +326,12 @@ test('the full answer orders the rows otherwise than the live one: Enter opens t
 	await field.fill('wvw');
 	const results = dialog.getByRole('listbox', { name: 'Resultaten' });
 	const rows = results.getByRole('option');
-	await expect(rows).toHaveCount(LIVE.length, { timeout: 30_000 });
-	await page.keyboard.press('ArrowDown');
-	await page.keyboard.press('ArrowDown');
-	const chosen = results.getByRole('option', { selected: true });
-	await expect(chosen).toContainText('Wet 0032904');
-	await expect(rows.nth(1)).toContainText('Wet 0032904');
-
+	// The live answer left kinds out: the fast lane asks again in full and shows nothing before.
+	await expect(rows).toHaveCount(0);
 	fullIn();
-	await expect(rows).toHaveCount(FULL.length);
-	await expect(rows.nth(1)).toContainText('Wet 0006299');
-	await expect(rows.nth(4)).toContainText('Wet 0032904');
-	await expect(chosen).toHaveCount(1);
+	await expect(rows).toHaveCount(FULL.length, { timeout: 30_000 });
+	for (let i = 0; i < FULL.length; i++) await page.keyboard.press('ArrowDown');
+	const chosen = results.getByRole('option', { selected: true });
 	await expect(chosen).toContainText('Wet 0032904');
 	await field.press('Enter');
 	await expect(page).toHaveURL(/\/wetten\/BWBR0032904/);

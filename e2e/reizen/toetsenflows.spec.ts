@@ -76,8 +76,12 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		await expect(page).toHaveURL(/weergave=keten/);
 		await doe(page, 'netwerk awb', 'Netwerk van');
 		await expect(page).toHaveURL(/\/wetten\/BWBR0005537\?mode=netwerk/);
+		// Recent holds bronnen: the Awb once left, not the netwerk without a bron (B117).
+		await page.goBack();
+		await expect(page).not.toHaveURL(/BWBR0005537/);
 		const recent = await palette(page, '', 'Recent');
-		await expect(recent.rows.first()).toContainText('Netwerk');
+		await expect(recent.rows).toHaveCount(1);
+		await expect(recent.rows.first()).toContainText('Awb');
 	},
 	// Aantal stappen by its word; 0 only with chosen bronnen.
 	F3: async (page) => {
