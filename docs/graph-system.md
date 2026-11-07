@@ -37,7 +37,7 @@ Each module is a factory that receives the context and returns part of the `Grap
 
 **One request per bron.** `nodeResponse(collection, key)` fetches `/api/nodes/{collection}/{key}` with `limit` 200, the most the API allows per bucket, through `getNode` in `records.ts`, so the record is asked once per session. The canvas draws from it and the panel Verbonden reads it, so a bron is asked for once. `expandNode` merges the response and draws at most `neighborLimit` neighbours (30 by default); `expandNeighborhood` fetches every node and edge within `depth` hops in one request. Instruments are recorded in the instrument cache and not drawn as neighbours. Edges below `semanticThreshold` are dropped when merged.
 
-**Soft cap.** `SOFT_NODE_CAP` is 400. A merge that passes it removes the oldest nodes that are not pinned, selected or next to the selection; `trimmedCount` counts them.
+**Soft cap.** `SOFT_NODE_CAP` is 1000, as high as the API keeps a neighbourhood of more than one step. A merge that passes it removes the oldest nodes that are not pinned, selected or next to the selection; `trimmedCount` counts them.
 
 **Cancellation.** Requests carry the context's signal; `reset()` calls `supersede()`, which aborts every request still writing into the old canvas.
 
