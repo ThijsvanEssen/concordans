@@ -202,6 +202,28 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
+	it('shows the groups once the fast answer in full is in, though it still says partial (B117)', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'onrechtmatige daad');
+		of('articles').answer(answer({ articles: [hit('articles', 'art', 1)] }));
+		of('instruments').answer(
+			answer({ instruments: [] }, { resolved: null, partial: { instruments: true, members: true } })
+		);
+		await settle();
+		await vi.advanceTimersByTimeAsync(150);
+		// The answer in full leaves members out too: no more to ask, so it is in.
+		of('instruments').answer(
+			answer(
+				{ instruments: [hit('instruments', 'bw6', 2)] },
+				{ resolved: null, partial: { members: true } }
+			)
+		);
+		await settle();
+		expect(s.shown.map((g) => g.kind)).toEqual(['instruments', 'articles', 'judgments']);
+		stop();
+	});
+
 	it('says a lane that failed in its group, and asks only that lane again', async () => {
 		const { asked, of } = api();
 		const { s, stop } = session();

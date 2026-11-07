@@ -579,7 +579,7 @@ export class SearchSession {
 
 	#request(
 		lane: Lane,
-		query: { q: string; types: SearchKind[]; resolve?: boolean },
+		query: { q: string; types: SearchKind[]; resolve?: boolean; mode?: string },
 		asked: number
 	) {
 		const run = this.#runs[lane.id];
@@ -607,8 +607,10 @@ export class SearchSession {
 				const hits = r.results as Hits;
 				this.searched = { ...this.searched, ...r.searched };
 				// The live mode names the kinds it cut off at its time: more on "Meer …". A lane that
-				// asks in full has no more to ask for.
-				const cut = lane.full ? [] : query.types.filter((k) => r.partial?.[k]);
+				// asks in full, or an answer in full, has no more to ask for (the API may still say
+				// `partial` there: then the fast lane would wait for a second answer that never comes).
+				const cut =
+					lane.full || query.mode === 'full' ? [] : query.types.filter((k) => r.partial?.[k]);
 				const answer: Answer = {
 					term,
 					best: r.best ?? null,
