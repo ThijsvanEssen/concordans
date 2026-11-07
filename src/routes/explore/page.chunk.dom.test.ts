@@ -71,7 +71,7 @@ async function settle() {
 
 describe('a part of the Verkenner whose chunk did not come', () => {
 	it('says De lijst with Opnieuw, which brings it in its place', async () => {
-		open('/explore?mode=index&kind=judgments');
+		open('/uitspraken');
 		const { container } = render(Page);
 		await settle();
 		expect(screen.getByRole('alert').textContent).toContain('De lijst kon niet worden geladen.');

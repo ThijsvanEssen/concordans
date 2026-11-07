@@ -11,7 +11,7 @@ const GROUPS = {
 };
 
 test('Bronnen lists every kind in its group, each with its count', async ({ page }) => {
-	await page.goto('/explore?mode=index');
+	await page.goto('/bladeren');
 	const main = page.getByRole('main');
 	for (const [group, kinds] of Object.entries(GROUPS)) {
 		await expect(main.getByRole('heading', { level: 2, name: group, exact: true })).toBeVisible();
@@ -22,7 +22,7 @@ test('Bronnen lists every kind in its group, each with its count', async ({ page
 
 for (const kind of ['Uitspraken', 'Stemmingen', 'Kamerleden', 'Toezeggingen'])
 	test(`Bronnen › ${kind} opens its list`, async ({ page }) => {
-		await page.goto('/explore?mode=index');
+		await page.goto('/bladeren');
 		await page
 			.getByRole('main')
 			.getByRole('link', { name: new RegExp(`^${kind} [\\d.]+$`) })
@@ -34,11 +34,17 @@ for (const kind of ['Uitspraken', 'Stemmingen', 'Kamerleden', 'Toezeggingen'])
 		).toBeVisible();
 	});
 
-test('a bare collection typed in the bar opens its list, named as its kind', async ({ page }) => {
+test('a list opens at its own address, named as its kind (B128)', async ({ page }) => {
 	await page.goto('/uitspraken');
-	await expect(page).toHaveURL(/\/explore\?mode=index&kind=judgments$/);
+	await expect(page).toHaveURL(/\/uitspraken$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Bronnen: Uitspraken');
 	await expect(page).toHaveTitle('Uitspraken, Concordans');
+});
+
+test('an old address of a list moves to its own, with its filters (B128)', async ({ page }) => {
+	await page.goto('/explore?mode=index&kind=judgments&source=echr');
+	await expect(page).toHaveURL(/\/uitspraken\?source=echr$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Bronnen: Uitspraken');
 });
 
 test('the documentation leads to the method and the keys', async ({ page }) => {

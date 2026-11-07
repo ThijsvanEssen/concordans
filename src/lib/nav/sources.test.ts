@@ -6,13 +6,13 @@ import { mineAt } from './mine';
 const at = (path: string) => new URL(path, 'https://concordans.nl');
 
 describe('the source a page stands under', () => {
-	it('names the list of Bladeren by its kind', () => {
-		expect(sourceOf(at('/explore?mode=index&kind=instruments'))?.id).toBe('wetten');
-		expect(sourceOf(at('/explore?mode=index&kind=judgments'))?.id).toBe('rechtspraak');
-		expect(sourceOf(at('/explore?mode=index&kind=decisions'))?.id).toBe('kamerstukken');
-		expect(sourceOf(at('/explore?mode=index&kind=factions'))?.id).toBe('parlement');
-		expect(sourceOf(at('/explore?mode=index&kind=ministers'))?.id).toBe('regering');
-		expect(sourceOf(at('/explore?mode=index'))).toBeNull();
+	it('names the list of Bladeren by its address', () => {
+		expect(sourceOf(at('/wetten'))?.id).toBe('wetten');
+		expect(sourceOf(at('/uitspraken?q=huur'))?.id).toBe('rechtspraak');
+		expect(sourceOf(at('/stemmingen'))?.id).toBe('kamerstukken');
+		expect(sourceOf(at('/fracties'))?.id).toBe('parlement');
+		expect(sourceOf(at('/bewindspersonen'))?.id).toBe('regering');
+		expect(sourceOf(at('/bladeren'))).toBeNull();
 	});
 
 	it('names a bron read by its address or its focus', () => {
@@ -71,7 +71,7 @@ describe('the Netwerk button', () => {
 			`${article}?mode=netwerk&netwerk=articles%2Fa&uit=members%2Fx`
 		);
 		expect(networkHref(at('/'))).toBe('/explore');
-		expect(networkHref(at('/explore?mode=index&kind=instruments'))).toBe('/explore');
+		expect(networkHref(at('/wetten'))).toBe('/explore');
 		expect(networkHref(at('/actueel'))).toBe('/explore');
 	});
 
@@ -79,7 +79,7 @@ describe('the Netwerk button', () => {
 		expect(onNetwork(at('/explore'))).toBe(true);
 		expect(onNetwork(at('/wetten/BWBR0005289/artikel/6:162?mode=netwerk'))).toBe(true);
 		expect(onNetwork(at('/wetten/BWBR0005289/artikel/6:162'))).toBe(false);
-		expect(onNetwork(at('/explore?mode=index'))).toBe(false);
+		expect(onNetwork(at('/bladeren'))).toBe(false);
 	});
 
 	it("counts the werkplek's own netwerk there, the kept one elsewhere, with the bron of the lezer", () => {

@@ -1,9 +1,10 @@
 // The kinds of source of the top navigation (besluit 36): what a reader browses by. Each is
-// a list of Bladeren (`/explore?mode=index&kind=…`) or, for Actueel, the page of the day. The
+// a list of Bladeren at its own address (`/wetten`, $lib/bron/lists.ts) or, for Actueel, the page of the day. The
 // network is no soort but a tool beside the search field (TopBar). One list here: the bar,
 // the tab bar of a phone, the breadcrumb of a reader and the sub-tabs of Bladeren read it.
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { isExplorePath } from '$lib/bron/address';
+import { listOfPath } from '$lib/bron/lists';
 import { indexHref } from '$lib/bron/href';
 import { RUBRIEK_LABEL, isMinister, rubriekOf, type Rubriek } from '$lib/bron/rubrieken';
 
@@ -14,7 +15,7 @@ type Source = {
 	label: string;
 	/** What it holds, under its name in the sheet of a phone. */
 	holds: string;
-	/** The lists of Bladeren it holds (`kind` of the address), the first its landing. */
+	/** The lists of Bladeren it holds, the first its landing. */
 	lists: readonly string[];
 	href: string;
 };
@@ -88,10 +89,9 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
  * focus). Null on the start page, Actueel, Mijn and a canvas without a bron.
  */
 export function sourceOf(url: URL, person?: Record<string, unknown> | null): Source | null {
+	const list = listOfPath(url.pathname);
+	if (list) return sourceOfList(list);
 	if (url.pathname === '/explore') {
-		const kind = url.searchParams.get('kind');
-		if (url.searchParams.get('mode') === 'index')
-			return kind && SOURCES.some((s) => s.lists.includes(kind)) ? sourceOfList(kind) : null;
 		const focus = parseNodeId(url.searchParams.get('focus') ?? '');
 		return focus ? sourceOfCollection(focus.collection, person) : null;
 	}

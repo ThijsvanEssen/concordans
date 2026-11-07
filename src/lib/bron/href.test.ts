@@ -66,13 +66,11 @@ describe('buildBronHref', () => {
 	});
 
 	it('reads a bron that is opened from Bladeren', () => {
-		expect(buildBronHref(at('/explore?mode=index&kind=judgments'), 'judgments/j')).toBe(
-			'/explore?focus=judgments/j'
-		);
+		expect(buildBronHref(at('/uitspraken'), 'judgments/j')).toBe('/explore?focus=judgments/j');
 	});
 
 	it('leaves the filters of Bladeren behind', () => {
-		const bladeren = '/explore?mode=index&kind=commitments&van=2020-01-01&tot=2020-12-31&status=x';
+		const bladeren = '/toezeggingen?van=2020-01-01&tot=2020-12-31&status=x';
 		expect(buildBronHref(at(bladeren), 'judgments/j')).toBe('/explore?focus=judgments/j');
 	});
 
@@ -139,9 +137,9 @@ describe('buildOpenHref', () => {
 
 describe('indexHref', () => {
 	it('names a list in Bladeren with its filters', () => {
-		expect(indexHref('dossiers')).toBe('/explore?mode=index&kind=dossiers');
+		expect(indexHref('dossiers')).toBe('/dossiers');
 		expect(indexHref('ministers', { kabinet: 'rutte_iv' })).toBe(
-			'/explore?mode=index&kind=ministers&kabinet=rutte_iv'
+			'/bewindspersonen?kabinet=rutte_iv'
 		);
 	});
 });
@@ -169,8 +167,8 @@ describe('exploreMode', () => {
 describe('modeOf', () => {
 	it.each([
 		['/explore', 'graph'],
-		['/explore?mode=index', 'index'],
-		['/explore?mode=index&kind=judgments', 'index'],
+		['/bladeren', 'index'],
+		['/uitspraken?q=huur', 'index'],
 		['/explore?focus=articles/a_1', 'read'],
 		['/dossiers/36799', 'read'],
 		['/dossiers/36799?mode=netwerk', 'graph'],

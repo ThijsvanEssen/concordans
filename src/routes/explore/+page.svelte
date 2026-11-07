@@ -84,6 +84,7 @@
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
+	import { OVERVIEW_PATH } from '$lib/bron/lists';
 	import type IndexView from '$lib/components/explore/IndexView.svelte';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
 	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
@@ -1698,7 +1699,10 @@
 	);
 
 	const pageTitle = $derived.by(() => {
-		if (mode === 'index') return siteTitle(categoryLabel(indexKind));
+		if (mode === 'index')
+			return params.get('kind') === null
+				? routeKop(OVERVIEW_PATH).title
+				: siteTitle(categoryLabel(indexKind));
 		if (nietGevonden) return siteTitle('Niet gevonden');
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).

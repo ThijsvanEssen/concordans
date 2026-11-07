@@ -2384,15 +2384,15 @@ exports[`Bronnen, list by list > ministers ?weergave=naast > view 1`] = `
 
 exports[`Bronnen, the address > drops the filters and the open row in a tab, the Kamer kept 1`] = `
 [
-  "/explore?kamer=EK&mode=index&kind=dossiers",
-  "/explore?kamer=EK&mode=index&kind=documents",
-  "/explore?kamer=EK&mode=index&kind=decisions",
-  "/explore?kamer=EK&mode=index&kind=commitments",
+  "/dossiers?kamer=EK",
+  "/kamerstukken?kamer=EK",
+  "/stemmingen?kamer=EK",
+  "/toezeggingen?kamer=EK",
 ]
 `;
 
-exports[`Bronnen, the address > switches the Kamer as a choice, dropping the fractie and the open row 1`] = `"?mode=index&kind=members&q=a&kamer=EK"`;
+exports[`Bronnen, the address > switches the Kamer as a choice, dropping the fractie and the open row 1`] = `"?q=a&kamer=EK"`;
 
-exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 1`] = `"?mode=index&kind=dossiers&sort=title&open=dossiers/1&track=Begroting"`;
+exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 1`] = `"?sort=title&open=dossiers/1&track=Begroting"`;
 
-exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 2`] = `"?mode=index&kind=dossiers&sort=title&open=dossiers/1"`;
+exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 2`] = `"?sort=title&open=dossiers/1"`;

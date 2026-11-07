@@ -10,6 +10,71 @@
 		"description": "Het netwerk van wetten, uitspraken, Kamerstukken en stemmingen, per bron met de verbonden bronnen."
 	},
 	{
+		"path": "/bladeren",
+		"title": "Bronnen, Concordans",
+		"description": "Alle bronnen per rubriek: wetten, rechtspraak, Kamerstukken, parlement en regering, elk met een lijst om te doorzoeken en te filteren."
+	},
+	{
+		"path": "/wetten",
+		"title": "Wetten, Concordans",
+		"description": "Wetten, verdragen en Europese regelgeving, en de publicaties in het Staatsblad die ze wijzigen."
+	},
+	{
+		"path": "/uitspraken",
+		"title": "Uitspraken, Concordans",
+		"description": "Uitspraken van de rechter, met de artikelen die ze aanhalen."
+	},
+	{
+		"path": "/dossiers",
+		"title": "Dossiers, Concordans",
+		"description": "Kamerdossiers: wetsvoorstellen, begrotingen, verdragen en andere onderwerpen, met hun stukken, behandeling en uitkomst."
+	},
+	{
+		"path": "/kamerstukken",
+		"title": "Stukken, Concordans",
+		"description": "Stukken van de Tweede Kamer en de Eerste Kamer: brieven, verslagen, moties, amendementen en wetsvoorstellen, met hun plaats in het dossier."
+	},
+	{
+		"path": "/stemmingen",
+		"title": "Stemmingen, Concordans",
+		"description": "Stemmingen van de Tweede Kamer en de Eerste Kamer over wetsvoorstellen, moties en amendementen, met de stemmen per fractie of per lid."
+	},
+	{
+		"path": "/toezeggingen",
+		"title": "Toezeggingen, Concordans",
+		"description": "Toezeggingen van bewindspersonen aan de Kamer, met hun stand en de dossiers waarop ze betrekking hebben."
+	},
+	{
+		"path": "/leden",
+		"title": "Kamerleden, Concordans",
+		"description": "Leden van de Tweede Kamer en de Eerste Kamer, met hun fractie en commissies."
+	},
+	{
+		"path": "/fracties",
+		"title": "Fracties, Concordans",
+		"description": "Fracties in de Tweede Kamer en de Eerste Kamer, met hun zetels en leden."
+	},
+	{
+		"path": "/commissies",
+		"title": "Commissies, Concordans",
+		"description": "Commissies van de Tweede Kamer en de Eerste Kamer, met hun leden en activiteiten."
+	},
+	{
+		"path": "/kabinetten",
+		"title": "Kabinetten, Concordans",
+		"description": "Kabinetten, met hun periode, coalitie en bewindspersonen."
+	},
+	{
+		"path": "/ministeries",
+		"title": "Ministeries, Concordans",
+		"description": "Ministeries, met hun periode en het ministerie dat hen opvolgde."
+	},
+	{
+		"path": "/bewindspersonen",
+		"title": "Bewindspersonen, Concordans",
+		"description": "Ministers en staatssecretarissen per kabinet en ministerie, met de dossiers die ze als bewindspersoon ondertekenden."
+	},
+	{
 		"path": "/actueel",
 		"title": "Actueel, Concordans",
 		"description": "Nieuwe wetten, uitspraken, Kamerstukken en stemmingen, per dag."

@@ -13,7 +13,7 @@ test('?bronnen= brings Verbonden into view where it stands under the text', asyn
 });
 
 test('a list names itself in the tab, also when it is the first page', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=instruments');
+	await page.goto('/wetten');
 	await expect(page).toHaveTitle(/^Wetten, Concordans$/);
 });
 

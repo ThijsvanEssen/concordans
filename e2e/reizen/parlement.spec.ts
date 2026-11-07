@@ -146,7 +146,7 @@ test('the Stemmingen narrow to the motions of no confidence, chosen under Stemmi
 	const motion = page.waitForRequest(
 		(r) => r.url().includes('/api/decisions') && r.url().includes('motion_kind=no_confidence')
 	);
-	await page.goto('/explore?mode=index&kind=decisions');
+	await page.goto('/stemmingen');
 	const option = await openFilter(page, touch, 'Stemmingsoort');
 	await option(/^Motie van wantrouwen/).click();
 	await expect(page).toHaveURL(/motie=wantrouwen/);
@@ -163,7 +163,7 @@ test('the Stemmingen narrow to the motions of no confidence, chosen under Stemmi
 });
 
 test('the Stemmingen say when the Kamer meets', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=decisions');
+	await page.goto('/stemmingen');
 	await expect(
 		page.getByText(/^Volgende vergadering en stemmingen: dinsdag 27\soktober\s2026$/)
 	).toBeVisible();
@@ -172,7 +172,7 @@ test('the Stemmingen say when the Kamer meets', async ({ page }) => {
 test('an open row of the Stemmingen draws its bar once, large, and shows a dossier by number', async ({
 	page
 }) => {
-	await page.goto('/explore?mode=index&kind=decisions');
+	await page.goto('/stemmingen');
 	const rij = page
 		.locator('li.row-wrap')
 		.filter({ has: page.locator('.stembalk') })
@@ -190,7 +190,7 @@ test('a search of several words goes to the API as one q', async ({ page }) => {
 	const asked = page.waitForRequest(
 		(r) => r.url().includes('/api/decisions') && r.url().includes('q=')
 	);
-	await page.goto('/explore?mode=index&kind=decisions&q=vertrouwen+opzeggen');
+	await page.goto('/stemmingen?q=vertrouwen+opzeggen');
 	const url = new URL((await asked).url());
 	expect(url.searchParams.getAll('q')).toEqual(['vertrouwen opzeggen']);
 });
@@ -329,7 +329,7 @@ test('a toezegging in the list names the debate its agenda came from, opened in 
 			dossiers: (t.dossiers as Rec[]).map((d) => ({ ...d, basis: 'agenda' }))
 		}))
 	}));
-	await page.goto('/explore?mode=index');
+	await page.goto('/bladeren');
 	await page
 		.getByRole('main')
 		.getByRole('link', { name: /^Toezeggingen [\d.]+$/ })

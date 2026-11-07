@@ -15,9 +15,9 @@ describe('chamberOf', () => {
 
 	it('points at the leden, fracties and stemmingen of that Kamer', () => {
 		expect(chamberLinks('EK').map((l) => l.href)).toEqual([
-			'/explore?mode=index&kind=members&kamer=EK',
-			'/explore?mode=index&kind=factions&kamer=EK',
-			'/explore?mode=index&kind=decisions&kamer=EK'
+			'/leden?kamer=EK',
+			'/fracties?kamer=EK',
+			'/stemmingen?kamer=EK'
 		]);
 	});
 });

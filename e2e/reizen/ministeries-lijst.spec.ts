@@ -6,7 +6,7 @@ test('/ministeries leads to the list, the current ministeries before the abolish
 	page
 }) => {
 	await page.goto('/ministeries');
-	await expect(page).toHaveURL(/kind=ministries/);
+	await expect(page).toHaveURL(/\/ministeries$/);
 	const list = page
 		.getByRole('list')
 		.filter({ has: page.getByRole('link', { name: 'Algemene Zaken' }) });
@@ -20,7 +20,7 @@ test('/ministeries leads to the list, the current ministeries before the abolish
 });
 
 test('an abolished ministry names its last year and its successor', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=ministries');
+	await page.goto('/ministeries');
 	const row = page.getByRole('listitem').filter({ hasText: 'Veiligheid en Justitie' }).first();
 	await expect(row).toContainText('tot 2017');
 	await expect(row.getByRole('link', { name: 'Justitie en Veiligheid' })).toHaveAttribute(
@@ -30,7 +30,7 @@ test('an abolished ministry names its last year and its successor', async ({ pag
 });
 
 test('a ministry without a TOOI code is abolished, with no year invented', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=ministries');
+	await page.goto('/ministeries');
 	await expect(page.getByText('Scheepvaart', { exact: true })).toBeVisible();
 	const rows = await page.locator('ul.list > li').allTextContents();
 	const split = rows.findIndex((t) => t.includes('Opgeheven ministeries'));
@@ -41,7 +41,7 @@ test('a ministry without a TOOI code is abolished, with no year invented', async
 });
 
 test('a long abbreviation keeps the row as high as a short one', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=ministries');
+	await page.goto('/ministeries');
 	const height = async (name: string) =>
 		(await page.locator('ul.list > li').filter({ hasText: name }).first().boundingBox())!.height;
 	await expect(page.getByText('MinJus', { exact: true })).toBeVisible();
@@ -49,13 +49,13 @@ test('a long abbreviation keeps the row as high as a short one', async ({ page }
 });
 
 test('an abolished row says so itself, also when searched alone', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=ministries&q=Scheepvaart');
+	await page.goto('/ministeries?q=Scheepvaart');
 	const row = page.locator('ul.list > li').filter({ hasText: 'Scheepvaart' });
 	await expect(row).toContainText('Opgeheven');
 });
 
 test('a row leads to the page of the ministry', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=ministries');
+	await page.goto('/ministeries');
 	await page.getByRole('link', { name: 'Justitie en Veiligheid', exact: true }).first().click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
 		'Ministerie van Justitie en Veiligheid'

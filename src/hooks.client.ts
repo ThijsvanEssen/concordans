@@ -14,8 +14,8 @@ export function onUnhandledRejection(event: PromiseRejectionEvent) {
 }
 
 /**
- * An address that moved ($lib/seo/moved.ts: a bare collection) replaced in the bar by the one
- * of now before the app reads it: as a 301 would.
+ * An address that moved ($lib/seo/moved.ts: a list of Bladeren under /explore) replaced in the
+ * bar by the one of now before the app reads it: as a 301 would.
  */
 export function moveAddress(location: Location, history: History) {
 	const moved = movedAddress(new URL(location.href));

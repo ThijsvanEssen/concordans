@@ -4,7 +4,8 @@
 // its overlay, so reading stays reading and the network stays the network.
 import { page } from '$app/state';
 import { parseNodeId, type Mode } from '$lib/vocabulary';
-import { isExplorePath, exploreHref, exploreUrl } from './address';
+import { isExplorePath, exploreHref, exploreUrl, parsePad } from './address';
+import { listPath } from './lists';
 import type { BronRef } from './ref';
 import type { SharedParam } from '$lib/url/filters';
 
@@ -12,8 +13,8 @@ import type { SharedParam } from '$lib/url/filters';
 export const NETWORK_MODE = 'netwerk';
 
 /**
- * Bladeren is ?mode=index, whatever else the address holds. Without a bron the Verkenner is
- * the werkplek Netwerk; a bron is read in Tekst unless the address asks for the werkplek
+ * Bladeren is a list at its own address (/wetten), read as ?mode=index. Without a bron the
+ * Verkenner is the werkplek Netwerk; a bron is read in Tekst unless the address asks for the werkplek
  * (?mode=netwerk), a netwerk of chosen bronnen in the address or not (besluit 39). The table
  * of its verbindingen is read so too.
  */
@@ -36,7 +37,7 @@ export const modeOf = (url: URL): Mode | null =>
 export const hasFocus = (url: URL): boolean =>
 	url.pathname === '/explore'
 		? Boolean(url.searchParams.get('focus'))
-		: isExplorePath(url.pathname);
+		: parsePad(url.pathname) !== null;
 
 type BronHrefOptions = {
 	/** Position inside the text: `lid-2`, `lid-2-onder-a`, `aanhef`, `rov-5.3`. */
@@ -150,11 +151,11 @@ export const bronHref = (ref: BronRef | string, opts?: BronHrefOptions) =>
 export const openHref = (ref: BronRef | string, opts?: OpenHrefOptions) =>
 	buildOpenHref(page.url, ref, opts);
 
-/** A list in Bladeren, with its filters: `/explore?mode=index&kind=ministers&kabinet=rutte_iv`. */
+/** A list in Bladeren, with its filters: `/bewindspersonen?kabinet=rutte_iv`. */
 export function indexHref(
 	kind: string,
 	filters: { [K in SharedParam | 'status']?: string } = {}
 ): string {
-	const params = new URLSearchParams({ mode: 'index', kind, ...filters });
-	return `/explore?${params.toString()}`;
+	const query = new URLSearchParams(filters).toString();
+	return `${listPath(kind)}${query ? `?${query}` : ''}`;
 }
