@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import {
 	expiredTitle,
+	expiredWord,
 	around,
 	bySection,
 	chamberOfHit,
@@ -543,6 +544,9 @@ describe('a hit that has expired (besluit 30)', () => {
 			'Vervallen per 1\u00a0januari\u00a02024'
 		);
 		expect(expiredTitle('dossiers', '2024-01-01', now)).toBeNull();
+		// The row marks a law ingetrokken, an article vervallen (B117).
+		expect(expiredWord(expiredTitle('instruments', '2024-01-01', now)!)).toBe('ingetrokken');
+		expect(expiredWord(expiredTitle('articles', '2024-01-01', now)!)).toBe('vervallen');
 		expect(expiredTitle('articles', null, now)).toBeNull();
 	});
 });

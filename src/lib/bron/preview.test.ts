@@ -74,7 +74,7 @@ describe('previewFromNode', () => {
 			outcome: 'aangenomen'
 		});
 		expect([p.kicker, p.title, p.lines]).toEqual([
-			'Dossier, Dossier 34372',
+			'Dossier 34372',
 			'Wijziging van het Wetboek van Strafrecht',
 			'Aangenomen'
 		]);

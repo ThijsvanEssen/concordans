@@ -100,7 +100,7 @@ describe('wet and dossier of the same name', () => {
 			short_title: 'Cyberbeveiligingswet'
 		});
 		expect([dossier.kicker, dossier.title, dossier.extra]).toEqual([
-			'Dossier, Dossier 36764',
+			'Dossier 36764',
 			'Cyberbeveiligingswet',
 			LONG
 		]);
