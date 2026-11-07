@@ -579,7 +579,7 @@ export class SearchSession {
 
 	#request(
 		lane: Lane,
-		query: { q: string; types: SearchKind[]; resolve?: boolean; mode?: string },
+		query: { q: string; types: SearchKind[]; resolve?: boolean; mode?: 'full' | 'live' },
 		asked: number
 	) {
 		const run = this.#runs[lane.id];
