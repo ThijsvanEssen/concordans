@@ -11,7 +11,7 @@ export type DossierNaamBron = {
 	title?: string | null;
 	/** Null or left out: the API knows none. */
 	short_title?: string | null;
-	short_title_basis?: 'title' | 'citation' | 'case' | 'amended_law' | null;
+	short_title_basis?: 'title' | 'citation' | 'case' | 'eerstekamer' | 'amended_law' | null;
 };
 
 // `36600-VIII`, `23908-(R1519)`: a number and its suffix as the data and the URLs join them. A

@@ -2,7 +2,7 @@
 // page, so a link to a bron seen anywhere is the API's address.
 import { onAnswer } from '$lib/api/client';
 import { onthoudArtikel } from '$lib/api/articles';
-import { apiNumber, bookNumber } from '$lib/text/bw';
+import { apiNumber } from '$lib/text/bw';
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { onthoudTitel } from './titels.svelte';
 import { keptPath, padHref, parsePad, remember, type Pad } from './address';
@@ -19,7 +19,7 @@ export function keepPaths(data: unknown, depth = 0) {
 		return;
 	}
 	const { path, key, member_key, collection } = data as Record<string, unknown>;
-	const address = typeof path === 'string' ? path : articleAddress(data);
+	const address = typeof path === 'string' ? path : null;
 	const pad = address ? parsePad(address) : null;
 	const id = (data as { id?: unknown }).id ?? idFrom(pad, collection, member_key ?? key);
 	if (typeof id === 'string' && address && pad && keptPath(id) !== address) {
@@ -64,17 +64,6 @@ function idFrom(pad: Pad | null, collection: unknown, key: unknown): string | un
 	if (typeof collection === 'string') return `${collection}/${key}`;
 	const own = pad && collectionOfAddress(pad);
 	return own ? `${own}/${key}` : undefined;
-}
-
-/**
- * An article's address where an answer names its law and number but has no path (the articles
- * a memorie explains, `explains`): as the app writes it (live-toets peek 5, C1).
- */
-function articleAddress(d: object): string | null {
-	const { collection, bwb_id: wet, article_number: nummer } = d as Record<string, unknown>;
-	const named = collection === 'articles' && !('path' in d);
-	if (!named || typeof wet !== 'string' || typeof nummer !== 'string') return null;
-	return padHref({ kind: 'artikel', law: wet, number: bookNumber(wet, nummer) });
 }
 
 onAnswer((data) => {

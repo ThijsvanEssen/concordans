@@ -46,6 +46,7 @@ export function rowsOfCitedBy(
 			passageAt: at,
 			relation: 'REFERS_TO',
 			direction: 'inbound',
+			edge: { origin: item.origin },
 			props: { ...j }
 		});
 	}
