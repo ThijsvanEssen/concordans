@@ -26,6 +26,7 @@ describe('abbreviation suggestions', () => {
 	});
 	it('offers none for the whole abbreviation, an empty line or several words', () => {
 		expect(abbreviations('Awb')).toEqual([]);
+		expect(abbreviations('sr')).toEqual([]);
 		expect(abbreviations('')).toEqual([]);
 		expect(abbreviations('BW 7')).toEqual([]);
 	});

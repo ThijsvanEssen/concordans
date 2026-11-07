@@ -28,10 +28,12 @@ export function suggestionsOf(data: Aliases): Suggestion[] {
 	return out;
 }
 
-/** The suggestions a line is the beginning of, never the whole abbreviation: shortest first. */
+/** The suggestions a line is the beginning of, none once it is a whole abbreviation: shortest first. */
 export function suggest(all: readonly Suggestion[], line: string): Suggestion[] {
 	const q = line.trim().toLowerCase();
 	if (!q || /\s/.test(q)) return [];
+	// A line that is a whole abbreviation is done: it names its law, the search opens it.
+	if (all.some((s) => s.abbreviation.toLowerCase() === q)) return [];
 	return all
 		.filter((s) => s.abbreviation.length > q.length && s.abbreviation.toLowerCase().startsWith(q))
 		.sort(
