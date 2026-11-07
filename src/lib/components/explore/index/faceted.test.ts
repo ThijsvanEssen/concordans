@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { WAITS } from '$lib/api/counted';
 import { fakeApi, fail, type FakeRequest } from '$lib/test/fakeApi';
 import type { FacetedPath } from '$lib/api/lists';
 import { faceted, type FacetsApart } from './faceted';
@@ -123,5 +124,55 @@ describe('a faceted list', () => {
 		const l = list();
 		const load = faceted('/api/documents', { limit: 100 }, l.apart, () => {});
 		await expect(load(0, new AbortController().signal)).rejects.toThrow('answered 500');
+	});
+
+	// B127: cold, the API answers the facets `partial` (empty) after 3 s; the browser keeps
+	// that answer, and the ETag of the data version answers a 304 for it until the data changes.
+	it('asks facets still being counted again, past the browser cache, with their total', async () => {
+		vi.useFakeTimers();
+		try {
+			const counting = { items: [], total: 21198, partial: true, facets: { legal_area: [] } };
+			const counted = { items: [], total: 21198, partial: false, facets: { tag: 'facets' } };
+			const facetsAnswers = [counting, counting, counted];
+			const api = fakeApi({
+				'/api/instruments': ({ params }: FakeRequest) =>
+					params.query?.facets ? facetsAnswers.shift() : answer([{ id: 'a' }], 'rows')
+			});
+			const kept: unknown[] = [];
+			const l = list();
+			await faceted('/api/instruments', { sort: 'title', limit: 100 }, l.apart, (c) =>
+				kept.push(c)
+			)(0, new AbortController().signal);
+			await vi.advanceTimersByTimeAsync(WAITS[0] + WAITS[1]);
+			expect(kept).toEqual([{ facets: { tag: 'facets' }, total: 21198 }]);
+			const facets = api.requests.filter((r) => r.params.query?.facets);
+			expect(facets.map((r) => r.cache)).toEqual([undefined, 'reload', 'reload']);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('stops asking the facets again when the filters change', async () => {
+		vi.useFakeTimers();
+		try {
+			const api = fakeApi({
+				'/api/judgments': ({ params }: FakeRequest) =>
+					params.query?.facets
+						? { items: [], total: null, partial: true, facets: {} }
+						: answer([{ id: 'a' }], 'rows')
+			});
+			const l = list();
+			const ac = new AbortController();
+			await faceted('/api/judgments', { limit: 100 }, l.apart, (c) => l.facets.push(c))(
+				0,
+				ac.signal
+			);
+			ac.abort();
+			await vi.advanceTimersByTimeAsync(WAITS.reduce((a, b) => a + b));
+			expect(api.requests.filter((r) => r.params.query?.facets)).toHaveLength(1);
+			expect(l.facets).toEqual([]);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

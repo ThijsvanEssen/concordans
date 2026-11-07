@@ -1,18 +1,17 @@
 // Wetten: the BWB, the treaties and the EU's acts, with the Staatsblad publications that amend them.
-import { getInstruments } from '$lib/api/instruments';
 import { report } from '$lib/api/errors';
+import { untilCounted } from '$lib/api/counted';
+import { getFacetedList } from '$lib/api/lists';
 import type { Schema } from '$lib/api/types';
 import { choiceOf } from '$lib/util/choice';
-import { faceted } from '../faceted';
-import type { FacetsOf } from '$lib/api/lists';
+import { countedTotal, faceted, type Counted } from '../faceted';
 import InstrumentRows from '../rows/InstrumentRows.svelte';
 import { areaTree, keepChosen, type Area } from './areas';
 import { PAGE, defineList, flag, toggle, type SortDef } from './list';
 import type { IndexParams } from './params';
 
 type Row = Schema<'InstrumentListItemDTO'>;
-type State = {
-	facets: FacetsOf<'/api/instruments'>;
+type State = Counted<'/api/instruments'> & {
 	/** The treaties under the filters chosen: asked apart, as the API counts no kinds yet. */
 	treaties: number | null;
 };
@@ -48,23 +47,36 @@ export const instruments = defineList<Row, State, ReturnType<typeof query>>({
 	period: () => ({ label: 'In werking getreden', unit: 'date' }),
 	query,
 	load: (q, offset, signal, apart, set) =>
-		faceted('/api/instruments', q, apart, (f) => set({ facets: f.facets ?? null }))(
-			offset,
-			signal
-		).then((r) => {
+		faceted(
+			'/api/instruments',
+			q,
+			apart,
+			set
+		)(offset, signal).then((r) => {
 			if (offset) return r;
 			// The count beside Verdragen: this list's own total where it is the treaties, else
 			// one row asked under the same filters, beside the rows, not before them (live,
 			// 10 Oct: rows in at 1.7 s, on screen at 4.1 s).
 			if (q.kind) set({ treaties: r.total });
 			else
-				void getInstruments({ ...q, kind: 'verdrag', limit: 1, offset: 0, facets: false }, signal)
+				void untilCounted(
+					(fresh) =>
+						getFacetedList(
+							'/api/instruments',
+							{ ...q, kind: 'verdrag', limit: 1, offset: 0, facets: false },
+							signal,
+							fresh
+						),
+					(v) => v.total == null,
+					signal
+				)
 					.then((v) => {
-						if (!signal.aborted) set({ treaties: v.total });
+						if (!signal.aborted) set({ treaties: v.total ?? null });
 					})
 					.catch((e) => report('Aantal verdragen', e));
 			return r;
 		}),
+	total: countedTotal,
 	facets: ({ p, state, patch }) => {
 		const legal = byKey(
 			(state.facets?.legal_area ?? []).flatMap((f) => [f, ...(f.narrower ?? [])])

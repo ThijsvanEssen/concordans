@@ -1,14 +1,13 @@
 // Stukken of a Kamer, newest first: always one Kamer, as without a filter the list is slow.
 import type { Schema } from '$lib/api/types';
 import { facetOptions } from '$lib/util/choice';
-import { faceted } from '../faceted';
-import type { FacetsOf } from '$lib/api/lists';
+import { countedTotal, faceted, type Counted } from '../faceted';
 import DocumentRows from '../rows/DocumentRows.svelte';
 import { PAGE, defineList, facetMap, toggle } from './list';
 import type { IndexParams } from './params';
 
 type Row = Schema<'DocumentListItemDTO'>;
-type State = { facets: FacetsOf<'/api/documents'> };
+type State = Counted<'/api/documents'>;
 
 const query = (p: IndexParams) => ({
 	chamber: p.kamer,
@@ -43,8 +42,8 @@ export const documents = defineList<Row, State, ReturnType<typeof query>>({
 	chamber: true,
 	period: () => ({ label: 'Datum', unit: 'date' }),
 	query,
-	load: (q, offset, signal, apart, set) =>
-		faceted('/api/documents', q, apart, (f) => set({ facets: f.facets ?? null }))(offset, signal),
+	load: (q, offset, signal, apart, set) => faceted('/api/documents', q, apart, set)(offset, signal),
+	total: countedTotal,
 	facets: ({ p, state, patch }) => [
 		{
 			id: 'soort',

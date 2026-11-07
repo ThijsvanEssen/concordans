@@ -1,6 +1,7 @@
 // The lists that count their facets on request (`facets=true`): one call for five paths.
 // Counting takes the time of a search (slowApi, 30 s): cold, a period took 20 s (#80).
 import { api, unwrap, slowApi } from './client';
+import { freshInit } from './counted';
 import type { paths } from './generated/openapi-types';
 
 /** The lists that count their facets on request (`facets=true`). */
@@ -23,11 +24,15 @@ export type ListPage<P extends FacetedPath> =
 /** The facets of a list as its answer gives them. */
 export type FacetsOf<P extends FacetedPath> = ListPage<P>['facets'];
 
-/** A page of a faceted list; with its facets counted, as long as the API takes. */
+/**
+ * A page of a faceted list; with its facets counted, as long as the API takes. `fresh`
+ * asks past the browser's cache (counted).
+ */
 export const getFacetedList = <P extends FacetedPath>(
 	path: P,
 	query: ListQuery<P> & { offset: number; limit?: number; facets: boolean },
-	signal: AbortSignal
+	signal: AbortSignal,
+	fresh = false
 ): Promise<ListPage<P>> =>
 	// One call for five paths: openapi-fetch types a call per path, not per union of them.
 	unwrap(
@@ -38,6 +43,10 @@ export const getFacetedList = <P extends FacetedPath>(
 			) => Promise<{ data?: ListPage<P>; response: Response }>
 		)(path, {
 			params: { query },
-			signal
+			signal,
+			...freshInit(fresh)
 		})
 	);
+
+/** An answer whose facets were still being counted: empty now, asked again (counted). */
+export const facetsCounting = (r: object) => 'partial' in r && r.partial === true;

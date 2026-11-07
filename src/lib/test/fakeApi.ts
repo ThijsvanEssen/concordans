@@ -14,6 +14,8 @@ export type FakeRequest = {
 	path: ApiPath;
 	params: { path?: Record<string, unknown>; query?: Record<string, unknown> };
 	signal?: AbortSignal;
+	/** `reload` where it asks past the browser's cache. */
+	cache?: RequestCache;
 };
 
 const FAILURE = Symbol('failure');
@@ -47,8 +49,14 @@ export function fakeApi(routes: Partial<Record<ApiPath, FakeAnswer>>) {
 	const requests: FakeRequest[] = [];
 	const get =
 		(client: FakeRequest['client']) =>
-		async (path: ApiPath, init: Partial<Pick<FakeRequest, 'params' | 'signal'>> = {}) => {
-			const request: FakeRequest = { client, path, params: init.params ?? {}, signal: init.signal };
+		async (path: ApiPath, init: Partial<Pick<FakeRequest, 'params' | 'signal' | 'cache'>> = {}) => {
+			const request: FakeRequest = {
+				client,
+				path,
+				params: init.params ?? {},
+				signal: init.signal,
+				...(init.cache ? { cache: init.cache } : {})
+			};
 			requests.push(request);
 			if (init.signal?.aborted) throw init.signal.reason;
 			if (!(path in routes)) throw new Error(`fakeApi: no answer for ${path}`);
