@@ -1,7 +1,7 @@
 // What the lanes know of a chosen wet from GET /api/instruments/{bwb}/amended-by (B82): an enacted
 // change runs from the Staatsblad to an article, so the neighbourhood of the wet itself holds no
 // publication. One request per chosen wet says whether she is changed, by which dossiers, and
-// whether a change is pending. Pure: LanesView asks, the scene (withChange) marks.
+// whether a change is pending. Pure: amended-by.svelte.ts asks, the scene (withChange) marks.
 import type { Schema } from '$lib/api/types';
 
 export type LawAmended = {
@@ -31,3 +31,10 @@ export function lawAmended(data: Schema<'AmendedByResponse'>): LawAmended {
 		)
 	};
 }
+
+/** The chosen wetten by their BWB-id (`instruments/bwbr0006622`), as one key: `amended-by` is asked for them. */
+export const chosenLaws = (chosen: readonly string[]) =>
+	chosen
+		.filter((id) => /^instruments\/bwbr\d+$/i.test(id))
+		.map((id) => id.slice('instruments/'.length).toUpperCase())
+		.join(' ');
