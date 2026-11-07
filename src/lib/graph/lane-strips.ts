@@ -107,6 +107,23 @@ function hullBox(u: SceneUnit, x: number, y: number, width: number): UnitBox {
 	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
 }
 
+/**
+ * The target of a finger on a row of a chosen hull: the whole line, up to the next (B95). The
+ * rows stand edge to edge, so a larger target would only take a tap from its neighbour.
+ */
+export const rowTarget = (b: UnitBox, y: number): Box => ({
+	x: b.mark.x,
+	y: y - STRIP_ROW / 2,
+	width: b.mark.width,
+	height: STRIP_ROW
+});
+
+/** The target of a unit: a little around it, on a phone its row exactly, touching the next (B95). */
+export function unitTarget(b: Box, phone: boolean): Box {
+	const pad = phone ? 0 : 4;
+	return { x: b.x - 4, y: b.y - pad, width: b.width + 8, height: b.height + 2 * pad };
+}
+
 const changeRank = (u: SceneUnit) => (u.change === 'enacted' ? 2 : u.change === 'proposed' ? 1 : 0);
 
 const byWeight = (a: SceneUnit, b: SceneUnit) =>

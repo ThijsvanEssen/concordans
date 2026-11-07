@@ -3,7 +3,7 @@ import { EXAMPLES, example, shuffled } from '$lib/test/lanes';
 import type { Pt } from '$lib/network/tree-lines';
 import { sample, slanted } from '$lib/test/paths';
 import type { Box } from './lane-layout';
-import { laneStrips, STRIP_ROW, stripHead, stripLines } from './lane-strips';
+import { laneStrips, rowTarget, STRIP_ROW, stripHead, stripLines, unitTarget } from './lane-strips';
 import { buildScene } from './scene';
 
 /** A phone. */
@@ -66,8 +66,12 @@ describe.each(EXAMPLES)('the strips of %s', (name) => {
 			expect(gap === 0 || gap >= 28).toBe(true);
 		}
 		for (const [id, b] of boxes)
-			for (let i = 1; i < b.rows.length; i++)
+			for (let i = 1; i < b.rows.length; i++) {
 				expect(b.rows[i].y - b.rows[i - 1].y, id).toBe(STRIP_ROW);
+				const [above, below] = [rowTarget(b, b.rows[i - 1].y), rowTarget(b, b.rows[i].y)];
+				expect(above.y + above.height, id).toBe(below.y);
+			}
+		for (const b of rows) expect(unitTarget(b, true)).toMatchObject({ y: b.y, height: b.height });
 	});
 
 	it('names every unit outside Wie maakt, on one line (Thijs, variant A)', () => {
