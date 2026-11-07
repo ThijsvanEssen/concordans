@@ -1020,6 +1020,7 @@
 			padding: var(--s-3) var(--s-4) 0;
 		}
 		.cat {
+			min-height: 44px;
 			padding: var(--s-2) var(--s-4) var(--s-3);
 		}
 		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the
