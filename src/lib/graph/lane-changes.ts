@@ -2,7 +2,7 @@
 // and with the card that lies over them. Pure: LanesView draws it.
 import type { Schema } from '$lib/api/types';
 import { dossierNumberOf } from '$lib/bron/describe';
-import type { LawChange } from './scene';
+import type { LawChange, SceneUnit } from './scene';
 import type { GraphNode } from './types';
 
 /** The air kept around what is scrolled into view. */
@@ -15,6 +15,13 @@ export const LAW_CHANGE_WORDS: Record<LawChange, { head: string; says: string }>
 	enacted: { head: 'Gewijzigd', says: 'gewijzigd' },
 	proposed: { head: 'Voorgesteld', says: 'wijziging voorgesteld' }
 };
+
+/** What a tooltip says of a dossier with a publication that changed the chosen wet (B82). */
+export const DOSSIER_ENACTED = 'wijziging vastgesteld';
+
+/** What a tooltip says of a unit's change, a wet's or a dossier's. */
+export const changeSays = (u: SceneUnit) =>
+	!u.change ? null : u.column === 'laws' ? LAW_CHANGE_WORDS[u.change].says : DOSSIER_ENACTED;
 
 /** A dossier's number as its node's key writes it: `21501-02` is `21501_02`. */
 const keyOfNumber = (number: string) => number.toLowerCase().replace(/[^a-z0-9]+/g, '_');

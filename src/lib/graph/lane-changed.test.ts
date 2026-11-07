@@ -3,6 +3,8 @@ import { example } from '$lib/test/lanes';
 import { CONTENT_TOP, laneLayout } from './lane-layout';
 import { laneStrips } from './lane-strips';
 import { buildScene, type Scene, type SceneUnit } from './scene';
+import { amendedKey, lawAmended, type Amended } from './lane-amended';
+import type { LineKind } from './line-kind';
 
 const WIDTH = 1200;
 const d2 = (): Scene => buildScene(example('d2'));
@@ -99,5 +101,63 @@ describe('a changed wet on the lanes', () => {
 		for (const u of changed) expect(strips.units.get(u.id)!.text.name.length).toBe(1);
 		for (const u of others) expect(at(u.id).y).toBeGreaterThanOrEqual(lastChanged);
 		expect(strips.heads).toEqual([]);
+	});
+});
+
+describe('a chosen wet by amended-by (B82)', () => {
+	const jw = example('jw');
+	const law = jw.chosen[0];
+	const said = (over: Partial<Parameters<typeof lawAmended>[0]> = {}) =>
+		lawAmended({
+			bwb_id: 'BWBR0034925',
+			total: 2,
+			proposals_total: 0,
+			proposals: [],
+			items: [{ dossiers: [{ id: 'dossiers/33684' }] }, { dossiers: [] }],
+			...over
+		} as unknown as Parameters<typeof lawAmended>[0]);
+	const scene = (amended: Amended, hidden: LineKind[] = []) =>
+		buildScene({
+			...jw,
+			amended,
+			visibility: { hiddenKinds: new Set(), hiddenLines: new Set(hidden) }
+		});
+	const unitOf = (s: Scene, id: string) =>
+		s.units.flatMap((u) => [u, ...u.periods.flatMap((p) => p.units)]).find((u) => u.id === id);
+
+	it('reads the publications, their dossiers and the pending proposals', () => {
+		expect(said()).toEqual({
+			enacted: true,
+			proposed: false,
+			dossiers: new Set(['dossiers/33684'])
+		});
+		expect(said({ total: 0, items: [], proposals_total: 3 })).toMatchObject({
+			enacted: false,
+			proposed: true
+		});
+	});
+
+	it('stands as changed with her publications, though no line on the canvas shows one', () => {
+		const s = scene(new Map([[amendedKey('instruments/BWBR0034925'), said()]]));
+		expect(unitOf(s, law)?.change).toBe('enacted');
+	});
+
+	it('marks the dossiers of those publications as enacted, and no other', () => {
+		const s = scene(new Map([[amendedKey(law), said()]]));
+		expect(unitOf(s, 'dossiers/33684')?.change).toBe('enacted');
+		const others = s.units.filter((u) => u.column !== 'laws' && u.id !== 'dossiers/33684');
+		expect(others.every((u) => u.change === null)).toBe(true);
+	});
+
+	it('is only proposed when amended-by names a pending proposal alone', () => {
+		const s = scene(
+			new Map([[amendedKey(law), said({ total: 0, items: [], proposals_total: 1 })]])
+		);
+		expect(unitOf(s, law)?.change).toBe('proposed');
+	});
+
+	it('marks nothing with Wijziging off in Relatie', () => {
+		const s = scene(new Map([[amendedKey(law), said()]]), ['change']);
+		expect(s.units.some((u) => u.change)).toBe(false);
 	});
 });

@@ -10,9 +10,9 @@
 	import { dossierNumberLabel, dossierOwnName, officialNumber } from '$lib/bron/dossier-naam';
 	import { sortColour } from '$lib/bron/rubrieken';
 	import { capitalize } from '$lib/text/words';
-	import { laneDossierNumber } from '$lib/graph/lane-changes';
+	import { CHANGED_MARK, DOSSIER_ENACTED, laneDossierNumber } from '$lib/graph/lane-changes';
 	import { nextIndex } from '$lib/actions/menu';
-	import { oneLine, type UnitBox } from '$lib/graph/lane-layout';
+	import { CHANGED_ROOM, oneLine, type UnitBox } from '$lib/graph/lane-layout';
 	import type { SceneUnit } from '$lib/graph/scene';
 	import type { GraphNode } from '$lib/graph/types';
 
@@ -62,12 +62,13 @@
 		};
 	});
 
-	const fullName = (u: SceneUnit) => {
-		const label = dossierNumberLabel(numberOf(u));
-		const name = names.get(u.id)?.full;
-		return name ? `${label}, ${name}` : label;
-	};
-	const nameRoom = $derived(box.mark.width - 2 * PAD - TILE.width - 8);
+	const fullName = (u: SceneUnit) =>
+		[dossierNumberLabel(numberOf(u)), names.get(u.id)?.full, u.change && DOSSIER_ENACTED]
+			.filter(Boolean)
+			.join(', ');
+	/** After the tile: the marker of an enacted change (B82), then the name. */
+	const nameX = (u: SceneUnit) => box.mark.x + PAD + TILE.width + 8 + (u.change ? CHANGED_ROOM : 0);
+	const nameRoom = (u: SceneUnit) => box.mark.x + box.mark.width - PAD - nameX(u);
 
 	/** The tiles are one stop of the Tab key, ↑ and ↓ go through them; the one last on keeps the stop. */
 	const tiles = $derived(unit.periods.flatMap((p) => p.units));
@@ -160,9 +161,16 @@
 				<text class="number" x={box.mark.x + PAD + TILE.width / 2} y={y + 4}
 					>{oneLine(officialNumber(numberOf(u)), TILE.width - 8, FONT)}</text
 				>
+				{#if u.change}
+					<path
+						class="changed-mark"
+						d={CHANGED_MARK}
+						transform="translate({box.mark.x + PAD + TILE.width + 12} {y})"
+					/>
+				{/if}
 				{#if names.get(u.id)}
-					<text class="name" x={box.mark.x + PAD + TILE.width + 8} y={y + 4}
-						>{oneLine(names.get(u.id)!.short, nameRoom, FONT)}</text
+					<text class="name" x={nameX(u)} y={y + 4}
+						>{oneLine(names.get(u.id)!.short, nameRoom(u), FONT)}</text
 					>
 				{/if}
 			</g>
@@ -204,6 +212,9 @@
 	}
 	.tile.is-open .plate {
 		stroke-width: 2px;
+	}
+	.changed-mark {
+		fill: var(--ink-2);
 	}
 	.number {
 		font-size: var(--t-label);

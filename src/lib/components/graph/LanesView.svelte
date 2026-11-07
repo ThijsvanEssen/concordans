@@ -26,10 +26,11 @@
 	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
 	import { laneLineColour } from '$lib/graph/line-strength';
 	import { getChangedArticles } from '$lib/api/dossiers';
+	import { amendedOf } from './amended-by.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import {
 		CHANGED_MARK,
-		LAW_CHANGE_WORDS,
+		changeSays,
 		changedFirst,
 		changedNumbers,
 		laneDossierNumber,
@@ -74,7 +75,6 @@
 		onOpen: (id: string) => void;
 		/** A group's Zijpaneel opens: no bron marked beside it. */
 		onUnmark: () => void;
-		/** What the lanes draw, every bron of a unit: for the counts and the keyboard's list. */
 		/** What the lanes draw, and what they would draw with nothing switched off: the count of a kind off. */
 		onDrawn: (ids: ReadonlySet<string>, held: ReadonlySet<string>) => void;
 		/** A click in the legend: Relatie of the canvas, one state with its address. */
@@ -93,6 +93,7 @@
 
 	let avail = $state(0);
 	const phone = $derived(avail > 0 && avail < PHONE);
+	const amended = amendedOf(() => chosen);
 	const sceneWith = (v: typeof visibility): Scene =>
 		buildScene({
 			nodes,
@@ -100,6 +101,7 @@
 			chosen,
 			visibility: v,
 			filter,
+			amended: amended.current,
 			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
 		});
 	const scene: Scene = $derived(sceneWith(visibility));
@@ -296,10 +298,8 @@
 		act();
 	}
 
-	/** The bronnen with no line to the chosen ones, by soort: one line under the lanes. */
-	const changedWords = (u: SceneUnit) => (u.change ? LAW_CHANGE_WORDS[u.change].says : null);
 	const titleOf = (u: SceneUnit) =>
-		[u.label, u.role, u.breakdown, changedWords(u)].filter(Boolean).join(', ') || u.label;
+		[u.label, u.role, u.breakdown, changeSays(u)].filter(Boolean).join(', ') || u.label;
 </script>
 
 {#snippet sign(n: GraphNode | undefined, sort: Sort, x: number, y: number, size: number)}
