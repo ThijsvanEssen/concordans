@@ -23,25 +23,28 @@ export const STRIP_KINDS: readonly { id: StripKind; colour: string }[] = [
  */
 export const CHANGE_COLOUR = kindColour('instruments');
 
-const KIND_OF: Partial<Record<Collection, StripKind>> = {
-	instruments: 'wetten',
-	articles: 'wetten',
-	annexes: 'wetten',
-	judgments: 'rechtspraak',
-	documents: 'kamerstukken',
-	dossiers: 'kamerstukken',
-	activities: 'kamerstukken',
-	decisions: 'kamerstukken',
-	cases: 'kamerstukken',
-	commitments: 'kamerstukken',
-	members: 'parlement',
-	factions: 'parlement',
-	committees: 'parlement',
-	cabinets: 'regering',
-	ministries: 'regering'
-};
+/** The collections the strip counts; its kind is the rubriek Tonen puts them in (`rubrieken.ts`). */
+const COUNTED: ReadonlySet<Collection> = new Set<Collection>([
+	'instruments',
+	'articles',
+	'annexes',
+	'judgments',
+	'documents',
+	'dossiers',
+	'activities',
+	'decisions',
+	'cases',
+	'commitments',
+	'members',
+	'factions',
+	'committees',
+	'cabinets',
+	'ministries'
+]);
 
-export const kindOf = (c: Collection): StripKind | null => KIND_OF[c] ?? null;
+/** The kind of a collection on the strip: its rubriek, as in Tonen; an activiteit is Parlement (B97). */
+export const kindOf = (c: Collection): StripKind | null =>
+	COUNTED.has(c) ? rubriekOf(c, '', null) : null;
 
 /**
  * The collection a bron is counted under on the strip: a bewindspersoon is a member in the API,
@@ -75,7 +78,8 @@ export function stripDate(
 
 /**
  * What a bron is called in the count, in the order of the bar: only a document is a stuk, as in
- * Tonen; an activiteit or a stemming shares the colour of the Kamerstukken, not their name.
+ * Tonen; a stemming shares the colour of the Kamerstukken, not their name, an activiteit that of
+ * Parlement. `kind` is the rubriek of `of` (guard test).
  */
 const NOUNS = [
 	{ id: 'wetten', one: 'wet', many: 'wetten', of: ['instruments'], kind: 'wetten' },
@@ -90,13 +94,6 @@ const NOUNS = [
 	},
 	{ id: 'stukken', one: 'stuk', many: 'stukken', of: ['documents'], kind: 'kamerstukken' },
 	{ id: 'dossiers', one: 'dossier', many: 'dossiers', of: ['dossiers'], kind: 'kamerstukken' },
-	{
-		id: 'activiteiten',
-		one: 'activiteit',
-		many: 'activiteiten',
-		of: ['activities'],
-		kind: 'kamerstukken'
-	},
 	{
 		id: 'stemmingen',
 		one: 'stemming',
@@ -117,6 +114,13 @@ const NOUNS = [
 		one: 'parlementsbron',
 		many: 'parlementsbronnen',
 		of: ['members', 'factions', 'committees'],
+		kind: 'parlement'
+	},
+	{
+		id: 'activiteiten',
+		one: 'activiteit',
+		many: 'activiteiten',
+		of: ['activities'],
 		kind: 'parlement'
 	},
 	{

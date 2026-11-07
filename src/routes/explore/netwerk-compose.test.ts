@@ -2,7 +2,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import { NEIGHBORHOOD_CAP } from '$lib/graph/store/types';
-import { NetwerkComposer, REACH_MAX, reachCap, withinCap } from './netwerk-compose.svelte';
+import {
+	NetwerkComposer,
+	REACH_MAX,
+	reachCap,
+	STEPS_CAP_MAX,
+	withinCap
+} from './netwerk-compose.svelte';
 
 vi.mock('$lib/api/records', () => ({
 	getNodeFirst: vi.fn(async (collection: string, key: string) => responseOf(collection, key))
@@ -181,5 +187,11 @@ describe('the steps of a netwerk', () => {
 		expect(reachCap(4)).toBe(100);
 		expect(reachCap(6)).toBe(66);
 		expect(reachCap(40)).toBe(50);
+	});
+
+	it('asks no more of one neighbourhood than the API keeps beyond the first step', () => {
+		expect(reachCap(1, 2000)).toBe(STEPS_CAP_MAX);
+		expect(reachCap(2, 2000)).toBe(STEPS_CAP_MAX);
+		expect(reachCap(4, 2000)).toBe(500);
 	});
 });

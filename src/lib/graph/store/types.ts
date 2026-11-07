@@ -93,7 +93,8 @@ export const DEFAULT_FILTERS: GraphFilters = {
 
 // Soft cap to keep the canvas responsive during additive exploration. A merge
 // that would pass it drops the oldest nodes that are not pinned, selected or
-// next to the selection.
+// next to the selection. Above 400 the fixtures of the browser suite must be recorded anew, and
+// with today's data the werkplek of 6:162 BW shifts as it loads (B94, at every cap).
 export const SOFT_NODE_CAP = 400;
 
 /**

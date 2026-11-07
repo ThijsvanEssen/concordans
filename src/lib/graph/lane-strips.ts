@@ -39,7 +39,8 @@ const NAME_AT = 48;
 const LANE_ROOM = 24;
 const GLYPH = 14;
 const PILL = 26;
-const ROW = 24;
+/** A row of a chosen hull: its line, and the target of a finger (LanesView), whole and touching the next. */
+export const STRIP_ROW = 24;
 const NAME_LINE = 15;
 const CHANNEL_STEP = 6;
 const TIP = 4;
@@ -99,11 +100,28 @@ function hullBox(u: SceneUnit, x: number, y: number, width: number): UnitBox {
 	const wide = Math.min(width, HULL_MAX);
 	const label = { x, y, width: wide, height: PILL - 4 };
 	const top = y + PILL;
-	const rows = u.rows.map((r, i) => ({ id: r.id, y: top + 14 + i * ROW }));
-	const mark = { x, y: top, width: wide, height: 8 + u.rows.length * ROW + 8 };
+	const rows = u.rows.map((r, i) => ({ id: r.id, y: top + 14 + i * STRIP_ROW }));
+	const mark = { x, y: top, width: wide, height: 8 + u.rows.length * STRIP_ROW + 8 };
 	const room = wide - 20 - (u.change ? CHANGED_ROOM : 0);
 	const text = { name: wrapLabel(u.label, room, 13, 1), small: [] };
 	return { x, y, width, height: mark.y + mark.height - y, mark, label, rows, text };
+}
+
+/**
+ * The target of a finger on a row of a chosen hull: the whole line, up to the next (B95). The
+ * rows stand edge to edge, so a larger target would only take a tap from its neighbour.
+ */
+export const rowTarget = (b: UnitBox, y: number): Box => ({
+	x: b.mark.x,
+	y: y - STRIP_ROW / 2,
+	width: b.mark.width,
+	height: STRIP_ROW
+});
+
+/** The target of a unit: a little around it, on a phone its row exactly, touching the next (B95). */
+export function unitTarget(b: Box, phone: boolean): Box {
+	const pad = phone ? 0 : 4;
+	return { x: b.x - 4, y: b.y - pad, width: b.width + 8, height: b.height + 2 * pad };
 }
 
 const changeRank = (u: SceneUnit) => (u.change === 'enacted' ? 2 : u.change === 'proposed' ? 1 : 0);
