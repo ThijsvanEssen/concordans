@@ -16,24 +16,21 @@ export const LIST_PATHS = {
 	ministries: '/ministeries',
 	ministers: '/bewindspersonen'
 } as const;
-
-/** A list of Bladeren, as its key (`instruments`); categories.ts names them. */
-type ListKind = keyof typeof LIST_PATHS;
+const PATH_OF: Readonly<Record<string, string>> = LIST_PATHS;
 
 /** The overview of Bladeren: every list in its rubriek, with its count. */
 export const OVERVIEW_PATH = '/bladeren';
 
 /** The address of a list, the overview without one; an unknown list is the dossiers. */
 export const listPath = (kind: string | null): string =>
-	kind === null ? OVERVIEW_PATH : (LIST_PATHS[kind as ListKind] ?? LIST_PATHS.dossiers);
+	kind === null ? OVERVIEW_PATH : (PATH_OF[kind] ?? LIST_PATHS.dossiers);
 
 const bare = (pathname: string) => pathname.replace(/(.)\/$/, '$1');
 
 /** The list at a path (`/wetten`, `/wetten/`), or null for any other, the overview too. */
-export function listOfPath(pathname: string): ListKind | null {
+export function listOfPath(pathname: string): string | null {
 	const path = bare(pathname);
-	const found = Object.entries(LIST_PATHS).find(([, p]) => p === path);
-	return found ? (found[0] as ListKind) : null;
+	return Object.entries(PATH_OF).find(([, p]) => p === path)?.[0] ?? null;
 }
 
 /** Whether a path is Bladeren: a list or the overview. */
