@@ -43,6 +43,21 @@
 		"description": "De besluiten van de Kamers over een onderwerp, per soort, uitkomst, jaar en fractie."
 	},
 	{
+		"path": "/ambten",
+		"title": "Ambten, Concordans",
+		"description": "De ambten van de ministers, elk met de houders over de namen van het ministerie heen en de toezeggingen en dossiers van het ambt."
+	},
+	{
+		"path": "/ambten/[ministerie]/[post]",
+		"title": "Ambt, Concordans",
+		"description": "Een ambt met zijn houders en hun periodes, over de namen van het ministerie heen, en de toezeggingen en dossiers van de houder van de dag."
+	},
+	{
+		"path": "/ambten/[ministerie]/[post]/[portefeuille]",
+		"title": "Ambt, Concordans",
+		"description": "Een ambt met een eigen portefeuille, met zijn houders en hun periodes en de toezeggingen en dossiers van de houder van de dag."
+	},
+	{
 		"path": "/docs",
 		"title": "Documentatie, Concordans",
 		"description": "Werking van Concordans: bronnen, verbindingen, netwerk en de lezers."
