@@ -205,12 +205,12 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.VerbondenTabel).toBeDefined();
 	});
 
-	it('lists bronnen with ?mode=index, whatever else the address holds', async () => {
-		const overview = await openAt(`/explore?mode=index&focus=${ARTICLE}`);
+	it('lists bronnen at their own address, whatever else the address holds (B128)', async () => {
+		const overview = await openAt(`/bladeren?focus=${ARTICLE}`);
 		expect(view(overview.container)).toBe('index');
 		expect(seen.IndexOverzicht).toBeDefined();
 		overview.unmount();
-		await openAt('/explore?mode=index&kind=judgments');
+		await openAt('/uitspraken');
 		expect(seen.IndexView?.category).toBe('judgments');
 	});
 
@@ -323,7 +323,7 @@ describe('Back and Forward to a bron', () => {
 		const { container } = await openAt('/kabinetten/schoof');
 		expect(view(container)).not.toBeNull();
 		const opened = view(container);
-		await appNavigation.goto('/explore?mode=index');
+		await appNavigation.goto('/bladeren');
 		await settle();
 		expect(view(container)).toBe('index');
 		delete seen.IndexOverzicht;

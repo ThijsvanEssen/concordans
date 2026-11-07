@@ -111,7 +111,7 @@ test('Bronnen says of a paused source that it is, and the day it reached', async
 
 test('the list of the EHRM says its source is paused', async ({ page }) => {
 	await patchApi(page, /^\/api\/stats$/, echrPaused);
-	await page.goto('/explore?mode=index&kind=judgments&source=echr');
+	await page.goto('/uitspraken?source=echr');
 	await expect(
 		page.getByText('HUDOC wordt niet meer bijgewerkt, stand 8 oktober 2026')
 	).toBeVisible();

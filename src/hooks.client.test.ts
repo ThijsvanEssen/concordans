@@ -49,7 +49,7 @@ describe('the outer boundary', () => {
 	});
 });
 
-describe('a bare collection that moved', () => {
+describe('a list that moved to its own address', () => {
 	const at = (href: string) => {
 		const replaceState = vi.fn();
 		moveAddress(
@@ -60,16 +60,19 @@ describe('a bare collection that moved', () => {
 	};
 
 	it('puts its list in the bar on loading, and leaves any other address alone', () => {
-		expect(at('/wetten')).toEqual(['/explore?mode=index&kind=instruments']);
+		expect(at('/explore?mode=index&kind=instruments&q=huur')).toEqual(['/wetten?q=huur']);
+		expect(at('/wetten')).toEqual([]);
 		expect(at('/bundels/k3j2')).toEqual([]);
 	});
 
-	it('serves it by its page of now within the app', () => {
+	it('serves a list and a bron by the Verkenner', () => {
 		const to = (href: string) =>
 			reroute({ url: new URL(href, 'https://concordans.nl'), fetch } as Parameters<
 				typeof reroute
 			>[0]);
 		expect(to('/wetten')).toBe('/explore');
+		expect(to('/bewindspersonen/')).toBe('/explore');
+		expect(to('/wetten/BWBR0005289')).toBe('/explore');
 		expect(to('/actueel')).toBeUndefined();
 	});
 });

@@ -194,7 +194,7 @@ test('Volg copies the Atom link of the view: on Actueel, in a list and in a doss
 	await expect(page.getByRole('button', { name: 'Gekopieerd' })).toBeVisible();
 	expect(await copied()).toMatch(/\/api\/feed\.atom\?.*chamber=EK/);
 
-	await page.goto('/explore?mode=index&kind=decisions');
+	await page.goto('/stemmingen');
 	await page.getByRole('button', { name: 'Volg', exact: true }).click();
 	await expect(page.getByRole('button', { name: 'Gekopieerd' })).toBeVisible();
 	expect(await copied()).toMatch(/\/api\/feed\.atom\?.*kind=stemming/);

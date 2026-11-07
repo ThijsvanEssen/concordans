@@ -31,6 +31,7 @@
 import { SvelteMap } from 'svelte/reactivity';
 import type { QueryOf } from '$lib/api/types';
 import { readableQuery } from '$lib/util/address';
+import { isIndexPath, listOfPath, listPath } from './lists';
 import { parseNodeId } from '$lib/vocabulary';
 import { ecliKey, keyEcli } from '$lib/text/ecli';
 import { onForget } from '$lib/util/forget';
@@ -309,9 +310,9 @@ export function parsePad(pathname: string): Pad | null {
 	return null;
 }
 
-/** Whether a path is the Verkenner: /explore, or a readable address of a bron. */
+/** Whether a path is the Verkenner: /explore, Bladeren (/wetten) or a readable address of a bron. */
 export const isExplorePath = (pathname: string) =>
-	pathname === '/explore' || parsePad(pathname) !== null;
+	pathname === '/explore' || isIndexPath(pathname) || parsePad(pathname) !== null;
 
 /** The path of a readable address. */
 export const padHref = (pad: Pad): string => ruleOf(pad).write(pad);
@@ -370,11 +371,21 @@ export function padOfFocus(focus: string, path?: string | null): string | null {
 }
 
 /**
- * The URL as the Verkenner reads it: `/explore` with the focus in the query. An
- * address whose focus is not known yet reads without one, until `lookUp` finds it.
+ * The URL as the Verkenner reads it: `/explore` with the focus in the query, a list (/wetten)
+ * as `?mode=index&kind=instruments`, the overview (/bladeren) as `?mode=index`. An address
+ * whose focus is not known yet reads without one, until `lookUp` finds it.
  */
 export function exploreUrl(url: URL): URL {
 	if (url.pathname === '/explore') return url;
+	if (isIndexPath(url.pathname)) {
+		const logical = new URL(url);
+		const list = listOfPath(url.pathname);
+		logical.pathname = '/explore';
+		logical.searchParams.set('mode', 'index');
+		if (list) logical.searchParams.set('kind', list);
+		else logical.searchParams.delete('kind');
+		return logical;
+	}
 	const pad = parsePad(url.pathname);
 	if (!pad) return url;
 	const logical = new URL(url);
@@ -388,14 +399,20 @@ export function exploreUrl(url: URL): URL {
 export const focusIn = (url: URL) => exploreUrl(url).searchParams.get('focus');
 
 /**
- * The address of a view of the Verkenner: the readable path of its focus where it has
- * one, the rest in the query. `params` is the query as the Verkenner reads it; `given` the
- * path the API gave the focus's node.
+ * The address of a view of the Verkenner: a list at its own path (/wetten), else the readable
+ * path of its focus where it has one, the rest in the query. `params` is the query as the
+ * Verkenner reads it; `given` the path the API gave the focus's node.
  */
 export function exploreHref(params: URLSearchParams, hash = '', given?: string | null): string {
+	const rest = new URLSearchParams(params);
+	if (params.get('mode') === 'index') {
+		rest.delete('mode');
+		rest.delete('kind');
+		const query = readableQuery(rest);
+		return `${listPath(params.get('kind'))}${query ? `?${query}` : ''}${hash}`;
+	}
 	const focus = params.get('focus');
 	const path = focus ? padOfFocus(focus, given) : null;
-	const rest = new URLSearchParams(params);
 	if (path) rest.delete('focus');
 	const query = readableQuery(rest);
 	return `${path ?? '/explore'}${query ? `?${query}` : ''}${hash}`;

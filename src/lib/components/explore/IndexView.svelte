@@ -63,6 +63,7 @@
 	} from './index/lists/list';
 	import { requestFrom } from './index/deep';
 	import { sourceOfList } from '$lib/nav/sources';
+	import { LIST_PATHS } from '$lib/bron/lists';
 
 	let { category }: { category: IndexCategory } = $props();
 
@@ -80,13 +81,11 @@
 	const patchUrl = (patch: IndexPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
 
-	// A tab drops the filters and the open row, so a stage filter of dossiers does not leak into decisions.
+	// A tab is its list's address without the filters and the open row (no leak between lists).
 	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) =>
-		withParams(
-			page.url,
-			{ mode: 'index', kind: k, ...filters },
-			{ clear: [...INDEX_FILTER_PARAMS, 'open'] }
-		);
+		withParams(new URL(LIST_PATHS[k] + page.url.search, page.url), filters, {
+			clear: [...INDEX_FILTER_PARAMS, 'open']
+		});
 
 	// ── Search text ─────────────────────────────────────────────────────────
 	// What is typed goes into the URL when the typing pauses, in place of the last
@@ -1020,6 +1019,7 @@
 			padding: var(--s-3) var(--s-4) 0;
 		}
 		.cat {
+			min-height: 44px;
 			padding: var(--s-2) var(--s-4) var(--s-3);
 		}
 		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the

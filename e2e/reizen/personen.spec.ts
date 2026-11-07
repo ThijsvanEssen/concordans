@@ -53,7 +53,7 @@ test('a cabinet names its coalition and shows its seats in both Kamers', async (
 });
 
 test('Bronnen › Fracties: the seats of each Kamer add up to the whole Kamer', async ({ page }) => {
-	await page.goto('/explore?mode=index&kind=factions');
+	await page.goto('/fracties');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Bronnen: Fracties');
 	const tk = page.getByRole('figure', { name: 'Zetelverdeling Tweede Kamer' });
 	await expect(tk).toBeVisible();

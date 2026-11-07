@@ -2,6 +2,7 @@
 // filters it offers with which counts, how it sorts, what its rows and empty state say, and
 // where a click takes it. The answers are the live API's, cut short (src/lib/test/bladeren.json).
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { LIST_PATHS } from '$lib/bron/lists';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { fail, fakeApi, type ApiPath, type FakeAnswer, type FakeRequest } from '$lib/test/fakeApi';
 import { page, visit } from '$lib/test/page.svelte';
@@ -157,7 +158,7 @@ function asked(requests: FakeRequest[]) {
 }
 
 async function open(category: IndexCategory, query = '', routes = ROUTES) {
-	visit(`/explore?mode=index&kind=${category}${query ? `&${query}` : ''}`);
+	visit(`${LIST_PATHS[category]}${query ? `?${query}` : ''}`);
 	const api = fakeApi(routes);
 	render(IndexView, { category });
 	await settled();
@@ -388,7 +389,7 @@ describe('Bronnen, the way back', () => {
 	};
 
 	it('keeps a dossier group open across another list', async () => {
-		visit('/explore?mode=index&kind=dossiers');
+		visit('/dossiers');
 		fakeApi({ ...ROUTES, '/api/dossiers': list(group) });
 		const { rerender } = render(IndexView, { category: 'dossiers' });
 		await settled();
@@ -396,7 +397,7 @@ describe('Bronnen, the way back', () => {
 		await fireEvent.click(toggle());
 		expect(toggle().getAttribute('aria-expanded')).toBe('true');
 		for (const category of ['decisions', 'dossiers'] as const) {
-			visit(`/explore?mode=index&kind=${category}`);
+			visit(LIST_PATHS[category]);
 			await rerender({ category });
 			await settled();
 		}

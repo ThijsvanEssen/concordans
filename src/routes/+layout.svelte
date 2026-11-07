@@ -25,12 +25,9 @@
 
 	let { children }: { children: Snippet } = $props();
 
-	/** A view of /explore that names itself: a list (mode=index) or a bron (focus). */
-	function ownHead(l: Pick<Location, 'pathname' | 'search'>): boolean {
-		if (l.pathname !== '/explore') return false;
-		const q = new URLSearchParams(l.search);
-		return q.get('mode') === 'index' || q.has('focus');
-	}
+	/** A view of /explore that names itself: a bron (focus). */
+	const ownHead = (l: Pick<Location, 'pathname' | 'search'>): boolean =>
+		l.pathname === '/explore' && new URLSearchParams(l.search).has('focus');
 
 	// The server gives a readable address its content in <main id="seo"> and its head
 	// (title, description, canonical, og:*, JSON-LD), each tag marked data-seo
@@ -49,9 +46,8 @@
 	// Without a head from the server (the plain index.html, when the API is down) the fixed
 	// description of app.html gives way to the page's own.
 	if (browser && !serverKop.actief) serverKop.clear();
-	// The server's head of /explore is the generic "Netwerk"; a list or a bron opened there
-	// (a Wetten list, an EU proposal) has its own name, which the page sets once the head is
-	// the app's (R3-I F6).
+	// The server's head of /explore is the generic "Netwerk"; a bron opened there (an EU
+	// proposal) has its own name, which the page sets once the head is the app's (R3-I F6).
 	if (browser && serverKop.actief && ownHead(location)) serverKop.clear();
 
 	// The server's head stays for the page it was made for: that is what a search engine

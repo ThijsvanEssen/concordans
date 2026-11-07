@@ -2,7 +2,7 @@
 // reads (exploreUrl: a readable address has its focus in the path). The page derives its
 // state from these; writing the address stays with the page.
 //
-// ?mode=index (Bladeren, with ?kind), ?focus (the bron), ?lezen=1 (read at full width),
+// ?mode=index (Bladeren, with ?kind: a list at its own address, /wetten, reads so), ?focus (the bron), ?lezen=1 (read at full width),
 // ?tabel=1 (all verbindingen as a table; ?soort narrows it to kinds, from the werkplek's
 // Tonen, which ?mode=netwerk leads back to), ?naast (a toelichting or judgment beside the
 // article), ?overlay, ?diepte and ?alles=1 (how far the canvas reaches), the bronfilter

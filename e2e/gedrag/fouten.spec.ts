@@ -77,7 +77,7 @@ test('a 429 says so with its wait, and asks again by itself once the wait is ove
 }) => {
 	guard.allow(/status of 429/);
 	await failApi(page, /^\/api\/factions/, 429);
-	await page.goto('/explore?mode=index&kind=factions');
+	await page.goto('/fracties');
 	const wacht = page.getByRole('status').filter({ hasText: 'Even te veel verzoeken' });
 	await expect(wacht).toBeVisible();
 	await expect(wacht.getByText(/^Even te veel verzoeken, opnieuw over \d s\.$/)).toBeVisible();
@@ -248,7 +248,7 @@ test('a list of Bronnen whose chunk did not come says so, and Opnieuw shows it',
 }) => {
 	guard.allow(/dynamically imported module|net::ERR_FAILED|Importing a module script failed/);
 	await failChunk(page, 'src/lib/components/explore/IndexView.svelte');
-	await page.goto('/explore?mode=index&kind=judgments');
+	await page.goto('/uitspraken');
 	const alert = page.getByRole('alert').filter({ hasText: 'De lijst kon niet worden geladen.' });
 	await expect(alert).toBeVisible();
 

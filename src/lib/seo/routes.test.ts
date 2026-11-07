@@ -3,6 +3,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { SPA_ROUTES, canonical, routeKop, routePath } from './routes';
 import { LADEN_TITEL, siteTitle } from './server-head.svelte';
+import { LIST_PATHS, OVERVIEW_PATH } from '$lib/bron/lists';
+import { categoryLabel, type IndexCategory } from '$lib/components/explore/index/categories';
 
 /** Every +page.svelte under src/routes, with its route id as SvelteKit gives it. */
 const PAGES = readdirSync('src/routes', { recursive: true, encoding: 'utf8' })
@@ -24,7 +26,17 @@ describe('routePath', () => {
 
 describe('spa-routes.json', () => {
 	it('lists every page, and only pages, so the server serves no 404 for a page', () => {
-		expect(SPA_ROUTES.map((r) => r.path).sort()).toEqual(PAGES.map((p) => routePath(p.id)).sort());
+		const lists = [...Object.values(LIST_PATHS), OVERVIEW_PATH];
+		expect(SPA_ROUTES.map((r) => r.path).sort()).toEqual(
+			[...PAGES.map((p) => routePath(p.id)), ...lists].sort()
+		);
+	});
+
+	it('names each list as its page does, so the sitemap lists it (B128)', () => {
+		for (const [kind, path] of Object.entries(LIST_PATHS)) {
+			expect(routeKop(path).title).toBe(siteTitle(categoryLabel(kind as IndexCategory)));
+			expect(routeKop(path).index).not.toBe(false);
+		}
 	});
 
 	it('gives each page under (main) its head from its own route id, with RouteKop', () => {
@@ -56,7 +68,7 @@ describe('spa-routes.json', () => {
 		expect(c('/wetten/BWBR0005289/artikel/6:162?lezen=1&netwerk=a')).toBe(
 			'https://concordans.nl/wetten/BWBR0005289/artikel/6:162'
 		);
-		expect(c('/explore?mode=index&kind=ministers')).toBe('https://concordans.nl/explore');
+		expect(c('/bewindspersonen?kabinet=rutte_iv')).toBe('https://concordans.nl/bewindspersonen');
 		expect(c('/explore?focus=decisions/decision_1&lezen=1')).toBe(
 			'https://concordans.nl/explore?focus=decisions/decision_1'
 		);

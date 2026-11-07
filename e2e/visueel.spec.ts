@@ -11,7 +11,7 @@ const PAGES = {
 	artikel: '/wetten/BWBR0005289/artikel/6:162',
 	uitspraak: '/uitspraken/ECLI:NL:HR:2019:2006',
 	kamerstuk: '/kamerstukken/36799/31',
-	bronnen: '/explore?mode=index',
+	bronnen: '/bladeren',
 	methode: '/docs/methode'
 };
 

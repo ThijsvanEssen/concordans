@@ -2,9 +2,9 @@
 // stands in view, clear of the fade on its edge; where all fits (1440) it does not pan at all.
 import { expect, test } from '../support/test';
 
-for (const kind of ['ministries', 'members', 'factions']) {
+for (const kind of ['ministeries', 'leden', 'fracties']) {
 	test(`the tab on show is in view, clear of the fade (${kind})`, async ({ page }) => {
-		await page.goto(`/explore?mode=index&kind=${kind}`);
+		await page.goto(`/${kind}`);
 		const bar = page.locator('nav.catbar');
 		const on = bar.locator('.cat--on');
 		await expect(on).toBeVisible();
@@ -31,7 +31,7 @@ for (const kind of ['ministries', 'members', 'factions']) {
 
 test('a tab reached with the keyboard comes clear of the edge', async ({ page, isMobile }) => {
 	test.skip(!isMobile, 'the strip only pans on a phone');
-	await page.goto('/explore?mode=index&kind=ministries');
+	await page.goto('/ministeries');
 	const bar = page.locator('nav.catbar');
 	const last = bar.locator('a.cat').last();
 	await last.focus();

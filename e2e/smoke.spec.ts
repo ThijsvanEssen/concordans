@@ -44,7 +44,6 @@ function oneOfEachKind(paths: string[]) {
 
 const pages = [
 	...routes.map((r) => PARAMS[r.path] ?? r.path),
-	'/explore?mode=index',
 	...oneOfEachKind(readable.paths.map((p) => p.path))
 ];
 

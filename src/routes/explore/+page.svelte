@@ -18,7 +18,6 @@
 	} from '$lib/nav/network';
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef, bwCode } from '$lib/text/bw';
-	import { categoryLabel } from '$lib/components/explore/index/categories';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { answer } from '$lib/keys/dispatch.svelte';
 	import { offer, type Target } from '$lib/keys/doen.svelte';
@@ -84,6 +83,7 @@
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
+	import { listPath } from '$lib/bron/lists';
 	import type IndexView from '$lib/components/explore/IndexView.svelte';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
 	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
@@ -1698,7 +1698,7 @@
 	);
 
 	const pageTitle = $derived.by(() => {
-		if (mode === 'index') return siteTitle(categoryLabel(indexKind));
+		if (mode === 'index') return routeKop(listPath(params.get('kind'))).title;
 		if (nietGevonden) return siteTitle('Niet gevonden');
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).

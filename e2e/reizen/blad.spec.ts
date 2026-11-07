@@ -59,7 +59,7 @@ test('Filter of Bladeren: a Blad of its own on a phone, with Toon at its foot', 
 	page
 }) => {
 	test.skip(!isPhone(page), 'a row of buttons from 769 px');
-	await page.goto('/explore?mode=index&kind=instruments');
+	await page.goto('/wetten');
 	const knop = page.getByRole('button', { name: /^Filter/ });
 	const blad = page.getByRole('dialog', { name: 'Filter' });
 	await sluitOpDrieManieren(page, knop, blad, () => page.mouse.click(187, 40));

@@ -12,7 +12,7 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	page,
 	touch
 }) => {
-	await page.goto('/explore?mode=index');
+	await page.goto('/bladeren');
 	await page.getByRole('link', { name: /^Wetten [\d.]+$/ }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Bronnen: Wetten');
 	const count = page.getByText(/^[\d.]+\s*wetten$/);
@@ -25,7 +25,7 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 	const name = ((await filter.textContent()) ?? '').replace(/[\d.]+$/, '').trim();
 	await filter.click();
 	await expect(chip(page, name)).toBeAttached();
-	await expect(page).toHaveURL(/kind=instruments.*&/);
+	await expect(page).toHaveURL(/\/wetten\?/);
 	await expect(count).not.toHaveText(before!);
 	// Toon closes the filters on a phone and brings the list into view (besluit 30, X4).
 	if (touch) {
@@ -34,7 +34,7 @@ test('Bronnen › Wetten: a filter narrows the list, a search finds a law that o
 		await expect(count).toBeInViewport();
 	}
 
-	await page.goto('/explore?mode=index&kind=instruments');
+	await page.goto('/wetten');
 	await page.getByRole('searchbox', { name: 'Zoek in wetten' }).fill('Burgerlijk Wetboek Boek 6');
 	await page.getByRole('link', { name: 'Burgerlijk Wetboek Boek 6', exact: true }).click();
 	await expect(page).toHaveURL(/\/wetten\/BWBR0005289$/);

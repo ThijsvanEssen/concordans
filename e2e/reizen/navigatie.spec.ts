@@ -13,12 +13,12 @@ const tabs = (page: import('@playwright/test').Page) =>
 test('every kind of source is an item of the navigation, and the one the page stands under is marked', async ({
 	page
 }) => {
-	await page.goto('/explore?mode=index&kind=instruments');
+	await page.goto('/wetten');
 	if (isPhone(page)) {
 		await expect(tabs(page).getByRole('button', { name: 'Bronnen' })).toHaveClass(/is-active/);
 		await expect(bar(page)).toBeHidden();
 		await goToSource(page, 'Rechtspraak');
-		await expect(page).toHaveURL(/kind=judgments/);
+		await expect(page).toHaveURL(/\/uitspraken$/);
 		return;
 	}
 	await expect(bar(page).getByRole('link')).toHaveText([
@@ -34,7 +34,7 @@ test('every kind of source is an item of the navigation, and the one the page st
 		'page'
 	);
 	await goToSource(page, 'Rechtspraak');
-	await expect(page).toHaveURL(/kind=judgments/);
+	await expect(page).toHaveURL(/\/uitspraken$/);
 	await expect(bar(page).getByRole('link', { name: 'Rechtspraak' })).toHaveAttribute(
 		'aria-current',
 		'page'
@@ -47,12 +47,12 @@ test('each item leads to the list of its kind, Actueel to the day', async ({ pag
 	await page.goto('/actueel');
 	const links = bar(page).getByRole('link');
 	for (const [label, href] of [
-		['Wetten', 'kind=instruments'],
-		['Rechtspraak', 'kind=judgments'],
-		['Kamerstukken', 'kind=dossiers'],
-		['Parlement', 'kind=members'],
-		['Regering', 'kind=cabinets'],
-		['Actueel', '/actueel']
+		['Wetten', '^/wetten$'],
+		['Rechtspraak', '^/uitspraken$'],
+		['Kamerstukken', '^/dossiers$'],
+		['Parlement', '^/leden$'],
+		['Regering', '^/kabinetten$'],
+		['Actueel', '^/actueel$']
 	])
 		await expect(links.filter({ hasText: label })).toHaveAttribute('href', new RegExp(href));
 });
@@ -69,23 +69,20 @@ test('a bron stands under its kind of source: the bar marks it and its breadcrum
 		);
 	const band = page.getByRole('navigation', { name: 'Behoort bij' });
 	await expect(band.getByRole('link').first()).toHaveText('Wetten');
-	await expect(band.getByRole('link').first()).toHaveAttribute(
-		'href',
-		'/explore?mode=index&kind=instruments'
-	);
+	await expect(band.getByRole('link').first()).toHaveAttribute('href', '/wetten');
 });
 
 test('the kinds of one source are its lists, the sources themselves are the navigation', async ({
 	page
 }) => {
-	await page.goto('/explore?mode=index&kind=factions');
+	await page.goto('/fracties');
 	const lists = page.getByRole('navigation', { name: 'Parlement', exact: true });
 	await expect(lists.getByRole('link')).toHaveText(['Kamerleden', 'Fracties', 'Commissies']);
 	await expect(lists.getByRole('link', { name: 'Fracties' })).toHaveAttribute(
 		'aria-current',
 		'page'
 	);
-	await page.goto('/explore?mode=index&kind=judgments');
+	await page.goto('/uitspraken');
 	await expect(page.getByRole('navigation', { name: 'Rechtspraak', exact: true })).toHaveCount(0);
 });
 

@@ -1,13 +1,15 @@
 {
-	"/wetten": "/explore?mode=index&kind=instruments",
-	"/uitspraken": "/explore?mode=index&kind=judgments",
-	"/dossiers": "/explore?mode=index&kind=dossiers",
-	"/kamerstukken": "/explore?mode=index&kind=documents",
-	"/stemmingen": "/explore?mode=index&kind=decisions",
-	"/leden": "/explore?mode=index&kind=members",
-	"/fracties": "/explore?mode=index&kind=factions",
-	"/commissies": "/explore?mode=index&kind=committees",
-	"/kabinetten": "/explore?mode=index&kind=cabinets",
-	"/ministeries": "/explore?mode=index&kind=ministries",
-	"/toezeggingen": "/explore?mode=index&kind=commitments"
+	"/explore?mode=index&kind=instruments": "/wetten",
+	"/explore?mode=index&kind=judgments": "/uitspraken",
+	"/explore?mode=index&kind=dossiers": "/dossiers",
+	"/explore?mode=index&kind=documents": "/kamerstukken",
+	"/explore?mode=index&kind=decisions": "/stemmingen",
+	"/explore?mode=index&kind=commitments": "/toezeggingen",
+	"/explore?mode=index&kind=members": "/leden",
+	"/explore?mode=index&kind=factions": "/fracties",
+	"/explore?mode=index&kind=committees": "/commissies",
+	"/explore?mode=index&kind=cabinets": "/kabinetten",
+	"/explore?mode=index&kind=ministries": "/ministeries",
+	"/explore?mode=index&kind=ministers": "/bewindspersonen",
+	"/explore?mode=index": "/bladeren"
 }
