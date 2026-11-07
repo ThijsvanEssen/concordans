@@ -21,7 +21,7 @@
 
 	let {
 		nodes,
-		komt = false,
+		pending = false,
 		isChosen,
 		onFocusNode,
 		onKies,
@@ -35,7 +35,7 @@
 		/** In reading order: the selected bron first. */
 		nodes: GraphNode[];
 		/** More bronnen on their way (the neighbourhood after the bron): the list says it is busy. */
-		komt?: boolean;
+		pending?: boolean;
 		isChosen: (id: string) => boolean;
 		/** The bron in focus, or null when the focus leaves the list. */
 		onFocusNode: (node: GraphNode | null) => void;
@@ -174,7 +174,7 @@
 	<ul
 		class="sr-only nodes canvas-node-list"
 		bind:this={list}
-		aria-busy={komt || undefined}
+		aria-busy={pending || undefined}
 		aria-label="Bronnen in het netwerk, {nodes.length}. Pijl omhoog en omlaag: volgende bron. Enter: kiezen.{onToggleChosen
 			? ' N: toevoegen aan of weghalen uit het netwerk.'
 			: ''}"

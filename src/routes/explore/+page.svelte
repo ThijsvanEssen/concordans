@@ -1278,18 +1278,18 @@
 		});
 		if (stap?.soort === 'laden') {
 			loadedFocus = focus;
-			komt(loadFocus(focus)).catch((e) => showFocusError(e, focus));
+			pending(loadFocus(focus)).catch((e) => showFocusError(e, focus));
 		} else if (stap?.soort === 'verdiepen') {
 			const anchor = verdiept ?? selectedNode;
-			if (anchor) komt(deepen(anchor)).catch((e) => showFocusError(e, anchor.key));
+			if (anchor) pending(deepen(anchor)).catch((e) => showFocusError(e, anchor.key));
 		}
 	});
 
 	/** Loads of a focus or its neighbourhood under way: the list of bronnen says it is busy. */
-	let komend = $state(0);
-	function komt<T>(load: Promise<T>): Promise<T> {
-		komend++;
-		return load.finally(() => komend--);
+	let inflight = $state(0);
+	function pending<T>(load: Promise<T>): Promise<T> {
+		inflight++;
+		return load.finally(() => inflight--);
 	}
 
 	/** The message for a bron the dataset does not hold. */
@@ -2413,7 +2413,7 @@
 								reach={netwerkActive ? { ...netwerkReach, focal: bronAlone ? focus : '' } : reach}
 								counting={netwerkActive && (composer.loading || composer.extending)}
 								expecting={netwerkActive ? netwerk.ids.length : 0}
-								komt={komend > 0}
+								pending={inflight > 0}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
 								inFluxMap={inFlux.counts}
