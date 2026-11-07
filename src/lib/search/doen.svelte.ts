@@ -8,6 +8,7 @@ import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
 import { hasChain } from '$lib/network/lineage';
 import { collectionOfBron } from './palette-preview';
+import { AliasSuggestions } from './aliases.svelte';
 import type { SearchSession } from './session.svelte';
 
 const capitalize = (word: string) => word[0].toUpperCase() + word.slice(1);
@@ -21,6 +22,8 @@ export class PaletteActions {
 	#target: () => Target | null = () => null;
 	/** Enter on a row still looking for its bron: the line it was pressed on. */
 	#waiting = $state<string | null>(null);
+	/** The abbreviations the line is the beginning of, from the table asked at the first ⌘K. */
+	readonly aliases = new AliasSuggestions();
 	/** The row the keys chose, for the line it was chosen on. */
 	#chosen = $state<{ line: string; at: number | null } | null>(null);
 
@@ -37,7 +40,9 @@ export class PaletteActions {
 			? rowsFor(this.parsed, this.#target())
 			: this.empty
 				? [...hereRows(), ...recentRows(page.url)]
-				: []
+				: this.#on()
+					? this.aliases.rows(this.line)
+					: []
 	);
 
 	/** The row the keys are on; null where they are in the results. */
@@ -45,10 +50,9 @@ export class PaletteActions {
 		if (this.#chosen?.line === this.line) return this.#chosen.at;
 		if (!this.rows.length) return null;
 		// The first that can be done: the weergave that stands now is not the one asked for.
-		return Math.max(
-			0,
-			this.rows.findIndex((r) => !r.why && !r.now)
-		);
+		// A suggestion is never chosen of itself: Enter opens what the line names.
+		const first = this.rows.findIndex((r) => !r.why && !r.now && !r.suggest);
+		return first >= 0 ? first : this.rows.every((r) => r.suggest) ? null : 0;
 	}
 
 	#choose(at: number | null) {
