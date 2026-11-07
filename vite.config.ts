@@ -123,6 +123,14 @@ export default defineConfig({
 		}
 	},
 	test: {
+		// A test or hook that hangs fails on its own deadline, and a run that does not close is
+		// ended. Each test file runs in a child process (forks), which vitest stops with SIGTERM and
+		// then SIGKILL, also after a red test: no worker is left behind. A test that loops forever
+		// blocks its worker past any of these; scripts/gates.sh stops that step whole.
+		pool: 'forks',
+		testTimeout: 10_000,
+		hookTimeout: 10_000,
+		teardownTimeout: 10_000,
 		setupFiles: ['src/lib/test/setup.ts'],
 		projects: [
 			{

@@ -18,6 +18,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import { ministryTitle, periodWords } from './ministry';
+	import { seatHref } from '$lib/offices/office';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -45,6 +46,16 @@
 				}))
 	);
 
+	/** The minister's office of a ministry under its name of now, where it has one. */
+	const ministerSeat = (m: {
+		key: string;
+		until?: string | null;
+		cabinets: { posts: { post?: string | null }[] }[];
+	}) =>
+		!m.until && m.cabinets.some((c) => c.posts.some((x) => x.post === 'minister'))
+			? `${m.key}/minister`
+			: null;
+
 	/** The day a post began, where it is not the cabinet's own. */
 	const since = (from: string | null | undefined, cabinet: string | null | undefined) =>
 		from && from !== cabinet ? sinceDate(from) : null;
@@ -64,9 +75,13 @@
 		</ReaderHead>
 	{/snippet}
 	{#snippet children(m)}
+		{@const office = ministerSeat(m)}
 		<div class="r-ministry">
-			{#if m.predecessors.length > 0 || m.successor}
+			{#if m.predecessors.length > 0 || m.successor || office}
 				<Feiten>
+					<Veld label="Ambt" value={office}>
+						<a href={seatHref(office ?? '')}>Minister van {name}</a>
+					</Veld>
 					<Veld label="Voorganger" value={m.predecessors.length > 0 ? m.predecessors : null}>
 						{#each m.predecessors as key, i (key)}{i ? ', ' : ''}<BronLink ref={`ministries/${key}`}
 								>{ministryName(key)}</BronLink
