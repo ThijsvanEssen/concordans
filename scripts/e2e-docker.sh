@@ -10,7 +10,8 @@ if ! docker info >/dev/null 2>&1; then
 	exit 1
 fi
 [ $# -eq 0 ] && exit 0
+# --init: the container passes a SIGTERM on to its command, so scripts/gates.sh can stop a step that hangs.
 version=$(node -p "require('@playwright/test/package.json').version")
-docker run --rm --ipc=host -v "$PWD":/work -v /work/node_modules -v /work/.svelte-kit -w /work \
+docker run --rm --init --ipc=host -v "$PWD":/work -v /work/node_modules -v /work/.svelte-kit -w /work \
 	"mcr.microsoft.com/playwright:v${version}-noble" \
 	bash -c "npm ci --no-audit --no-fund --loglevel=error && $1"
