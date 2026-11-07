@@ -283,7 +283,6 @@
 		loadFailure = null;
 		if (!p || untrack(() => params.get('focus'))) return;
 		const ac = new AbortController();
-		// Untracked: lookUp reads what is remembered (focusOfPad), and a list that comes in
 		// remembers hundreds of addresses; that is no reason to ask again (Sv 143 was asked
 		// twice, 10 Oct).
 		// A law by its abbreviation (/wetten/wft/artikel/1:1): on to its own address, without
