@@ -23,6 +23,8 @@ export type DoRow = {
 	pending?: boolean;
 	/** The heading it stands under, where not Doen or Hier: Recent. */
 	group?: string;
+	/** The bron it goes back to (Recent), as a node id: the right column shows it. */
+	bron?: string;
 	/** The state it stands in now: shown, not done again. */
 	now?: boolean;
 	run?: () => void;

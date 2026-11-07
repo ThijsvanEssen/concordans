@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * The narrow form of several articles
-         * @description The narrow form of an article, to read it beside something else: its heading (`label`, `heading`, `display_name`, its `law` with the abbreviation, `validity`), its text as `blocks`, one per lid, onderdeel or aanhef with the anchor of its place (`lid-2-onder-a`) and the links in it whose target the data holds, and the articles before and after it in its law (`previous`, `next`). No citations of it and no network: the article route has those. One item per article of `refs`, in the order asked (each once), at most 20; an article the data does not hold has `article` null and its `ref` in `not_in_data`.
+         * @description The narrow form of an article, to read it beside something else: its heading (`label`, `heading`, `display_name`, its `law` with the abbreviation, `validity`, `valid_from`, `breadcrumb`, `stub`), its text as `blocks`, one per lid, onderdeel or aanhef with the anchor of its place (`lid-2-onder-a`) and the links in it whose target the data holds, and the articles before and after it in its law (`previous`, `next`). No citations of it and no network: the article route has those. One item per article of `refs`, in the order asked (each once), at most 20; an article the data does not hold has `article` null and its `ref` in `not_in_data`.
          */
         get: operations["get_article_text_batch_api_articles_batch_get"];
         put?: never;
@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * The narrow form of an article
-         * @description The narrow form of an article, to read it beside something else: its heading (`label`, `heading`, `display_name`, its `law` with the abbreviation, `validity`), its text as `blocks`, one per lid, onderdeel or aanhef with the anchor of its place (`lid-2-onder-a`) and the links in it whose target the data holds, and the articles before and after it in its law (`previous`, `next`). No citations of it and no network: the article route has those. 404 when the article is unknown.
+         * @description The narrow form of an article, to read it beside something else: its heading (`label`, `heading`, `display_name`, its `law` with the abbreviation, `validity`, `valid_from`, `breadcrumb`, `stub`), its text as `blocks`, one per lid, onderdeel or aanhef with the anchor of its place (`lid-2-onder-a`) and the links in it whose target the data holds, and the articles before and after it in its law (`previous`, `next`). No citations of it and no network: the article route has those. 404 when the article is unknown.
          */
         get: operations["get_article_text_api_articles__bwb_id___article_number__text_get"];
         put?: never;
@@ -73,7 +73,7 @@ export interface paths {
         };
         /**
          * Passages of judgments that cite an article
-         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` (repeated: any of them), `year` (of the judgment's date), `subject_area` (a main area of law of the judgment's source, the part of a subject before its first `;`: `Strafrecht`) and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in, `echr_judgment_total` the ECHR judgments that cite the article (no passage: HUDOC names the article). `facets` counts the judgments, whatever the page: per `year` (oldest first, null for none first) without the `year` filter, per `tier` (most first) without the `tier` filter, per `subject_area` (most first) without the `subject_area` filter, each under the other filters. 404 when the article is unknown.
+         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection, and `origin` of the judgment's link to the article (`text`, `metadata` or both; null when not kept). A judgment only its metadata links has no passage: one row, `paragraph_id` and all else of a passage null. Newest judgment first. `court` (ECLI court code), `tier` (repeated: any of them), `year` (of the judgment's date), `subject_area` (a main area of law of the judgment's source, the part of a subject before its first `;`: `Strafrecht`) and `lid` (a lid number the passage names, so no row without a passage) filter; `total` counts all rows that match, `judgment_total` the judgments of them, `echr_judgment_total` the ECHR judgments that cite the article (no passage: HUDOC names the article). `facets` counts the judgments, whatever the page: per `year` (oldest first, null for none first) without the `year` filter, per `tier` (most first) without the `tier` filter, per `subject_area` (most first) without the `subject_area` filter, each under the other filters. 404 when the article is unknown.
          */
         get: operations["get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get"];
         put?: never;
@@ -237,7 +237,7 @@ export interface paths {
          * One judgment with the articles it cites
          * @description Looks a judgment up by ECLI, follows its REFERS_TO edges to articles and adds each article with its parent instrument.
          *
-         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; EUR-Lex by CELEX number, `external_id`, for one of a court of the EU; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), its `tables` (each a span of its `text`, a row a line and its cells separated by a tab), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked). Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
+         *     the judgment with its `official_url` (uitspraken.rechtspraak.nl by ECLI; HUDOC by item id, `external_id`, for an ECHR judgment; EUR-Lex by CELEX number, `external_id`, for one of a court of the EU; null for a stub of another court), its `paragraphs` (each with a `paragraph_id` for deep links, its printed `number`, its `kind` (`heading`, `subheading`, `body`, `toc`: a line of a table of contents, `signature`: the closing lines that sign a conclusion), of a paragraph without a number that goes on with a numbered consideration `continues` (its `paragraph_id`), its `tables` (each a span of its `text`, a row a line and its cells separated by a tab), and the `citations` in it of an article or a judgment, one per occurrence with `start` and `end`, `kind` `article` or `judgment` and `target.collection` to match; the first is the kop when the judgment has one), its `footnotes` (`label` as printed, `paragraph_id` the paragraph whose marker points to it, null when none does, `at` where that marker stands in the paragraph's `text`, null when not known, `text`, and the `citations` in that text as a paragraph has them), its `parties` (`name`, `role`, `roles` (every role the kop names, in its order: geïntimeerde and appellant in incidenteel hoger beroep), `role_stated` (a derived role is never the other side's for a public authority: the prosecution is `Officier van justitie`), `side` `first`/`second`/`other`, `alias` ("(hierna: X)", and "Partijen worden hierna A, B en C genoemd"), `representatives` (`name`, `role` `advocaat`, `gemachtigde` or, in a criminal case, `raadsman`, `place`, `capacity`: from the kop and the account of the procedure, data model (docs/data-model.md#judgment)); a party the procedure hears "als partij" that the kop does not name comes last, `side` `other`; null when the judgment was normalized before parties were read, empty when none are named), the articles its `REFERS_TO` edges point at with their parent instrument (`articles`), and the same articles as `cited_articles` with the paragraphs that cite them, the lid or onderdeel named and the snippet of the strongest mention: `snippet_paragraph_id` the paragraph it is from (of a citation in a footnote, the paragraph that refers to it, and `footnote` the footnote's `label`; null for a paragraph's own text), `text` the citation as written and `start`/`end` where the linker found it in the snippet (null when the judgment was normalized again since it was linked), and `origin` what names the article: its `text`, its `metadata` (`Wetsverwijzing`; such an article has no paragraphs) or both, null for an edge linked before origin was kept. Citations are read from the stored edges; nothing is detected per request. `judgment.names` and `decision_kind` as in the list; `summary` is the Dutch inhoudsindicatie and `summary_en` an English one: an English translation (its own ECLI, `translation_of` the ECLI of the Dutch judgment) has the Dutch `summary` of that judgment, and that judgment the English `summary_en` (see data-model (docs/data-model.md#judgment)). `judgment.series_id` and `series_size` name the series of parallel cases it is one of (the same court, day and text), `series` the other judgments of it. `conclusions` are the conclusions its metadata names (`conclusion_eclis`), in that order: `ecli`, `author` (the A-G or P-G), `role` and `date` as the conclusion's light node gives them (`lg_judgment_light`), so they read as the conclusion's own page; one the graph lacks is its `ecli` alone. `cited_judgments` are the judgments its text cites (`REFERS_TO`: by ECLI, LJN or application number), newest first, each with the places that cite it as `cited_articles` has them (`paragraph_ids`, `paragraph_numbers`, `snippet`, `snippet_paragraph_id`, `footnote`, `text`, `start`, `end`, `confidence`, `mention_count`; empty for an edge linked before places were kept); `judgment.same_as` is, for a replaced publication, the ECLI of the one kept (for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept), and `same_as` the other publications of the decision (`SAME_AS`, either way); `related_to` the connected cases (`RELATED_TO`, as between dossiers, either way: those its summary names, "Samenhang met 24/03860 E", "Zie ook: ECLI:…", and those whose summary names it), each once with its `links`: per edge its `direction` (`outbound`: this judgment's summary names it, `inbound`: its summary names this one, outbound first), `basis` (`summary_text`) and `text`, the sentence that names it; `judgment.replaced_by` the ECLI `dcterms:isReplacedBy` names, loaded or not. `judgment.advocate_general` and `advocate_general_role` (the role it is signed in: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal`, `plaatsvervangend advocaat-generaal`; null when not clear) is, for a conclusion, who wrote it (`T. Hartlief`; null for a judgment); `published_on`, the "Datum publicatie" of uitspraken.rechtspraak.nl (null for another source or without a published document). How it ended (data model (docs/data-model.md#judgment)): `judgment.outcome` (`verworpen`, `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`, `tussenuitspraak`; of the ECHR `schending` or `geen schending`) with `outcome_text`, the clause of the decision that says it ("verwerpt het beroep"), and `outcome_paragraph_id`; of a conclusion `conclusion_outcome` (`verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording`) with `conclusion_outcome_text` and `conclusion_outcome_paragraph_id`; of the ECHR `echr_findings`, per article `{article, protocol, combined_with, finding, aspect, text}`; null (empty) when the text does not say it. Each of `conclusions` has the `outcome` and `outcome_text` of that conclusion (what it proposes)
          */
         get: operations["get_judgment_detail_api_judgments__ecli__get"];
         put?: never;
@@ -377,7 +377,7 @@ export interface paths {
         };
         /**
          * Parliamentary dossiers touching this law
-         * @description Dossiers reached through LEGISLATED_IN from (a) the regulation itself and (b) the amending publications (Stb/Trb) that change, introduce or repeal one of its articles. ``via`` says how the dossier is linked (``instrument`` or ``amending_publication``; in the latter case ``publication`` names the newest publication). ``total`` is the absolute count, independent of ``limit``. ``sort`` ``opened`` (default): newest opened first; ``importance``: the dossiers of the regulation itself first, then those with the most amending publications, then the newest opened.
+         * @description Dossiers reached through LEGISLATED_IN from (a) the regulation itself and (b) the amending publications (Stb/Trb) that change, introduce or repeal one of its articles. ``via`` says how the dossier is linked (``instrument`` or ``amending_publication``; in the latter case ``publication`` names the newest publication; null for a dossier reached by a paper that AMENDS the regulation or an article of it, not by one that only names it). ``total`` is the absolute count, independent of ``limit``. ``sort`` ``opened`` (default): newest opened first; ``importance``: the dossiers of the regulation itself first, then those with the most amending publications, then the newest opened.
          */
         get: operations["get_instrument_dossiers_route_api_instruments__bwb_id__dossiers_get"];
         put?: never;
@@ -417,7 +417,7 @@ export interface paths {
         };
         /**
          * Instruments referring to this one, or referred to by it
-         * @description The other laws in force whose articles in force refer to articles in force of this law, or the other way (`REFERS_TO` between articles), the most articles first; an expired law (`date_expired` passed) is left out. Each carries its `kind` and `date_in_force`, the `direction`, the articles at both ends (`outbound_count` articles of this law refer to `outbound_cited_count` of it; `inbound_count` of its articles refer to `inbound_cited_count` of this law) and `basis`: whether one is issued under the other as well (`BASED_ON`), with the articles its preamble names. ``total`` is the absolute count, independent of ``limit``; ``based_on_total`` how many of those have a `basis`. The articles between the two: `.../references/{other}`.
+         * @description The other laws in force whose articles in force refer to articles in force of this law, or the other way (`REFERS_TO` between articles), the most articles first; an expired law (`date_expired` passed) is left out. Each carries its `kind` and `date_in_force`, the `direction`, the articles at both ends (`outbound_count` articles of this law refer to `outbound_cited_count` of it; `inbound_count` of its articles refer to `inbound_cited_count` of this law, named in `inbound_cited_articles`) and `basis`: whether one is issued under the other as well (`BASED_ON`), with the articles its preamble names. ``total`` is the absolute count, independent of ``limit``; ``based_on_total`` how many of those have a `basis`. The articles between the two: `.../references/{other}`.
          */
         get: operations["get_instrument_related_route_api_instruments__bwb_id__related_instruments_get"];
         put?: never;
@@ -641,7 +641,7 @@ export interface paths {
         };
         /**
          * BFS neighborhood around a node
-         * @description Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included). `stop_at` names collections the walk reaches but does not go through (but from the focal node, and from a member to the faction and the cabinet it sits in, `MEMBER_OF` and `SERVED_IN`), so the cap goes to what the node itself touches: `stop_at=members,factions,committees,cabinets` keeps the papers of a paper's dossier, not those its signers signed elsewhere. A law is not walked back to the old articles whose outcome in a recodification it holds (`TRANSPOSED_TO` the law, `meta.outcome`), nor are they counted in its `buckets`.
+         * @description Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included). `stop_at` names collections the walk reaches but does not go through (but from the focal node, and from a member to the faction and the cabinet it sits in, `MEMBER_OF` and `SERVED_IN`), so the cap goes to what the node itself touches: `stop_at=members,factions,committees,cabinets` keeps the papers of a paper's dossier, not those its signers signed elsewhere. A law is not walked back to the old articles whose outcome in a recodification it holds (`TRANSPOSED_TO` the law, `meta.outcome`), nor are they counted in its `buckets`. A walk past `cap` shares it per hop and relation.
          */
         get: operations["get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get"];
         put?: never;
@@ -1467,6 +1467,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/seats/{seat}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Office
+         * @description One office (``seat`` of a post in ``GET /api/cabinets/{key}``: ``ienw/minister``, ``jenv/staatssecretaris/rechtsbescherming``), under every name its ministry went by: any of its names gives the same answer. A merger of ministries is no rename (`merged_from`, `merged_into`). The holders with their periods, `gaps` without a holder, and per list what can be attributed to it: `commitments` and `dossiers` count the lists filtered on ``seat``, and what may be its own but fits nobody. Something is attributed by who did it and the day: the post of that kind they held; with two such posts that day the ministry decides, else it is attributed to neither. A seat without a ministry (``-/…``) has no other names. The viceminister-president, a seat beside a minister's own, has nothing attributed.
+         */
+        get: operations["get_seat_detail_api_seats__seat__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats": {
         parameters: {
             query?: never;
@@ -1719,6 +1739,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/aliases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The abbreviations of the laws
+         * @description The one table of abbreviations the search, the titles and the short addresses (`/bw/7/658`) read: every abbreviation that stands for one law, from the BWB (the WTI) and, where it gives none, kept by hand; and the codes whose books are regulations of their own (`BW`), with their books and names. Changes with the data version alone (its `ETag`).
+         */
+        get: operations["get_aliases_api_aliases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{bwb_id}/above": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The laws whose text leaves a matter to this one
+         * @description The laws in force, by title, with an article in force whose text leaves a matter to this one with a link to it (`geregeld in`, `vindt regeling in`, `in … voorzien`), and those articles. It names it: the source gives no basis (art. 5, 42, 50 and 51 of the Statuut for the Grondwet). Empty for an unknown instrument. A basis in the preamble: `.../basis`.
+         */
+        get: operations["get_instrument_above_route_api_instruments__bwb_id__above_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/feed.atom": {
         parameters: {
             query?: never;
@@ -1730,7 +1790,7 @@ export interface paths {
          * News feed as Atom
          * @description A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader, named after its filters (``Concordans: moties``): an ``alternate`` link to the same view on Concordans (``LAWGRAPH_SITE_URL``/actueel), per entry an ``alternate`` link to the event there and a ``related`` link to its official page, and a ``next`` link to the next page. ``dossier`` follows one dossier.
          *
-         *     the same page under the same parameters (without `facets`) as an Atom 1.0 feed (`application/atom+xml`), named after its filters (`Concordans`, `Concordans: moties`, `Concordans: dossier 36600`), with an `alternate` link to the same view on Concordans (`<LAWGRAPH_SITE_URL>/actueel?soort=Motie`: `soort`, `van`, `tot`, `kabinet`, `ministerie`, `dossier`, `persoon`, `fractie`, `q` once per word, `kamer`, `coalitie`, `wet`, `artikel`; not the tier) and a `next` link with the cursor; an entry per event (`id` `tag:lawgraph,2026:<id>`, `title`, `updated` the start of its day in the Netherlands (the source gives no time of day), an `alternate` link to the event on Concordans (its `path`, else `/explore?focus=<id>`) and a `related` one to its `official_url` or `tk_url`, `category` its kind, an `author` per person, `summary` its summary and dossier). The feed is `updated` when the events were last written (`lawgraph feed-events`), and may be kept 15 minutes by any cache (`public, max-age=900`).
+         *     the same page under the same parameters (without `facets`) as an Atom 1.0 feed (`application/atom+xml`), named after its filters (`Concordans`, `Concordans: moties`, `Concordans: dossier 36600`), with an `alternate` link to the same view on Concordans (`<LAWGRAPH_SITE_URL>/actueel?soort=Motie`: `soort`, `van`, `tot`, `kabinet`, `ministerie`, `dossier`, `persoon`, `fractie`, `q` once per word, `kamer`, `coalitie`, `wet`, `artikel`; not the tier) and a `next` link with the cursor; an entry per event (`id` `tag:lawgraph,2026:<id>`, `title`, `updated` the start of its day in the Netherlands (the source gives no time of day), an `alternate` link to the event on Concordans (its `path`, of an `inwerkingtreding` the page of its law, of a source without a readable address `/explore?focus=<id>`) and a `related` one to its `official_url` or `tk_url`, `category` its kind, an `author` per person, `summary` its summary and dossier). The feed is `updated` when the events were last written (`lawgraph feed-events`), and may be kept 15 minutes by any cache (`public, max-age=900`).
          */
         get: operations["get_feed_atom_api_feed_atom_get"];
         put?: never;
@@ -1803,6 +1863,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AboveArticleDTO
+         * @description An article of a law above that says so.
+         */
+        AboveArticleDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Article Number */
+            article_number: string | null;
+            /** Display Name */
+            display_name: string | null;
+        };
         /**
          * ActingOtherSeatDTO
          * @description The seat a stand-in held throughout.
@@ -2153,7 +2227,7 @@ export interface components {
             title: string | null;
             /**
              * Short Title
-             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             * @description The name a bill goes by: the parentheses that end its title, else what the Eerste Kamer calls it (``Ontwerpen voor bewegwijzering``); null without.
              */
             short_title: string | null;
             /** Title Source */
@@ -2282,6 +2356,49 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["ActorDossierDTO"][];
+        };
+        /**
+         * AliasDTO
+         * @description An abbreviation of one law: `Cbw` stands for `BWBR0049999`.
+         */
+        AliasDTO: {
+            /**
+             * Abbreviation
+             * @description As its source spells it: `Cbw`, `BW 7`.
+             */
+            abbreviation: string;
+            /**
+             * Law Id
+             * @description The BWB id or CELEX number it stands for.
+             */
+            law_id: string;
+        };
+        /**
+         * AliasesResponse
+         * @description Response for GET /api/aliases.
+         */
+        AliasesResponse: {
+            /**
+             * Codes
+             * @description Every abbreviation that stands for one law, in alphabetical order ignoring case: the short title and the other abbreviations of the BWB (its WTI), then those kept by hand where the source gives none (an EU act: `AVG`). One that several laws share is left out, as a law without one is.
+             */
+            codes: components["schemas"]["AliasDTO"][];
+            /**
+             * Families
+             * @description Code -> book -> BWB id, of a code whose books are regulations of their own: `{"BW": {"7": "BWBR0005290"}}`. A citation names the book: `7:658 BW`.
+             */
+            families: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            /**
+             * Names
+             * @description Code -> the names it goes by besides its abbreviation: `{"BW": ["Burgerlijk Wetboek"]}`.
+             */
+            names: {
+                [key: string]: string[];
+            };
         };
         /**
          * AmendedByResponse
@@ -2856,9 +2973,15 @@ export interface components {
         /**
          * ArticleCitedByItem
          * @description One passage of a judgment that cites the article. `leden`, `onderdelen` and
-         *     `aanhef` say what the passage names of it.
+         *     `aanhef` say what the passage names of it. A judgment only its metadata links to the
+         *     article has no passage: one row, with null for all that describes a passage.
          */
         ArticleCitedByItem: {
+            /**
+             * Origin
+             * @description What names the article: the judgment's `text`, its `metadata` (the `Wetsverwijzing` the court's editors entered), or both. Null for a link made before this was kept.
+             */
+            origin: ("text" | "metadata")[] | null;
             /**
              * Leden
              * @description Numbers of the leden named (`['1', '2']`), ranges written out.
@@ -2878,9 +3001,9 @@ export interface components {
             judgment: components["schemas"]["CitedByJudgment"];
             /**
              * Paragraph Id
-             * @description The paragraph, as `paragraph_id` of `/api/judgments/{ecli}`.
+             * @description The paragraph, as `paragraph_id` of `/api/judgments/{ecli}`; null for a judgment without a passage.
              */
-            paragraph_id: string;
+            paragraph_id: string | null;
             /**
              * Paragraph Number
              * @description Its printed number (`5.3`), null when it has none.
@@ -2895,21 +3018,21 @@ export interface components {
              * Start
              * @description Offset of the citation in the text of the paragraph.
              */
-            start: number;
+            start: number | null;
             /** End */
-            end: number;
+            end: number | null;
             /**
              * Text
              * @description The citation as written: `text[start:end]`.
              */
-            text: string;
+            text: string | null;
             /**
              * Snippet
              * @description The text of the paragraph around the citation.
              */
-            snippet: string;
+            snippet: string | null;
             /** Confidence */
-            confidence: number;
+            confidence: number | null;
         };
         /**
          * ArticleCitedByResponse
@@ -2922,17 +3045,17 @@ export interface components {
             items: components["schemas"]["ArticleCitedByItem"][];
             /**
              * Total
-             * @description Every passage that matches the filters, independent of `limit`.
+             * @description Every row that matches the filters, independent of `limit`.
              */
             total: number;
             /**
              * Judgment Total
-             * @description The judgments those passages are in: a judgment that cites the article in three places is three passages and one judgment.
+             * @description The judgments of those rows: a judgment that cites the article in three places is three rows and one judgment. Counted with every request (under `lid` kept with the rows), so after a run of the sources it can be ahead of `total`, `items` and `facets`, which are kept up to an hour.
              */
             judgment_total: number;
             /**
              * Echr Judgment Total
-             * @description The ECHR judgments that cite the article, whatever the filters. HUDOC names the articles a judgment applies, not the passage, so they are no row of `items`; `GET /api/instruments/{identifier}/eu-links` lists them (`international`).
+             * @description The ECHR judgments that cite the article, whatever the filters, counted with every request. Without filters, this and `judgment_total` add up to `metadata.judgment_count` of the article, but for a citation by a judgment not (yet) in the graph, which only that count holds. HUDOC names the articles a judgment applies, not the passage, so they are no row of `items`; `GET /api/instruments/{identifier}/eu-links` lists them (`international`).
              * @default 0
              */
             echr_judgment_total: number;
@@ -3712,8 +3835,23 @@ export interface components {
             display_name: string | null;
             /** Repealed */
             repealed: boolean;
+            /**
+             * Stub
+             * @description Known only from what cites it: the data has no text of it and no law, so `blocks` is empty, which does not say it lapsed.
+             */
+            stub: boolean;
+            /**
+             * Valid From
+             * @description `Tekst sinds`: the first day of the wording that holds today, as `/history` gives it (`valid_from` of the version where `text_changed`). Null when no version holds today, and for an article without versions (an EU act, a law of the Staatsblad).
+             */
+            valid_from: string | null;
             /** @description Whether it holds today, from the dates its source gives (docs/api.md "Validity"); null where the source says nothing of it (an EU act, a treaty the Verdragenbank does not say is in force). */
             validity: components["schemas"]["ValidityDTO"] | null;
+            /**
+             * Breadcrumb
+             * @description The divisions it stands in, the outermost first; empty for none.
+             */
+            breadcrumb: components["schemas"]["InstrumentArticleBreadcrumbDTO"][];
             law: components["schemas"]["ArticleTextLawDTO"] | null;
             /** Blocks */
             blocks: components["schemas"]["ArticleTextBlockDTO"][];
@@ -6319,7 +6457,7 @@ export interface components {
             facets: components["schemas"]["DocumentFacetsDTO"] | null;
             /**
              * Partial
-             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): ``total`` null and empty facets now, ask again for them; they are counted on. The next page does not depend on them.
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted before them; ask again for them, they are counted on. The next page does not depend on them.
              * @default false
              */
             partial: boolean;
@@ -6647,7 +6785,7 @@ export interface components {
             title: string | null;
             /**
              * Short Title
-             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             * @description The name a bill goes by: the parentheses that end its title, else what the Eerste Kamer calls it (``Ontwerpen voor bewegwijzering``); null without.
              */
             short_title: string | null;
             /** Title Source */
@@ -7357,7 +7495,7 @@ export interface components {
             title: string | null;
             /**
              * Short Title
-             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             * @description The name a bill goes by: the parentheses that end its title, else what the Eerste Kamer calls it (``Ontwerpen voor bewegwijzering``); null without.
              */
             short_title: string | null;
             /** Title Source */
@@ -7940,6 +8078,11 @@ export interface components {
             bwb_id: string | null;
             /** Article Number */
             article_number: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * ExplainingDocumentDTO
@@ -8372,7 +8515,7 @@ export interface components {
             /** Short Title */
             short_title: string | null;
             /** Short Title Basis */
-            short_title_basis: ("title" | "citation" | "case" | "amended_law") | null;
+            short_title_basis: ("title" | "citation" | "case" | "eerstekamer" | "amended_law") | null;
             /**
              * Changes Articles
              * @description Whether the dossier changes an article, enacted or proposed (then ``/api/dossiers/{number}/changed-articles`` has something; a dossier that does not answers ``total: 0``); null where this answer did not look.
@@ -8394,14 +8537,14 @@ export interface components {
             title: string | null;
             /**
              * Short Title
-             * @description The name it goes by: of a budget its chapter and year, else the parentheses that end its title, else the citation title its bill gives itself, the Kamer gives the bill's case, or of the one law the bill changes; null without.
+             * @description The name it goes by: of a budget its chapter and year, else the parentheses that end its title, else the citation title its bill gives itself or the Kamer gives the bill's case, else the name the Eerste Kamer gives the bill, else the citation title of the one law the bill changes; null without.
              */
             short_title: string | null;
             /**
              * Short Title Basis
-             * @description Where ``short_title`` comes from: ``title``, ``citation``, ``case`` or ``amended_law`` (then it names the law changed, not the bill).
+             * @description Where ``short_title`` comes from: ``title``, ``citation``, ``case``, ``eerstekamer`` or ``amended_law`` (then it names the law changed, not the bill).
              */
-            short_title_basis: ("title" | "citation" | "case" | "amended_law") | null;
+            short_title_basis: ("title" | "citation" | "case" | "eerstekamer" | "amended_law") | null;
             /**
              * Changes Articles
              * @description Whether the dossier changes an article, enacted or proposed (then ``/api/dossiers/{number}/changed-articles`` has something; a dossier that does not answers ``total: 0``); null where this answer did not look.
@@ -9473,6 +9616,38 @@ export interface components {
             dossiers: components["schemas"]["InFluxDossierDTO"][];
         };
         /**
+         * InstrumentAboveItem
+         * @description A law whose text leaves a matter to this one, with the articles that say so.
+         */
+        InstrumentAboveItem: {
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type, lower case.
+             */
+            kind: string | null;
+            /** Articles */
+            articles: components["schemas"]["AboveArticleDTO"][];
+        };
+        /**
+         * InstrumentAboveResponse
+         * @description Response for GET /api/instruments/{bwb_id}/above.
+         */
+        InstrumentAboveResponse: {
+            /**
+             * Bwb Id
+             * @description The identifier as asked for.
+             */
+            bwb_id: string;
+            /** Total */
+            total: number;
+            /**
+             * Items
+             * @description The laws in force, by title.
+             */
+            items: components["schemas"]["InstrumentAboveItem"][];
+        };
+        /**
          * InstrumentAnnexDTO
          * @description An annex (``<bijlage>``) of a law in its table of contents.
          */
@@ -10197,14 +10372,14 @@ export interface components {
             closed: boolean | null;
             /**
              * Via
-             * @description How the dossier is linked: ``instrument`` = LEGISLATED_IN from the regulation itself, ``amending_publication`` = LEGISLATED_IN from a publication that amends, introduces or repeals one of its articles.
+             * @description How the dossier is linked: ``instrument`` = LEGISLATED_IN from the regulation itself, ``amending_publication`` = LEGISLATED_IN from a publication that amends, introduces or repeals one of its articles, or a paper of the dossier that AMENDS the regulation or one of its articles.
              * @default instrument
              * @enum {string}
              */
             via: "instrument" | "amending_publication";
             /**
              * Publication
-             * @description Identifier (e.g. ``stb-2019-33``) of the newest amending publication linking the dossier; only set when ``via`` is ``amending_publication``.
+             * @description Identifier (e.g. ``stb-2019-33``) of the newest amending publication linking the dossier; only set when ``via`` is ``amending_publication``, null for a dossier with only a paper that amends.
              */
             publication: string | null;
             /**
@@ -10552,13 +10727,13 @@ export interface components {
             items: components["schemas"]["InstrumentListItemDTO"][];
             /**
              * Total
-             * @description Matching instruments; null while ``partial``.
+             * @description Matching instruments; null until it is counted.
              */
             total: number | null;
             facets: components["schemas"]["InstrumentFacets"] | null;
             /**
              * Partial
-             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): ``total`` null and empty facets now, ask again for them; they are counted on. The next page does not depend on them.
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted before them; ask again for them, they are counted on. The next page does not depend on them.
              * @default false
              */
             partial: boolean;
@@ -10672,6 +10847,19 @@ export interface components {
             items: components["schemas"]["InstrumentReferenceDTO"][];
         };
         /**
+         * InstrumentRelatedArticleDTO
+         * @description An article of this law that a related instrument refers to.
+         */
+        InstrumentRelatedArticleDTO: {
+            /**
+             * Key
+             * @description Node key of the article, to open it.
+             */
+            key: string;
+            /** Article Number */
+            article_number: string | null;
+        };
+        /**
          * InstrumentRelatedBasisDTO
          * @description How a related instrument and the law are one of a delegation.
          */
@@ -10743,6 +10931,11 @@ export interface components {
              * @description Articles in force of this law that those refer to.
              */
             inbound_cited_count: number;
+            /**
+             * Inbound Cited Articles
+             * @description Those articles, each once, in the order of this law: `inbound_cited_count` of them.
+             */
+            inbound_cited_articles: components["schemas"]["InstrumentRelatedArticleDTO"][];
             /**
              * Based On
              * @description Whether the two are one of a delegation as well: see `basis`.
@@ -10988,6 +11181,11 @@ export interface components {
          * @description An article a judgment cites, with where and how: the strongest of its mentions.
          */
         JudgmentCitedArticle: {
+            /**
+             * Origin
+             * @description What names the article: the judgment's `text`, its `metadata` (the `Wetsverwijzing` the court's editors entered), or both. Null for a link made before this was kept.
+             */
+            origin: ("text" | "metadata")[] | null;
             /**
              * Paragraph Ids
              * @description The paragraphs that cite it, in reading order (a citation in a footnote counts for the paragraph that refers to the footnote).
@@ -11627,13 +11825,13 @@ export interface components {
             items: components["schemas"]["JudgmentListItemDTO"][];
             /**
              * Total
-             * @description Matching judgments; null while ``partial``.
+             * @description Matching judgments; null until it is counted.
              */
             total: number | null;
             facets: components["schemas"]["JudgmentFacets"] | null;
             /**
              * Partial
-             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): ``total`` null and empty facets now, ask again for them; they are counted on. The next page does not depend on them.
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted before them; ask again for them, they are counted on. The next page does not depend on them.
              * @default false
              */
             partial: boolean;
@@ -13817,6 +14015,57 @@ export interface components {
             signed_for: components["schemas"]["SignedForDTO"][];
         };
         /**
+         * SeatCountsDTO
+         * @description How much of a list can be attributed to the seat.
+         */
+        SeatCountsDTO: {
+            /**
+             * Attributed
+             * @description The ``total`` of the list filtered on this ``seat``.
+             */
+            attributed: number;
+            /**
+             * Unattributed
+             * @description Of its ministry and kind, on a day the seat was held, but with no member found or a member who fits no one seat that day: in no list of a seat.
+             */
+            unattributed: number;
+        };
+        /**
+         * SeatDTO
+         * @description An office, over the names of its ministry.
+         */
+        SeatDTO: {
+            /**
+             * Seat
+             * @description By its latest name: ``ienw/minister``, without a lane.
+             */
+            seat: string;
+            /**
+             * Names
+             * @description Every name it was held under, oldest first.
+             */
+            names: string[];
+            /**
+             * Merged From
+             * @description The seats of ministries that merged into this one (``venw/minister`` into ``ienm/minister``): other offices, their holders not among these.
+             */
+            merged_from: string[];
+            /**
+             * Merged Into
+             * @description The seat of the ministry this one merged into: another office.
+             */
+            merged_into: string[];
+            /**
+             * Holders
+             * @description Oldest first.
+             */
+            holders: components["schemas"]["SeatHolderDTO"][];
+            /** Gaps */
+            gaps: components["schemas"]["SeatGapDTO"][];
+            commitments: components["schemas"]["SeatCountsDTO"];
+            dossiers: components["schemas"]["SeatCountsDTO"];
+        };
+        /**
          * SeatEventBasis
          * @enum {string}
          */
@@ -13850,6 +14099,66 @@ export interface components {
          * @enum {string}
          */
         SeatEventKind: "beëdiging" | "vertrek" | "overstap" | "afsplitsing" | "hernoeming" | "samenvoeging" | "verkiezing" | "vacature" | "opvolging" | "coalitie";
+        /**
+         * SeatGapDTO
+         * @description A stretch longer than two weeks between two holders: no post known, or no such office
+         *     then. Not filled in.
+         */
+        SeatGapDTO: {
+            /** From Date */
+            from_date: string;
+            /** To Date */
+            to_date: string;
+        };
+        /**
+         * SeatHolderDTO
+         * @description A post in the seat: one person, in one cabinet, under one name of the ministry.
+         */
+        SeatHolderDTO: {
+            member: components["schemas"]["PersonRefDTO"];
+            /**
+             * Seat
+             * @description The seat as it was then, with its lane: ``bz/staatssecretaris#2``.
+             */
+            seat: string;
+            post: components["schemas"]["Post"] | null;
+            /**
+             * Function
+             * @description As Rijksoverheid names the post.
+             */
+            function: string | null;
+            ministry: components["schemas"]["MinistryKey"] | null;
+            /** Cabinet Key */
+            cabinet_key: string | null;
+            /** Cabinet Name */
+            cabinet_name: string | null;
+            /**
+             * From Date
+             * @description The day it began.
+             */
+            from_date: string | null;
+            /**
+             * To Date
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts.
+             */
+            to_date: string | null;
+            /**
+             * Acting
+             * @description A stand-in (ad interim).
+             * @default false
+             */
+            acting: boolean;
+            /**
+             * Overlaps With
+             * @description The members who held the same seat at the same time: a conflict in the source, not hidden.
+             */
+            overlaps_with: string[];
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
+        };
         /**
          * SeatStretchDTO
          * @description A stretch of days in which neither the coalition nor any faction's seats changed.
@@ -16677,6 +16986,8 @@ export interface operations {
                 offset?: number;
                 /** @description Count per status, outcome, track, stage and ministry. */
                 facets?: boolean;
+                /** @description An office, by any of its names (``GET /api/seats/{seat}``): the dossiers its holder that day signed first. */
+                seat?: string | null;
             };
             header?: never;
             path?: never;
@@ -17592,6 +17903,8 @@ export interface operations {
                 offset?: number;
                 /** @description Count per status, cabinet and ministry. */
                 facets?: boolean;
+                /** @description An office, by any of its names (``GET /api/seats/{seat}``): the commitments of the member who held it that day. */
+                seat?: string | null;
             };
             header?: never;
             path?: never;
@@ -18012,6 +18325,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_seat_detail_api_seats__seat__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seat: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeatDTO"];
                 };
             };
             /** @description Validation Error */
@@ -18529,6 +18873,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LookupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_aliases_api_aliases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AliasesResponse"];
+                };
+            };
+        };
+    };
+    get_instrument_above_route_api_instruments__bwb_id__above_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentAboveResponse"];
                 };
             };
             /** @description Validation Error */

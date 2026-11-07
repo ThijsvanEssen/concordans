@@ -1,8 +1,9 @@
 <script lang="ts">
 	// The right column of ⌘K on a wide screen: the bron the keys are on, so it is chosen without
 	// opening it (palette-preview.ts); under it what Enter does, in words, and what else can be done
-	// with it, each with its key. Where nothing is chosen, what Enter does then. A phone has the
-	// one column without it. Its foot stands still whatever comes in above it.
+	// with it, each with its key. A row of Recent shows its bron the same way; a row that does
+	// something says what, and where it does it. Where nothing is chosen, what Enter does then. A
+	// phone has the one column without it. Its foot stands still whatever comes in above it.
 	import KeyCaps from '$lib/keys/KeyCaps.svelte';
 	import { SHORTCUTS } from '$lib/keys/register';
 	import type { DoRow } from '$lib/keys/doen.svelte';
@@ -26,6 +27,7 @@
 		query = '',
 		opens = true,
 		cited = null,
+		waits = false,
 		ondo
 	}: {
 		/** A row Doen or Hier the keys are on. */
@@ -40,19 +42,28 @@
 		opens?: boolean;
 		/** The citation Enter opens then, by its name. */
 		cited?: string | null;
+		/** Enter waits for the answer that says whether the query cites a bron. */
+		waits?: boolean;
 		ondo: (row: DoRow) => void;
 	} = $props();
 
 	/** Keys walk fast over a list: a row the keys only pass asks nothing. */
 	const REST_MS = 120;
 
+	/**
+	 * The bron shown: the one of a row of Recent, else of the result the keys are on. A row of
+	 * Recent is named as its tab was ("36600 VII Begroting …"): its card names it better.
+	 */
+	const shown = $derived<ChosenBron | null>(
+		row ? (row.bron ? { ref: row.bron, label: row.label, unnamed: true } : null) : bron
+	);
 	let loaded = $state.raw<{ bron: ChosenBron; rest: PreviewRest | null } | null>(null);
-	const rest = $derived(loaded?.bron === bron ? loaded.rest : null);
-	const loading = $derived(!!bron && !rowSaysAll(bron) && !(loaded?.bron === bron && rest));
-	const data = $derived(bron ? previewOfBron(bron, query, rest) : null);
+	const rest = $derived(loaded?.bron === shown ? loaded.rest : null);
+	const loading = $derived(!!shown && !rowSaysAll(shown) && !(loaded?.bron === shown && rest));
+	const data = $derived(shown ? previewOfBron(shown, query, rest) : null);
 
 	$effect(() => {
-		const asked = bron;
+		const asked = shown;
 		if (!asked || rowSaysAll(asked)) return;
 		let stale = false;
 		const timer = setTimeout(() => {
@@ -73,15 +84,15 @@
 
 	/** Where Enter opens it: a bron opens in the view that stands (bronHref). */
 	const where = $derived(modeOf(page.url) === 'graph' ? 'in het netwerk' : 'in de lezer');
-	const collection = $derived(bron ? collectionOfBron(bron) : null);
+	const collection = $derived(shown ? collectionOfBron(shown) : null);
+	/** The page a row Hier does its work on, by the name its tab gives it. */
+	const here = $derived.by(() => {
+		void page.url;
+		return typeof document === 'undefined' ? '' : document.title.replace(/, Concordans$/, '');
+	});
 
 	const comboOf = (id: string | undefined) => SHORTCUTS.find((s) => s.id === id)?.keys[0];
-	const whatEnterDoes = (r: DoRow) =>
-		r.fill !== undefined
-			? 'en typ verder'
-			: r.group === 'Recent'
-				? 'gaat hierheen terug'
-				: 'voert dit uit';
+	const whatEnterDoes = (r: DoRow) => (r.fill !== undefined ? 'en typ verder' : 'voert dit uit');
 </script>
 
 {#snippet keyOf(r: DoRow)}{@const combo = comboOf(r.key)}{#if combo}<span class="combo"
@@ -89,12 +100,11 @@
 		>{/if}{/snippet}
 
 <aside class="preview" aria-label="Voorbeeld">
-	{#if row}
-		<div class="bron">
-			{#if row.group}<p class="kind">{row.group}</p>{/if}
+	{#if row && !row.bron}
+		<!-- What it does and where, Enter under it: no room held for a passage it has not. -->
+		<div class="doe">
+			{#if row.group || (!query && here)}<p class="kind">{row.group ?? here}</p>{/if}
 			<p class="title">{row.label}</p>
-		</div>
-		<div class="foot">
 			{#if row.why}
 				<p class="line quiet">{row.why}</p>
 			{:else if row.now}
@@ -130,8 +140,10 @@
 			</div>
 		</div>
 		<div class="foot">
-			{#if opens}
-				<p class="line"><kbd>Enter</kbd> opent {whatOpens(collection)} {where}</p>
+			{#if row}
+				<p class="line"><kbd>Enter</kbd> gaat hierheen terug</p>
+			{:else if opens}
+				<p class="line"><kbd>Enter</kbd> opent {whatOpens(collection, data.kind)} {where}</p>
 			{:else if cited}
 				<p class="line"><kbd>Enter</kbd> opent {cited}</p>
 			{:else}
@@ -150,8 +162,13 @@
 		</div>
 	{:else if query}
 		<div class="bron">
-			<p class="line"><kbd>Enter</kbd> zoekt "{query}" op de zoekpagina</p>
-			<p class="line quiet"><kbd>↓</kbd> kiest een regel uit de lijst</p>
+			{#if waits}
+				<!-- Enter opens what a citation names, else searches: which, the answer says. -->
+				<p class="line" role="status"><kbd>Enter</kbd> wacht op het antwoord</p>
+			{:else}
+				<p class="line"><kbd>Enter</kbd> zoekt "{query}" op de zoekpagina</p>
+				<p class="line quiet"><kbd>↓</kbd> kiest een regel uit de lijst</p>
+			{/if}
 		</div>
 	{/if}
 </aside>
@@ -178,6 +195,9 @@
 		overflow: hidden;
 	}
 	.foot {
+		flex-shrink: 0;
+	}
+	.doe {
 		flex-shrink: 0;
 	}
 	.kind {

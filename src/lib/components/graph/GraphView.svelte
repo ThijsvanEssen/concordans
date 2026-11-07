@@ -111,6 +111,7 @@
 		verbonden,
 		reach = null,
 		expecting = 0,
+		pending = false,
 		selectedEdgeId = null,
 		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
@@ -147,6 +148,8 @@
 		reach?: NeighborhoodReach | null;
 		/** The bronnen of the netwerk asked and not yet in: Weergave keeps its place meanwhile. */
 		expecting?: number;
+		/** The focus or its neighbourhood is on its way: the list of bronnen is not yet whole. */
+		pending?: boolean;
 		selectedEdgeId?: string | null;
 		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
 		lineLids?: ReadonlyMap<string, string>;
@@ -1442,6 +1445,7 @@
 		     keep stepping through the history there. -->
 			<CanvasNodeList
 				nodes={listNodes}
+				pending={pending || !!legend.counting}
 				isChosen={(id) => pinnedIds.has(id)}
 				onFocusNode={onKeyNode}
 				onKies={markeer}

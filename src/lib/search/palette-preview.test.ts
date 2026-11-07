@@ -146,11 +146,35 @@ describe('voorbeeldVan: what the right column of ⌘K reads', () => {
 	});
 });
 
+describe('a bron cited by what was typed (B117)', () => {
+	it('takes the name its card gives, and names the kind once', () => {
+		const bron: ChosenBron = { ref: 'dossiers/36600_vii', label: '36600-VII', unnamed: true };
+		const rest: PreviewRest = {
+			card: card({ kicker: 'Dossier 36600 VII', title: 'Begroting BZK 2025' }),
+			first: null,
+			standing: []
+		};
+		expect(previewOfBron(bron, '36600-VII', null, NOW)!.name).toBe('36600-VII');
+		expect(previewOfBron(bron, '36600-VII', rest, NOW)).toMatchObject({
+			kind: 'Dossier 36600 VII',
+			name: 'Begroting BZK 2025'
+		});
+	});
+});
+
 describe('whatOpens', () => {
 	it('says what Enter opens with its article', () => {
 		expect(whatOpens('instruments')).toBe('de wet');
 		expect(whatOpens('articles')).toBe('het artikel');
 		expect(whatOpens('judgments')).toBe('de uitspraak');
 		expect(whatOpens('dossiers')).toBe('het dossier');
+	});
+
+	it('says a regeling by its own kind (B117)', () => {
+		expect(whatOpens('instruments', 'Beleidsregel')).toBe('de beleidsregel');
+		expect(whatOpens('instruments', 'AMvB')).toBe('de AMvB');
+		expect(whatOpens('instruments', 'Koninklijk besluit')).toBe('het koninklijk besluit');
+		expect(whatOpens('instruments', 'Verdrag')).toBe('het verdrag');
+		expect(whatOpens('instruments', 'Wet')).toBe('de wet');
 	});
 });

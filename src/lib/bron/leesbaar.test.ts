@@ -223,7 +223,7 @@ describe('the address of a focus', () => {
 		expect(padOfFocus('documents/d0c5')).toBe('/kamerstukken/21501-20/2461');
 	});
 
-	it("writes an article's address where the answer names its law and number but no path (Licht toe)", () => {
+	it("keeps the address the API gives an explained article, a BW book's too (Licht toe)", () => {
 		keepPaths({
 			explains: [
 				{
@@ -231,20 +231,23 @@ describe('the address of a focus', () => {
 					key: 'bwbr0052872_3',
 					collection: 'articles',
 					bwb_id: 'BWBR0052872',
-					article_number: '3'
+					article_number: '3',
+					path: '/wetten/BWBR0052872/artikel/3'
 				},
 				{
 					id: 'articles/bw6_162',
 					key: 'bw6_162',
 					collection: 'articles',
 					bwb_id: 'BWBR0005289',
-					article_number: '162'
+					article_number: '162',
+					path: '/wetten/BWBR0005289/artikel/6:162'
 				},
 				{
 					id: 'instruments/bwbr0052872',
 					collection: 'instruments',
 					bwb_id: 'BWBR0052872',
-					article_number: null
+					article_number: null,
+					path: '/wetten/BWBR0052872'
 				}
 			]
 		});

@@ -12,6 +12,15 @@ const node = (key: string): GraphNode => ({
 });
 
 describe('CanvasNodeList', () => {
+	it('says it is busy while more bronnen are on their way, and only then (B107)', async () => {
+		const props = { nodes: [node('1')], isChosen: () => false, onFocusNode: () => {} };
+		const { container, rerender } = render(CanvasNodeList, { ...props, pending: true });
+		const list = () => container.querySelector('ul')!;
+		expect(list().getAttribute('aria-busy')).toBe('true');
+		await rerender({ ...props, pending: false });
+		expect(list().hasAttribute('aria-busy')).toBe(false);
+	});
+
 	it('closes the card of the bron in focus with Escape, the focus staying on the bron (B6)', async () => {
 		const onEscape = vi.fn(() => true);
 		const { container } = render(CanvasNodeList, {

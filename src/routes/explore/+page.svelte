@@ -283,7 +283,6 @@
 		loadFailure = null;
 		if (!p || untrack(() => params.get('focus'))) return;
 		const ac = new AbortController();
-		// Untracked: lookUp reads what is remembered (focusOfPad), and a list that comes in
 		// remembers hundreds of addresses; that is no reason to ask again (Sv 143 was asked
 		// twice, 10 Oct).
 		// A law by its abbreviation (/wetten/wft/artikel/1:1): on to its own address, without
@@ -1278,12 +1277,20 @@
 		});
 		if (stap?.soort === 'laden') {
 			loadedFocus = focus;
-			loadFocus(focus).catch((e) => showFocusError(e, focus));
+			pending(loadFocus(focus)).catch((e) => showFocusError(e, focus));
 		} else if (stap?.soort === 'verdiepen') {
 			const anchor = verdiept ?? selectedNode;
-			if (anchor) deepen(anchor).catch((e) => showFocusError(e, anchor.key));
+			if (anchor) pending(deepen(anchor)).catch((e) => showFocusError(e, anchor.key));
 		}
 	});
+
+	/** Loads of a focus or its neighbourhood under way: the list of bronnen says it is busy. */
+	let inflight = $state(0);
+	function pending<T>(load: Promise<T>): Promise<T> {
+		// Untracked: the effect that starts a load must not depend on the counter it raises.
+		untrack(() => inflight++);
+		return load.finally(() => inflight--);
+	}
 
 	/** The message for a bron the dataset does not hold. */
 	function missing(id: string) {
@@ -2406,6 +2413,7 @@
 								reach={netwerkActive ? { ...netwerkReach, focal: bronAlone ? focus : '' } : reach}
 								counting={netwerkActive && (composer.loading || composer.extending)}
 								expecting={netwerkActive ? netwerk.ids.length : 0}
+								pending={inflight > 0}
 								selectedEdgeId={card?.edgeId ?? null}
 								{lineLids}
 								inFluxMap={inFlux.counts}

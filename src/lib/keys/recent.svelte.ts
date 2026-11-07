@@ -1,20 +1,24 @@
-// Recent in ⌘K: the last places the reader left, by the name the tab gave them, so a place of a
-// moment ago is two keys away. Kept in this tab (sessionStorage); a page without storage keeps
-// them while it stands.
+// Recent in ⌘K: the last bronnen the reader left, by the name the tab gave them, so a bron of a
+// moment ago is two keys away; the right column shows it as it does a hit. A page that is no bron
+// (the start page, Zoeken) is no place to go back to (UX-toets 5 Nov). Kept in this tab
+// (sessionStorage); a page without storage keeps them while it stands.
 import { goto } from '$app/navigation';
 import type { DoRow } from './doen.svelte';
 import { ignore } from '$lib/api/errors';
+import { focusIn } from '$lib/bron/address';
 
 const KEY = 'concordans.recent';
 const MAX = 5;
 const SUFFIX = ', Concordans';
 
-type Place = { href: string; title: string };
+/** `focus`: the node id of the bron, `instruments/bwbr0005537`. */
+type Place = { href: string; title: string; focus: string };
 
 function read(): Place[] {
 	try {
 		const list = JSON.parse(sessionStorage.getItem(KEY) ?? '[]');
-		return Array.isArray(list) ? list : [];
+		// A place kept before Recent held only bronnen has no focus.
+		return Array.isArray(list) ? list.filter((p) => p?.focus) : [];
 	} catch (e) {
 		ignore('Recent')(e);
 		return [];
@@ -25,8 +29,13 @@ let places = $state.raw<Place[]>(typeof sessionStorage === 'undefined' ? [] : re
 
 /** The place being left, before the next is drawn: its title is still its own. */
 export function leave(url: URL, title: string) {
-	if (!title.endsWith(SUFFIX)) return;
-	const place = { href: `${url.pathname}${url.search}`, title: title.slice(0, -SUFFIX.length) };
+	const focus = focusIn(url);
+	if (!focus || !title.endsWith(SUFFIX)) return;
+	const place = {
+		href: `${url.pathname}${url.search}`,
+		title: title.slice(0, -SUFFIX.length),
+		focus
+	};
 	// One row per page: a weergave or a filter of it is the same place, as it was last.
 	places = [place, ...places.filter((p) => new URL(p.href, url).pathname !== url.pathname)].slice(
 		0,
@@ -48,6 +57,7 @@ export function recentRows(here: URL): DoRow[] {
 			id: `recent-${i}`,
 			label: p.title,
 			group: 'Recent',
+			bron: p.focus,
 			run: () => goto(p.href)
 		}));
 }

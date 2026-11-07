@@ -5,7 +5,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
-	import { hitName, presentHit } from './present';
+	import { expiredWord, hitName, presentHit } from './present';
 	import { conceptOf } from './results';
 
 	let {
@@ -41,7 +41,7 @@
 				? ` ${shown.context}`
 				: shown.context}{#if shown.expired}{shown.context ? ', ' : ''}<span
 					class="vervallen"
-					title={shown.expired}>vervallen</span
+					title={shown.expired}>{expiredWord(shown.expired)}</span
 				>{/if}</span
 		>
 	{/if}

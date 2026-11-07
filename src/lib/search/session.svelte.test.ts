@@ -162,6 +162,68 @@ describe('the lanes of a search', () => {
 		stop();
 	});
 
+	it('brings no group in above one shown: the slower lanes wait for the fast one (B117)', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'huur');
+		of('articles').answer(answer({ articles: [hit('articles', 'art', 1)] }));
+		await settle();
+		// The articles are in before the laws: nothing stands yet, no place is held.
+		expect(s.shown).toEqual([]);
+		of('instruments').answer(
+			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { resolved: null })
+		);
+		await settle();
+		expect(s.shown.map((g) => [g.kind, g.pending])).toEqual([
+			['instruments', false],
+			['articles', false],
+			['judgments', true]
+		]);
+		stop();
+	});
+
+	it('keeps the slower groups back while the fast lane asks again in full (B117)', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'huur');
+		of('articles').answer(answer({ articles: [hit('articles', 'art', 1)] }));
+		of('instruments').answer(
+			answer({ instruments: [] }, { resolved: null, partial: { instruments: true } })
+		);
+		await settle();
+		expect(s.fullFor).toBe('huur');
+		expect(s.shown).toEqual([]);
+		await vi.advanceTimersByTimeAsync(150);
+		of('instruments').answer(
+			answer({ instruments: [hit('instruments', 'huurwet', 2)] }, { resolved: null })
+		);
+		await settle();
+		expect(s.shown.map((g) => g.kind)).toEqual(['instruments', 'articles', 'judgments']);
+		stop();
+	});
+
+	it('shows the groups once the fast answer in full is in, though it still says partial (B117)', async () => {
+		const { of } = api();
+		const { s, stop } = session();
+		await type(s, 'onrechtmatige daad');
+		of('articles').answer(answer({ articles: [hit('articles', 'art', 1)] }));
+		of('instruments').answer(
+			answer({ instruments: [] }, { resolved: null, partial: { instruments: true, members: true } })
+		);
+		await settle();
+		await vi.advanceTimersByTimeAsync(150);
+		// The answer in full leaves members out too: no more to ask, so it is in.
+		of('instruments').answer(
+			answer(
+				{ instruments: [hit('instruments', 'bw6', 2)] },
+				{ resolved: null, partial: { members: true } }
+			)
+		);
+		await settle();
+		expect(s.shown.map((g) => g.kind)).toEqual(['instruments', 'articles', 'judgments']);
+		stop();
+	});
+
 	it('says a lane that failed in its group, and asks only that lane again', async () => {
 		const { asked, of } = api();
 		const { s, stop } = session();
@@ -582,6 +644,19 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		stop();
 	});
 
+	it('says that Enter waits until the answer is in, for a query with a digit (B117)', async () => {
+		const { of } = api();
+		const { s, stop } = session(undefined, true);
+		await type(s, '6:162 BW');
+		expect(s.enterWaits).toBe(true);
+		of('instruments').answer(answer({ instruments: [] }, CITED));
+		await settle();
+		expect(s.enterWaits).toBe(false);
+		await type(s, 'politiewet');
+		expect(s.enterWaits).toBe(false);
+		stop();
+	});
+
 	it('a citation that does not exist goes to the page of results, also after waiting', async () => {
 		const { of } = api();
 		const { s, opened, results, stop } = session(undefined, true);
@@ -725,17 +800,19 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 	});
 
 	describe('an answer that comes in after the choice', () => {
-		const ARTICLE_A = hit('articles', 'a');
-		const ARTICLE_B = hit('articles', 'b');
-		const LAW = hit('instruments', 'huurwet');
+		// The fast lane is in, the text lane not: its group Artikelen holds a place above the
+		// members, and its hits come in there (B117: no group comes in above before the fast one).
+		const MEMBER_A = hit('members', 'a', 0);
+		const MEMBER_B = hit('members', 'b', 0);
+		const ARTICLE = hit('articles', 'art');
 
-		/** The articles in, the fast lane still out, and ↓ on the row given. */
-		async function chosenBeforeLaws(presses = 1) {
+		/** The fast lane in, the articles still out, and ↓ on the row given. */
+		async function chosenBeforeArticles(presses = 1) {
 			const { of } = api();
 			const session_ = session(undefined, true);
 			await type(session_.s, 'huur');
 			await vi.advanceTimersByTimeAsync(300);
-			of('articles').answer(answer({ articles: [ARTICLE_A, ARTICLE_B] }));
+			of('instruments').answer(answer({ members: [MEMBER_A, MEMBER_B] }, { resolved: null }));
 			await settle();
 			for (let n = 0; n < presses; n++) session_.s.down();
 			flushSync();
@@ -743,45 +820,34 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		}
 
 		it('Enter opens the bron that was chosen, in its new place', async () => {
-			const { of, s, opened, results, stop } = await chosenBeforeLaws(2);
+			const { of, s, opened, results, stop } = await chosenBeforeArticles(2);
 			expect(s.isActive(1)).toBe(true);
-			of('instruments').answer(answer({ instruments: [LAW] }));
+			of('articles').answer(answer({ articles: [ARTICLE] }));
 			await settle();
 			expect(s.isActive(2)).toBe(true);
 			s.pressEnter();
-			expect(opened).toEqual([ARTICLE_B.id]);
-			expect(results).toEqual([]);
-			stop();
-		});
-
-		it('an Enter pressed before that answer opens the same bron once it is in', async () => {
-			const { of, s, opened, results, stop } = await chosenBeforeLaws();
-			s.pressEnter();
-			expect(opened).toEqual([]);
-			of('instruments').answer(answer({ instruments: [LAW] }));
-			await settle();
-			expect(opened).toEqual([ARTICLE_A.id]);
+			expect(opened).toEqual([MEMBER_B.id]);
 			expect(results).toEqual([]);
 			stop();
 		});
 
 		it('↓ goes on from the bron where it stands now', async () => {
-			const { of, s, opened, stop } = await chosenBeforeLaws();
-			of('instruments').answer(answer({ instruments: [LAW] }));
+			const { of, s, opened, stop } = await chosenBeforeArticles();
+			of('articles').answer(answer({ articles: [ARTICLE] }));
 			await settle();
 			s.down();
 			s.pressEnter();
-			expect(opened).toEqual([ARTICLE_B.id]);
+			expect(opened).toEqual([MEMBER_B.id]);
 			stop();
 		});
 
 		it('a bron that leaves the list leaves the choice: Enter the page of results', async () => {
-			const { of, s, opened, results, stop } = await chosenBeforeLaws();
-			of('instruments').answer(answer({ instruments: [LAW] }));
+			const { of, s, opened, results, stop } = await chosenBeforeArticles();
+			of('articles').answer(answer({ articles: [ARTICLE] }));
 			await settle();
-			s.retry('text');
+			s.retry('fast');
 			await vi.advanceTimersByTimeAsync(150);
-			of('articles').answer(answer({ articles: [ARTICLE_B] }));
+			of('instruments').answer(answer({ members: [MEMBER_B] }, { resolved: null }));
 			await settle();
 			expect(s.enterRow).toBe(null);
 			s.pressEnter();
@@ -791,9 +857,9 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 		});
 
 		it('the row the pointer is on moves along, and still chooses nothing', async () => {
-			const { of, s, opened, results, stop } = await chosenBeforeLaws(0);
+			const { of, s, opened, results, stop } = await chosenBeforeArticles(0);
 			s.point(1);
-			of('instruments').answer(answer({ instruments: [LAW] }));
+			of('articles').answer(answer({ articles: [ARTICLE] }));
 			await settle();
 			expect(s.isPointed(2)).toBe(true);
 			s.pressEnter();
@@ -807,14 +873,14 @@ describe('Enter with nothing chosen (Thijs, 5 Nov; besluit 30)', () => {
 			const { s, opened, stop } = session();
 			await type(s, 'huur');
 			await vi.advanceTimersByTimeAsync(300);
-			of('articles').answer(answer({ articles: [ARTICLE_A, ARTICLE_B] }));
+			of('instruments').answer(answer({ members: [MEMBER_A, MEMBER_B] }, { resolved: null }));
 			await settle();
 			s.point(1);
-			of('instruments').answer(answer({ instruments: [LAW] }));
+			of('articles').answer(answer({ articles: [ARTICLE] }));
 			await settle();
 			expect(s.isActive(2)).toBe(true);
 			s.pressEnter();
-			expect(opened).toEqual([ARTICLE_B.id]);
+			expect(opened).toEqual([MEMBER_B.id]);
 			stop();
 		});
 	});

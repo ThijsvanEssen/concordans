@@ -105,6 +105,12 @@ describe('the keten of a law', () => {
 		} as never;
 		const k = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis);
 		expect(k.layers.map((l) => l.id)).toEqual(['basis', 'law']);
+		// A law under a law: the layer above is Grondslag, not a second Wet (UX-toets 5 Nov).
+		expect(k.layers.map((l) => l.label)).toEqual(['Grondslag', 'Wet']);
+		const amvb = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis, {
+			kind: 'amvb'
+		});
+		expect(amvb.layers.map((l) => l.label)).toEqual(['Wet', 'AMvB']);
 		expect(k.layers[1].nodes[0].parents).toEqual([
 			{
 				id: 'instruments/bwbr0010346',
@@ -516,7 +522,11 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			citation_title: 'Kieswet',
 			kind: 'wet',
 			date_in_force: '1989-09-01',
-			inbound_cited_count: 2
+			inbound_cited_count: 2,
+			inbound_cited_articles: [
+				{ key: 'bwbr0001840_56', article_number: '56' },
+				{ key: 'bwbr0001840_57', article_number: '57' }
+			]
 		},
 		{
 			id: 'instruments/bwbr0005730',
@@ -527,21 +537,23 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			citation_title: 'Aanwijzingen voor de regelgeving',
 			kind: 'ministeriele-regeling',
 			date_in_force: '1993-01-01',
-			inbound_cited_count: 25
+			inbound_cited_count: 25,
+			inbound_cited_articles: []
 		}
 	] as never;
 
-	it('draws a wet that only names the law in its text in Noemt, under the rest, without a count', () => {
+	it('draws a wet that only names the law in its text in Noemt, under the rest, with its articles (B48)', () => {
 		const k = chain(gw, delegated, null, { mentions: true, refers });
 		const named = k.layers[k.layers.length - 1];
 		expect(named).toMatchObject({ id: 'named', label: 'Noemt' });
 		expect(k.layers.find((l) => l.id === 'law')!.nodes.map((n) => n.name)).toEqual([gw.name]);
 		expect(named.nodes.map((n) => n.name)).toEqual(['Kieswet']);
-		// the API gives how many articles, not which: no label ("2 art." reads as article 2)
-		expect(named.nodes[0].parents).toEqual([
+		// the articles of the law it names, never a count alone ("2 art." reads as article 2)
+		expect(named.nodes[0].parents).toMatchObject([
 			{ id: 'instruments/bwbr0001840', way: 'mentioned', relation: 'REFERS_TO', named: 2 }
 		]);
-		expect(named.nodes[0].mentions).toBe('Gw');
+		expect(named.nodes[0].parents[0].cite?.full).toBe('art. 56, 57 Gw');
+		expect(named.nodes[0].mentions).toBe('art. 56, 57 Gw');
 	});
 
 	it('puts a wet that names an AMvB in Noemt, and not the law it rests on', () => {
