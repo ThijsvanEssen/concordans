@@ -559,6 +559,10 @@
 		/>{/if}
 {/snippet}
 
+{#snippet legend()}
+	<LaneLegend {whole} {scene} {visibility} {onToggleLine} foot={phone} />
+{/snippet}
+
 <div
 	class="banen"
 	class:has-card={!!openUnit}
@@ -566,17 +570,7 @@
 	bind:clientWidth={avail}
 	data-testid="banen"
 >
-	<!-- Also with nothing left to draw: what is switched off comes back here. -->
-	{#if whole.kinds.length > 0 || visibility.hiddenLines.size > 0}
-		<LaneLegend
-			kinds={whole.kinds}
-			lines={scene.lines}
-			hidden={visibility.hiddenLines}
-			onToggle={onToggleLine}
-			changes={whole.units.flatMap((u) => u.change ?? [])}
-			changesDrawn={scene.units.flatMap((u) => u.change ?? [])}
-		/>
-	{/if}
+	{#if !phone}{@render legend()}{/if}
 	{#if scene.units.length === 0}
 		<!-- No bron at all: the canvas says so itself (Nog geen bron gekozen). -->
 		{#if nodes.length > 0}<div class="leeg">
@@ -630,6 +624,7 @@
 			</svg>
 		</div>
 	{/if}
+	{#if phone}{@render legend()}{/if}
 </div>
 {#if !phone}<LaneEdge {field} {covered} watch={[avail, layout, scale]} />{/if}
 {#if openUnit}

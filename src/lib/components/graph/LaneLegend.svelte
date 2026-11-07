@@ -13,31 +13,35 @@
 	} from '$lib/graph/line-kind';
 	import { CHANGED_MARK, LAW_CHANGE_WORDS } from '$lib/graph/lane-changes';
 	import { laneLineColour } from '$lib/graph/line-strength';
-	import type { LawChange, SceneLine } from '$lib/graph/scene';
+	import type { LawChange, Scene } from '$lib/graph/scene';
+	import type { Visibility } from '$lib/graph/visibility';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import LineSample from './LineSample.svelte';
 	import { tokens } from './nodeSprites';
 
 	let {
-		kinds,
-		lines,
-		hidden,
-		onToggle,
-		changes,
-		changesDrawn
+		whole,
+		scene,
+		visibility,
+		onToggleLine,
+		foot = false
 	}: {
-		/** What the network holds, with nothing switched off (scene `kinds`). */
-		kinds: readonly { kind: LineKind; proposed: boolean }[];
-		/** The lines drawn now. */
-		lines: readonly SceneLine[];
-		/** The lijnsoorten switched off. */
-		hidden: ReadonlySet<LineKind>;
-		onToggle: (kind: LineKind) => void;
-		/** How the wetten of this network change. */
-		changes: readonly LawChange[];
-		/** And which of those stand on the canvas now. */
-		changesDrawn: readonly LawChange[];
+		/** What the network holds, with nothing switched off: its lijnsoorten and changed wetten. */
+		whole: Scene;
+		/** What is drawn now. */
+		scene: Scene;
+		/** Its hiddenLines: the lijnsoorten switched off. */
+		visibility: Visibility;
+		onToggleLine: (kind: LineKind) => void;
+		/** Under the strips of a phone, not over the columns. */
+		foot?: boolean;
 	} = $props();
+
+	const hidden = $derived(visibility.hiddenLines);
+	const kinds = $derived(whole.kinds);
+	const lines = $derived(scene.lines);
+	const changes = $derived(whole.units.flatMap((u) => u.change ?? []));
+	const changesDrawn = $derived(scene.units.flatMap((u) => u.change ?? []));
 
 	const holds = (kind: LineKind, proposed: boolean) =>
 		kinds.some((k) => k.kind === kind && k.proposed === proposed);
@@ -57,6 +61,15 @@
 			})
 		)
 	);
+	/** Every lijnsoort there is, Wijziging also proposed: the room the legend stands in. */
+	const ALL_ITEMS = LINE_KINDS.map((kind) => ({
+		kind,
+		samples: [
+			{ proposed: false, label: LINE_KIND_LABEL[kind] },
+			...(kind === 'change' ? [{ proposed: true, label: 'Voorgestelde wijziging' }] : [])
+		]
+	}));
+	const ALL_MARKS = ['enacted', 'proposed'] as const;
 	const marks = $derived((['enacted', 'proposed'] as const).filter((c) => changes.includes(c)));
 	const colourOf = (kind: LineKind, proposed: boolean) => {
 		const style = LINE_KIND_STYLE[kind];
@@ -65,56 +78,94 @@
 	};
 </script>
 
-<ul class="kinds" aria-label="Lijnsoorten">
-	{#each items as { kind, samples } (kind)}
-		{@const sample = LINE_KIND_SAMPLE[kind]}
-		<li>
-			<button
-				type="button"
-				class="kind"
-				aria-pressed={!hidden.has(kind)}
-				title="{LINE_KIND_LABEL[kind]} {hidden.has(kind) ? 'tonen' : 'verbergen'}"
-				onclick={() => onToggle(kind)}
-			>
-				<Vinkje aan={!hidden.has(kind)} />
-				{#each samples as { proposed, label } (label)}
-					<span class="sample" class:faint={!drawn(kind, proposed)}>
-						<LineSample
-							relation={sample.relation}
-							from={sample.from}
-							colour={colourOf(kind, proposed)}
-						/>
-						<span class="word">{label}</span>
+<!-- Also with nothing left to draw: what is switched off comes back here. The legend stands in the
+     room of every lijnsoort there is, an unseen copy under it: what comes in later adds no line, so
+     the field under it does not move (N17c). -->
+{#if kinds.length > 0 || hidden.size > 0}
+	<div class="legend" class:foot>
+		<ul class="kinds" aria-label="Lijnsoorten">
+			{#each items as { kind, samples } (kind)}
+				<li>
+					<button
+						type="button"
+						class="kind"
+						aria-pressed={!hidden.has(kind)}
+						title="{LINE_KIND_LABEL[kind]} {hidden.has(kind) ? 'tonen' : 'verbergen'}"
+						onclick={() => onToggleLine(kind)}
+					>
+						<Vinkje aan={!hidden.has(kind)} />
+						{#each samples as { proposed, label } (label)}
+							{@render sampleOf(kind, proposed, label, !drawn(kind, proposed))}
+						{/each}
+					</button>
+				</li>
+			{/each}
+			{#each marks as change, i (change)}
+				{@render markOf(change, i, !changesDrawn.includes(change))}
+			{/each}
+		</ul>
+		<ul class="kinds room" aria-hidden="true" inert>
+			{#each ALL_ITEMS as { kind, samples } (kind)}
+				<li>
+					<span class="kind">
+						<Vinkje aan />
+						{#each samples as { proposed, label } (label)}
+							{@render sampleOf(kind, proposed, label, false)}
+						{/each}
 					</span>
-				{/each}
-			</button>
-		</li>
-	{/each}
-	{#each marks as change, i (change)}
-		<li class="mark" class:first={i === 0} class:faint={!changesDrawn.includes(change)}>
-			<svg width="10" height="10" viewBox="-5 -5 10 10" aria-hidden="true">
-				<path class:hollow={change === 'proposed'} d={CHANGED_MARK} />
-			</svg>
-			{LAW_CHANGE_WORDS[change].head}
-		</li>
-	{/each}
-</ul>
+				</li>
+			{/each}
+			{#each ALL_MARKS as change, i (change)}
+				{@render markOf(change, i, false)}
+			{/each}
+		</ul>
+	</div>
+{/if}
+
+{#snippet sampleOf(kind: LineKind, proposed: boolean, label: string, faint: boolean)}
+	{@const sample = LINE_KIND_SAMPLE[kind]}
+	<span class="sample" class:faint>
+		<LineSample relation={sample.relation} from={sample.from} colour={colourOf(kind, proposed)} />
+		<span class="word">{label}</span>
+	</span>
+{/snippet}
+
+{#snippet markOf(change: LawChange, i: number, faint: boolean)}
+	<li class="mark" class:first={i === 0} class:faint>
+		<svg width="10" height="10" viewBox="-5 -5 10 10" aria-hidden="true">
+			<path class:hollow={change === 'proposed'} d={CHANGED_MARK} />
+		</svg>
+		{LAW_CHANGE_WORDS[change].head}
+	</li>
+{/snippet}
 
 <style>
-	/* It stays in view while the field scrolls: over the empty top of the columns. */
-	.kinds {
+	/* It stays in view while the field scrolls: over the empty top of the columns. The legend and
+	   its unseen room share one cell, so the room sets the height. */
+	.legend {
 		position: sticky;
 		top: 0;
 		left: 0;
 		z-index: 1;
+		display: grid;
+		width: fit-content;
+		max-width: calc(100% - 2 * var(--s-8));
+		margin: 0 0 calc(-1 * var(--s-8));
+	}
+	.legend > .kinds {
+		grid-area: 1 / 1;
+	}
+	.room {
+		visibility: hidden;
+	}
+	.kinds {
 		box-sizing: border-box;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0 var(--s-4);
-		width: fit-content;
-		max-width: calc(100% - 2 * var(--s-8));
-		margin: 0 0 calc(-1 * var(--s-8));
+		align-self: start;
+		margin: 0;
 		padding: var(--s-1) var(--s-4);
 		list-style: none;
 		background: var(--paper);
@@ -169,13 +220,17 @@
 		fill: var(--paper);
 		stroke: var(--ink-2);
 	}
-	/* A phone: Deel stands above the field; the samples above the strips, and they scroll away. */
+	/* Under the strips of a phone, a key at the foot: what comes in later moves nothing above it,
+	   so it needs no room. */
+	.legend.foot {
+		position: static;
+		max-width: 100%;
+		margin: 0;
+	}
+	.foot > .room {
+		display: none;
+	}
 	@media (max-width: 768px) {
-		.kinds {
-			position: static;
-			max-width: 100%;
-			margin: 0;
-		}
 		.kind {
 			min-height: 44px;
 		}
