@@ -251,6 +251,24 @@ const said = (words: string, status: unknown) =>
 	[words, status === 'voorgesteld' ? 'voorgesteld' : null].filter(Boolean).join(', ');
 
 /** The hull of each drawn group, with its name placed where no other name stands. */
+/**
+ * Another dossier a dossier holds: related, not a part of it. Its disc is not gone round, nor is
+ * its anchor this one's (B130: dossier 29023 went round two related dossiers at either side of the
+ * canvas, and over the wet).
+ */
+const relatedDossier = (group: ContainerGroup, id: string, attrs: Record<string, unknown>) =>
+	group.kind === 'dossier' && id !== group.id && !!attrs.anchor && attrs.collection === 'dossiers';
+
+/** What a disc does not go round: a bron hidden, or a related dossier. */
+const leftOut = (s: HullScene, group: ContainerGroup, id: string, attrs: Record<string, unknown>) =>
+	s.isHidden(id, attrs) || relatedDossier(group, id, attrs);
+
+/** The anchor a group stands for: its own, not that of a dossier it is related to. */
+const ownAnchor = (graph: Graph, group: ContainerGroup) =>
+	[...group.members].find(
+		(id) => isAnchor(graph, id) && !relatedDossier(group, id, graph.getNodeAttributes(id))
+	);
+
 function drawHulls(s: HullScene): {
 	drawn: Map<string, Drawn>;
 	anchorHull: Map<string, Drawn>;
@@ -277,7 +295,7 @@ function drawHulls(s: HullScene): {
 		for (const id of group.members) {
 			if (!graph.hasNode(id)) continue;
 			const attrs = graph.getNodeAttributes(id);
-			if (s.isHidden(id, attrs)) continue;
+			if (leftOut(s, group, id, attrs)) continue;
 			const p = s.toViewport({ x: attrs.x as number, y: attrs.y as number });
 			const inner = attrs.anchor ? anchorHull.get(id) : undefined;
 			if (inner && inner.id !== group.id) {
@@ -307,7 +325,7 @@ function drawHulls(s: HullScene): {
 		// The anchor is no bron: the hull goes round what it holds, not to where the anchor is
 		// pulled. With nothing of it drawn there is no hull: the anchor is an ordinary bron, its
 		// sign and its name (Netwerkcanvas, Omhulling zonder leden; Thijs, 27 Oct).
-		const anchor = [...group.members].find((id) => isAnchor(graph, id));
+		const anchor = ownAnchor(graph, group);
 		if (points.length === 0 && anchorPoint && anchor) {
 			const own =
 				s.namesOf(group).short || (graph.getNodeAttribute(anchor, 'anchorNaam') as string);

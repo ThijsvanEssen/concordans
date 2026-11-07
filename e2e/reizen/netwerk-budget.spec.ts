@@ -36,7 +36,8 @@ test('Cbw at two steps is drawn, no step greyed out, and the panel says it is no
 });
 
 // A dossier is an island with its stukken only: however many, its disc never holds the wet
-// that its stukken also cite (the Cbw stood in the disc of dossier 36764 at two steps).
+// that its stukken also cite (the Cbw stood in the disc of dossier 36764 at two steps), nor goes
+// round the dossiers it is related to (B130: 29023 round dossiers at either side of the Cbw).
 for (const diepte of [1, 2]) {
 	test(`Cbw at ${diepte} step(s): no dossier disc holds the wet`, async ({ page, touch }) => {
 		test.skip(touch, 'the discs are measured at one width');
@@ -50,16 +51,28 @@ for (const diepte of [1, 2]) {
 				.first()
 		).toBeAttached();
 		await page.waitForLoadState('networkidle');
-		const discs = await page.evaluate(() =>
-			[...document.querySelectorAll('.hull-overlay path.hull')].map((e) => {
-				const m = /M ([-\d.e]+) ([-\d.e]+) A ([-\d.e]+)/.exec(e.getAttribute('d') ?? '');
-				return m ? { x: +m[1] + +m[3], y: +m[2], r: +m[3] } : null;
-			})
-		);
-		// The smallest disc is the wet's (its articles); no other holds its middle.
+		const { discs, wet: label } = await page.evaluate(() => {
+			const px = (e: Element, v: string) =>
+				parseFloat(getComputedStyle(e as HTMLElement).getPropertyValue(v));
+			const cbw = [...document.querySelectorAll('.hull-label')].find(
+				(e) => e.textContent?.trim() === 'Cbw'
+			);
+			return {
+				discs: [...document.querySelectorAll('.hull-overlay path.hull')].map((e) => {
+					const m = /M ([-\d.e]+) ([-\d.e]+) A ([-\d.e]+)/.exec(e.getAttribute('d') ?? '');
+					return m ? { x: +m[1] + +m[3], y: +m[2], r: +m[3] } : null;
+				}),
+				wet: cbw ? { x: px(cbw, '--x'), y: px(cbw, '--y') } : null
+			};
+		});
+		// The wet's disc is the one under its name; no larger disc holds its middle (the small
+		// discs of the European articles beside it hold nothing).
 		const all = discs.filter((d): d is { x: number; y: number; r: number } => !!d);
-		const wet = all.reduce((a, b) => (b.r < a.r ? b : a));
-		for (const d of all.filter((d) => d !== wet))
+		expect(label, 'the wet is named').not.toBeNull();
+		const top = (d: { x: number; y: number; r: number }) =>
+			Math.hypot(d.x - label!.x, d.y - d.r - label!.y);
+		const wet = all.reduce((a, b) => (top(b) < top(a) ? b : a));
+		for (const d of all.filter((d) => d !== wet && d.r > wet.r))
 			expect(Math.hypot(d.x - wet.x, d.y - wet.y), 'a disc holds the wet').toBeGreaterThan(d.r);
 	});
 }

@@ -251,6 +251,28 @@ describe('the names of the hulls (UX review N4, N8)', () => {
 		expect(outerTop.labelY).toBeLessThan(innerTop.labelY);
 	});
 
+	it('goes not round a related dossier, nor takes its anchor for its own (B130)', () => {
+		const s = scene();
+		const node = (id: string, x: number, collection: string, anchor = false) =>
+			s.graph.addNode(id, { x, y: 0, collection, kind: collection, anchor, anchorNaam: id });
+		// Dossier 1 at the left with two stukken; dossier 2, related, at the far right.
+		node('dossiers/1', 0, 'dossiers', true);
+		node('a1', -20, 'documents');
+		node('a2', 20, 'documents');
+		node('dossiers/2', 600, 'dossiers', true);
+		node('b1', 580, 'documents');
+		node('b2', 620, 'documents');
+		const groups = new Map([
+			['dossiers/2', group('dossiers/2', 'dossier', '2', ['dossiers/2', 'b1', 'b2', 'dossiers/1'])],
+			['dossiers/1', group('dossiers/1', 'dossier', '1', ['dossiers/1', 'a1', 'a2', 'dossiers/2'])]
+		]);
+		const { hulls } = layoutHulls({ ...s, groups });
+		const radius = (id: string) =>
+			Number(/ A ([\d.]+) /.exec(hulls.find((h) => h.id === id)!.path)![1]);
+		expect(radius('dossiers/1')).toBeLessThan(100);
+		expect(radius('dossiers/2')).toBeLessThan(100);
+	});
+
 	it('keeps a hull’s name off the signs of the bronnen', () => {
 		const free = layoutHulls(scene()).hulls.find((h) => h.id === 'D')!;
 		// A sign where the name would stand: it steps down into its hull, clear of it.
