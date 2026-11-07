@@ -93,12 +93,12 @@ export const DEFAULT_FILTERS: GraphFilters = {
 
 // Soft cap to keep the canvas responsive during additive exploration. A merge
 // that would pass it drops the oldest nodes that are not pinned, selected or
-// next to the selection. 1000: as high as the API keeps a neighbourhood of more than one step
-// (B94, Thijs 6 Nov: "zo hoog mogelijk"; WVW at two steps draws in about 5 s on 1440).
-export const SOFT_NODE_CAP = 1000;
+// next to the selection. Above 400 the fixtures of the browser suite must be recorded anew, and
+// with today's data the werkplek of 6:162 BW shifts as it loads (B94, at every cap).
+export const SOFT_NODE_CAP = 400;
 
 /**
- * `?grens=600`, a trial of how many places the canvas keeps: a whole number from 50 to 2000
+ * `?grens=800`, a trial of how many places the canvas keeps: a whole number from 50 to 2000
  * replaces the soft cap for the store made at the page's start; anything else leaves it.
  */
 export const capFrom = (asked: string | null): number => {

@@ -129,7 +129,7 @@ describe('the steps of a netwerk', () => {
 		composer.steps = 2;
 		composer.compose(netwerk('members/a'));
 		await settle(composer);
-		expect(composer.reach).toMatchObject({ depth: 2, capped: true, cap: 1000 });
+		expect(composer.reach).toMatchObject({ depth: 2, capped: true, cap: 400 });
 	});
 
 	it('takes the default of each bron when the address says nothing: a dossier stays at one step', async () => {
@@ -182,10 +182,10 @@ describe('the steps of a netwerk', () => {
 	});
 
 	it('shares the room: a quarter of it for four, never under 50, all of it for one', () => {
-		expect(reachCap(1)).toBe(1000);
-		expect(reachCap(3)).toBe(333);
-		expect(reachCap(4)).toBe(250);
-		expect(reachCap(6)).toBe(166);
+		expect(reachCap(1)).toBe(400);
+		expect(reachCap(3)).toBe(133);
+		expect(reachCap(4)).toBe(100);
+		expect(reachCap(6)).toBe(66);
 		expect(reachCap(40)).toBe(50);
 	});
 
