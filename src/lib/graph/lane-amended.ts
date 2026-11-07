@@ -4,7 +4,7 @@
 // whether a change is pending. Pure: amended-by.svelte.ts asks, the scene (withChange) marks.
 import type { Schema } from '$lib/api/types';
 
-export type LawAmended = {
+type LawAmended = {
 	/** A publication changed, introduced or repealed an article of her. */
 	enacted: boolean;
 	/** A paper of the Tweede Kamer proposes a change that is still pending. */
