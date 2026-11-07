@@ -14,10 +14,10 @@ const node = (key: string): GraphNode => ({
 describe('CanvasNodeList', () => {
 	it('says it is busy while more bronnen are on their way, and only then (B107)', async () => {
 		const props = { nodes: [node('1')], isChosen: () => false, onFocusNode: () => {} };
-		const { container, rerender } = render(CanvasNodeList, { ...props, komt: true });
+		const { container, rerender } = render(CanvasNodeList, { ...props, pending: true });
 		const list = () => container.querySelector('ul')!;
 		expect(list().getAttribute('aria-busy')).toBe('true');
-		await rerender({ ...props, komt: false });
+		await rerender({ ...props, pending: false });
 		expect(list().hasAttribute('aria-busy')).toBe(false);
 	});
 
