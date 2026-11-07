@@ -81,8 +81,7 @@
 	const patchUrl = (patch: IndexPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
 
-	// A tab goes to its list's address, without the filters and the open row: a stage filter
-	// of dossiers does not leak into decisions.
+	// A tab is its list's address without the filters and the open row (no leak between lists).
 	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) =>
 		withParams(new URL(LIST_PATHS[k] + page.url.search, page.url), filters, {
 			clear: [...INDEX_FILTER_PARAMS, 'open']
