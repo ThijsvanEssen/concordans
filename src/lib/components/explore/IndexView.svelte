@@ -81,13 +81,12 @@
 	const patchUrl = (patch: IndexPatch, replaceState = false) =>
 		navigate(withParams(page.url, patch), { step: !replaceState });
 
-	// A tab goes to the address of its list and drops the filters and the open row, so a stage
-	// filter of dossiers does not leak into decisions.
-	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) => {
-		const at = new URL(page.url);
-		at.pathname = LIST_PATHS[k];
-		return withParams(at, filters, { clear: [...INDEX_FILTER_PARAMS, 'open'] });
-	};
+	// A tab goes to its list's address, without the filters and the open row: a stage filter
+	// of dossiers does not leak into decisions.
+	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) =>
+		withParams(new URL(LIST_PATHS[k] + page.url.search, page.url), filters, {
+			clear: [...INDEX_FILTER_PARAMS, 'open']
+		});
 
 	// ── Search text ─────────────────────────────────────────────────────────
 	// What is typed goes into the URL when the typing pauses, in place of the last
