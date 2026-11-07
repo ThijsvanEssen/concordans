@@ -16,6 +16,9 @@ export const LAW_CHANGE_WORDS: Record<LawChange, { head: string; says: string }>
 	proposed: { head: 'Voorgesteld', says: 'wijziging voorgesteld' }
 };
 
+/** What a tooltip says of a dossier with a publication that changed the chosen wet (B82). */
+export const DOSSIER_ENACTED = 'wijziging vastgesteld';
+
 /** A dossier's number as its node's key writes it: `21501-02` is `21501_02`. */
 const keyOfNumber = (number: string) => number.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 

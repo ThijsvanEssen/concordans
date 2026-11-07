@@ -26,10 +26,14 @@
 	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
 	import { laneLineColour } from '$lib/graph/line-strength';
 	import { getChangedArticles } from '$lib/api/dossiers';
+	import { getAmendedBy } from '$lib/api/records';
+	import { ignore } from '$lib/api/errors';
+	import { amendedKey, lawAmended, NOT_AMENDED, type Amended } from '$lib/graph/lane-amended';
 	import { load } from '$lib/util/load.svelte';
 	import {
 		CHANGED_MARK,
 		LAW_CHANGE_WORDS,
+		DOSSIER_ENACTED,
 		changedFirst,
 		changedNumbers,
 		laneDossierNumber,
@@ -93,6 +97,34 @@
 
 	let avail = $state(0);
 	const phone = $derived(avail > 0 && avail < PHONE);
+	/** The chosen wetten by their BWB-id (`instruments/bwbr0006622`): `amended-by` is asked for them. */
+	const chosenLaws = $derived(
+		chosen
+			.filter((id) => /^instruments\/bwbr\d+$/i.test(id))
+			.map((id) => id.slice('instruments/'.length).toUpperCase())
+			.join(' ')
+	);
+	/** What `amended-by` says of each chosen wet (B82): one request per wet, asked once. */
+	let amended = $state.raw<Amended>(NOT_AMENDED);
+	$effect(() => {
+		const bwbs = chosenLaws ? chosenLaws.split(' ') : [];
+		let current = true;
+		Promise.all(
+			bwbs.map((bwb) =>
+				getAmendedBy(bwb).then(
+					(data) => [amendedKey(`instruments/${bwb}`), lawAmended(data)] as const,
+					(e) => (ignore('Banen amended-by')(e), null)
+				)
+			)
+		)
+			.then((found) => {
+				if (current) amended = new Map(found.filter((f) => f !== null));
+			})
+			.catch(ignore('Banen amended-by'));
+		return () => {
+			current = false;
+		};
+	});
 	const sceneWith = (v: typeof visibility): Scene =>
 		buildScene({
 			nodes,
@@ -100,6 +132,7 @@
 			chosen,
 			visibility: v,
 			filter,
+			amended,
 			nameOf: (n) => bronNaam(n, $instrumentMetaStore)
 		});
 	const scene: Scene = $derived(sceneWith(visibility));
@@ -297,7 +330,8 @@
 	}
 
 	/** The bronnen with no line to the chosen ones, by soort: one line under the lanes. */
-	const changedWords = (u: SceneUnit) => (u.change ? LAW_CHANGE_WORDS[u.change].says : null);
+	const changedWords = (u: SceneUnit) =>
+		!u.change ? null : u.column === 'laws' ? LAW_CHANGE_WORDS[u.change].says : DOSSIER_ENACTED;
 	const titleOf = (u: SceneUnit) =>
 		[u.label, u.role, u.breakdown, changedWords(u)].filter(Boolean).join(', ') || u.label;
 </script>

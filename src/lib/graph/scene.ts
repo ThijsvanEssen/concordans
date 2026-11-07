@@ -26,6 +26,7 @@ import {
 	type MakerLane,
 	type Signatures
 } from './roles';
+import { amendedKey, NOT_AMENDED, type Amended } from './lane-amended';
 import { foldGroups, markGeneral, unreached } from './scene-groups';
 import { foldTiles, type TilePeriod } from './scene-tiles';
 import {
@@ -77,7 +78,11 @@ export type SceneUnit = {
 	breakdown: string | null;
 	/** A group: the other units its bronnen have a line with, not drawn (only to its target). */
 	elsewhere: number;
-	/** A wet a line of Wijziging goes to, enacted or only proposed: it stands first, with a marker. */
+	/**
+	 * A wet a line of Wijziging goes to, enacted or only proposed, or a chosen wet `amended-by`
+	 * says is changed: it stands first, with a marker. A dossier: `enacted` where a publication
+	 * of it changed a chosen wet.
+	 */
 	change: LawChange | null;
 };
 
@@ -115,6 +120,8 @@ type SceneInput = {
 	nameOf?: (n: GraphNode) => string;
 	/** The bronfilter: what lies outside it leaves the scene (`laneFiltered`). */
 	filter?: LaneFilter;
+	/** What `amended-by` says of the chosen wetten (B82). */
+	amended?: Amended;
 };
 
 /** The column of a rubriek: Wetten, Rechtspraak, Kamerstukken; Parlement and Regering make. */
@@ -430,27 +437,42 @@ export function buildScene(input: SceneInput): Scene {
 		kind: lineKindOf(e.edge.relation, e.fromClass),
 		proposed: e.edge.status === 'voorgesteld'
 	}));
+	// Wijziging off in Relatie: no marker and no head, also not from amended-by.
+	const amended = input.visibility?.hiddenLines.has('change')
+		? NOT_AMENDED
+		: (input.amended ?? NOT_AMENDED);
 	return {
-		...withChange(unreached(withElsewhere(folded.units, linked, folded), lines)),
+		...withChange(unreached(withElsewhere(folded.units, linked, folded), lines), amended),
 		kinds
 	};
 }
 
 /**
  * Marks the wetten a line of Wijziging goes to, a wet that changes another not by that: enacted
- * where one line is (a publication), else proposed.
+ * where one line is (a publication), else proposed. A chosen wet also by `amended-by`: her enacted
+ * changes run through her articles, so no line on the canvas shows them (B82); and the dossiers of
+ * those publications, also as tiles.
  */
-function withChange(scene: Omit<Scene, 'kinds'>): Omit<Scene, 'kinds'> {
+function withChange(scene: Omit<Scene, 'kinds'>, amended: Amended): Omit<Scene, 'kinds'> {
 	const changes = scene.lines.filter((l) => l.kind === 'change');
 	const enacted = new Set(changes.filter((l) => !l.proposed).map((l) => l.to));
 	const proposed = new Set(changes.map((l) => l.to));
-	const changeOf = (id: string): LawChange | null =>
-		enacted.has(id) ? 'enacted' : proposed.has(id) ? 'proposed' : null;
-	const units = scene.units.map((u) => ({
+	const enactedBy = new Set([...amended.values()].flatMap((a) => [...a.dossiers]));
+	const lawChange = (id: string): LawChange | null => {
+		const said = amended.get(amendedKey(id));
+		if (enacted.has(id) || said?.enacted) return 'enacted';
+		return proposed.has(id) || said?.proposed ? 'proposed' : null;
+	};
+	const changeOf = (u: SceneUnit): LawChange | null => {
+		if (u.column === 'laws') return lawChange(u.id);
+		return u.sort === 'dossiers' && enactedBy.has(amendedKey(u.id)) ? 'enacted' : null;
+	};
+	const marked = (u: SceneUnit): SceneUnit => ({
 		...u,
-		change: u.column === 'laws' ? changeOf(u.id) : null
-	}));
-	return { ...scene, units };
+		change: changeOf(u),
+		periods: u.periods.map((p) => ({ ...p, units: p.units.map(marked) }))
+	});
+	return { ...scene, units: scene.units.map(marked) };
 }
 
 type Folded = ReturnType<typeof foldGroups>;
