@@ -1288,7 +1288,8 @@
 	/** Loads of a focus or its neighbourhood under way: the list of bronnen says it is busy. */
 	let inflight = $state(0);
 	function pending<T>(load: Promise<T>): Promise<T> {
-		inflight++;
+		// Untracked: the effect that starts a load must not depend on the counter it raises.
+		untrack(() => inflight++);
 		return load.finally(() => inflight--);
 	}
 
