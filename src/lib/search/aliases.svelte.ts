@@ -1,20 +1,17 @@
 // The abbreviations of the laws ("BW", "Sr", "Awb") ⌘K offers as a prefix is typed: the one
 // table the API keeps (`/api/aliases`, 108 KB, 18 KB gzip). Asked when ⌘K opens, once, never
 // with a page.
-import { api, unwrap } from '$lib/api/client';
-import { onceFn } from '$lib/api/records';
+import { aliases } from '$lib/api/aliases';
 import type { Schema } from '$lib/api/types';
 import type { DoRow } from '$lib/keys/doen.svelte';
 
 type Aliases = Schema<'AliasesResponse'>;
 
 /** An abbreviation the line can become, with the name it goes by where the API gives one. */
-export type Suggestion = { abbreviation: string; name: string | null; family: boolean };
+type Suggestion = { abbreviation: string; name: string | null; family: boolean };
 
 /** Most suggestions shown: "A" is the prefix of hundreds. */
 const MAX = 6;
-
-const fetchAliases = onceFn('aliases', () => unwrap(api.GET('/api/aliases')));
 
 /** The suggestions of one table: one word each (`BW 7` is a book, not an abbreviation). */
 export function suggestionsOf(data: Aliases): Suggestion[] {
@@ -62,7 +59,7 @@ export class AliasSuggestions {
 	/** Asks the table, once. A failure leaves ⌘K without suggestions. */
 	load() {
 		if (this.#all.length) return;
-		fetchAliases().then(
+		aliases().then(
 			(data) => (this.#all = suggestionsOf(data)),
 			() => {}
 		);
