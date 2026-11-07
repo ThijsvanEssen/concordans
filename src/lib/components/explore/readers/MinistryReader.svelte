@@ -18,7 +18,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import { ministryTitle, periodWords } from './ministry';
-	import { seatHref } from '$lib/ambten/ambt';
+	import { seatHref } from '$lib/offices/office';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -75,12 +75,12 @@
 		</ReaderHead>
 	{/snippet}
 	{#snippet children(m)}
-		{@const ambt = ministerSeat(m)}
+		{@const office = ministerSeat(m)}
 		<div class="r-ministry">
-			{#if m.predecessors.length > 0 || m.successor || ambt}
+			{#if m.predecessors.length > 0 || m.successor || office}
 				<Feiten>
-					<Veld label="Ambt" value={ambt}>
-						<a href={seatHref(ambt ?? '')}>Minister van {name}</a>
+					<Veld label="Ambt" value={office}>
+						<a href={seatHref(office ?? '')}>Minister van {name}</a>
 					</Veld>
 					<Veld label="Voorganger" value={m.predecessors.length > 0 ? m.predecessors : null}>
 						{#each m.predecessors as key, i (key)}{i ? ', ' : ''}<BronLink ref={`ministries/${key}`}

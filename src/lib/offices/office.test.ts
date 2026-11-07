@@ -9,7 +9,7 @@ import {
 	seatTitle,
 	stints,
 	timeline
-} from './ambt';
+} from './office';
 
 type Holder = Schema<'SeatHolderDTO'>;
 
@@ -59,6 +59,7 @@ describe('an office', () => {
 			'Minister voor werk en participatie'
 		);
 		expect(seatName('viceminister-president', name)).toBe('viceminister-president');
+		expect(seatName('jenv/staatssecretaris', name)).toBe('jenv/staatssecretaris');
 	});
 
 	it('lists holders and gaps newest first, a gap where it fell', () => {

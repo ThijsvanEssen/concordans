@@ -7,7 +7,7 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { load } from '$lib/util/load.svelte';
-	import { ministerSeats, seatHref } from '$lib/ambten/ambt';
+	import { ministerSeats, seatHref } from '$lib/offices/office';
 
 	const cabinet = load(
 		() => 'nu',

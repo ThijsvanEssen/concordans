@@ -7,8 +7,8 @@ type Page<T> = { items: T[]; total: number };
 export class Paged<T> {
 	rows = $state.raw<T[]>([]);
 	total = $state<number | null>(null);
-	laden = $state(false);
-	fout = $state<unknown>(null);
+	loading = $state(false);
+	error = $state<unknown>(null);
 	#ask: (offset: number) => Promise<Page<T>>;
 	#what: string;
 	#round = 0;
@@ -34,8 +34,8 @@ export class Paged<T> {
 	/** Asks the page after the rows so far. */
 	async next(): Promise<void> {
 		const round = this.#round;
-		this.laden = true;
-		this.fout = null;
+		this.loading = true;
+		this.error = null;
 		try {
 			const page = await this.#ask(this.rows.length);
 			if (round !== this.#round) return;
@@ -44,9 +44,9 @@ export class Paged<T> {
 		} catch (e) {
 			if (round !== this.#round || isAborted(e)) return;
 			report(this.#what, e);
-			this.fout = e;
+			this.error = e;
 		} finally {
-			if (round === this.#round) this.laden = false;
+			if (round === this.#round) this.loading = false;
 		}
 	}
 }

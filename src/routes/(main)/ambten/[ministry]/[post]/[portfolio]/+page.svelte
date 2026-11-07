@@ -1,0 +1,18 @@
+<script lang="ts">
+	// An office under a portfolio (/ambten/-/minister/werk-en-participatie): OfficePage.
+	import { page } from '$app/state';
+	import RouteKop from '$lib/seo/RouteKop.svelte';
+	import { siteTitle } from '$lib/seo/server-head.svelte';
+	import OfficePage from '$lib/offices/OfficePage.svelte';
+	import { seatOf } from '$lib/offices/office';
+
+	let title = $state<string>();
+</script>
+
+<RouteKop title={title ? siteTitle(title) : undefined} />
+<div class="blad blad--tekst">
+	<OfficePage
+		seat={seatOf(page.params.ministry, page.params.post, page.params.portfolio)}
+		bind:title
+	/>
+</div>

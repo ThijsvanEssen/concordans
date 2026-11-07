@@ -1,20 +1,21 @@
 // The words and order of an office (/ambten/<seat>): its address, its name, its holders and the
 // stretches without one, newest first, and the ministers' offices of a cabinet for /ambten.
 import type { Schema } from '$lib/api/types';
+import { daysBetween } from '$lib/text/datum';
 import { capitalize } from '$lib/text/words';
 
 type Seat = Schema<'SeatDTO'>;
 type Holder = Schema<'SeatHolderDTO'>;
 type Gap = Schema<'SeatGapDTO'>;
 
-export const AMBTEN_PATH = '/ambten';
+export const OFFICES_PATH = '/ambten';
 
 /** The posts whose seat /ambten lists: the ministers, the minister-president first. */
 const MINISTER_POSTS = new Set(['minister-president', 'minister', 'minister_zonder_portefeuille']);
 
 /** The address of an office: `/ambten/jenv/minister`, `/ambten/-/minister/werk-en-participatie`. */
 export const seatHref = (seat: string): string =>
-	`${AMBTEN_PATH}/${seat.split('/').map(encodeURIComponent).join('/')}`;
+	`${OFFICES_PATH}/${seat.split('/').map(encodeURIComponent).join('/')}`;
 
 /** The seat an address names, from its segments; a lane (`#2`) is no part of an office. */
 export const seatOf = (...segments: (string | undefined)[]): string =>
@@ -44,8 +45,7 @@ export function formerTitles(seat: Pick<Seat, 'seat' | 'holders'>): string[] {
 const POST_WORD: Record<string, string> = {
 	'minister-president': 'Minister-president',
 	minister: 'Minister',
-	minister_zonder_portefeuille: 'Minister',
-	staatssecretaris: 'Staatssecretaris'
+	minister_zonder_portefeuille: 'Minister'
 };
 
 /**
@@ -63,7 +63,7 @@ export function seatName(seat: string, name: (ministry: string) => string): stri
 }
 
 /** One person's stretch in the office: their posts one after the other, over cabinets. */
-export type Stint = {
+type Stint = {
 	member: Holder['member'];
 	from_date: string | null;
 	to_date: string | null;
@@ -78,7 +78,7 @@ export type Stint = {
 const JOINS = 7;
 
 const joins = (to: string | null, from: string | null) =>
-	!!to && !!from && Math.abs(Date.parse(from) - Date.parse(to)) <= JOINS * 86_400_000;
+	!!to && !!from && Math.abs(daysBetween(to, from)) <= JOINS;
 
 /** One holder's post as a stretch of its own. */
 function stintOf(h: Holder): Stint {
@@ -120,7 +120,7 @@ export function stints(holders: readonly Holder[]): Stint[] {
 	return out;
 }
 
-export type Entry = { kind: 'holder'; stint: Stint } | { kind: 'gap'; gap: Gap };
+type Entry = { kind: 'holder'; stint: Stint } | { kind: 'gap'; gap: Gap };
 
 /** The stints and the gaps between them in one line, newest first; a gap stands where it fell. */
 export function timeline(holders: readonly Holder[], gaps: readonly Gap[]): Entry[] {
@@ -137,7 +137,7 @@ export function timeline(holders: readonly Holder[], gaps: readonly Gap[]): Entr
 		.map(({ entry }) => entry);
 }
 
-export type MinisterSeat = { seat: string; title: string; holders: string[] };
+type MinisterSeat = { seat: string; title: string; holders: string[] };
 
 /** The ministers' offices of a cabinet, as it lists its ministries: the seat without its lane. */
 export function ministerSeats(
