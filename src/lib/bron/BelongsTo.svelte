@@ -601,13 +601,10 @@
 		.behoort:not(.uit) .lagen {
 			flex: 1 1 auto;
 		}
-		/* The Verloop under its term, the width of the column: its names stand whole. */
-		.regel:has(.lagen.heel) {
-			flex-wrap: wrap;
-			row-gap: calc(var(--veld-h-raak) - 1lh);
-		}
-		.regel:has(.lagen.heel) > dd {
-			flex-basis: 100%;
+		/* The Verloop is its term: the list it opens names every step whole, one under the other,
+		   and the title stays in the first screen (B143). */
+		.lagen.heel {
+			display: none;
 		}
 		/* Folded, a layer that does not fit goes to the next line whole (UX-toets B4). */
 		.behoort:not(.uit) .lagen.gevouwen {
