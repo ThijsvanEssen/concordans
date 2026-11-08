@@ -71,6 +71,14 @@ describe('the stage of a step', () => {
 		expect(stageOf(step('x', { procedure: 'herziening' }), c)).toBe('Herziening');
 	});
 
+	it('names a decision after referral by its edge, whatever its procedure reads', () => {
+		const after = step('ECLI:NL:GHDHA:2026:2845', {
+			procedure: 'Hoger beroep',
+			links: [{ relation: 'REFERRED_BY', to: HR.ecli!, source_outcome: null }]
+		});
+		expect(stageOf(after, courseOf([HOF, HR, after]))).toBe('Na verwijzing');
+	});
+
 	it('names a stub without a procedure by the edge that points at it', () => {
 		const stub = step('ECLI:NL:HR:2020:1', { loaded: false });
 		const after = (relation: string) =>
@@ -140,9 +148,11 @@ describe('the line Verloop', () => {
 		expect(courseLayers(courseOf([HOF, HR]), self)[1]).toBe(self);
 	});
 
-	it('is empty when the case has nothing besides this one', () => {
-		expect(courseLayers(courseOf([HR]))).toEqual([]);
-		expect(courseLayers(courseOf([PHR, HR]))).toEqual([]);
+	it('names this one alone when the case has nothing besides it', () => {
+		const alone = [['Deze uitspraak', 'deze uitspraak']];
+		const words = (c: Course) => courseLayers(c).map((l) => [l.soort, l.naam]);
+		expect(words(courseOf([HR]))).toEqual(alone);
+		expect(words(courseOf([PHR, HR]))).toEqual(alone);
 	});
 
 	it('names the other judgments of the case for Verbonden', () => {
