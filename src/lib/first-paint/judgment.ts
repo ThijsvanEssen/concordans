@@ -2,14 +2,14 @@
 // BelongsTo, ReaderHead, JudgmentReader, TextBlocks), in the app's own elements and classes,
 // from what the server puts in the page (api/seo/paint.py of the API): the answer of the
 // judgment with its first paragraphs, and its light node for the band. The words come from the
-// functions the app's reader uses (judgment-text, citation-record, appeal-chain). The
+// functions the app's reader uses (judgment-text, citation-record, course-layers). The
 // title, the summary, the parties and the first overwegingen show; the band, the kind, the
 // status and the actions stand in their place unseen (`data-later`) until the app has come.
 import type { Schema } from '$lib/api/types';
 import type { NodeGraph } from '$lib/api/nodes';
 import { findBucket } from '$lib/api/buckets';
 import { layerOf, type Layer } from '$lib/bron/behoort-layer';
-import { ADVISED, LATER, appealChain } from '$lib/bron/appeal-chain';
+import { ADVISED, LATER, courseLayers, type Course } from '$lib/bron/course-layers';
 import { keyEcli } from '$lib/text/ecli';
 import { articleRef } from '$lib/text/bw';
 import { citationRecord } from '$lib/text/citation-record';
@@ -35,7 +35,6 @@ import type { PaintedColumn } from './paint';
 import { band, coverage, esc, glyph, headRow, readerHead, running, type BandLine } from './markup';
 
 type Judgment = Schema<'JudgmentDTO'>;
-type Neighbor = Schema<'NeighborDTO'>;
 
 /** What the server gives of a judgment (api/seo/paint.py). */
 export type JudgmentPaint = {
@@ -49,10 +48,10 @@ export type JudgmentPaint = {
 	same_as?: { key: string; ecli?: string | null }[];
 	conclusions?: Schema<'JudgmentDetailResponse'>['conclusions'];
 	completeness?: Completeness | null;
-	/** Its light node of the procesgang and the conclusie (`limit=1`), the props the band reads. */
+	/** Its light node of the conclusie and the appeals (`limit=1`), the props the band reads. */
 	light: NodeGraph;
-	/** The instances before its eerdere aanleg, the nearest first. */
-	chain?: Neighbor[];
+	/** Its Verloop, the answer of `/api/judgments/{ecli}/course`. */
+	course?: Course | null;
 };
 
 /** The source a judgment is under, first in its band (sourceOfCollection in $lib/nav/sources:
@@ -122,23 +121,18 @@ function shown(items: BodyItem[], whole: boolean): BodyItem[] {
 }
 
 /** The band "Behoort bij" of a judgment (behoort-rules, `judgments`): Conclusie bij, the
- *  procesgang with the instances before its eerdere aanleg, the group of more appeals. */
+ *  Verloop of its case, the group of more appeals. */
 export function bandOf(
 	v: JudgmentPaint
 ): [
 	BandLine[],
 	{ phone: boolean; more: string | null; groups: { label: string; count: number }[] }
 ] {
-	const props = (v.light.node?.props ?? {}) as Record<string, unknown>;
-	const lines: { term: string; layers: Layer[] }[] = [];
+	const lines: { term: string; layers: Layer[]; course?: boolean }[] = [];
 	const advised = findBucket(v.light, ADVISED)?.items?.[0];
 	if (advised) lines.push({ term: 'Conclusie bij', layers: [layerOf(advised, 'Arrest')] });
-	const { earlier, gang } = appealChain(props, v.light);
-	if (gang.length) {
-		const before = earlier.at(-1)?.ref ? (v.chain ?? []) : [];
-		const instances = [...before].reverse().map((n) => layerOf(n, 'Eerdere aanleg'));
-		lines.push({ term: 'Procesgang', layers: [...instances, ...gang] });
-	}
+	const steps = v.course ? courseLayers(v.course) : [];
+	if (steps.length) lines.push({ term: 'Verloop', layers: steps, course: true });
 	const appeals = findBucket(v.light, LATER)?.total ?? 0;
 	const groups = appeals >= 2 ? [{ label: 'Hoger beroep of cassatie', count: appeals }] : [];
 	// What a phone's first line folds away (BelongsTo's `knop`).
@@ -153,6 +147,7 @@ export function bandOf(
 	return [
 		lines.map((l) => ({
 			term: l.term,
+			...(l.course ? { course: true } : {}),
 			layers: l.layers.map((x) => ({
 				name: x.naam,
 				short: x.kort,

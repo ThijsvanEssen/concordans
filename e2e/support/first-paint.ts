@@ -62,7 +62,8 @@ export function articlePaint(law: string, number: string, key: string) {
 	};
 }
 
-/** The relations of a judgment's band (api/seo/paint.py): its procesgang and its conclusie. */
+/** The relations of a judgment's light node in its paint (api/seo/paint.py): its conclusie
+ *  and its later appeals; its Verloop is the answer of `/course`. */
 const BAND = ['APPEAL_OF', 'ADVISES_ON'];
 /** The props of its light node the band reads. */
 const BAND_PROPS = ['outcome', 'unresolved_appeal_targets', 'translation_of'];
@@ -95,16 +96,10 @@ export function judgmentPaint(ecli: string, key: string) {
 		size += p.text.length;
 	}
 	const ids = new Set(kept.map((p) => p.paragraph_id));
-	const lightOf = (k: string) => answer<Light>(`/api/nodes/judgments/${k}?limit=1`);
-	const earlier = (light: Light) =>
-		light.neighbors.buckets.find((b) => b.relation === 'APPEAL_OF' && b.direction === 'outbound')
-			?.items[0] ?? null;
-	const light = lightOf(key);
-	const chain = [];
-	for (let step = earlier(light), i = 0; step && i < 3; i++) {
-		step = earlier(lightOf(step.key));
-		if (step) chain.push(step);
-	}
+	const light = answer<Light>(`/api/nodes/judgments/${key}?limit=1`);
+	const course = answer<Record<string, unknown>>(
+		`/api/judgments/${encodeURIComponent(ecli)}/course`
+	);
 	const { paragraphs, text, footnotes, sections, ...props } = j.props ?? {};
 	void [paragraphs, text, footnotes, sections];
 	return {
@@ -131,7 +126,7 @@ export function judgmentPaint(ecli: string, key: string) {
 			},
 			neighbors: { buckets: light.neighbors.buckets.filter((b) => BAND.includes(b.relation)) }
 		},
-		chain
+		course: 'steps' in course ? course : null
 	};
 }
 

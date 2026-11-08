@@ -1,10 +1,10 @@
 <script lang="ts">
 	// The band "Behoort bij" above every reader (docs/hierarchie.md, "Kern of context"): the
-	// kern as lines, a legal term and the bronnen it names as links (Procesgang, Ingediend bij,
+	// kern as lines, a legal term and the bronnen it names as links (Verloop, Ingediend bij,
 	// Wet); under them the groups of the context with their counts, each listed when it is
 	// opened. Same place, same terms for every kind of bron (Thijs, 9 Oct). It reads the light
 	// node the reader has asked already, so the first paint never waits for it; a line that
-	// needs more (the instances before the eerdere aanleg) fills in when its answer comes, a
+	// needs more (the Verloop, one answer of the API) fills in when its answer comes, a
 	// group asks its rows only when it is opened. On a phone the first line shows, the rest
 	// folds open, in the short names of its bronnen (Awb, Rb. Den Haag 2015), wrapping rather
 	// than cut. Type follows docs/typografie.md: the term rung 6, a bron rung 4. One instance
@@ -23,6 +23,7 @@
 	import { behoort, heeftIets } from './behoort';
 	import { layerOf, type Groep, type Layer } from '$lib/bron/behoort-layer';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import CourseList from './CourseList.svelte';
 	import { createLoader, type LoadState as State } from '$lib/util/load.svelte';
 
 	let {
@@ -62,7 +63,7 @@
 	// A line that needs more than the light node: its full form once it has come.
 	let vol = $state<Record<string, Layer[]>>({});
 	// A line whose `laad` failed: it stands as the light node gives it, marked incomplete, so a
-	// procesgang cut short by a time-out does not pass for a whole one.
+	// Verloop cut short by a time-out does not pass for a whole one.
 	let onvolledig = $state<Record<string, boolean>>({});
 	$effect(() => {
 		// Asked once the light node is in: a line built before it (no Kamer from its label yet)
@@ -84,7 +85,7 @@
 		}
 		return () => controller.abort();
 	});
-	// The band waits for its lines in full (the instances before the eerdere aanleg), so it
+	// The band waits for its lines in full (the Verloop), so it
 	// stands once, folded, instead of two layers over two lines first.
 	const wacht = $derived(band.regels.some((r) => r.laad && !(r.id in vol)));
 	// A line that waits on its `laad` (Bij wetsvoorstel) stands once it has a layer.
@@ -134,8 +135,19 @@
 	// Side by side (the fracties of a lid) it folds on a phone from three on: its lines stand a
 	// finger's 44 px apart there, and the name must come first (E8, N9).
 	const phone = new MediaQuery('max-width: 768px');
-	const gevouwen = (r: { id: string; los?: boolean; lagen: Layer[] }) =>
-		!ontvouwd[r.id] && (r.los ? phone.current && r.lagen.length > 2 : r.lagen.length > 3);
+	// The Verloop names its instances whole, wrapping; past four, the first and the last two
+	// (B143).
+	const gevouwen = (r: { id: string; los?: boolean; course?: string; lagen: Layer[] }) =>
+		!ontvouwd[r.id] &&
+		(r.los ? phone.current && r.lagen.length > 2 : r.lagen.length > (r.course ? COURSE_WHOLE : 3));
+	const COURSE_WHOLE = 4;
+	/** Whether layer `j` of a line stands while it is folded: the first, and the last (of the
+	 *  Verloop the last two). */
+	const stands = (r: { course?: string; lagen: Layer[] }, j: number) =>
+		j === 0 || j >= r.lagen.length - (r.course ? 2 : 1);
+	// The list per step of the Verloop, opened by its term.
+	let courseOpen = $state(false);
+	const courseEcli = $derived(regels.find((r) => r.course)?.course ?? null);
 
 	// On a phone the band is its first line until it is opened.
 	let uit = $state(false);
@@ -189,9 +201,27 @@
 				{#each regels as r, i (r.id)}
 					<div class="regel">
 						{#if i === 0}{@render crumb()}{/if}
-						<dt class="term">{r.label}</dt>
+						{#if r.course}
+							<dt class="term">
+								<button
+									type="button"
+									class="term-knop raakvlak"
+									aria-expanded={courseOpen}
+									aria-controls="verloop-lijst"
+									onclick={() => (courseOpen = !courseOpen)}
+									>{r.label}<Caret open={courseOpen} /></button
+								>
+							</dt>
+						{:else}
+							<dt class="term">{r.label}</dt>
+						{/if}
 						<dd>
-							<ol class="lagen" class:los={r.los} class:gevouwen={gevouwen(r)}>
+							<ol
+								class="lagen"
+								class:los={r.los}
+								class:gevouwen={gevouwen(r)}
+								class:heel={!!r.course}
+							>
 								{#each r.lagen as laag, j (j)}
 									{#if gevouwen(r) && j === 1}
 										<li class="vouw">
@@ -199,18 +229,18 @@
 												class="raakvlak"
 												type="button"
 												title={r.lagen
-													.slice(1, -1)
+													.slice(1, r.course ? -2 : -1)
 													.map((l) => l.naam)
 													.join(' › ')}
 												aria-label="Alle lagen tonen: {r.lagen
-													.slice(1, -1)
+													.slice(1, r.course ? -2 : -1)
 													.map((l) => l.naam)
 													.join(', ')}"
 												onclick={() => (ontvouwd = { ...ontvouwd, [r.id]: true })}>…</button
 											>
 										</li>
 									{/if}
-									{#if !gevouwen(r) || j === 0 || j === r.lagen.length - 1}
+									{#if !gevouwen(r) || stands(r, j)}
 										<li class:huidig={laag.huidig} class:laatst={j === r.lagen.length - 1}>
 											{#if laag.ref}<a
 													class="raakvlak"
@@ -231,6 +261,9 @@
 					</div>
 				{/each}
 			</dl>
+			{#if courseOpen && courseEcli}
+				<CourseList id="verloop-lijst" ecli={courseEcli} />
+			{/if}
 		{:else}
 			<div class="regel">{@render crumb()}{@render meer()}</div>
 		{/if}
@@ -352,6 +385,24 @@
 		line-height: 20px;
 		color: var(--ink-3);
 	}
+	/* The term that opens the Verloop: the term's look, a button. */
+	.term-knop {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-1);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-2);
+		cursor: pointer;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: var(--onderstreping-krap);
+	}
+	.term-knop:hover {
+		text-decoration-color: var(--ink);
+	}
 	/* Folded: one line, the last layer cut at the right rather than wrapping. */
 	/* Cut at the side only (clip): a finger's target of the "…" stands above and below the
 	   line (.raakvlak), and `hidden` would cut it there too. */
@@ -360,6 +411,13 @@
 		white-space: nowrap;
 		overflow-x: clip;
 		overflow-y: visible;
+	}
+	/* The Verloop wraps, folded too: its names stand whole (B143). */
+	.lagen.gevouwen.heel,
+	.lagen.gevouwen.heel .laatst {
+		flex-wrap: wrap;
+		white-space: normal;
+		overflow-x: visible;
 	}
 	.lagen.gevouwen .laatst {
 		min-width: 0;
@@ -518,6 +576,15 @@
 			text-overflow: ellipsis;
 		}
 	}
+	/* The Verloop names its instances whole: it wraps between them, never within one (B143). */
+	@media (min-width: 769px) {
+		.lagen.heel {
+			flex-wrap: wrap;
+		}
+		.lagen.heel li {
+			overflow-x: visible;
+		}
+	}
 	/* A phone: the first line, the rest once it is opened. */
 	@media (max-width: 768px) {
 		/* Without a kern line (a kabinet) a phone shows no band: its groups are in Verbonden. */
@@ -533,6 +600,11 @@
 		}
 		.behoort:not(.uit) .lagen {
 			flex: 1 1 auto;
+		}
+		/* The Verloop is its term: the list it opens names every step whole, one under the other,
+		   and the title stays in the first screen (B143). */
+		.lagen.heel {
+			display: none;
 		}
 		/* Folded, a layer that does not fit goes to the next line whole (UX-toets B4). */
 		.behoort:not(.uit) .lagen.gevouwen {

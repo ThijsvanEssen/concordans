@@ -3,7 +3,7 @@ import { outcomeOf } from './outcome-words';
 import { dossierNummer } from './dossier-naam';
 
 describe('outcomeOf', () => {
-	it('names an instance of the procesgang by its remedy and outcome', () => {
+	it('names an instance of the Verloop by its remedy and outcome', () => {
 		expect(outcomeOf('verworpen', 'Cassatie')).toBe('cassatie verworpen');
 		expect(outcomeOf('bekrachtigd', null)).toBe('bekrachtigd');
 		expect(outcomeOf(null, 'Cassatie')).toBeNull();

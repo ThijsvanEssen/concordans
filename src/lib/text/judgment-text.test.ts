@@ -42,6 +42,7 @@ const judgment = (over: Partial<Judgment> = {}): Judgment => ({
 	procedure: null,
 	subjects: [],
 	decision_kind: null,
+	criminal_decision: null,
 	series_id: null,
 	series_size: null,
 	same_as: null,

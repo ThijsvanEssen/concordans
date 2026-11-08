@@ -1,4 +1,4 @@
-// A judgment: its heading and course of proceedings, the overview of its parts, the menu of a
+// A judgment: its heading and its Verloop, the overview of its parts, the menu of a
 // rechtsoverweging, and an article it cites.
 import { expect, test } from '../support/test';
 import { smallTargets, withoutSize } from '../support/rules';
@@ -11,11 +11,20 @@ test('a judgment shows its court, its course and its parts', async ({ page, touc
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
 		'HR 20 december 2019, ECLI:NL:HR:2019:2006 (Urgenda)'
 	);
+	const band = page.getByRole('navigation', { name: 'Behoort bij' });
+	const rb = band.getByRole('link', { name: 'Rechtbank Den Haag 24\u00a0jun.\u00a02015' });
+	// Wide the line names the instances; on a phone it is its term, the list names them.
+	if (!touch) await expect(rb).toBeVisible();
+	// The Verloop opens its steps: what each is, its court and date, how it ended.
+	await band.getByRole('button', { name: 'Verloop' }).click();
+	const list = band.getByRole('region', { name: 'Verloop' });
 	await expect(
-		page.getByRole('navigation', { name: 'Behoort bij' }).getByRole('link', {
-			name: /Rb\. Den Haag 24 juni 2015/
-		})
+		list.getByRole('link', { name: 'Rechtbank Den Haag 24\u00a0jun.\u00a02015' })
 	).toBeVisible();
+	const steps = list.getByRole('listitem');
+	await expect(steps).toHaveCount(4);
+	await expect(steps.nth(1)).toContainText('Hoger beroep');
+	await expect(steps.last()).toContainText('Uitkomst: cassatie verworpen');
 	await expect(page.getByRole('rowheader', { name: 'Eiser' })).toBeVisible();
 	await expect(
 		page.getByRole('button', { name: /^Overweging [\d.]+: citeren, bewaren$/ })
@@ -58,8 +67,13 @@ test('the lines of Behoort bij stand a finger’s target apart', async ({ page, 
 	test.skip(!touch, 'a finger’s target');
 	await page.goto(URGENDA);
 	const band = page.getByRole('navigation', { name: 'Behoort bij' });
-	// Three layers stand whole, as the kruimelpad of the mockups V1.
-	await expect(band.getByRole('link', { name: /^Hof Den Haag 9 oktober 2018/ })).toBeVisible();
+	// On a phone the Verloop is its term; its list names every instance whole (B143).
+	await band.getByRole('button', { name: 'Verloop' }).click();
+	await expect(
+		band
+			.getByRole('region', { name: 'Verloop' })
+			.getByRole('link', { name: 'Gerechtshof Den Haag 9\u00a0okt.\u00a02018' })
+	).toBeVisible();
 	expect(await smallTargets(page), 'tap targets under 44 px').toEqual([]);
 });
 

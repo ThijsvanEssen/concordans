@@ -1,5 +1,5 @@
 // Where a bron stands, for the band "Behoort bij" above every reader: the kern, the relations
-// without which the bron does not read (Procesgang, Ingediend bij, Wet), as lines in the
+// without which the bron does not read (Verloop, Ingediend bij, Wet), as lines in the
 // reading column; under them the groups of its context, folded. The lines per kind of bron
 // are a table (behoort-rules); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
@@ -11,7 +11,7 @@ import { getDossier } from '$lib/api/dossiers';
 import type { Collection } from '$lib/vocabulary';
 import { layerOf, type Behoort, type Regel } from './behoort-layer';
 import { dossierNummer, dossierNummerVanSleutel } from './dossier-naam';
-import { procesgangIds } from './behoort-procesgang';
+import { courseIdsOf } from './course';
 import { BANDS, kernOf, type BucketLine, type Context } from './behoort-rules';
 
 /** An ordinary line of the table: the first bron of its bucket, where it has one. */
@@ -45,7 +45,7 @@ export function behoort(
 
 /**
  * The ids the band's lazy kern lines name, for Verbonden not to list them again: the
- * procesgang of a uitspraak, what a dossier's bill amends and implements (`legal_effect`,
+ * Verloop of a uitspraak, what a dossier's bill amends and implements (`legal_effect`,
  * from the detail the reader asks already).
  */
 export async function lazeKernIds(
@@ -53,7 +53,7 @@ export async function lazeKernIds(
 	key: string,
 	props: Record<string, unknown>
 ): Promise<string[]> {
-	if (collection === 'judgments') return procesgangIds(key);
+	if (collection === 'judgments') return courseIdsOf(key);
 	if (collection !== 'dossiers') return [];
 	const nummer = dossierNummer(props) ?? dossierNummerVanSleutel(key);
 	const d = await ifExists(getDossier(nummer));

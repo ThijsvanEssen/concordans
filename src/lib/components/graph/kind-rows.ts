@@ -49,7 +49,7 @@ const OWN_LABEL: Partial<Record<Collection, Partial<Record<string, string>>>> = 
 
 /** The bronnen the band of a bron names beside its kern groups (`lazeKernIds`). */
 const CHAIN_LABEL: Partial<Record<Collection, string>> = {
-	judgments: 'Procesgang',
+	judgments: 'Verloop',
 	dossiers: 'Wetten die het voorstel wijzigt'
 };
 
