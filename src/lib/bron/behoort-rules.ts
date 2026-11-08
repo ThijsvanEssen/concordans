@@ -30,8 +30,8 @@ import {
 	type Layer,
 	type Regel
 } from './behoort-layer';
-import { procesgangLine, translationLines } from './behoort-procesgang';
-import { ADVISED, CONCLUSION, EARLIER, LATER } from './appeal-chain';
+import { translationLines, courseLine } from './course';
+import { ADVISED, CONCLUSION, COURSE_BUCKETS, EARLIER, LATER } from './course-layers';
 
 /** What a line is made from: the bron's props and its light node (`limit=1`). */
 export type Context = { props: Record<string, unknown>; light: NodeGraph | null };
@@ -289,9 +289,10 @@ export const BANDS: Partial<Record<Collection, Band>> = {
 	annexes: { lines: [{ kern: [TO_LAW], lines: (c) => lawLine(c, false) }] },
 	judgments: {
 		lines: [
-			{ kern: [], lines: (c) => translationLines(c.props, c.light) },
+			{ kern: [], lines: (c) => translationLines(c.props) },
 			{ id: 'conclusie-bij', label: 'Conclusie bij', bak: ADVISED, soort: 'Arrest' },
-			{ kern: [EARLIER, LATER], lines: (c) => procesgangLine(c.props, c.light) }
+			// The whole case, one answer of the API (verloop.ts).
+			{ kern: [EARLIER, LATER, ...COURSE_BUCKETS], lines: (c) => courseLine(c.props) }
 		],
 		// More than one appeal against it: the line names the first, the group all.
 		groups: [{ id: 'beroep', label: 'Hoger beroep of cassatie', bak: LATER, atLeast: 2 }],

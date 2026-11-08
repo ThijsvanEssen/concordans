@@ -85,7 +85,7 @@
 		return () => clearTimeout(t);
 	});
 	// An article stands from its first paint; a dossier holds the room of its band instead, one
-	// line wide and two on a phone (its procesgang wraps there), so its title stands at once.
+	// line wide and two on a phone (its Verloop wraps there), so its title stands at once.
 	const NO_BAND_WAIT = new Set(['articles', 'dossiers']);
 	const bandWait = $derived(
 		!!bron &&

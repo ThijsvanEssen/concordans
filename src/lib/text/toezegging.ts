@@ -3,6 +3,7 @@
 // reader of a toezegging and its line opened in a list (ToezeggingInhoud). The activity is
 // named by its kind and day, never by its number.
 
+import type { Schema } from '$lib/api/types';
 import { shortKind } from '$lib/text/document-kind';
 import { langeDatum } from '$lib/text/datum';
 
@@ -62,7 +63,8 @@ export function nagekomenIn(brieven: readonly Brief[] | null | undefined): {
  * dossier on the agenda of the debate it was made in. A debate takes its agenda together: a
  * dossier there is where the toezegging was discussed, not what it is about.
  */
-type Basis = 'nakoming' | 'agenda';
+/** Why a dossier is a toezegging's, as the API names it (`kamerstukken`: of the Eerste Kamer). */
+type Basis = NonNullable<Schema<'CommitmentDossierDTO'>['basis']>;
 
 /** The words of a dossier on the agenda of that debate: on its row, the reader, Verbonden. */
 export const DISCUSSED_IN_DEBATE = 'Besproken in het debat';

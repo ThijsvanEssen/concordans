@@ -119,7 +119,7 @@ describe('exportRows', () => {
 		...extra
 	});
 	const groups: Group[] = [
-		{ id: 'procesgang', label: 'Procesgang', rows: [row('hof')], capped: false },
+		{ id: 'verloop', label: 'Verloop', rows: [row('hof')], capped: false },
 		{
 			id: 'cited-by',
 			label: 'Aangehaald in',

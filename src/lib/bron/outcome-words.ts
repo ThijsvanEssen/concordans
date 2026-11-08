@@ -1,5 +1,5 @@
-// How an instance of a procesgang ended, in the band's words; one source for the band
-// (behoort-layer, behoort-procesgang) and the first paint of a judgment ($lib/first-paint).
+// How an instance of a Verloop ended, in the band's words; one source for the band
+// (behoort-layer, course-layers) and the first paint of a judgment ($lib/first-paint).
 import { textOf } from '$lib/text/words';
 
 /**
