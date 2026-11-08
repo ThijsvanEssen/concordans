@@ -33,9 +33,11 @@ const LAW: Record<string, string> = { BWBR0001830: 'RO', BWBR0005537: 'Awb' };
 const isConclusion = (s: CourseStep) => s.decision_kind === 'conclusie';
 
 /** What a step is in the case: its procedure in the lawyer's word, else what the step after
- *  it calls it (the stub of an eerdere aanleg). */
+ *  it calls it (the stub of an eerdere aanleg). A decision after referral by its edge: the
+ *  source often names its procedure Hoger beroep. */
 export function stageOf(step: CourseStep, course: Course): string {
 	if (isConclusion(step)) return 'Conclusie';
+	if (step.links.some((l) => l.relation === 'REFERRED_BY')) return 'Na verwijzing';
 	const p = (step.procedure ?? '').toLowerCase();
 	if (p.startsWith('eerste aanleg')) return 'Eerste aanleg';
 	if (p.startsWith('hoger beroep')) return 'Hoger beroep';
@@ -92,8 +94,8 @@ export const unresolvedName = (t: Record<string, unknown>) =>
  * The band's line: the instances of the case before and after this one, in their order, this
  * one in its place (`self` its words: "deze uitspraak", or for a translation its original as
  * a link); a decision the text names that the data lacks first, by its name. A conclusie is
- * left out (the line Conclusie bij and the status name it), unless it is this one. Empty when
- * the case has nothing besides this one.
+ * left out (the line Conclusie bij and the status name it), unless it is this one. Also when
+ * the case has nothing besides this one (Thijs: "Ja, altijd tonen").
  */
 export function courseLayers(course: Course, self?: Layer): Layer[] {
 	const layers: Layer[] = (course.unresolved ?? []).map((t) => ({
@@ -120,7 +122,7 @@ export function courseLayers(course: Course, self?: Layer): Layer[] {
 			});
 		}
 	}
-	return layers.length > 1 ? layers : [];
+	return layers;
 }
 
 const outcomeLayer = (step: CourseStep, course: Course) => {

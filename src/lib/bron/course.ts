@@ -10,8 +10,8 @@ import { textOf } from '$lib/text/words';
 import { layerOf, type Regel } from './behoort-layer';
 import { stepName, courseIds, courseLayers } from './course-layers';
 
-/** The line Verloop: asked once the band is there, left out where the case has nothing
- *  besides this one. Where the course does not come, this one alone, marked incomplete. */
+/** The line Verloop: asked once the band is there, also where the case has nothing besides
+ *  this one. Where the course does not come, this one alone, marked incomplete. */
 export function courseLine(props: Record<string, unknown>): Regel[] {
 	const ecli = textOf(props.ecli);
 	if (!ecli || textOf(props.translation_of)) return [];
