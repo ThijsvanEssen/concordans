@@ -45,7 +45,7 @@ const HOF = step('ECLI:NL:GHDHA:2018:2591', {
 	date: '2018-10-09',
 	procedure: 'Hoger beroep',
 	outcome: 'bekrachtigd',
-	links: [{ relation: 'APPEAL_OF', to: RB.ecli, source_outcome: null }]
+	links: [{ relation: 'APPEAL_OF', to: RB.ecli!, source_outcome: null }]
 });
 const PHR = step('ECLI:NL:PHR:2019:887', { decision_kind: 'conclusie', date: '2019-09-13' });
 const HR = step('ECLI:NL:HR:2019:2006', {
@@ -54,7 +54,7 @@ const HR = step('ECLI:NL:HR:2019:2006', {
 	procedure: 'Cassatie',
 	outcome: 'verworpen',
 	current: true,
-	links: [{ relation: 'APPEAL_OF', to: HOF.ecli, source_outcome: 'Bekrachtiging/bevestiging' }]
+	links: [{ relation: 'APPEAL_OF', to: HOF.ecli!, source_outcome: 'Bekrachtiging/bevestiging' }]
 });
 
 describe('the stage of a step', () => {
@@ -74,7 +74,7 @@ describe('the stage of a step', () => {
 	it('names a stub without a procedure by the edge that points at it', () => {
 		const stub = step('ECLI:NL:HR:2020:1', { loaded: false });
 		const after = (relation: string) =>
-			courseOf([stub, step('y', { links: [{ relation, to: stub.ecli, source_outcome: null }] })]);
+			courseOf([stub, step('y', { links: [{ relation, to: stub.ecli!, source_outcome: null }] })]);
 		expect(stageOf(stub, after('REFERRED_BY'))).toBe('Cassatie');
 		expect(stageOf(stub, after('CONTINUES'))).toBe('Eerdere uitspraak');
 		expect(stageOf(stub, after('APPEAL_OF'))).toBe('Eerdere aanleg');
@@ -135,7 +135,7 @@ describe('the line Verloop', () => {
 		const self = {
 			soort: 'Het origineel',
 			naam: 'Hoge Raad',
-			ref: { collection: 'judgments', key: HR.key }
+			ref: { collection: 'judgments' as const, key: HR.key }
 		};
 		expect(courseLayers(courseOf([HOF, HR]), self)[1]).toBe(self);
 	});
