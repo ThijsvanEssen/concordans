@@ -99,6 +99,17 @@
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
+/* On a touch screen the crumb is a finger's 44 px high, its rule just under it. */
+@media (pointer: coarse), (max-width: 768px) {
+	.blad .stub-eyebrow {
+		padding-bottom: 0;
+	}
+	.blad .stub-eyebrow a {
+		display: inline-flex;
+		align-items: center;
+		min-height: var(--veld-h-raak);
+	}
+}
 .blad--tekst .stub-lede {
 	margin-bottom: var(--s-7);
 	font-family: var(--font-serif);

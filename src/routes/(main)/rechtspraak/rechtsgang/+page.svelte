@@ -7,10 +7,12 @@
 	import { page } from '$app/state';
 	import { getJudgmentRoutes } from '$lib/api/judgments';
 	import { openHref } from '$lib/bron/href';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
+	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 	import { SOURCES } from '$lib/nav/sources';
 	import { count, separatorBefore } from '$lib/text/words';
@@ -28,9 +30,11 @@
 		'Rechtsgang'
 	);
 	const judgments = SOURCES.find((x) => x.id === 'rechtspraak')!;
-	const asked = page.url.searchParams.get('gebied');
-	let chosen = $state(VIEWS.find((v) => v.id === asked)?.id ?? VIEWS[0].id);
-	const view = $derived(VIEWS.find((v) => v.id === chosen) ?? VIEWS[0]);
+	// The area is the address's (`?gebied=`): shared or reloaded, the page shows the same.
+	const view = $derived(
+		VIEWS.find((v) => v.id === page.url.searchParams.get('gebied')) ?? VIEWS[0]
+	);
+	const choose = (id: string) => navigate(withParams(page.url, { gebied: id }));
 	const data = $derived(routes.state.status === 'ready' ? routes.state.data : null);
 	const route = $derived(data ? routeOf(view, data) : null);
 	const options = $derived(VIEWS.map((v) => ({ waarde: v.id, label: v.short })));
@@ -51,7 +55,8 @@
 		{#each court.articles as a, i (a.name + (a.area ?? ''))}{separatorBefore(
 				i,
 				court.articles.length
-			)}<a href={openHref(a.ref)}>{a.name}</a>{#if a.area}{` (${a.area})`}{/if}{/each}
+			)}<a class="raakvlak" href={openHref(a.ref)}>{a.name}</a
+			>{#if a.area}{` (${a.area})`}{/if}{/each}
 	{/if}
 {/snippet}
 
@@ -67,7 +72,7 @@
 			>
 			en de <a href={openHref(AWB)}>Algemene wet bestuursrecht</a>.
 		</p>
-		<Keuze opties={options} waarde={chosen} onSelect={(w) => (chosen = w)} label="Rechtsgebied" />
+		<Keuze opties={options} waarde={view.id} onSelect={choose} label="Rechtsgebied" />
 
 		{#if routes.state.status !== 'ready'}
 			<LoadState state={routes.state} what="De rechtsgang" retry={routes.retry} />
@@ -83,7 +88,7 @@
 								{#each stage.courts as court (court.tier)}
 									<p class="instantie">
 										<span class="naam">{court.name}</span>
-										<span class="art">{@render articles(court)}</span>
+										<span class="art raak-regels">{@render articles(court)}</span>
 									</p>
 								{/each}
 							</div>
@@ -94,7 +99,10 @@
 					<p class="stil andere">Eerste en enige aanleg bij een andere rechter:</p>
 					<ul class="andere-lijst">
 						{#each route.others as court (court.tier)}
-							<li><span class="naam">{court.name}</span> {@render articles(court)}</li>
+							<li class="raak-regels">
+								<span class="naam">{court.name}</span>
+								{@render articles(court)}
+							</li>
 						{/each}
 					</ul>
 				{/if}
@@ -117,23 +125,29 @@
 										<summary>
 											<span class="art-naam"
 												>{annexArticleName(art.number)}
-												{art.heading ?? ''}</span
+												{art.heading ?? ''}<Caret side /></span
 											>
-											<span class="rechter">{court ?? ''}</span>
+											<span class="rechter"
+												>{#if court}{court}{:else}<span class="sr-only"
+														>geen rechter uit de route</span
+													>{/if}</span
+											>
 											<span class="aantal">{count(art.laws.length, 'wet', 'wetten')}</span>
 										</summary>
 										<p class="open-kop">
-											<a href={openHref({ collection: 'articles', key: art.key })}
+											<a class="raakvlak" href={openHref({ collection: 'articles', key: art.key })}
 												>{annexArticleName(art.number)} van de regeling</a
 											>
 										</p>
+										<p class="wetten-kop stil">Wetten genoemd</p>
 										<ul class="wetten">
 											{#each art.laws as law (law.bwb_id)}
 												<li>
-													{#if law.name}<a href={openHref(lawRef(law.bwb_id))}>{law.name}</a
-														>{:else}<a href={openHref(lawRef(law.bwb_id))}>{law.bwb_id}</a><span
-															class="gat">, naam {NOT_IN_DATA}</span
-														>{/if}
+													{#if law.name}<a class="raakvlak" href={openHref(lawRef(law.bwb_id))}
+															>{law.name}</a
+														>{:else}<a class="raakvlak" href={openHref(lawRef(law.bwb_id))}
+															>{law.bwb_id}</a
+														><span class="gat">, naam {NOT_IN_DATA}</span>{/if}
 												</li>
 											{/each}
 										</ul>
@@ -163,7 +177,7 @@
 		font: var(--niveau-1-sectie);
 		color: var(--ink);
 	}
-	.rechtsgang :is(.lede, .instantie, .andere-lijst, .open-kop, .wetten) a {
+	.rechtsgang :is(.lede, .instantie, .andere-lijst, .wetten) a {
 		color: inherit;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -181,6 +195,10 @@
 		align-items: center;
 		gap: var(--s-2);
 		min-width: 0;
+	}
+	/* An article whole on its line: a link that breaks has no one place to tap. */
+	:is(.art, .andere-lijst) a {
+		white-space: nowrap;
 	}
 	.pijl {
 		flex: none;
@@ -284,10 +302,29 @@
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
+	/* Open: the article itself first, a link of its own, apart from the laws it names. */
+	details[open] > summary :global(.caret) {
+		transform: rotate(0deg);
+	}
 	.open-kop {
-		margin: 0 0 var(--s-1);
+		margin: var(--s-2) 0 var(--s-3);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
+	}
+	.open-kop a {
+		color: var(--ink);
+		font-weight: 600;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.open-kop a::before {
+		content: '→ ';
+	}
+	.wetten-kop {
+		margin: 0 0 var(--s-1);
+		font-size: var(--t-micro);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
 	}
 	.wetten {
 		padding-bottom: var(--s-3);
@@ -320,6 +357,12 @@
 		}
 		.wetten {
 			columns: 1;
+		}
+		/* A finger's 44 px per law, so one target never covers the next. */
+		.wetten li {
+			display: flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 	}
 </style>
