@@ -9,7 +9,7 @@ import type { Column, Scene, SceneUnit } from './scene';
 
 export const GUTTER = 76;
 const HULL_GAP = 56;
-export const ITEM_GAP = 30;
+const ITEM_GAP = 30;
 /** The edge of a column's panel around what it holds. */
 export const PANEL = 14;
 
