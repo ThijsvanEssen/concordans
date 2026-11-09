@@ -54,10 +54,11 @@ export const strayRed = (page: Page) =>
  * widens it (a ::after over the line) must answer a tap 22 px from its centre in each
  * direction. Inline links in running text are text, not controls, and are left out. A row's
  * toggle (a button with aria-expanded in a [data-rij]) is widened by its row: a tap on the
- * row's words opens it too ($lib/actions/klik.ts), so they count as its target.
+ * row's words opens it too ($lib/actions/klik.ts), so they count as its target. `also` adds
+ * a selector of links that stand alone on a page (not running text).
  */
-export const smallTargets = (page: Page) =>
-	page.evaluate(() => {
+export const smallTargets = (page: Page, also = '') =>
+	page.evaluate((also) => {
 		const H = 22;
 		// The tab bar of a phone and the entry to Verbonden above it cover the foot of the screen:
 		// what lies under them is out of reach until it is scrolled up, as what lies past the screen.
@@ -66,9 +67,16 @@ export const smallTargets = (page: Page) =>
 			innerHeight - (document.querySelector<HTMLElement>('.tabbar')?.offsetHeight ?? 0),
 			entry?.offsetHeight ? entry.getBoundingClientRect().top : Infinity
 		);
+		// The top bar, where it stays on screen, covers its head the same way.
+		const bar = document.querySelector<HTMLElement>('.topbar');
+		const top =
+			bar && ['fixed', 'sticky'].includes(getComputedStyle(bar).position)
+				? Math.max(0, bar.getBoundingClientRect().bottom)
+				: 0;
 		const controls = document.querySelectorAll<HTMLElement>(
 			'button, [role="button"], [role="tab"], [role="menuitem"], [role="switch"], select, ' +
-				'input:not([type="hidden"]), summary, nav a, a.btn, a[class*="knop"]'
+				'input:not([type="hidden"]), summary, nav a, a.btn, a[class*="knop"]' +
+				(also ? `, ${also}` : '')
 		);
 		const out: string[] = [];
 		for (const el of controls) {
@@ -78,7 +86,7 @@ export const smallTargets = (page: Page) =>
 			if (
 				r.width === 0 ||
 				r.height === 0 ||
-				r.bottom < 0 ||
+				r.bottom < top ||
 				r.top > bottom ||
 				r.right < 0 ||
 				r.left > innerWidth
@@ -94,7 +102,7 @@ export const smallTargets = (page: Page) =>
 				[cx + H - 1, cy]
 			];
 			const ok = probes.every(([x, y]) => {
-				if (x < 0 || y < 0 || x >= innerWidth || y >= bottom) return true;
+				if (x < 0 || y < top || x >= innerWidth || y >= bottom) return true;
 				const hit = document.elementFromPoint(x, y);
 				// Nothing there (past the bottom of the screen): nothing takes the tap.
 				if (!hit) return true;
@@ -112,7 +120,7 @@ export const smallTargets = (page: Page) =>
 			out.push(`${label.slice(0, 50)} (${Math.round(r.width)}x${Math.round(r.height)})`);
 		}
 		return out;
-	});
+	}, also);
 
 /** A breach without its measure, to match it against a list of known ones. */
 export const withoutSize = (breach: string) => breach.replace(/ \(\d+x\d+\)$/, '');

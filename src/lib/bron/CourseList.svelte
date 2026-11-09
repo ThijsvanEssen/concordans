@@ -98,7 +98,7 @@
 						</div>
 						<span class="wet"
 							>{#if article}<a class="raakvlak" href={bronHref(article.ref)}>{article.name}</a
-								>{:else}<Waarde value={null} />{/if}</span
+								>{:else if step.decision_kind !== 'conclusie'}<Waarde value={null} />{/if}</span
 						>
 					</li>
 				{/each}
@@ -176,6 +176,13 @@
 	}
 	.verder {
 		margin: var(--s-2) 0 0;
+	}
+	/* The link to Rechtsgang as a TekstLink: ink, underlined. */
+	.verder a {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
 	}
 	/* A phone: what it is above the step, the article under it. */
 	@media (max-width: 768px) {
