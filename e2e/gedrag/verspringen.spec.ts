@@ -41,6 +41,8 @@ for (const r of READERS) {
 		// The text comes a moment after the rest, as on a slow line: Verbonden must not stand
 		// where it comes.
 		await page.route(/\/api\/(articles|judgments)\//, async (route) => {
+			// The band's Verloop (`/course`) is the rest, not the text.
+			if (route.request().url().endsWith('/course')) return route.fallback();
 			await new Promise((done) => setTimeout(done, 1200));
 			await route.fallback();
 		});

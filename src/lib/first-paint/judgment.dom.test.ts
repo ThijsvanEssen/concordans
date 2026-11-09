@@ -1,5 +1,5 @@
 // The first paint of a judgment: the elements and words of JudgmentReader, rendered here beside
-// it on the same answer; the band as the app's (behoort) with the instances it asks; what it
+// it on the same answer; the band as the app's (behoort) with the course it asks; what it
 // leaves to the app.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -16,15 +16,16 @@ import JudgmentReader from '$lib/components/explore/readers/JudgmentReader.svelt
 import { COMPONENTS, type Classes } from './classes';
 import { bandOf, judgmentColumn, JUDGMENTS_SOURCE, type JudgmentPaint } from './judgment';
 import { frame } from './paint';
+import type { Course, CourseStep } from '$lib/bron/course-layers';
 
 vi.mock('$app/state', async () => (await import('$lib/test/navigation.svelte')).appState);
 vi.mock('$app/navigation', async () => (await import('$lib/test/navigation.svelte')).appNavigation);
 
-/** The light nodes the band asks for the instances before an eerdere aanleg. */
-const LIGHTS = new Map<string, NodeGraph>();
-vi.mock('$lib/api/records', async (original) => ({
-	...(await original<typeof import('$lib/api/records')>()),
-	getNodeFirst: async (_: string, key: string) => LIGHTS.get(key) ?? null
+/** The course the band asks (`/course`), the one the paint has from the server. */
+let COURSE: Course | null = null;
+vi.mock('$lib/api/judgments', async (original) => ({
+	...(await original<typeof import('$lib/api/judgments')>()),
+	getJudgmentCourse: async () => COURSE
 }));
 
 /** Each component's class as the build would give it, here its own name. */
@@ -47,7 +48,7 @@ const PAINT: JudgmentPaint = {
 	conclusions: [],
 	completeness: null,
 	light: EMPTY,
-	chain: []
+	course: null
 };
 
 const parse = (v: JudgmentPaint) => {
@@ -87,7 +88,7 @@ beforeEach(() => {
 });
 afterEach(() => {
 	vi.restoreAllMocks();
-	LIGHTS.clear();
+	COURSE = null;
 });
 
 describe('the first paint of a judgment', () => {
@@ -114,8 +115,8 @@ describe('the first paint of a judgment', () => {
 		expect(number?.textContent).toBe('2.1');
 	});
 
-	it('names the band as the app does, with the instances before its eerdere aanleg', async () => {
-		const neighbor = (key: string, relation: string, direction: string, name: string) => ({
+	it('names the band as the app does, its Verloop from the course', async () => {
+		const neighbor = (key: string, name: string) => ({
 			id: `judgments/${key}`,
 			key,
 			collection: 'judgments',
@@ -123,47 +124,87 @@ describe('the first paint of a judgment', () => {
 			display_name: name,
 			props: { court: name, date: '2024-01-01' },
 			cite: { short: name, full: `${name}, ECLI` },
-			relation,
-			direction,
-			meta: relation === 'APPEAL_OF' ? { procedure_type: 'Cassatie' } : {}
+			relation: 'ADVISES_ON',
+			direction: 'outbound',
+			meta: {}
 		});
-		const bucket = (
-			relation: string,
-			direction: string,
-			items: unknown[],
-			total = items.length
-		) => ({
-			relation,
-			direction,
-			collection: 'judgments',
-			total,
-			items
-		});
-		const hof = neighbor('ecli_nl_ghdha_2018_1', 'APPEAL_OF', 'outbound', 'Hof Den Haag');
-		const rb = neighbor('ecli_nl_rbdha_2015_1', 'APPEAL_OF', 'outbound', 'Rb. Den Haag');
-		const arrest = neighbor('ecli_nl_hr_2019_1', 'ADVISES_ON', 'outbound', 'HR 2019');
-		const later = neighbor('ecli_nl_hr_2020_1', 'APPEAL_OF', 'inbound', 'HR 2020');
+		const arrest = neighbor('ecli_nl_hr_2019_1', 'HR 2019');
 		const light = {
-			node: { props: { outcome: 'verworpen' } },
+			node: { props: { ecli: 'ECLI:NL:PHR:2019:1', outcome: 'verworpen' } },
 			neighbors: {
 				buckets: [
-					bucket('APPEAL_OF', 'outbound', [hof]),
-					bucket('APPEAL_OF', 'inbound', [later], 2),
-					bucket('ADVISES_ON', 'outbound', [arrest])
+					{
+						relation: 'APPEAL_OF',
+						direction: 'inbound',
+						collection: 'judgments',
+						total: 2,
+						items: []
+					},
+					{
+						relation: 'ADVISES_ON',
+						direction: 'outbound',
+						collection: 'judgments',
+						total: 1,
+						items: [arrest]
+					}
 				]
 			}
 		} as unknown as NodeGraph;
-		LIGHTS.set(hof.key, {
-			...EMPTY,
-			neighbors: { buckets: [bucket('APPEAL_OF', 'outbound', [rb])] }
-		} as never);
-		const v = { ...PAINT, light, chain: [rb] } as unknown as JudgmentPaint;
+		const step = (ecli: string, over: Partial<CourseStep>): CourseStep => ({
+			ecli,
+			key: ecli,
+			court_code: null,
+			court_name: null,
+			tier: null,
+			court_kind: null,
+			date: null,
+			procedure: null,
+			decision_kind: 'uitspraak',
+			outcome: null,
+			area: null,
+			basis: null,
+			loaded: true,
+			current: false,
+			links: [],
+			...over
+		});
+		COURSE = {
+			steps: [
+				step('ECLI:NL:RBDHA:2015:1', { court_code: 'RBDHA', date: '2015-01-01', loaded: false }),
+				step('ECLI:NL:GHDHA:2018:1', {
+					court_name: 'Gerechtshof Den Haag',
+					date: '2018-05-16',
+					procedure: 'Hoger beroep',
+					outcome: 'bekrachtigd',
+					links: [{ relation: 'APPEAL_OF', to: 'ECLI:NL:RBDHA:2015:1', source_outcome: null }]
+				}),
+				step('ECLI:NL:PHR:2019:1', { decision_kind: 'conclusie', current: true }),
+				step('ECLI:NL:HR:2019:1', {
+					court_name: 'Hoge Raad',
+					date: '2019-10-01',
+					procedure: 'Cassatie',
+					outcome: 'verworpen',
+					basis: { bwb_id: 'BWBR0001830', article_number: '78' },
+					links: [
+						{
+							relation: 'APPEAL_OF',
+							to: 'ECLI:NL:GHDHA:2018:1',
+							source_outcome: 'Bekrachtiging/bevestiging'
+						}
+					]
+				})
+			],
+			unresolved: [],
+			truncated: false
+		} as unknown as Course;
+		const v = { ...PAINT, light, course: COURSE } as unknown as JudgmentPaint;
 
 		const { behoort } = await import('$lib/bron/behoort');
 		const band = behoort('judgments', light.node.props as Record<string, unknown>, light);
 		const lines = await Promise.all(
 			band.regels.map(async (r) => ({
 				term: r.label,
+				...(r.course ? { course: true } : {}),
 				layers: (r.laad ? await r.laad() : r.lagen).map((l) => ({
 					name: l.naam,
 					short: l.kort,
@@ -176,6 +217,7 @@ describe('the first paint of a judgment', () => {
 		const [painted, o] = bandOf(v);
 		expect(painted).toEqual(lines);
 		expect(painted.map((l) => l.layers.length)).toEqual([1, 4]);
+		expect(painted[1].layers.map((l) => l.current ?? false)).toEqual([false, false, true, false]);
 		expect(o.groups).toEqual(band.onder.map((g) => ({ label: g.label, count: g.aantal })));
 		expect(o.more).toBe('Meer');
 	});

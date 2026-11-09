@@ -12,7 +12,7 @@ import {
 import { expect, test, TODAY } from '../support/test';
 
 // An article of leden (Boek 6 BW), one of an act of the EU with onderdelen `a)`, an arrest with
-// its summary, parties, procesgang and numbered overwegingen, a law with its divisions, and a
+// its summary, parties, Verloop and numbered overwegingen, a law with its divisions, and a
 // motie with its indiener.
 const READERS = [
 	{

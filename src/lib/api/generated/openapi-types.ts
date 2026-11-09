@@ -248,6 +248,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/judgments/{ecli}/course": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The course of the case of a judgment (Verloop)
+         * @description The judgments of the case of a judgment, in one answer: breadth-first over `APPEAL_OF`, `REFERRED_BY`, `CONTINUES` and `ADVISES_ON`, both ways, up to 8 edges from it and 24 judgments (`truncated` when the case goes on). Each step has its court, date, procedure, outcome and area of law, `basis` the article of law that gives its court its say (RO art. 42, 44, 45, 60, 78; Awb art. 8:6, 8:105; from a fixed list, null where it has none), `loaded` (false for a stub) and `links`, its edges to other steps with the outcome the Rechtspraak records (`source_outcome`). 404 for a judgment not in the graph.
+         */
+        get: operations["get_judgment_course_api_judgments__ecli__course_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instruments": {
         parameters: {
             query?: never;
@@ -1209,7 +1229,7 @@ export interface paths {
         };
         /**
          * Commitments
-         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters; ``facets=false`` leaves them out (null): the pages after the first need none.
+         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match; those of the Tweede Kamer (since 2022) and of the Eerste Kamer (since 2003), ``chamber``. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`) or the status of the Eerste Kamer with a capital (`Openstaand`, `Voldaan`, `Deels voldaan`, `Afgevoerd`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet``, ``ministry`` and ``chamber`` the commitments under the other filters; ``facets=false`` leaves them out (null): the pages after the first need none.
          */
         get: operations["list_commitments_api_commitments_get"];
         put?: never;
@@ -5074,21 +5094,28 @@ export interface components {
         };
         /**
          * CommitmentDTO
-         * @description A commitment (toezegging) of a bewindspersoon to the Tweede Kamer.
+         * @description A commitment (toezegging) of a bewindspersoon to the Tweede or the Eerste Kamer.
          */
         CommitmentDTO: {
             /** Key */
             key: string;
             /**
+             * Chamber
+             * @description The chamber it was made to: `TK` or `EK`.
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
              * Number
-             * @description How the Kamer cites it: `TZ202603-130`.
+             * @description How the Kamer cites it: `TZ202603-130`; of the Eerste Kamer `T04275`.
              */
             number: string | null;
             /** Text */
             text: string | null;
             /**
              * Status
-             * @description The status the Tweede Kamer gives the commitment (`Toezegging.Status`), as it writes it: `Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`; null when it gives none.
+             * @description The status the Tweede Kamer gives the commitment (`Toezegging.Status`), as it writes it: `Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`; of the Eerste Kamer its status with a capital: `Openstaand`, `Voldaan`, `Deels voldaan`, `Afgevoerd`; null when it gives none.
              */
             status: string | null;
             /**
@@ -5113,11 +5140,23 @@ export interface components {
             expected_resolution_impossible: string | null;
             /**
              * Minister Name
-             * @description As the source writes it.
+             * @description As the source writes it; of the Eerste Kamer the name of who spoke in the office responsible in the passage it quotes (`Vijlbrief`).
              */
             minister_name: string | null;
+            /**
+             * Minister Role
+             * @description The office it was made in, as the source writes it (`Minister van Sociale Zaken en Werkgelegenheid`).
+             */
+            minister_role: string | null;
             /** @description The member who made it; null when no member fits the name. */
             member: components["schemas"]["CommitmentMemberDTO"] | null;
+            /**
+             * Member Missing
+             * @description Of the Eerste Kamer, without ``member``: why. `no_name`, the passage names no one who spoke in an office of its kind; `unmatched`, the name fits no one or several who held one that day. A gap, not filled by hand.
+             */
+            member_missing: ("no_name" | "unmatched") | null;
+            /** @description Of the Eerste Kamer: the ministry of the post the member held that day, when it is not ``ministry`` (that of the office the Kamer names): a conflict, not corrected. */
+            ministry_held: components["schemas"]["MinistryKey"] | null;
             post: components["schemas"]["Post"] | null;
             ministry: components["schemas"]["MinistryKey"] | null;
             /**
@@ -5134,6 +5173,8 @@ export interface components {
              * @description The letters that fulfil it (``ANSWERS``, from ``Toezegging.KamerbriefNakoming``), oldest first.
              */
             fulfilled_by: components["schemas"]["CommitmentLetterDTO"][];
+            /** @description Of the Eerste Kamer: its page on eerstekamer.nl and the day it was read, to name with it; null for the Tweede Kamer. */
+            source: components["schemas"]["EkSourceDTO"] | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -5160,9 +5201,9 @@ export interface components {
             short_title: string | null;
             /**
              * Basis
-             * @description Why it is this dossier: `nakoming`, the dossier of a letter that fulfils it (`Toezegging.KamerbriefNakoming`); `agenda`, a dossier on the agenda of the debate it was made in, where it was discussed (a commitment no letter in a dossier fulfils yet).
+             * @description Why it is this dossier: `nakoming`, the dossier of a letter that fulfils it (`Toezegging.KamerbriefNakoming`); `agenda`, a dossier on the agenda of the debate it was made in, where it was discussed (a commitment no letter in a dossier fulfils yet); `kamerstukken`, of the Eerste Kamer, the dossier of a Kamerstuk its page names.
              */
-            basis: ("nakoming" | "agenda") | null;
+            basis: ("nakoming" | "agenda" | "kamerstukken") | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -5182,6 +5223,8 @@ export interface components {
             cabinet: components["schemas"]["FacetCountDTO"][];
             /** Ministry */
             ministry: components["schemas"]["FacetCountDTO"][];
+            /** Chamber */
+            chamber: components["schemas"]["FacetCountDTO"][];
         };
         /**
          * CommitmentLetterDTO
@@ -5478,6 +5521,97 @@ export interface components {
             substitute: boolean;
         };
         /**
+         * CourseBasis
+         * @description The article of law that gives the court its say in this step.
+         */
+        CourseBasis: {
+            /**
+             * Bwb Id
+             * @description The law: `BWBR0001830` (RO), `BWBR0005537` (Awb).
+             */
+            bwb_id: string;
+            /**
+             * Article Number
+             * @description Its article as numbered: `60`, `8:105`.
+             */
+            article_number: string;
+        };
+        /**
+         * CourseLink
+         * @description An edge from this step to another step of the course.
+         */
+        CourseLink: {
+            /**
+             * Relation
+             * @description `APPEAL_OF`, `REFERRED_BY` or `CONTINUES` (to an earlier step), `ADVISES_ON` (a conclusion to the judgment it advises on).
+             */
+            relation: string;
+            /**
+             * To
+             * @description The ECLI of the other step.
+             */
+            to: string;
+            /**
+             * Source Outcome
+             * @description How the appeal ended as the Rechtspraak records it (`psi:gevolg`: `Bekrachtiging/bevestiging`); null when neither judgment says.
+             */
+            source_outcome: string | null;
+        };
+        /**
+         * CourseStep
+         * @description One judgment of the case.
+         */
+        CourseStep: {
+            /** Ecli */
+            ecli: string | null;
+            /** Key */
+            key: string;
+            /** Court Code */
+            court_code: string | null;
+            /**
+             * Court Name
+             * @description The court as its metadata names it; of a stub as the Instanties list names its code.
+             */
+            court_name: string | null;
+            /** Tier */
+            tier: string | null;
+            /** Court Kind */
+            court_kind: string | null;
+            /** Date */
+            date: string | null;
+            /**
+             * Procedure
+             * @description The procedure as the source writes it (`psi:procedure`, the first).
+             */
+            procedure: string | null;
+            /** Decision Kind */
+            decision_kind: string | null;
+            /**
+             * Outcome
+             * @description How it ended as its text says (`judgment.outcome`).
+             */
+            outcome: string | null;
+            /**
+             * Area
+             * @description `civiel`, `straf`, `bestuur` or `belasting`, from its subjects.
+             */
+            area: string | null;
+            /** @description From a fixed list (`data/route_articles.json`) by tier, procedure and area; null where the list has none (a gap, never a guess). */
+            basis: components["schemas"]["CourseBasis"] | null;
+            /**
+             * Loaded
+             * @description False for a stub: named, not in the graph.
+             */
+            loaded: boolean;
+            /**
+             * Current
+             * @description The judgment asked for.
+             */
+            current: boolean;
+            /** Links */
+            links: components["schemas"]["CourseLink"][];
+        };
+        /**
          * CourtKind
          * @enum {string}
          */
@@ -5544,6 +5678,51 @@ export interface components {
             first_date: string | null;
             /** Last Date */
             last_date: string | null;
+        };
+        /**
+         * CriminalDecisionDTO
+         * @description What a criminal judgment of a rechtbank or gerechtshof decided on the charge, read
+         *     from its decision (``core/criminal_decision.py``). It is the outcome of the whole case,
+         *     not of one article it cites: with more than one charge, `deels` says nothing of one.
+         */
+        CriminalDecisionDTO: {
+            /**
+             * Proven
+             * @description `ja` (verklaart bewezen), `deels` (a charge proven, another acquitted or the prosecution inadmissible for it), `nee` (acquitted of all); null with `proven_missing`.
+             */
+            proven: ("ja" | "deels" | "nee") | null;
+            /**
+             * Proven Missing
+             * @description Why it is empty: `geen-dictum` (no decision read in the text), `geen-strafvonnis` (the decision neither proves nor sentences: a complaint, a confiscation order, an appeal court that confirms), `niet-in-dictum` (the decision sentences but does not say what was proven: an appeal court that changes only the sentence), `niet-gevonden` (proven, but no main sentence read: the decision may be cut off or impose a measure alone; never read it as no sentence), `vrijgesproken` (nothing proven); null when it is not empty.
+             */
+            proven_missing: ("geen-dictum" | "geen-strafvonnis" | "niet-in-dictum" | "niet-gevonden" | "vrijgesproken") | null;
+            /**
+             * Sentences
+             * @description The main punishments the decision imposes, in its order; empty with `sentences_missing`.
+             */
+            sentences: components["schemas"]["CriminalSentenceDTO"][];
+            /**
+             * Sentences Missing
+             * @description Why it is empty: `geen-dictum` (no decision read in the text), `geen-strafvonnis` (the decision neither proves nor sentences: a complaint, a confiscation order, an appeal court that confirms), `niet-in-dictum` (the decision sentences but does not say what was proven: an appeal court that changes only the sentence), `niet-gevonden` (proven, but no main sentence read: the decision may be cut off or impose a measure alone; never read it as no sentence), `vrijgesproken` (nothing proven); null when it is not empty.
+             */
+            sentences_missing: ("geen-dictum" | "geen-strafvonnis" | "niet-in-dictum" | "niet-gevonden" | "vrijgesproken") | null;
+        };
+        /**
+         * CriminalSentenceDTO
+         * @description A main punishment as the decision imposes it.
+         */
+        CriminalSentenceDTO: {
+            /**
+             * Kind
+             * @description `gevangenisstraf`, `taakstraf`, `geldboete`, `jeugddetentie`, `hechtenis`, `tbs`, or `meerdere` for one clause that imposes more than one.
+             * @enum {string}
+             */
+            kind: "gevangenisstraf" | "taakstraf" | "geldboete" | "jeugddetentie" | "hechtenis" | "tbs" | "meerdere";
+            /**
+             * Text
+             * @description The clause as the decision writes it, at most 240 characters: "Veroordeelt verdachte tot een gevangenisstraf voor de duur van 3 (drie) jaren." Its duration or amount is text, not a number to sort on.
+             */
+            text: string;
         };
         /**
          * DataAsOfDTO
@@ -6457,7 +6636,7 @@ export interface components {
             facets: components["schemas"]["DocumentFacetsDTO"] | null;
             /**
              * Partial
-             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted before them; ask again for them, they are counted on. The next page does not depend on them.
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted apart (the judgments and instruments wait 3 s more for it alone, after the page); ask again for them, they are counted on. The next page does not depend on them.
              * @default false
              */
             partial: boolean;
@@ -10591,6 +10770,11 @@ export interface components {
              */
             advocate_general_role: string | null;
             /**
+             * Inbound Citation Count
+             * @description The judgments that cite it, each once (as in `/api/judgments`): what `sort=citation_count` orders by.
+             */
+            inbound_citation_count: number | null;
+            /**
              * Cited Articles
              * @description Articles of the focal instrument that this judgment cites.
              */
@@ -10733,7 +10917,7 @@ export interface components {
             facets: components["schemas"]["InstrumentFacets"] | null;
             /**
              * Partial
-             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted before them; ask again for them, they are counted on. The next page does not depend on them.
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted apart (the judgments and instruments wait 3 s more for it alone, after the page); ask again for them, they are counted on. The next page does not depend on them.
              * @default false
              */
             partial: boolean;
@@ -10841,7 +11025,10 @@ export interface components {
              * @description The other instrument, as requested.
              */
             other: string;
-            /** Total */
+            /**
+             * Total
+             * @description The references both ways together, so the same for `A/references/B` and `B/references/A`; per way, the items by `direction`.
+             */
             total: number;
             /** Items */
             items: components["schemas"]["InstrumentReferenceDTO"][];
@@ -11368,6 +11555,26 @@ export interface components {
              */
             readonly path: string | null;
         };
+        /** JudgmentCourseResponse */
+        JudgmentCourseResponse: {
+            /**
+             * Steps
+             * @description The judgments of the case in its order: an earlier instance before the judgment that names it, a conclusion just before the judgment it advises on, judgments of one place by date.
+             */
+            steps: components["schemas"]["CourseStep"][];
+            /**
+             * Unresolved
+             * @description The decisions the judgment asked for names in its text as the one it appeals that are not loaded (`unresolved_appeal_targets`: `court`, `date`, `case_number`).
+             */
+            unresolved: {
+                [key: string]: string | null;
+            }[];
+            /**
+             * Truncated
+             * @description The case goes on past 8 edges from the judgment or 24 judgments.
+             */
+            truncated: boolean;
+        };
         /**
          * JudgmentCoverageResponse
          * @description Which judgments the graph holds: a count of case law is a count of this selection.
@@ -11476,6 +11683,8 @@ export interface components {
              * @description Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment.
              */
             echr_findings: components["schemas"]["EchrFindingDTO"][];
+            /** @description Of a criminal judgment of a rechtbank or gerechtshof (no conclusion), what it decided on the charge; null for any other (the Hoge Raad rules on the cassation appeal, not on the charge) and for one `normalize rechtspraak` has not read since. */
+            criminal_decision: components["schemas"]["CriminalDecisionDTO"] | null;
             /**
              * Outcome Paragraph Id
              * @description The paragraph of `outcome_text` (`paragraph_id` of `paragraphs`).
@@ -11831,7 +12040,7 @@ export interface components {
             facets: components["schemas"]["JudgmentFacets"] | null;
             /**
              * Partial
-             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted before them; ask again for them, they are counted on. The next page does not depend on them.
+             * @description The page is whole, but ``total`` and ``facets`` were not counted in time (a filter not counted since the data last changed: a request waits 3 s for them): empty facets now, and ``total`` null unless it was counted apart (the judgments and instruments wait 3 s more for it alone, after the page); ask again for them, they are counted on. The next page does not depend on them.
              * @default false
              */
             partial: boolean;
@@ -16156,6 +16365,37 @@ export interface operations {
             };
         };
     };
+    get_judgment_course_api_judgments__ecli__course_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ecli: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JudgmentCourseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_instruments_api_instruments_get: {
         parameters: {
             query?: {
@@ -17879,7 +18119,7 @@ export interface operations {
     list_commitments_api_commitments_get: {
         parameters: {
             query?: {
-                /** @description A Toezegging.Status as the Tweede Kamer writes it: `Openstaand`. */
+                /** @description A status as the commitment has it: `Openstaand`, `Voldaan`. */
                 status?: string | null;
                 /** @description Member key. */
                 member?: string | null;
@@ -17901,10 +18141,12 @@ export interface operations {
                 sort?: "date" | "expected_resolution" | "registered_on";
                 limit?: number;
                 offset?: number;
-                /** @description Count per status, cabinet and ministry. */
+                /** @description Count per status, cabinet, ministry and chamber. */
                 facets?: boolean;
                 /** @description An office, by any of its names (``GET /api/seats/{seat}``): the commitments of the member who held it that day. */
                 seat?: string | null;
+                /** @description The chamber it was made to: `TK` or `EK`. */
+                chamber?: ("TK" | "EK") | null;
             };
             header?: never;
             path?: never;

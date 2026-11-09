@@ -178,14 +178,14 @@
 		expanded = new Set();
 	});
 
-	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
+	// The kern of the bron (Verloop, Ingediend bij, Wet, Fractie) stands above its text in
 	// the band; Verbonden is the context and leaves those groups out (Thijs, 9 Oct: "dubbelop";
 	// docs/hierarchie.md, Kern of context). The table keeps all, and the count is the table's:
 	// one number for the head, the link and the table (UX-toets 10 Oct, #15: "0 verbindingen"
 	// over "Alle 79 in een tabel" on a fractie).
 	// A bron in the kern is not listed again by another relation either: the Rechtbank of a
-	// procesgang is no "uitspraak die hier wordt aangehaald" (Thijs, 9 Oct). The instances
-	// before the eerdere aanleg come with the band's own cached light nodes.
+	// Verloop is no "uitspraak die hier wordt aangehaald" (Thijs, 9 Oct). Its steps come with
+	// the band's own cached course.
 	let keten = $state<Set<string>>(new Set());
 	$effect(() => {
 		const { collection, key, id } = selection;

@@ -45,7 +45,8 @@ type BandLayer = {
 };
 
 /** A line of the band: its term, its layers, side by side (`loose`) or a chain. */
-export type BandLine = { term: string; layers: BandLayer[]; loose?: boolean };
+/** `verloop`: the term opens the list per step, and the line names its layers whole (BelongsTo). */
+export type BandLine = { term: string; layers: BandLayer[]; loose?: boolean; course?: boolean };
 
 /**
  * The band "Behoort bij" (BelongsTo): the source first (`Wetten ›`), each line its term and
@@ -71,15 +72,29 @@ export function band(
 		return `<li class="${cls}">${l.link ? `<a class="raakvlak ${c}">${name}</a>` : `<span>${name}</span>`}${outcome}</li>`;
 	};
 	const line = (r: BandLine, i: number) => {
-		const folded = r.loose ? o.phone && r.layers.length > 2 : r.layers.length > 3;
+		const folded = r.loose ? o.phone && r.layers.length > 2 : r.layers.length > (r.course ? 4 : 3);
 		const last = r.layers.length - 1;
+		// Folded: the first and the last, of the Verloop the last two.
+		const tail = r.course ? 2 : 1;
 		const items = folded
 			? layer(r.layers[0], false) +
 				`<li class="vouw ${c}"><button class="raakvlak ${c}" type="button" tabindex="-1">…</button></li>` +
-				layer(r.layers[last], true)
+				r.layers
+					.slice(-tail)
+					.map((l, j) => layer(l, j === tail - 1))
+					.join('')
 			: r.layers.map((l, j) => layer(l, j === last)).join('');
-		const cls = ['lagen', r.loose ? 'los' : '', folded ? 'gevouwen' : '', c].filter(Boolean);
-		return `<div class="regel ${c}">${i === 0 ? crumb : ''}<dt class="term ${c}">${esc(r.term)}</dt><dd class="${c}"><ol class="${cls.join(' ')}">${items}</ol>${i === 0 ? more : ''}</dd></div>`;
+		const cls = [
+			'lagen',
+			r.loose ? 'los' : '',
+			folded ? 'gevouwen' : '',
+			r.course ? 'heel' : '',
+			c
+		].filter(Boolean);
+		const term = r.course
+			? `<dt class="term ${c}"><button type="button" class="term-knop raakvlak ${c}" tabindex="-1">${esc(r.term)}${caret(k)}</button></dt>`
+			: `<dt class="term ${c}">${esc(r.term)}</dt>`;
+		return `<div class="regel ${c}">${i === 0 ? crumb : ''}${term}<dd class="${c}"><ol class="${cls.join(' ')}">${items}</ol>${i === 0 ? more : ''}</dd></div>`;
 	};
 	const body = lines.length
 		? `<dl class="regels ${c}">${lines.map(line).join('')}</dl>`

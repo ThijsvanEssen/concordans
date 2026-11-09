@@ -123,10 +123,10 @@ describe('behoort', () => {
 		expect(b.regels[0].lagen[0].kort).toBe('Boek 7A BW');
 	});
 
-	it('gives a judgment its procesgang as kern, more appeals as a group', () => {
+	it('gives a judgment its Verloop as kern, more appeals as a group', () => {
 		const b = behoort(
 			'judgments',
-			{},
+			{ ecli: 'ECLI:NL:HR:2019:2006' },
 			light([
 				{
 					relation: 'APPEAL_OF',
@@ -165,19 +165,11 @@ describe('behoort', () => {
 				}
 			])
 		);
-		expect(b.regels.map((r) => r.label)).toEqual(['Procesgang']);
-		expect(b.regels[0].lagen.map((l) => [l.soort, !!l.huidig])).toEqual([
-			['Eerdere aanleg', false],
-			['Deze uitspraak', true],
-			['Hoger beroep of cassatie', false]
+		// The instances come from one answer of the API (`/course`), asked once the band is there.
+		expect(b.regels.map((r) => [r.label, r.course, r.lagen.length])).toEqual([
+			['Verloop', 'ECLI:NL:HR:2019:2006', 1]
 		]);
 		expect(b.regels[0].laad).toBeTypeOf('function');
-		// On a phone as the API cites them (F107).
-		expect(b.regels[0].lagen.map((l) => l.kort)).toEqual([
-			'Hof Den Haag 9\u00a0oktober\u00a02018',
-			undefined,
-			'HR 3\u00a0maart\u00a02020'
-		]);
 		expect(b.onder.map((g) => [g.label, g.aantal])).toEqual([['Hoger beroep of cassatie', 2]]);
 		const conclusie = behoort(
 			'judgments',
@@ -379,7 +371,11 @@ describe('kern of context', () => {
 			'conclusion',
 			'advised',
 			'earlier-instance',
-			'later-instance'
+			'later-instance',
+			'continues',
+			'continued',
+			'referred-by',
+			'referred-to'
 		]);
 		expect(kern('articles')).toEqual(['law']);
 		expect(kern('documents')).toEqual([
@@ -441,6 +437,10 @@ describe('kern of context', () => {
 			    "advised",
 			    "earlier-instance",
 			    "later-instance",
+			    "continues",
+			    "continued",
+			    "referred-by",
+			    "referred-to",
 			  ],
 			  "members": [
 			    "factions",
@@ -450,32 +450,17 @@ describe('kern of context', () => {
 		`);
 	});
 
-	it('puts an eerdere aanleg the data lacks in the procesgang, as text', () => {
-		const b = behoort(
-			'judgments',
-			{
-				unresolved_appeal_targets: [
-					{ court: 'rechtbank Gelderland', date: '2025-07-09', case_number: '24/6811' }
-				]
-			},
-			light([])
-		);
-		expect(b.regels[0].label).toBe('Procesgang');
-		// No citation of the API: the same words on a phone.
-		expect(b.regels[0].lagen[0]).toMatchObject({
-			naam: 'Rechtbank Gelderland, 9\u00a0juli\u00a02025, 24/6811'
-		});
-		expect(b.regels[0].lagen[0].kort).toBeUndefined();
-		expect(b.regels[0].lagen[0].ref).toBeUndefined();
+	it('leaves out the Verloop of a judgment without an ECLI', () => {
+		expect(behoort('judgments', {}, light([])).regels).toEqual([]);
 	});
 });
 
 describe('a translation and a dossier', () => {
-	it('names the original of a translation, its procesgang to follow', () => {
+	it('names the original of a translation, its Verloop to follow', () => {
 		const b = behoort('judgments', { translation_of: 'ECLI:NL:HR:2019:2006' }, light([]));
 		expect(b.regels.map((r) => [r.id, r.label, r.lagen.length, !!r.laad])).toEqual([
 			['vertaling', 'Vertaling van', 1, true],
-			['procesgang', 'Procesgang', 0, true]
+			['verloop', 'Verloop', 0, true]
 		]);
 		expect(b.regels[0].lagen[0].ref).toEqual({
 			collection: 'judgments',

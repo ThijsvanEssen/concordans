@@ -23,7 +23,7 @@ export type Layer = {
 	kort?: string;
 	/** The bron itself in a chain ("deze uitspraak"): no link. */
 	huidig?: boolean;
-	/** How an instance of a procesgang ended: `cassatie verworpen`, `bekrachtigd` (API 0.79.55). */
+	/** How an instance of a Verloop ended: `cassatie verworpen`, `bekrachtigd` (API 0.79.55). */
 	uitkomst?: string;
 };
 
@@ -39,6 +39,8 @@ export type Regel = {
 	laad?: (signal?: AbortSignal) => Promise<Layer[]>;
 	/** Bronnen side by side (the fracties of a lid), not a chain: "; " in place of "›". */
 	los?: boolean;
+	/** The ECLI whose Verloop the line names: its term opens the list per step (CourseList). */
+	course?: string;
 };
 
 /** The bucket a line or group reads, as the API names it. */
