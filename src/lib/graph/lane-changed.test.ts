@@ -8,7 +8,7 @@ import type { LineKind } from './line-kind';
 
 const WIDTH = 1200;
 const d2 = (): Scene => buildScene(example('d2'));
-const laws = (s: Scene) => s.units.filter((u) => u.column === 'laws' && !u.general);
+const laws = (s: Scene) => s.units.filter((u) => u.column === 'laws');
 
 const withChanges = (s: Scene, changes: Record<string, SceneUnit['change']>): Scene => ({
 	...s,

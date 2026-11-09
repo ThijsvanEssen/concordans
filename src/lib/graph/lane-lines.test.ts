@@ -78,21 +78,17 @@ describe.each(EXAMPLES)('the lines of %s', (name) => {
 		const kindOf = (l: LanePath) => scene.lines.find((x) => x.id === l.id)!.kind;
 		const shares = (a: LanePath, b: LanePath) =>
 			kindOf(a) === kindOf(b) && (a.from === b.from || a.to === b.to);
-		// Open: the climbs into the strip Algemene wetten still share their passages.
-		const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
-		const verticals = lines
-			.filter((l) => !general.has(l.from) && !general.has(l.to))
-			.flatMap((l) =>
-				l.points.slice(1).flatMap((b, i) => {
-					const a = l.points[i];
-					// The first run out of a mark and the last into one: lines fan out of one bron
-					// and arrows meet in one target there, as in the Keten.
-					const end = i === 0 || i === l.points.length - 2;
-					return Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) > 4 && !end
-						? [{ l, x: a.x, lo: Math.min(a.y, b.y), hi: Math.max(a.y, b.y) }]
-						: [];
-				})
-			);
+		const verticals = lines.flatMap((l) =>
+			l.points.slice(1).flatMap((b, i) => {
+				const a = l.points[i];
+				// The first run out of a mark and the last into one: lines fan out of one bron
+				// and arrows meet in one target there, as in the Keten.
+				const end = i === 0 || i === l.points.length - 2;
+				return Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) > 4 && !end
+					? [{ l, x: a.x, lo: Math.min(a.y, b.y), hi: Math.max(a.y, b.y) }]
+					: [];
+			})
+		);
 		const close: string[] = [];
 		for (let i = 0; i < verticals.length; i++)
 			for (let j = i + 1; j < verticals.length; j++) {
@@ -106,8 +102,6 @@ describe.each(EXAMPLES)('the lines of %s', (name) => {
 
 	it('runs the lines of one lijnsoort into one point as one line down their gutter', () => {
 		// Many to one: the rails of a bundle stand on one x, with no other rail between them.
-		// Open: lines to and from the strip Algemene wetten keep their own rails.
-		const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
 		const kindOf = (l: LanePath) => scene.lines.find((x) => x.id === l.id)!.kind;
 		const zones: [number, number][] = layout.columns.flatMap((c, i) => {
 			const next = layout.columns[i + 1];
@@ -118,7 +112,7 @@ describe.each(EXAMPLES)('the lines of %s', (name) => {
 			];
 		});
 		const rails = new Map<string, Set<number>>();
-		for (const l of lines.filter((x) => !general.has(x.from) && !general.has(x.to))) {
+		for (const l of lines) {
 			const p = l.points;
 			const i = p.findLastIndex((q, k) => k > 0 && k < p.length - 1 && q.x === p[k - 1].x);
 			if (i < 1) continue;

@@ -27,13 +27,13 @@ function overlaps(layout: LaneLayout): string[] {
 	return out;
 }
 
-/** The units that stand outside their column (or outside the strip). */
+/** The units that stand outside their column. */
 function outside(scene: Scene, layout: LaneLayout): string[] {
 	const columns = new Map(layout.columns.map((c) => [c.column, c]));
 	return scene.units
 		.filter((u) => {
 			const box = layout.units.get(u.id)!;
-			const frame = u.general ? layout.strip! : columns.get(u.column)!;
+			const frame = columns.get(u.column)!;
 			return box.x < frame.x || box.x + box.width > frame.x + frame.width;
 		})
 		.map((u) => u.id);
@@ -51,17 +51,17 @@ describe.each(EXAMPLES)('the layout of %s', (name) => {
 		expect(overlaps(layout)).toEqual([]);
 	});
 
-	it('keeps every unit in its column, the general ones in their strip', () => {
+	it('keeps every unit in its column', () => {
 		expect(outside(scene, layout)).toEqual([]);
 	});
 
-	it('keeps a gutter between two columns, and the strip under them all', () => {
+	it('keeps a gutter between two columns, at most GUTTER_MAX wide', () => {
 		for (let i = 1; i < layout.columns.length; i++) {
 			const a = layout.columns[i - 1];
-			expect(layout.columns[i].x - (a.x + a.width)).toBeGreaterThanOrEqual(GUTTER);
+			const gap = layout.columns[i].x - (a.x + a.width);
+			expect(gap).toBeGreaterThanOrEqual(GUTTER);
+			expect(gap).toBeLessThanOrEqual(160);
 		}
-		if (layout.strip)
-			for (const c of layout.columns) expect(layout.strip.y).toBeGreaterThan(c.y + c.height);
 	});
 
 	it('is as high as what it holds', () => {
@@ -133,20 +133,21 @@ describe('the layout, by its rules', () => {
 		for (const box of laws) expect(box.x).toBe(column.x);
 	});
 
-	it('puts the general wetten in the first line of the strip, each column below on its own', () => {
+	it('orders each section of Wetten by how often it is cited, the most first', () => {
 		const v1 = buildScene(example('v1'));
-		const strip = laneLayout(v1, WIDTH);
-		const general = v1.units.filter((u) => u.general);
-		const top = (column: string, law: boolean) =>
-			general
-				.filter((u) => u.column === column && (u.shape !== 'group') === law)
-				.map((u) => strip.units.get(u.id)!);
-		const laws = top('laws', true);
-		const first = Math.min(...general.map((u) => strip.units.get(u.id)!.y));
-		expect(laws.map((b) => b.y)).toEqual(laws.map(() => first));
-		const below = Math.max(...laws.map((b) => b.y + b.height));
-		for (const box of [...top('papers', false), ...top('laws', false), ...top('rulings', false)])
-			expect(box.y).toBeGreaterThan(below);
+		const placed = laneLayout(v1, WIDTH);
+		const cited = new Map<string, number>();
+		for (const l of v1.lines)
+			if (l.kind === 'citation') cited.set(l.to, (cited.get(l.to) ?? 0) + l.count);
+		const laws = v1.units
+			.filter((u) => u.column === 'laws' && !u.focus)
+			.sort((a, b) => placed.units.get(a.id)!.y - placed.units.get(b.id)!.y);
+		for (const change of ['enacted', 'proposed', null]) {
+			const counts = laws.filter((u) => u.change === change).map((u) => cited.get(u.id) ?? 0);
+			expect(counts).toEqual([...counts].sort((a, b) => b - a));
+		}
+		const awb = placed.units.get('instruments/bwbr0005537')!;
+		expect(awb.x).toBe(placed.columns.find((c) => c.column === 'laws')!.x);
 	});
 });
 

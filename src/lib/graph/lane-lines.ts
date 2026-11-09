@@ -3,20 +3,11 @@
 // along it to the height of its target (the row it ends in), then into the target. Through a
 // column between the two it keeps to a corridor where nothing stands; out of a hull its lines
 // leave from points spread over its side in the order of their targets; within one column a line
-// runs on a rail right of the column; to the strip Algemene wetten it runs above the strip and
-// drops in. Each pair of rails in a gutter stands in the order that does not cross where the
-// other would.
+// runs on a rail right of the column. Each pair of rails in a gutter stands in the order that
+// does not cross where the other would.
 // Pure: the view draws what this returns, with the dot, the arrow and the dash of its lijnsoort.
 import { easePath, type Pt } from '$lib/network/tree-lines';
-import {
-	bundleKeys,
-	GUTTER,
-	ITEM_GAP,
-	PANEL,
-	type Box,
-	type LaneLayout,
-	type UnitBox
-} from './lane-layout';
+import { bundleKeys, GUTTER, PANEL, type Box, type LaneLayout, type UnitBox } from './lane-layout';
 import { hasArrow, LINE_KIND_STYLE, LINE_KINDS, type Stroke } from './line-kind';
 import type { Scene, SceneLine } from './scene';
 
@@ -24,8 +15,6 @@ import type { Scene, SceneLine } from './scene';
 const RAIL_STEP = 10;
 /** The room between a line and the edge of what it passes. */
 const AIR = 6;
-/** Where a line arrives at a mark, this far off its edge (the arrow's tip). */
-const TIP = 4;
 
 export type LanePath = {
 	id: string;
@@ -73,10 +62,10 @@ export const LINE_WIDTH = 1.6;
 
 type Frames = { x: number; width: number }[];
 
-/** The column index of each unit: its column, or -1 for the strip. */
+/** The column index of each unit. */
 function columnIndex(scene: Scene, layout: LaneLayout): Map<string, number> {
 	const order = layout.columns.map((c) => c.column);
-	return new Map(scene.units.map((u) => [u.id, u.general ? -1 : order.indexOf(u.column)]));
+	return new Map(scene.units.map((u) => [u.id, order.indexOf(u.column)]));
 }
 
 /** The boxes that stand in a column, for what a line may not run through. */
@@ -137,80 +126,13 @@ function heightAt(box: UnitBox, row: string | null, toward: number): number {
 	return clamp(toward, box.mark.y + 12, box.mark.y + box.mark.height - 12);
 }
 
-/** A line of the strip: its top and its boxes from left to right. */
-type StripRow = { top: number; boxes: UnitBox[] };
-
 type Context = {
 	scene: Scene;
 	layout: LaneLayout;
 	index: Map<string, number>;
 	frames: Frames;
 	columns: UnitBox[][];
-	strip: StripRow[];
 };
-
-/** The lines of the strip, from the top. */
-function stripRows(layout: LaneLayout, index: Map<string, number>): StripRow[] {
-	const byTop = new Map<number, UnitBox[]>();
-	for (const [id, box] of layout.units)
-		if (index.get(id) === -1) byTop.set(box.y, [...(byTop.get(box.y) ?? []), box]);
-	return [...byTop]
-		.sort((a, b) => a[0] - b[0])
-		.map(([top, boxes]) => ({ top, boxes: boxes.sort((a, b) => a.x - b.x) }));
-}
-
-const rowOf = (c: Context, box: UnitBox) => c.strip.findIndex((r) => r.boxes.includes(box));
-
-/** The height a line runs at above line `r` of the strip: above the strip for the first. */
-const gangAbove = (c: Context, r: number) =>
-	r === 0 ? c.layout.strip!.y - AIR * 2 : c.strip[r].top - ITEM_GAP / 2;
-
-/** A way down through line `r` of the strip: a space between two boxes, or beside them, nearest `toward`. */
-function passage(c: Context, r: number, toward: number): number {
-	const { boxes } = c.strip[r];
-	const strip = c.layout.strip!;
-	const ends = boxes.map((b) => b.x + b.width);
-	const ways = [
-		strip.x + PANEL / 2,
-		...boxes.slice(1).map((b, i) => (ends[i] + b.x) / 2),
-		Math.min(ends.at(-1)! + 22, strip.x + strip.width - PANEL / 2)
-	];
-	return ways.sort((a, b) => Math.abs(a - toward) - Math.abs(b - toward))[0];
-}
-
-/**
- * From the top of a unit in the strip up to the height above line `to` of the strip: through the
- * lines between by a space between their boxes.
- */
-function climb(c: Context, box: UnitBox, to: number, toward: number): Pt[] {
-	const from = rowOf(c, box);
-	const x0 = box.mark.x + box.mark.width / 2;
-	const pts = [
-		{ x: x0, y: box.mark.y - TIP },
-		{ x: x0, y: gangAbove(c, from) }
-	];
-	for (let r = from - 1; r >= to; r--) {
-		const x = passage(c, r, toward);
-		pts.push({ x, y: gangAbove(c, r + 1) }, { x, y: gangAbove(c, r) });
-	}
-	return pts;
-}
-
-/**
- * Within the strip: from the lower of the two up to the height under the line of the other, then
- * up into it; in one line, over that line and down into it.
- */
-function planInStrip(c: Context, line: SceneLine, a: UnitBox, b: UnitBox): Plan {
-	const [ra, rb] = [rowOf(c, a), rowOf(c, b)];
-	const [low, high] = rb > ra ? [b, a] : [a, b];
-	const [rl, rh] = [Math.max(ra, rb), Math.min(ra, rb)];
-	const x = high.mark.x + high.mark.width / 2;
-	const level = rl === rh ? rl : rh + 1;
-	const up = climb(c, low, level, x);
-	const end = rl === rh ? high.mark.y - TIP : high.mark.y + high.mark.height + TIP;
-	const pts = [...up, { x, y: gangAbove(c, level) }, { x, y: end }];
-	return { line, out: low === a ? pts : pts.reverse(), in: [], rails: [] };
-}
 
 /** The plan of a line between two columns, or within one. */
 function planBetween(
@@ -258,54 +180,6 @@ function planBetween(
 		});
 	rails.push({ gutter: last, enter: yc, leave: y2, key: into, ...dir });
 	return { line, out, in: inn, rails };
-}
-
-/** The plan of a line to or from the strip: above the strip to the target's middle, then down. */
-function planStrip(
-	c: Context,
-	line: SceneLine,
-	a: UnitBox,
-	b: UnitBox,
-	ia: number,
-	ib: number
-): Plan {
-	if (ia === -1 && ib === -1) return planInStrip(c, line, a, b);
-	const above = gangAbove(c, 0);
-	const fromStrip = ia === -1;
-	const unit = fromStrip ? b : a;
-	const k = fromStrip ? ib : ia;
-	const drop = fromStrip ? a : b;
-	const down = climb(c, drop, 0, c.frames[k].x).reverse();
-	const x = down[0].x;
-	const side: Side = x >= c.frames[k].x ? 'right' : 'left';
-	const leg = port(
-		unit,
-		side,
-		heightAt(unit, fromStrip ? line.toRow : line.fromRow, above),
-		c.frames[k],
-		c.columns[k]
-	);
-	const gutter = side === 'right' ? k : k - 1;
-	const [left, right] = gutterOf(c.layout, gutter);
-	const rail: Rail = {
-		gutter,
-		enter: leg.at(-1)!.y,
-		leave: above,
-		fromLeft: side === 'right',
-		toLeft: x < (left + right) / 2,
-		key: `strip ${line.id}`,
-		x: 0
-	};
-	return fromStrip
-		? {
-				line,
-				out: [...down].reverse(),
-				in: [...leg].reverse(),
-				rails: [
-					{ ...rail, enter: above, leave: rail.enter, fromLeft: rail.toLeft, toLeft: rail.fromLeft }
-				]
-			}
-		: { line, out: leg, in: down, rails: [rail] };
 }
 
 /**
@@ -390,21 +264,36 @@ function orderBundles(bundles: Rail[][], left: number, right: number): Rail[][] 
 		order.push(rest[pick]);
 		rest.splice(pick, 1);
 	}
-	return settled(order, cost).map((i) => bundles[i]);
+	const single = bundles.map((list) => list.length === 1);
+	return settled(order, cost, single).map((i) => bundles[i]);
 }
 
-/** The order with each bundle moved to where it crosses least, as long as that still helps. */
-function settled(start: readonly number[], cost: readonly number[][]): number[] {
+/**
+ * The order with each bundle moved to where it crosses least, as long as that still helps. Of two
+ * places that cross as often, the one where fewer pairs of lone rails stand in the order they cross
+ * most in: a bundle's crossings are the price of one line, two lone rails can always swap.
+ */
+function settled(
+	start: readonly number[],
+	cost: readonly number[][],
+	single: readonly boolean[]
+): number[] {
 	let order = [...start];
 	let moved = true;
 	while (moved) {
 		moved = false;
 		for (const b of start) {
 			const others = order.filter((o) => o !== b);
-			const at = (k: number) =>
-				others.reduce((n, o, i) => n + (i < k ? cost[o][b] : cost[b][o]), 0);
+			const pay = (o: number, left: boolean) => (left ? cost[o][b] : cost[b][o]);
+			const at = (k: number) => others.reduce((n, o, i) => n + pay(o, i < k), 0);
+			const wrong = (k: number) =>
+				single[b]
+					? others.reduce((n, o, i) => n + (single[o] && pay(o, i < k) > pay(o, i >= k) ? 1 : 0), 0)
+					: 0;
+			const better = (k: number, than: number) =>
+				at(k) < at(than) || (at(k) === at(than) && wrong(k) < wrong(than));
 			let best = order.indexOf(b);
-			for (let k = 0; k <= others.length; k++) if (at(k) < at(best)) best = k;
+			for (let k = 0; k <= others.length; k++) if (better(k, best)) best = k;
 			if (best === order.indexOf(b)) continue;
 			order = [...others.slice(0, best), b, ...others.slice(best)];
 			moved = true;
@@ -479,11 +368,9 @@ export function straight(pts: readonly Pt[]): Pt[] {
 	return out;
 }
 
-/** The key of each rail in its gutter (`bundleKeys`); lines of the strip keep their own. */
+/** The key of each rail in its gutter (`bundleKeys`). */
 function bundle(plans: readonly Plan[]) {
-	const own = plans.flatMap((p) =>
-		p.rails.filter((r) => !r.key.startsWith('strip')).map((r) => ({ p, r }))
-	);
+	const own = plans.flatMap((p) => p.rails.map((r) => ({ p, r })));
 	const keys = bundleKeys(own.map(({ p, r }) => ({ gutter: r.gutter, ...p.line })));
 	own.forEach(({ r }, i) => (r.key = keys[i]));
 }
@@ -569,7 +456,7 @@ export function laneLines(scene: Scene, layout: LaneLayout): LanePath[] {
 	const index = columnIndex(scene, layout);
 	const frames = layout.columns.map((c) => ({ x: c.x, width: c.width - c.inner }));
 	const columns = layout.columns.map((_, i) => boxesIn(layout, index, i));
-	const c: Context = { scene, layout, index, frames, columns, strip: stripRows(layout, index) };
+	const c: Context = { scene, layout, index, frames, columns };
 	const plans: Plan[] = [];
 	for (const line of scene.lines) {
 		const a = layout.units.get(line.from);
@@ -577,9 +464,7 @@ export function laneLines(scene: Scene, layout: LaneLayout): LanePath[] {
 		const ia = index.get(line.from);
 		const ib = index.get(line.to);
 		if (!a || !b || ia === undefined || ib === undefined) continue;
-		plans.push(
-			ia === -1 || ib === -1 ? planStrip(c, line, a, b, ia, ib) : planBetween(c, line, a, b, ia, ib)
-		);
+		plans.push(planBetween(c, line, a, b, ia, ib));
 	}
 	spread(plans, layout, index);
 	bundle(plans);

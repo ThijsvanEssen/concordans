@@ -70,7 +70,7 @@ describe('the scene of the five examples (round 3)', () => {
 		});
 		expect(groups(s)).toEqual([
 			'laws 4 europees en internationaal',
-			'laws 9 wetten',
+			'laws 8 wetten',
 			'makers 16 fracties',
 			'makers 4 kamerleden',
 			'papers 16 stemmingen',
@@ -112,41 +112,40 @@ describe('the scene of the five examples (round 3)', () => {
 		expect(groups(s)).toEqual(['papers 61 stukken']);
 	});
 
-	it('v1: the uitspraken by instantie, the Awb in the strip Algemene wetten', () => {
+	it('v1: the uitspraken by instantie, the Awb and the Wkkgz in Wetten', () => {
 		const s = scene('v1');
 		const focus = s.units.filter((u) => u.focus).map((u) => u.id);
 		expect(focus).toEqual(['dossiers/36702', 'instruments/bwbr0023864']);
 		expect(unit(s, (u) => u.id === 'instruments/bwbr0005537')).toMatchObject({
 			label: 'Algemene wet bestuursrecht',
-			general: true
+			column: 'laws'
 		});
-		// The rule decides, not the name: the Wkkgz has no change or structural line to a chosen bron
-		// and 30 uitspraken only through her. The 18 that cite her alone go with her to the strip.
-		expect(unit(s, (u) => u.id === 'instruments/bwbr0037173')?.general).toBe(true);
+		// Cited by 30 uitspraken: she stands on her own, not in a group of wetten.
+		expect(unit(s, (u) => u.id === 'instruments/bwbr0037173')?.shape).toBe('node');
 		const rulings = s.units.filter((u) => u.sort === 'uitspraken' && u.shape === 'group');
-		expect(rulings.map((u) => [u.general, u.breakdown]).sort()).toEqual([
-			[false, 'HR 6, rb 3, RvS 2, hof 1'],
-			[false, 'RvS 3, rb 2, HR 1'],
-			[true, 'rb 13, hof 2, RvS 2, HR 1'],
-			[true, 'rb 3, HR 1']
+		expect(rulings.map((u) => u.breakdown).sort()).toEqual([
+			'rb 16, HR 7, RvS 4, hof 3',
+			'rb 4, HR 2, RvS 1'
 		]);
-		// Changed by a chosen stuk: never general.
-		expect(unit(s, (u) => u.id === 'instruments/bwbr0023864')?.general).toBe(false);
 		expect(s.units.filter((u) => u.shape === 'hull' && u.column === 'papers').length).toBe(5);
 	});
 
 	it('v1: loose bronnen fold by the column of their target too', () => {
 		const s = scene('v1');
 		// Round 3 drew ±45 units; by one target alone it was 98.
-		expect(s.units.length).toBe(48);
+		expect(s.units.length).toBe(50);
 		const loose = s.units.filter((u) => u.shape === 'node' && u.column !== 'makers');
 		expect(loose.map((u) => u.label).sort()).toEqual([
 			'32402, Wet kwaliteit, klachten en geschillen zorg',
 			'33684, Jeugdwet',
-			'Bevorderen contracteren, nr. 941',
+			'Raad van State 2019-12-24 / 201806610/1/A3',
+			'Raad van State 2021-07-28 / 202003365/1/A2',
+			'Rechtbank Midden-Nederland 2020-01-10 / AWB - 19 _ 608',
 			'Richtlijn 1999/93/EG',
+			'Richtlijn 2004/17/EG',
+			'Richtlijn 2014/25/EU',
+			'Richtlijn 2014/61/EU',
 			'Verordening (EU) nr. 910/2014',
-			'Verslag van een hoorzitting / rondetafelgesprek, nr. 180',
 			'Wet kwaliteit, klachten en geschillen zorg'
 		]);
 		// Publicaties to several wetten: one group, its line to the wet most of them have.

@@ -1,8 +1,7 @@
 <svelte:options namespace="svg" />
 
 <script lang="ts">
-	// What stands behind the lanes: the panel of each column with its head, the strip Algemene
-	// wetten, the heads in Wetten, the cards of Wie maakt; on a phone the one line that counts who makes.
+	// What stands behind the lanes: the panel of each column with its head, the heads in Wetten, the cards of Wie maakt; on a phone the one line that counts who makes.
 	import { sortColour } from '$lib/bron/rubrieken';
 	import { COLUMN_SORT, COLUMN_TITLE, LANE_SORT, LANE_TITLE } from '$lib/graph/lane-columns';
 	import { CONTENT_TOP, type LaneLayout } from '$lib/graph/lane-layout';
@@ -56,19 +55,6 @@
 		/>
 	{/if}
 {/each}
-{#if layout.strip}
-	{@const s = layout.strip}
-	<rect
-		class="panel"
-		x={s.x}
-		y={s.y}
-		width={s.width}
-		height={s.height}
-		rx="12"
-		style:--tint="var(--rubriek-wetten)"
-	/>
-	<text class="col-head" x={s.x + 14} y={s.y + 24}>Algemene wetten</text>
-{/if}
 {#each layout.heads as h (h.label)}
 	<text class="lane-head law-head" x={h.x} y={h.y}>{h.label}</text>
 {/each}
@@ -86,7 +72,7 @@
 {/each}
 {#if phone}
 	{#each layout.columns.filter((c) => c.column === 'makers') as c (c.column)}
-		{@const makers = scene.units.filter((u) => u.column === 'makers' && !u.general)}
+		{@const makers = scene.units.filter((u) => u.column === 'makers')}
 		{@const byLane = (['government', 'council', 'parliament'] as const)
 			.map((lane) => [lane, makers.filter((u) => u.lane === lane).length] as const)
 			.filter(([, k]) => k > 0)}

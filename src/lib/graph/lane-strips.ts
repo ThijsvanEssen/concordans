@@ -1,5 +1,5 @@
 // The lanes on a phone: the columns as strips from top to bottom (Wie maakt, Kamerstukken, Wetten,
-// Rechtspraak, Algemene wetten), from the design of phase 0. Wie maakt is a row of marks with one
+// Rechtspraak), from the design of phase 0. Wie maakt is a row of marks with one
 // line that counts them; a chosen hull stands in full with a line per row; every other unit is a
 // row of its own, its mark with its name on one line, a hull outside the focus as a disc with its
 // count (Thijs, 1 nov.: variant A). Only the lines to the chosen units are drawn, those of Wie maakt
@@ -32,6 +32,8 @@ const DESCENT = MARGIN + 4;
 const STRIP_GAP = 14;
 /** A unit outside the focus: one line, as high as a line of tiles with air around it. */
 const UNIT_ROW = 28;
+/** Above a disc in the first row of a strip: room for the bend out of the channel (`placeRows`). */
+const DISC_AIR = 10;
 /** Left of the mark the lines run; the widest disc with its marker ends before the name. */
 const MARK_CENTRE = 22;
 const NAME_AT = 48;
@@ -59,13 +61,7 @@ export const stripHead = (strip: Box): Box => ({
 	height: 26
 });
 
-const STRIP_ORDER: readonly (Column | 'general')[] = [
-	'makers',
-	'papers',
-	'laws',
-	'rulings',
-	'general'
-];
+const STRIP_ORDER: readonly Column[] = ['makers', 'papers', 'laws', 'rulings'];
 
 /** What the strips add to a layout: the channels. */
 export type StripLayout = LaneLayout & {
@@ -79,8 +75,6 @@ export type StripLayout = LaneLayout & {
 
 const laneRank = (u: SceneUnit) =>
 	u.lane ? MAKER_LANE_ORDER.indexOf(u.lane) : MAKER_LANE_ORDER.length;
-
-const stripKey = (u: SceneUnit): Column | 'general' => (u.general ? 'general' : u.column);
 
 /** The radius of a disc by its count, as lane-layout draws a group. */
 const discRadius = (n: number): number => (n < 10 ? 10 : n < 30 ? 12 : 15);
@@ -136,7 +130,7 @@ const byWeight = (a: SceneUnit, b: SceneUnit) =>
 /** A chosen hull and tiles: on a phone they alone stand in full. */
 const isFull = (u: SceneUnit) => (u.shape === 'hull' && u.focus) || u.shape === 'tiles';
 
-type Strip = { key: Column | 'general'; units: SceneUnit[] };
+type Strip = { key: Column; units: SceneUnit[] };
 
 /** What placing a strip needs beside it, and what it records. */
 type Place = {
@@ -148,11 +142,15 @@ type Place = {
 	load: ReadonlyMap<string, number>;
 };
 
-/** The rows of a strip: the weightiest first. */
+/**
+ * The rows of a strip: the weightiest first. A disc reaches further left than a mark: in the first
+ * row it stands DISC_AIR lower, so the bend of a line out of the channel above passes it.
+ */
 function placeRows(units: readonly SceneUnit[], y0: number, p: Place): number {
 	const x0 = MARGIN + INSET;
-	let y = y0;
-	for (const u of [...units].sort(byWeight)) {
+	const rows = [...units].sort(byWeight);
+	let y = y0 + (rows[0] && rows[0].shape !== 'node' ? DISC_AIR : 0);
+	for (const u of rows) {
 		p.units.set(u.id, rowBox(u, x0, y, p.right - LANE_ROOM - x0, u.shape !== 'node'));
 		y += UNIT_ROW;
 	}
@@ -249,7 +247,7 @@ function channelsOf(l: SceneLine, w: Where): { first: string; last: string } {
 export function laneStrips(scene: Scene, width: number): StripLayout {
 	const strips: Strip[] = STRIP_ORDER.map((key) => ({
 		key,
-		units: scene.units.filter((u) => stripKey(u) === key)
+		units: scene.units.filter((u) => u.column === key)
 	})).filter((s) => s.units.length > 0);
 	const w = whereOf(scene, strips);
 	const focus = new Set(scene.units.filter((u) => u.focus).map((u) => u.id));
@@ -271,13 +269,11 @@ export function laneStrips(scene: Scene, width: number): StripLayout {
 		load
 	};
 	const columns: LaneLayout['columns'] = [];
-	let strip: Box | null = null;
 	let y = STRIP_GAP;
 	strips.forEach((s, i) => {
 		const bottom = s.key === 'makers' ? placeMakers(s.units, y, p) : placeStrip(s, i, y, p);
 		const box = { x: MARGIN, y, width: width - 2 * MARGIN, height: bottom - y };
-		if (s.key === 'general') strip = box;
-		else columns.push({ ...box, column: s.key, inner: 0 });
+		columns.push({ ...box, column: s.key, inner: 0 });
 		y = bottom + STRIP_GAP;
 	});
 	return {
@@ -285,7 +281,6 @@ export function laneStrips(scene: Scene, width: number): StripLayout {
 		height: y,
 		columns,
 		lanes: [],
-		strip,
 		heads: [],
 		units: p.units,
 		stripOf: w.stripOf,
