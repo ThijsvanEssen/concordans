@@ -189,5 +189,9 @@
 		.wet:not(:has(a)) {
 			display: none;
 		}
+		/* The link to Rechtsgang a finger's target apart from the article above it. */
+		.verder:has(a) {
+			margin-top: var(--s-5);
+		}
 	}
 </style>
