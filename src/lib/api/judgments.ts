@@ -12,3 +12,7 @@ export const getJudgmentCourse = (ecli: string) =>
 	once(`judgments/${ecli}/course`, () =>
 		unwrap(api.GET('/api/judgments/{ecli}/course', { params: { path: { ecli } } }))
 	);
+
+/** The route of a case per area of law and the Bevoegdheidsregeling (Rechtsgang), one answer. */
+export const getJudgmentRoutes = () =>
+	once('judgments/routes', () => unwrap(api.GET('/api/judgments/routes')));

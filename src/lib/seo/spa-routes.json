@@ -25,6 +25,11 @@
 		"description": "Uitspraken van de rechter, met de artikelen die ze aanhalen."
 	},
 	{
+		"path": "/rechtspraak/rechtsgang",
+		"title": "Rechtsgang, Concordans",
+		"description": "De route van een zaak langs de instanties per rechtsgebied, met het wetsartikel van elke rechter en de Bevoegdheidsregeling bestuursrechtspraak."
+	},
+	{
 		"path": "/dossiers",
 		"title": "Dossiers, Concordans",
 		"description": "Kamerdossiers: wetsvoorstellen, begrotingen, verdragen en andere onderwerpen, met hun stukken, behandeling en uitkomst."

@@ -8,6 +8,7 @@
 | `/bundels/[id]`                                                      | One bundel on a page of its own: to work in, to read and to print (PDF)           |
 | `/onderwerpen`, `/onderwerpen/overzicht`                             | Followed topics, and one topic's overview                                         |
 | `/ambten`                                                            | The ministers' offices of the cabinet in office, each to its page                 |
+| `/rechtspraak/rechtsgang`                                            | The route of a case per area of law, each court with its article; the regeling    |
 | `/ambten/[ministry]/[post]`, `/ambten/[ministry]/[post]/[portfolio]` | One office over the names of its ministry: holders, gaps, toezeggingen, dossiers  |
 | `/`                                                                  | Start page: search with four scopes, each linking into Bladeren; Actueel in short |
 | `/actueel`                                                           | What came in per day, with filters in the URL and an Atom feed                    |

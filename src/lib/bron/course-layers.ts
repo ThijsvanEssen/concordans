@@ -12,6 +12,7 @@ import { outcomeOf } from './outcome-words';
 
 export type Course = Schema<'JudgmentCourseResponse'>;
 export type CourseStep = Schema<'CourseStep'>;
+export type Basis = Schema<'CourseBasis'>;
 
 export const EARLIER = outbound('APPEAL_OF', 'judgments');
 export const LATER = inbound('APPEAL_OF', 'judgments');
@@ -65,13 +66,18 @@ export function stepOutcome(step: CourseStep, course: Course): string | null {
 }
 
 /** The article that gives the court its say, as cited and as a ref: "art. 60 RO". */
-export function basisArticle(step: CourseStep): { naam: string; ref: BronRef } | null {
-	const b = step.basis;
-	if (!b) return null;
+export const basisArticle = (step: CourseStep) => (step.basis ? articleOfBasis(step.basis) : null);
+
+/** An article of the API's list as cited and as a ref: "art. 60 RO"; one of a bijlage by its
+ *  place, "art. 2 bijlage 2 Awb". */
+export function articleOfBasis(b: Basis): { name: string; ref: BronRef } {
 	const law = LAW[b.bwb_id];
-	const number = articleRef(b.bwb_id, b.article_number);
+	const inAnnex = /^bijlage (\S+) artikel (\S+)$/.exec(b.article_number);
+	const number = inAnnex
+		? `art. ${inAnnex[2]} bijlage ${inAnnex[1]}`
+		: articleRef(b.bwb_id, b.article_number);
 	return {
-		naam: law ? `${number} ${law}` : number,
+		name: law ? `${number} ${law}` : number,
 		ref: {
 			collection: 'articles',
 			key: `${b.bwb_id}_${b.article_number}`.toLowerCase().replace(/[^a-z0-9]+/g, '_')

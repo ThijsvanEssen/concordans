@@ -92,13 +92,13 @@ describe('the stage of a step', () => {
 describe('the article of a step', () => {
 	it('cites the article with its law and links to its node', () => {
 		expect(basisArticle(RB)).toEqual({
-			naam: 'art. 42 RO',
+			name: 'art. 42 RO',
 			ref: { collection: 'articles', key: 'bwbr0001830_42' }
 		});
 		expect(
 			basisArticle(step('x', { basis: { bwb_id: 'BWBR0005537', article_number: '8:105' } }))
 		).toEqual({
-			naam: 'art. 8:105 Awb',
+			name: 'art. 8:105 Awb',
 			ref: { collection: 'articles', key: 'bwbr0005537_8_105' }
 		});
 	});
