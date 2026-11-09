@@ -65,7 +65,7 @@ export function foldTiles(folded: Folded, lines: readonly SceneLine[]): Folded {
 	const byTarget = new Map<string, SceneUnit[]>();
 	for (const u of folded.units) {
 		const target = targets.get(u.id)?.id;
-		if (!target || u.shape !== 'hull' || u.column !== 'papers' || u.focus || u.general) continue;
+		if (!target || u.shape !== 'hull' || u.column !== 'papers' || u.focus) continue;
 		byTarget.set(target, [...(byTarget.get(target) ?? []), u]);
 	}
 	const unitOf = new Map(folded.unitOf);

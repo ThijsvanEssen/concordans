@@ -33,7 +33,7 @@ describe.each(EXAMPLES)('the strips of %s', (name) => {
 	});
 
 	it('keeps everything within the width of the screen, in its strip', () => {
-		const strips = [...layout.columns, ...(layout.strip ? [layout.strip] : [])];
+		const strips = layout.columns;
 		for (const [id, b] of boxes) {
 			expect(b.x, id).toBeGreaterThanOrEqual(16);
 			expect(b.x + b.width, id).toBeLessThanOrEqual(WIDTH - 16);
@@ -106,7 +106,7 @@ describe.each(EXAMPLES)('the strips of %s', (name) => {
 	});
 
 	it('runs no line through the head of a strip (B108)', () => {
-		const heads = [...layout.columns, ...(layout.strip ? [layout.strip] : [])].map(stripHead);
+		const heads = layout.columns.map(stripHead);
 		const hits = stripLines(scene, layout).filter((line) =>
 			sample(line.d).some((q) => heads.some((h) => inside(q, h)))
 		);

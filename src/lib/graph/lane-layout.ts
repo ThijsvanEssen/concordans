@@ -1,8 +1,7 @@
 // The layout of the scene of Omgeving as lanes (scene.ts): fixed column widths with a gutter of
 // GUTTER px between them for the rails of the lines, HULL_GAP px of air under a hull and ITEM_GAP
 // under a bron, Wetten one bron a line, in Kamerstukken only small dossiers in pairs, Wie maakt
-// in three cards (Regering, Raad van State, Parlement), the strip Algemene wetten under the highest
-// column; the canvas is as high as what it holds. Pure and deterministic: text is measured by an
+// in three cards (Regering, Raad van State, Parlement), Wetten by how often they are cited; the canvas is as high as what it holds. Pure and deterministic: text is measured by an
 // estimate, not the DOM.
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
 import { LAW_CHANGE_WORDS } from './lane-changes';
@@ -10,7 +9,7 @@ import type { Column, Scene, SceneUnit } from './scene';
 
 export const GUTTER = 76;
 const HULL_GAP = 56;
-export const ITEM_GAP = 30;
+const ITEM_GAP = 30;
 /** The edge of a column's panel around what it holds. */
 export const PANEL = 14;
 
@@ -24,8 +23,6 @@ const MARGIN_LEFT = 36;
 const MARGIN_RIGHT = PANEL + GUTTER / 2 + 8;
 const LANE_HEAD = 26;
 const LANE_SPACE = 22;
-const STRIP_SPACE = 24;
-const STRIP_HEAD = 44;
 
 const LINE = 15;
 const SMALL_LINE = 14;
@@ -65,8 +62,6 @@ export type LaneLayout = {
 	columns: ColumnBox[];
 	/** The cards of Wie maakt. */
 	lanes: (Box & { lane: MakerLane })[];
-	/** The strip Algemene wetten, when something stands in it. */
-	strip: Box | null;
 	/** The heads in Wetten, by the baseline of their text: changed wetten apart from the others. */
 	heads: { label: string; x: number; y: number }[];
 	units: Map<string, UnitBox>;
@@ -237,7 +232,7 @@ type Frame = { x: number; width: number; inner?: number };
 /** The rails a gutter takes at least this far apart, so no two lines run on one another. */
 const RAIL_MIN = 9;
 /** A gutter never grows past this: beyond it, its rails stand closer. */
-const GUTTER_MAX = 360;
+const GUTTER_MAX = 160;
 
 /**
  * How many rails each gutter holds, after the column of that index: a line runs down the gutter
@@ -245,18 +240,13 @@ const GUTTER_MAX = 360;
  * column down the gutter right of it. A bundle (one target or one bron, one lijnsoort) is one rail.
  */
 function gutterLoads(scene: Scene, used: readonly Column[]): number[] {
-	const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
 	const index = new Map(scene.units.map((u) => [u.id, used.indexOf(u.column)]));
 	const keys = used.map(() => new Set<string>());
 	const rails = scene.lines.flatMap((l) => {
-		const [a, b] = [index.get(l.from)!, index.get(l.to)!];
-		const strip = general.has(l.from) || general.has(l.to);
-		const gutters = guttersOf(a, b, general.has(l.from), general.has(l.to)).filter(
+		const gutters = guttersOf(index.get(l.from)!, index.get(l.to)!).filter(
 			(g) => g >= 0 && g < used.length
 		);
-		// A rail to or from the strip runs alone.
-		if (strip) for (const g of gutters) keys[g].add(l.id);
-		return strip ? [] : gutters.map((gutter) => ({ gutter, ...l }));
+		return gutters.map((gutter) => ({ gutter, ...l }));
 	});
 	bundleKeys(rails).forEach((key, i) => keys[rails[i].gutter].add(key));
 	return keys.map((k) => k.size);
@@ -296,13 +286,8 @@ export function bundleKeys(rails: readonly RailOf[]): string[] {
 	return out;
 }
 
-/** The gutters a line between columns `a` and `b` runs down; to the strip, on either side of its column. */
-function guttersOf(a: number, b: number, fromStrip: boolean, toStrip: boolean): number[] {
-	if (fromStrip && toStrip) return [];
-	if (fromStrip || toStrip) {
-		const k = fromStrip ? b : a;
-		return [k - 1, k];
-	}
+/** The gutters a line between columns `a` and `b` runs down. */
+function guttersOf(a: number, b: number): number[] {
 	if (a === b) return [];
 	return a < b ? [b - 1, ...(b - a > 1 ? [a] : [])] : [b, ...(a - b > 1 ? [a - 1] : [])];
 }
@@ -312,13 +297,11 @@ function guttersOf(a: number, b: number, fromStrip: boolean, toStrip: boolean): 
  * lijnsoort, as lane-lines bundles them.
  */
 function innerLoads(scene: Scene, used: readonly Column[]): number[] {
-	const general = new Set(scene.units.filter((u) => u.general).map((u) => u.id));
 	const column = new Map(scene.units.map((u) => [u.id, used.indexOf(u.column)]));
 	const keys = used.map(() => new Set<string>());
 	for (const l of scene.lines) {
 		const a = column.get(l.from)!;
-		if (a === column.get(l.to) && !general.has(l.from) && !general.has(l.to))
-			keys[a].add(`${l.to} ${l.kind}`);
+		if (a === column.get(l.to)) keys[a].add(`${l.to} ${l.kind}`);
 	}
 	return keys.map((k) => (k.size > 0 ? 12 + k.size * RAIL_MIN : 0));
 }
@@ -332,7 +315,7 @@ const gutterFor = (rails: number) =>
  * the canvas takes: `width`, or more where its columns and gutters need it.
  */
 function framesOf(scene: Scene, width: number): { frames: Map<Column, Frame>; width: number } {
-	const used = COLUMN_ORDER.filter((c) => scene.units.some((u) => u.column === c && !u.general));
+	const used = COLUMN_ORDER.filter((c) => scene.units.some((u) => u.column === c));
 	const left = MARGIN_LEFT;
 	const gutters = gutterLoads(scene, used).map(gutterFor);
 	const inner = innerLoads(scene, used);
@@ -443,44 +426,6 @@ function placeMakers(units: readonly SceneUnit[], frame: Frame, top: number) {
 	return { units: out, lanes, bottom: y };
 }
 
-/**
- * The bands of the strip, each from a new line: the general wetten themselves, then what hangs on
- * them by column. The lines of the strip then rise from below into the wet they cite.
- */
-function stripBands(units: readonly SceneUnit[]): SceneUnit[][] {
-	const law = (u: SceneUnit) => u.column === 'laws' && u.shape !== 'group';
-	const rest = COLUMN_ORDER.map((c) => units.filter((u) => !law(u) && u.column === c));
-	return [units.filter(law), ...rest].filter((band) => band.length > 0);
-}
-
-/** The strip Algemene wetten: its units side by side by band, a new line where the width ends. */
-function placeStrip(units: readonly SceneUnit[], x0: number, right: number, top: number) {
-	const out = new Map<string, UnitBox>();
-	let y = top + STRIP_HEAD;
-	let line = 0;
-	for (const band of stripBands(units)) {
-		let x = x0;
-		if (line > 0) [y, line] = [y + line + ITEM_GAP, 0];
-		for (const u of band) {
-			let box = boxOf(u, x, y, Math.min(right - x0, 260));
-			if (x > x0 && box.x + box.width > right) {
-				[y, x, line] = [y + line + ITEM_GAP, x0, 0];
-				box = boxOf(u, x, y, Math.min(right - x0, 260));
-			}
-			out.set(u.id, box);
-			line = Math.max(line, box.height);
-			x = box.x + box.width + 44;
-		}
-	}
-	const strip = {
-		x: x0 - PANEL,
-		y: top,
-		width: right - x0 + 2 * PANEL,
-		height: y + line + 20 - top
-	};
-	return { units: out, strip };
-}
-
 /** The mean height of a unit's partners already placed: the order that crosses fewest lines. */
 function barycentre(scene: Scene, placed: ReadonlyMap<string, UnitBox>): Map<string, number> {
 	const sum = new Map<string, [number, number]>();
@@ -503,21 +448,36 @@ function ordered(units: SceneUnit[], centre: ReadonlyMap<string, number> | null)
 	return units.sort((a, b) => at(a) - at(b) || byDefault(a, b));
 }
 
+/** How often each unit is cited on the canvas: the edges of the citation lines into it. */
+function citations(scene: Scene): Map<string, number> {
+	const out = new Map<string, number>();
+	for (const l of scene.lines)
+		if (l.kind === 'citation') out.set(l.to, (out.get(l.to) ?? 0) + l.count);
+	return out;
+}
+
+/** The order of Wetten: chosen first, then the most cited. */
+function byCited(units: SceneUnit[], cited: ReadonlyMap<string, number>) {
+	const at = (u: SceneUnit) => (u.focus ? Infinity : (cited.get(u.id) ?? 0));
+	return units.sort((a, b) => at(b) - at(a) || byDefault(a, b));
+}
+
 function placeAll(scene: Scene, frames: Map<Column, Frame>, centre: Map<string, number> | null) {
 	const units = new Map<string, UnitBox>();
 	const bottoms: number[] = [];
 	let lanes: LaneLayout['lanes'] = [];
 	let heads: LaneLayout['heads'] = [];
+	const cited = citations(scene);
 	for (const [column, frame] of frames) {
-		const own = scene.units.filter((u) => u.column === column && !u.general);
-		const list = ordered(own, centre);
+		const own = scene.units.filter((u) => u.column === column);
 		if (column === 'laws') {
-			const laws = placeLaws(list, frame, CONTENT_TOP);
+			const laws = placeLaws(byCited(own, cited), frame, CONTENT_TOP);
 			heads = laws.heads;
 			for (const [id, box] of laws.units) units.set(id, box);
 			bottoms.push(laws.bottom);
 			continue;
 		}
+		const list = ordered(own, centre);
 		const placed =
 			column === 'makers'
 				? placeMakers(list, frame, CONTENT_TOP)
@@ -539,16 +499,6 @@ export function laneLayout(scene: Scene, width: number): LaneLayout {
 	width = framed.width;
 	const first = placeAll(scene, frames, null);
 	const { units, lanes, heads, bottom } = placeAll(scene, frames, barycentre(scene, first.units));
-	const general = scene.units.filter((u) => u.general).sort(byDefault);
-	let strip: Box | null = null;
-	let end = bottom;
-	if (general.length > 0) {
-		const from = frames.get('papers') ?? [...frames.values()][0] ?? { x: MARGIN_LEFT, width: 0 };
-		const placed = placeStrip(general, from.x, width - MARGIN_RIGHT - PANEL, bottom + STRIP_SPACE);
-		for (const [id, box] of placed.units) units.set(id, box);
-		strip = placed.strip;
-		end = strip.y + strip.height;
-	}
 	const columns = [...frames].map(([column, f]) => ({
 		column,
 		x: f.x,
@@ -557,5 +507,5 @@ export function laneLayout(scene: Scene, width: number): LaneLayout {
 		y: CONTENT_TOP,
 		height: bottom - CONTENT_TOP
 	}));
-	return { width, height: Math.ceil(end + 40), columns, lanes, strip, heads, units };
+	return { width, height: Math.ceil(bottom + 40), columns, lanes, heads, units };
 }

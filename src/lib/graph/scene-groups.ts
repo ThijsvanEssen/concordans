@@ -1,21 +1,17 @@
-// The folding rules of the scene (scene.ts): general wetten to their strip, four bronnen or more of
-// one soort with the same target (or one in the same column) into one group, and what has no line
-// to the chosen bronnen into one count below the canvas. Each takes units and lines and returns new ones.
+// The folding rules of the scene (scene.ts): four bronnen or more of one soort with the same target
+// (or one in the same column) into one group, and what has no line to the chosen bronnen into one
+// count below the canvas. Each takes units and lines and returns new ones.
 import { textOf } from '$lib/text/words';
 import { RELATIONS } from '$lib/vocabulary';
 import { filterGroupCount } from '$lib/verbonden/filter';
-import type { LineKind } from './line-kind';
 import type { Column, Scene, SceneLine, SceneUnit } from './scene';
 import type { GraphNode } from './types';
 
 /** Bronnen of one soort with the same lines are one group from this many on. */
 export const GROUP_MIN = 4;
 
-/** A wet is general when more bronnen than this stand on the canvas only through her. */
-const GENERAL_MIN = 20;
-
-/** A line of these kinds to a chosen unit ties a wet to it: she is then never general. */
-const BINDING: ReadonlySet<LineKind> = new Set(['change', 'structural']);
+/** A wet more bronnen than this point to never folds: an often cited wet stays in sight. */
+const CITED_MIN = 20;
 
 /** The units each unit has a line with. */
 function partnersOf(lines: readonly SceneLine[]): Map<string, Set<string>> {
@@ -26,33 +22,6 @@ function partnersOf(lines: readonly SceneLine[]): Map<string, Set<string>> {
 		add(l.to, l.from);
 	}
 	return out;
-}
-
-/**
- * The general wetten and what hangs on them alone, marked for the strip Algemene wetten: a wet
- * that is not chosen, has no change or structural line to a chosen unit, and more than GENERAL_MIN
- * bronnen with a line to her alone.
- */
-export function markGeneral(units: readonly SceneUnit[], lines: readonly SceneLine[]): SceneUnit[] {
-	const partners = partnersOf(lines);
-	const chosen = new Set(units.filter((u) => u.focus).map((u) => u.id));
-	const bound = new Set(
-		lines
-			.filter((l) => BINDING.has(l.kind) && (chosen.has(l.from) || chosen.has(l.to)))
-			.flatMap((l) => [l.from, l.to])
-	);
-	const general = new Set<string>();
-	for (const law of units) {
-		if (law.column !== 'laws' || law.focus || bound.has(law.id)) continue;
-		const alone = units.filter((u) => {
-			const p = partners.get(u.id);
-			return !u.focus && p?.size === 1 && p.has(law.id);
-		});
-		if (alone.reduce((n, u) => n + u.members.length, 0) <= GENERAL_MIN) continue;
-		general.add(law.id);
-		for (const u of alone) general.add(u.id);
-	}
-	return units.map((u) => (general.has(u.id) ? { ...u, general: true } : u));
 }
 
 /** Above zero when line `a` says more of a unit than `b`: to a chosen unit, heavier, more edges. */
@@ -165,12 +134,27 @@ function commonTarget(parts: readonly SceneUnit[], targets: ReadonlyMap<string, 
 	return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
 }
 
+/** The wetten more than CITED_MIN bronnen have as their target: they stand on their own, never in a group. */
+function carriersOf(
+	units: readonly SceneUnit[],
+	targets: ReadonlyMap<string, Target>
+): Set<string> {
+	const count = new Map<string, number>();
+	for (const u of units) {
+		const t = targets.get(u.id);
+		if (t) count.set(t.id, (count.get(t.id) ?? 0) + u.members.length);
+	}
+	const laws = new Set(units.filter((u) => u.column === 'laws').map((u) => u.id));
+	return new Set([...count].filter(([id, n]) => laws.has(id) && n > CITED_MIN).map(([id]) => id));
+}
+
 /**
- * Bronnen of one soort, lane and strip with the same target (`targetsOf`), GROUP_MIN or more, as
- * one group. Of what is left, those of one soort, lane and strip with a target in the same column
+ * Bronnen of one soort and lane with the same target (`targetsOf`), GROUP_MIN or more, as
+ * one group. Of what is left, those of one soort and lane with a target in the same column
  * fold too. A group keeps one line: to the target most of its bronnen have. What else its bronnen
  * have a line with only counts (`elsewhere`). In Wie maakt a name says who did what: there only
- * makers of one Kamer with the same target, row and lijnsoort fold.
+ * makers of one Kamer with the same target, row and lijnsoort fold. A wet more than CITED_MIN
+ * bronnen point to never folds (`carriersOf`).
  */
 export function foldGroups(
 	units: readonly SceneUnit[],
@@ -178,13 +162,14 @@ export function foldGroups(
 	nodes: readonly GraphNode[]
 ): { units: SceneUnit[]; unitOf: Map<string, string>; targetOf: Map<string, string> } {
 	const targets = targetsOf(units, lines);
-	const base = (u: SceneUnit) => [u.sort, u.lane ?? '', u.chamber ?? '', u.general].join('|');
+	const base = (u: SceneUnit) => [u.sort, u.lane ?? '', u.chamber ?? ''].join('|');
 	const byId = new Map(nodes.map((n) => [n.id, n]));
 	const unitOf = new Map<string, string>();
 	const targetOf = new Map<string, string>();
 	const groups: SceneUnit[] = [];
+	const carriers = carriersOf(units, targets);
 	const fold = (keyOf: (t: Target, maker: boolean) => string | null) => {
-		const free = units.filter((u) => !unitOf.has(u.id));
+		const free = units.filter((u) => !unitOf.has(u.id) && !carriers.has(u.id));
 		const byKey = byKeyOf(free, (u) => {
 			const t = targets.get(u.id);
 			const key = t && keyOf(t, u.column === 'makers');

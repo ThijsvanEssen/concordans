@@ -6,8 +6,6 @@
 //   hoofdstuk (scene-hulls.ts); who makes stands in three lanes by their function (roles.ts);
 // - four bronnen or more of one soort with the same target, or a target in the same column, are
 //   one group (scene-groups.ts);
-// - a general wet (no change or structural line, more than twenty bronnen only through her) and
-//   what hangs on her alone go to the strip Algemene wetten;
 // - one line per pair of units: the heaviest relation, with the number of edges and the row it
 //   ends in; no unit without a line to the chosen bronnen: the rest is counted below.
 import { laneFiltered, type LaneFilter } from './lane-filter';
@@ -27,7 +25,7 @@ import {
 	type Signatures
 } from './roles';
 import { amendedKey, NOT_AMENDED, type Amended } from './lane-amended';
-import { foldGroups, markGeneral, unreached } from './scene-groups';
+import { foldGroups, unreached } from './scene-groups';
 import { foldTiles, type TilePeriod } from './scene-tiles';
 import {
 	HULL_MIN,
@@ -66,8 +64,6 @@ export type SceneUnit = {
 	date: string | null;
 	/** It holds a chosen bron. */
 	focus: boolean;
-	/** It stands in the strip Algemene wetten. */
-	general: boolean;
 	/** In Wie maakt: the function on the day of the first stuk. */
 	role: string | null;
 	/** In Wie maakt: a Kamerlid's Kamer. */
@@ -155,7 +151,6 @@ const blank = (
 	periods: [],
 	date: null,
 	focus: false,
-	general: false,
 	role: null,
 	chamber: null,
 	gap: false,
@@ -429,8 +424,7 @@ export function buildScene(input: SceneInput): Scene {
 		base.home,
 		input.visibility?.hiddenLines ?? SHOW_ALL.hiddenLines
 	);
-	const general = markGeneral(base.units, linesBetween(base.units, linked));
-	const grouped = foldGroups(general, linesBetween(general, linked), sortedNodes);
+	const grouped = foldGroups(base.units, linesBetween(base.units, linked), sortedNodes);
 	const folded = foldTiles(grouped, linesBetween(grouped.units, groupEdges(linked, grouped)));
 	const lines = linesBetween(folded.units, groupEdges(linked, folded));
 	const kinds = linked.map((e) => ({
