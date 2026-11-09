@@ -4,7 +4,8 @@
 	// court and date as a link, its facts, how it ended (its text, and the outcome the
 	// Rechtspraak records on the appeal) and the article of law that gives its court its say,
 	// as a link. A step the data lacks is named with "niet in de gegevens"; an article the API
-	// does not know stays empty. One answer of the API, the band's (cached).
+	// does not know stays empty. One answer of the API, the band's (cached). Under it a link to
+	// Rechtsgang, at the area of the judgment.
 	import { getJudgmentCourse } from '$lib/api/judgments';
 	import { bronHref } from '$lib/bron/href';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
@@ -48,6 +49,13 @@
 		return [kind, procedure, step.ecli].filter(Boolean).join(', ');
 	}
 
+	/** The page Rechtsgang at the area of this judgment (the band's course). */
+	const routeHref = (course: Course) => {
+		const area = course.steps.find((s) => s.current)?.area;
+		const view = area === 'straf' ? 'civiel' : area;
+		return `/rechtspraak/rechtsgang${view ? `?gebied=${view}` : ''}`;
+	};
+
 	/** The outcome the Rechtspraak records on the appeal this step decided (`psi:gevolg`). */
 	const recorded = (step: CourseStep) => step.links.find((l) => l.source_outcome)?.source_outcome;
 </script>
@@ -89,7 +97,7 @@
 								</div>{/if}
 						</div>
 						<span class="wet"
-							>{#if article}<a class="raakvlak" href={bronHref(article.ref)}>{article.naam}</a
+							>{#if article}<a class="raakvlak" href={bronHref(article.ref)}>{article.name}</a
 								>{:else}<Waarde value={null} />{/if}</span
 						>
 					</li>
@@ -98,6 +106,10 @@
 			{#if course.truncated}
 				<p class="verder">De zaak loopt verder dan deze stappen.</p>
 			{/if}
+			<p class="verder">
+				<a class="raakvlak" href={routeHref(course)}>Rechtsgang</a>: de route van een zaak per
+				rechtsgebied
+			</p>
 		{/snippet}
 	</LoadState>
 </section>

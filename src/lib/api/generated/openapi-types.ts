@@ -226,6 +226,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/judgments/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The route of a case per area of law (Rechtsgang)
+         * @description Per area of law (`civiel`, `straf`, `bestuur`, `belasting`) the courts of its route, each with `basis`, the article a step of the Verloop gets, and `designations`, the articles of the Bevoegdheidsregeling bestuursrechtspraak that name it; the steps whose article is not read in the source as `gaps`. From the fixed list `data/route_articles.json`. `regeling`: the regeling (Awb bijlage 2) by chapter, each article with its heading and the laws its list names.
+         */
+        get: operations["get_judgment_routes_api_judgments_routes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/judgments/{ecli}": {
         parameters: {
             query?: never;
@@ -2891,6 +2911,18 @@ export interface components {
              * @description As the text writes it: `24/6811`; null when it gives none.
              */
             case_number: string | null;
+        };
+        /** AreaRoute */
+        AreaRoute: {
+            /**
+             * Area
+             * @description `civiel`, `straf`, `bestuur` or `belasting`.
+             */
+            area: string;
+            /** Steps */
+            steps: components["schemas"]["RouteStep"][];
+            /** Gaps */
+            gaps: components["schemas"]["RouteGap"][];
         };
         /**
          * ArticleCellSpanDTO
@@ -12150,6 +12182,19 @@ export interface components {
              */
             capacity: string | null;
         };
+        /** JudgmentRoutesResponse */
+        JudgmentRoutesResponse: {
+            /**
+             * Areas
+             * @description Per area of law, the courts of its route from `data/route_articles.json` in their order, and its gaps.
+             */
+            areas: components["schemas"]["AreaRoute"][];
+            /**
+             * Regeling
+             * @description The Bevoegdheidsregeling bestuursrechtspraak by chapter; empty when the Awb is not loaded.
+             */
+            regeling: components["schemas"]["RegelingChapter"][];
+        };
         /**
          * JudgmentSummaryDTO
          * @description Lightweight judgment summary for listing matches.
@@ -13774,6 +13819,48 @@ export interface components {
             /** Id */
             readonly id: string;
         };
+        /** RegelingArticle */
+        RegelingArticle: {
+            /**
+             * Number
+             * @description `bijlage 2 artikel 2`.
+             */
+            number: string;
+            /**
+             * Key
+             * @description The article in the graph: `bwbr0005537_bijlage_2_artikel_2`.
+             */
+            key: string;
+            /** Heading */
+            heading: string | null;
+            /**
+             * Laws
+             * @description The laws its list names, each once, in the order of the text.
+             */
+            laws: components["schemas"]["RegelingLaw"][];
+        };
+        /** RegelingChapter */
+        RegelingChapter: {
+            /**
+             * Label
+             * @description `Hoofdstuk 2`.
+             */
+            label: string;
+            /** Title */
+            title: string | null;
+            /** Articles */
+            articles: components["schemas"]["RegelingArticle"][];
+        };
+        /** RegelingLaw */
+        RegelingLaw: {
+            /** Bwb Id */
+            bwb_id: string;
+            /**
+             * Name
+             * @description Its citation title in the graph, else as the regeling names it.
+             */
+            name: string | null;
+        };
         /**
          * RegisterConceptDTO
          * @description A concept of a register with the instruments under the filters filed under it.
@@ -13992,6 +14079,44 @@ export interface components {
             qualifier: string | null;
             /** @description The notation `q` is (`TZ202603-130`, `Sr 287`, `Stcrt. 2026, 12`), with a match or without one; null for words. */
             notation: components["schemas"]["NotationDTO"] | null;
+        };
+        /**
+         * RouteGap
+         * @description A court in the route whose article is not read in the source: a gap, marked.
+         */
+        RouteGap: {
+            /** Tier */
+            tier: string;
+            /** Procedures */
+            procedures: string[];
+            /**
+             * Why
+             * @description What is not read (in English).
+             */
+            why: string;
+        };
+        /**
+         * RouteStep
+         * @description A court in the route of an area of law, with the article that gives it its say.
+         */
+        RouteStep: {
+            /**
+             * Tier
+             * @description `rechtbank`, `gerechtshof`, `hoge_raad`, ...
+             */
+            tier: string;
+            /**
+             * Procedures
+             * @description The procedures the metadata names that fit (their start): `Eerste aanleg`, `Hoger beroep`, `Cassatie`.
+             */
+            procedures: string[];
+            /** @description The article a step of the Verloop gets (`/course`). */
+            basis: components["schemas"]["CourseBasis"];
+            /**
+             * Designations
+             * @description The articles of the Bevoegdheidsregeling bestuursrechtspraak (Awb bijlage 2: `bijlage 2 artikel 2`) that name this court, besides `basis`; empty for a court the regeling does not name.
+             */
+            designations: components["schemas"]["CourseBasis"][];
         };
         /**
          * ScheduledActivityDTO
@@ -16330,6 +16455,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_judgment_routes_api_judgments_routes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JudgmentRoutesResponse"];
                 };
             };
         };
