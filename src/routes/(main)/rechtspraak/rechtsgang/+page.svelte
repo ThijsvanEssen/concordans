@@ -13,7 +13,7 @@
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { load } from '$lib/util/load.svelte';
 	import { SOURCES } from '$lib/nav/sources';
-	import { count } from '$lib/text/words';
+	import { count, separatorBefore } from '$lib/text/words';
 	import {
 		VIEWS,
 		designatedCourt,
@@ -48,9 +48,10 @@
 	{#if court.gap}
 		<span class="gat">wetsartikel {NOT_IN_DATA}</span>
 	{:else}
-		{#each court.articles as a, i (a.name + (a.area ?? ''))}{#if i}{', '}{/if}<a
-				href={openHref(a.ref)}>{a.name}</a
-			>{#if a.area}{` (${a.area})`}{/if}{/each}
+		{#each court.articles as a, i (a.name + (a.area ?? ''))}{separatorBefore(
+				i,
+				court.articles.length
+			)}<a href={openHref(a.ref)}>{a.name}</a>{#if a.area}{` (${a.area})`}{/if}{/each}
 	{/if}
 {/snippet}
 
