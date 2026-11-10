@@ -3,15 +3,18 @@
 	// its order, each with what it is (Eerste stageOf, Hoger beroep, Cassatie, Conclusie), its
 	// court and date as a link, its facts, how it ended (its text, and the outcome the
 	// Rechtspraak records on the appeal) and the article of law that gives its court its say,
-	// as a link. A step the data lacks is named with "niet in de gegevens"; an article the API
-	// does not know stays empty. One answer of the API, the band's (cached). Under it a link to
+	// as a link to its readable address. A step the data lacks is named with "niet in de
+	// gegevens"; a court whose article the API does not know shows that gap (WetsartikelGat,
+	// as on Rechtsgang). One answer of the API, the band's (cached). Under it a link to
 	// Rechtsgang, at the area of the judgment.
 	import { getJudgmentCourse } from '$lib/api/judgments';
 	import { bronHref } from '$lib/bron/href';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { capitalize } from '$lib/text/words';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import Waarde from '$lib/components/ui/Waarde.svelte';
+	import WetsartikelGat from '$lib/court-route/WetsartikelGat.svelte';
+	import { basisArticle } from '$lib/court-route/basis';
+	import { VIEWS } from '$lib/court-route/route';
 	import { createLoader, type LoadState as State } from '$lib/util/load.svelte';
 	import {
 		stageOf,
@@ -19,7 +22,6 @@
 		stepName,
 		stepRef,
 		stepOutcome,
-		basisArticle,
 		type Course,
 		type CourseStep
 	} from './course-layers';
@@ -49,11 +51,14 @@
 		return [kind, procedure, step.ecli].filter(Boolean).join(', ');
 	}
 
-	/** The page Rechtsgang at the area of this judgment (the band's course). */
-	const routeHref = (course: Course) => {
+	/** The page Rechtsgang at the area of this judgment (the band's course), named by it:
+	 *  "Rechtsgang in het bestuursrecht". */
+	const route = (course: Course) => {
 		const area = course.steps.find((s) => s.current)?.area;
-		const view = area === 'straf' ? 'civiel' : area;
-		return `/rechtspraak/rechtsgang${view ? `?gebied=${view}` : ''}`;
+		const view = VIEWS.find((v) => area && v.areas.includes(area));
+		return view
+			? { href: `/rechtspraak/rechtsgang?gebied=${view.id}`, label: `Rechtsgang ${view.within}` }
+			: { href: '/rechtspraak/rechtsgang', label: 'Rechtsgang' };
 	};
 
 	/** The outcome the Rechtspraak records on the appeal this step decided (`psi:gevolg`). */
@@ -70,7 +75,7 @@
 						<div class="wat">
 							<span class="naam">{unresolvedName(t)}</span><span class="leeg">, {NOT_IN_DATA}</span>
 						</div>
-						<span class="wet"><Waarde value={null} /></span>
+						<span class="wet"></span>
 					</li>
 				{/each}
 				{#each course.steps as step (step.key)}
@@ -97,19 +102,19 @@
 								</div>{/if}
 						</div>
 						<span class="wet"
-							>{#if article}<a class="raakvlak" href={bronHref(article.ref)}>{article.name}</a
-								>{:else if step.decision_kind !== 'conclusie'}<Waarde value={null} />{/if}</span
+							>{#if article}<a class="raakvlak" href={bronHref(article.ref, { path: article.path })}
+									>{article.name}</a
+								>{:else if step.loaded && step.decision_kind !== 'conclusie'}<WetsartikelGat
+								/>{/if}</span
 						>
 					</li>
 				{/each}
 			</ol>
 			{#if course.truncated}
-				<p class="verder">De zaak loopt verder dan deze stappen.</p>
+				<p class="verder">Niet alle stappen getoond.</p>
 			{/if}
-			<p class="verder">
-				<a class="raakvlak" href={routeHref(course)}>Rechtsgang</a>: de route van een zaak per
-				rechtsgebied
-			</p>
+			{@const r = route(course)}
+			<p class="verder"><a class="raakvlak" href={r.href}>{r.label}</a></p>
 		{/snippet}
 	</LoadState>
 </section>
@@ -174,6 +179,11 @@
 	.wet a {
 		color: var(--ink-2);
 	}
+	/* The gap of an article on two lines rather than pressing the step. */
+	.wet {
+		max-width: 9rem;
+		text-align: right;
+	}
 	.verder {
 		margin: var(--s-2) 0 0;
 	}
@@ -190,10 +200,14 @@
 			grid-template-columns: minmax(0, 1fr);
 			row-gap: var(--s-1);
 		}
-		.wet:has(a) {
+		.wet {
+			max-width: none;
+			text-align: left;
+		}
+		.wet:not(:empty) {
 			padding-top: var(--s-1);
 		}
-		.wet:not(:has(a)) {
+		.wet:empty {
 			display: none;
 		}
 		/* The link to Rechtsgang a finger's target apart from the article above it. */

@@ -10,9 +10,10 @@ test('the route of civiel recht names each court with its article as a link', as
 	await expect(
 		page.getByRole('heading', { level: 2, name: 'Civiel recht en strafrecht' })
 	).toBeVisible();
+	// At its readable address, not by /explore?focus (B144).
 	await expect(page.getByRole('link', { name: 'art. 42 RO' })).toHaveAttribute(
 		'href',
-		/bwbr0001830/
+		'/wetten/BWBR0001830/artikel/42'
 	);
 	await expect(page.getByRole('link', { name: 'art. 78 RO' })).toBeVisible();
 });
@@ -52,6 +53,10 @@ test('bestuursrecht opens an article of the regeling to the laws it names', asyn
 	await expect(
 		page.getByRole('heading', { level: 2, name: 'Bevoegdheidsregeling bestuursrechtspraak' })
 	).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Bijlage 2 bij de Awb' })).toHaveAttribute(
+		'href',
+		'/wetten/BWBR0005537/bijlage/2'
+	);
 	const article = page.locator('details').filter({ hasText: 'Artikel 2 Beroep bij de Afdeling' });
 	await article.locator('summary').click();
 	await expect(article.getByRole('link', { name: 'Archiefwet 1995' })).toBeVisible();

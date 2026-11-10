@@ -4,7 +4,7 @@
 // shown as one. And the Bevoegdheidsregeling bestuursrechtspraak by chapter, each article with
 // the court it names. Pure: the page asks the answer.
 import type { Schema } from '$lib/api/types';
-import { articleOfBasis } from '$lib/bron/course-layers';
+import { articleOfBasis } from './basis';
 import type { BronRef } from '$lib/bron/ref';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 
@@ -12,7 +12,8 @@ export type Routes = Schema<'JudgmentRoutesResponse'>;
 type AreaRoute = Schema<'AreaRoute'>;
 type RouteStep = Schema<'RouteStep'>;
 
-export type Cited = { name: string; ref: BronRef; area?: string };
+/** An article cited, with its readable address where it has one (`articleOfBasis`). */
+export type Cited = { name: string; ref: BronRef; path: string | null; area?: string };
 export type CourtStep = {
 	tier: string;
 	name: string;
@@ -26,6 +27,8 @@ type AreaView = {
 	label: string;
 	/** The label on a phone. */
 	short: string;
+	/** After "Rechtsgang", in the link under the Verloop. */
+	within: string;
 	areas: string[];
 };
 
@@ -35,10 +38,23 @@ export const VIEWS: AreaView[] = [
 		id: 'civiel',
 		label: 'Civiel recht en strafrecht',
 		short: 'Civiel en straf',
+		within: 'in het civiel recht en strafrecht',
 		areas: ['civiel', 'straf']
 	},
-	{ id: 'belasting', label: 'Belastingrecht', short: 'Belasting', areas: ['belasting'] },
-	{ id: 'bestuur', label: 'Bestuursrecht', short: 'Bestuur', areas: ['bestuur'] }
+	{
+		id: 'belasting',
+		label: 'Belastingrecht',
+		short: 'Belasting',
+		within: 'in het belastingrecht',
+		areas: ['belasting']
+	},
+	{
+		id: 'bestuur',
+		label: 'Bestuursrecht',
+		short: 'Bestuur',
+		within: 'in het bestuursrecht',
+		areas: ['bestuur']
+	}
 ];
 
 /** The stage of a step by its first procedure: Eerste aanleg, Hoger beroep, Cassatie. */
