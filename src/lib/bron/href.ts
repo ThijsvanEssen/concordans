@@ -50,6 +50,9 @@ type BronHrefOptions = {
 	keepNetwerk?: boolean;
 	/** Params of the target's own, such as the peildatum of the law it was opened from. */
 	params?: Record<string, string>;
+	/** The target's readable address where the caller knows it (an article by its law and
+	 *  number): the link goes there, not by /explore?focus. */
+	path?: string | null;
 };
 
 /**
@@ -92,7 +95,7 @@ export function focusOf(ref: BronRef | string): string | null {
 export function buildBronHref(
 	current: URL | null,
 	ref: BronRef | string,
-	{ at, keepMode = true, mode, keepNetwerk = true, params: own }: BronHrefOptions = {}
+	{ at, keepMode = true, mode, keepNetwerk = true, params: own, path }: BronHrefOptions = {}
 ): string {
 	const focus = focusOf(ref);
 	const target = focus && parseNodeId(focus);
@@ -124,13 +127,10 @@ export function buildBronHref(
 		}
 	}
 	for (const [name, value] of Object.entries(own ?? {})) params.set(name, value);
-	return exploreHref(params, at ? `#${encodeURIComponent(at)}` : '');
+	return exploreHref(params, at ? `#${encodeURIComponent(at)}` : '', path);
 }
 
-type OpenHrefOptions = {
-	/** Position inside the text: `lid-2`, `rov-5.3`. */
-	at?: string | null;
-};
+type OpenHrefOptions = Pick<BronHrefOptions, 'at' | 'path'>;
 
 /**
  * The one link a click on a bron follows, wherever it stands: a BronLink, a row of
@@ -140,8 +140,8 @@ type OpenHrefOptions = {
 export const buildOpenHref = (
 	current: URL | null,
 	ref: BronRef | string,
-	{ at }: OpenHrefOptions = {}
-): string => buildBronHref(current, ref, { at, keepMode: false, mode: 'read' });
+	{ at, path }: OpenHrefOptions = {}
+): string => buildBronHref(current, ref, { at, path, keepMode: false, mode: 'read' });
 
 /** Link to a bron from the current page. Reactive where it is read in a template. */
 export const bronHref = (ref: BronRef | string, opts?: BronHrefOptions) =>

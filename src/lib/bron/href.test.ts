@@ -133,6 +133,13 @@ describe('buildOpenHref', () => {
 		expect(buildOpenHref(netwerk, 'articles/b')).toBe('/explore?focus=articles/b');
 		expect(buildOpenHref(netwerk, 'decisions/d')).toBe('/stemmingen/d');
 	});
+
+	it('goes to the readable address the caller knows, not by /explore?focus', () => {
+		const ref = { collection: 'articles' as const, key: 'bwbr0001830_60' };
+		const path = '/wetten/BWBR0001830/artikel/60';
+		expect(buildOpenHref(at('/uitspraken/ECLI:NL:HR:2024:1'), ref, { path })).toBe(path);
+		expect(buildOpenHref(null, ref, { path: null })).toBe('/explore?focus=articles/bwbr0001830_60');
+	});
 });
 
 describe('indexHref', () => {

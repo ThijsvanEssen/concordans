@@ -4,7 +4,6 @@
 import type { Schema } from '$lib/api/types';
 import { NOT_IN_DATA } from '$lib/text/coverage';
 import { korteDatum, langeDatum } from '$lib/text/datum';
-import { articleRef } from '$lib/text/bw';
 import { capitalize, textOf } from '$lib/text/words';
 import { inbound, outbound, type Layer } from './behoort-layer';
 import type { BronRef } from './ref';
@@ -12,7 +11,6 @@ import { outcomeOf } from './outcome-words';
 
 export type Course = Schema<'JudgmentCourseResponse'>;
 export type CourseStep = Schema<'CourseStep'>;
-export type Basis = Schema<'CourseBasis'>;
 
 export const EARLIER = outbound('APPEAL_OF', 'judgments');
 export const LATER = inbound('APPEAL_OF', 'judgments');
@@ -27,9 +25,6 @@ export const COURSE_BUCKETS = [
 	outbound('CONTINUES', 'judgments'),
 	inbound('CONTINUES', 'judgments')
 ];
-
-/** The laws the API's list of articles names (`data/route_articles.json`), as cited. */
-const LAW: Record<string, string> = { BWBR0001830: 'RO', BWBR0005537: 'Awb' };
 
 const isConclusion = (s: CourseStep) => s.decision_kind === 'conclusie';
 
@@ -63,26 +58,6 @@ export const stepRef = (step: CourseStep): BronRef => ({ collection: 'judgments'
 export function stepOutcome(step: CourseStep, course: Course): string | null {
 	const a = stageOf(step, course);
 	return outcomeOf(step.outcome, a === 'Cassatie' || a === 'Hoger beroep' ? a : null);
-}
-
-/** The article that gives the court its say, as cited and as a ref: "art. 60 RO". */
-export const basisArticle = (step: CourseStep) => (step.basis ? articleOfBasis(step.basis) : null);
-
-/** An article of the API's list as cited and as a ref: "art. 60 RO"; one of a bijlage by its
- *  place, "art. 2 bijlage 2 Awb". */
-export function articleOfBasis(b: Basis): { name: string; ref: BronRef } {
-	const law = LAW[b.bwb_id];
-	const inAnnex = /^bijlage (\S+) artikel (\S+)$/.exec(b.article_number);
-	const number = inAnnex
-		? `art. ${inAnnex[2]} bijlage ${inAnnex[1]}`
-		: articleRef(b.bwb_id, b.article_number);
-	return {
-		name: law ? `${number} ${law}` : number,
-		ref: {
-			collection: 'articles',
-			key: `${b.bwb_id}_${b.article_number}`.toLowerCase().replace(/[^a-z0-9]+/g, '_')
-		}
-	};
 }
 
 /** A decision the text names as the one appealed that the data lacks, as text:

@@ -1,17 +1,20 @@
 <script lang="ts">
 	// Rechtsgang (B143): the route of a case per area of law, each court with the article that
-	// gives it its say as a link; a court whose article is not read in the source shows the gap.
+	// gives it its say as a link to its readable address; a court whose article is not read in
+	// the source shows the gap (WetsartikelGat, as in the Verloop).
 	// Under bestuursrecht the Bevoegdheidsregeling bestuursrechtspraak by chapter, its headings
 	// as the regeling writes them, each article opened to the laws its list names. One answer
 	// of the API (`/api/judgments/routes`); `?gebied=` chooses the area (from the Verloop).
 	import { page } from '$app/state';
 	import { getJudgmentRoutes } from '$lib/api/judgments';
 	import { openHref } from '$lib/bron/href';
+	import { padHref } from '$lib/bron/address';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
+	import WetsartikelGat from '$lib/court-route/WetsartikelGat.svelte';
 	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 	import { SOURCES } from '$lib/nav/sources';
@@ -40,6 +43,7 @@
 	const options = $derived(VIEWS.map((v) => ({ waarde: v.id, label: v.short })));
 	const RO = { collection: 'instruments' as const, key: 'bwbr0001830' };
 	const AWB = { collection: 'instruments' as const, key: 'bwbr0005537' };
+	const BIJLAGE_2 = padHref({ kind: 'bijlage', law: 'BWBR0005537', label: '2' });
 	const lawRef = (bwbId: string) => ({
 		collection: 'instruments' as const,
 		key: bwbId.toLowerCase()
@@ -50,12 +54,12 @@
 
 {#snippet articles(court: CourtStep)}
 	{#if court.gap}
-		<span class="gat">wetsartikel {NOT_IN_DATA}</span>
+		<WetsartikelGat />
 	{:else}
 		{#each court.articles as a, i (a.name + (a.area ?? ''))}{separatorBefore(
 				i,
 				court.articles.length
-			)}<a class="raakvlak" href={openHref(a.ref)}>{a.name}</a
+			)}<a class="raakvlak" href={openHref(a.ref, { path: a.path })}>{a.name}</a
 			>{#if a.area}{` (${a.area})`}{/if}{/each}
 	{/if}
 {/snippet}
@@ -67,7 +71,7 @@
 		</nav>
 		<header class="blad__kop"><h1 class="blad__titel">Rechtsgang</h1></header>
 		<p class="stil lede">
-			De route van een zaak langs de instanties, uit de <a href={openHref(RO)}
+			Instanties per rechtsgebied, volgens de <a href={openHref(RO)}
 				>Wet op de rechterlijke organisatie</a
 			>
 			en de <a href={openHref(AWB)}>Algemene wet bestuursrecht</a>.
@@ -111,7 +115,7 @@
 			{#if view.id === 'bestuur' && data.regeling.length}
 				<section class="regeling" aria-labelledby="regeling-kop">
 					<h2 id="regeling-kop">Bevoegdheidsregeling bestuursrechtspraak</h2>
-					<p class="stil">Bijlage 2 bij de Awb, koppen zoals de bijlage ze schrijft.</p>
+					<p class="stil bijlage"><a href={BIJLAGE_2}>Bijlage 2 bij de Awb</a></p>
 					<div class="kop-rij stil" aria-hidden="true">
 						<span>Artikel</span><span>Rechter</span><span>Wetten genoemd</span>
 					</div>
@@ -177,7 +181,7 @@
 		font: var(--niveau-1-sectie);
 		color: var(--ink);
 	}
-	.rechtsgang :is(.lede, .instantie, .andere-lijst, .wetten) a {
+	.rechtsgang :is(.lede, .bijlage, .instantie, .andere-lijst, .wetten) a {
 		color: inherit;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -238,7 +242,6 @@
 		display: inline;
 	}
 	.gat {
-		font-style: italic;
 		color: var(--ink-3);
 	}
 	.andere {
@@ -336,6 +339,12 @@
 		break-inside: avoid;
 	}
 	@media (max-width: 768px) {
+		/* The link to the bijlage a finger's target. */
+		.bijlage a {
+			display: inline-flex;
+			align-items: center;
+			min-height: var(--veld-h-raak);
+		}
 		.route {
 			flex-direction: column;
 		}

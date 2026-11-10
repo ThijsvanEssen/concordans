@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-	basisArticle,
 	courseIds,
 	courseLayers,
 	stageOf,
@@ -86,25 +85,6 @@ describe('the stage of a step', () => {
 		expect(stageOf(stub, after('REFERRED_BY'))).toBe('Cassatie');
 		expect(stageOf(stub, after('CONTINUES'))).toBe('Eerdere uitspraak');
 		expect(stageOf(stub, after('APPEAL_OF'))).toBe('Eerdere aanleg');
-	});
-});
-
-describe('the article of a step', () => {
-	it('cites the article with its law and links to its node', () => {
-		expect(basisArticle(RB)).toEqual({
-			name: 'art. 42 RO',
-			ref: { collection: 'articles', key: 'bwbr0001830_42' }
-		});
-		expect(
-			basisArticle(step('x', { basis: { bwb_id: 'BWBR0005537', article_number: '8:105' } }))
-		).toEqual({
-			name: 'art. 8:105 Awb',
-			ref: { collection: 'articles', key: 'bwbr0005537_8_105' }
-		});
-	});
-
-	it('gives nothing where the API has no article', () => {
-		expect(basisArticle(HOF)).toBeNull();
 	});
 });
 

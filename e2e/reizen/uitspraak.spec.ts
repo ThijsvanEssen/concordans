@@ -25,6 +25,16 @@ test('a judgment shows its court, its course and its parts', async ({ page, touc
 	await expect(steps).toHaveCount(4);
 	await expect(steps.nth(1)).toContainText('Hoger beroep');
 	await expect(steps.last()).toContainText('Uitkomst: cassatie verworpen');
+	// The article that gives a court its say at its readable address; one the data lacks a gap
+	// (B144). Under the list Rechtsgang at the area of the judgment.
+	await expect(steps.nth(1).getByRole('link', { name: 'art. 60 RO' })).toHaveAttribute(
+		'href',
+		'/wetten/BWBR0001830/artikel/60'
+	);
+	await expect(steps.first()).toContainText('wetsartikel niet in de gegevens');
+	await expect(
+		list.getByRole('link', { name: 'Rechtsgang in het civiel recht en strafrecht' })
+	).toHaveAttribute('href', '/rechtspraak/rechtsgang?gebied=civiel');
 	await expect(page.getByRole('rowheader', { name: 'Eiser' })).toBeVisible();
 	await expect(
 		page.getByRole('button', { name: /^Overweging [\d.]+: citeren, bewaren$/ })
