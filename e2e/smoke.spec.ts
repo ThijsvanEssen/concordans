@@ -16,8 +16,9 @@ const FIRST_PAINT = 3_000;
 /** A page with a parameter, as a reader reaches it. */
 const PARAMS: Record<string, string> = {
 	'/bundels/[id]': '/bundels/lm000001',
+	'/ambten/[ministry]': '/ambten/minister_zonder_portefeuille',
 	'/ambten/[ministry]/[post]': '/ambten/jenv/minister',
-	'/ambten/[ministry]/[post]/[portfolio]': '/ambten/-/minister/werk-en-participatie'
+	'/ambten/[ministry]/[post]/[portfolio]': '/ambten/minister/werk-en-participatie'
 };
 
 /**
