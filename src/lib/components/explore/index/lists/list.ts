@@ -156,10 +156,7 @@ export function sorted<T>(
 	});
 }
 
-/** A facet of the API as value → count; each dimension counted without its own filter. */
-export const facetMap = (
-	facet: { value?: string | boolean | null; count: number }[] | null | undefined
-) => new Map((facet ?? []).map((f) => [String(f.value), f.count]));
+export { facetMap } from '../facets';
 
 /** A filter of one value: on, or off when it was on. */
 export const toggle =

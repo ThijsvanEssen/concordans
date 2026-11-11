@@ -62,8 +62,10 @@
 	import type { Schema } from '$lib/api/types';
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
+	import { facetOptions } from '$lib/util/choice';
 	import {
 		activeFilters,
+		facetMap,
 		selectOptions,
 		type FacetGroup
 	} from '$lib/components/explore/index/facets';
@@ -85,8 +87,7 @@
 		VOTES,
 		feedQuery,
 		readFilters,
-		speaksOf,
-		NOT_OF,
+		shownFilters,
 		summaryQuery,
 		type CoalitionWord,
 		type FeedQuery
@@ -457,18 +458,13 @@
 		items.flatMap((i) => i.persons).find((p) => p.key === member)?.name ?? 'Gekozen persoon'
 	);
 
-	const facetMap = (list: { value?: string | null; count: number }[] | undefined) =>
-		new Map((list ?? []).flatMap((f) => (f.value ? [[f.value, f.count] as const] : [])));
-
 	const coalitionCounts = $derived(facetMap(facets?.coalition));
 	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
 	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
 	const allGroups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
-		const factionMap = facetMap(facets?.faction);
-		if (faction && !factionMap.has(faction)) factionMap.set(faction, 0);
-		const factionCounts = [...factionMap];
+		const factionCounts = facetOptions(facetMap(facets?.faction), faction);
 		return [
 			{
 				id: 'soort',
@@ -633,20 +629,8 @@
 			}
 		];
 	});
-	// Only the filters that speak of the kinds chosen (none: all): under Uitspraak alone no
-	// Ingediend door, Stemde, Coalitie or Kamer. A value chosen stays, to be undone.
-	const ofKamer = $derived(speaksOf(kinds, NOT_OF.kamer));
-	const groups = $derived.by(() => {
-		const shown: Record<string, boolean> = {
-			fractie: ofKamer || !!faction,
-			stemde: ofKamer || !!voted,
-			coalitie: ofKamer || !!coalition,
-			ministerie: speaksOf(kinds, NOT_OF.ministry) || !!ministry,
-			dossier: speaksOf(kinds, NOT_OF.dossier) || !!dossier,
-			komend: !kinds.length || kinds.includes('inwerkingtreding') || ahead
-		};
-		return allGroups.filter((g) => shown[g.id] ?? true);
-	});
+	const staat = $derived(shownFilters(filters));
+	const groups = $derived(allGroups.filter((g) => staat(g.id)));
 	const chips = $derived(activeFilters(groups));
 	/** Actueel as it opens, without a filter, a word or a period: what is first comes first. */
 	const unfiltered = $derived(!chips.length && !q.length && !chamber);
@@ -741,7 +725,7 @@
 	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
 		<FilterBar
 			{groups}
-			chamber={ofKamer || chamber
+			chamber={staat('kamer')
 				? {
 						value: chamber || BOTH_CHAMBERS,
 						options: CHAMBER_CHOICES,

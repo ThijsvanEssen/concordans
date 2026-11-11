@@ -44,6 +44,25 @@ export const NOT_OF = {
 export const speaksOf = (kinds: readonly FeedKind[], not: readonly FeedKind[]) =>
 	!kinds.length || kinds.some((k) => !not.includes(k));
 
+/**
+ * Which filters of Actueel stand, by their id: those that speak of the kinds chosen, and a
+ * filter with a value chosen, to be undone. Under Uitspraak alone no Ingediend door, Stemde,
+ * Coalitie or Kamer.
+ */
+export function shownFilters(f: ActueelFilters): (id: string) => boolean {
+	const kamer = speaksOf(f.kinds, NOT_OF.kamer);
+	const shown: Record<string, boolean> = {
+		kamer: kamer || !!f.chamber,
+		fractie: kamer || !!f.faction,
+		stemde: kamer || !!f.voted,
+		coalitie: kamer || !!f.coalition,
+		ministerie: speaksOf(f.kinds, NOT_OF.ministry) || !!f.ministry,
+		dossier: speaksOf(f.kinds, NOT_OF.dossier) || !!f.dossier,
+		komend: !f.kinds.length || f.kinds.includes('inwerkingtreding') || f.ahead
+	};
+	return (id) => shown[id] ?? true;
+}
+
 type ActueelFilters = {
 	kinds: FeedKind[];
 	since: string;

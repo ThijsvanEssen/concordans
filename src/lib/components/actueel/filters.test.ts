@@ -5,6 +5,7 @@ import {
 	NOT_OF,
 	feedQuery,
 	readFilters,
+	shownFilters,
 	speaksOf,
 	summaryQuery
 } from './filters';
@@ -194,5 +195,18 @@ describe('speaksOf: which filters stand under the kinds chosen', () => {
 		expect(speaksOf(['publicatie'], NOT_OF.kamer)).toBe(false);
 		expect(speaksOf(['publicatie'], NOT_OF.dossier)).toBe(true);
 		expect(speaksOf(['publicatie'], NOT_OF.ministry)).toBe(true);
+	});
+});
+
+describe('shownFilters: the filters of Actueel that stand', () => {
+	it('drops the filters of the Kamer under Uitspraak alone, keeps the period', () => {
+		const shown = shownFilters(read('soort=uitspraak'));
+		for (const id of ['kamer', 'fractie', 'stemde', 'coalitie', 'ministerie', 'dossier', 'komend'])
+			expect(shown(id)).toBe(false);
+		expect(shown('periode')).toBe(true);
+	});
+
+	it('keeps a filter with a value chosen, to be undone', () => {
+		expect(shownFilters(read('soort=uitspraak&fractie=vvd'))('fractie')).toBe(true);
 	});
 });
