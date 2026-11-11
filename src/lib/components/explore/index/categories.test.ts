@@ -14,6 +14,15 @@ describe('the tabs of a source', () => {
 		expect(tabs[1].about).toBeTruthy();
 	});
 
+	it('give Regering its offices beside its lists', () => {
+		expect(sourceTabs(of('regering')).map((t) => t.label)).toEqual([
+			'Kabinetten',
+			'Ministeries',
+			'Bewindspersonen',
+			'Ambten'
+		]);
+	});
+
 	it('take the address of a list from the caller (IndexView keeps the Kamer)', () => {
 		const tabs = sourceTabs(of('parlement'), (k) => `/${k}?kamer=EK`);
 		expect(tabs.map((t) => t.href)).toEqual([

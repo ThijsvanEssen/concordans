@@ -15,10 +15,13 @@ describe('the source a page stands under', () => {
 		expect(sourceOf(at('/bladeren'))).toBeNull();
 	});
 
-	it('names the page beside a list by its address (Rechtsgang under Rechtspraak)', () => {
+	it('names the page beside a list by its address (Rechtsgang, Ambten and the pages under it)', () => {
 		expect(sourceOf(at('/rechtspraak/rechtsgang?gebied=bestuur'))?.id).toBe('rechtspraak');
 		expect(sourceOf(at('/rechtspraak/rechtsgang/'))?.id).toBe('rechtspraak');
 		expect(sourceOf(at('/rechtspraak'))).toBeNull();
+		expect(sourceOf(at('/ambten'))?.id).toBe('regering');
+		expect(sourceOf(at('/ambten/financien/minister'))?.id).toBe('regering');
+		expect(sourceOf(at('/ambtenaren'))).toBeNull();
 	});
 
 	it('names a bron read by its address or its focus', () => {

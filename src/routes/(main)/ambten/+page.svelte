@@ -8,6 +8,9 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { ministerSeats, seatHref } from '$lib/offices/office';
+	import { SOURCES } from '$lib/nav/sources';
+	import SourceTabs from '$lib/nav/SourceTabs.svelte';
+	import { sourceTabs } from '$lib/components/explore/index/categories';
 
 	const cabinet = load(
 		() => 'nu',
@@ -17,10 +20,13 @@
 		},
 		'Ambten'
 	);
+	const government = SOURCES.find((x) => x.id === 'regering')!;
 	const shown = $derived(cabinet.state.status === 'ready' ? cabinet.state.data : null);
 </script>
 
 <RouteKop />
+
+<SourceTabs label={government.label} tabs={sourceTabs(government)} current="/ambten" />
 
 <div class="blad blad--tekst">
 	<header class="blad__kop"><h1 class="blad__titel">Ambten</h1></header>

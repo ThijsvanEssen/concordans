@@ -58,18 +58,21 @@ export const SOURCES: readonly Source[] = [
 		'factions',
 		'committees'
 	]),
-	source('regering', 'kabinetten, ministeries, bewindspersonen', [
-		'cabinets',
-		'ministries',
-		'ministers'
-	])
+	source(
+		'regering',
+		'kabinetten, ministeries, bewindspersonen, ambten',
+		['cabinets', 'ministries', 'ministers'],
+		[{ path: '/ambten', label: 'Ambten' }]
+	)
 ];
 
 const sourceById = (id: SourceId): Source => SOURCES.find((s) => s.id === id)!;
 
-/** The source a page beside the lists belongs to (`/rechtspraak/rechtsgang`), or undefined. */
+/** The source a page beside the lists belongs to, and the pages under it (`/ambten/…`). */
 const sourceOfPage = (pathname: string): Source | undefined =>
-	SOURCES.find((s) => s.pages.some((p) => p.path === pathname.replace(/(.)\/$/, '$1')));
+	SOURCES.find((s) =>
+		s.pages.some((p) => pathname === p.path || pathname.startsWith(`${p.path}/`))
+	);
 
 /** The source a list of Bladeren belongs to. */
 export const sourceOfList = (list: string): Source => SOURCES.find((s) => s.lists.includes(list))!;

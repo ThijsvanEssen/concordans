@@ -67,7 +67,11 @@
 	{/if}
 {/snippet}
 
-<SourceTabs label={judgments.label} tabs={sourceTabs(judgments)} current={page.url.pathname} />
+<SourceTabs
+	label={judgments.label}
+	tabs={sourceTabs(judgments)}
+	current="/rechtspraak/rechtsgang"
+/>
 
 <div class="page-wrap">
 	<div class="container blad rechtsgang">

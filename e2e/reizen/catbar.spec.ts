@@ -1,5 +1,6 @@
-// The tab strip of Bladeren (Kabinetten ... Fracties) pans sideways on a phone: the tab on show
-// stands in view, clear of the fade on its edge; where all fits (1440) it does not pan at all.
+// The tab strip of Bladeren (Kabinetten ... Fracties; Ambten beside the lists of Regering) pans
+// sideways on a phone: the tab on show stands in view, clear of the fade on its edge; where all
+// fits (1440) it does not pan at all.
 import { expect, test } from '../support/test';
 
 for (const kind of ['ministeries', 'leden', 'fracties']) {
@@ -42,4 +43,18 @@ test('a tab reached with the keyboard comes clear of the edge', async ({ page, i
 			return b!.x + b!.width - (t!.x + t!.width);
 		})
 		.toBeGreaterThanOrEqual(0);
+});
+
+test('Ambten is a tab under Regering, beside its lists', async ({ page }) => {
+	await page.goto('/kabinetten');
+	const tabs = page.getByRole('navigation', { name: 'Regering', exact: true });
+	await tabs.getByRole('link', { name: 'Ambten' }).click();
+	await expect(page).toHaveURL(/\/ambten$/);
+	await expect(page.getByRole('heading', { level: 1, name: 'Ambten' })).toBeVisible();
+	const here = page.getByRole('navigation', { name: 'Regering', exact: true });
+	await expect(here.getByRole('link', { name: 'Ambten' })).toHaveAttribute('aria-current', 'page');
+	await expect(here.getByRole('link', { name: 'Kabinetten' })).toHaveAttribute(
+		'href',
+		'/kabinetten'
+	);
 });
