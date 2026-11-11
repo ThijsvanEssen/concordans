@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import type { Vorm } from '$lib/bron/vormen';
+	import type { shapeOfCategory } from '$lib/bron/vormen';
 
 	export type SourceTab = {
 		key: string;
@@ -8,7 +8,7 @@
 		/** What it holds, as its title. */
 		about?: string;
 		/** The glyph of the bron a list holds; a page beside the lists has none. */
-		vorm?: Vorm;
+		shape?: ReturnType<typeof shapeOfCategory>;
 	};
 </script>
 
@@ -49,7 +49,7 @@
 			data-sveltekit-noscroll
 			data-sveltekit-keepfocus
 		>
-			{#if tab.vorm}<KindGlyph vorm={tab.vorm} size={11} />{/if}
+			{#if tab.shape}<KindGlyph vorm={tab.shape} size={11} />{/if}
 			<span class="cat-name">{tab.label}</span>
 		</a>
 	{/each}

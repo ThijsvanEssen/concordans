@@ -87,7 +87,7 @@ export function sourceTabs(
 			label: c.label,
 			href: listHref(c.key),
 			about: c.about,
-			vorm: shapeOfCategory(c.key)
+			shape: shapeOfCategory(c.key)
 		})
 	);
 	const pages = source.pages.map((p) => ({

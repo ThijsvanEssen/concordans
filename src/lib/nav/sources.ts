@@ -68,7 +68,7 @@ export const SOURCES: readonly Source[] = [
 const sourceById = (id: SourceId): Source => SOURCES.find((s) => s.id === id)!;
 
 /** The source a page beside the lists belongs to (`/rechtspraak/rechtsgang`), or undefined. */
-export const sourceOfPage = (pathname: string): Source | undefined =>
+const sourceOfPage = (pathname: string): Source | undefined =>
 	SOURCES.find((s) => s.pages.some((p) => p.path === pathname.replace(/(.)\/$/, '$1')));
 
 /** The source a list of Bladeren belongs to. */

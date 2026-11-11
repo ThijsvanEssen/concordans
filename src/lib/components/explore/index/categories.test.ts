@@ -7,7 +7,7 @@ const of = (id: string) => SOURCES.find((s) => s.id === id)!;
 describe('the tabs of a source', () => {
 	it('are its lists, each with its glyph, then its pages without one', () => {
 		const tabs = sourceTabs(of('rechtspraak'));
-		expect(tabs.map((t) => [t.label, t.href, t.vorm])).toEqual([
+		expect(tabs.map((t) => [t.label, t.href, t.shape])).toEqual([
 			['Uitspraken', '/uitspraken', 'uitspraak'],
 			['Rechtsgang', '/rechtspraak/rechtsgang', undefined]
 		]);
