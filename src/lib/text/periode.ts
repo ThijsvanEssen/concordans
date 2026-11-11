@@ -1,23 +1,7 @@
 // The period of a list: one filter for every list with dates, said in words (Design System,
 // Periode). Days as the URL and the API hold them (YYYY-MM-DD); a reader types a year or a
 // date, and reads the period back as "Sinds 2020" or "1 jan 2024 tot 30 jun 2024".
-import { MONTHS, isDay } from './datum';
-
-/** A date as the period says it: day, month in three letters without a full stop, year. */
-const MONTHS_SHORT = [
-	'jan',
-	'feb',
-	'mrt',
-	'apr',
-	'mei',
-	'jun',
-	'jul',
-	'aug',
-	'sep',
-	'okt',
-	'nov',
-	'dec'
-];
+import { MAAND_KORT, MONTHS, isDay, yearOf, korteDatum } from './datum';
 
 type QuickChoice = { id: string; label: string; from: (today: string) => string };
 
@@ -56,23 +40,21 @@ export function alsDag(v: string | null | undefined): string | null {
 	return isDay(s) ? s : null;
 }
 
-/** `2024-03-01` as "1 mrt 2024". */
-export function formatDay(iso: string): string {
-	const [y, m, d] = iso.split('-').map(Number);
-	return `${d} ${MONTHS_SHORT[m - 1]} ${y}`;
-}
+/** `2024-03-01` as "1 mrt 2024": the short date without a full stop, as a reader types a bound. */
+export const formatDay = (iso: string): string => korteDatum(iso, { fullStop: false });
 
 type Side = 'from' | 'to';
 
 /** The year a bound stands for, where it is a whole year's first day (from) or last (to). */
 function wholeYear(iso: string, side: Side): string | null {
 	const rest = iso.slice(4);
-	return rest === (side === 'from' ? '-01-01' : '-12-31') ? iso.slice(0, 4) : null;
+	return rest === (side === 'from' ? '-01-01' : '-12-31') ? yearOf(iso) : null;
 }
 
-/** A bound as a field shows it: a year where it is a whole year's edge, else "1 mrt 2024". */
+/** A bound as a field shows it: a year where it is a whole year's edge, else "1 mrt 2024"; with
+ *  plain spaces, as a reader types it. */
 export const fieldText = (iso: string, side: Side): string =>
-	iso ? (wholeYear(iso, side) ?? formatDay(iso)) : '';
+	iso ? (wholeYear(iso, side) ?? formatDay(iso).replaceAll('\u00a0', ' ')) : '';
 
 /** A period in words; the name of a quick choice where it is one. */
 export function periodInWords(from: string, to: string, today: string): string {
@@ -80,7 +62,7 @@ export function periodInWords(from: string, to: string, today: string): string {
 	const quick = QUICK_CHOICES.find((c) => c.id === quickChoiceOf(from, to, today));
 	if (quick) return quick.label;
 	const whole = (!from || wholeYear(from, 'from')) && (!to || wholeYear(to, 'to'));
-	const say = (iso: string) => (whole ? iso.slice(0, 4) : formatDay(iso));
+	const say = (iso: string) => (whole ? yearOf(iso) : formatDay(iso));
 	const [a, b] = [from && say(from), to && say(to)];
 	if (a && b) return `${a} tot ${b}`;
 	return a ? `Sinds ${a}` : `Tot ${b}`;
@@ -93,7 +75,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 function monthNumber(word: string): number {
 	const w = word.toLowerCase().replace(/\.$/, '');
 	if (w.length < 3) return 0;
-	return MONTHS_SHORT.findIndex((k, i) => w === k || MONTHS[i].startsWith(w)) + 1;
+	return MAAND_KORT.findIndex((k, i) => w === k.replace('.', '') || MONTHS[i].startsWith(w)) + 1;
 }
 
 /**

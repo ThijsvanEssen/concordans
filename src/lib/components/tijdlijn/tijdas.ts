@@ -2,8 +2,7 @@
 // zetels. Een plek op de as is een fractie van de periode (0 aan het begin, 1 aan het eind);
 // de streepjes kiezen hun stap naar de breedte, zodat twee labels nooit botsen en geen label
 // tegen een rand komt.
-import { NOT_IN_DATA } from '$lib/text/coverage';
-import { DAY_MS, korteDatum, maandJaar, vandaag } from '$lib/text/datum';
+import { DAY_MS, korteDatum, maandJaar } from '$lib/text/datum';
 
 export const ms = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
@@ -100,16 +99,4 @@ export function randen(
 	fmt: (iso: string) => string = korteDatum
 ): { begin: string; eind: string } {
 	return { begin: fmt(van), eind: lopend || !tot ? 'nu' : fmt(tot) };
-}
-
-/** Een periode in een zin: `sinds 23 feb. 2026` of `van 2 jul. 2024 tot 23 feb. 2026`. */
-export function periodeZin(
-	van: string | null | undefined,
-	tot: string | null | undefined,
-	fmt: (iso: string) => string = korteDatum,
-	vandaagIso = vandaag()
-): string {
-	if (!van) return tot ? `tot ${fmt(tot)}` : `periode ${NOT_IN_DATA}`;
-	if (!tot || tot >= vandaagIso) return `sinds ${fmt(van)}`;
-	return `${fmt(van)} tot ${fmt(tot)}`;
 }

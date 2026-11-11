@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { vandaag } from '$lib/text/datum';
+	import { yearOf, vandaag } from '$lib/text/datum';
 	import { report } from '$lib/api/errors';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -157,7 +157,7 @@
 	/** `Dinsdag 22 september`: the year only when it is not this one. */
 	const dayHeading = (date: string) => {
 		const label = dayLabel(date, today);
-		return date.slice(0, 4) === today.slice(0, 4) ? label.replace(/ \d{4}$/, '') : label;
+		return yearOf(date) === yearOf(today) ? label.replace(/ \d{4}$/, '') : label;
 	};
 	// Actueel in the shared timeline: days, newest first; a decision large with its outcome,
 	// a quiet day small.

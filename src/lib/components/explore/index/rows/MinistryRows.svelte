@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import { openHref } from '$lib/bron/href';
+	import { yearOf } from '$lib/text/datum';
 	import IndexRow from '../IndexRow.svelte';
 	import type { Ministry } from '../government';
 	import { isCurrent } from '../lists/ministries';
@@ -8,7 +9,7 @@
 
 	let { ctx }: ViewProps<Ministry, object> = $props();
 	const rows = $derived(ctx.rows ?? []);
-	const since = (m: Ministry) => m.periods.find((s) => s.from_date)?.from_date?.slice(0, 4);
+	const since = (m: Ministry) => yearOf(m.periods.find((s) => s.from_date)?.from_date);
 </script>
 
 <ul class="list">
@@ -25,7 +26,7 @@
 					<span class="row-id-main">{since(m) ? `sinds ${since(m)}` : ''}</span>
 				{:else}
 					<span class="row-id-main">Opgeheven</span>
-					{#if m.until}<span class="row-id-sub">tot {m.until.slice(0, 4)}</span>{/if}
+					{#if m.until}<span class="row-id-sub">tot {yearOf(m.until)}</span>{/if}
 				{/if}
 			{/snippet}
 			{#snippet body()}

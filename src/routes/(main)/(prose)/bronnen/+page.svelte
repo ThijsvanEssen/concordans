@@ -4,7 +4,7 @@
 	import KeyRow from '$lib/components/ui/KeyRow.svelte';
 	import CoverageLine from '$lib/components/ui/Coverage.svelte';
 	import { coverageLine } from '$lib/text/coverage';
-	import { onDate, untilDate, throughDate } from '$lib/text/datum';
+	import { yearOf, onDate, untilDate, throughDate } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
 	// what may be done with it. Elsewhere one sentence links here.
@@ -91,7 +91,7 @@
 					<KeyList>
 						{#each tiersIn(coverage) as t (t.tier)}
 							<KeyRow key={TIER_LABEL[t.tier]}
-								>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(0, 4)}
+								>{formatCount(t.count)}{#if t.first_date && t.last_date}, {yearOf(t.first_date)}
 									{untilDate(t.last_date)}{/if}</KeyRow
 							>
 						{/each}

@@ -10,7 +10,7 @@ import { naamVanId } from '$lib/bron/menselijk';
 import { isMinister } from '$lib/bron/rubrieken';
 import { capitalize, lowerFirst, textOf } from '$lib/text/words';
 import { seatWord } from '$lib/text/seat';
-import { shortDatesIn } from '$lib/text/datum';
+import { shortDatesIn, yearsOf } from '$lib/text/datum';
 import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
 import type { ChainLayer, ChainNode } from './chain';
@@ -90,12 +90,9 @@ const chainNode = (
 });
 
 type Meta = Record<string, unknown>;
-const year = (d: unknown) => textOf(d)?.slice(0, 4) ?? null;
-/** A span of years as the list says it: `2021 – 2023`, `sinds 2025`, `tot en met 2021`. */
-function span(from: unknown, to: unknown): string | null {
-	const [a, b] = [year(from), year(to)];
-	return a && b ? (a === b ? a : `${a} – ${b}`) : a ? `sinds ${a}` : b ? `tot en met ${b}` : null;
-}
+/** A span of years as the list says it: `2021–2023`, `sinds 2025`, `tot en met 2021`. */
+const span = (from: unknown, to: unknown): string | null =>
+	yearsOf(textOf(from), textOf(to), { form: 'zin' }) || null;
 const joined = (...parts: (string | null)[]) => parts.filter(Boolean).join(', ') || null;
 
 /** The posts of a bewindspersoon in a kabinet (`key`) or at a ministerie, from an edge's meta. */
