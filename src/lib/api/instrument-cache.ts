@@ -10,10 +10,12 @@ import {
 } from '$lib/text/instrument-meta';
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
+import { ignore } from './errors';
 import { INSTRUMENT_NAMES } from './first-pages';
 import { once } from './records';
 import type { Schema } from './types';
 import { onForget } from '$lib/util/forget';
+import { whenIdle } from '$lib/util/idle';
 
 const cache = new Map<string, InstrumentMeta>();
 const store = writable(cache);
@@ -97,16 +99,19 @@ export function primeInstrumentNames(): void {
 	primed = true;
 	// Not on the first view (110 kB): the browser asks it when it is idle, and until then a
 	// law keeps the name its own response carried (Thijs, 9 Oct: "alles zo lazy mogelijk").
-	const ask = () =>
+	// A failed request is asked again the next time.
+	whenIdle(() =>
 		unwrap(
 			api.GET('/api/instruments', {
 				params: { query: { sort: 'article_count', limit: INSTRUMENT_NAMES } }
 			})
 		)
 			.then(({ items }) => items.forEach(recordInstrument))
-			.catch(() => {});
-	if (typeof requestIdleCallback === 'function') requestIdleCallback(ask, { timeout: 3000 });
-	else setTimeout(ask, 1500);
+			.catch((e) => {
+				primed = false;
+				ignore('Wetsnamen')(e);
+			})
+	);
 }
 
 onForget(() => {
