@@ -47,7 +47,7 @@ test('a Kamerstuk names its indiener and its dossier, and folds out its vote', a
 	const sectie = page
 		.locator('section')
 		.filter({ has: page.getByRole('heading', { name: 'Stemming', exact: true }) });
-	await expect(sectie).toContainText('Uitstellen op 22 september 2026');
+	await expect(sectie).toContainText('Uitgesteld op 22 september 2026');
 	await expect(sectie).not.toContainText('Aangenomen');
 });
 

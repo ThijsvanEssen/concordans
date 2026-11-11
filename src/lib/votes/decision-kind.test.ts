@@ -3,17 +3,18 @@ import {
 	decisionMethod,
 	decisionOutcome,
 	decisionResult,
-	isHammer
+	isHammer,
+	uitslag
 } from '$lib/votes/decision-kind';
 
 describe('decisionOutcome', () => {
 	it('names a vote, a hamerstuk and a decision that is no vote', () => {
-		expect(
-			decisionOutcome({ kind: null, passed: true, decision_kind: 'Stemmen - aangenomen' })
-		).toBe('Aangenomen');
-		expect(
-			decisionOutcome({ kind: null, passed: false, decision_kind: 'Stemmen - verworpen' })
-		).toBe('Verworpen');
+		expect(decisionOutcome({ passed: true, decision_kind: 'Stemmen - aangenomen' })).toBe(
+			'Aangenomen'
+		);
+		expect(decisionOutcome({ passed: false, decision_kind: 'Stemmen - verworpen' })).toBe(
+			'Verworpen'
+		);
 		const hammer = {
 			kind: null,
 			passed: true,
@@ -21,10 +22,10 @@ describe('decisionOutcome', () => {
 		};
 		expect(isHammer(hammer)).toBe(true);
 		expect(decisionOutcome(hammer)).toBe('Aangenomen zonder stemming');
-		expect(
-			decisionOutcome({ kind: null, passed: null, decision_kind: 'Stemmen - uitstellen' })
-		).toBe('Uitstellen');
-		expect(decisionOutcome({ kind: null, decision_kind: null, passed: null })).toBeNull();
+		expect(decisionOutcome({ passed: null, decision_kind: 'Stemmen - uitstellen' })).toBe(
+			'Uitgesteld'
+		);
+		expect(decisionOutcome({ decision_kind: null, passed: null })).toBeNull();
 	});
 });
 
@@ -53,5 +54,34 @@ describe('decisionMethod', () => {
 		);
 		expect(decisionMethod({ method: 'Hamerstuk' })).toBe('Hamerstuk');
 		expect(decisionMethod({ method: null })).toBeNull();
+	});
+});
+
+describe('uitslag', () => {
+	it('reads passed, the result of the Eerste Kamer and a hamerstuk alike', () => {
+		expect(uitslag({ passed: true }).passed).toBe(true);
+		expect(uitslag({ passed: false }).passed).toBe(false);
+		expect(uitslag({ passed: null, result: 'Aangenomen' }).passed).toBe(true);
+		expect(uitslag({ passed: null, result: 'Verworpen' }).passed).toBe(false);
+		expect(uitslag({ passed: null, decision_kind: 'Stemmen - zonder stemming aannemen' })).toEqual({
+			passed: true,
+			hammer: true,
+			word: 'aangenomen zonder stemming'
+		});
+	});
+
+	it('gives no outcome for a postponed vote (36799, 22\u00a0september\u00a02026)', () => {
+		expect(uitslag({ passed: null, result: null }).passed).toBeNull();
+		expect(uitslag({})).toEqual({ passed: null, hammer: false, word: null });
+	});
+
+	it('names a decision that is no vote as the Kamer decided, never "gestemd"', () => {
+		const word = (decision_kind: string) => uitslag({ passed: null, decision_kind }).word;
+		expect(word('Stemmen - ingetrokken')).toBe('ingetrokken');
+		expect(word('Aanhouden')).toBe('aangehouden');
+		expect(word('Stemmen - aangehouden')).toBe('aangehouden');
+		expect(word('Stemmen - uitstellen')).toBe('uitgesteld');
+		expect(word('Vervallen')).toBe('vervallen');
+		expect(word('Stemmen')).toBeNull();
 	});
 });
