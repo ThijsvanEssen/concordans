@@ -208,6 +208,7 @@
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
+	import { NL } from '$lib/text/collator';
 
 	// One store for the lifetime of this page, so it survives mode switches.
 	// ?grens=800 is a trial: the places the canvas keeps (1000), read once, at the page's start.
@@ -736,7 +737,7 @@
 			props: n.raw?.props ?? null,
 			collection: n.collection
 		}));
-		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));
+		return ends.sort((x, y) => NL.compare(x.name, y.name) || x.id.localeCompare(y.id));
 	});
 	/**
 	 * The ends Verband draws: at most SHARED_ENDS, so it asks at most 15 pairs; more chosen

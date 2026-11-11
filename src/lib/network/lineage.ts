@@ -15,6 +15,7 @@ import { citationRecord } from '$lib/text/citation-record';
 import { TIER_LABEL, type Collection, type Relation, type Tier } from '$lib/vocabulary';
 import type { ChainLayer, ChainNode } from './chain';
 import { PERSON_LAYERS } from './person-layers';
+import { NL } from '$lib/text/collator';
 
 type NodeResponse = Schema<'NodeGraphResponse'>;
 type Neighbour = NodeResponse['neighbors']['buckets'][number]['items'][number];
@@ -305,7 +306,7 @@ export async function lineage(
 		l.nodes.push(node);
 	}
 	const byDate = (x: ChainNode, y: ChainNode) =>
-		(x.since ?? '').localeCompare(y.since ?? '') || x.name.localeCompare(y.name);
+		(x.since ?? '').localeCompare(y.since ?? '') || NL.compare(x.name, y.name);
 	// A ministerie stands under its kabinet: the ministeries in the order of their kabinetten.
 	const cabinets = [...nodes.values()]
 		.filter((n) => n.node.collection === 'cabinets')

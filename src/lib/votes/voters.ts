@@ -4,6 +4,7 @@ import { capitalize, count, joinAnd } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { UNNAMED } from '$lib/bron/describe';
 import { choiceRank } from '$lib/votes/stemming';
+import { NL } from '$lib/text/collator';
 
 export type Voter = {
 	id: string;
@@ -26,7 +27,7 @@ export function votersOf(decision: Pick<Schema<'DecisionDTO'>, 'vote_kind' | 'vo
 				(a, b) =>
 					choiceRank(a.choice) - choiceRank(b.choice) ||
 					Number(a.name === UNNAMED) - Number(b.name === UNNAMED) ||
-					a.name.localeCompare(b.name, 'nl')
+					NL.compare(a.name, b.name)
 			)
 		: voters.sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0));
 }

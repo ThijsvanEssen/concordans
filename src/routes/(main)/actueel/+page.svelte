@@ -104,6 +104,7 @@
 	} from '$lib/components/actueel/feed';
 	import { standLine } from '$lib/text/stand';
 	import { FEED_PAGE } from '$lib/api/first-pages';
+	import { NL } from '$lib/text/collator';
 
 	const today = vandaag();
 	/** The days one summary spans at most, as the API allows. */
@@ -508,7 +509,7 @@
 				all: 'Alle fracties',
 				options: [...new Set([...Object.keys(factionNames), ...(voted ? [voted] : [])])]
 					.map((key) => ({ value: key, label: factionNames[key] ?? key }))
-					.sort((a, b) => a.label.localeCompare(b.label, 'nl')),
+					.sort((a, b) => NL.compare(a.label, b.label)),
 				onChange: (v) =>
 					patchUrl({ [VOTED_PARAM]: v || null, [VOTE_PARAM]: v ? vote || null : null })
 			},

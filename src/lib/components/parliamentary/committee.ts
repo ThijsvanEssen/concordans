@@ -1,6 +1,7 @@
 // A committee's standing and its seats, one place for the list of Bronnen and its reader.
 import type { Schema } from '$lib/api/types';
 import { seatWord } from '$lib/text/seat';
+import { NL } from '$lib/text/collator';
 
 type Member = Schema<'MemberDTO'>;
 
@@ -25,7 +26,7 @@ export type Seats = {
 
 const RANG: Record<string, number> = { voorzitter: 0, ondervoorzitter: 1 };
 const byName = (a: Member, b: Member) =>
-	(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl');
+	NL.compare(a.family_name ?? a.name ?? '', b.family_name ?? b.name ?? '');
 
 /** A committee's members split by their seat, each group by family name. */
 export function seatsOf(members: Member[]): Seats {

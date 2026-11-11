@@ -19,15 +19,15 @@
 		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1609,
-		"src/lib/components/graph/GraphView.svelte": 2106,
+		"src/lib/components/graph/GraphView.svelte": 2108,
 		"src/lib/network/ChainView.svelte": 1182,
 		"src/lib/text/judgment-text.ts": 1108,
 		"src/lib/verbonden/Verbonden.svelte": 871,
 		"src/lib/verbonden/groups.ts": 1217,
-		"src/lib/verbonden/loaders.ts": 1511,
-		"src/routes/(main)/actueel/+page.svelte": 855,
+		"src/lib/verbonden/loaders.ts": 1512,
+		"src/routes/(main)/actueel/+page.svelte": 856,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2966
+		"src/routes/explore/+page.svelte": 2967
 	},
 	"effects_per_svelte": {
 		"src/lib/components/graph/GraphView.svelte": 9,
@@ -41,10 +41,10 @@
 		"src/lib/components/explore/readers/DossierReader.svelte": 42,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 44,
 		"src/lib/components/explore/readers/MemberReader.svelte": 44,
-		"src/lib/components/graph/GraphView.svelte": 64,
+		"src/lib/components/graph/GraphView.svelte": 65,
 		"src/lib/verbonden/Verbonden.svelte": 41,
-		"src/routes/(main)/actueel/+page.svelte": 42,
-		"src/routes/explore/+page.svelte": 105
+		"src/routes/(main)/actueel/+page.svelte": 43,
+		"src/routes/explore/+page.svelte": 106
 	},
 	"complexity": {
 		"src/lib/bron/describe.ts": 46,
@@ -96,7 +96,6 @@
 		"src/lib/map/map.ts": 22,
 		"src/lib/network/chain.ts": 60,
 		"src/lib/network/lineage.ts": 34,
-		"src/lib/network/shared.ts": 16,
 		"src/lib/onderwerpen/overzicht.ts": 17,
 		"src/lib/search/present.ts": 63,
 		"src/lib/search/session.svelte.ts": 16,

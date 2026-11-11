@@ -8,6 +8,7 @@ import { isLetter, motionOrAmendment } from '$lib/text/document-kind';
 import { nodeId, type Relation } from '$lib/vocabulary';
 import { holdsInHull } from './container-membership';
 import { instrumentLawId, lawIdOf, type GraphEdge, type GraphNode } from './types';
+import { nodeKey } from '$lib/text/node-key';
 
 /** A dossier is drawn as a hull from this many bronnen on (or when it is chosen); a wet always. */
 export const HULL_MIN = 4;
@@ -38,8 +39,7 @@ export function isHullEdge(from: Ends, to: Ends, relation: Relation): boolean {
 }
 
 /** The node id of a dossier by its number as a stuk carries it: `21501-02` is `dossiers/21501_02`. */
-const dossierIdOf = (number: string): string =>
-	nodeId('dossiers', number.toLowerCase().replace(/[^a-z0-9]+/g, '_'));
+const dossierIdOf = (number: string): string => nodeId('dossiers', nodeKey(number));
 
 /** A row of a hull: the bronnen of one stuksoort, or the articles of one hoofdstuk. */
 export type HullRow = {
