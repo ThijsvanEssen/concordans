@@ -18,6 +18,27 @@ test('the route of civiel recht names each court with its article as a link', as
 	await expect(page.getByRole('link', { name: 'art. 78 RO' })).toBeVisible();
 });
 
+test('Rechtsgang is a tab under Rechtspraak, beside Uitspraken', async ({ page }) => {
+	await page.goto('/uitspraken');
+	const tabs = page.getByRole('navigation', { name: 'Rechtspraak', exact: true });
+	await expect(tabs.getByRole('link', { name: 'Uitspraken' })).toHaveAttribute(
+		'aria-current',
+		'page'
+	);
+	await tabs.getByRole('link', { name: 'Rechtsgang' }).click();
+	await expect(page).toHaveURL(/\/rechtspraak\/rechtsgang$/);
+	await expect(page.getByRole('heading', { level: 1, name: 'Rechtsgang' })).toBeVisible();
+	const here = page.getByRole('navigation', { name: 'Rechtspraak', exact: true });
+	await expect(here.getByRole('link', { name: 'Rechtsgang' })).toHaveAttribute(
+		'aria-current',
+		'page'
+	);
+	await expect(here.getByRole('link', { name: 'Uitspraken' })).toHaveAttribute(
+		'href',
+		'/uitspraken'
+	);
+});
+
 test('a court whose article is not read in the source shows the gap', async ({ page }) => {
 	await page.goto('/rechtspraak/rechtsgang?gebied=belasting');
 	const cassation = page.locator('.vak').filter({ hasText: 'Hoge Raad' });
@@ -39,7 +60,7 @@ test('the links of Rechtsgang stand a finger’s target apart', async ({ page, t
 	test.skip(!touch, 'a finger’s target');
 	await page.goto('/rechtspraak/rechtsgang?gebied=bestuur');
 	const links = '.rechtsgang a:not(.lede a)';
-	// The crumb and the courts with their articles; then an article of the regeling opened.
+	// The courts with their articles; then an article of the regeling opened.
 	await expect(page.getByRole('link', { name: 'art. 8:6 Awb' }).first()).toBeVisible();
 	expect(await smallTargets(page, links), 'tap targets under 44 px').toEqual([]);
 	await page.locator('details').nth(1).locator('summary').click();

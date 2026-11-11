@@ -2,22 +2,22 @@
 
 ## Pages
 
-| URL                                                                                        | Purpose                                                                           |
-| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `/bundels`                                                                                 | The bundels a reader keeps, a list; a shared bundel (`#m=`) opens as its page     |
-| `/bundels/[id]`                                                                            | One bundel on a page of its own: to work in, to read and to print (PDF)           |
-| `/onderwerpen`, `/onderwerpen/overzicht`                                                   | Followed topics, and one topic's overview                                         |
-| `/ambten`                                                                                  | The ministers' offices of the cabinet in office, each to its page                 |
-| `/rechtspraak/rechtsgang`                                                                  | The route of a case per area of law, each court with its article; the regeling    |
-| `/ambten/[ministry]`, `/ambten/[ministry]/[post]`, `/ambten/[ministry]/[post]/[portfolio]` | One office over the names of its ministry: holders, gaps, toezeggingen, dossiers  |
-| `/`                                                                                        | Start page: search with four scopes, each linking into Bladeren; Actueel in short |
-| `/actueel`                                                                                 | What came in per day, with filters in the URL and an Atom feed                    |
-| `/zoeken`                                                                                  | Results of a query per soort, with facets and pages; not indexed                  |
-| `/explore`                                                                                 | The Verkenner                                                                     |
-| Readable addresses (below)                                                                 | The Verkenner, for one bron                                                       |
-| `/docs`, `/docs/methode`, `/docs/sneltoetsen`                                              | Documentation for users                                                           |
-| `/api`                                                                                     | API reference, rendered from `src/lib/api/openapi.json`                           |
-| `/over`, `/bronnen`, `/privacy`, `/voorwaarden`                                            | Prose pages                                                                       |
+| URL                                                                                        | Purpose                                                                                                                               |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `/bundels`                                                                                 | The bundels a reader keeps, a list; a shared bundel (`#m=`) opens as its page                                                         |
+| `/bundels/[id]`                                                                            | One bundel on a page of its own: to work in, to read and to print (PDF)                                                               |
+| `/onderwerpen`, `/onderwerpen/overzicht`                                                   | Followed topics, and one topic's overview                                                                                             |
+| `/ambten`                                                                                  | The ministers' offices of the cabinet in office, each to its page                                                                     |
+| `/rechtspraak/rechtsgang`                                                                  | The route of a case per area of law, each court with its article; the regeling; a tab beside Uitspraken (`pages` in `nav/sources.ts`) |
+| `/ambten/[ministry]`, `/ambten/[ministry]/[post]`, `/ambten/[ministry]/[post]/[portfolio]` | One office over the names of its ministry: holders, gaps, toezeggingen, dossiers                                                      |
+| `/`                                                                                        | Start page: search with four scopes, each linking into Bladeren; Actueel in short                                                     |
+| `/actueel`                                                                                 | What came in per day, with filters in the URL and an Atom feed                                                                        |
+| `/zoeken`                                                                                  | Results of a query per soort, with facets and pages; not indexed                                                                      |
+| `/explore`                                                                                 | The Verkenner                                                                                                                         |
+| Readable addresses (below)                                                                 | The Verkenner, for one bron                                                                                                           |
+| `/docs`, `/docs/methode`, `/docs/sneltoetsen`                                              | Documentation for users                                                                                                               |
+| `/api`                                                                                     | API reference, rendered from `src/lib/api/openapi.json`                                                                               |
+| `/over`, `/bronnen`, `/privacy`, `/voorwaarden`                                            | Prose pages                                                                                                                           |
 
 ## Readable addresses
 

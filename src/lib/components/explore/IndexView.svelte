@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { centerChild, sideScroll } from '$lib/actions/side-scroll';
 	import { tick, untrack } from 'svelte';
 	// Index: browse one category at a time. Over the list a bar of filters (FilterBar), each
 	// option with the number of bronnen it holds under the other filters. A row says what
@@ -45,10 +44,10 @@
 		INDEX_CATEGORIES,
 		categoryLabel,
 		categoryNoun,
+		sourceTabs,
 		type IndexCategory
 	} from './index/categories';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { shapeOfCategory } from '$lib/bron/vormen';
+	import SourceTabs from '$lib/nav/SourceTabs.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { navigate, withParams } from '$lib/util/address';
 	import { LISTS } from './index/lists';
@@ -67,9 +66,7 @@
 
 	let { category }: { category: IndexCategory } = $props();
 
-	// The lists beside this one under the same source.
 	const source = $derived(sourceOfList(category));
-	const sourceLists = $derived(INDEX_CATEGORIES.filter((c) => source.lists.includes(c.key)));
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const list = $derived(LISTS[category]);
@@ -86,6 +83,8 @@
 		withParams(new URL(LIST_PATHS[k] + page.url.search, page.url), filters, {
 			clear: [...INDEX_FILTER_PARAMS, 'open']
 		});
+	// The lists beside this one under the same source, and its pages (Rechtsgang).
+	const tabs = $derived(sourceTabs(source, tabHref));
 
 	// ── Search text ─────────────────────────────────────────────────────────
 	// What is typed goes into the URL when the typing pauses, in place of the last
@@ -481,22 +480,6 @@
 		return source ? ekListSource(source) : null;
 	});
 
-	// On a phone the tab strip scrolls (wider, it wraps): the category on screen is brought to the
-	// middle of it, on load and when it changes, and an edge that hides tabs fades out
-	// (use:sideScroll). Once the fonts are in the tabs are wider, so it centres again then.
-	let catbar = $state<HTMLElement | null>(null);
-	function centerActive() {
-		const on = catbar?.querySelector<HTMLElement>('.cat--on');
-		if (catbar && on) centerChild(catbar, on);
-	}
-	$effect(() => {
-		void category;
-		if (!catbar) return;
-		centerActive();
-		document.fonts?.addEventListener('loadingdone', centerActive);
-		return () => document.fonts?.removeEventListener('loadingdone', centerActive);
-	});
-
 	// ── Open row, Esc ───────────────────────────────────────────────────────
 	// A shared link with an open row scrolls to it once the list is in.
 	let revealOpen = $state(false);
@@ -554,26 +537,9 @@
 <svelte:window onkeydown={handleKey} />
 
 <div class="index-view">
-	<!-- The lists of the soort the page stands under (Parlement: Kamerleden, Fracties,
-	     Commissies); the soorten themselves are the top navigation. A soort of one list has
-	     no strip. -->
-	{#if sourceLists.length > 1}
-		<nav class="catbar" data-zijscroll use:sideScroll aria-label={source.label} bind:this={catbar}>
-			{#each sourceLists as cat (cat.key)}
-				<a
-					href={tabHref(cat.key)}
-					class="cat"
-					class:cat--on={cat.key === category}
-					aria-current={cat.key === category ? 'page' : undefined}
-					title={cat.about}
-					data-sveltekit-noscroll
-					data-sveltekit-keepfocus
-				>
-					<KindGlyph vorm={shapeOfCategory(cat.key)} size={11} />
-					<span class="cat-name">{cat.label}</span>
-				</a>
-			{/each}
-		</nav>
+	<!-- The lists of the soort the page stands under and the pages beside them (SourceTabs). -->
+	{#if tabs.length}
+		<SourceTabs label={source.label} {tabs} current={category} />
 	{/if}
 
 	<div class="stage">
@@ -794,53 +760,6 @@
 		overflow: hidden;
 	}
 
-	/* ── Category bar ─────────────────────────────────────────────────── */
-	.catbar {
-		display: flex;
-		align-items: stretch;
-		gap: 0;
-		padding: var(--s-3) var(--s-5) 0;
-		border-bottom: 1px solid var(--rule);
-		background: var(--paper);
-		flex-shrink: 0;
-		overflow-x: auto;
-		scrollbar-width: thin;
-		/* A tab reached with the keyboard comes clear of the fade, not under it. */
-		scroll-padding-inline: var(--s-7);
-	}
-	/* The fade is wide here: a tab that is half in view reads as one that goes on. */
-	.catbar {
-		--fade-width: var(--s-7);
-	}
-	.cat {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-2) var(--s-2) var(--s-3);
-		text-decoration: none;
-		border-bottom: 2px solid transparent;
-		white-space: nowrap;
-		color: var(--ink-3);
-	}
-	.cat-name {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink-3);
-		line-height: 1;
-		transition: color var(--dur-1) var(--ease);
-	}
-	.cat:hover .cat-name {
-		color: var(--ink-2);
-	}
-	.cat--on {
-		border-bottom-color: var(--ink);
-		color: var(--ink);
-	}
-	.cat--on .cat-name {
-		color: var(--ink);
-		font-weight: 600;
-	}
-
 	/* ── Stage container ─────────────────────────────────────────────── */
 	.stage {
 		flex: 1;
@@ -1015,13 +934,6 @@
 
 	/* Narrow viewports: the columns stack. */
 	@media (max-width: 768px) {
-		.catbar {
-			padding: var(--s-3) var(--s-4) 0;
-		}
-		.cat {
-			min-height: 44px;
-			padding: var(--s-2) var(--s-4) var(--s-3);
-		}
 		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the
 		   number columns, over the numbers at full width. */
 		.list-head {

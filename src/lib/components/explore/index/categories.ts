@@ -2,6 +2,8 @@ import { SOURCES } from '$lib/nav/sources';
 import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
 import { LIST_PATHS } from '$lib/bron/lists';
 import { routeKop } from '$lib/seo/routes';
+import { shapeOfCategory } from '$lib/bron/vormen';
+import type { SourceTab } from '$lib/nav/SourceTabs.svelte';
 
 // The index in the five rubrieken of the Topbalk (nav/sources.ts), in their order and under their
 // names: Wetten, Rechtspraak, Kamerstukken, Parlement, Regering. A category is named as the bron
@@ -70,3 +72,30 @@ export const INDEX_TABS = INDEX_GROUPS.map((group) => ({
 	label: group.label,
 	categories: INDEX_CATEGORIES.filter((c) => c.group === group.label)
 }));
+
+/**
+ * The tabs of a source: its lists, each at `listHref` (IndexView keeps the Kamer), then the
+ * pages beside them (Rechtsgang). A source of one list and no page has no strip: empty.
+ */
+export function sourceTabs(
+	source: (typeof SOURCES)[number],
+	listHref: (category: IndexCategory) => string = (k) => LIST_PATHS[k]
+): SourceTab[] {
+	const lists: SourceTab[] = INDEX_CATEGORIES.filter((c) => source.lists.includes(c.key)).map(
+		(c) => ({
+			key: c.key,
+			label: c.label,
+			href: listHref(c.key),
+			about: c.about,
+			vorm: shapeOfCategory(c.key)
+		})
+	);
+	const pages = source.pages.map((p) => ({
+		key: p.path,
+		label: p.label,
+		href: p.path,
+		about: routeKop(p.path).description
+	}));
+	const tabs = [...lists, ...pages];
+	return tabs.length > 1 ? tabs : [];
+}
