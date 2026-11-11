@@ -13,7 +13,7 @@ export const OFFICES_PATH = '/ambten';
 /** The posts whose seat /ambten lists: the ministers, the minister-president first. */
 const MINISTER_POSTS = new Set(['minister-president', 'minister', 'minister_zonder_portefeuille']);
 
-/** The address of an office: `/ambten/jenv/minister`, `/ambten/-/minister/werk-en-participatie`. */
+/** The address of an office: `/ambten/jenv/minister`, `/ambten/minister/werk-en-participatie`. */
 export const seatHref = (seat: string): string =>
 	`${OFFICES_PATH}/${seat.split('/').map(encodeURIComponent).join('/')}`;
 
@@ -51,14 +51,19 @@ const POST_WORD: Record<string, string> = {
 /**
  * An office by its seat where no holder names it: `Minister van Verkeer en Waterstaat` for
  * `venw/minister`, by the ministry's name as `name` gives it. A portfolio is in words of its
- * slug; a seat in another form stands for itself.
+ * slug; a seat in another form stands for itself. The old key of a seat without a ministry has
+ * a "-" in front (`-/minister/werk-en-participatie`); it names the same office.
  */
 export function seatName(seat: string, name: (ministry: string) => string): string {
-	const [ministry, post, portfolio] = seat.split('#')[0].split('/');
+	const parts = seat.split('#')[0].split('/');
+	// The first segment is the ministry, or the post itself where the seat has no ministry.
+	const [ministry, [post, portfolio]] = POST_WORD[parts[0]]
+		? [undefined, parts]
+		: [parts[0], parts.slice(1)];
 	const word = post ? POST_WORD[post] : undefined;
 	if (!word) return seat;
 	if (portfolio) return `${word} voor ${portfolio.replaceAll('-', ' ')}`;
-	if (post === 'minister-president' || ministry === '-') return word;
+	if (post === 'minister-president' || !ministry || ministry === '-') return word;
 	return `${word} van ${name(ministry)}`;
 }
 

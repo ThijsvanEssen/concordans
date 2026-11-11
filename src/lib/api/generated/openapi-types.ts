@@ -1516,7 +1516,7 @@ export interface paths {
         };
         /**
          * Office
-         * @description One office (``seat`` of a post in ``GET /api/cabinets/{key}``: ``ienw/minister``, ``jenv/staatssecretaris/rechtsbescherming``), under every name its ministry went by: any of its names gives the same answer. A merger of ministries is no rename (`merged_from`, `merged_into`). The holders with their periods, `gaps` without a holder, and per list what can be attributed to it: `commitments` and `dossiers` count the lists filtered on ``seat``, and what may be its own but fits nobody. Something is attributed by who did it and the day: the post of that kind they held; with two such posts that day the ministry decides, else it is attributed to neither. A seat without a ministry (``-/…``) has no other names. The viceminister-president, a seat beside a minister's own, has nothing attributed.
+         * @description One office (``seat`` of a post in ``GET /api/cabinets/{key}``: ``ienw/minister``, ``jenv/staatssecretaris/rechtsbescherming``), under every name its ministry went by: any of its names gives the same answer. A merger of ministries is no rename (`merged_from`, `merged_into`). The holders with their periods, `gaps` without a holder, and per list what can be attributed to it: `commitments` and `dossiers` count the lists filtered on ``seat``, and what may be its own but fits nobody. Something is attributed by who did it and the day: the post of that kind they held; with two such posts that day the ministry decides, else it is attributed to neither. A seat without a ministry (``staatssecretaris/…``) has no other names. The viceminister-president, a seat beside a minister's own, has nothing attributed.
          */
         get: operations["get_seat_detail_api_seats__seat__get"];
         put?: never;
@@ -5316,6 +5316,11 @@ export interface components {
              * @description The name they go by: Sophie Hermans.
              */
             name: string | null;
+            /**
+             * First Name Missing
+             * @description true: no official source gives their first name (neither the Kamer nor Rijksoverheid), so `name` is initials and surname: a gap, not filled in. Given on a cabinet, office, ministry and commitment; null elsewhere.
+             */
+            first_name_missing: boolean | null;
             /** Function */
             function: string | null;
             /**
@@ -13699,6 +13704,11 @@ export interface components {
              * @description The name they go by: Sophie Hermans.
              */
             name: string | null;
+            /**
+             * First Name Missing
+             * @description true: no official source gives their first name (neither the Kamer nor Rijksoverheid), so `name` is initials and surname: a gap, not filled in. Given on a cabinet, office, ministry and commitment; null elsewhere.
+             */
+            first_name_missing: boolean | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.

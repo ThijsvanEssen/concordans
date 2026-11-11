@@ -58,6 +58,11 @@ describe('an office', () => {
 		expect(seatName('-/minister/werk-en-participatie', name)).toBe(
 			'Minister voor werk en participatie'
 		);
+		expect(seatName('minister/werk-en-participatie', name)).toBe(
+			'Minister voor werk en participatie'
+		);
+		expect(seatName('minister_zonder_portefeuille', name)).toBe('Minister');
+		expect(seatName('-/minister_zonder_portefeuille', name)).toBe('Minister');
 		expect(seatName('viceminister-president', name)).toBe('viceminister-president');
 		expect(seatName('jenv/staatssecretaris', name)).toBe('jenv/staatssecretaris');
 	});

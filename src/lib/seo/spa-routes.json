@@ -118,6 +118,11 @@
 		"description": "De ambten van de ministers, elk met de houders over de namen van het ministerie heen en de toezeggingen en dossiers van het ambt."
 	},
 	{
+		"path": "/ambten/[ministry]",
+		"title": "Ambt, Concordans",
+		"description": "Een ambt zonder ministerie, zoals de minister zonder portefeuille, met zijn houders en hun periodes en de toezeggingen en dossiers van de houder van de dag."
+	},
+	{
 		"path": "/ambten/[ministry]/[post]",
 		"title": "Ambt, Concordans",
 		"description": "Een ambt met zijn houders en hun periodes, over de namen van het ministerie heen, en de toezeggingen en dossiers van de houder van de dag."
