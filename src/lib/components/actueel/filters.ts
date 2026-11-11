@@ -28,6 +28,22 @@ type VoteWord = (typeof VOTES)[number];
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
 export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
 
+/**
+ * The kinds a filter has nothing to say about: who submitted or voted, the coalition and the
+ * Kamer are of the papers, votes and commitments of the Kamer; a dossier is not of a
+ * commencement or a judgment; a ministry not of a judgment. A filter stands where the kinds
+ * chosen (none: every kind) hold one it speaks of.
+ */
+export const NOT_OF = {
+	kamer: ['publicatie', 'inwerkingtreding', 'uitspraak'],
+	dossier: ['inwerkingtreding', 'uitspraak'],
+	ministry: ['uitspraak']
+} as const satisfies Record<string, readonly FeedKind[]>;
+
+/** Whether a filter that says nothing about `not` speaks of any of the kinds chosen. */
+export const speaksOf = (kinds: readonly FeedKind[], not: readonly FeedKind[]) =>
+	!kinds.length || kinds.some((k) => !not.includes(k));
+
 type ActueelFilters = {
 	kinds: FeedKind[];
 	since: string;

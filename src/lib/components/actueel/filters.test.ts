@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
-import { FEED_FILTER_PARAMS, feedQuery, readFilters, summaryQuery } from './filters';
+import {
+	FEED_FILTER_PARAMS,
+	NOT_OF,
+	feedQuery,
+	readFilters,
+	speaksOf,
+	summaryQuery
+} from './filters';
 
 const TODAY = '2026-10-14';
 const read = (query: string) => readFilters(new URLSearchParams(query));
@@ -167,5 +174,25 @@ describe('summaryQuery: the day counts under the same filters', () => {
 			openapi.paths['/api/feed/summary'].get.parameters.map((p: { name: string }) => p.name)
 		);
 		expect(Object.keys(summaryQuery(all)).filter((k) => !taken.has(k))).toEqual([]);
+	});
+});
+
+describe('speaksOf: which filters stand under the kinds chosen', () => {
+	it('keeps every filter without a kind', () => {
+		expect(speaksOf([], NOT_OF.kamer)).toBe(true);
+	});
+
+	it('drops the Kamer, the dossier and the ministry under Uitspraak alone', () => {
+		for (const not of Object.values(NOT_OF)) expect(speaksOf(['uitspraak'], not)).toBe(false);
+	});
+
+	it('keeps the Kamer once a kind of the Kamer is chosen beside it', () => {
+		expect(speaksOf(['uitspraak', 'Motie'], NOT_OF.kamer)).toBe(true);
+	});
+
+	it('keeps the dossier and the ministry of a publication, not the Kamer', () => {
+		expect(speaksOf(['publicatie'], NOT_OF.kamer)).toBe(false);
+		expect(speaksOf(['publicatie'], NOT_OF.dossier)).toBe(true);
+		expect(speaksOf(['publicatie'], NOT_OF.ministry)).toBe(true);
 	});
 });

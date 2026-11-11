@@ -85,6 +85,8 @@
 		VOTES,
 		feedQuery,
 		readFilters,
+		speaksOf,
+		NOT_OF,
 		summaryQuery,
 		type CoalitionWord,
 		type FeedQuery
@@ -461,7 +463,7 @@
 	const coalitionCounts = $derived(facetMap(facets?.coalition));
 	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
 	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
-	const groups = $derived.by<FacetGroup[]>(() => {
+	const allGroups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
 		const factionMap = facetMap(facets?.faction);
@@ -631,6 +633,20 @@
 			}
 		];
 	});
+	// Only the filters that speak of the kinds chosen (none: all): under Uitspraak alone no
+	// Ingediend door, Stemde, Coalitie or Kamer. A value chosen stays, to be undone.
+	const ofKamer = $derived(speaksOf(kinds, NOT_OF.kamer));
+	const groups = $derived.by(() => {
+		const shown: Record<string, boolean> = {
+			fractie: ofKamer || !!faction,
+			stemde: ofKamer || !!voted,
+			coalitie: ofKamer || !!coalition,
+			ministerie: speaksOf(kinds, NOT_OF.ministry) || !!ministry,
+			dossier: speaksOf(kinds, NOT_OF.dossier) || !!dossier,
+			komend: !kinds.length || kinds.includes('inwerkingtreding') || ahead
+		};
+		return allGroups.filter((g) => shown[g.id] ?? true);
+	});
 	const chips = $derived(activeFilters(groups));
 	/** Actueel as it opens, without a filter, a word or a period: what is first comes first. */
 	const unfiltered = $derived(!chips.length && !q.length && !chamber);
@@ -725,11 +741,13 @@
 	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
 		<FilterBar
 			{groups}
-			chamber={{
-				value: chamber || BOTH_CHAMBERS,
-				options: CHAMBER_CHOICES,
-				onChoose: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
-			}}
+			chamber={ofKamer || chamber
+				? {
+						value: chamber || BOTH_CHAMBERS,
+						options: CHAMBER_CHOICES,
+						onChoose: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
+					}
+				: null}
 			pending={tellen}
 			show={total === null
 				? 'Toon de gebeurtenissen'
