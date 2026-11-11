@@ -11,6 +11,7 @@ import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 export type Routes = Schema<'JudgmentRoutesResponse'>;
 type AreaRoute = Schema<'AreaRoute'>;
 type RouteStep = Schema<'RouteStep'>;
+type RouteGap = AreaRoute['gaps'][number];
 
 /** An article cited, with its readable address where it has one (`articleOfBasis`). */
 export type Cited = { name: string; ref: BronRef; path: string | null; area?: string };
@@ -20,6 +21,9 @@ export type CourtStep = {
 	articles: Cited[];
 	/** The article is not read in the source: shown as a gap, never filled. */
 	gap: boolean;
+	/** The court a case goes to after this one alone, not after the others of its stage (the
+	 *  Hoge Raad after the Centrale Raad van Beroep): a line in the card, not a stage. */
+	then?: CourtStep & { stage: string };
 };
 type Stage = { name: string; courts: CourtStep[] };
 type AreaView = {
@@ -90,6 +94,18 @@ export function routeOf(view: AreaView, routes: Routes): { stages: Stage[]; othe
 			addCourt(other ? others : stage.courts, step, area, areas.length > 1);
 		}
 		for (const gap of area.gaps) {
+			const before = afterTier(gap);
+			const after = before && stages.flatMap((st) => st.courts).find((c) => c.tier === before);
+			if (after) {
+				after.then = {
+					tier: gap.tier,
+					name: tierName(gap.tier),
+					articles: [],
+					gap: true,
+					stage: stageName(gap.procedures)
+				};
+				continue;
+			}
 			const courts = stageOf(stageName(gap.procedures)).courts;
 			if (!courts.some((c) => c.tier === gap.tier))
 				courts.push({ tier: gap.tier, name: tierName(gap.tier), articles: [], gap: true });
@@ -97,6 +113,13 @@ export function routeOf(view: AreaView, routes: Routes): { stages: Stage[]; othe
 	}
 	return { stages, others };
 }
+
+/**
+ * The court a gap follows alone: cassation lies against the Centrale Raad van Beroep only, not
+ * against the other courts of appeal. Read from `why` until the API names it (B150).
+ */
+const afterTier = (gap: RouteGap): string | null =>
+	/Centrale Raad van Beroep/.test(gap.why) ? 'centrale_raad_van_beroep' : null;
 
 function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: boolean) {
 	let court = courts.find((c) => c.tier === step.tier);
