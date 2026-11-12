@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
-import { FEED_FILTER_PARAMS, feedQuery, readFilters, summaryQuery } from './filters';
+import {
+	FEED_FILTER_PARAMS,
+	NOT_OF,
+	feedQuery,
+	readFilters,
+	shownFilters,
+	speaksOf,
+	summaryQuery
+} from './filters';
 
 const TODAY = '2026-10-14';
 const read = (query: string) => readFilters(new URLSearchParams(query));
@@ -167,5 +175,38 @@ describe('summaryQuery: the day counts under the same filters', () => {
 			openapi.paths['/api/feed/summary'].get.parameters.map((p: { name: string }) => p.name)
 		);
 		expect(Object.keys(summaryQuery(all)).filter((k) => !taken.has(k))).toEqual([]);
+	});
+});
+
+describe('speaksOf: which filters stand under the kinds chosen', () => {
+	it('keeps every filter without a kind', () => {
+		expect(speaksOf([], NOT_OF.chamber)).toBe(true);
+	});
+
+	it('drops the Kamer, the dossier and the ministry under Uitspraak alone', () => {
+		for (const not of Object.values(NOT_OF)) expect(speaksOf(['uitspraak'], not)).toBe(false);
+	});
+
+	it('keeps the Kamer once a kind of the Kamer is chosen beside it', () => {
+		expect(speaksOf(['uitspraak', 'Motie'], NOT_OF.chamber)).toBe(true);
+	});
+
+	it('keeps the dossier and the ministry of a publication, not the Kamer', () => {
+		expect(speaksOf(['publicatie'], NOT_OF.chamber)).toBe(false);
+		expect(speaksOf(['publicatie'], NOT_OF.dossier)).toBe(true);
+		expect(speaksOf(['publicatie'], NOT_OF.ministry)).toBe(true);
+	});
+});
+
+describe('shownFilters: the filters of Actueel that stand', () => {
+	it('drops the filters of the Kamer under Uitspraak alone, keeps the period', () => {
+		const shown = shownFilters(read('soort=uitspraak'));
+		for (const id of ['kamer', 'fractie', 'stemde', 'coalitie', 'ministerie', 'dossier', 'komend'])
+			expect(shown(id)).toBe(false);
+		expect(shown('periode')).toBe(true);
+	});
+
+	it('keeps a filter with a value chosen, to be undone', () => {
+		expect(shownFilters(read('soort=uitspraak&fractie=vvd'))('fractie')).toBe(true);
 	});
 });
