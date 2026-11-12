@@ -5,7 +5,12 @@ import { dayParam } from '$lib/text/periode';
 import type { paths } from '$lib/api/generated/openapi-types';
 import { PARAM, listParam } from '$lib/url/filters';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
-import { isFeedKind, type FeedKind } from './feed';
+import { TIERS, TIER_LABEL, type Tier } from '$lib/vocabulary';
+import { capitalize } from '$lib/text/words';
+import { FEED_KINDS, isFeedKind, type FeedKind } from './feed';
+import { NO_AREA, NO_AREA_LABEL } from './lower-courts';
+import type { Schema } from '$lib/api/types';
+import { facetMap, type FacetGroup } from '$lib/components/explore/index/facets';
 
 export type FeedQuery = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
 
@@ -26,19 +31,27 @@ export const VOTED_PARAM = 'stemde';
 export const VOTE_PARAM = 'stem';
 type VoteWord = (typeof VOTES)[number];
 
+/** The names of Instantie and Rechtsgebied in the address. */
+export const TIER_PARAM = 'instantie';
+export const AREA_PARAM = 'rechtsgebied';
+
+const isTier = (v: string): v is Tier => (TIERS as readonly string[]).includes(v);
+
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
 export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
 
 /**
  * The kinds a filter has nothing to say about: who submitted or voted, the coalition and the
  * Kamer are of the papers, votes and commitments of the Kamer; a dossier is not of a
- * commencement or a judgment; a ministry not of a judgment. A filter stands where the kinds
- * chosen (none: every kind) hold one it speaks of.
+ * commencement or a judgment; a ministry not of a judgment; the court and the area of law of
+ * nothing but a judgment. A filter stands where the kinds chosen (none: every kind) hold one
+ * it speaks of.
  */
 export const NOT_OF = {
 	chamber: ['publicatie', 'inwerkingtreding', 'uitspraak'],
 	dossier: ['inwerkingtreding', 'uitspraak'],
-	ministry: ['uitspraak']
+	ministry: ['uitspraak'],
+	judgment: FEED_KINDS.filter((k) => k !== 'uitspraak')
 } as const satisfies Record<string, readonly FeedKind[]>;
 
 /** Whether a filter that says nothing about `not` speaks of any of the kinds chosen. */
@@ -48,18 +61,24 @@ export const speaksOf = (kinds: readonly FeedKind[], not: readonly FeedKind[]) =
 /**
  * Which filters of Actueel stand, by their id: those that speak of the kinds chosen, and a
  * filter with a value chosen, to be undone. Under Uitspraak alone no Ingediend door, Stemde,
- * Coalitie or Kamer.
+ * Coalitie or Kamer, nor with an Instantie or a Rechtsgebied chosen; those two only where
+ * judgments may be.
  */
 export function shownFilters(f: ActueelFilters): (id: string) => boolean {
-	const ofChamber = speaksOf(f.kinds, NOT_OF.chamber);
+	// A court or an area of law keeps judgments alone, whatever the kinds chosen.
+	const kinds: FeedKind[] = f.tiers.length || f.area ? ['uitspraak'] : f.kinds;
+	const ofChamber = speaksOf(kinds, NOT_OF.chamber);
+	const ofJudgment = speaksOf(kinds, NOT_OF.judgment);
 	const shown = new Map<string, boolean>([
 		['kamer', ofChamber || !!f.chamber],
 		['fractie', ofChamber || !!f.faction],
 		['stemde', ofChamber || !!f.voted],
 		['coalitie', ofChamber || !!f.coalition],
-		['ministerie', speaksOf(f.kinds, NOT_OF.ministry) || !!f.ministry],
-		['dossier', speaksOf(f.kinds, NOT_OF.dossier) || !!f.dossier],
-		['komend', !f.kinds.length || f.kinds.includes('inwerkingtreding') || f.ahead]
+		['ministerie', speaksOf(kinds, NOT_OF.ministry) || !!f.ministry],
+		['dossier', speaksOf(kinds, NOT_OF.dossier) || !!f.dossier],
+		[TIER_PARAM, ofJudgment || !!f.tiers.length],
+		[AREA_PARAM, ofJudgment || !!f.area],
+		['komend', !kinds.length || kinds.includes('inwerkingtreding') || f.ahead]
 	]);
 	return (id) => shown.get(id) ?? true;
 }
@@ -81,6 +100,10 @@ type ActueelFilters = {
 	/** Every word searched, each a `q` of its own: any of them counts. */
 	q: string[];
 	chamber: Chamber | '';
+	/** The courts of the judgments (`tier`): any of them; none, the feed's own. */
+	tiers: Tier[];
+	/** The main area of law of the judgments (`subject_area`), `none` for those without one. */
+	area: string;
 	instrument: string;
 	/** An article of the law, only with the law. */
 	article: string;
@@ -164,6 +187,12 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 		},
 		ask: (v) => (v ? { chamber: v } : {})
 	},
+	tiers: {
+		param: TIER_PARAM,
+		read: (p) => TIERS.filter((t) => listParam(p.get(TIER_PARAM), isTier).includes(t)),
+		ask: (v) => (v.length ? { tier: v.join(',') } : {})
+	},
+	area: { ...plain(AREA_PARAM, 'subject_area'), read: (p) => p.get(AREA_PARAM)?.trim() ?? '' },
 	instrument: { ...plain('wet', 'instrument'), read: readLaw },
 	article: {
 		...plain('artikel', 'article'),
@@ -196,4 +225,78 @@ export function feedQuery(filters: ActueelFilters, today: string): FeedQuery {
 export function summaryQuery(query: FeedQuery) {
 	const { since: _since, until: _until, limit: _limit, cursor: _cursor, ...filters } = query;
 	return filters;
+}
+
+type Option = { id: string; label: string; count: number; on: boolean; onClick: () => void };
+
+/**
+ * Instantie as the bar lists it: the courts the feed counts (`tier`, every tier, also those it
+ * shows only when asked), in the order of the judiciary; a chosen one without a count with 0.
+ * Any of them at once, as `soort`.
+ */
+export function tierOptions(
+	counts: ReadonlyMap<string, number>,
+	chosen: readonly Tier[],
+	choose: (tiers: Tier[]) => void
+): Option[] {
+	return TIERS.filter((t) => counts.has(t) || chosen.includes(t)).map((t) => {
+		const on = chosen.includes(t);
+		return {
+			id: t,
+			label: TIER_LABEL[t],
+			count: counts.get(t) ?? 0,
+			on,
+			onClick: () => choose(on ? chosen.filter((c) => c !== t) : [...chosen, t])
+		};
+	});
+}
+
+/**
+ * Rechtsgebied as the bar lists it: the main areas of the judgments, most first, and last the
+ * judgments without one, a gap in the source named "Onbekend" (`none`); one at a time.
+ */
+export function areaOptions(
+	facet: readonly { value?: string | null; count: number }[] | null | undefined,
+	chosen: string,
+	choose: (area: string | null) => void
+): Option[] {
+	const areas = (facet ?? []).map((f) => ({ id: f.value || NO_AREA, count: f.count }));
+	if (chosen && !areas.some((a) => a.id === chosen)) areas.push({ id: chosen, count: 0 });
+	areas.sort((a, b) => Number(a.id === NO_AREA) - Number(b.id === NO_AREA));
+	return areas.map(({ id, count }) => ({
+		id,
+		label: id === NO_AREA ? capitalize(NO_AREA_LABEL) : id,
+		count,
+		on: chosen === id,
+		onClick: () => choose(chosen === id ? null : id)
+	}));
+}
+
+/**
+ * Instantie and Rechtsgebied as groups of the bar, each changing its name in the address; of
+ * the judgments alone, so standing where they may be (`shownFilters`).
+ */
+export function judgmentGroups(
+	facets: Schema<'FeedFacetsDTO'> | null,
+	tiers: readonly Tier[],
+	area: string,
+	patch: (p: Record<string, string | null>) => void
+): FacetGroup[] {
+	return [
+		{
+			id: TIER_PARAM,
+			label: 'Instantie',
+			kind: 'list',
+			options: tierOptions(facetMap(facets?.tier), tiers, (t) =>
+				patch({ [TIER_PARAM]: t.join(',') || null })
+			)
+		},
+		{
+			id: AREA_PARAM,
+			label: 'Rechtsgebied',
+			chip: 'Rechtsgebied',
+			kind: 'list',
+			options: areaOptions(facets?.subject_area, area, (a) => patch({ [AREA_PARAM]: a }))
+		}
+	];
 }

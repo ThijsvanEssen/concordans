@@ -16,9 +16,9 @@ export const LOWER_TIERS = [
 ].join(',');
 
 /** `subject_area` for the judgments without a rechtsgebied: a gap in the source, named as one. */
-const NO_AREA = 'none';
+export const NO_AREA = 'none';
 /** The label of that gap. */
-const NO_AREA_LABEL = 'onbekend';
+export const NO_AREA_LABEL = 'onbekend';
 
 /** How many judgments a heading shows before "Alle N". */
 export const FIRST_JUDGMENTS = 3;

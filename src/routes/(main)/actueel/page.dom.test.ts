@@ -170,3 +170,48 @@ describe('the votes of a fractie on Actueel (B5)', () => {
 		);
 	});
 });
+
+describe('the courts and the area of law of the judgments on Actueel (B157)', () => {
+	beforeEach(() => {
+		api = fakeApi({
+			'/api/feed': (r) =>
+				r.params.query?.facets
+					? {
+							items: [],
+							total: 2,
+							facets: {
+								tier: [{ value: 'rechtbank', count: 2 }],
+								subject_area: [{ value: null, count: 2 }]
+							}
+						}
+					: { items: [], next_cursor: null, data_as_of: {} },
+			'/api/feed/summary': { days: [] },
+			'/api/documents': { items: [] },
+			'/api/cabinets': [],
+			'/api/factions': []
+		});
+	});
+
+	it('asks them as `tier` and `subject_area`, the gap as `none`, chosen as chips', async () => {
+		open('/actueel?instantie=rechtbank&rechtsgebied=none');
+		const { findAllByText, getAllByText } = render(Page);
+		await findAllByText(/Rechtbanken/);
+		expect(getAllByText(/Onbekend/).length).toBeGreaterThan(0);
+		const asked = api.asked('/api/feed').map((p) => p.query);
+		expect(asked.every((q) => q?.tier === 'rechtbank' && q?.subject_area === 'none')).toBe(true);
+	});
+
+	it('stands where judgments may be, not under kinds without them', async () => {
+		const shown = async (address: string) => {
+			cleanup();
+			open(address);
+			const { getByRole, queryAllByText } = render(Page);
+			await settle();
+			const meer = getByRole('button', { name: /^Meer/ });
+			await fireEvent.click(meer);
+			return ['Instantie', 'Rechtsgebied'].map((t) => queryAllByText(t).length > 0);
+		};
+		expect(await shown('/actueel')).toEqual([true, true]);
+		expect(await shown('/actueel?soort=Motie')).toEqual([false, false]);
+	});
+});
