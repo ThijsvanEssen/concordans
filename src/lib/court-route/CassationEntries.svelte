@@ -5,10 +5,10 @@
 	// only instance, under it the court after verwijzing. A line after one court alone is dashed.
 	// On a phone the same as a list down the page.
 	import CourtArticles from './CourtArticles.svelte';
-	import type { Entries } from './entries';
+	import type { CassationIntake } from './entries';
 	import { lowerFirst } from '$lib/text/words';
 
-	let { entries }: { entries: Entries } = $props();
+	let { entries }: { entries: CassationIntake } = $props();
 	const dashed = $derived(entries.into.some((e) => e.dashed));
 </script>
 

@@ -63,21 +63,21 @@ test('bestuursrecht reads as rows "als … / anders", the excepted besluit first
 	).toBeVisible();
 });
 
-test('cassation in bestuursrecht stands under the Centrale Raad van Beroep alone', async ({
+test('cassation in bestuursrecht is a dashed card after the Centrale Raad van Beroep alone', async ({
 	page
 }) => {
 	await page.goto('/rechtspraak/rechtsgang?gebied=bestuur');
-	await expect(page.locator('.vak')).toHaveCount(2);
-	const appeal = page.locator('.vak').filter({ hasText: 'Hoger beroep' });
-	await expect(appeal.locator('.daarna')).toHaveCount(1);
-	await expect(appeal.locator('.daarna')).toContainText('daarna cassatie bij de Hoge Raad');
+	const stages = page.locator('.gebied .vak');
+	await expect(stages).toHaveCount(3);
+	const cassation = stages.filter({ hasText: 'Cassatie' });
+	await expect(cassation).toHaveClass(/vak--stippel/);
+	await expect(cassation.locator('.als')).toHaveText('alleen in enkele zaken');
+	await expect(cassation.locator('.naam')).toHaveText('Hoge Raad');
 	// With its grounds: art. 78 RO and the laws that open it (B150).
-	await expect(appeal.locator('.daarna').getByRole('link', { name: 'art. 53 AOW' })).toBeVisible();
-	// The line follows the CRvB, not the Afdeling or the CBb.
-	const order = await appeal.locator('.naam, .daarna').allTextContents();
-	expect(order.findIndex((t) => t.startsWith('daarna'))).toBe(
-		order.indexOf('Centrale Raad van Beroep') + 1
-	);
+	await expect(cassation.getByRole('link', { name: 'art. 53 AOW' })).toBeVisible();
+	await expect(
+		page.locator('.gebied').getByText('cassatie, alleen na de Centrale Raad van Beroep')
+	).toBeVisible();
 });
 
 test('the entries into the Hoge Raad name each court before it, with its articles', async ({

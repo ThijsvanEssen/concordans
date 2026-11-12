@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entriesOf } from './entries';
+import { supremeEntries } from './entries';
 import type { Routes } from './route';
 
 const RO = 'BWBR0001830';
@@ -76,7 +76,7 @@ const names = (articles: { name: string; area?: string }[]) =>
 	articles.map((a) => (a.area ? `${a.name} (${a.area})` : a.name));
 
 describe('the entries into the Hoge Raad', () => {
-	const { into, first, out } = entriesOf(ROUTES);
+	const { into, first, out } = supremeEntries(ROUTES);
 
 	it('names the court before it, the full lines first, by view and stage', () => {
 		expect(into.map((e) => [e.name, e.stage, e.areas, e.via, e.dashed])).toEqual([
@@ -121,6 +121,6 @@ describe('the entries into the Hoge Raad', () => {
 	});
 
 	it('is empty where the answer names no Hoge Raad', () => {
-		expect(entriesOf({ areas: [], regeling: [] })).toEqual({ into: [], first: [], out: [] });
+		expect(supremeEntries({ areas: [], regeling: [] })).toEqual({ into: [], first: [], out: [] });
 	});
 });

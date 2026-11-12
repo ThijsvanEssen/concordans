@@ -18,7 +18,7 @@
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import CourtArticles from '$lib/court-route/CourtArticles.svelte';
 	import CassationEntries from '$lib/court-route/CassationEntries.svelte';
-	import { entriesOf } from '$lib/court-route/entries';
+	import { supremeEntries } from '$lib/court-route/entries';
 	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 	import { SOURCES } from '$lib/nav/sources';
@@ -46,10 +46,8 @@
 	const choose = (id: string) => navigate(withParams(page.url, { gebied: id }));
 	const data = $derived(routes.state.status === 'ready' ? routes.state.data : null);
 	const route = $derived(data ? routeOf(view, data) : null);
-	const entries = $derived(data ? entriesOf(data) : null);
-	const dashed = $derived(
-		route?.some((s) => s.rows.some((r) => r.courts.some((c) => c.then))) ?? false
-	);
+	const entries = $derived(data ? supremeEntries(data) : null);
+	const dashed = $derived(route?.some((s) => s.after) ?? false);
 	const options = $derived(VIEWS.map((v) => ({ waarde: v.id, label: v.short })));
 	const RO = { collection: 'instruments' as const, key: 'bwbr0001830' };
 	const AWB = { collection: 'instruments' as const, key: 'bwbr0005537' };
@@ -109,7 +107,8 @@
 						<li class="stap">
 							{#if i}<span class="pijl" aria-hidden="true">{arrowInto(stage, route[i - 1])}</span
 								>{/if}
-							<div class="vak">
+							<!-- After one court alone: dashed (B144, the Hoge Raad after the CRvB). -->
+							<div class="vak" class:vak--stippel={stage.after}>
 								<span class="fase">{stage.name}</span>
 								{#each stage.rows as row (row.when)}
 									<!-- A row per condition, "anders" last (B144 stroomschema). -->
@@ -129,13 +128,6 @@
 												<span class="naam">{court.name}</span>
 												<span class="art raak-regels"><CourtArticles {court} /></span>
 											</p>
-											{#if court.then}
-												<!-- After this court alone, so not a stage of its own (B144 4A). -->
-												<p class="daarna raak-regels">
-													daarna {court.then.stage.toLowerCase()} bij de {court.then.name}, in
-													enkele wetten: <CourtArticles court={court.then} />
-												</p>
-											{/if}
 										{/each}
 									</div>
 								{/each}
@@ -331,14 +323,8 @@
 		font-size: var(--t-meta);
 	}
 	/* After one court alone: dashed, as the legend says. */
-	.daarna {
-		margin: var(--s-2) 0 0;
-		padding: var(--s-2);
-		border: 1px dashed var(--ink-3);
-		border-radius: var(--r-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
+	.vak--stippel {
+		border-style: dashed;
 	}
 	.artikelen,
 	.wetten {

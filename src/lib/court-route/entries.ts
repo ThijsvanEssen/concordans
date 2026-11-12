@@ -21,7 +21,7 @@ const FIRST = 'Eerste aanleg';
 
 /** A court whose judgments the Hoge Raad hears: "Gerechtshoven", "hoger beroep", for "civiel en
  *  straf", by "cassatie"; `to` holds the articles that open it. */
-export type Entry = {
+type CassationEntry = {
 	name: string;
 	stage: string;
 	areas: string;
@@ -31,8 +31,12 @@ export type Entry = {
 };
 /** The Hoge Raad by itself (`first`: in first and only instance) or the court after it (`out`):
  *  its name, the procedure, the areas and the articles. */
-export type Beside = { court: CourtStep; stage: string; areas: string };
-export type Entries = { into: Entry[]; first: Beside[]; out: Beside[] };
+type CassationSide = { court: CourtStep; stage: string; areas: string };
+export type CassationIntake = {
+	into: CassationEntry[];
+	first: CassationSide[];
+	out: CassationSide[];
+};
 
 type Item = { step: RouteStep; gap: boolean; area: AreaRoute };
 type Group = { key: string; order: number; items: Item[] };
@@ -42,7 +46,7 @@ type Group = { key: string; order: number; items: Item[] };
  * view (civiel and straf together) and stage; an article the areas of an entry differ in names
  * its area ("art. 398 Rv (civiel)"). Empty where the answer names none.
  */
-export function entriesOf(routes: Routes): Entries {
+export function supremeEntries(routes: Routes): CassationIntake {
 	const into = new Map<string, Group>();
 	const first = new Map<string, Group>();
 	const out = new Map<string, Group>();
@@ -89,7 +93,7 @@ function before(steps: RouteStep[], after: string | null): RouteStep | undefined
 	);
 }
 
-function entryOf(group: Group): Entry {
+function entryOf(group: Group): CassationEntry {
 	const [, tier, stage] = group.key.split('|');
 	const { court } = besideOf(group);
 	return {
@@ -104,7 +108,7 @@ function entryOf(group: Group): Entry {
 }
 
 /** The court of a group, its articles from every step: one an area alone gives names it. */
-function besideOf(group: Group): Beside {
+function besideOf(group: Group): CassationSide {
 	const [{ step }] = group.items;
 	const courts: CourtStep[] = [];
 	const many = new Set(group.items.map((x) => x.area.area)).size > 1;

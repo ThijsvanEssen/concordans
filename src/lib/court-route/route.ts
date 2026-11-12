@@ -21,10 +21,6 @@ export type CourtStep = {
 	articles: Cited[];
 	/** The article is not read in the source: shown as a gap, never filled. */
 	gap: boolean;
-	/** The court a case goes to after this one alone, not after the others of its stage (the
-	 *  Hoge Raad after the Centrale Raad van Beroep, `after_tier`): a dashed line in the card,
-	 *  not a stage. */
-	then?: CourtStep & { stage: string };
 };
 /** A row of a stage: the courts of a case that meets its condition. `when` null: every case,
  *  in a stage of one row; "anders": every other case. A row without courts ends the route
@@ -35,7 +31,9 @@ export type Row = {
 	none: string | null;
 	courts: CourtStep[];
 };
-type Stage = { name: string; rows: Row[] };
+/** A stage; `after`: only after that court of the stage before, not after the others (the
+ *  Hoge Raad after the Centrale Raad van Beroep, `after_tier`): a dashed card. */
+type Stage = { name: string; rows: Row[]; after?: string };
 type AreaView = {
 	id: string;
 	label: string;
@@ -71,6 +69,9 @@ export const VIEWS: AreaView[] = [
 	}
 ];
 
+/** The condition of a stage after one court alone. */
+const SOME = 'alleen in enkele zaken';
+
 /** The article of the regeling that excepts a besluit from beroep (hoofdstuk 1). */
 const EXCEPTED = 'bijlage 2 artikel 1';
 
@@ -94,7 +95,7 @@ const entryOnly = (step: RouteStep) =>
 /**
  * The stages of the route of a view in their order, each with its rows: a court the areas of
  * the view give different articles names each with its area ("art. 42 RO (civiel)"). A step
- * after one court alone (`after_tier`) is a line under that court.
+ * after one court alone (`after_tier`) is a stage of its own, last: "alleen in enkele zaken".
  */
 export function routeOf(view: AreaView, routes: Routes): Stage[] {
 	const areas = routes.areas.filter((a) => view.areas.includes(a.area));
@@ -121,17 +122,16 @@ export function routeOf(view: AreaView, routes: Routes): Stage[] {
 				row.courts.push({ tier: gap.tier, name: tierName(gap.tier), articles: [], gap: true });
 		}
 	}
-	const courts = stages.flatMap((s) => s.rows.flatMap((r) => r.courts));
-	for (const [step, area] of after) {
-		// The court of the latest stage: the CRvB in hoger beroep, not in first and only instance.
-		const before = courts.findLast((c) => c.tier === step.after_tier);
-		if (!before) continue;
-		const then = { tier: step.tier, name: tierName(step.tier), articles: [], gap: false };
-		addCourt([then], step, area, false);
-		before.then = { ...then, stage: stageName(step.procedures) };
-	}
 	if (view.areas.includes('bestuur')) excepted(stages[0], routes);
 	for (const stage of stages) settle(stage);
+	const courts = stages.flatMap((s) => s.rows.flatMap((r) => r.courts));
+	for (const [step, area] of after) {
+		const before = courts.find((c) => c.tier === step.after_tier);
+		if (!before) continue;
+		const row: Row = { when: SOME, cite: null, none: null, courts: [] };
+		addCourt(row.courts, step, area, false);
+		stages.push({ name: stageName(step.procedures), rows: [row], after: before.name });
+	}
 	return stages;
 }
 
@@ -185,9 +185,11 @@ export function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, 
 }
 
 /** The arrow into a stage: "hoger beroep"; after a stage with an "anders" row, the court of
- *  that row alone: "hoger beroep, na de rechtbank". */
+ *  that row alone: "hoger beroep, na de rechtbank"; into a stage after one court alone, that
+ *  court: "cassatie, alleen na de Centrale Raad van Beroep". */
 export function arrowInto(stage: Stage, before: Stage): string {
 	const name = stage.name.toLowerCase();
+	if (stage.after) return `${name}, alleen na de ${stage.after}`;
 	const other = before.rows.length > 1 ? before.rows.at(-1)?.courts[0] : undefined;
 	return other ? `${name}, na de ${other.tier === 'rechtbank' ? 'rechtbank' : other.name}` : name;
 }
