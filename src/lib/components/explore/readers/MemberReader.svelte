@@ -367,9 +367,10 @@
 				{#snippet ambtOnder(id: string)}
 					{@const step = career.find((c) => stapId(c) === id)}
 					{#if step?.kind === 'function'}
-						<MinistryLink ministry={step.ministry} />{#if step.cabinet}{step.ministry
-								? ', '
-								: ''}<NameLink
+						<MinistryLink
+							ministry={step.ministry}
+							class="raak-rij"
+						/>{#if step.cabinet}{step.ministry ? ', ' : ''}<NameLink
 								collection="cabinets"
 								name={step.cabinet}
 							/>{/if}{#if step.count > 0}{`${step.cabinet || step.ministry ? ', ' : ''}${count(step.count, 'stuk', 'stukken')} ondertekend`}{/if}

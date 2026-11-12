@@ -108,12 +108,13 @@
 				>
 			</Veld>
 		</Feiten>
-		<CabinetTeam cabinet={c} />
 	{/snippet}
 	{#snippet foot()}
 		<div class="seats">
 			<KabinetZetels kabinet={node.key} fasen={phaseStarts(record?.phases ?? [])} />
 		</div>
+		<!-- Under the seats: it comes with the record and moves nothing above it. -->
+		{#if record}<CabinetTeam cabinet={record} />{/if}
 	{/snippet}
 </ReaderFrame>
 
