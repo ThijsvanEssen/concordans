@@ -2,6 +2,7 @@
 	// Inline term that shows a popover with the full name and a plain explanation on
 	// hover or focus: the kind of a kamerstuk in the document reader (MvT, Motie). A dotted
 	// underline marks the term.
+	import { takeEscape } from '$lib/actions/keys';
 	import { clickOutside } from '$lib/actions/top-layer';
 	import FloatingCard from '$lib/components/ui/FloatingCard.svelte';
 	import { GLOSSARY, type GlossaryTerm } from '$lib/glossary';
@@ -56,7 +57,7 @@
 		open = touch || e.detail === 0 ? !open : true;
 	}}
 	onkeydown={(e) => {
-		if (e.key === 'Escape') open = false;
+		if (open && takeEscape(e)) open = false;
 	}}
 	aria-describedby={uid}
 	aria-expanded={open}>{display}</button

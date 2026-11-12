@@ -11,11 +11,7 @@ import type { Collection } from '$lib/vocabulary';
 import { titleParts } from '$lib/text/title-parts';
 import type { Classes } from './classes';
 import { FOLDS_KEY, readJson } from '$lib/util/storage';
-
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
-
-/** `s` as text in HTML. */
-export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ESCAPES[c]);
+import { esc } from '$lib/text/html';
 
 /** Running text as CitedText sets it: a date on one line (A184). */
 export const running = (text: string, k: Classes) =>
@@ -209,7 +205,7 @@ export function glyph(collection: Collection, size: number, k: Classes): string 
 /** Whether a section of a reader, by its key, stands open in this browser: until closed
  *  (dicht.svelte.ts). */
 export const sectionOpen = (key: string): boolean =>
-	readJson('local', FOLDS_KEY, (ruw) => (ruw as Record<string, unknown> | null)?.[key]) !== false;
+	readJson('local', FOLDS_KEY, (kept) => (kept as Record<string, unknown> | null)?.[key]) !== false;
 
 /**
  * A section of a reader as the first paint draws it (Sectie): its heading and count, open or

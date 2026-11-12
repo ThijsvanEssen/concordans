@@ -16,6 +16,7 @@
 	import { DAY_MS, fromDate, yearOf, periodSentence, vandaag } from '$lib/text/datum';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import { ms } from '$lib/components/tijdlijn/tijdas';
+	import { fractieNaam } from '$lib/bron/menselijk';
 
 	let {
 		cabinets,
@@ -105,7 +106,7 @@
 				? `${fromDate(c.from_date)}, eind ${NOT_IN_DATA}`
 				: periodSentence(c.from_date, c.to_date)
 		}${c.prime_minister?.name ? `, minister-president ${c.prime_minister.name}` : ''}${
-			c.parties?.length ? `, ${c.parties.map((p) => p.short ?? p.faction).join(', ')}` : ''
+			c.parties?.length ? `, ${c.parties.map(fractieNaam).join(', ')}` : ''
 		}.`;
 </script>
 

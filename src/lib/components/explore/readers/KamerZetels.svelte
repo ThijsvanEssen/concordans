@@ -311,7 +311,12 @@
 										k.s
 									)}"
 									onclick={() => onSelect(k.s)}
-									onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(k.s)}
+									onkeydown={(e) => {
+										if (e.key !== 'Enter' && e.key !== ' ') return;
+										// Space on a button scrolls the page unless taken.
+										e.preventDefault();
+										onSelect(k.s);
+									}}
 									><title>{k.s.coalition} zetels {fromDate(k.s.from_date)}{onzekerWoord(k.s)}</title
 									></rect
 								>

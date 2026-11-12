@@ -249,6 +249,17 @@ export const numeralOf = (line: string): string | null => NUMERAL_LINE.exec(line
  * answer read as a pair; offsets, lines and anchors stay as the API has them. A line before a
  * heading or a table, or at the end, stays as it is.
  */
+/** The headings of a paper as they compare to its lines: trimmed, in lower case. */
+export const headingSet = (headings: Iterable<string>): ReadonlySet<string> =>
+	new Set([...headings].map((h) => h.trim().toLowerCase()));
+
+/**
+ * Whether a block is a heading's own line, drawn as that heading: one line with its text. The
+ * first paint and the reader skip it alike.
+ */
+export const isHeadingLine = (b: PaperBlock, headings: ReadonlySet<string>): boolean =>
+	b.lines.length === 1 && headings.has(b.line.text.trim().toLowerCase());
+
 function withLabels(blocks: PaperBlock[], headings: ReadonlySet<string>): PaperBlock[] {
 	const out: PaperBlock[] = [];
 	let numeral: PaperParagraph | null = null;
@@ -256,10 +267,7 @@ function withLabels(blocks: PaperBlock[], headings: ReadonlySet<string>): PaperB
 	blocks.forEach((b, k) => {
 		const next = blocks[k + 1];
 		const bare = b.lines.length === 1 && !b.tables.length ? b.line.text : null;
-		const joinable =
-			!!next &&
-			!next.tables.length &&
-			!(next.lines.length === 1 && headings.has(next.line.text.toLowerCase()));
+		const joinable = !!next && !next.tables.length && !isHeadingLine(next, headings);
 		if (bare !== null && joinable && !numeral && !answerLabel && numeralOf(bare)) {
 			numeral = b.line;
 			return;
@@ -324,10 +332,7 @@ export function paperBlocks(
 		});
 		k = last + 1;
 	}
-	return withLabels(
-		blocks,
-		new Set((doc.sections ?? []).map((s) => s.heading.trim().toLowerCase()))
-	);
+	return withLabels(blocks, headingSet((doc.sections ?? []).map((s) => s.heading)));
 }
 
 /** The anchor of a lid by its number: `lid-2`. */

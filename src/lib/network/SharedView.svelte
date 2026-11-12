@@ -5,6 +5,7 @@
 	// With three to six bronnen a Keuze above holds Alle drie and each pair, and shows the rows
 	// of that choice only. One click on a pill or a tussenbron marks its row: its card stands
 	// in the strip at the right.
+	import { takeEscape } from '$lib/actions/keys';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
@@ -108,7 +109,7 @@
 	const BLOCK = ['', 'Eén stap', 'Twee stappen', 'Drie stappen'];
 	const openSearch = useSearchOpener();
 	const keydown = (e: KeyboardEvent) => {
-		if (e.key === 'Escape' && chosen) onChoose(null);
+		if (chosen && takeEscape(e)) onChoose(null);
 	};
 </script>
 

@@ -16,7 +16,14 @@ import { hasOwnOutcome, numberWord, replacementsOf } from '$lib/text/vervanging'
 import { langeDatum } from '$lib/text/datum';
 import { voteBarOf, type VoteBarModel, type VoteSide } from '$lib/votes/stembalk';
 import { decidingVote, hasSides, voteLineOf } from '$lib/votes/vote-line';
-import { numeralOf, paperBlocks, paperParagraphs, type PaperBlock } from '$lib/text/anchor';
+import {
+	headingSet,
+	isHeadingLine,
+	numeralOf,
+	paperBlocks,
+	paperParagraphs,
+	type PaperBlock
+} from '$lib/text/anchor';
 import { korteDatum } from '$lib/text/datum';
 import { belongsToBill, isCoverLetter, motionOrAmendment, ownKind } from '$lib/text/document-kind';
 import { formatCount } from '$lib/text/getal';
@@ -28,7 +35,6 @@ import {
 	band,
 	caret,
 	coverage,
-	esc,
 	glyph,
 	headRow,
 	readerHead,
@@ -36,6 +42,7 @@ import {
 	sectionOpen,
 	type BandLine
 } from './markup';
+import { esc } from '$lib/text/html';
 import type { PaintedColumn } from './paint';
 
 type Doc = Schema<'DocumentTextResponse'>;
@@ -206,10 +213,7 @@ function body(v: PaperPaint, k: Classes): string | null {
 		sections: [...sections, ...(v.headings ?? []).map((heading) => ({ heading }))]
 	} as Doc);
 	const notes = stukNoten(doc.footnotes ?? [], paragraphs, sections);
-	const headings = new Set([
-		...sections.map((s) => s.heading.trim().toLowerCase()),
-		...(v.headings ?? [])
-	]);
+	const headings = headingSet([...sections.map((s) => s.heading), ...(v.headings ?? [])]);
 	const entries: Entry[] = [
 		...sections.map((section) => ({
 			type: 'heading' as const,
@@ -217,7 +221,7 @@ function body(v: PaperPaint, k: Classes): string | null {
 			section
 		})),
 		...blocks
-			.filter((b) => !(b.lines.length === 1 && headings.has(b.line.text.trim().toLowerCase())))
+			.filter((b) => !isHeadingLine(b, headings))
 			.map((block) => ({ type: 'para' as const, start: block.start, block }))
 	].sort((a, b) => a.start - b.start || (a.type === 'heading' ? -1 : 1));
 	const stop = entries.findIndex(

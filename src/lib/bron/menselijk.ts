@@ -154,15 +154,22 @@ export const naamVan = (
 /**
  * A fractie by its abbreviation (UX #57): the one name for its chip, its seats and its
  * colour, as the votes name it (NSC, not "Nieuw Sociaal Contract"); its name where it has none.
+ * A party of a cabinet or a coalition gives its abbreviation as `short` and its key as `faction`.
  */
 export const fractieNaam = (
 	f: {
 		key?: string | null;
+		faction?: string | null;
 		abbreviation?: string | null;
+		short?: string | null;
 		name?: string | null;
 		display_name?: string | null;
 	} & object
-): string => textOf(f.abbreviation) ?? textOf(f.name) ?? naamVan('factions', f);
+): string =>
+	textOf(f.abbreviation) ??
+	textOf(f.short) ??
+	textOf(f.name) ??
+	naamVan('factions', { ...f, key: f.key ?? f.faction ?? null });
 
 /** The name of a bron known only by its id (`collection/key`) and perhaps a name. */
 export function naamVanId(id: string, displayName?: string | null): string {

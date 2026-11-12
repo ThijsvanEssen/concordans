@@ -13,6 +13,8 @@
 	} from '$lib/components/parliamentary/paper-cite';
 	import {
 		numeralOf,
+		headingSet,
+		isHeadingLine,
 		paperBlocks,
 		paperParagraphs,
 		parseAnchor,
@@ -152,7 +154,7 @@
 	// an article, instead of one long run of paragraphs.
 	type Section = Schema<'SectionDTO'>;
 	const sections = $derived<Section[]>(loaded?.sections ?? []);
-	const headingTexts = $derived(new Set(sections.map((s) => s.heading.trim().toLowerCase())));
+	const headingTexts = $derived(headingSet(sections.map((s) => s.heading)));
 
 	type Entry =
 		| { type: 'heading'; start: number; section: Section }
@@ -203,12 +205,9 @@
 			start: section.char_start,
 			section
 		}));
-		for (const block of blocks) {
-			// The heading's own line is already drawn as the heading; skip its duplicate.
-			if (block.lines.length === 1 && headingTexts.has(block.line.text.trim().toLowerCase()))
-				continue;
+		// The heading's own line is already drawn as the heading; skip its duplicate.
+		for (const block of blocks.filter((b) => !isHeadingLine(b, headingTexts)))
 			out.push({ type: 'para', start: block.start, end: block.start + block.text.length, block });
-		}
 		return out.sort((a, b) => a.start - b.start || (a.type === 'heading' ? -1 : 1));
 	});
 

@@ -5,7 +5,7 @@
 // values, put in words; no reading of them.
 
 import type { Schema } from '$lib/api/types';
-import { naamVanId } from '$lib/bron/menselijk';
+import { fractieNaam } from '$lib/bron/menselijk';
 import { CHOICE } from '$lib/votes/stemming';
 
 type CoalitionVote = Schema<'CoalitionVoteDTO'>;
@@ -35,8 +35,6 @@ type CoalitionLine = {
 	labels: string[];
 };
 
-const nameOf = (f: CoalitionFaction) => f.short ?? naamVanId(`factions/${f.key}`);
-
 /** The coalition line of a vote; null where the coalition cast no seat. */
 export function coalitionLine(
 	c: CoalitionVote,
@@ -46,7 +44,7 @@ export function coalitionLine(
 	const side = (choice: Choice): CoalitionSide => ({
 		choice,
 		outcome: choice === CHOICE.for ? 'ja' : 'nee',
-		names: factions.filter((f) => f.choice === choice).map(nameOf),
+		names: factions.filter((f) => f.choice === choice).map(fractieNaam),
 		seats: choice === CHOICE.for ? c.coalition_for : c.coalition_against
 	});
 	const both = [side(CHOICE.for), side(CHOICE.against)];
@@ -60,7 +58,7 @@ export function coalitionLine(
 			c.pattern === 'together'
 				? []
 				: both.filter((s) => (known ? s.names.length > 0 : s.seats > 0)),
-		splitFactions: factions.filter((f) => f.choice == null).map(nameOf),
+		splitFactions: factions.filter((f) => f.choice == null).map(fractieNaam),
 		labels: [
 			c.pattern === 'wissel' ? 'wisselmeerderheid' : null,
 			c.decisive ? 'doorslaggevend' : null

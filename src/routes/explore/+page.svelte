@@ -199,7 +199,7 @@
 	import { ChainData } from './chain-data.svelte';
 	import ReadTabs from './ReadTabs.svelte';
 	import ConnectedEntry from './ConnectedEntry.svelte';
-	import { mayShortcut } from '$lib/actions/keys';
+	import { mayShortcut, takeEscape } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
@@ -1930,7 +1930,7 @@
 	// ── Keys ─────────────────────────────────────────────────────────────────
 	// Escape closes what is on top here; the keys with Alt are answered below.
 	function handleKeydown(e: KeyboardEvent) {
-		if (tocOpen && e.key === 'Escape') {
+		if (tocOpen && takeEscape(e)) {
 			tocOpen = false;
 			return;
 		}

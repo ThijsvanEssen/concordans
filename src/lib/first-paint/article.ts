@@ -38,6 +38,7 @@ import { joinParts, textOf } from '$lib/text/words';
 import { uniqueBy } from '$lib/util/unique';
 import type { Classes } from './classes';
 import { findButton, readerStatus, running } from './markup';
+import { esc } from '$lib/text/html';
 import type { PaintedColumn } from './paint';
 
 type Dossier = {
@@ -103,9 +104,6 @@ export type ArticlePaint = {
 /** The source an article is under, first in its band (sourceOfCollection in $lib/nav/sources,
  *  which reads the app's page: a test keeps the two equal). */
 export const ARTICLES_SOURCE = 'Wetten';
-
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ESCAPES[c]);
 
 /** Whether the paint sets the text as the app does: leden, onderdelen, paragraphs and
  *  headings. A table or a footnote is the app's alone (TextTable, the notes). */
