@@ -62,8 +62,10 @@
 	import type { Schema } from '$lib/api/types';
 	import { partyColor } from '$lib/components/explore/party-color.svelte';
 	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
+	import { facetOptions } from '$lib/util/choice';
 	import {
 		activeFilters,
+		facetMap,
 		selectOptions,
 		type FacetGroup
 	} from '$lib/components/explore/index/facets';
@@ -85,6 +87,7 @@
 		VOTES,
 		feedQuery,
 		readFilters,
+		shownFilters,
 		summaryQuery,
 		type CoalitionWord,
 		type FeedQuery
@@ -455,18 +458,13 @@
 		items.flatMap((i) => i.persons).find((p) => p.key === member)?.name ?? 'Gekozen persoon'
 	);
 
-	const facetMap = (list: { value?: string | null; count: number }[] | undefined) =>
-		new Map((list ?? []).flatMap((f) => (f.value ? [[f.value, f.count] as const] : [])));
-
 	const coalitionCounts = $derived(facetMap(facets?.coalition));
 	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
 	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
-	const groups = $derived.by<FacetGroup[]>(() => {
+	const allGroups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
-		const factionMap = facetMap(facets?.faction);
-		if (faction && !factionMap.has(faction)) factionMap.set(faction, 0);
-		const factionCounts = [...factionMap];
+		const factionCounts = facetOptions(facetMap(facets?.faction), faction);
 		return [
 			{
 				id: 'soort',
@@ -631,6 +629,8 @@
 			}
 		];
 	});
+	const isShown = $derived(shownFilters(filters));
+	const groups = $derived(allGroups.filter((g) => isShown(g.id)));
 	const chips = $derived(activeFilters(groups));
 	/** Actueel as it opens, without a filter, a word or a period: what is first comes first. */
 	const unfiltered = $derived(!chips.length && !q.length && !chamber);
@@ -725,11 +725,13 @@
 	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
 		<FilterBar
 			{groups}
-			chamber={{
-				value: chamber || BOTH_CHAMBERS,
-				options: CHAMBER_CHOICES,
-				onChoose: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
-			}}
+			chamber={isShown('kamer')
+				? {
+						value: chamber || BOTH_CHAMBERS,
+						options: CHAMBER_CHOICES,
+						onChoose: (v) => patchUrl({ kamer: v === BOTH_CHAMBERS ? null : v })
+					}
+				: null}
 			pending={tellen}
 			show={total === null
 				? 'Toon de gebeurtenissen'
