@@ -3,7 +3,8 @@ import type { Schema } from '$lib/api/types';
 import { facetOptions } from '$lib/util/choice';
 import { countedTotal, faceted, type Counted } from '../faceted';
 import DocumentRows from '../rows/DocumentRows.svelte';
-import { PAGE, defineList, facetMap, toggle } from './list';
+import { PAGE, defineList, toggle } from './list';
+import { facetMap } from '../facets';
 import type { IndexParams } from './params';
 
 type Row = Schema<'DocumentListItemDTO'>;

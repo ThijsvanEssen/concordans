@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import {
-	aantalAmendementen,
-	besluitSoort,
-	dienstregeling,
-	inStemming,
-	kolomVan,
-	stappen
-} from './amendementen';
+import { aantalAmendementen, dienstregeling, inStemming, kolomVan, stappen } from './amendementen';
 
 type Antwoord = Schema<'AmendmentChainsResponse'>;
 type Keten = Antwoord['chains'][number];
@@ -209,17 +202,6 @@ describe('the timetable of the amendementen', () => {
 });
 
 describe('besluiten without a vote (gap 2, BesluitSoort)', () => {
-	it('names the kind as the Kamer decided, never "gestemd"', () => {
-		expect(besluitSoort('Stemmen - ingetrokken')).toBe('ingetrokken');
-		expect(besluitSoort('Aanhouden')).toBe('aangehouden');
-		expect(besluitSoort('Stemmen - aangehouden')).toBe('aangehouden');
-		expect(besluitSoort('Uitstellen')).toBe('uitgesteld');
-		expect(besluitSoort('Vervallen')).toBe('vervallen');
-		expect(besluitSoort('Stemmen - aangenomen')).toBeNull();
-		expect(besluitSoort('Stemmen')).toBeNull();
-		expect(besluitSoort(null)).toBeNull();
-	});
-
 	it('gives an ingetrokken amendement its word, and a replaced stuk its successor', () => {
 		const d = dienstregeling({
 			number: '36000',

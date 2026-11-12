@@ -15,7 +15,7 @@
 		"src/lib/components/articles/ArticleText.svelte": 1092,
 		"src/lib/components/articles/VersionCompare.svelte": 972,
 		"src/lib/components/explore/IndexView.svelte": 975,
-		"src/lib/components/explore/readers/ArticleReader.svelte": 1210,
+		"src/lib/components/explore/readers/ArticleReader.svelte": 1209,
 		"src/lib/components/explore/readers/DocumentReader.svelte": 854,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphCanvas.svelte": 1609,
@@ -25,9 +25,9 @@
 		"src/lib/verbonden/Verbonden.svelte": 871,
 		"src/lib/verbonden/groups.ts": 1217,
 		"src/lib/verbonden/loaders.ts": 1511,
-		"src/routes/(main)/actueel/+page.svelte": 855,
+		"src/routes/(main)/actueel/+page.svelte": 857,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2966
+		"src/routes/explore/+page.svelte": 2965
 	},
 	"effects_per_svelte": {
 		"src/lib/components/graph/GraphView.svelte": 9,
@@ -36,15 +36,15 @@
 	},
 	"imports_per_svelte": {
 		"src/lib/components/explore/WholeLawReader.svelte": 49,
-		"src/lib/components/explore/readers/ArticleReader.svelte": 55,
+		"src/lib/components/explore/readers/ArticleReader.svelte": 54,
 		"src/lib/components/explore/readers/DocumentReader.svelte": 48,
 		"src/lib/components/explore/readers/DossierReader.svelte": 42,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 44,
 		"src/lib/components/explore/readers/MemberReader.svelte": 44,
 		"src/lib/components/graph/GraphView.svelte": 64,
 		"src/lib/verbonden/Verbonden.svelte": 41,
-		"src/routes/(main)/actueel/+page.svelte": 42,
-		"src/routes/explore/+page.svelte": 105
+		"src/routes/(main)/actueel/+page.svelte": 43,
+		"src/routes/explore/+page.svelte": 106
 	},
 	"complexity": {
 		"src/lib/bron/describe.ts": 46,
@@ -77,7 +77,7 @@
 		"src/lib/components/open/rij-inhoud.ts": 21,
 		"src/lib/components/open/wijzigingen.ts": 20,
 		"src/lib/components/parliamentary/career.ts": 36,
-		"src/lib/components/parliamentary/procedure.ts": 33,
+		"src/lib/components/parliamentary/procedure.ts": 31,
 		"src/lib/components/parliamentary/proposer.ts": 25,
 		"src/lib/components/parliamentary/stand.ts": 39,
 		"src/lib/first-paint/article.ts": 94,
@@ -130,7 +130,6 @@
 		"src/lib/verbonden/verbinding.ts": 22,
 		"src/lib/verbonden/view.ts": 19,
 		"src/lib/votes/stembalk.ts": 16,
-		"src/routes/(main)/actueel/+page.svelte": 17,
 		"src/routes/(main)/onderwerpen/+page.svelte": 20,
 		"src/routes/explore/+page.svelte": 39,
 		"src/routes/explore/explore-url.ts": 27,
@@ -148,7 +147,7 @@
 		"src/lib/components/graph/hulls.ts": 109,
 		"src/lib/components/graph/kind-rows.ts": 113,
 		"src/lib/components/parliamentary/career.ts": 84,
-		"src/lib/components/parliamentary/procedure.ts": 126,
+		"src/lib/components/parliamentary/procedure.ts": 98,
 		"src/lib/first-paint/article.ts": 134,
 		"src/lib/graph/container-membership.ts": 85,
 		"src/lib/graph/layout.ts": 115,
@@ -164,7 +163,7 @@
 		"src/lib/verbonden/data-source.ts": 418,
 		"src/lib/verbonden/loaders.ts": 90,
 		"src/lib/verbonden/sketch.ts": 291,
-		"src/routes/(main)/actueel/+page.svelte": 163,
+		"src/routes/(main)/actueel/+page.svelte": 161,
 		"src/routes/explore/+page.svelte": 91
 	}
 }

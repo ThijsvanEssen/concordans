@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { fakeApi } from '$lib/test/fakeApi';
+import { describe, expect, it, vi } from 'vitest';
+import { fail, fakeApi } from '$lib/test/fakeApi';
 import {
 	getInstrumentDetail,
 	getInstrumentMeta,
 	instrumentMetaStore,
+	primeInstrumentNames,
 	recordInstrument
 } from './instrument-cache';
 import { lawName } from '$lib/text/instrument-meta';
@@ -73,5 +74,22 @@ describe('a law of the Staatsblad the BWB does not hold yet', () => {
 			identifier: 'STB-2026-56'
 		});
 		expect(getInstrumentMeta('STB-2026-56')?.citationTitle).toBe('Wetboek van Strafvordering');
+	});
+});
+
+describe('primeInstrumentNames', () => {
+	it('asks the names again after a failed request, once at a time', async () => {
+		vi.stubGlobal('requestIdleCallback', (fn: () => void) => (fn(), 1));
+		const answers: unknown[] = [fail(503), { items: [{ bwb_id: 'BWBR0005537', title: 'Awb' }] }];
+		const fake = fakeApi({ '/api/instruments': () => answers.shift() });
+		primeInstrumentNames();
+		primeInstrumentNames();
+		expect(fake.asked('/api/instruments')).toHaveLength(1);
+		await vi.waitFor(() => expect(answers).toHaveLength(1));
+		await new Promise((r) => setTimeout(r));
+		primeInstrumentNames();
+		await vi.waitFor(() => expect(getInstrumentMeta('BWBR0005537')?.title).toBe('Awb'));
+		expect(fake.asked('/api/instruments')).toHaveLength(2);
+		vi.unstubAllGlobals();
 	});
 });

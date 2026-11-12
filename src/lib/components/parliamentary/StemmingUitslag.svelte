@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Every vote taken on a motie or an amendement, on the page of the stuk itself (API 0.73,
 	// BE-33), each in the one form of a vote's outcome (VoteLine): an earlier
-	// "Uitstellen" too. The vote that settled it stands in the head, at rest, and not again
+	// "Uitgesteld" too. The vote that settled it stands in the head, at rest, and not again
 	// here (`except`): each vote is said once.
 	import type { Schema } from '$lib/api/types';
 	import Sectie from '$lib/components/ui/Sectie.svelte';

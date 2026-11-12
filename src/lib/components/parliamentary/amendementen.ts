@@ -8,6 +8,7 @@ import { getDossierAmendments } from '$lib/api/dossiers';
 import type { Schema } from '$lib/api/types';
 import { maandagVan } from '$lib/text/datum';
 import { votesShort } from '$lib/votes/stemming';
+import { uitslag } from '$lib/votes/decision-kind';
 
 /** A paper of an amendment: a stop in its route. `nieuw` where it replaces no other. */
 export type Stuk = {
@@ -61,39 +62,19 @@ function stukVan(d: Keten['documents'][number]): Stuk {
 	return { id: d.id, nummer: d.number ?? '', datum: d.date ?? '', titel: d.title ?? '' };
 }
 
-/**
- * What a decision without a vote says, from the TK's BesluitSoort as the API gives it
- * (`decision_kind`): `Stemmen - ingetrokken`, `Aanhouden`, `Uitstellen`, `Vervallen`. The
- * word, never "gestemd"; another kind by the part after its dash, lowercased.
- */
-export function besluitSoort(kind: string | null | undefined): string | null {
-	const k = (kind ?? '').trim().toLowerCase();
-	if (!k) return null;
-	if (/ingetrokken|intrekken/.test(k)) return 'ingetrokken';
-	if (/aangehouden|aanhouden/.test(k)) return 'aangehouden';
-	if (/uitgesteld|uitstellen/.test(k)) return 'uitgesteld';
-	if (/vervallen|vervalt/.test(k)) return 'vervallen';
-	if (/aangenomen|verworpen/.test(k)) return null;
-	const deel =
-		k
-			.split(/\s+-\s+/)
-			.at(-1)
-			?.trim() ?? '';
-	return deel && !/gestemd|stemmen/.test(deel) ? deel : null;
-}
-
 /** Above this many days the columns are weeks, so a long dossier stays one screen wide. */
 const MAX_DAGEN = 14;
 
 /** Without a vote the word of the decision: the API's outcome, else the BesluitSoort. */
-function uitslagVan(b: Keten['decision']): Uitslag | null {
+function decisionOf(b: Keten['decision']): Uitslag | null {
 	if (!b) return null;
+	const { passed, word } = uitslag(b);
 	return {
 		id: b.id,
 		datum: b.date ?? '',
-		aangenomen: b.passed,
+		aangenomen: passed,
 		telling: votesShort(b.tally),
-		soort: b.passed === null ? (b.outcome ?? besluitSoort(b.decision_kind)) : null
+		soort: passed === null ? (b.outcome ?? word) : null
 	};
 }
 
@@ -112,7 +93,7 @@ function rijVan(k: Keten): Rij {
 			? { naam: eerste.name, fractie: eerste.faction, anderen: anderen.length }
 			: null,
 		samengevoegd: k.merged,
-		uitslag: uitslagVan(k.decision),
+		uitslag: decisionOf(k.decision),
 		nogNiet: k.waiting
 	};
 }

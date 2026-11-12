@@ -44,6 +44,17 @@ const ROUTES: Routes = {
 					basis(AWB, 'bijlage 2 artikel 9')
 				])
 			],
+			gaps: [
+				{
+					tier: 'hoge_raad',
+					procedures: ['Cassatie'],
+					why: 'Cassation against the Centrale Raad van Beroep: not read in the source.'
+				}
+			]
+		},
+		{
+			area: 'belasting',
+			steps: [step('rechtbank', 'Eerste aanleg', basis(RO, '44'))],
 			gaps: [{ tier: 'hoge_raad', procedures: ['Cassatie'], why: 'not read' }]
 		}
 	],
@@ -52,6 +63,12 @@ const ROUTES: Routes = {
 const view = (id: string) => VIEWS.find((v) => v.id === id)!;
 
 describe('the route of a view', () => {
+	it('shows a gap after all courts of a stage as a stage of its own', () => {
+		const { stages } = routeOf(view('belasting'), ROUTES);
+		expect(stages.map((s) => s.name)).toEqual(['Eerste aanleg', 'Cassatie']);
+		expect(stages[1].courts[0]).toMatchObject({ name: 'Hoge Raad', gap: true, articles: [] });
+	});
+
 	it('names an article per area where the areas differ, once where they agree', () => {
 		const { stages } = routeOf(view('civiel'), ROUTES);
 		expect(stages.map((s) => s.name)).toEqual(['Eerste aanleg', 'Hoger beroep']);
@@ -68,14 +85,19 @@ describe('the route of a view', () => {
 		const { stages, others } = routeOf(view('bestuur'), ROUTES);
 		expect(stages.map((s) => [s.name, s.courts.map((c) => c.name)])).toEqual([
 			['Eerste aanleg', ['Rechtbanken']],
-			['Hoger beroep', ['Centrale Raad van Beroep']],
-			['Cassatie', ['Hoge Raad']]
+			['Hoger beroep', ['Centrale Raad van Beroep']]
 		]);
 		expect(stages[1].courts[0].articles.map((a) => a.name)).toEqual([
 			'art. 8:105 Awb',
 			'art. 9 bijlage 2 Awb'
 		]);
-		expect(stages[2].courts[0]).toMatchObject({ gap: true, articles: [] });
+		// Cassation lies against the CRvB alone: a line under it, not a stage after all three.
+		expect(stages[1].courts[0].then).toMatchObject({
+			name: 'Hoge Raad',
+			stage: 'Cassatie',
+			gap: true,
+			articles: []
+		});
 		expect(others.map((c) => [c.name, c.articles.map((a) => a.ref.key)])).toEqual([
 			[
 				'Afdeling bestuursrechtspraak van de Raad van State',

@@ -8,7 +8,8 @@ import { formatCount } from '$lib/text/getal';
 import { MOTION_KINDS, MOTION_KIND_LABEL, MOTION_KIND_PARAM } from '$lib/text/motion-kind';
 import DecisionRows from '../rows/DecisionRows.svelte';
 import ChamberRest from '../rows/ChamberRest.svelte';
-import { defineList, facetMap, sorted, toggle } from './list';
+import { defineList, sorted, toggle } from './list';
+import { facetMap } from '../facets';
 import type { IndexParams } from './params';
 
 type Row = Schema<'DecisionSummaryDTO'>;

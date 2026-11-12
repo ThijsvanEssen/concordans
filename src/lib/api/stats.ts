@@ -1,51 +1,33 @@
 import { api, unwrap } from './client';
 import type { Schema } from './types';
-import { isAborted, isSlow } from './errors';
-import { onForget } from '$lib/util/forget';
+import { isSlow } from './errors';
+import { abortable, onceFn } from './records';
 
-/**
- * One answer for the page load, asked at most once at a time. The caller that starts it gives
- * its `signal` to the request, so leaving the page ends it; a caller that finds it under way
- * waits for it. A failure clears it (the next ask is a new request), and a request that gave
- * up on its time or the API's (503, 504), or that the starter ended, is asked once more before
- * it counts as failed.
- */
-function sharedOnce<T>(get: (signal?: AbortSignal) => Promise<T>) {
-	let request: Promise<T> | null = null;
-	const start = (signal?: AbortSignal) => {
-		const mine: Promise<T> = get(signal).catch((err) => {
-			if (request === mine) request = null;
-			throw err;
-		});
-		return (request = mine);
-	};
-	const ask = async (signal?: AbortSignal, again = true): Promise<T> => {
-		try {
-			return await (request ?? start(signal));
-		} catch (err) {
-			if (again && !signal?.aborted && (isSlow(err) || isAborted(err))) return ask(signal, false);
-			throw err;
-		}
-	};
-	return { ask, forget: () => (request = null) };
-}
+/** `get`, asked once more when the first request gave up on its time or the API's (503, 504). */
+const twice =
+	<T>(get: () => Promise<T>) =>
+	() =>
+		get().catch((err) => (isSlow(err) ? get() : Promise.reject(err)));
 
 export type Stats = Schema<'StatsResponse'>;
 
-// The dataset changes by the day at most: one request per page load is enough.
-const stats = sharedOnce((signal) => unwrap(api.GET('/api/stats', { signal })));
+// The dataset changes by the day at most: one request per session is enough. A caller that
+// leaves ends its own wait, not the request the others share.
+const stats = onceFn(
+	'stats',
+	twice(() => unwrap(api.GET('/api/stats')))
+);
 
 /** The number of bronnen per collection and of verbindingen per relation. */
-export const getStats = (signal?: AbortSignal): Promise<Stats> => stats.ask(signal);
+export const getStats = (signal?: AbortSignal): Promise<Stats> => abortable(stats(), signal);
 
 export type Coverage = Schema<'JudgmentCoverageResponse'>;
 
-const coverage = sharedOnce((signal) => unwrap(api.GET('/api/stats/coverage', { signal })));
+const coverage = onceFn(
+	'stats/coverage',
+	twice(() => unwrap(api.GET('/api/stats/coverage')))
+);
 
 /** The judgments whose text is loaded, per court tier and per court, with their dates. */
-export const getCoverage = (signal?: AbortSignal): Promise<Coverage> => coverage.ask(signal);
-
-onForget(() => {
-	stats.forget();
-	coverage.forget();
-});
+export const getCoverage = (signal?: AbortSignal): Promise<Coverage> =>
+	abortable(coverage(), signal);
