@@ -28,6 +28,16 @@ describe('the article of a step', () => {
 		});
 	});
 
+	it('cites the AWR and the laws of cassation against the CRvB by their abbreviation', () => {
+		expect(articleOfBasis({ bwb_id: 'BWBR0002320', article_number: '28' }).name).toBe(
+			'art. 28 AWR'
+		);
+		expect(articleOfBasis({ bwb_id: 'BWBR0035917', article_number: '10.3.2' })).toMatchObject({
+			name: 'art. 10.3.2 Wlz',
+			path: '/wetten/BWBR0035917/artikel/10.3.2'
+		});
+	});
+
 	it('gives nothing where the API has no article', () => {
 		expect(basisArticle(withBasis(null))).toBeNull();
 	});
