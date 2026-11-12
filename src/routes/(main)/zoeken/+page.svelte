@@ -30,10 +30,11 @@
 	} from '$lib/search/results';
 	import { SearchResults } from '$lib/search/results.svelte';
 	import ResultRow from '$lib/search/ResultRow.svelte';
-	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { filterAddress, withParams } from '$lib/util/address';
 	import { atLeast, formatCount } from '$lib/text/getal';
 	import { uniqueBy } from '$lib/util/unique';
 	import { plural } from '$lib/text/words';
+	import { dayParam } from '$lib/text/periode';
 	import { lijstDoel as listTarget } from '$lib/stores/sprong';
 
 	// The names of the parameters in the address, which stay Dutch.
@@ -48,8 +49,8 @@
 	} as const;
 	const params = $derived(page.url.searchParams);
 	const q = $derived((params.get(P.q) ?? '').trim());
-	const from = $derived(params.get(P.from) ?? '');
-	const to = $derived(params.get(P.to) ?? '');
+	const from = $derived(dayParam(params, P.from));
+	const to = $derived(dayParam(params, P.to));
 	const chosen = $derived(
 		SEARCH_KINDS.find((k) => k === params.get(P.kind)) as SearchKind | undefined
 	);
@@ -64,21 +65,19 @@
 	});
 	$effect(() => () => results.stop());
 
-	/** A step in the history; typing replaces it. */
-	const patchUrl = (patch: ParamPatch, replace = false) =>
-		navigate(withParams(page.url, patch, { clear: [P.page] }), { step: !replace });
-	const hrefWith = (patch: ParamPatch) => withParams(page.url, patch, { clear: [P.page] });
+	// Every filter starts the results at their first page.
+	const address = filterAddress(() => page.url, {
+		clear: [P.page],
+		filters: [P.kind, P.court, P.year, P.from, P.to]
+	});
+	const patchUrl = address.patch;
+	const hrefWith = address.href;
 
 	// What is typed goes into the address when the typing pauses; the field keeps what was typed.
 	let draft = $state<string | null>(null);
-	let timer: ReturnType<typeof setTimeout> | undefined;
 	function type(v: string) {
 		draft = v;
-		clearTimeout(timer);
-		timer = setTimeout(
-			() => patchUrl({ [P.q]: v.trim() || null, [P.kind]: null }, true),
-			v ? 300 : 0
-		);
+		address.typeQuery(v, (t) => ({ [P.q]: t || null, [P.kind]: null }));
 	}
 	$effect(() => {
 		void q;
@@ -172,8 +171,7 @@
 		});
 		return out;
 	});
-	const clearFilters = () =>
-		patchUrl({ [P.kind]: null, [P.court]: null, [P.year]: null, [P.from]: null, [P.to]: null });
+	const clearFilters = address.clearFilters;
 
 	let listEl = $state<HTMLElement | null>(null);
 
@@ -319,9 +317,7 @@
 						<TextLink href={resultsHref(word, from, to)}>Zoek "{word}"</TextLink>
 					{/each}
 					{#if from || to}
-						<TextLink href={withParams(page.url, { [P.from]: null, [P.to]: null })}
-							>Zonder periode</TextLink
-						>
+						<TextLink href={hrefWith({ [P.from]: null, [P.to]: null })}>Zonder periode</TextLink>
 					{/if}
 				</span>
 			</div>

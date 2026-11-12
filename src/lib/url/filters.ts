@@ -20,3 +20,16 @@ export const PARAM = {
 } as const;
 
 export type SharedParam = (typeof PARAM)[keyof typeof PARAM];
+
+/**
+ * A list in one param, `?soort=a,b`: its parts trimmed, each once, in their order; an old
+ * name read as its new one, and what `accept` does not know left out (audit dubbele helpers).
+ */
+export function listParam<T extends string = string>(
+	value: string | null | undefined,
+	accept: (part: string) => part is T = (part): part is T => part !== '',
+	renamed: Readonly<Record<string, string>> = {}
+): T[] {
+	const parts = (value ?? '').split(',').map((s) => renamed[s.trim()] ?? s.trim());
+	return [...new Set(parts.filter(accept))];
+}

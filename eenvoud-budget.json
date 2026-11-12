@@ -14,7 +14,7 @@
 	"lines_per_file": {
 		"src/lib/components/articles/ArticleText.svelte": 1092,
 		"src/lib/components/articles/VersionCompare.svelte": 972,
-		"src/lib/components/explore/IndexView.svelte": 974,
+		"src/lib/components/explore/IndexView.svelte": 946,
 		"src/lib/components/explore/readers/ArticleReader.svelte": 1209,
 		"src/lib/components/explore/readers/DocumentReader.svelte": 853,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
@@ -25,9 +25,9 @@
 		"src/lib/verbonden/Verbonden.svelte": 871,
 		"src/lib/verbonden/groups.ts": 1217,
 		"src/lib/verbonden/loaders.ts": 1512,
-		"src/routes/(main)/actueel/+page.svelte": 854,
+		"src/routes/(main)/actueel/+page.svelte": 842,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2966
+		"src/routes/explore/+page.svelte": 2963
 	},
 	"effects_per_svelte": {
 		"src/lib/components/graph/GraphView.svelte": 9,

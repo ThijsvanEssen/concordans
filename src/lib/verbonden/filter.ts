@@ -18,7 +18,7 @@ import {
 	type Stuksoort
 } from '$lib/bron/rubrieken';
 import type { Row } from './rows';
-import { PARAM } from '$lib/url/filters';
+import { PARAM, listParam } from '$lib/url/filters';
 
 /** The confidence from which a verbinding's betrouwbaarheid is hoog: a citation read whole has 0.95. */
 export const HIGH_CONFIDENCE = 0.9;
@@ -137,6 +137,10 @@ const isStuksoort = (v: string): v is Stuksoort => (STUKSOORTEN as readonly stri
 const isRechter = (v: string | null): v is Rechter => RECHTERS.some((r) => r.id === v);
 const year = (v: string | null) => (v && /^\d{4}$/.test(v) ? Number(v) : null);
 
+/** The kinds of bronnen a param names (`?bronnen=`, `?soort=`), each once. */
+export const filterGroupsOf = (value: string | null, renamed?: Record<string, string>) =>
+	listParam(value, isFilterGroup, renamed);
+
 /** Whether the reader narrowed the verbindingen: a choice of bronnen or any filter. */
 const filterActive = (f: VerbondenFilter): boolean =>
 	Object.values(filterParams(f)).some((v) => v !== null);
@@ -151,25 +155,16 @@ export const emptyLine = (f: VerbondenFilter): string =>
  * The start page's server HTML (lawgraph, `seo/pages/home.py`) still names the stukken as
  * toelichtingen and wetsvoorstellen; they are one soort, Stukken, until that page says so.
  */
-const START_PAGE_NAME = [
+const START_PAGE_NAME = Object.fromEntries([
 	['toelichtingen', 'stukken'],
 	['wetsvoorstellen', 'stukken']
-] as const;
+]);
 
 /** The filter the URL holds. */
 export function parseFilter(params: URLSearchParams): VerbondenFilter {
-	const kinds = (params.get('bronnen') ?? '')
-		.split(',')
-		.map((s) => START_PAGE_NAME.find(([old]) => old === s.trim())?.[1] ?? s.trim())
-		.filter(isFilterGroup);
-	const stuksoorten = (params.get('stuksoort') ?? '')
-		.split(',')
-		.map((v) => v.trim())
-		.filter(isStuksoort);
-	const relationList = (params.get('relatie') ?? '')
-		.split(',')
-		.map((r) => r.trim())
-		.filter(Boolean);
+	const kinds = filterGroupsOf(params.get('bronnen'), START_PAGE_NAME);
+	const stuksoorten = listParam(params.get('stuksoort'), isStuksoort);
+	const relationList = listParam(params.get('relatie'));
 	const rechter = params.get('rechter');
 	const betrouwbaarheid = params.get('betrouwbaarheid');
 	const status = params.get('status');

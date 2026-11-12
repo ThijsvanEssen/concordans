@@ -2,6 +2,7 @@
 // within a number of steps of one focus. The URL holds it: ?netwerk lists the
 // chosen bronnen by the name a link uses (`members/<key>`, `dossiers/37020-XV`),
 // ?uit the ones switched off.
+import { listParam } from '$lib/url/filters';
 import type { GraphNode } from '$lib/graph/types';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { Neighbor } from '$lib/api/nodes';
@@ -38,13 +39,10 @@ export type NetwerkEntry = {
 };
 
 const list = (value: string | null) =>
-	(value ?? '')
-		.split(',')
-		.map((s) => s.trim())
-		.filter((s) => parseNodeId(s) !== null);
+	listParam(value, (s): s is string => parseNodeId(s) !== null);
 
 export function parseNetwerk(params: URLSearchParams): Netwerk {
-	const ids = [...new Set(list(params.get('netwerk')))];
+	const ids = list(params.get('netwerk'));
 	const uit = new Set(list(params.get('uit')).filter((id) => ids.includes(id)));
 	return { ids, uit };
 }

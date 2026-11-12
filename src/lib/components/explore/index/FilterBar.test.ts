@@ -158,4 +158,15 @@ describe('selectOptions', () => {
 			{ value: 'bz', label: 'Buitenlandse Zaken', count: 3 }
 		]);
 	});
+	it('has the options of facetOptions: none counted 0, none without a value, the chosen last (audit 14)', () => {
+		const counts = new Map([
+			['fin', 2],
+			['bz', 0],
+			['null', 5]
+		]);
+		expect(selectOptions(counts, 'az', name)).toEqual([
+			{ value: 'fin', label: 'Financiën', count: 2 },
+			{ value: 'az', label: 'az' }
+		]);
+	});
 });
