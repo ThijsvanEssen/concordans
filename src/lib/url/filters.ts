@@ -16,7 +16,9 @@ export const PARAM = {
 	outcome: 'uitkomst',
 	kind: 'soort',
 	chamber: 'kamer',
-	dossier: 'dossier'
+	dossier: 'dossier',
+	tier: 'tier',
+	subject_area: 'subject_area'
 } as const;
 
 export type SharedParam = (typeof PARAM)[keyof typeof PARAM];

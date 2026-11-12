@@ -86,6 +86,7 @@
 		VOTED_PARAM,
 		VOTES,
 		feedQuery,
+		judgmentGroups,
 		readFilters,
 		shownFilters,
 		summaryQuery,
@@ -503,10 +504,7 @@
 							kind: 'select' as const,
 							value: vote,
 							all: 'Voor en tegen',
-							options: VOTES.map((k) => ({
-								value: k,
-								label: capitalize(k)
-							})),
+							options: VOTES.map((k) => ({ value: k, label: capitalize(k) })),
 							onChange: (v: string) => patchUrl({ [VOTE_PARAM]: v || null })
 						}
 					]
@@ -547,6 +545,7 @@
 				options: selectOptions(facetMap(facets?.cabinet), cabinet, cabinetName),
 				onChange: (v) => patchUrl({ kabinet: v || null })
 			},
+			...judgmentGroups(facets, filters.tiers, filters.area, patchUrl),
 			{
 				id: 'dossier',
 				label: 'Dossier',

@@ -11,11 +11,14 @@ import { articleNodeKey } from '$lib/text/node-key';
 export type Basis = Schema<'CourseBasis'>;
 
 /** The laws the API's list of articles names (`data/route_articles.json`), as cited: the RO,
- *  the Awb, the AWR and the laws that open cassation against the Centrale Raad van Beroep. */
+ *  the Awb, the AWR, Rv and Sv (sprongcassatie, verwijzing) and the laws that open cassation
+ *  against the Centrale Raad van Beroep. */
 const LAW: Record<string, string> = {
 	BWBR0001830: 'RO',
 	BWBR0005537: 'Awb',
 	BWBR0002320: 'AWR',
+	BWBR0001827: 'Rv',
+	BWBR0001903: 'Sv',
 	BWBR0002368: 'AKW',
 	BWBR0007795: 'Anw',
 	BWBR0002221: 'AOW',
