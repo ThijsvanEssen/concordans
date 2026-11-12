@@ -40,6 +40,10 @@ export function alsDag(v: string | null | undefined): string | null {
 	return isDay(s) ? s : null;
 }
 
+/** The bound `name` of an address, a day or `''`: `?van=2024-13-45` is no bound (audit 5). */
+export const dayParam = (params: URLSearchParams, name: string): string =>
+	alsDag(params.get(name)) ?? '';
+
 /** `2024-03-01` as "1 mrt 2024": the short date without a full stop, as a reader types a bound. */
 export const formatDay = (iso: string): string => korteDatum(iso, { fullStop: false });
 

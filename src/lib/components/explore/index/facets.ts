@@ -2,6 +2,7 @@
 // its options, each with the number of bronnen it holds under the other filters; a period;
 // a choice. Groups that share a `knop` stand under one button of the bar, each as a section
 // of its menu (the courts under Instantie, in the order of the judiciary).
+import { facetOptions } from '$lib/util/choice';
 import { rangeLabel } from './range';
 
 type FacetOption = {
@@ -63,20 +64,20 @@ export const facetMap = (
 ) => new Map((facet ?? []).map((f) => [String(f.value), f.count]));
 
 /**
- * A menu's options from its counts, the chosen value among them though the counts lack it
- * (not in yet, or partial): by its name, never its key (#136).
+ * A menu's options from its counts, as every facet has them (facetOptions): the chosen value
+ * among them though the counts lack it (not in yet, or partial), without a count then; by its
+ * name, never its key (#136).
  */
 export const selectOptions = (
-	counts: Map<string, number>,
+	counts: ReadonlyMap<string, number>,
 	chosen: string,
 	name: (key: string) => string
-): { value: string; label: string; count?: number }[] => [
-	...(chosen && !counts.has(chosen) ? [{ value: chosen, label: name(chosen) }] : []),
-	// Not the count without a value (`facetMap`'s `'null'`): nothing to choose.
-	...[...counts].flatMap(([key, count]) =>
-		key === 'null' ? [] : [{ value: key, label: name(key), count }]
-	)
-];
+): { value: string; label: string; count?: number }[] =>
+	facetOptions(counts, chosen).map(([value, count]) => ({
+		value,
+		label: name(value),
+		...(counts.has(value) ? { count } : {})
+	}));
 
 /** A filter that is on, as a chip above the list; `short` its value alone (`Hoge Raad`). */
 type ActiveFilter = { id: string; label: string; short: string; onRemove: () => void };

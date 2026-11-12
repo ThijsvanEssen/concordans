@@ -2,6 +2,7 @@
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { capitalize } from '$lib/text/words';
 	import { atLeast } from '$lib/text/getal';
+	import { queryHref } from '$lib/util/address';
 	import { twoAtATime } from '$lib/util/two-at-a-time';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import AllN from '$lib/components/ui/AlleN.svelte';
@@ -307,14 +308,14 @@
 
 	/** The law (and article) in Actueel. */
 	const actueelWetHref = (o: Onderwerp) =>
-		`/actueel?${new URLSearchParams({ wet: o.wet!.bwb, ...(o.wet!.artikel ? { artikel: o.wet!.artikel } : {}) })}`;
+		queryHref('/actueel', { wet: o.wet!.bwb, artikel: o.wet!.artikel });
 
 	// The whole of Actueel for a word: the API searches its titles fast since 0.79.30, and says
 	// how far back it searched where it stopped short (Doorzocht vanaf).
-	const actueelHref = (term: string) => `/actueel?${new URLSearchParams({ q: term })}`;
+	const actueelHref = (term: string) => queryHref('/actueel', { q: term });
 
 	const overzichtHref = (o: Pick<Onderwerp, 'termen'>) =>
-		`/onderwerpen/overzicht?${new URLSearchParams({ onderwerp: topicParam(o.termen) })}`;
+		queryHref('/onderwerpen/overzicht', { onderwerp: topicParam(o.termen) });
 
 	// ── Following ───────────────────────────────────────────────────────────
 	let typed = $state('');
@@ -504,7 +505,7 @@
 								{today}
 								{openId}
 								onToggle={(id) => (openId = openId === id ? null : id)}
-								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
+								filterHref={(patch) => queryHref('/actueel', patch)}
 								nieuwSinds={o.vorige}
 								termen={isWords(o) ? o.termen : []}
 								wet={o.wet ? { bwb: o.wet.bwb, titel: wetNamen[o.wet.bwb] ?? o.wet.titel } : null}
@@ -533,7 +534,7 @@
 				{/if}
 				<p class="verder">
 					{#if o.dossier}
-						<a href="/actueel?{new URLSearchParams({ dossier: o.dossier.number })}">In Actueel</a>
+						<a href={queryHref('/actueel', { dossier: o.dossier.number })}>In Actueel</a>
 					{:else if o.wet}
 						<a href={actueelWetHref(o)}>In Actueel</a>
 					{:else}

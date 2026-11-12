@@ -1,6 +1,7 @@
 // ?uit names what is switched off, in one list: the chosen bronnen (`members/x`), the lijnsoorten
 // of Relatie (`aanhaling`) and the groupings (`dossier`). The address holds it, so a reload
 // or a shared link draws the same canvas.
+import { listParam } from '$lib/url/filters';
 import { isContainerKind, type ContainerKind } from '$lib/graph/container-membership';
 import { isLineKind, type LineKind } from '$lib/graph/line-kind';
 import { parseNodeId } from '$lib/vocabulary';
@@ -18,7 +19,7 @@ type Off = {
 /** The parts of ?uit; what is none of them is left out. */
 export function offOf(value: string | null): Off {
 	const off: Off = { chosen: [], lines: [], annexes: false, groups: [] };
-	for (const t of (value ?? '').split(',').map((s) => s.trim())) {
+	for (const t of listParam(value)) {
 		if (parseNodeId(t) !== null) off.chosen.push(t);
 		else if (t === ANNEXES) off.annexes = true;
 		else if (isLineKind(t)) off.lines.push(t);

@@ -2,6 +2,7 @@
 // place in it that is cited. One parameter, so a link with it opens the panel at whoever gets it;
 // several articles are comma-separated (`…_19,…_23.lid-1`), the panel shows them under each other.
 // The fragment (`#lid-2`) stays the place in the reader; `?naast` stays the text under it.
+import { listParam } from '$lib/url/filters';
 import { patchParams, queryHref } from '$lib/util/address';
 
 export const READ_PARAM = 'lees';
@@ -14,9 +15,8 @@ const PLACE = /\.((?:lid|onder)-[^.,]+|aanhef)$/;
 
 /** The articles a `lees` value names, in its order; what is no article is left out. */
 export function parseRead(value: string | null | undefined): ReadRef[] {
-	if (!value) return [];
-	return value.split(',').flatMap((part) => {
-		const m = /^articles\/(.+)$/.exec(part.trim());
+	return listParam(value).flatMap((part) => {
+		const m = /^articles\/(.+)$/.exec(part);
 		if (!m) return [];
 		const place = PLACE.exec(m[1]);
 		const key = place ? m[1].slice(0, place.index) : m[1];

@@ -27,7 +27,8 @@
 	import OverviewFacets from '$lib/onderwerpen/OverviewFacets.svelte';
 	import OverviewCourse from '$lib/onderwerpen/OverviewCourse.svelte';
 	import OverviewList from '$lib/onderwerpen/OverviewList.svelte';
-	import { isDay, monthName, fromDate, vandaag } from '$lib/text/datum';
+	import { monthName, fromDate, vandaag } from '$lib/text/datum';
+	import { dayParam } from '$lib/text/periode';
 	import { download, safeFileName } from '$lib/util/save-file';
 	import { lees, topicKey, topicsOf, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierOwnName } from '$lib/bron/dossier-naam';
@@ -113,9 +114,8 @@
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
 	const kamer: Chamber | '' = $derived(chamberFromParam(params.get(PARAM.chamber)) ?? '');
 	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
-	const dag = (v: string | null) => (isDay(v) ? v : '');
-	const van = $derived(dag(params.get(PARAM.since)));
-	const tot = $derived(dag(params.get(PARAM.until)));
+	const van = $derived(dayParam(params, PARAM.since));
+	const tot = $derived(dayParam(params, PARAM.until));
 	const fractie = $derived(params.get(PARAM.party) ?? '');
 	/** The chosen number (`cel=moties:2026-10`, `cel=voor:2025`, `cel=brieven`). */
 	const keuze = $derived(leesKeuze(params.get('cel')));

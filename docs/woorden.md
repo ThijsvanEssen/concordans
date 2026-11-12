@@ -96,6 +96,7 @@ fails on a label of a button that is not in this table.
 | `Adres van deze onderwerpen`         | naam      |
 | `Gevolgd. Naar de eigen onderwerpen` | naam      |
 | `Overzicht`                          | naam      |
+| `Zonder periode`                     | naam      |
 | `Bron ↗`                             | naam      |
 | `×`                                  | naam      |
 

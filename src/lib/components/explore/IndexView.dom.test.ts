@@ -282,7 +282,7 @@ describe('Bronnen, the address', () => {
 		expect(tabs).toMatchSnapshot();
 	});
 
-	it('takes a filter on and off in one step, the open row and the sort kept', async () => {
+	it('takes a filter on and off in one step, the sort kept and the open row closed', async () => {
 		const api = await open('dossiers', 'sort=title&open=dossiers/1');
 		await choose(/^Begroting/);
 		await settled();

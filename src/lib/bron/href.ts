@@ -5,6 +5,7 @@
 import { page } from '$app/state';
 import { parseNodeId, type Mode } from '$lib/vocabulary';
 import { isExplorePath, exploreHref, exploreUrl, parsePad } from './address';
+import { queryHref } from '$lib/util/address';
 import { listPath } from './lists';
 import type { BronRef } from './ref';
 import type { SharedParam } from '$lib/url/filters';
@@ -156,6 +157,5 @@ export function indexHref(
 	kind: string,
 	filters: { [K in SharedParam | 'status']?: string } = {}
 ): string {
-	const query = new URLSearchParams(filters).toString();
-	return `${listPath(kind)}${query ? `?${query}` : ''}`;
+	return queryHref(listPath(kind), filters);
 }
