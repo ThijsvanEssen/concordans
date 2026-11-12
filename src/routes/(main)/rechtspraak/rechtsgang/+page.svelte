@@ -12,12 +12,15 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import WetsartikelGat from '$lib/court-route/WetsartikelGat.svelte';
 	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 	import { SOURCES } from '$lib/nav/sources';
+	import SourceTabs from '$lib/nav/SourceTabs.svelte';
+	import { sourceTabs } from '$lib/components/explore/index/categories';
 	import { count, separatorBefore } from '$lib/text/words';
 	import {
 		VIEWS,
@@ -64,11 +67,14 @@
 	{/if}
 {/snippet}
 
+<SourceTabs
+	label={judgments.label}
+	tabs={sourceTabs(judgments)}
+	current="/rechtspraak/rechtsgang"
+/>
+
 <div class="page-wrap">
 	<div class="container blad rechtsgang">
-		<nav class="stub-eyebrow" aria-label="Hoort bij">
-			<a href={judgments.href}>{judgments.label}</a>
-		</nav>
 		<header class="blad__kop"><h1 class="blad__titel">Rechtsgang</h1></header>
 		<p class="stil lede">
 			Instanties per rechtsgebied, volgens de <a href={openHref(RO)}
@@ -79,7 +85,27 @@
 		<Keuze opties={options} waarde={view.id} onSelect={choose} label="Rechtsgebied" />
 
 		{#if routes.state.status !== 'ready'}
-			<LoadState state={routes.state} what="De rechtsgang" retry={routes.retry} />
+			<!-- While the API answers: the place of the schema, three cards, so the page does not
+			     stand empty under the choice; under them the line that it takes longer than usual. -->
+			{#if routes.state.status === 'loading'}
+				<section class="gebied" aria-busy="true" aria-labelledby="gebied-kop">
+					<h2 id="gebied-kop">{view.label}</h2>
+					<ol class="route" aria-hidden="true">
+						{#each [0, 1, 2] as i (i)}
+							<li class="stap">
+								<div class="vak vak--wacht">
+									<span class="skelet wacht-fase"></span>
+									<span class="skelet wacht-naam"></span>
+									<span class="skelet wacht-art"></span>
+								</div>
+							</li>
+						{/each}
+					</ol>
+					<SlowLoad label="Laden…" />
+				</section>
+			{:else}
+				<LoadState state={routes.state} what="De rechtsgang" retry={routes.retry} />
+			{/if}
 		{:else if route && data}
 			<section class="gebied" aria-labelledby="gebied-kop">
 				<h2 id="gebied-kop">{view.label}</h2>
@@ -203,6 +229,26 @@
 	/* An article whole on its line: a link that breaks has no one place to tap. */
 	:is(.art, .andere-lijst) a {
 		white-space: nowrap;
+	}
+	.gebied[aria-busy] :global([data-slow]) {
+		margin-top: var(--s-3);
+	}
+	.vak--wacht {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.wacht-fase {
+		height: var(--s-3);
+		width: 40%;
+	}
+	.wacht-naam {
+		height: var(--s-4);
+		width: 70%;
+	}
+	.wacht-art {
+		height: var(--s-3);
+		width: 30%;
 	}
 	.pijl {
 		flex: none;

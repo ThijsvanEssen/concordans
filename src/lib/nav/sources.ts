@@ -17,21 +17,36 @@ type Source = {
 	holds: string;
 	/** The lists of Bladeren it holds, the first its landing. */
 	lists: readonly string[];
+	/** Pages beside the lists, a tab each after them (Rechtsgang beside Uitspraken). */
+	pages: readonly SourcePage[];
 	href: string;
 };
 
-const source = (id: SourceId, holds: string, lists: readonly string[]): Source => ({
+type SourcePage = { path: string; label: string };
+
+const source = (
+	id: SourceId,
+	holds: string,
+	lists: readonly string[],
+	pages: readonly SourcePage[] = []
+): Source => ({
 	id,
 	label: RUBRIEK_LABEL[id],
 	holds,
 	lists,
+	pages,
 	href: indexHref(lists[0])
 });
 
 /** The five rubrieken, in their order and under their names (indeling.ts). */
 export const SOURCES: readonly Source[] = [
 	source('wetten', 'wetten, regelingen, artikelen', ['instruments']),
-	source('rechtspraak', 'rechtbank tot Hoge Raad', ['judgments']),
+	source(
+		'rechtspraak',
+		'rechtbank tot Hoge Raad',
+		['judgments'],
+		[{ path: '/rechtspraak/rechtsgang', label: 'Rechtsgang' }]
+	),
 	source('kamerstukken', 'dossiers, stukken, stemmingen, toezeggingen', [
 		'dossiers',
 		'documents',
@@ -43,14 +58,21 @@ export const SOURCES: readonly Source[] = [
 		'factions',
 		'committees'
 	]),
-	source('regering', 'kabinetten, ministeries, bewindspersonen', [
-		'cabinets',
-		'ministries',
-		'ministers'
-	])
+	source(
+		'regering',
+		'kabinetten, ministeries, bewindspersonen, ambten',
+		['cabinets', 'ministries', 'ministers'],
+		[{ path: '/ambten', label: 'Ambten' }]
+	)
 ];
 
 const sourceById = (id: SourceId): Source => SOURCES.find((s) => s.id === id)!;
+
+/** The source a page beside the lists belongs to, and the pages under it (`/ambten/…`). */
+const sourceOfPage = (pathname: string): Source | undefined =>
+	SOURCES.find((s) =>
+		s.pages.some((p) => pathname === p.path || pathname.startsWith(`${p.path}/`))
+	);
 
 /** The source a list of Bladeren belongs to. */
 export const sourceOfList = (list: string): Source => SOURCES.find((s) => s.lists.includes(list))!;
@@ -85,12 +107,14 @@ const SOURCE_OF_PATH: Record<string, SourceId> = {
 };
 
 /**
- * The source a page stands under: the list of Bladeren, or the bron read (by its address or its
+ * The source a page stands under: the list of Bladeren, a page beside it, or the bron read (by its address or its
  * focus). Null on the start page, Actueel, Mijn and a canvas without a bron.
  */
 export function sourceOf(url: URL, person?: Record<string, unknown> | null): Source | null {
 	const list = listOfPath(url.pathname);
 	if (list) return sourceOfList(list);
+	const beside = sourceOfPage(url.pathname);
+	if (beside) return beside;
 	if (url.pathname === '/explore') {
 		const focus = parseNodeId(url.searchParams.get('focus') ?? '');
 		return focus ? sourceOfCollection(focus.collection, person) : null;

@@ -86,9 +86,9 @@
 {#if state.status === 'loading'}
 	{#if form === 'block'}
 		<div class="skeleton" aria-busy="true">
-			<div class="skeleton__head"></div>
-			<div class="skeleton__line"></div>
-			<div class="skeleton__line skeleton__line--short"></div>
+			<div class="skelet skeleton__head"></div>
+			<div class="skelet skeleton__line"></div>
+			<div class="skelet skeleton__line skeleton__line--short"></div>
 		</div>
 		<SlowLoad label="Laden…" />
 	{:else}
@@ -153,14 +153,6 @@
 		padding: var(--s-5) 0;
 	}
 
-	.skeleton__head,
-	.skeleton__line {
-		border-radius: var(--r-1);
-		background: linear-gradient(90deg, var(--paper-2) 25%, var(--rule) 50%, var(--paper-2) 75%);
-		background-size: 200% 100%;
-		animation: shimmer 1.4s infinite;
-	}
-
 	.skeleton__head {
 		height: var(--s-6);
 		width: 60%;
@@ -172,14 +164,5 @@
 
 	.skeleton__line--short {
 		width: 70%;
-	}
-
-	@keyframes shimmer {
-		0% {
-			background-position: 200% 0;
-		}
-		100% {
-			background-position: -200% 0;
-		}
 	}
 </style>

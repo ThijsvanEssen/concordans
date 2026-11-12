@@ -338,3 +338,21 @@ a.raakvlak.is-open {
 [data-zijscroll][data-more-right] {
 	--fade-right: var(--fade-width, var(--s-6));
 }
+
+/* The place of what is still on its way (LoadState, the schema of Rechtsgang): a bar that
+   shimmers. */
+.skelet {
+	display: block;
+	border-radius: var(--r-1);
+	background: linear-gradient(90deg, var(--paper-2) 25%, var(--rule) 50%, var(--paper-2) 75%);
+	background-size: 200% 100%;
+	animation: skelet 1.4s infinite;
+}
+@keyframes skelet {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
