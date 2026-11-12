@@ -3,7 +3,7 @@ import { BILL_KINDS } from '$lib/votes/stages';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { count } from '$lib/text/words';
 import { citationRecord } from '$lib/text/citation-record';
-import { DAY_MS, addDays, weekdag } from '$lib/text/datum';
+import { addDays, daysBetween, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { API_BASE_URL } from '$lib/api/base-url';
 import { isGeneriek } from '$lib/bron/generiek';
@@ -289,9 +289,7 @@ export function daysOf(items: readonly FeedItem[]): Day[] {
 
 /** `Vandaag`, `Gisteren`, else `Dinsdag 22 september 2026`. */
 export function dayLabel(iso: string, today: string): string {
-	const d = new Date(`${iso}T00:00:00Z`);
-	const t = new Date(`${today}T00:00:00Z`);
-	const diff = Math.round((t.getTime() - d.getTime()) / DAY_MS);
+	const diff = Math.round(daysBetween(iso, today));
 	if (diff === 0) return 'Vandaag';
 	if (diff === 1) return 'Gisteren';
 	if (diff === -1) return 'Morgen';
