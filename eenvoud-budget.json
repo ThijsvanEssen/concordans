@@ -25,7 +25,7 @@
 		"src/lib/verbonden/Verbonden.svelte": 871,
 		"src/lib/verbonden/groups.ts": 1217,
 		"src/lib/verbonden/loaders.ts": 1512,
-		"src/routes/(main)/actueel/+page.svelte": 842,
+		"src/routes/(main)/actueel/+page.svelte": 841,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
 		"src/routes/explore/+page.svelte": 2963
 	},
@@ -162,7 +162,7 @@
 		"src/lib/verbonden/data-source.ts": 418,
 		"src/lib/verbonden/loaders.ts": 90,
 		"src/lib/verbonden/sketch.ts": 291,
-		"src/routes/(main)/actueel/+page.svelte": 161,
+		"src/routes/(main)/actueel/+page.svelte": 159,
 		"src/routes/explore/+page.svelte": 91
 	}
 }

@@ -3,11 +3,13 @@ import openapi from '$lib/api/openapi.json';
 import {
 	FEED_FILTER_PARAMS,
 	NOT_OF,
+	areaOptions,
 	feedQuery,
 	readFilters,
 	shownFilters,
 	speaksOf,
-	summaryQuery
+	summaryQuery,
+	tierOptions
 } from './filters';
 
 const TODAY = '2026-10-14';
@@ -29,10 +31,18 @@ describe('readFilters: every filter of Actueel by its name in the address', () =
 			coalition: '',
 			q: [],
 			chamber: '',
+			tiers: [],
+			area: '',
 			instrument: '',
 			article: '',
 			ahead: false
 		});
+	});
+
+	it('reads the courts in the order of the judiciary, each once, and the area of law', () => {
+		const f = read('tier=rechtbank,hoge_raad,onzin,rechtbank&subject_area=Strafrecht');
+		expect(f.tiers).toEqual(['hoge_raad', 'rechtbank']);
+		expect(f.area).toBe('Strafrecht');
 	});
 
 	it('reads the kinds, an old one as the TK word, each once', () => {
@@ -114,6 +124,8 @@ describe('FEED_FILTER_PARAMS: the names a shared link keeps', () => {
 			'coalitie',
 			'q',
 			'kamer',
+			'tier',
+			'subject_area',
 			'wet',
 			'artikel',
 			'komend'
@@ -145,6 +157,13 @@ describe('feedQuery: the filters as the feed asks them', () => {
 		});
 	});
 
+	it('asks the courts as `tier` and the area of law as `subject_area`, the gap as `none`', () => {
+		expect(feedQuery(read('tier=rechtbank,gerechtshof&subject_area=none'), TODAY)).toEqual({
+			tier: 'gerechtshof,rechtbank',
+			subject_area: 'none'
+		});
+	});
+
 	it('asks an end only before today', () => {
 		expect(feedQuery(read('tot=2026-10-01'), TODAY).until).toBe('2026-10-01');
 		expect(feedQuery(read(`tot=${TODAY}`), TODAY).until).toBeUndefined();
@@ -159,7 +178,7 @@ describe('feedQuery: the filters as the feed asks them', () => {
 describe('summaryQuery: the day counts under the same filters', () => {
 	const all = feedQuery(
 		read(
-			'soort=Motie&van=2026-01-01&tot=2026-02-01&kabinet=schoof&ministerie=fin&dossier=36600&persoon=p1&fractie=d66&coalitie=verdeeld&q=huur&kamer=TK&wet=BWBR0005289&artikel=6:162'
+			'soort=Motie&van=2026-01-01&tot=2026-02-01&kabinet=schoof&ministerie=fin&dossier=36600&persoon=p1&fractie=d66&coalitie=verdeeld&q=huur&kamer=TK&tier=rechtbank&subject_area=Strafrecht&wet=BWBR0005289&artikel=6:162'
 		),
 		TODAY
 	);
@@ -184,7 +203,8 @@ describe('speaksOf: which filters stand under the kinds chosen', () => {
 	});
 
 	it('drops the Kamer, the dossier and the ministry under Uitspraak alone', () => {
-		for (const not of Object.values(NOT_OF)) expect(speaksOf(['uitspraak'], not)).toBe(false);
+		for (const not of [NOT_OF.chamber, NOT_OF.dossier, NOT_OF.ministry])
+			expect(speaksOf(['uitspraak'], not)).toBe(false);
 	});
 
 	it('keeps the Kamer once a kind of the Kamer is chosen beside it', () => {
@@ -208,5 +228,84 @@ describe('shownFilters: the filters of Actueel that stand', () => {
 
 	it('keeps a filter with a value chosen, to be undone', () => {
 		expect(shownFilters(read('soort=uitspraak&fractie=vvd'))('fractie')).toBe(true);
+		expect(shownFilters(read('soort=Motie&tier=rechtbank'))('tier')).toBe(true);
+	});
+
+	it('drops the filters of the Kamer once a court or an area of law is chosen', () => {
+		for (const query of [
+			'tier=rechtbank',
+			'subject_area=Strafrecht',
+			'soort=Motie&tier=rechtbank'
+		]) {
+			const shown = shownFilters(read(query));
+			expect(['kamer', 'fractie', 'ministerie', 'tier', 'subject_area'].map(shown)).toEqual([
+				false,
+				false,
+				false,
+				true,
+				true
+			]);
+		}
+	});
+
+	it('shows Instantie and Rechtsgebied only where judgments may be', () => {
+		for (const [query, shown] of [
+			['', true],
+			['soort=uitspraak', true],
+			['soort=Motie,uitspraak', true],
+			['soort=Motie,stemming', false]
+		] as const) {
+			const isShown = shownFilters(read(query));
+			expect([isShown('tier'), isShown('subject_area')]).toEqual([shown, shown]);
+		}
+	});
+});
+
+describe('tierOptions: Instantie as the bar lists it', () => {
+	it('lists the courts counted in the order of the judiciary, a chosen one without a count', () => {
+		const picked: string[][] = [];
+		const options = tierOptions(
+			new Map([
+				['rechtbank', 40],
+				['hoge_raad', 3]
+			]),
+			['tuchtcollege'],
+			(t) => picked.push(t)
+		);
+		expect(options.map((o) => [o.label, o.count, o.on])).toEqual([
+			['Hoge Raad', 3, false],
+			['Rechtbanken', 40, false],
+			['Tuchtcolleges', 0, true]
+		]);
+		options[1].onClick();
+		options[2].onClick();
+		expect(picked).toEqual([['tuchtcollege', 'rechtbank'], []]);
+	});
+});
+
+describe('areaOptions: Rechtsgebied as the bar lists it', () => {
+	it('lists the areas most first and the judgments without one last, as Onbekend', () => {
+		const options = areaOptions(
+			[
+				{ value: null, count: 9 },
+				{ value: 'Strafrecht', count: 5 },
+				{ value: 'Civiel recht', count: 2 }
+			],
+			'',
+			() => {}
+		);
+		expect(options.map((o) => [o.id, o.label, o.count])).toEqual([
+			['Strafrecht', 'Strafrecht', 5],
+			['Civiel recht', 'Civiel recht', 2],
+			['none', 'Onbekend', 9]
+		]);
+	});
+
+	it('keeps a chosen area the counts lack, and lets it go on a click', () => {
+		const picked: (string | null)[] = [];
+		const [option] = areaOptions([], 'Bestuursrecht', (a) => picked.push(a));
+		expect([option.label, option.count, option.on]).toEqual(['Bestuursrecht', 0, true]);
+		option.onClick();
+		expect(picked).toEqual([null]);
 	});
 });
