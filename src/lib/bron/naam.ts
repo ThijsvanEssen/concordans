@@ -4,7 +4,7 @@ import { textOf } from '$lib/text/words';
 import type { InstrumentMeta } from '$lib/text/instrument-meta';
 import { instrumentLawId, lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describeBronShort, UNNAMED } from '$lib/bron/describe';
-import { decisionOutcome } from '$lib/votes/decision-kind';
+import { uitslag } from '$lib/votes/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/ek-decision';
 import { chamberName } from '$lib/components/parliamentary/chamber';
 import { langeDatum, shortDatesIn } from '$lib/text/datum';
@@ -121,16 +121,12 @@ export const ownRow = (node: GraphNode, id: string, meta: Map<string, Instrument
  * "Stemming Tweede Kamer, aangenomen, 29 september 2026: Wijziging van de Wet …". The
  * API's own name ("Wetgeving 2025Z15911: …") carries the Kamer's zaak number instead.
  */
-export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string {
+export function stemmingKop(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string {
 	const p = n.raw?.props ?? {};
 	const kamer = chamberName(isEkDecision(n.id) ? 'EK' : textOf(p['chamber']));
-	const uitslag = decisionOutcome({
-		kind: textOf(p['kind']),
-		decision_kind: textOf(p['decision_kind']),
-		passed: typeof p['passed'] === 'boolean' ? p['passed'] : null
-	});
+	const { word } = uitslag(p);
 	const datum = textOf(p['date']);
-	const kop = [`Stemming ${kamer}`, uitslag?.toLowerCase(), datum ? langeDatum(datum) : null]
+	const kop = [`Stemming ${kamer}`, word, datum ? langeDatum(datum) : null]
 		.filter(Boolean)
 		.join(', ');
 	const over = textOf(p['subject']) ?? textOf(p['title']);

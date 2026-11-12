@@ -270,8 +270,6 @@ describe('nothing left over', () => {
 			'placeOf',
 			'plekVan',
 			'soortVan',
-			'stemmingNaam',
-			'uitslagVan',
 			'vullingVan',
 			'wijzigingenVan'
 		];
