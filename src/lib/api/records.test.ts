@@ -19,6 +19,13 @@ describe('once', () => {
 		expect(load).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps one record for a key in either case', async () => {
+		const load = vi.fn(async () => 'Awb');
+		await once('instruments/BWBR0005537/detail', load);
+		await once('instruments/bwbr0005537/detail', load);
+		expect(load).toHaveBeenCalledTimes(1);
+	});
+
 	it('shares a request that is still under way', async () => {
 		const load = vi.fn(() => new Promise<string>((r) => setTimeout(() => r('lid'), 5)));
 		const [a, b] = await Promise.all([once('members/x', load), once('members/x', load)]);

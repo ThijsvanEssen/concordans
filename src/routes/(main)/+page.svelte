@@ -18,6 +18,7 @@
 	import Wetsnetwerk from '$lib/components/actueel/Wetsnetwerk.svelte';
 	import { laadWetsnetwerk, type Schets } from '$lib/components/actueel/wetsnetwerk';
 	import { tick } from 'svelte';
+	import { whenIdle } from '$lib/util/idle';
 	import { HOME_SUMMARY } from '$lib/api/first-pages';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { page } from '$app/state';
@@ -147,12 +148,7 @@
 		if (!signal.aborted) networkLoading = false;
 	}
 
-	const idle = () =>
-		new Promise<void>((done) =>
-			'requestIdleCallback' in window
-				? requestIdleCallback(() => done(), { timeout: 2000 })
-				: setTimeout(done, 200)
-		);
+	const idle = () => new Promise<void>((done) => whenIdle(done, { timeout: 2000, fallback: 200 }));
 
 	/** `Dinsdag 22 september`: the year only when it is not this one. */
 	const dayHeading = (date: string) => {
