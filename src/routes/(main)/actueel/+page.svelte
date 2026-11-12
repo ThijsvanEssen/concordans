@@ -629,8 +629,8 @@
 			}
 		];
 	});
-	const staat = $derived(shownFilters(filters));
-	const groups = $derived(allGroups.filter((g) => staat(g.id)));
+	const isShown = $derived(shownFilters(filters));
+	const groups = $derived(allGroups.filter((g) => isShown(g.id)));
 	const chips = $derived(activeFilters(groups));
 	/** Actueel as it opens, without a filter, a word or a period: what is first comes first. */
 	const unfiltered = $derived(!chips.length && !q.length && !chamber);
@@ -725,7 +725,7 @@
 	<div class="feed" aria-busy={loading} use:lijstDoel bind:this={feedEl}>
 		<FilterBar
 			{groups}
-			chamber={staat('kamer')
+			chamber={isShown('kamer')
 				? {
 						value: chamber || BOTH_CHAMBERS,
 						options: CHAMBER_CHOICES,

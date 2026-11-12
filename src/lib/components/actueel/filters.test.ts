@@ -180,7 +180,7 @@ describe('summaryQuery: the day counts under the same filters', () => {
 
 describe('speaksOf: which filters stand under the kinds chosen', () => {
 	it('keeps every filter without a kind', () => {
-		expect(speaksOf([], NOT_OF.kamer)).toBe(true);
+		expect(speaksOf([], NOT_OF.chamber)).toBe(true);
 	});
 
 	it('drops the Kamer, the dossier and the ministry under Uitspraak alone', () => {
@@ -188,11 +188,11 @@ describe('speaksOf: which filters stand under the kinds chosen', () => {
 	});
 
 	it('keeps the Kamer once a kind of the Kamer is chosen beside it', () => {
-		expect(speaksOf(['uitspraak', 'Motie'], NOT_OF.kamer)).toBe(true);
+		expect(speaksOf(['uitspraak', 'Motie'], NOT_OF.chamber)).toBe(true);
 	});
 
 	it('keeps the dossier and the ministry of a publication, not the Kamer', () => {
-		expect(speaksOf(['publicatie'], NOT_OF.kamer)).toBe(false);
+		expect(speaksOf(['publicatie'], NOT_OF.chamber)).toBe(false);
 		expect(speaksOf(['publicatie'], NOT_OF.dossier)).toBe(true);
 		expect(speaksOf(['publicatie'], NOT_OF.ministry)).toBe(true);
 	});

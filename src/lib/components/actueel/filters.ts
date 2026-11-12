@@ -35,7 +35,7 @@ export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
  * chosen (none: every kind) hold one it speaks of.
  */
 export const NOT_OF = {
-	kamer: ['publicatie', 'inwerkingtreding', 'uitspraak'],
+	chamber: ['publicatie', 'inwerkingtreding', 'uitspraak'],
 	dossier: ['inwerkingtreding', 'uitspraak'],
 	ministry: ['uitspraak']
 } as const satisfies Record<string, readonly FeedKind[]>;
@@ -50,17 +50,17 @@ export const speaksOf = (kinds: readonly FeedKind[], not: readonly FeedKind[]) =
  * Coalitie or Kamer.
  */
 export function shownFilters(f: ActueelFilters): (id: string) => boolean {
-	const kamer = speaksOf(f.kinds, NOT_OF.kamer);
-	const shown: Record<string, boolean> = {
-		kamer: kamer || !!f.chamber,
-		fractie: kamer || !!f.faction,
-		stemde: kamer || !!f.voted,
-		coalitie: kamer || !!f.coalition,
-		ministerie: speaksOf(f.kinds, NOT_OF.ministry) || !!f.ministry,
-		dossier: speaksOf(f.kinds, NOT_OF.dossier) || !!f.dossier,
-		komend: !f.kinds.length || f.kinds.includes('inwerkingtreding') || f.ahead
-	};
-	return (id) => shown[id] ?? true;
+	const ofChamber = speaksOf(f.kinds, NOT_OF.chamber);
+	const shown = new Map<string, boolean>([
+		['kamer', ofChamber || !!f.chamber],
+		['fractie', ofChamber || !!f.faction],
+		['stemde', ofChamber || !!f.voted],
+		['coalitie', ofChamber || !!f.coalition],
+		['ministerie', speaksOf(f.kinds, NOT_OF.ministry) || !!f.ministry],
+		['dossier', speaksOf(f.kinds, NOT_OF.dossier) || !!f.dossier],
+		['komend', !f.kinds.length || f.kinds.includes('inwerkingtreding') || f.ahead]
+	]);
+	return (id) => shown.get(id) ?? true;
 }
 
 type ActueelFilters = {

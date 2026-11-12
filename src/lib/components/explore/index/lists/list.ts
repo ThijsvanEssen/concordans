@@ -156,8 +156,6 @@ export function sorted<T>(
 	});
 }
 
-export { facetMap } from '../facets';
-
 /** A filter of one value: on, or off when it was on. */
 export const toggle =
 	(

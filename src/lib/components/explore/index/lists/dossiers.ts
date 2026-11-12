@@ -7,7 +7,8 @@ import { countedTotal, faceted, type Counted } from '../faceted';
 import { OPEN_STATUS } from '../government';
 import { ministryName } from '../ministries.svelte';
 import DossierRows from '../rows/DossierRows.svelte';
-import { PAGE, defineList, facetMap, toggle, type SortDef } from './list';
+import { PAGE, defineList, toggle, type SortDef } from './list';
+import { facetMap } from '../facets';
 import type { IndexParams } from './params';
 
 type Row = Schema<'DossierSummaryDTO'>;
