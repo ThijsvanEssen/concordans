@@ -48,29 +48,44 @@ describe('what a bundel asks for what is new', () => {
 });
 
 describe('what is new for an item', () => {
-	const amends = feed({ id: 'a', via: { relation: 'amends', article: '658', dossier: null } });
+	const amends = feed({
+		id: 'a',
+		via: { relation: 'amends', article: '658', article_key: 'bwbr0005290_658', dossier: null }
+	});
 	const version = feed({
 		id: 'v',
 		kind: 'inwerkingtreding',
-		via: { relation: 'version_of', article: null, dossier: null },
-		commencement: { articles: ['629', '658'] } as FeedLine['commencement']
+		via: { relation: 'version_of', article: null, article_key: null, dossier: null },
+		commencement: {
+			articles: ['629', '658'],
+			article_keys: ['bwbr0005290_629', 'bwbr0005290_658']
+		} as FeedLine['commencement']
 	});
 	const proposes = feed({
 		id: 'p',
-		via: { relation: 'proposes', article: null, dossier: '36700' },
+		via: { relation: 'proposes', article: null, article_key: null, dossier: '36700' },
 		amends_articles: [{ key: 'bwbr0005290_658' }] as FeedLine['amends_articles']
 	});
 	const basedOn = feed({
 		id: 'b',
 		kind: 'inwerkingtreding',
-		via: { relation: 'based_on', article: '3:2', dossier: null },
-		commencement: { articles: ['658'] } as FeedLine['commencement']
+		via: { relation: 'based_on', article: '3:2', article_key: 'bwbr0005537_3_2', dossier: null },
+		commencement: {
+			articles: ['658'],
+			article_keys: ['bwbr0005290_658']
+		} as FeedLine['commencement']
 	});
-	const awbAmends = feed({ id: 'w', via: { relation: 'amends', article: '3:2', dossier: null } });
-	const other = feed({ id: 'o', via: { relation: 'amends', article: '611', dossier: null } });
+	const awbAmends = feed({
+		id: 'w',
+		via: { relation: 'amends', article: '3:2', article_key: 'bwbr0005537_3_2', dossier: null }
+	});
+	const other = feed({
+		id: 'o',
+		via: { relation: 'amends', article: '611', article_key: 'bwbr0005290_611', dossier: null }
+	});
 	const all = [amends, version, proposes, basedOn, awbAmends, other];
 
-	it('gives an article what changes it or proposes to: by its number, as its key writes it', () => {
+	it('gives an article what changes it or proposes to: by its key', () => {
 		expect(freshLines(lid, all).map((f) => f.id)).toEqual(['a', 'v', 'p']);
 		expect(freshLines(awb, all).map((f) => f.id)).toEqual(['w']);
 	});

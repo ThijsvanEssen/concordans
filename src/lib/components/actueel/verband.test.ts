@@ -75,6 +75,7 @@ describe('an inwerkingtreding', () => {
 			article_count: 9,
 			changed_articles: 1,
 			articles: ['2'],
+			article_keys: ['bwbr0038456_2'],
 			new: false,
 			publication: {
 				citation: null,
@@ -110,6 +111,7 @@ describe('an inwerkingtreding', () => {
 			article_count: 111,
 			changed_articles: 111,
 			articles: [],
+			article_keys: [],
 			new: true,
 			publication: {
 				citation: null,
@@ -127,6 +129,7 @@ describe('an inwerkingtreding', () => {
 			article_count: 11,
 			changed_articles: 8,
 			articles: ['1', '2', '3', '4', '5', '6', '7', '8'],
+			article_keys: [],
 			new: false,
 			publication: null,
 			based_on: null
@@ -246,33 +249,38 @@ describe('the papers and articles a row is tied to', () => {
 
 describe('how a row is tied to a followed law', () => {
 	it('says it in the words of the relation', () => {
-		expect(viaTekst({ dossier: null, relation: 'amends', article: '3' })).toBe('Wijzigt art. 3');
+		expect(viaTekst({ article_key: null, dossier: null, relation: 'amends', article: '3' })).toBe(
+			'Wijzigt art. 3'
+		);
 		expect(
-			viaTekst({ dossier: null, relation: 'based_on', article: '68' }, 'Cyberbeveiligingswet')
+			viaTekst(
+				{ article_key: null, dossier: null, relation: 'based_on', article: '68' },
+				'Cyberbeveiligingswet'
+			)
 		).toBe('Krachtens art. 68 Cyberbeveiligingswet');
-		expect(viaTekst({ article: null, dossier: null, relation: 'establishes' })).toBe(
-			'Stelt de wet vast'
-		);
-		expect(viaTekst({ article: null, relation: 'proposes', dossier: '36764' })).toBe(
-			'In dossier 36764'
-		);
+		expect(
+			viaTekst({ article_key: null, article: null, dossier: null, relation: 'establishes' })
+		).toBe('Stelt de wet vast');
+		expect(
+			viaTekst({ article_key: null, article: null, relation: 'proposes', dossier: '36764' })
+		).toBe('In dossier 36764');
 		expect(viaTekst(null)).toBeNull();
 	});
 
 	it('puts the verb of a change around what it changes', () => {
 		const wet = 'Cyberbeveiligingswet';
-		expect(viaTekst({ dossier: null, relation: 'introduces', article: '5' }, wet)).toBe(
-			'Voegt art. 5 Cyberbeveiligingswet in'
-		);
-		expect(viaTekst({ article: null, dossier: null, relation: 'introduces' }, wet)).toBe(
-			'Voegt artikelen in Cyberbeveiligingswet in'
-		);
-		expect(viaTekst({ dossier: null, relation: 'repeals', article: '5' }, wet)).toBe(
-			'Doet art. 5 Cyberbeveiligingswet vervallen'
-		);
-		expect(viaTekst({ article: null, dossier: null, relation: 'repeals' }, wet)).toBe(
-			'Trekt Cyberbeveiligingswet in'
-		);
+		expect(
+			viaTekst({ article_key: null, dossier: null, relation: 'introduces', article: '5' }, wet)
+		).toBe('Voegt art. 5 Cyberbeveiligingswet in');
+		expect(
+			viaTekst({ article_key: null, article: null, dossier: null, relation: 'introduces' }, wet)
+		).toBe('Voegt artikelen in Cyberbeveiligingswet in');
+		expect(
+			viaTekst({ article_key: null, dossier: null, relation: 'repeals', article: '5' }, wet)
+		).toBe('Doet art. 5 Cyberbeveiligingswet vervallen');
+		expect(
+			viaTekst({ article_key: null, article: null, dossier: null, relation: 'repeals' }, wet)
+		).toBe('Trekt Cyberbeveiligingswet in');
 	});
 });
 

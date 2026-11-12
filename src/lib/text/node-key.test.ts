@@ -1,18 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { articleNodeKey, fold, nodeKey } from './node-key';
+import { fold, nodeKey } from './node-key';
 
-describe('articleNodeKey', () => {
+describe('nodeKey', () => {
 	it('makes the key as the API does (make_node_key)', () => {
-		expect(articleNodeKey('BWBR0005537', '3:2')).toBe('bwbr0005537_3_2');
-		expect(articleNodeKey('BWBR0005537', '3: 2')).toBe('bwbr0005537_3_2');
-		expect(articleNodeKey('BWBR0001854', '287')).toBe('bwbr0001854_287');
-		expect(articleNodeKey('BWBR0005537', '8:1a')).toBe('bwbr0005537_8_1a');
-		expect(articleNodeKey('BWBR0011353', 'bijlage 2 artikel 9')).toBe(
-			'bwbr0011353_bijlage_2_artikel_9'
-		);
-		expect(articleNodeKey('BWBR0001840', 'enig-artikel')).toBe('bwbr0001840_enig_artikel');
-		expect(articleNodeKey('BWBR0001840', '12°/3')).toBe('bwbr0001840_12_3');
-		expect(articleNodeKey('BWBR0001840', ' 7. ')).toBe('bwbr0001840_7');
+		expect(nodeKey('BWBR0005537', '3:2')).toBe('bwbr0005537_3_2');
+		expect(nodeKey('BWBR0005537', '3: 2')).toBe('bwbr0005537_3_2');
+		expect(nodeKey('BWBR0001854', '287')).toBe('bwbr0001854_287');
+		expect(nodeKey('BWBR0005537', '8:1a')).toBe('bwbr0005537_8_1a');
+		expect(nodeKey('BWBR0011353', 'bijlage 2 artikel 9')).toBe('bwbr0011353_bijlage_2_artikel_9');
+		expect(nodeKey('BWBR0001840', 'enig-artikel')).toBe('bwbr0001840_enig_artikel');
+		expect(nodeKey('BWBR0001840', '12°/3')).toBe('bwbr0001840_12_3');
+		expect(nodeKey('BWBR0001840', ' 7. ')).toBe('bwbr0001840_7');
 	});
 
 	it('leaves out a letter without an accent to take off, as ascii_slug does', () => {

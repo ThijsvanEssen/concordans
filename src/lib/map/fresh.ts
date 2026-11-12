@@ -5,7 +5,6 @@
 // Concordans ask nothing.
 import type { Schema } from '$lib/api/types';
 import type { MapItem } from './map';
-import { nodeKey } from '$lib/text/node-key';
 
 /** A line of the feed as the API gives it. */
 export type FeedLine = Schema<'FeedItemDTO'>;
@@ -43,26 +42,26 @@ export function freshAsks(items: readonly MapItem[]): FreshAsk[] {
 	return [...groups.values(), ...articles.values()];
 }
 
-/** What a line of the law's feed changes or proposes to change of the law's own articles. */
+/** The keys of the law's own articles a line of its feed changes or proposes to change. */
 function articlesOf(f: FeedLine): string[] {
 	const relation = f.via?.relation;
 	// A regulation based on the law: its articles are its own, not the law's.
 	if (relation === 'based_on' || relation === 'refers_to') return [];
 	return [
-		nodeKey(f.via?.article),
-		...(relation === 'version_of' ? (f.commencement?.articles ?? []).map((a) => nodeKey(a)) : []),
-		...(f.amends_articles ?? []).map((a) => a.key.slice(a.key.indexOf('_') + 1))
+		f.via?.article_key ?? '',
+		...(relation === 'version_of' ? (f.commencement?.article_keys ?? []) : []),
+		...(f.amends_articles ?? []).map((a) => a.key)
 	].filter(Boolean);
 }
 
 /**
  * The lines of a law's or a dossier's feed that are new for an item: for an article what
- * changes it or proposes to, by its number; for the law or the dossier itself all of them; for
+ * changes it or proposes to, by its key; for the law or the dossier itself all of them; for
  * a paper of a dossier none (the dossier's group says what came in).
  */
 export function freshLines(item: MapItem, feed: readonly FeedLine[]): FeedLine[] {
 	const article = ARTICLE.exec(item.id);
-	if (article) return feed.filter((f) => articlesOf(f).includes(article[2]));
+	if (article) return feed.filter((f) => articlesOf(f).includes(`${article[1]}_${article[2]}`));
 	if (/^(?:instruments|dossiers)\//.test(item.id)) return [...feed];
 	return [];
 }

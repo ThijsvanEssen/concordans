@@ -5603,6 +5603,11 @@ export interface components {
              * @description Its article as numbered: `60`, `8:105`.
              */
             article_number: string;
+            /**
+             * Key
+             * @description The node key of the article: `bwbr0001830_60`, `bwbr0005537_bijlage_2_artikel_2`.
+             */
+            readonly key: string;
         };
         /**
          * CourseLink
@@ -8704,6 +8709,11 @@ export interface components {
              */
             articles: string[];
             /**
+             * Article Keys
+             * @description Their node keys (``bwbr0005537_3_2``), alike.
+             */
+            article_keys: string[];
+            /**
              * New
              * @description The law itself comes into force: the day is the one it came into force as enacted (its ``date_in_force``).
              * @default false
@@ -9435,6 +9445,11 @@ export interface components {
              * @description The number of the article of the law it touches, the first in the order of the law; null where it is tied to the law as a whole or by a dossier.
              */
             article: string | null;
+            /**
+             * Article Key
+             * @description Its node key (``bwbr0005537_3_2``); null with ``article``.
+             */
+            article_key: string | null;
             /**
              * Dossier
              * @description The label of the dossier it is tied by; null for the others.

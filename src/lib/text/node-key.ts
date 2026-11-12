@@ -15,6 +15,3 @@ const part = (s: string | null | undefined): string =>
 /** The key of a node from its parts: `21501-02` is `21501_02`; empty without any. */
 export const nodeKey = (...parts: (string | null | undefined)[]): string =>
 	parts.map(part).filter(Boolean).join('_');
-
-/** The key of article `number` of the law `bwb`: `BWBR0005537`, `3:2` is `bwbr0005537_3_2`. */
-export const articleNodeKey = (bwb: string, number: string): string => nodeKey(bwb, number);

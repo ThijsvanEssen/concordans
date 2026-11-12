@@ -156,7 +156,11 @@ function excepted(stage: Stage | undefined, routes: Routes) {
 	if (!stage || !article) return;
 	stage.rows.unshift({
 		when: 'als het besluit is uitgezonderd',
-		cite: articleOfBasis({ bwb_id: 'BWBR0005537', article_number: article.number }),
+		cite: articleOfBasis({
+			bwb_id: 'BWBR0005537',
+			article_number: article.number,
+			key: article.key
+		}),
 		none: article.heading ?? 'Geen beroep',
 		courts: []
 	});
