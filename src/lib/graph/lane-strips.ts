@@ -21,6 +21,7 @@ import { fromTheEnd, LINE_WIDTH, straight, type LanePath } from './lane-lines';
 import { hasArrow, LINE_KIND_STYLE } from './line-kind';
 import { MAKER_LANE_ORDER } from './roles';
 import type { Column, Scene, SceneLine, SceneUnit } from './scene';
+import { NL } from '$lib/text/collator';
 
 const MARGIN = 16;
 const INSET = 12;
@@ -124,7 +125,7 @@ const byWeight = (a: SceneUnit, b: SceneUnit) =>
 	Number(b.focus) - Number(a.focus) ||
 	changeRank(b) - changeRank(a) ||
 	b.members.length - a.members.length ||
-	a.label.localeCompare(b.label) ||
+	NL.compare(a.label, b.label) ||
 	a.id.localeCompare(b.id);
 
 /** A chosen hull and tiles: on a phone they alone stand in full. */

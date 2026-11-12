@@ -8,6 +8,7 @@
 	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
 	import type { FacetGroup } from '$lib/components/explore/index/facets';
 	import { load } from '$lib/util/load.svelte';
+	import { NL } from '$lib/text/collator';
 
 	let {
 		faction,
@@ -34,7 +35,7 @@
 		(factions.state.status === 'ready' ? factions.state.data : [])
 			.filter((x) => !chamber || !x.chamber || x.chamber === chamber)
 			.map((x) => ({ key: x.key, name: fractieNaam(x), active: !!x.active }))
-			.sort((a, b) => a.name.localeCompare(b.name, 'nl'))
+			.sort((a, b) => NL.compare(a.name, b.name))
 	);
 	const groups = $derived<FacetGroup[]>(
 		[

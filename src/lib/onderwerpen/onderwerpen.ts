@@ -6,6 +6,7 @@ import { normaal } from '$lib/text/treffer';
 import { isFeedLaw } from '$lib/components/actueel/filters';
 import { dossierLabel } from '$lib/bron/dossier-naam';
 import { followedAt } from '$lib/bevestig/bevestig.svelte';
+import { readJson, readStored, writeJson, writeStored } from '$lib/util/storage';
 
 // A topic followed: the words of the user, looked for in the titles of Actueel. The source has
 // no theme of its own (the TK OData has none, Back-end #3, 9 Oct), so a topic is its words.
@@ -96,44 +97,35 @@ const readDossier = (v: unknown): FollowedDossier | null => {
 export const followedDossierName = (d: FollowedDossier) =>
 	dossierLabel({ number: d.number, title: d.title === d.number ? null : d.title });
 
-export function lees(): Onderwerp[] {
-	try {
-		const raw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '[]');
-		if (!Array.isArray(raw)) return [];
-		return raw.flatMap((o) => {
-			const dag = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
-			const dossier = readDossier(o?.dossier);
-			if (dossier)
-				return [
-					{
-						termen: [followedDossierName(dossier)],
-						dossier,
-						vorige: dag(o.vorige),
-						gezien: dag(o.gezien)
-					}
-				];
-			const wet = leesWet(o?.wet);
-			if (wet)
-				return [{ termen: [wetNaam(wet)], wet, vorige: dag(o.vorige), gezien: dag(o.gezien) }];
-			const termen = Array.isArray(o?.termen)
-				? o.termen.filter((t: unknown): t is string => typeof t === 'string' && !!normaal(t))
-				: [];
-			if (!termen.length) return [];
-			return [{ termen, vorige: dag(o.vorige), gezien: dag(o.gezien) }];
-		});
-	} catch {
-		return [];
-	}
+export const lees = (): Onderwerp[] => readJson('local', SLEUTEL, leesLijst) ?? [];
+
+/** The topics as kept, each in the shape this version knows; the rest left out. */
+function leesLijst(raw: unknown): Onderwerp[] {
+	if (!Array.isArray(raw)) return [];
+	return raw.flatMap((o) => {
+		const dag = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
+		const dossier = readDossier(o?.dossier);
+		if (dossier)
+			return [
+				{
+					termen: [followedDossierName(dossier)],
+					dossier,
+					vorige: dag(o.vorige),
+					gezien: dag(o.gezien)
+				}
+			];
+		const wet = leesWet(o?.wet);
+		if (wet) return [{ termen: [wetNaam(wet)], wet, vorige: dag(o.vorige), gezien: dag(o.gezien) }];
+		const termen = Array.isArray(o?.termen)
+			? o.termen.filter((t: unknown): t is string => typeof t === 'string' && !!normaal(t))
+			: [];
+		if (!termen.length) return [];
+		return [{ termen, vorige: dag(o.vorige), gezien: dag(o.gezien) }];
+	});
 }
 
-export function bewaar(lijst: Onderwerp[]) {
-	try {
-		if (lijst.length) localStorage.setItem(SLEUTEL, JSON.stringify(lijst));
-		else localStorage.removeItem(SLEUTEL);
-	} catch {
-		/* geen opslag */
-	}
-}
+export const bewaar = (lijst: Onderwerp[]) =>
+	void writeJson('local', SLEUTEL, lijst.length ? lijst : null);
 
 export const volgt = (term: string) => !!normaal(term) && vindIndex(lees(), term) >= 0;
 
@@ -239,12 +231,7 @@ export function haalTermWeg(term: string) {
  * browser session, or a reload would empty the list it shows.
  */
 export function nieuwBezoek(lijst: Onderwerp[]): Onderwerp[] {
-	try {
-		if (sessionStorage.getItem(SESSIE)) return lijst;
-		sessionStorage.setItem(SESSIE, '1');
-	} catch {
-		return lijst;
-	}
+	if (readStored(SESSIE, 'session') || !writeStored(SESSIE, '1', 'session')) return lijst;
 	const volgende = lijst.map((o) => ({ ...o, vorige: o.gezien ?? o.vorige }));
 	bewaar(volgende);
 	return volgende;

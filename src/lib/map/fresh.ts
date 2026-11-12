@@ -5,6 +5,7 @@
 // Concordans ask nothing.
 import type { Schema } from '$lib/api/types';
 import type { MapItem } from './map';
+import { nodeKey } from '$lib/text/node-key';
 
 /** A line of the feed as the API gives it. */
 export type FeedLine = Schema<'FeedItemDTO'>;
@@ -42,17 +43,14 @@ export function freshAsks(items: readonly MapItem[]): FreshAsk[] {
 	return [...groups.values(), ...articles.values()];
 }
 
-/** An article's number as its key writes it: `3:2` is `3_2`. */
-const asKey = (n: string | null | undefined) => (n ?? '').toLowerCase().replace(/[:.\s]+/g, '_');
-
 /** What a line of the law's feed changes or proposes to change of the law's own articles. */
 function articlesOf(f: FeedLine): string[] {
 	const relation = f.via?.relation;
 	// A regulation based on the law: its articles are its own, not the law's.
 	if (relation === 'based_on' || relation === 'refers_to') return [];
 	return [
-		asKey(f.via?.article),
-		...(relation === 'version_of' ? (f.commencement?.articles ?? []).map(asKey) : []),
+		nodeKey(f.via?.article),
+		...(relation === 'version_of' ? (f.commencement?.articles ?? []).map((a) => nodeKey(a)) : []),
 		...(f.amends_articles ?? []).map((a) => a.key.slice(a.key.indexOf('_') + 1))
 	].filter(Boolean);
 }

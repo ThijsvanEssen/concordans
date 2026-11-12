@@ -5,7 +5,7 @@
 // that reaches it; a later chain that touches it runs to that place.
 import type { Schema } from '$lib/api/types';
 import { relationWords } from '$lib/verbonden/relation-words';
-import { rowNotation } from './shared';
+import { notationName } from './shared';
 import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -81,9 +81,6 @@ type ChainsModel = {
 	none: boolean;
 };
 
-/** A Kamerstuk by its notation, as the shared bronnen are, else the API's name. */
-const nameOf = (n: ChainsResponse['nodes'][number]) => rowNotation(n).title;
-
 /** One line of a step: its relation, the kind it comes from and the end its arrow points to. */
 export type StepLeg = {
 	relation: Relation | null;
@@ -158,7 +155,9 @@ export function chainsModel(
 	const bron = (id: string): ChainBron => {
 		const n = nodes.get(id);
 		const known = names(id);
-		return n ? { id, name: nameOf(n), collection: n.collection as Collection, node: n } : known;
+		return n
+			? { id, name: notationName(n), collection: n.collection as Collection, node: n }
+			: known;
 	};
 	const known: ChainsModel['known'] = new Map();
 	const blocks = response.blocks

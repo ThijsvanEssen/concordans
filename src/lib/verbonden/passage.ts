@@ -3,6 +3,7 @@
 // "de geciteerde tekst hier zien zodat ik niet heel hard moet zoeken").
 import { truncate } from '$lib/text/words';
 import { paragraphNumber } from '$lib/text/anchor';
+import { isFiniteNumber } from '$lib/text/getal';
 
 export type PassageParts = { before: string; mark: string; after: string };
 
@@ -68,11 +69,16 @@ export type Aanhaling = {
 	noot: string | null;
 };
 
-const getal = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-
 /** The words at `start`..`end` of a text, where the offsets hold them. */
 function woordenIn(text: string, start: unknown, end: unknown): string | null {
-	if (!getal(start) || !getal(end) || start < 0 || end <= start || end > text.length) return null;
+	if (
+		!isFiniteNumber(start) ||
+		!isFiniteNumber(end) ||
+		start < 0 ||
+		end <= start ||
+		end > text.length
+	)
+		return null;
 	return text.slice(start, end);
 }
 

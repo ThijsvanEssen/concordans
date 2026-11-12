@@ -7,10 +7,12 @@ import { isKernGroep } from '$lib/bron/behoort';
 import type { Collection } from '$lib/vocabulary';
 import { groupCount, type Group } from './groups';
 import type { Row } from './rows';
+import { fold } from '$lib/text/node-key';
 
 type Bron = { collection: string; key: string; props: Record<string, unknown> };
 
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+/** A key or a publication to compare by: `Stb. 2021, 162` and `stb_2021_162`; `ë` is `e`. */
+const norm = (s: string) => fold(s).replace(/[^a-z0-9]/g, '');
 
 /** Whether a row is a thing the heading of `bron` already names. */
 export function namedByHeader(row: Row, bron: Bron): boolean {

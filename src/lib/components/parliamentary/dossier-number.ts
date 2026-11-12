@@ -3,6 +3,7 @@
 // own; the dossiers that share a number belong together (the chapters of one budget, the
 // meetings of one Council series).
 import { capitalize } from '$lib/text/words';
+import { NL } from '$lib/text/collator';
 
 /** `37035` for `37035-XXII`, `37035` for `37035`. */
 export const numberOf = (label: string): string => label.split('-')[0];
@@ -37,7 +38,7 @@ function suffixKey(label: string): [number, number, string] {
 /** Orders labels of one number as the Kamer does: no suffix, numbers, chapters, funds. */
 export function compareSuffix(a: string, b: string): number {
 	const [x, y] = [suffixKey(a), suffixKey(b)];
-	return x[0] - y[0] || x[1] - y[1] || x[2].localeCompare(y[2], 'nl');
+	return x[0] - y[0] || x[1] - y[1] || NL.compare(x[2], y[2]);
 }
 
 /**

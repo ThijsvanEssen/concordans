@@ -6,6 +6,7 @@
 	import IndexRow from '../IndexRow.svelte';
 	import { inOffice, period, type Cabinet } from '../government';
 	import type { ViewProps } from '../lists/list';
+	import { fractieNaam } from '$lib/bron/menselijk';
 
 	let { ctx }: ViewProps<Cabinet, object> = $props();
 	/** The cabinet in office; an older one without an end has an end no source gives. */
@@ -40,7 +41,7 @@
 								><span class="party-dot" style:background={partyColor(x.short ?? '')}
 								></span><NameLink
 									collection="factions"
-									name={x.short ?? x.faction ?? ''}
+									name={fractieNaam(x)}
 									key={x.faction}
 								/></span
 							>
@@ -49,7 +50,8 @@
 				{/if}
 			{/snippet}
 			{#snippet aside()}
-				<span class="num-strong">{c.members}<span class="num-lbl">bewindspersonen</span></span>
+				<span class="num-strong">{c.members}<span class="num-lbl">&nbsp;bewindspersonen</span></span
+				>
 			{/snippet}
 		</IndexRow>
 	{/each}

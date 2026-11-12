@@ -5,7 +5,7 @@
 	import { count } from '$lib/text/words';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
-	import { bronHref } from '$lib/bron/href';
+	import { openHref } from '$lib/bron/href';
 	import { kleurVan, vullingVan } from './partijkleuren.svelte';
 	import FractiePatronen from './FractiePatronen.svelte';
 	import { HALL_COLUMNS, HALL_ROWS, plaatsenOpVolgorde } from './zaaltegenover';
@@ -19,8 +19,6 @@
 		data: Seats;
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
-
-	const hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' });
 
 	// In the units of the Tweede Kamer's hall (Hemicycle): a seat as large, the hall as high
 	// (291), so both stand at one scale in the same frame (Thijs, 9 Oct: "dezelfde styling
@@ -137,7 +135,7 @@
 				{@const f = byName.get(name)}
 				{@const v = side(name)}
 				<a
-					href={f?.key ? hrefOf(f.key) : undefined}
+					href={f?.key ? openHref(`factions/${f.key}`) : undefined}
 					aria-label="{name}, {count(seatsOf(name), 'zetel', 'zetels')}"
 					onmouseenter={() => (hovered = name)}
 					onmouseleave={() => (hovered = null)}

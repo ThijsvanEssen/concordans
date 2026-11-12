@@ -8,11 +8,7 @@ const RAW_COUNT = /\$\{[\w.?]*(?:\.length|article_count|\.count|\.total)\} [a-z]
 
 describe('a count in words', () => {
 	it('is written with formatCount', () => {
-		// The home page's stream is another branch's now (home-first-paint); its count of bills of
-		// a day stays under a thousand.
-		const raw = BRONNEN.filter(({ text }) => RAW_COUNT.test(text))
-			.map((s) => s.path)
-			.filter((path) => path !== 'lib/components/actueel/home-stream.ts');
+		const raw = BRONNEN.filter(({ text }) => RAW_COUNT.test(text)).map((s) => s.path);
 		expect(raw).toEqual([]);
 	});
 });
@@ -34,5 +30,16 @@ describe('a count and its word', () => {
 	it('stand apart: a space between the number and the noun, not "66.190stemmingen" (E9 R)', () => {
 		const aaneen = /\{formatCount\([^)]*\)\}<span[^>]*>\s*(?!&nbsp;)/;
 		expect(BRONNEN.filter(({ text }) => aaneen.test(text)).map((s) => s.path)).toEqual([]);
+	});
+});
+
+describe('a count with its noun', () => {
+	it('goes by count or plural from text/words.ts, never a plural of its own (audit dubbele helpers, 13)', () => {
+		const eigen = /\b(const|function) plural\b/;
+		expect(
+			BRONNEN.filter(({ path, text }) => path !== 'lib/text/words.ts' && eigen.test(text)).map(
+				(s) => s.path
+			)
+		).toEqual([]);
 	});
 });

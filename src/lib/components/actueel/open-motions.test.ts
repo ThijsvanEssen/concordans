@@ -27,7 +27,7 @@ describe('openMotions', () => {
 	});
 
 	it('names the dossier with its suffix', () => {
-		expect(dossierOf({ dossier_number: '37020', dossier_suffix: 'XVI' })).toBe('37020-XVI');
+		expect(dossierOf({ dossier_number: '37020', dossier_suffix: 'XVI' })).toBe('37020 XVI');
 		expect(dossierOf({ dossier_number: '29628', dossier_suffix: null })).toBe('29628');
 		expect(dossierOf({ dossier_number: null, dossier_suffix: null })).toBeNull();
 	});

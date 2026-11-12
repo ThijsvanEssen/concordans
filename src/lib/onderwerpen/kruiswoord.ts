@@ -5,7 +5,7 @@
 // toezeggingen are the feed's events. With a strekking chosen, every number counts the moties
 // so read, from the decisions themselves. A cell is new where it holds a day after the visit
 // before this one (Onderwerpen volgen).
-import { DAY_MS, addDays, maandagVan } from '$lib/text/datum';
+import { addDays, isoWeek, lastDayOfMonth, maandagVan, mondayOfWeek } from '$lib/text/datum';
 import { uitkomstVan, type Besluit, type Stem } from './overzicht';
 
 export type Kolom =
@@ -56,11 +56,8 @@ function maandVan(dag: string): Vak {
 
 /** The ISO week of a day: its Thursday's year and the week's number. */
 export function weekVan(dag: string): Vak {
-	const d = new Date(`${dag.slice(0, 10)}T00:00:00Z`);
-	d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) + 3);
-	const jaar = d.getUTCFullYear();
-	const nr = Math.ceil(((d.getTime() - Date.UTC(jaar, 0, 1)) / DAY_MS + 1) / 7);
-	return `${jaar}-W${String(nr).padStart(2, '0')}`;
+	const { year, week } = isoWeek(dag);
+	return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
 export const vakVan = (dag: string, indeling: Indeling) =>
@@ -71,10 +68,8 @@ export const jaarVanVak = (vak: Vak) => vak.slice(0, 4);
 /** The Monday of an ISO week, as a day. */
 function weekMonday(vak: Vak): string {
 	const [jaar, w] = vak.split('-W').map(Number);
-	// The 4th of January is always in week 1.
-	return addDays(maandagVan(`${jaar}-01-04`), (w - 1) * 7);
+	return mondayOfWeek(jaar, w);
 }
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 /** The first and last day of a year, month or week, as the API takes them. */
 export function grenzenVan(vak: Vak): { van: string; tot: string } {
@@ -84,7 +79,7 @@ export function grenzenVan(vak: Vak): { van: string; tot: string } {
 		return { van: m, tot: addDays(m, 6) };
 	}
 	const [j, mnd] = vak.split('-').map(Number);
-	return { van: `${vak}-01`, tot: iso(new Date(Date.UTC(j, mnd, 0))) };
+	return { van: `${vak}-01`, tot: lastDayOfMonth(j, mnd) };
 }
 
 /** Every month or week from `tot` back to `van`, the newest first. */

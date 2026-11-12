@@ -6,11 +6,32 @@ import { padHref } from '$lib/bron/address';
 import type { CourseStep } from '$lib/bron/course-layers';
 import type { BronRef } from '$lib/bron/ref';
 import { articleRef, bookNumber } from '$lib/text/bw';
+import { articleNodeKey } from '$lib/text/node-key';
 
 export type Basis = Schema<'CourseBasis'>;
 
-/** The laws the API's list of articles names (`data/route_articles.json`), as cited. */
-const LAW: Record<string, string> = { BWBR0001830: 'RO', BWBR0005537: 'Awb' };
+/** The laws the API's list of articles names (`data/route_articles.json`), as cited: the RO,
+ *  the Awb, the AWR and the laws that open cassation against the Centrale Raad van Beroep. */
+const LAW: Record<string, string> = {
+	BWBR0001830: 'RO',
+	BWBR0005537: 'Awb',
+	BWBR0002320: 'AWR',
+	BWBR0002368: 'AKW',
+	BWBR0007795: 'Anw',
+	BWBR0002221: 'AOW',
+	BWBR0004044: 'IOAW',
+	BWBR0004163: 'IOAZ',
+	BWBR0024394: 'IOW',
+	BWBR0015703: 'Participatiewet',
+	BWBR0004043: 'TW',
+	BWBR0008657: 'Wajong',
+	BWBR0002524: 'WAO',
+	BWBR0008656: 'WAZ',
+	BWBR0019057: 'WIA',
+	BWBR0035917: 'Wlz',
+	BWBR0004045: 'WW',
+	BWBR0001888: 'ZW'
+};
 
 /** The article that gives the court its say, as cited and as a ref: "art. 60 RO". */
 export const basisArticle = (step: CourseStep) => (step.basis ? articleOfBasis(step.basis) : null);
@@ -29,7 +50,7 @@ export function articleOfBasis(b: Basis): { name: string; ref: BronRef; path: st
 		name: law ? `${number} ${law}` : number,
 		ref: {
 			collection: 'articles',
-			key: `${b.bwb_id}_${b.article_number}`.toLowerCase().replace(/[^a-z0-9]+/g, '_')
+			key: articleNodeKey(b.bwb_id, b.article_number)
 		},
 		path: /\s/.test(b.article_number)
 			? null

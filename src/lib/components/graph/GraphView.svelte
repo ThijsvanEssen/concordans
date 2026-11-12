@@ -90,6 +90,7 @@
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notesOfBundels } from '$lib/map/notities';
 	import { keepsCamera, saveCamera, savedCamera } from './camera';
+	import { NL } from '$lib/text/collator';
 
 	/** The card of a bron marked in a weergave of its own: its node and what it says of it. */
 	type ExternalCard = {
@@ -645,7 +646,8 @@
 		const db = String(g.getNodeAttribute(b, 'date') ?? '');
 		return da && db && da !== db
 			? da.localeCompare(db)
-			: String(g.getNodeAttribute(a, 'label') ?? '').localeCompare(
+			: NL.compare(
+					String(g.getNodeAttribute(a, 'label') ?? ''),
 					String(g.getNodeAttribute(b, 'label') ?? '')
 				);
 	};

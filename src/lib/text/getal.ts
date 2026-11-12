@@ -1,5 +1,9 @@
 // Figures in Dutch notation, in one place as the dates are in datum.ts: `1.104`, `12,5`.
 
+/** A number that counts: not NaN, not Infinity, not a string. */
+export const isFiniteNumber = (v: unknown): v is number =>
+	typeof v === 'number' && Number.isFinite(v);
+
 /** A count: `1.104`. */
 export const formatCount = (n: number): string => n.toLocaleString('nl-NL');
 

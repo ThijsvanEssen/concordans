@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { hasModifier, isEscape, isTyping } from './keys';
+import { describe, expect, it, vi } from 'vitest';
+import { hasModifier, isEscape, isTyping, takeEscape } from './keys';
 
 const key = (over: Partial<Parameters<typeof isEscape>[0]> = {}) => ({
 	key: 'Escape',
@@ -44,5 +44,21 @@ describe('hasModifier', () => {
 		expect(hasModifier(key())).toBe(false);
 		for (const m of ['metaKey', 'ctrlKey', 'altKey', 'shiftKey'] as const)
 			expect(hasModifier(key({ [m]: true }))).toBe(true);
+	});
+});
+
+describe('takeEscape', () => {
+	it('takes an Escape for its own handler, so nothing behind closes along', () => {
+		const e = { ...key(), preventDefault: vi.fn(), stopPropagation: vi.fn() };
+		expect(takeEscape(e as unknown as KeyboardEvent)).toBe(true);
+		expect(e.preventDefault).toHaveBeenCalled();
+		expect(e.stopPropagation).toHaveBeenCalled();
+	});
+
+	it('leaves an Escape typed in a field alone', () => {
+		const field = { closest: () => ({}) } as unknown as EventTarget;
+		const e = { ...key({ target: field }), preventDefault: vi.fn(), stopPropagation: vi.fn() };
+		expect(takeEscape(e as unknown as KeyboardEvent)).toBe(false);
+		expect(e.preventDefault).not.toHaveBeenCalled();
 	});
 });

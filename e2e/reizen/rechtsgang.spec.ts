@@ -39,11 +39,26 @@ test('Rechtsgang is a tab under Rechtspraak, beside Uitspraken', async ({ page }
 	);
 });
 
-test('a court whose article is not read in the source shows the gap', async ({ page }) => {
+test('cassation in belastingrecht names art. 28 AWR beside art. 78 RO', async ({ page }) => {
 	await page.goto('/rechtspraak/rechtsgang?gebied=belasting');
 	const cassation = page.locator('.vak').filter({ hasText: 'Hoge Raad' });
-	await expect(cassation).toContainText('wetsartikel niet in de gegevens');
-	await expect(cassation.getByRole('link')).toHaveCount(0);
+	await expect(cassation.getByRole('link', { name: 'art. 28 AWR' })).toBeVisible();
+	await expect(cassation.getByRole('link', { name: 'art. 78 RO' })).toBeVisible();
+});
+
+test('bestuursrecht reads as rows "als … / anders", the excepted besluit first', async ({
+	page
+}) => {
+	await page.goto('/rechtspraak/rechtsgang?gebied=bestuur');
+	const first = page.locator('.vak').filter({ hasText: 'Eerste aanleg' });
+	await expect(first.locator('.als')).toHaveText([
+		'als het besluit is uitgezonderd, art. 1 bijlage 2 Awb',
+		'als de rechter is aangewezen, hoofdstuk 2 bijlage 2',
+		'anders'
+	]);
+	await expect(first.locator('.rij--anders')).toContainText('Rechtbanken');
+	await expect(page.getByText('hoger beroep, na de rechtbank')).toBeVisible();
+	await expect(page.getByText('Gestippeld: alleen in enkele zaken.')).toBeVisible();
 });
 
 test('cassation in bestuursrecht stands under the Centrale Raad van Beroep alone', async ({
@@ -54,6 +69,8 @@ test('cassation in bestuursrecht stands under the Centrale Raad van Beroep alone
 	const appeal = page.locator('.vak').filter({ hasText: 'Hoger beroep' });
 	await expect(appeal.locator('.daarna')).toHaveCount(1);
 	await expect(appeal.locator('.daarna')).toContainText('daarna cassatie bij de Hoge Raad');
+	// With its grounds: art. 78 RO and the laws that open it (B150).
+	await expect(appeal.locator('.daarna').getByRole('link', { name: 'art. 53 AOW' })).toBeVisible();
 	// The line follows the CRvB, not the Afdeling or the CBb.
 	const order = await appeal.locator('.naam, .daarna').allTextContents();
 	expect(order.findIndex((t) => t.startsWith('daarna'))).toBe(

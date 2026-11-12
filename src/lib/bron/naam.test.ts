@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { InstrumentMeta } from '$lib/text/instrument-meta';
 import type { GraphNode } from '$lib/graph/types';
-import { bronNaam, stemmingNaam } from './naam';
+import { bronNaam, stemmingKop } from './naam';
 
 const awb: InstrumentMeta = {
 	bwbId: 'BWBR0005537',
@@ -101,7 +101,7 @@ describe('bronNaam', () => {
 	});
 });
 
-describe('stemmingNaam', () => {
+describe('stemmingKop', () => {
 	const vote = (key: string, props: Record<string, unknown>) =>
 		({
 			id: `decisions/${key}`,
@@ -111,7 +111,7 @@ describe('stemmingNaam', () => {
 
 	it('names a vote as the procedure does, not by its zaak number', () => {
 		expect(
-			stemmingNaam(
+			stemmingKop(
 				vote('abc', {
 					date: '2026-09-29',
 					subject: 'Wijziging van de Wet SUWI ',
@@ -126,10 +126,10 @@ describe('stemmingNaam', () => {
 	});
 
 	it('says a postponed vote and a vote of the Eerste Kamer in their own words', () => {
-		expect(stemmingNaam(vote('abc', { decision_kind: 'Stemmen - uitstellen', passed: null }))).toBe(
-			'Stemming Tweede Kamer, uitstellen'
+		expect(stemmingKop(vote('abc', { decision_kind: 'Stemmen - uitstellen', passed: null }))).toBe(
+			'Stemming Tweede Kamer, uitgesteld'
 		);
-		expect(stemmingNaam(vote('ek_36799', { passed: false }))).toBe(
+		expect(stemmingKop(vote('ek_36799', { passed: false }))).toBe(
 			'Stemming Eerste Kamer, verworpen'
 		);
 	});

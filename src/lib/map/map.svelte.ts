@@ -31,6 +31,7 @@ import { keptIn, removedFrom } from '$lib/bevestig/bevestig.svelte';
 import { bundlePageHref } from './page';
 import { isDay } from '$lib/text/datum';
 import { formatCount } from '$lib/text/getal';
+import { arrayOf, readJson, readStored, writeJson, writeStored } from '$lib/util/storage';
 
 const STORAGE_KEY = 'concordans:mappen';
 const LOOSE_NAME = 'Mijn markeringen';
@@ -40,14 +41,7 @@ const SHARED_LOOSE = 'Gedeelde markeringen';
 const KEEPING = 'concordans:bewaar-in';
 
 /** The bundel kept in this session; none where the browser keeps no session. */
-function keepingNow(): string | null {
-	try {
-		return typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem(KEEPING);
-	} catch (e) {
-		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
-		return null;
-	}
-}
+const keepingNow = () => readStored(KEEPING, 'session');
 
 /** The bundels, and what else a later version keeps beside them, as it was kept. */
 type Stand = { mappen: Map[]; extra?: Record<string, unknown> };
@@ -85,14 +79,8 @@ const day = (v: unknown) => (typeof v === 'string' && isDay(v) ? v : null);
 const VISITED = 'concordans:bundels-bezocht';
 
 /** The bundels visited in this session; none where the browser keeps no session. */
-function visitedNow(): Set<string> {
-	try {
-		return new Set(JSON.parse(sessionStorage.getItem(VISITED) ?? '[]'));
-	} catch (e) {
-		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
-		return new Set();
-	}
-}
+const visitedNow = () =>
+	readJson('session', VISITED, (ids) => new Set(arrayOf(ids) as string[])) ?? new Set<string>();
 
 /** The notes per group as kept, strings only. */
 const textsOnly = (v: unknown): GroepNotities =>
@@ -138,13 +126,7 @@ const LOOSE_ID = 'losse-markeringen';
 const firstState = (): Stand => ({ mappen: [{ ...blank(LOOSE_NAME), id: LOOSE_ID }] });
 
 /** The bundels as this browser keeps them, as written; null where it keeps none. */
-function stored(): string | null {
-	try {
-		return localStorage.getItem(STORAGE_KEY);
-	} catch {
-		return null;
-	}
-}
+const stored = () => readStored(STORAGE_KEY);
 
 /** The bundels as this browser keeps them now; null where it keeps none it can read. */
 function readKept(text = stored()): Stand | null {
@@ -226,12 +208,7 @@ class Kaarten {
 			};
 		});
 		const text = JSON.stringify({ ...this.#stand.extra, mappen });
-		try {
-			localStorage.setItem(STORAGE_KEY, text);
-			this.#lastText = text;
-		} catch {
-			/* geen opslag */
-		}
+		if (writeStored(STORAGE_KEY, text)) this.#lastText = text;
 	}
 	/** Changes a map by its id and remembers. */
 	#change(id: string, f: (m: Map) => Partial<Map>) {
@@ -262,12 +239,7 @@ class Kaarten {
 	/** Keeps in a bundel from now on in this session; null ends it. */
 	keepIn(id: string | null) {
 		this.#keeping = id;
-		try {
-			if (id) sessionStorage.setItem(KEEPING, id);
-			else sessionStorage.removeItem(KEEPING);
-		} catch (e) {
-			if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
-		}
+		writeStored(KEEPING, id, 'session');
 	}
 	/** In a bundel or out of it, by its id: the bundels of Bewaar's menu. */
 	toggleIn(id: string, i: MapItem) {
@@ -365,12 +337,8 @@ class Kaarten {
 		if (!m) return null;
 		const visited = visitedNow();
 		if (visited.has(id)) return m.since ?? null;
-		try {
-			sessionStorage.setItem(VISITED, JSON.stringify([...visited, id]));
-		} catch (e) {
-			// Without a session every load is a visit: what is new counts from the load before.
-			if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
-		}
+		// Without a session every load is a visit: what is new counts from the load before.
+		writeJson('session', VISITED, [...visited, id]);
 		const since = m.seen ?? m.since ?? null;
 		this.#stand = {
 			...this.#stand,

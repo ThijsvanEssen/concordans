@@ -19,6 +19,7 @@
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef, bwCode } from '$lib/text/bw';
 	import { onDestroy, onMount, untrack } from 'svelte';
+	import { whenIdle } from '$lib/util/idle';
 	import { answer } from '$lib/keys/dispatch.svelte';
 	import { offer, type Target } from '$lib/keys/doen.svelte';
 	import { focusView, keyView, stepBy, werkplekDoer, type ViewId, type Werkplek } from './doen';
@@ -198,7 +199,7 @@
 	import { ChainData } from './chain-data.svelte';
 	import ReadTabs from './ReadTabs.svelte';
 	import ConnectedEntry from './ConnectedEntry.svelte';
-	import { mayShortcut } from '$lib/actions/keys';
+	import { mayShortcut, takeEscape } from '$lib/actions/keys';
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
@@ -208,6 +209,7 @@
 	import TocSheet from './TocSheet.svelte';
 	import BronFailure from '$lib/components/explore/BronFailure.svelte';
 	import { contentsTold, contentsEmpty } from '$lib/components/explore/contents-state.svelte';
+	import { NL } from '$lib/text/collator';
 
 	// One store for the lifetime of this page, so it survives mode switches.
 	// ?grens=800 is a trial: the places the canvas keeps (1000), read once, at the page's start.
@@ -736,7 +738,7 @@
 			props: n.raw?.props ?? null,
 			collection: n.collection
 		}));
-		return ends.sort((x, y) => x.name.localeCompare(y.name, 'nl') || x.id.localeCompare(y.id));
+		return ends.sort((x, y) => NL.compare(x.name, y.name) || x.id.localeCompare(y.id));
 	});
 	/**
 	 * The ends Verband draws: at most SHARED_ENDS, so it asks at most 15 pairs; more chosen
@@ -1810,9 +1812,7 @@
 			graphChunk.load();
 			panelChunk.load();
 		};
-		if (typeof requestIdleCallback !== 'function') return void setTimeout(ask, 3000);
-		const idle = requestIdleCallback(ask, { timeout: 5000 });
-		return () => cancelIdleCallback(idle);
+		return whenIdle(ask, { timeout: 5000, fallback: 3000 });
 	});
 	$effect(() => {
 		if (mode === 'index') {
@@ -1930,7 +1930,7 @@
 	// ── Keys ─────────────────────────────────────────────────────────────────
 	// Escape closes what is on top here; the keys with Alt are answered below.
 	function handleKeydown(e: KeyboardEvent) {
-		if (tocOpen && e.key === 'Escape') {
+		if (tocOpen && takeEscape(e)) {
 			tocOpen = false;
 			return;
 		}

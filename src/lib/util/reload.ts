@@ -3,20 +3,16 @@
 // the failure stays shown. +error.svelte and the Verkenner's own chunks share the rule.
 import { updated } from '$app/state';
 import { report } from '$lib/api/errors';
+import { readStored, writeStored } from '$lib/util/storage';
 
 /** Set when this tab reloaded for a new version; it reloads once per version. */
 const RELOADED = 'concordans:herladen';
 
 async function reloadIfUpdated() {
 	if (!(await updated.check())) return;
-	try {
-		if (sessionStorage.getItem(RELOADED) === location.href) return;
-		sessionStorage.setItem(RELOADED, location.href);
-	} catch {
-		// Without storage a reload could repeat itself: the failure stays shown instead.
-		return;
-	}
-	location.reload();
+	if (readStored(RELOADED, 'session') === location.href) return;
+	// Without storage a reload could repeat itself: the failure stays shown instead.
+	if (writeStored(RELOADED, location.href, 'session')) location.reload();
 }
 
 export function reloadForNewVersion(): void {

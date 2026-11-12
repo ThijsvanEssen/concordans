@@ -10,11 +10,17 @@ export const WAITS = [1500, 3000, 6000, 12000];
 
 const pause = (ms: number, signal?: AbortSignal) =>
 	new Promise<void>((done, fail) => {
+		// An abort before the wait fires no event: it ends at once, not after one more question.
+		if (signal?.aborted) return fail(signal.reason);
 		const t = setTimeout(done, ms);
-		signal?.addEventListener('abort', () => {
-			clearTimeout(t);
-			fail(signal.reason);
-		});
+		signal?.addEventListener(
+			'abort',
+			() => {
+				clearTimeout(t);
+				fail(signal.reason);
+			},
+			{ once: true }
+		);
 	});
 
 /**

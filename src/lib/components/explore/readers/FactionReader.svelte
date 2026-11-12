@@ -18,6 +18,7 @@
 	import { stemmingNaam } from '$lib/votes/stemming';
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { NL } from '$lib/text/collator';
 
 	/** A member of the fractie's board, as the Eerste Kamer lists it (API 0.65). */
 	type BoardSeat = { function?: string; name?: string; member?: string | null; since?: string };
@@ -54,7 +55,7 @@
 			if (!key) return [];
 			const r = await getMembers({ party: key, active: true, limit: 200 }, signal);
 			return [...r].sort((a, b) =>
-				(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl')
+				NL.compare(a.family_name ?? a.name ?? '', b.family_name ?? b.name ?? '')
 			);
 		},
 		'Leden van de fractie'

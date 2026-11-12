@@ -52,9 +52,9 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { navigating, page } from '$app/state';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
-	import { getFeed, getFeedSummary } from '$lib/api/feed';
+	import { getFeed, getFeedCounts, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
-	import { isSlow, report } from '$lib/api/errors';
+	import { isAborted, isSlow, report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import type { LoadFailure } from '$lib/util/load.svelte';
 	import { tick, untrack } from 'svelte';
@@ -107,6 +107,7 @@
 	} from '$lib/components/actueel/feed';
 	import { standLine } from '$lib/text/stand';
 	import { FEED_PAGE } from '$lib/api/first-pages';
+	import { NL } from '$lib/text/collator';
 
 	const today = vandaag();
 	/** The days one summary spans at most, as the API allows. */
@@ -143,7 +144,8 @@
 		const clear = 'open' in patch ? [] : ['open'];
 		navigate(withParams(page.url, patch, { clear }), { step: !replaceState });
 	}
-	const filterHref = (patch: ParamPatch) => withParams(page.url, patch, { clear: ['open'] });
+	/** Actueel under the patch alone: "Alles over dit dossier" is all of it, whatever the filters. */
+	const filterHref = (patch: ParamPatch) => withParams(new URL('/actueel', page.url), patch);
 	const toggleOpen = (id: string) => patchUrl({ open: openId === id ? null : id }, true);
 	const clearFilters = () => patchUrl(Object.fromEntries(FEED_FILTER_PARAMS.map((f) => [f, null])));
 
@@ -295,35 +297,22 @@
 		facets = null;
 		total = null;
 		tellen = true;
-		// Without the counts in 3 s the API answers `partial` (0.79.14) and counts on: asked
-		// once more after 30 s past the browser's cache (which keeps the partial answer 60 s),
-		// or with the next filter. Then the filters stand without them.
-		let opnieuw: ReturnType<typeof setTimeout> | undefined;
-		const tel = (poging: number): void => {
-			getFeed(
-				{ ...q, limit: 1, facets: true },
-				{ signal: ac.signal, wait: 'short', fresh: poging > 0 }
-			)
-				.then((r) => {
-					if (r.partial && !r.facets) {
-						if (poging === 0) opnieuw = setTimeout(() => tel(1), 30_000);
-						else tellen = false;
-						return;
-					}
-					facets = r.facets ?? null;
-					total = r.total ?? null;
-					tellen = false;
-				})
-				.catch((e) => {
-					// The list stands; the filters without their counts.
-					report('Actueel tellingen', e);
-					if (!ac.signal.aborted) tellen = false;
-				});
-		};
-		tel(0);
+		getFeedCounts(q, ac.signal)
+			.then((r) => {
+				if (ac.signal.aborted) return;
+				facets = r.facets ?? null;
+				total = r.total ?? null;
+				tellen = false;
+			})
+			.catch((e) => {
+				if (ac.signal.aborted || isAborted(e)) return;
+				// The list stands; the filters without their counts.
+				report('Actueel tellingen', e);
+				tellen = false;
+			});
 		return () => {
-			clearTimeout(opnieuw);
 			ac.abort();
+			pageAbort?.abort();
 		};
 	});
 
@@ -335,17 +324,34 @@
 	async function verderTerug() {
 		if (!doorzocht || verderLaden) return;
 		verderLaden = true;
+		await appendPage({ until: addDays(doorzocht, -1) }, 'Actueel verder back', verderTerug);
+		verderLaden = false;
+	}
+
+	// Days added to the list go with a change of filters while they load, as on Bladeren: an
+	// answer to the filters before would add their days, and their cursor, to the new list.
+	let pageAbort: AbortController | null = null;
+	/** The next days under the filters shown; true when they were added. */
+	async function appendPage(
+		extra: Partial<FeedQuery>,
+		where: string,
+		retry: () => void
+	): Promise<boolean> {
+		pageAbort?.abort();
+		const ac = (pageAbort = new AbortController());
 		error = null;
 		try {
-			const r = await getFeed({ ...query, until: addDays(doorzocht, -1), facets: false });
+			const r = await getFeed({ ...query, ...extra, facets: false }, { signal: ac.signal });
+			if (ac.signal.aborted) return false;
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 			doorzocht = doorzochtVanaf(r);
+			return true;
 		} catch (e) {
-			report('Actueel verder back', e);
-			error = { what: 'De eerdere dagen', plural: true, error: e, retry: verderTerug };
-		} finally {
-			verderLaden = false;
+			if (ac.signal.aborted || isAborted(e)) return false;
+			report(where, e);
+			error = { what: 'De eerdere dagen', plural: true, error: e, retry };
+			return false;
 		}
 	}
 
@@ -356,22 +362,13 @@
 	async function loadMore() {
 		if (!cursor || loadingMore) return;
 		loadingMore = true;
-		error = null;
 		// The focus to the first row the page adds: the link gives way to "Laden…" (F3, as Bladeren).
 		const before = daysEl?.querySelectorAll(ROW).length ?? 0;
-		try {
-			const r = await getFeed({ ...query, cursor, facets: false });
-			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
-			cursor = r.next_cursor ?? null;
-			doorzocht = doorzochtVanaf(r);
+		if (await appendPage({ cursor }, 'Actueel eerdere dagen', loadMore)) {
 			await tick();
 			if (daysEl) focusFirstNew(daysEl, ROW, before);
-		} catch (e) {
-			report('Actueel eerdere dagen', e);
-			error = { what: 'De eerdere dagen', plural: true, error: e, retry: loadMore };
-		} finally {
-			loadingMore = false;
 		}
+		loadingMore = false;
 	}
 
 	// What stands is kept for Back, Eerdere dagen included.
@@ -506,7 +503,7 @@
 				all: 'Alle fracties',
 				options: [...new Set([...Object.keys(factionNames), ...(voted ? [voted] : [])])]
 					.map((key) => ({ value: key, label: factionNames[key] ?? key }))
-					.sort((a, b) => a.label.localeCompare(b.label, 'nl')),
+					.sort((a, b) => NL.compare(a.label, b.label)),
 				onChange: (v) =>
 					patchUrl({ [VOTED_PARAM]: v || null, [VOTE_PARAM]: v ? vote || null : null })
 			},

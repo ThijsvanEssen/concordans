@@ -6,6 +6,7 @@
 // to share.
 import { truncate } from '$lib/text/words';
 import { CODING_FORMAT, csvText, parseCsv } from '$lib/text/csv';
+import { entriesOf, readJson, writeJson } from '$lib/util/storage';
 
 export type Strekking = 'bevorderend' | 'beperkend' | 'neutraal';
 export const STREKKINGEN: readonly Strekking[] = ['bevorderend', 'beperkend', 'neutraal'];
@@ -31,31 +32,18 @@ const SLEUTEL = 'concordans:strekking';
 const isStrekking = (v: unknown): v is Strekking => STREKKINGEN.includes(v as Strekking);
 
 /** The coding in this browser; empty where there is none or storage is closed. */
-export function leesCodering(): Codering {
-	try {
-		const ruw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '{}') as unknown;
-		if (!ruw || typeof ruw !== 'object') return {};
-		const uit: Codering = {};
-		for (const [o, rijen] of Object.entries(ruw as Record<string, unknown>)) {
-			if (!rijen || typeof rijen !== 'object') continue;
-			const goed = Object.entries(rijen as Record<string, unknown>).filter(([, r]) =>
-				isStrekking(r)
-			) as [string, Strekking][];
-			if (goed.length) uit[o] = Object.fromEntries(goed);
-		}
-		return uit;
-	} catch {
-		return {};
-	}
-}
+export const leesCodering = (): Codering =>
+	readJson('local', SLEUTEL, (ruw) =>
+		Object.fromEntries(
+			entriesOf(ruw).flatMap(([o, rijen]) => {
+				const goed = entriesOf(rijen).filter((e): e is [string, Strekking] => isStrekking(e[1]));
+				return goed.length ? [[o, Object.fromEntries(goed)]] : [];
+			})
+		)
+	) ?? {};
 
-export function schrijfCodering(c: Codering) {
-	try {
-		localStorage.setItem(SLEUTEL, JSON.stringify(c));
-	} catch {
-		// A browser that keeps nothing: the coding lasts as long as the page.
-	}
-}
+/** Keeps the coding; a browser that keeps nothing has it as long as the page. */
+export const schrijfCodering = (c: Codering) => void writeJson('local', SLEUTEL, c);
 
 /** A coding with one decision set, or cleared with null. */
 export function metStrekking(

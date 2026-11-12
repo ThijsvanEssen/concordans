@@ -12,10 +12,13 @@
 //   sinceDate   sinds 28 september 2026; so asOfDate, onDate, fromDate, untilDate and
 //                throughDate: a word before a date in a sentence is written here only,
 //                and always with the long date (guards/datum.test.ts)
+//   yearsOf      2017–2021, 2025– in a column, sinds 2025 in a sentence: every span of years
+//   periodSentence  sinds 23 feb. 2026, 2 jul. 2024 tot 23 feb. 2026: every period in words
 //
 // The parts of a date are joined by a no-break space, so a line never breaks inside it.
 
 import { capitalize } from './words';
+import { NOT_IN_DATA } from './coverage';
 
 /** The months, lower case, January first. */
 export const MONTHS = [
@@ -33,7 +36,7 @@ export const MONTHS = [
 	'december'
 ];
 // The Taalunie's abbreviations: a full stop, except for mei; maart is mrt.
-const MAAND_KORT = [
+export const MAAND_KORT = [
 	'jan.',
 	'feb.',
 	'mrt.',
@@ -93,10 +96,17 @@ export function dagVan(iso: string | null | undefined): Dag | null {
 	return dag.m >= 1 && dag.m <= 12 && dag.d >= 1 && dag.d <= 31 ? dag : null;
 }
 
-/** `28 sep. 2026`; empty without a date. */
-export const korteDatum = (iso: string | null | undefined): string => {
+/** The year of an ISO date or moment, `2026`; empty without one. */
+export const yearOf = (iso: string | null | undefined): string =>
+	/^\d{4}/.exec(iso ?? '')?.[0] ?? '';
+
+/** `28 sep. 2026`; empty without a date. Without `fullStop` the month has no full stop, `28 sep 2026`:
+ *  as a reader types a bound of a period. */
+export const korteDatum = (iso: string | null | undefined, { fullStop = true } = {}): string => {
 	const t = dagVan(iso);
-	return t ? `${t.d}${NBSP}${MAAND_KORT[t.m - 1]}${NBSP}${t.j}` : '';
+	if (!t) return '';
+	const month = MAAND_KORT[t.m - 1];
+	return `${t.d}${NBSP}${fullStop ? month : month.replace('.', '')}${NBSP}${t.j}`;
 };
 
 /** `28 sep.`; empty without a date. */
@@ -190,13 +200,70 @@ export function maandagVan(dag: string): string {
 /** Whether the ISO day has come: today or before (in Europe/Amsterdam). */
 export const hasPassed = (iso: string, now = new Date()): boolean => iso <= vandaag(now);
 
-/** `2017–2026`, `2026`, `2025–` while it lasts: a year first, so a column of them aligns. */
-export function yearsOf(from: string | null, to: string | null): string {
-	const a = from?.slice(0, 4);
-	const b = to?.slice(0, 4);
+type YearsForm = {
+	/** `kolom`: a year first, so a column of them aligns, `2025–`; `zin`: in a sentence, `sinds 2025`. */
+	form?: 'kolom' | 'zin';
+	/** Whether a period without an end still runs; else its end is one the sources do not give. */
+	open?: boolean;
+};
+
+/**
+ * The years of a period, one dash without spaces: `2017–2026`, `2026`, and while it lasts
+ * `2025–` (kolom) or `sinds 2025` (zin). Without a start `–2021` or `tot en met 2021`; an end
+ * the sources do not give (not `open`) says so: `1913, einde niet in de gegevens`.
+ */
+export function yearsOf(
+	from: string | null | undefined,
+	to: string | null | undefined,
+	{ form = 'kolom', open = true }: YearsForm = {}
+): string {
+	const [a, b] = [yearOf(from), yearOf(to)];
 	if (a && b) return a === b ? a : `${a}–${b}`;
-	return a ? `${a}–` : b ? `–${b}` : '';
+	if (a && !open) return `${a}, einde ${NOT_IN_DATA}`;
+	const sentence = form === 'zin';
+	if (a) return sentence ? `sinds ${a}` : `${a}–`;
+	return b ? (sentence ? `tot en met ${b}` : `–${b}`) : '';
 }
+
+/**
+ * A period in a sentence: `sinds 23 feb. 2026` while it runs (no end, or one still to come),
+ * `2 jul. 2024 tot 23 feb. 2026`, `tot 23 feb. 2026` without a start. The dates `kort` (in a
+ * list, a bar), `lang` (in a sentence of a reader) or by `maand` (`feb. 2026`, on a time line).
+ */
+export function periodSentence(
+	from: string | null | undefined,
+	to: string | null | undefined,
+	form: 'kort' | 'lang' | 'maand' = 'kort',
+	today = vandaag()
+): string {
+	const date = { kort: korteDatum, lang: langeDatum, maand: maandJaar }[form];
+	if (!dagVan(from)) return dagVan(to) ? `tot ${date(to)}` : `periode ${NOT_IN_DATA}`;
+	if (!to || !dagVan(to) || to >= today) return `sinds ${date(from)}`;
+	return `${date(from)} tot ${date(to)}`;
+}
+
+/** The day after an ISO day. */
+export const nextDay = (iso: string): string => addDays(iso, 1);
+
+/** The ISO week of a day: its Thursday's year and the week's number, `{ year: 2026, week: 41 }`. */
+export function isoWeek(day: string): { year: number; week: number } {
+	const thursday = addDays(maandagVan(day.slice(0, 10)), 3);
+	const year = Number(thursday.slice(0, 4));
+	const week = Math.ceil((daysBetween(`${year}-01-01`, thursday) + 1) / 7);
+	return { year, week };
+}
+
+/** The Monday of week `week` of ISO year `year`, as a day; the 4th of January is in week 1. */
+export const mondayOfWeek = (year: number, week: number): string =>
+	addDays(maandagVan(`${year}-01-04`), (week - 1) * 7);
+
+/** The last day of a month (`m` 1 to 12), as an ISO day. */
+export const lastDayOfMonth = (year: number, m: number): string =>
+	new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
+
+/** The years from `a` to `b` (today without `b`), ISO dates: a period's length on a time line. */
+export const yearsBetween = (a: string | null | undefined, b?: string | null): number =>
+	daysBetween(a ?? '', b ?? vandaag()) / 365.25;
 
 /** Today as a reader dates a consultation: `22 oktober 2026`. */
 export const consultedOn = (now = new Date()): string => langeDatum(vandaag(now));

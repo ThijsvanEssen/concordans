@@ -1,7 +1,7 @@
 // A date is written in one place (E9 A, B; E7 G2): a word before a date goes through a helper
 // of $lib/text/datum, and a date is never typed out in a component.
 import { describe, expect, it } from 'vitest';
-import { BRONNEN, regelOvertreders } from '$lib/test/bronnen';
+import { BRONNEN, plek, regelOvertreders } from '$lib/test/bronnen';
 
 const NIET_REGEL = /^\s*(\/\/|\*|\/\*|<!--)|<!--|-->|\/\*/;
 
@@ -18,6 +18,34 @@ describe('a date in words', () => {
 			/\b\d{1,2}\s(?:jan|feb|mrt|apr|mei|jun|jul|aug|sep|okt|nov|dec)[a-z]*\.?\s\d{4}\b/;
 		expect(
 			regelOvertreders((l) => !NIET_REGEL.test(l) && letterlijk.test(l.replace(/\/\/.*$/, '')))
+		).toEqual([]);
+	});
+});
+
+describe('a period in years or in a sentence', () => {
+	// One form per screen kind (audit dubbele helpers, 8 and 9): yearsOf for `2017–2021`, `2025–`
+	// and `sinds 2025`, periodSentence for `2 jul. 2024 tot 23 feb. 2026`; a dash with spaces, a `?`
+	// for an end not known, or a sentence of its own read differently per screen.
+	const JAAR = String.raw`(?:from|to|van|tot|a|b|jaa?r\w*|year\w*|[^{}]*slice\(0, ?4\))`;
+	const JAARSPANNE = [
+		new RegExp(String.raw`\{\s*${JAAR}[^{}]*\}\s?–`, 'i'),
+		/(sinds|tot en met) \$?\{\s*(a|b|jaa?r\w*|year\w*|[^{}]*slice\(0, ?4\))[^{}\w]/i,
+		/–\?/,
+		/\$\{\s*(from|van)\s*\} tot \$\{\s*(to|tot)\s*\}/
+	];
+	it('writes a span of years and a period sentence through $lib/text/datum alone', () => {
+		expect(
+			regelOvertreders(
+				(l) => !NIET_REGEL.test(l) && JAARSPANNE.some((r) => r.test(l)),
+				[
+					plek('lib/text/datum.ts'),
+					{
+						pad: 'lib/bron/menselijk.ts',
+						reden: 'the name of a law version, "versie van … tot …", is a name and not a period',
+						regel: /versie van \$\{van\} tot/
+					}
+				]
+			)
 		).toEqual([]);
 	});
 });

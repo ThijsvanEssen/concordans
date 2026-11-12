@@ -26,6 +26,7 @@
 		VIEWS,
 		designatedCourt,
 		annexArticleName,
+		arrowInto,
 		routeOf,
 		type CourtStep
 	} from '$lib/court-route/route';
@@ -43,6 +44,9 @@
 	const choose = (id: string) => navigate(withParams(page.url, { gebied: id }));
 	const data = $derived(routes.state.status === 'ready' ? routes.state.data : null);
 	const route = $derived(data ? routeOf(view, data) : null);
+	const dashed = $derived(
+		route?.some((s) => s.rows.some((r) => r.courts.some((c) => c.then))) ?? false
+	);
 	const options = $derived(VIEWS.map((v) => ({ waarde: v.id, label: v.short })));
 	const RO = { collection: 'instruments' as const, key: 'bwbr0001830' };
 	const AWB = { collection: 'instruments' as const, key: 'bwbr0005537' };
@@ -110,39 +114,45 @@
 			<section class="gebied" aria-labelledby="gebied-kop">
 				<h2 id="gebied-kop">{view.label}</h2>
 				<ol class="route">
-					{#each route.stages as stage, i (stage.name)}
+					{#each route as stage, i (stage.name)}
 						<li class="stap">
-							{#if i}<span class="pijl" aria-hidden="true">{stage.name.toLowerCase()}</span>{/if}
+							{#if i}<span class="pijl" aria-hidden="true">{arrowInto(stage, route[i - 1])}</span
+								>{/if}
 							<div class="vak">
 								<span class="fase">{stage.name}</span>
-								{#each stage.courts as court (court.tier)}
-									<p class="instantie">
-										<span class="naam">{court.name}</span>
-										<span class="art raak-regels">{@render articles(court)}</span>
-									</p>
-									{#if court.then}
-										<!-- After this court alone, so not a stage of its own (B144 4A). -->
-										<p class="daarna raak-regels">
-											daarna {court.then.stage.toLowerCase()} bij de {court.then.name}, in enkele
-											wetten: {@render articles(court.then)}
-										</p>
-									{/if}
+								{#each stage.rows as row (row.when)}
+									<!-- A row per condition, "anders" last (B144 stroomschema). -->
+									<div class="rij" class:rij--anders={row.when === 'anders'}>
+										{#if row.when}
+											<p class="als raak-regels">
+												{row.when}{#if row.cite}, <a
+														class="raakvlak"
+														href={openHref(row.cite.ref, { path: row.cite.path })}
+														>{row.cite.name}</a
+													>{/if}
+											</p>
+										{/if}
+										{#if row.none}<p class="instantie"><span class="naam">{row.none}</span></p>{/if}
+										{#each row.courts as court (court.tier)}
+											<p class="instantie">
+												<span class="naam">{court.name}</span>
+												<span class="art raak-regels">{@render articles(court)}</span>
+											</p>
+											{#if court.then}
+												<!-- After this court alone, so not a stage of its own (B144 4A). -->
+												<p class="daarna raak-regels">
+													daarna {court.then.stage.toLowerCase()} bij de {court.then.name}, in
+													enkele wetten: {@render articles(court.then)}
+												</p>
+											{/if}
+										{/each}
+									</div>
 								{/each}
 							</div>
 						</li>
 					{/each}
 				</ol>
-				{#if route.others.length}
-					<p class="stil andere">Eerste en enige aanleg bij een andere rechter:</p>
-					<ul class="andere-lijst">
-						{#each route.others as court (court.tier)}
-							<li class="raak-regels">
-								<span class="naam">{court.name}</span>
-								{@render articles(court)}
-							</li>
-						{/each}
-					</ul>
-				{/if}
+				{#if dashed}<p class="stil legenda">Gestippeld: alleen in enkele zaken.</p>{/if}
 			</section>
 
 			{#if view.id === 'bestuur' && data.regeling.length}
@@ -214,7 +224,7 @@
 		font: var(--niveau-1-sectie);
 		color: var(--ink);
 	}
-	.rechtsgang :is(.lede, .bijlage, .instantie, .daarna, .andere-lijst, .wetten) a {
+	.rechtsgang :is(.lede, .bijlage, .als, .instantie, .daarna, .wetten) a {
 		color: inherit;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -236,7 +246,7 @@
 		min-width: 0;
 	}
 	/* An article whole on its line: a link that breaks has no one place to tap. */
-	:is(.art, .andere-lijst) a {
+	:is(.art, .als, .daarna) a {
 		white-space: nowrap;
 	}
 	.gebied[aria-busy] :global([data-slow]) {
@@ -296,33 +306,52 @@
 		font-size: var(--t-body);
 		color: var(--ink);
 	}
-	.andere-lijst li .naam {
-		display: inline;
-	}
 	.gat {
 		color: var(--ink-3);
 	}
+	/* A row per condition, ruled off from the next; "anders" on the paper of a choice made. */
+	.rij {
+		margin: var(--s-2) calc(-1 * var(--s-3)) 0;
+		padding: var(--s-2) var(--s-3) 0;
+		border-top: 1px solid var(--rule);
+	}
+	.rij:first-of-type {
+		border-top: 0;
+		margin-top: 0;
+	}
+	.rij--anders {
+		margin-bottom: calc(-1 * var(--s-3));
+		padding-bottom: var(--s-3);
+		background: var(--paper-2);
+	}
+	.als {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.rij .instantie:first-of-type {
+		margin-top: 0;
+	}
+	.legenda {
+		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
+	}
+	/* After one court alone: dashed, as the legend says. */
 	.daarna {
-		margin: var(--s-1) 0 0;
-		padding-top: var(--s-1);
-		border-top: 1px dashed var(--rule);
+		margin: var(--s-2) 0 0;
+		padding: var(--s-2);
+		border: 1px dashed var(--ink-3);
+		border-radius: var(--r-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	.andere {
-		margin-top: var(--s-4);
-	}
-	.andere-lijst,
 	.artikelen,
 	.wetten {
 		list-style: none;
 		margin: 0;
 		padding: 0;
-	}
-	.andere-lijst li {
-		font-size: var(--t-meta);
-		padding: var(--s-1) 0;
 	}
 	.kop-rij,
 	summary {

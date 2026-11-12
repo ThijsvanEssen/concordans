@@ -1,6 +1,7 @@
 // The feed of the Kamers and the Staatsblad: Actueel, the start page and Onderwerpen.
 import { api, clientFor, slowApi, unwrap, type Wait } from './client';
 import type { QueryOf } from './types';
+import { untilCounted } from './counted';
 
 /**
  * A page of the feed under `query`. It waits as long as the API does: a search of words or a
@@ -21,6 +22,17 @@ export const getFeed = (
 			signal,
 			...(fresh ? { cache: 'reload' as const } : {})
 		})
+	);
+
+/**
+ * The total and the facets of the feed under `query`: without them in 3 s the API answers
+ * `partial` and counts on, asked again as every list asks (untilCounted).
+ */
+export const getFeedCounts = (query: QueryOf<'/api/feed'>, signal?: AbortSignal) =>
+	untilCounted(
+		(fresh) => getFeed({ ...query, limit: 1, facets: true }, { signal, wait: 'short', fresh }),
+		(r) => !!r.partial && !r.facets,
+		signal
 	);
 
 /** The days of the feed counted, with the events that stand alone; cold it takes seconds. */

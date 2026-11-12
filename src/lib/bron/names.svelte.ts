@@ -1,7 +1,8 @@
 // A fractie or a cabinet named in a row or a text (`D66`, `kabinet-Rutte IV`) as the bron
 // it is: its key, from the lists the API gives, asked for once. A name that is not in
 // the list stays text; a guessed key would be a link to nothing.
-import { getFactions } from '$lib/api/factions';
+import { getAllFactions } from '$lib/api/factions';
+import { AGAIN_AFTER } from '$lib/api/records';
 import { report } from '$lib/api/errors';
 import { getCabinets } from '$lib/api/government';
 import { onForget } from '$lib/util/forget';
@@ -30,7 +31,7 @@ export function keyOfName(items: Named[], name: string | null | undefined): stri
 type List = 'factions' | 'cabinets';
 
 const lists = $state<Record<List, Named[]>>({ factions: [], cabinets: [] });
-/** The lists asked or in; one that failed is asked again the next time. */
+/** The lists asked or in; one that failed is asked again after a pause. */
 const requested = new Set<List>();
 onForget(() => {
 	lists.factions = [];
@@ -40,7 +41,7 @@ onForget(() => {
 
 const LOAD: Record<List, () => Promise<Named[]>> = {
 	factions: () =>
-		getFactions().then((items) =>
+		getAllFactions().then((items) =>
 			items.map((f) => ({ key: f.key, names: [f.abbreviation, f.name] }))
 		),
 	cabinets: () => getCabinets().then((items) => items.map((c) => ({ key: c.key, names: [c.name] })))
@@ -55,7 +56,7 @@ function keyIn(list: List, name: string | null | undefined): string | null {
 				lists[list] = items;
 			})
 			.catch((e) => {
-				requested.delete(list);
+				setTimeout(() => requested.delete(list), AGAIN_AFTER);
 				report(`Namen (${list})`, e);
 			});
 	}

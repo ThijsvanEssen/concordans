@@ -13,7 +13,7 @@ import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/votes/stages';
 import { articleName } from '$lib/text/bw';
 import { citationRecord } from '$lib/text/citation-record';
-import { hasPassed, korteDatum, langeDatum, asOfDate } from '$lib/text/datum';
+import { hasPassed, korteDatum, langeDatum, asOfDate, periodSentence } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -397,11 +397,10 @@ function presentBase(hit: Hit, query: string, neighbours: readonly Hit[]): Prese
 		}
 		case 'cabinets': {
 			// "kabinet-Schoof", with its period (BE-35): "2 jul. 2024 tot 23 feb. 2026".
-			const from = korteDatum(extra(hit, 'from_date'));
-			const to = korteDatum(extra(hit, 'to_date'));
+			const from = extra(hit, 'from_date');
 			return {
 				title: nameOf(hit),
-				context: from ? (to ? `${from} tot ${to}` : `sinds ${from}`) : '',
+				context: from ? periodSentence(from, extra(hit, 'to_date')) : '',
 				snippet: null
 			};
 		}

@@ -6,6 +6,7 @@
 // Every action that keeps, follows or copies comes through `announce`, `keptIn` or `followedAt`
 // (a guard reads the sources); the line itself is drawn once, by Bevestiging.
 import { BUNDLES_PATH } from '$lib/map/page';
+import { arrayOf, readJson, readStored, writeJson, writeStored } from '$lib/util/storage';
 
 export const BEVESTIG_MS = 2000;
 /** A line with a way back (Ongedaan maken) is read and answered, not only seen. */
@@ -90,25 +91,13 @@ const PATHS: Record<Sign, string> = { bundels: BUNDLES_PATH, gevolgd: FOLLOWED_P
 const onPage = (sign: Sign, path: string) =>
 	path === PATHS[sign] || path.startsWith(`${PATHS[sign]}/`);
 
-function read(): Sign[] {
-	try {
-		const r = JSON.parse(localStorage.getItem(KEY) ?? '[]');
-		return Array.isArray(r) ? r.filter((t): t is Sign => t in PATHS) : [];
-	} catch (e) {
-		if (import.meta.env.DEV) console.debug('localStorage (unreadable):', e);
-		return [];
-	}
-}
+const read = () =>
+	readJson('local', KEY, (r) => arrayOf(r).filter((t): t is Sign => (t as string) in PATHS)) ?? [];
 let unseen = $state<Sign[]>(read());
 
 function store(list: Sign[]) {
 	unseen = list;
-	try {
-		if (list.length) localStorage.setItem(KEY, JSON.stringify(list));
-		else localStorage.removeItem(KEY);
-	} catch (e) {
-		if (import.meta.env.DEV) console.debug('localStorage (refused):', e);
-	}
+	writeJson('local', KEY, list.length ? list : null);
 }
 
 /** The sign at Bundels or Gevolgd, until the reader has been there. */
@@ -133,12 +122,8 @@ let noticeSeen = false;
 function firstOfSession(): boolean {
 	if (noticeSeen) return false;
 	noticeSeen = true;
-	try {
-		if (sessionStorage.getItem(NOTICE_KEY)) return false;
-		sessionStorage.setItem(NOTICE_KEY, '1');
-	} catch (e) {
-		if (import.meta.env.DEV) console.debug('sessionStorage (refused):', e);
-	}
+	if (readStored(NOTICE_KEY, 'session')) return false;
+	writeStored(NOTICE_KEY, '1', 'session');
 	return true;
 }
 

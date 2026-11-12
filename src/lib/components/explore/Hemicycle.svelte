@@ -4,7 +4,7 @@
 	import { RIJEN_150, RIJEN_75, deelStoelen, stemVanStoel } from './stoel';
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
-	import { bronHref } from '$lib/bron/href';
+	import { openHref } from '$lib/bron/href';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
 	import FractiePatronen from './FractiePatronen.svelte';
 	import { patroonId, patroonVan } from './partijkleuren.svelte';
@@ -38,7 +38,6 @@
 	} = $props();
 
 	/** Where a fractie's sector links: its reader. */
-	const hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' });
 
 	// The factions as they sit in the plenary hall, from the chair's left: the order of the
 	// Kamer's own plan (`seating_plan`), which the API gives per faction.
@@ -173,7 +172,7 @@
 		{#each sectors as sec (sec.faction.id)}
 			<!-- A fractie is a bron: its sector is a link, as its name is everywhere else. -->
 			<a
-				href={sec.faction.key ? hrefOf(sec.faction.key) : undefined}
+				href={sec.faction.key ? openHref(`factions/${sec.faction.key}`) : undefined}
 				aria-label={`${naamVan(sec.faction)}, ${sec.faction.name ?? ''}, ${count(sec.faction.seats, 'zetel', 'zetels')}`}
 				data-sveltekit-noscroll
 				onmouseenter={() => (hovered = sec.faction)}

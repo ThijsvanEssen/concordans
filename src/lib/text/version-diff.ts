@@ -5,6 +5,7 @@
 // pair whose wording changed in a few words gets those words marked; a pair that changed for
 // the most part is paired sentence by sentence first, the words marked within each pair.
 import { joinAnd } from './words';
+import { yearOf } from './datum';
 import type { Schema } from '$lib/api/types';
 import { partsOf } from './article-parts';
 
@@ -518,7 +519,7 @@ export function wordingsOf<V extends VersionLike>(versions: V[]): Wording<V>[] {
 export function byYear<W extends { from: string | null }>(wordings: W[]): [string, W[]][] {
 	const out: [string, W[]][] = [];
 	for (const w of wordings) {
-		const year = w.from?.slice(0, 4) ?? 'Zonder datum';
+		const year = yearOf(w.from) || 'Zonder datum';
 		const last = out.at(-1);
 		if (last && last[0] === year) last[1].push(w);
 		else out.push([year, [w]]);

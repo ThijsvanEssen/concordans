@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { faseRegels, ms, periodeZin, randen, streepjes } from './tijdas';
+import { faseRegels, ms, randen, streepjes } from './tijdas';
 
 // Schoof: 2 Jul 2024 to 23 Feb 2026.
 const schoof = { van: ms('2024-07-02'), tot: ms('2026-02-23'), lopend: false };
@@ -27,20 +27,13 @@ describe('streepjes', () => {
 	});
 });
 
-describe('randen and periodeZin', () => {
+describe('randen', () => {
 	it('ends a running period on "nu"', () => {
 		expect(randen('2026-02-23', null, true)).toEqual({
 			begin: '23\u00a0feb.\u00a02026',
 			eind: 'nu'
 		});
 		expect(randen('2024-07-02', '2026-02-23', false).eind).toBe('23\u00a0feb.\u00a02026');
-	});
-
-	it('says "sinds" for what still runs and names no period without a start', () => {
-		const fmt = (iso: string) => iso.slice(0, 7);
-		expect(periodeZin('2026-02-23', null, fmt, '2026-10-12')).toBe('sinds 2026-02');
-		expect(periodeZin('2024-07-02', '2026-02-23', fmt, '2026-10-12')).toBe('2024-07 tot 2026-02');
-		expect(periodeZin(null, null, fmt, '2026-10-12')).toBe('periode niet in de gegevens');
 	});
 });
 

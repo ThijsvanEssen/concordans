@@ -4,6 +4,7 @@
 import { aliases } from '$lib/api/aliases';
 import type { Schema } from '$lib/api/types';
 import type { DoRow } from '$lib/keys/doen.svelte';
+import { NL } from '$lib/text/collator';
 
 type Aliases = Schema<'AliasesResponse'>;
 
@@ -38,8 +39,7 @@ export function suggest(all: readonly Suggestion[], line: string): Suggestion[] 
 		.filter((s) => s.abbreviation.length > q.length && s.abbreviation.toLowerCase().startsWith(q))
 		.sort(
 			(a, b) =>
-				a.abbreviation.length - b.abbreviation.length ||
-				a.abbreviation.localeCompare(b.abbreviation, 'nl')
+				a.abbreviation.length - b.abbreviation.length || NL.compare(a.abbreviation, b.abbreviation)
 		)
 		.slice(0, MAX);
 }

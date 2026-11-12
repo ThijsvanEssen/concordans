@@ -266,8 +266,8 @@ describe('how a row of the list hangs', () => {
 		);
 	it('says a seat with its role and years', async () => {
 		const h = await how();
-		expect(h['committees/vz']).toBe('Voorzitter, 2021 – 2023');
-		expect(h['committees/pl']).toBe('Plaatsvervangend lid, 2024 – 2025');
+		expect(h['committees/vz']).toBe('Voorzitter, 2021–2023');
+		expect(h['committees/pl']).toBe('Plaatsvervangend lid, 2024–2025');
 	});
 	it('says a fractie over all its years, open where the last membership is', async () => {
 		expect((await how())['factions/d66']).toBe('sinds 2017');

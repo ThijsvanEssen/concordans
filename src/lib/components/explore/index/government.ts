@@ -1,5 +1,5 @@
 import type { Schema } from '$lib/api/types';
-import { daysBetween, vandaag } from '$lib/text/datum';
+import { daysBetween, vandaag, yearsOf } from '$lib/text/datum';
 import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 
 // The words for the government's side of the index: the posts in a cabinet, the state of a
@@ -72,16 +72,13 @@ export const currentCabinet = (cabinets: readonly Cabinet[]): Cabinet | undefine
 export const inOffice = (cabinet: Cabinet, cabinets: readonly Cabinet[]): boolean =>
 	!cabinet.to_date && currentCabinet(cabinets)?.key === cabinet.key;
 
-/** `2024–2026`, `sinds 2026` while in office, and `1913–?` when the end is not known. */
-export function period(
+/** `2024–2026`, `sinds 2026` while in office, and `1913, einde niet in de gegevens` when the
+ *  end is not known. */
+export const period = (
 	from: string | null | undefined,
 	to: string | null | undefined,
 	open = true
-): string {
-	const y = (iso: string | null | undefined) => iso?.slice(0, 4) ?? '?';
-	if (!to) return open ? `sinds ${y(from)}` : `${y(from)}–?`;
-	return y(from) === y(to) ? y(from) : `${y(from)}–${y(to)}`;
-}
+): string => yearsOf(from, to, { form: 'zin', open });
 
 /**
  * The posts of a person other than their longest. The API counts dossiers, bills and open

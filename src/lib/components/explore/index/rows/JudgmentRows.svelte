@@ -4,6 +4,7 @@
 	import { openHref } from '$lib/bron/href';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { plural } from '$lib/text/words';
+	import { formatCount } from '$lib/text/getal';
 	import IndexRow from '../IndexRow.svelte';
 	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from '../judgment-row';
 	import type { ViewProps } from '../lists/list';
@@ -36,8 +37,8 @@
 			{#snippet aside()}
 				{#if j.inbound_citation_count}
 					<span class="num-strong"
-						>{j.inbound_citation_count}<span class="num-lbl"
-							>{plural(j.inbound_citation_count, 'citatie', 'citaties')}</span
+						>{formatCount(j.inbound_citation_count)}<span class="num-lbl"
+							>&nbsp;{plural(j.inbound_citation_count, 'citatie', 'citaties')}</span
 						></span
 					>
 				{/if}

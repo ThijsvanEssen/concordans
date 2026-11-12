@@ -53,7 +53,7 @@ export interface paths {
         };
         /**
          * One article with its references
-         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself; `successors` and `predecessors` give its place in a recodification (`TRANSPOSED_TO`) both ways.
+         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself; `successors` and `predecessors` give its place in a recodification (`TRANSPOSED_TO`) both ways. 404 when the article is unknown.
          */
         get: operations["get_article_detail_api_articles__bwb_id___article_number__get"];
         put?: never;
@@ -235,7 +235,7 @@ export interface paths {
         };
         /**
          * The route of a case per area of law (Rechtsgang)
-         * @description Per area of law (`civiel`, `straf`, `bestuur`, `belasting`) the courts of its route, each with `basis`, the article a step of the Verloop gets, and `designations`, the articles of the Bevoegdheidsregeling bestuursrechtspraak that name it; the steps whose article is not read in the source as `gaps`. From the fixed list `data/route_articles.json`. `regeling`: the regeling (Awb bijlage 2) by chapter, each article with its heading and the laws its list names.
+         * @description Per area of law (`civiel`, `straf`, `bestuur`, `belasting`) the courts of its route, each with `basis`, the article a step of the Verloop gets, and `designations`, the other articles that give it its say in the step (the Bevoegdheidsregeling bestuursrechtspraak, the laws that open cassation), and `after_tier` for a court that hears only the judgments of that one; the steps whose article is not read in the source as `gaps`. From the fixed list `data/route_articles.json`. `regeling`: the regeling (Awb bijlage 2) by chapter, each article with its heading and the laws its list names.
          */
         get: operations["get_judgment_routes_api_judgments_routes_get"];
         put?: never;
@@ -1499,6 +1499,26 @@ export interface paths {
          *     Pages and facets (`mode=full`): `offset` skips that many hits of each type (a page of `limit`, `offset` at most 500). `facets=true` adds `counts`, per type how many hits it has (`total`; `capped`: at least that many, the count stops after 5,000 rows), and `facets`, the hits divided by instance (`tier`) and decision year (`year`) for `judgments`, by `kind` for `documents`, by `validity` (in force, expired, not in force yet) for `instruments`; the rows that hold the words, unranked, so a count may be more than the hits a citation or a name puts first. A type without a count of its own (`members`, ...) has the hits it found, `capped` when it found as many as asked for. A count that takes over a second is null. `mode=live` has neither.
          */
         get: operations["search_api_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/seats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Offices
+         * @description Every office someone held (the ``seat`` of a post), each once over the names of its ministry, by ``seat``: its latest name, post and ministry, its first and last day, how many held it and who holds it today (`current`). `ministry` keeps the offices held under that ministry or one of its names; `cabinet` those held in that cabinet (key); `current` those someone holds today. A seat nobody holds today has an empty `current`: a gap or a former office, not filled in.
+         */
+        get: operations["get_seats_api_seats_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3327,7 +3347,10 @@ export interface components {
             celex: string | null;
             /** Official Id */
             official_id: string | null;
-            /** Article Number */
+            /**
+             * Article Number
+             * @description Its number in the BWB, in its own regulation: `162` for 6:162 of BW Boek 6, whose cited form is `address`. Null for an article with only a heading, and for a repealed one.
+             */
             article_number: string | null;
             /**
              * Label
@@ -3336,7 +3359,7 @@ export interface components {
             label: string | null;
             /**
              * Address
-             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             * @description The `{article_number}` segment of the article routes: the number as cited (`287`, `8:54`, `6:162` of BW Boek 6), or for an article without one the rest of its key (`stam_16464063`; a repealed identity `2_10_stam_2866303`). Same across versions.
              */
             address: string;
             /**
@@ -3689,7 +3712,7 @@ export interface components {
             official_id: string | null;
             /**
              * Article Number
-             * @description Null for an article with only a heading, and for a repealed one.
+             * @description Its number in the BWB, in its own regulation: `162` for 6:162 of BW Boek 6, whose cited form is `address`. Null for an article with only a heading, and for a repealed one.
              */
             article_number: string | null;
             /**
@@ -3704,7 +3727,7 @@ export interface components {
             heading: string | null;
             /**
              * Address
-             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             * @description The `{article_number}` segment of the article routes: the number as cited (`287`, `8:54`, `6:162` of BW Boek 6), or for an article without one the rest of its key (`stam_16464063`; a repealed identity `2_10_stam_2866303`). Same across versions.
              */
             address: string;
             /**
@@ -3863,11 +3886,14 @@ export interface components {
              * @description Of an article of a law the BWB does not hold (yet): the id of the Staatsblad publication that enacted its law (`stb-2026-56`), which names the law in the article routes (`/api/articles/STB-2026-56/2.8.6`) and in its address.
              */
             official_id: string | null;
-            /** Article Number */
+            /**
+             * Article Number
+             * @description Its number in the BWB, in its own regulation: `162` for 6:162 of BW Boek 6, whose cited form is `address`. Null for an article with only a heading, and for a repealed one.
+             */
             article_number: string | null;
             /**
              * Address
-             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             * @description The `{article_number}` segment of the article routes: the number as cited (`287`, `8:54`, `6:162` of BW Boek 6), or for an article without one the rest of its key (`stam_16464063`; a repealed identity `2_10_stam_2866303`). Same across versions.
              */
             address: string;
             /**
@@ -3885,6 +3911,11 @@ export interface components {
              * @description How it is cited: `Art. 68 Cbw`.
              */
             display_name: string | null;
+            /**
+             * Official Url
+             * @description The article in force on wetten.overheid.nl (its JCI); the regulation for an article without a number the JCI can address; the enacting Staatsblad publication of a law the BWB does not hold (yet).
+             */
+            official_url: string | null;
             /** Repealed */
             repealed: boolean;
             /**
@@ -8226,6 +8257,17 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * ErrorDTO
+         * @description The body of every error above.
+         */
+        ErrorDTO: {
+            /**
+             * Detail
+             * @description A sentence: `Article 'bwbr0005289_999' not found.`
+             */
+            detail: string;
+        };
+        /**
          * EuLinkDTO
          * @description An `IMPLEMENTS` or `REFERS_TO` edge between a national instrument and an EU act.
          *
@@ -9942,7 +9984,7 @@ export interface components {
             official_id: string | null;
             /**
              * Article Number
-             * @description Null for an article with only a heading, and for a repealed one.
+             * @description Its number in the BWB, in its own regulation: `162` for 6:162 of BW Boek 6, whose cited form is `address`. Null for an article with only a heading, and for a repealed one.
              */
             article_number: string | null;
             /**
@@ -9957,7 +9999,7 @@ export interface components {
             heading: string | null;
             /**
              * Address
-             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             * @description The `{article_number}` segment of the article routes: the number as cited (`287`, `8:54`, `6:162` of BW Boek 6), or for an article without one the rest of its key (`stam_16464063`; a repealed identity `2_10_stam_2866303`). Same across versions.
              */
             address: string;
             /** Display Name */
@@ -12976,6 +13018,11 @@ export interface components {
             /** Portfolio */
             portfolio: string | null;
             /**
+             * Seat
+             * @description The office (``GET /api/seats/{seat}``), with its lane: ``fin/staatssecretaris#2``.
+             */
+            seat: string | null;
+            /**
              * From Date
              * @description The day it began.
              */
@@ -14120,11 +14167,16 @@ export interface components {
              * @description The procedures the metadata names that fit (their start): `Eerste aanleg`, `Hoger beroep`, `Cassatie`.
              */
             procedures: string[];
+            /**
+             * After Tier
+             * @description The court whose judgments this step hears, when only that one's: `centrale_raad_van_beroep` for cassation in `bestuur`; null when it hears those of the step before it.
+             */
+            after_tier: string | null;
             /** @description The article a step of the Verloop gets (`/course`). */
             basis: components["schemas"]["CourseBasis"];
             /**
              * Designations
-             * @description The articles of the Bevoegdheidsregeling bestuursrechtspraak (Awb bijlage 2: `bijlage 2 artikel 2`) that name this court, besides `basis`; empty for a court the regeling does not name.
+             * @description The other articles that give this court its say in this step, besides `basis`: the article of the Bevoegdheidsregeling bestuursrechtspraak (Awb bijlage 2: `bijlage 2 artikel 2`) that names it, the Awb beside the RO in `belasting` (`8:6`, `8:105`), the laws that open cassation against the Centrale Raad van Beroep (`BWBR0002221` art. `53`, ...); empty when there are none.
              */
             designations: components["schemas"]["CourseBasis"][];
         };
@@ -14375,6 +14427,31 @@ export interface components {
             unattributed: number;
         };
         /**
+         * SeatCurrentDTO
+         * @description Someone who holds the seat on the day asked.
+         */
+        SeatCurrentDTO: {
+            member: components["schemas"]["PersonRefDTO"];
+            /**
+             * Function
+             * @description As Rijksoverheid names the post.
+             */
+            function: string | null;
+            /** Cabinet Key */
+            cabinet_key: string | null;
+            /**
+             * From Date
+             * @description The day the post began.
+             */
+            from_date: string | null;
+            /**
+             * Acting
+             * @description A stand-in (ad interim).
+             * @default false
+             */
+            acting: boolean;
+        };
+        /**
          * SeatDTO
          * @description An office, over the names of its ministry.
          */
@@ -14384,6 +14461,8 @@ export interface components {
              * @description By its latest name: ``ienw/minister``, without a lane.
              */
             seat: string;
+            /** @description The ministry of its latest post; null for a seat without one (``viceminister-president``). */
+            ministry: components["schemas"]["MinistryKey"] | null;
             /**
              * Names
              * @description Every name it was held under, oldest first.
@@ -14408,6 +14487,16 @@ export interface components {
             gaps: components["schemas"]["SeatGapDTO"][];
             commitments: components["schemas"]["SeatCountsDTO"];
             dossiers: components["schemas"]["SeatCountsDTO"];
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
+            /**
+             * Ministry Path
+             * @description The address of ``ministry``: ``/ministeries/fin``; null without one.
+             */
+            readonly ministry_path: string | null;
         };
         /**
          * SeatEventBasis
@@ -14504,6 +14593,16 @@ export interface components {
             readonly ministry_name: string | null;
         };
         /**
+         * SeatListDTO
+         * @description The offices that match, by ``seat``.
+         */
+        SeatListDTO: {
+            /** Total */
+            total: number;
+            /** Items */
+            items: components["schemas"]["SeatSummaryDTO"][];
+        };
+        /**
          * SeatStretchDTO
          * @description A stretch of days in which neither the coalition nor any faction's seats changed.
          */
@@ -14549,6 +14648,55 @@ export interface components {
              * @description Eerste Kamer: whether its term added up (every change's faction known, no faction below zero, no more than 75 seats; the current term also equal to today's composition); when false, show the stretch as uncertain. Null for the Tweede Kamer, whose seats are the source's own.
              */
             checked: boolean | null;
+        };
+        /**
+         * SeatSummaryDTO
+         * @description An office in the list: its latest name and post, its period and who holds it now.
+         */
+        SeatSummaryDTO: {
+            /**
+             * Seat
+             * @description By its latest name, without a lane: ``fin/minister``.
+             */
+            seat: string;
+            post: components["schemas"]["Post"] | null;
+            /**
+             * Function
+             * @description Its latest post as Rijksoverheid names it.
+             */
+            function: string | null;
+            /** @description The ministry of its latest post; null without one. */
+            ministry: components["schemas"]["MinistryKey"] | null;
+            /**
+             * From Date
+             * @description The first day someone held it.
+             */
+            from_date: string | null;
+            /**
+             * To Date
+             * @description The last day someone held it; null while it is held.
+             */
+            to_date: string | null;
+            /**
+             * Holder Count
+             * @description How many people held it, as ``holders`` of the seat counts them.
+             */
+            holder_count: number;
+            /**
+             * Current
+             * @description Who holds it on the day asked, oldest post first; empty for a seat nobody holds then: a gap or a former office, not filled in.
+             */
+            current: components["schemas"]["SeatCurrentDTO"][];
+            /**
+             * Ministry Name
+             * @description The name of ``ministry`` (``GET /api/ministries/{key}``): ``Financiën``; null without one.
+             */
+            readonly ministry_name: string | null;
+            /**
+             * Ministry Path
+             * @description The address of ``ministry``: ``/ministeries/fin``; null without one.
+             */
+            readonly ministry_path: string | null;
         };
         /**
          * SeatingPlanDTO
@@ -16124,6 +16272,15 @@ export interface operations {
                     "application/json": components["schemas"]["ArticleTextDTO"];
                 };
             };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -16154,6 +16311,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleDetailResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
                 };
             };
             /** @description Validation Error */
@@ -16203,6 +16369,15 @@ export interface operations {
                     "application/json": components["schemas"]["ArticleCitedByResponse"];
                 };
             };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -16233,6 +16408,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleHistoryResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
                 };
             };
             /** @description Validation Error */
@@ -16266,6 +16450,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleVersionDTO"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
                 };
             };
             /** @description Validation Error */
@@ -16398,6 +16591,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleDelegatedResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
                 };
             };
             /** @description Validation Error */
@@ -18722,6 +18924,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_seats_api_seats_get: {
+        parameters: {
+            query?: {
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description Only the offices held in this cabinet (key). */
+                cabinet?: string | null;
+                /** @description Only the offices someone holds today. */
+                current?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeatListDTO"];
                 };
             };
             /** @description Validation Error */

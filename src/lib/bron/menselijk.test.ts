@@ -148,4 +148,9 @@ describe('fractieNaam', () => {
 		).toBe('Nieuw Sociaal Contract');
 		expect(fractieNaam({ key: 'nieuw_sociaal_contract' })).not.toContain('nieuw_sociaal_contract');
 	});
+
+	it('names a party of a cabinet or coalition by its short, else not by its raw key', () => {
+		expect(fractieNaam({ short: 'VVD', faction: 'vvd' })).toBe('VVD');
+		expect(fractieNaam({ short: null, faction: 'nieuw_sociaal_contract' })).not.toContain('_');
+	});
 });

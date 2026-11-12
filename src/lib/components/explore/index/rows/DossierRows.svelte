@@ -56,7 +56,7 @@
 				{#snippet aside()}
 					<span class="num-strong"
 						>{entry.rows.length}<span class="num-lbl"
-							>{entry.rows.length < all ? `van ${all} dossiers` : 'dossiers'}</span
+							>&nbsp;{entry.rows.length < all ? `van ${all} dossiers` : 'dossiers'}</span
 						></span
 					>
 					<span class="chevron" class:chevron--open={isOpen} aria-hidden="true">›</span>

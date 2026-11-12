@@ -6,6 +6,7 @@
 // A mention whose target is unknown stays text: no dead link.
 import type { Schema } from '$lib/api/types';
 import type { Span } from './segments';
+import { articleNodeKey } from './node-key';
 
 export type Reference = Schema<'ArticleReferenceDTO'>;
 
@@ -48,16 +49,10 @@ export function divisionAnchor(doc: string, crumbs: readonly Crumb[]): string | 
 	);
 }
 
-const normalKey = (s: string) =>
-	s
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '_')
-		.replace(/^_+|_+$/g, '');
-
 /** The article target a citation resolved for this reference's law and article, if any. */
 function resolvedArticle(ref: Reference, citations: readonly Span[]) {
 	if (!ref.bwb_id || !ref.article) return null;
-	const key = `${normalKey(ref.bwb_id)}_${normalKey(ref.article)}`;
+	const key = articleNodeKey(ref.bwb_id, ref.article);
 	return (
 		citations.find(
 			({ target: t }) =>
