@@ -57,6 +57,11 @@ export type FacetGroup = {
 	  }
 );
 
+/** A facet of the API as value → count; each dimension counted without its own filter. */
+export const facetMap = (
+	facet: { value?: string | boolean | null; count: number }[] | null | undefined
+) => new Map((facet ?? []).map((f) => [String(f.value), f.count]));
+
 /**
  * A menu's options from its counts, the chosen value among them though the counts lack it
  * (not in yet, or partial): by its name, never its key (#136).
@@ -67,7 +72,10 @@ export const selectOptions = (
 	name: (key: string) => string
 ): { value: string; label: string; count?: number }[] => [
 	...(chosen && !counts.has(chosen) ? [{ value: chosen, label: name(chosen) }] : []),
-	...[...counts].map(([key, count]) => ({ value: key, label: name(key), count }))
+	// Not the count without a value (`facetMap`'s `'null'`): nothing to choose.
+	...[...counts].flatMap(([key, count]) =>
+		key === 'null' ? [] : [{ value: key, label: name(key), count }]
+	)
 ];
 
 /** A filter that is on, as a chip above the list; `short` its value alone (`Hoge Raad`). */
