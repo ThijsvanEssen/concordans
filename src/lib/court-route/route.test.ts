@@ -24,7 +24,7 @@ const ROUTES: Routes = {
 			steps: [
 				step('rechtbank', 'Eerste aanleg', basis(RO, '42')),
 				step('gerechtshof', 'Hoger beroep', basis(RO, '60')),
-				// Of API 0.80.39: left out until its release is live (B144).
+				// Sprongcassatie: in the schema of the entries, not a stage of the view.
 				step('hoge_raad', 'Cassatie', basis(RO, '78'), [basis('BWBR0001827', '398')], 'rechtbank')
 			],
 			gaps: []
@@ -105,7 +105,7 @@ describe('the route of a view', () => {
 		expect(appeal.map((a) => [a.name, a.area])).toEqual([['art. 60 RO', undefined]]);
 	});
 
-	it('leaves out the entries into the Hoge Raad of API 0.80.39 until they are built', () => {
+	it('leaves the entries into the Hoge Raad off the main route to their own schema', () => {
 		expect(rows('civiel')).toEqual([
 			['Eerste aanleg', [[null, 'Rechtbanken']]],
 			['Hoger beroep', [[null, 'Gerechtshoven']]]
@@ -135,7 +135,8 @@ describe('the route of a view', () => {
 					['als de rechter is aangewezen, hoofdstuk 4 bijlage 2', 'Centrale Raad van Beroep'],
 					['anders', 'Afdeling bestuursrechtspraak van de Raad van State']
 				]
-			]
+			],
+			['Cassatie', [['alleen in enkele zaken', 'Hoge Raad']]]
 		]);
 		const [first] = routeOf(view('bestuur'), ROUTES);
 		expect(first.rows[0].cite).toMatchObject({
@@ -144,13 +145,17 @@ describe('the route of a view', () => {
 		});
 	});
 
-	it('puts cassation under the Centrale Raad van Beroep alone, with its articles', () => {
-		const [first, appeal] = routeOf(view('bestuur'), ROUTES);
-		expect(first.rows[1].courts[1].then).toBeUndefined();
-		const crvb = appeal.rows[0].courts[0];
-		expect(crvb.then).toMatchObject({ name: 'Hoge Raad', stage: 'Cassatie', gap: false });
-		expect(crvb.then?.articles.map((a) => a.name)).toEqual(['art. 78 RO', 'art. 53 AOW']);
-		expect(appeal.rows[1].courts[0].then).toBeUndefined();
+	it('gives cassation after the Centrale Raad van Beroep alone a card of its own, last', () => {
+		const stages = routeOf(view('bestuur'), ROUTES);
+		const cassation = stages.at(-1)!;
+		expect(stages).toHaveLength(3);
+		expect(cassation).toMatchObject({ name: 'Cassatie', after: 'Centrale Raad van Beroep' });
+		expect(cassation.rows).toHaveLength(1);
+		expect(cassation.rows[0].when).toBe('alleen in enkele zaken');
+		const [court] = cassation.rows[0].courts;
+		expect(court).toMatchObject({ name: 'Hoge Raad', gap: false });
+		expect(court.articles.map((a) => a.name)).toEqual(['art. 78 RO', 'art. 53 AOW']);
+		expect(arrowInto(cassation, stages[1])).toBe('cassatie, alleen na de Centrale Raad van Beroep');
 	});
 
 	it('names the arrow after the court of "anders" alone', () => {

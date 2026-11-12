@@ -10,8 +10,8 @@ import type { BronRef } from '$lib/bron/ref';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 
 export type Routes = Schema<'JudgmentRoutesResponse'>;
-type AreaRoute = Schema<'AreaRoute'>;
-type RouteStep = Schema<'RouteStep'>;
+export type AreaRoute = Schema<'AreaRoute'>;
+export type RouteStep = Schema<'RouteStep'>;
 
 /** An article cited, with its readable address where it has one (`articleOfBasis`). */
 export type Cited = { name: string; ref: BronRef; path: string | null; area?: string };
@@ -21,10 +21,6 @@ export type CourtStep = {
 	articles: Cited[];
 	/** The article is not read in the source: shown as a gap, never filled. */
 	gap: boolean;
-	/** The court a case goes to after this one alone, not after the others of its stage (the
-	 *  Hoge Raad after the Centrale Raad van Beroep, `after_tier`): a dashed line in the card,
-	 *  not a stage. */
-	then?: CourtStep & { stage: string };
 };
 /** A row of a stage: the courts of a case that meets its condition. `when` null: every case,
  *  in a stage of one row; "anders": every other case. A row without courts ends the route
@@ -35,7 +31,9 @@ export type Row = {
 	none: string | null;
 	courts: CourtStep[];
 };
-type Stage = { name: string; rows: Row[] };
+/** A stage; `after`: only after that court of the stage before, not after the others (the
+ *  Hoge Raad after the Centrale Raad van Beroep, `after_tier`): a dashed card. */
+type Stage = { name: string; rows: Row[]; after?: string };
 type AreaView = {
 	id: string;
 	label: string;
@@ -71,30 +69,33 @@ export const VIEWS: AreaView[] = [
 	}
 ];
 
+/** The condition of a stage after one court alone. */
+const SOME = 'alleen in enkele zaken';
+
 /** The article of the regeling that excepts a besluit from beroep (hoofdstuk 1). */
 const EXCEPTED = 'bijlage 2 artikel 1';
 
 /** The stage of a step by its first procedure: Eerste aanleg, Hoger beroep, Cassatie. */
-const stageName = (procedures: string[]) => procedures[0] ?? 'Overig';
+export const stageName = (procedures: string[]) => procedures[0] ?? 'Overig';
 
 /** The name of a court by its tier: "Rechtbanken", "Hoge Raad"; of the Raad van State its
  *  Afdeling, the court of a route. */
-const tierName = (tier: string) =>
+export const tierName = (tier: string) =>
 	tier === 'raad_van_state'
 		? 'Afdeling bestuursrechtspraak van de Raad van State'
 		: (TIER_LABEL[tier as Tier] ?? tier);
 
-/** The entries into the Hoge Raad of API 0.80.39 (sprongcassatie after the rechtbank, the Hoge
- *  Raad in first and only instance, the gerechtshof after verwijzing): built once that release
- *  is live (B144), left out until then. */
-const later = (step: RouteStep) =>
+/** The entries into the Hoge Raad off the main route (sprongcassatie after the rechtbank, the
+ *  Hoge Raad in first and only instance, the gerechtshof after verwijzing): not a stage of a
+ *  view, but in the schema of the entries (`entries.ts`). */
+const entryOnly = (step: RouteStep) =>
 	(step.after_tier != null && step.after_tier !== 'centrale_raad_van_beroep') ||
 	step.procedures[0] === 'Eerste en enige aanleg';
 
 /**
  * The stages of the route of a view in their order, each with its rows: a court the areas of
  * the view give different articles names each with its area ("art. 42 RO (civiel)"). A step
- * after one court alone (`after_tier`) is a line under that court.
+ * after one court alone (`after_tier`) is a stage of its own, last: "alleen in enkele zaken".
  */
 export function routeOf(view: AreaView, routes: Routes): Stage[] {
 	const areas = routes.areas.filter((a) => view.areas.includes(a.area));
@@ -107,7 +108,7 @@ export function routeOf(view: AreaView, routes: Routes): Stage[] {
 	const after: [RouteStep, AreaRoute][] = [];
 	for (const area of areas) {
 		for (const step of area.steps) {
-			if (later(step)) continue;
+			if (entryOnly(step)) continue;
 			if (step.after_tier) {
 				after.push([step, area]);
 				continue;
@@ -121,17 +122,16 @@ export function routeOf(view: AreaView, routes: Routes): Stage[] {
 				row.courts.push({ tier: gap.tier, name: tierName(gap.tier), articles: [], gap: true });
 		}
 	}
-	const courts = stages.flatMap((s) => s.rows.flatMap((r) => r.courts));
-	for (const [step, area] of after) {
-		// The court of the latest stage: the CRvB in hoger beroep, not in first and only instance.
-		const before = courts.findLast((c) => c.tier === step.after_tier);
-		if (!before) continue;
-		const then = { tier: step.tier, name: tierName(step.tier), articles: [], gap: false };
-		addCourt([then], step, area, false);
-		before.then = { ...then, stage: stageName(step.procedures) };
-	}
 	if (view.areas.includes('bestuur')) excepted(stages[0], routes);
 	for (const stage of stages) settle(stage);
+	const courts = stages.flatMap((s) => s.rows.flatMap((r) => r.courts));
+	for (const [step, area] of after) {
+		const before = courts.find((c) => c.tier === step.after_tier);
+		if (!before) continue;
+		const row: Row = { when: SOME, cite: null, none: null, courts: [] };
+		addCourt(row.courts, step, area, false);
+		stages.push({ name: stageName(step.procedures), rows: [row], after: before.name });
+	}
 	return stages;
 }
 
@@ -172,7 +172,7 @@ function settle(stage: Stage) {
 	stage.rows = [...stage.rows.filter((r) => r !== other), other];
 }
 
-function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: boolean) {
+export function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: boolean) {
 	let court = courts.find((c) => c.tier === step.tier);
 	if (!court)
 		courts.push((court = { tier: step.tier, name: tierName(step.tier), articles: [], gap: false }));
@@ -185,9 +185,11 @@ function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: b
 }
 
 /** The arrow into a stage: "hoger beroep"; after a stage with an "anders" row, the court of
- *  that row alone: "hoger beroep, na de rechtbank". */
+ *  that row alone: "hoger beroep, na de rechtbank"; into a stage after one court alone, that
+ *  court: "cassatie, alleen na de Centrale Raad van Beroep". */
 export function arrowInto(stage: Stage, before: Stage): string {
 	const name = stage.name.toLowerCase();
+	if (stage.after) return `${name}, alleen na de ${stage.after}`;
 	const other = before.rows.length > 1 ? before.rows.at(-1)?.courts[0] : undefined;
 	return other ? `${name}, na de ${other.tier === 'rechtbank' ? 'rechtbank' : other.name}` : name;
 }
