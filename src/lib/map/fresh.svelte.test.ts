@@ -20,13 +20,13 @@ const motie: MapItem = {
 	groep: 'Kamerstuk 36744',
 	groupKey: 'dossier:36744'
 };
-const line = (id: string, date: string, article: string | null = null) => ({
+const line = (id: string, date: string, article_key: string | null = null) => ({
 	id,
 	kind: 'publicatie',
 	date,
 	title: id,
 	node: { collection: 'instruments', key: id, id: `instruments/${id}`, path: null },
-	via: { relation: 'amends', article, dossier: null },
+	via: { relation: 'amends', article: null, article_key, dossier: null },
 	amends_articles: [],
 	persons: []
 });
@@ -39,7 +39,7 @@ describe('what is new in a bundel', () => {
 				asked.push(r);
 				return {
 					items: r.params.query?.instrument
-						? [line('stb_2026_306', '2026-10-07', '658'), line('oud', '2026-10-01')]
+						? [line('stb_2026_306', '2026-10-07', 'bwbr0005290_658'), line('oud', '2026-10-01')]
 						: [line('stemming', '2026-10-09')],
 					next_cursor: null
 				};

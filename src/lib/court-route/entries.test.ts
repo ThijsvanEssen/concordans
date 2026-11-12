@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { nodeKey } from '$lib/text/node-key';
 import { supremeEntries } from './entries';
 import type { Routes } from './route';
 
@@ -6,7 +7,11 @@ const RO = 'BWBR0001830';
 const RV = 'BWBR0001827';
 const AWR = 'BWBR0002320';
 const AWB = 'BWBR0005537';
-const basis = (bwb_id: string, article_number: string) => ({ bwb_id, article_number });
+const basis = (bwb_id: string, article_number: string) => ({
+	bwb_id,
+	article_number,
+	key: nodeKey(bwb_id, article_number)
+});
 const step = (
 	tier: string,
 	procedure: string,

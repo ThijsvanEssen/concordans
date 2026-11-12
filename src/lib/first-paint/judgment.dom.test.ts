@@ -184,7 +184,7 @@ describe('the first paint of a judgment', () => {
 					date: '2019-10-01',
 					procedure: 'Cassatie',
 					outcome: 'verworpen',
-					basis: { bwb_id: 'BWBR0001830', article_number: '78' },
+					basis: { bwb_id: 'BWBR0001830', article_number: '78', key: 'bwbr0001830_78' },
 					links: [
 						{
 							relation: 'APPEAL_OF',

@@ -71,7 +71,7 @@ import { describeBron, describeBronShort } from '$lib/bron/describe';
 import { activityLine, rolesLine, citedLine } from './lines';
 import { type Neighbor } from '$lib/api/nodes';
 import { isDerived, lidOfMatch, plaatsVanMeta, positionsLabel } from './edge-meta';
-import { articleNodeKey } from '$lib/text/node-key';
+import { nodeKey } from '$lib/text/node-key';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
 const BASIS: Record<string, string> = {
@@ -247,7 +247,7 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 	const law = lawIdOf(props);
 	const number = textOf(props?.article_number);
 	if (!law || !number) return null;
-	const own = articleNodeKey(law, number);
+	const own = nodeKey(law, number);
 	const lid = key.toLowerCase().startsWith(`${own}_`) ? key.slice(own.length + 1) : null;
 	return lid && /^\d+[a-z]*$/i.test(lid) ? { key: key.slice(0, own.length), lid } : null;
 }

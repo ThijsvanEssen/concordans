@@ -37,7 +37,7 @@ const RB = step('ECLI:NL:RBDHA:2015:7145', {
 	court_name: 'Rechtbank Den Haag',
 	date: '2015-06-24',
 	procedure: 'Eerste aanleg - meervoudig',
-	basis: { bwb_id: 'BWBR0001830', article_number: '42' }
+	basis: { bwb_id: 'BWBR0001830', article_number: '42', key: 'bwbr0001830_42' }
 });
 const HOF = step('ECLI:NL:GHDHA:2018:2591', {
 	court_name: 'Gerechtshof Den Haag',
