@@ -13,9 +13,9 @@
 	import { pannable } from './pannable';
 	import { cabinetShortName, inOffice, type Cabinet } from './government';
 	import { bronHref, indexHref } from '$lib/bron/href';
-	import { DAY_MS, korteDatum, fromDate, vandaag } from '$lib/text/datum';
+	import { DAY_MS, fromDate, yearOf, periodSentence, vandaag } from '$lib/text/datum';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
-	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
+	import { ms } from '$lib/components/tijdlijn/tijdas';
 
 	let {
 		cabinets,
@@ -103,7 +103,7 @@
 		`${c.name}, ${
 			onbekend(c)
 				? `${fromDate(c.from_date)}, eind ${NOT_IN_DATA}`
-				: periodeZin(c.from_date, c.to_date, korteDatum)
+				: periodSentence(c.from_date, c.to_date)
 		}${c.prime_minister?.name ? `, minister-president ${c.prime_minister.name}` : ''}${
 			c.parties?.length ? `, ${c.parties.map((p) => p.short ?? p.faction).join(', ')}` : ''
 		}.`;
@@ -157,7 +157,7 @@
 						</button>
 					{/each}
 				</div>
-				<Tijdas {periode} from={rows[0].from_date!.slice(0, 4)} to="nu" plaats="onder" lijnen />
+				<Tijdas {periode} from={yearOf(rows[0].from_date)} to="nu" plaats="onder" lijnen />
 			</div>
 		</div>
 		{#if gekozen}

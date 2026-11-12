@@ -15,7 +15,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
-	import { monthName, maandagVan } from '$lib/text/datum';
+	import { yearOf, monthName, maandagVan } from '$lib/text/datum';
 	import { noneHeld } from '$lib/text/coverage';
 	import {
 		getAmendementen,
@@ -55,8 +55,8 @@
 		}
 		return uit.map((m, i) => {
 			const kort = monthName(`${m.maand}-01`, m.span < 3);
-			const jaar = i > 0 && uit[i - 1].maand.slice(0, 4) !== m.maand.slice(0, 4);
-			return { ...m, label: jaar ? `${kort} ${m.maand.slice(0, 4)}` : kort };
+			const jaar = i > 0 && yearOf(uit[i - 1].maand) !== yearOf(m.maand);
+			return { ...m, label: jaar ? `${kort} ${yearOf(m.maand)}` : kort };
 		});
 	});
 	/** Where a column starts a new month or a new week: the rule that shows the distance. */
@@ -111,7 +111,7 @@
 					</colgroup>
 					<thead>
 						<tr class="maanden">
-							<th class="naam" scope="col">{regeling.kolommen[0]?.slice(0, 4)}</th>
+							<th class="naam" scope="col">{yearOf(regeling.kolommen[0])}</th>
 							{#each maanden as m, i (m.maand)}
 								<th scope="colgroup" colspan={m.span} class:maandgrens={i > 0}>{m.label}</th>
 							{/each}

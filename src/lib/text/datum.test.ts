@@ -8,6 +8,13 @@ import {
 	throughDate,
 	fromDate,
 	yearsOf,
+	yearOf,
+	periodSentence,
+	nextDay,
+	isoWeek,
+	mondayOfWeek,
+	lastDayOfMonth,
+	yearsBetween,
 	holdDatesTogether,
 	shortDatesIn,
 	splitDates,
@@ -115,6 +122,78 @@ describe('yearsOf', () => {
 		expect(yearsOf('2017-03-23', '2021-03-31')).toBe('2017–2021');
 		expect(yearsOf('2026-02-23', null)).toBe('2026–');
 		expect(yearsOf('2024-07-02', '2024-11-12')).toBe('2024');
+		expect(yearsOf(null, '2021-03-31')).toBe('–2021');
+		expect(yearsOf(null, undefined)).toBe('');
+	});
+
+	it('says an open period in a sentence with sinds, one without a start with tot en met', () => {
+		const sentence = { form: 'zin' } as const;
+		expect(yearsOf('2017-03-23', '2021-03-31', sentence)).toBe('2017–2021');
+		expect(yearsOf('2026-02-23', null, sentence)).toBe('sinds 2026');
+		expect(yearsOf(null, '2021-03-31', sentence)).toBe('tot en met 2021');
+	});
+
+	it('says an end the sources do not give, in place of a question mark', () => {
+		expect(yearsOf('1913-08-29', null, { form: 'zin', open: false })).toBe(
+			'1913, einde niet in de gegevens'
+		);
+	});
+});
+
+describe('yearOf', () => {
+	it('reads the year of a day, a moment or a month; empty without one', () => {
+		expect(yearOf('2026-09-28')).toBe('2026');
+		expect(yearOf('2026-09-28T10:00:00Z')).toBe('2026');
+		expect(yearOf('2026-09')).toBe('2026');
+		expect(yearOf(null)).toBe('');
+		expect(yearOf('')).toBe('');
+	});
+});
+
+describe('periodSentence', () => {
+	const nu = '2026-10-12';
+	it('says sinds for what still runs, also with an end still to come', () => {
+		expect(periodSentence('2026-02-23', null, 'kort', nu)).toBe('sinds 23\u00a0feb.\u00a02026');
+		expect(periodSentence('2026-02-23', '2027-01-01', 'kort', nu)).toBe(
+			'sinds 23\u00a0feb.\u00a02026'
+		);
+	});
+
+	it('says a past period from its start to its end, short, long or by month', () => {
+		const [van, tot] = ['2024-07-02', '2026-02-23'];
+		expect(periodSentence(van, tot, 'kort', nu)).toBe(
+			'2\u00a0jul.\u00a02024 tot 23\u00a0feb.\u00a02026'
+		);
+		expect(periodSentence(van, tot, 'lang', nu)).toBe(
+			'2\u00a0juli\u00a02024 tot 23\u00a0februari\u00a02026'
+		);
+		expect(periodSentence(van, tot, 'maand', nu)).toBe('jul.\u00a02024 tot feb.\u00a02026');
+	});
+
+	it('says tot without a start, and names no period without either', () => {
+		expect(periodSentence(null, '2010-01-01', 'lang', nu)).toBe('tot 1\u00a0januari\u00a02010');
+		expect(periodSentence(null, null, 'kort', nu)).toBe('periode niet in de gegevens');
+	});
+});
+
+describe('korteDatum without a full stop', () => {
+	it('writes the month in three letters, as a reader types it', () => {
+		expect(korteDatum('2024-03-01', { fullStop: false })).toBe('1\u00a0mrt\u00a02024');
+		expect(korteDatum('2024-05-01', { fullStop: false })).toBe('1\u00a0mei\u00a02024');
+	});
+});
+
+describe('the calendar', () => {
+	it('counts the next day, ISO weeks, the last day of a month and years between days', () => {
+		expect(nextDay('2024-02-28')).toBe('2024-02-29');
+		expect(nextDay('2026-12-31T23:00:00Z')).toBe('2027-01-01');
+		expect(isoWeek('2026-10-10')).toEqual({ year: 2026, week: 41 });
+		expect(isoWeek('2021-01-03')).toEqual({ year: 2020, week: 53 });
+		expect(isoWeek('2024-12-30')).toEqual({ year: 2025, week: 1 });
+		expect(mondayOfWeek(2026, 41)).toBe('2026-10-05');
+		expect(lastDayOfMonth(2024, 2)).toBe('2024-02-29');
+		expect(lastDayOfMonth(2026, 12)).toBe('2026-12-31');
+		expect(yearsBetween('2020-01-01', '2021-01-01')).toBeCloseTo(1, 2);
 	});
 });
 

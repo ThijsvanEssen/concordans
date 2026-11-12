@@ -2,7 +2,7 @@
 // (Thijs, 9 Oct). From the lid's own `faction_memberships`, one record per role and term as
 // the source gives them; records that follow on from each other (a new role the next day) are
 // one period. The years only: the days are in the reader.
-import { DAY_MS } from '$lib/text/datum';
+import { DAY_MS, yearsOf } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
 
 type Lidmaatschap = {
@@ -21,8 +21,6 @@ type FractiePeriode = {
 	/** The last day of the latest period, null while it runs. */
 	tot: string | null;
 };
-
-const jaar = (d: string) => d.slice(0, 4);
 
 /** Whether `next` starts the day after `prev` ends, or before. */
 const sluitAan = (prevTo: string | null, nextFrom: string | null) =>
@@ -49,17 +47,7 @@ export function fractiePeriodes(list: unknown): FractiePeriode[] {
 			} else spans.push({ from: m.from_date ?? null, to: m.to_date ?? null });
 		}
 		const periode = spans
-			.map(({ from, to }) =>
-				!from
-					? to
-						? `tot ${jaar(to)}`
-						: ''
-					: to === null
-						? `sinds ${jaar(from)}`
-						: jaar(from) === jaar(to)
-							? jaar(from)
-							: `${jaar(from)}–${jaar(to)}`
-			)
+			.map(({ from, to }) => yearsOf(from, to, { form: 'zin' }))
 			.filter(Boolean)
 			.join(', ');
 		const m = sorted[0];

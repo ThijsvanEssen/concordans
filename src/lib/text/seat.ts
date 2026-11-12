@@ -1,5 +1,7 @@
 // How the Kamer's role of a seat reads in a sentence; one place for a member's page, Verbonden and
 // the keten.
+import { nextDay } from './datum';
+
 /**
  * A seat on a committee in words, where it is more than a seat (API 0.75): "voorzitter",
  * "ondervoorzitter" for the Kamer's `OnderVz`, "fungerend voorzitter" for `FngVz`, "plaatsvervangend lid" for a substitute or
@@ -19,13 +21,6 @@ type SeatPeriod = {
 	to_date?: string | null;
 	role?: string | null;
 	substitute?: boolean | null;
-};
-
-/** The day after an ISO day. */
-const nextDay = (iso: string): string => {
-	const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
-	d.setUTCDate(d.getUTCDate() + 1);
-	return d.toISOString().slice(0, 10);
 };
 
 /**

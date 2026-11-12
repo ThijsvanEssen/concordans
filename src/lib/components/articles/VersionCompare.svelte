@@ -3,7 +3,14 @@
 	import { capitalize } from '$lib/text/words';
 	import { hasModifier, isTyping } from '$lib/actions/keys';
 	import { lidAnchor, lidNumber } from '$lib/text/anchor';
-	import { DAY_MS, korteDatum, langeDatum, untilDate } from '$lib/text/datum';
+	import {
+		yearOf,
+		korteDatum,
+		langeDatum,
+		periodSentence,
+		untilDate,
+		yearsBetween
+	} from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
@@ -171,10 +178,6 @@
 	// ── Wording ──────────────────────────────────────────────────────────────────
 
 	const date = (iso: string | null | undefined) => langeDatum(iso) || NOT_IN_DATA;
-	const year = (iso: string | null | undefined) => (iso ? iso.slice(0, 4) : '');
-
-	const period = (w: { from: string | null; until: string | null }) =>
-		w.until ? `${date(w.from)} tot ${date(w.until)}` : `sinds ${date(w.from)}`;
 
 	const publication = (p: Schema<'PublicationDTO'> | null | undefined) =>
 		citationRecord({ kind: 'publication', series: p?.kind, year: p?.year, number: p?.number })
@@ -196,11 +199,8 @@
 
 	// ── The line through time ────────────────────────────────────────────────────
 
-	const time = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : NaN);
-	const today = Date.now();
 	/** A period's share of the line: its years, so a long-lived text takes more room. */
-	const years = (w: VersionWording) =>
-		Math.max(0.1, ((w.until ? time(w.until) : today) - time(w.from)) / (365.25 * DAY_MS));
+	const years = (w: VersionWording) => Math.max(0.1, yearsBetween(w.from, w.until));
 
 	/** The changes between A and B, oldest first, whichever way round they are held. */
 	const between = $derived(wordings.slice(older.index + 1, newer.index + 1));
@@ -291,10 +291,9 @@
 	);
 
 	type Formulation = LidFormulation<Version>;
-	const formulationPeriod = (f: Formulation) =>
-		period({ from: f.since.from, until: f.through.until });
-	const formulationCite = (lid: string, f: Formulation) =>
-		`${cite(lid)} (tekst geldig ${f.through.until ? 'van ' : ''}${formulationPeriod(f)})`;
+	const periodOf = (f: Formulation) => periodSentence(f.since.from, f.through.until, 'lang');
+	const formulationCite = (lid: string, f: Formulation, p = periodOf(f)) =>
+		`${cite(lid)} (tekst geldig ${/^\d/.test(p) ? 'van ' : ''}${p})`;
 </script>
 
 <!-- Where a version came from: the publication that made it, the one that brought it into
@@ -377,7 +376,7 @@
 					{@const unit = state.status === 'ready' ? lidIn(f) : null}
 					<li class="formulation" use:inView={askFormulation(f, before)}>
 						<div class="formulation__head">
-							<span class="formulation__when">{capitalize(formulationPeriod(f))}</span>
+							<span class="formulation__when">{capitalize(periodOf(f))}</span>
 							{#if f.kind === 'first' && f.since.index === 0}
 								<span>Oudste tekst in de gegevens</span>
 							{:else}
@@ -443,11 +442,11 @@
 								class="line__label"
 								class:is-active={adjacent && w.index === newer.index}
 								disabled={w.index === 0}
-								title="{capitalize(period(w))}: {w.index === 0
+								title="{capitalize(periodSentence(w.from, w.until, 'lang'))}: {w.index === 0
 									? 'oudste tekst in de gegevens'
 									: w.summary}"
 								onclick={() => showChange(w.index)}
-								><span class="line__year">{year(w.from)}</span><span class="line__what"
+								><span class="line__year">{yearOf(w.from)}</span><span class="line__what"
 									>{w.index === 0 ? 'oudste tekst' : w.summary}</span
 								></button
 							>
@@ -549,10 +548,11 @@
 						<tr class:is-quiet={!changed}>
 							<td class="table__when"
 								>{capitalize(
-									period({
-										from: v.valid_from ?? null,
-										until: v === versions.at(-1) && !v.valid_until ? null : (v.valid_until ?? null)
-									})
+									periodSentence(
+										v.valid_from,
+										v === versions.at(-1) && !v.valid_until ? null : v.valid_until,
+										'lang'
+									)
 								)}</td
 							>
 							<td>

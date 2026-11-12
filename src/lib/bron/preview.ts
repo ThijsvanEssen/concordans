@@ -5,7 +5,7 @@
 // r.o. that overweging; an article its first lid, or the part the reference names.
 import { decisionOutcome } from '$lib/votes/decision-kind';
 import { motionOrAmendment, shortKind } from '$lib/text/document-kind';
-import { langeDatum } from '$lib/text/datum';
+import { langeDatum, periodSentence } from '$lib/text/datum';
 import { separatorBefore, textOf, truncate } from '$lib/text/words';
 import { getDossier } from '$lib/api/dossiers';
 import { getNodeFirst, once } from '$lib/api/records';
@@ -220,12 +220,11 @@ export function previewFromNode(
 				lines: textOf(props.seats) ? `${textOf(props.seats)} zetels` : null
 			};
 		case 'cabinets': {
-			const from = langeDatum(textOf(props.from_date));
-			const to = langeDatum(textOf(props.to_date));
+			const from = textOf(props.from_date);
 			return {
 				kicker: kind,
 				title: name,
-				date: from ? (to ? `${from} tot ${to}` : `sinds ${from}`) : null,
+				date: from ? periodSentence(from, textOf(props.to_date), 'lang') : null,
 				lines: null
 			};
 		}

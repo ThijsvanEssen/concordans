@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { lacks, NOT_IN_DATA, notHeld } from '$lib/text/coverage';
 	import { naamVan } from '$lib/bron/menselijk';
-	import { korteDatum, maandJaar, fromDate } from '$lib/text/datum';
+	import { fromDate, periodSentence } from '$lib/text/datum';
 	import CabinetPostOpen from './CabinetPostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
 	// a successor is the next block on the line, a stand-in has a dotted frame (not italic).
@@ -24,7 +24,7 @@
 	} from './occupancy';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';
-	import { periodeZin, randen } from '$lib/components/tijdlijn/tijdas';
+	import { randen } from '$lib/components/tijdlijn/tijdas';
 
 	let {
 		cabinet,
@@ -109,7 +109,6 @@
 	/** A post found through an old link closes by the link's own id. */
 	const toggle = (id: string) => onToggle(openKey === id && openId && openId !== id ? openId : id);
 
-	const month = (iso: string) => maandJaar(iso);
 	/** On a phone: the post on the scale of the figure, as a Strookje. */
 	const plek = (p: SeatPost) =>
 		term ? { van: at(term, p.from_date, 'start'), tot: at(term, p.to_date, 'end') } : null;
@@ -126,7 +125,7 @@
 
 	const nameOf = (p: SeatPost) => p.member.name ?? naamVan('members', p.member);
 	const label = (p: SeatPost) =>
-		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodeZin(p.from_date, p.to_date, korteDatum)}${p.acting ? ', waarnemend' : ''}`;
+		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodSentence(p.from_date, p.to_date)}${p.acting ? ', waarnemend' : ''}`;
 </script>
 
 {#if !term}
@@ -176,7 +175,7 @@
 								<span class="holder-name"
 									>{nameOf(p)}{#if p.acting}<span class="holder-note">, waarnemend</span>{/if}</span
 								>
-								<span class="holder-period">{periodeZin(p.from_date, p.to_date, month)}</span>
+								<span class="holder-period">{periodSentence(p.from_date, p.to_date, 'maand')}</span>
 								{#if plek(p)}
 									{@const b = plek(p)!}
 									<span class="holder-strook"

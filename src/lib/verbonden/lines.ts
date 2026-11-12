@@ -1,7 +1,7 @@
 // The lines under a row's title that say more than its bron: the period of a seat, the
 // articles a judgment cites, what an activity was, what a lid was in a dossier.
 import { count, joinAnd, lowerFirst } from '$lib/text/words';
-import { vandaag } from '$lib/text/datum';
+import { vandaag, yearsOf } from '$lib/text/datum';
 import { articleRef, bookNumber } from '$lib/text/bw';
 import { dossierLabel, dossierNumberLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
 import type { Row } from './rows';
@@ -11,18 +11,9 @@ import type { Row } from './rows';
  * front. The end date is the last day of the period (the Kamer's TotEnMet).
  */
 export function periodLabel(period: NonNullable<Row['period']>): string {
-	const from = period.from?.slice(0, 4);
-	const to = period.to?.slice(0, 4);
-	const span =
-		from && to
-			? from === to
-				? from
-				: `${from}–${to}`
-			: from
-				? `sinds ${from}`
-				: `tot en met ${to}`;
+	const span = yearsOf(period.from, period.to, { form: 'zin' });
 	if (!period.role || period.role === 'Lid') return span;
-	return `${lowerFirst(period.role)}, ${span}`;
+	return [lowerFirst(period.role), span].filter(Boolean).join(', ');
 }
 
 /**

@@ -10,7 +10,7 @@
 	// verder. Een termijn (`perioden`, Loopbaan) is geen moment: geen lijn en geen teken.
 	import type { Snippet } from 'svelte';
 	import { sorteer, type TijdGroep, type TijdRegel, type Volgorde } from './tijdlijn';
-	import { dagMaand, yearsOf } from '$lib/text/datum';
+	import { dagMaand, yearOf, yearsOf } from '$lib/text/datum';
 	import { dateColumn } from './date-column';
 	import DateTime from '$lib/components/ui/DateTime.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
@@ -92,7 +92,7 @@
 <!-- The day of a line: day and month, the year under it where the group does not name it. -->
 {#snippet dayOn(year: string | null | undefined, datum: string)}
 	<DateTime iso={datum} form="dayMonth"
-		>{dagMaand(datum)}{#if datum.slice(0, 4) !== year}<span class="j">{datum.slice(0, 4)}</span
+		>{dagMaand(datum)}{#if yearOf(datum) !== year}<span class="j">{yearOf(datum)}</span
 			>{/if}</DateTime
 	>
 {/snippet}

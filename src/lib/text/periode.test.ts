@@ -31,12 +31,15 @@ describe('periode', () => {
 		expect(periodInWords('2020-01-01', '', NU)).toBe('Sinds 2020');
 		expect(periodInWords('', '1990-12-31', NU)).toBe('Tot 1990');
 		expect(periodInWords('2010-01-01', '2020-12-31', NU)).toBe('2010 tot 2020');
-		expect(periodInWords('2024-01-01', '2024-06-30', NU)).toBe('1 jan 2024 tot 30 jun 2024');
+		expect(periodInWords('2024-01-01', '2024-06-30', NU)).toBe(
+			'1\u00a0jan\u00a02024 tot 30\u00a0jun\u00a02024'
+		);
 		expect(periodInWords('2025-10-09', '', NU)).toBe('Afgelopen jaar');
 	});
 
 	it('writes a date with a month of three letters and no full stop', () => {
-		expect(formatDay('2024-03-01')).toBe('1 mrt 2024');
+		expect(formatDay('2024-03-01')).toBe('1\u00a0mrt\u00a02024');
+		expect(formatDay('')).toBe('');
 		expect(fieldText('2020-01-01', 'from')).toBe('2020');
 		expect(fieldText('2020-12-31', 'from')).toBe('31 dec 2020');
 		expect(fieldText('2020-12-31', 'to')).toBe('2020');

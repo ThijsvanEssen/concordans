@@ -1,6 +1,7 @@
 // Één vorm voor elke tijdlijn in Concordans. Een groep
 // (dag, jaar, instantie) met regels; elke regel heeft een datum, een teken en een zin.
 import type { Snippet } from 'svelte';
+import { yearOf } from '$lib/text/datum';
 
 export type Teken = 'ja' | 'nee' | 'stuk' | 'activiteit' | 'verwacht' | 'open';
 /** A line of a timeline; `B` is what its caller draws under it (`bij`, the Tijdlijn's `onderRegel`). */
@@ -84,6 +85,6 @@ export function sorteer<R extends TijdRegel>(regels: readonly R[], volgorde: Vol
 
 /** The one year a group's lines fall in, for its heading; null where they span more. */
 export function enigJaar(regels: readonly TijdRegel[]): string | null {
-	const jaren = new Set(regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])));
+	const jaren = new Set(regels.flatMap((r) => (r.datum ? [yearOf(r.datum)] : [])));
 	return jaren.size === 1 ? [...jaren][0] : null;
 }

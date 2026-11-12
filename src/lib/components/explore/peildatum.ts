@@ -2,7 +2,7 @@
 // the day, the versions per year for the list, and the articles of that day with their
 // place in the law as it was that day.
 import type { Schema } from '$lib/api/types';
-import { isDay } from '$lib/text/datum';
+import { isDay, yearOf } from '$lib/text/datum';
 import { getInstrumentVersions } from '$lib/api/instruments';
 import { uniqueBy } from '$lib/util/unique';
 import type { FootnoteMark } from '$lib/text/voetnoten';
@@ -62,7 +62,7 @@ export function versionsByYear<V extends Version>(versions: V[]): [string, V[]][
 		.filter((v) => v.valid_from)
 		.sort((a, b) => b.valid_from!.localeCompare(a.valid_from!));
 	for (const v of sorted) {
-		const year = v.valid_from!.slice(0, 4);
+		const year = yearOf(v.valid_from);
 		const last = out.at(-1);
 		if (last?.[0] === year) last[1].push(v);
 		else out.push([year, [v]]);

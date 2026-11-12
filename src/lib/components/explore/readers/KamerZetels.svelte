@@ -11,7 +11,15 @@
 	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
-	import { DAY_MS, korteDatum, langeDatum, onDate, fromDate, vandaag } from '$lib/text/datum';
+	import {
+		DAY_MS,
+		korteDatum,
+		langeDatum,
+		onDate,
+		fromDate,
+		periodSentence,
+		vandaag
+	} from '$lib/text/datum';
 	import { noneHeld } from '$lib/text/coverage';
 	import { capitalize } from '$lib/text/words';
 	import { hallOfDay, vacantZonderFractie, wijzigingenVan, zetelHoogte } from './zetels';
@@ -21,7 +29,7 @@
 	import type { Chamber } from '$lib/components/parliamentary/chamber';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import Fasen from '$lib/components/tijdlijn/Fasen.svelte';
-	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
+	import { ms } from '$lib/components/tijdlijn/tijdas';
 
 	type Zaal = Schema<'ParliamentSeatsResponse'>;
 	type Stretch = Schema<'SeatStretchDTO'>;
@@ -208,7 +216,7 @@
 	/** `66 zetels, 2 sep. 2026 tot 10 okt. 2026.`, or `24 zetels, … (onzeker).` */
 	const stapZin = (s: Stretch) =>
 		`${s.coalition} zetels, ${
-			s.to_date === s.from_date ? korteDatum(s.from_date) : periodeZin(s.from_date, s.to_date)
+			s.to_date === s.from_date ? korteDatum(s.from_date) : periodSentence(s.from_date, s.to_date)
 		}${onzekerWoord(s)}.`;
 	/** The axis: the one of the posts (Tijdas), under the steps. */
 	const as = $derived(
