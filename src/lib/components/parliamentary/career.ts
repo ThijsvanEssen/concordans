@@ -53,6 +53,18 @@ const within = (date: string, post: GovernmentFunction) =>
 	(!post.from_date || date >= post.from_date.slice(0, 10)) &&
 	(!post.to_date || date <= post.to_date.slice(0, 10));
 
+/** A post in a cabinet as a step of the career: its term, cabinet, office and ministry. */
+const postEntry = (g: GovernmentFunction): Fn => ({
+	kind: 'function',
+	function: g.function!,
+	from: g.from_date!.slice(0, 10),
+	to: g.to_date?.slice(0, 10) ?? null,
+	count: 0,
+	cabinet: g.cabinet ?? null,
+	seat: g.seat?.split('#')[0] ?? null,
+	ministry: g.ministry ?? null
+});
+
 export function careerOf(
 	memberships: Membership[],
 	signatures: Signature[],
@@ -97,19 +109,7 @@ export function careerOf(
 
 	const posts = government
 		.filter((g) => g.from_date && g.function)
-		.map((g): { post: GovernmentFunction; entry: Fn } => ({
-			post: g,
-			entry: {
-				kind: 'function',
-				function: g.function!,
-				from: g.from_date!.slice(0, 10),
-				to: g.to_date?.slice(0, 10) ?? null,
-				count: 0,
-				cabinet: g.cabinet ?? null,
-				seat: g.seat?.split('#')[0] ?? null,
-				ministry: g.ministry ?? null
-			}
-		}));
+		.map((g) => ({ post: g, entry: postEntry(g) }));
 	const functions = new Map<string, Fn>();
 	for (const s of signatures) {
 		if (!s.function || !s.date || s.capacity === 'kamerlid') continue;
