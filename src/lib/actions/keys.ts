@@ -24,6 +24,17 @@ export function isEscape(e: KeyLike): boolean {
 }
 
 /**
+ * Escape for the thing this handler closes: as `isEscape`, and then taken, so that nothing
+ * behind it (a Blad, the selection of the network) closes along.
+ */
+export function takeEscape(e: KeyboardEvent): boolean {
+	if (!isEscape(e)) return false;
+	e.preventDefault();
+	e.stopPropagation();
+	return true;
+}
+
+/**
  * Whether a one-key shortcut (J, K or N in a list that holds the focus) may act now: not with a modifier, not when
  * something nearer took the key, not while the focus is in a field (input, select, textarea,
  * contenteditable), and not while a Blad, dialog or menu is open: the keys then belong to it.

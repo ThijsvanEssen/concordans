@@ -3,6 +3,7 @@
 	// the way to keep it elsewhere. A live region like Bevestiging, drawn once for the site; it
 	// takes no focus (Bewaar keeps it), stays until Sluiten or Escape, and ends with Exporteer
 	// or the way to Mijn markeringen.
+	import { takeEscape } from '$lib/actions/keys';
 	import { notice } from '$lib/bevestig/bevestig.svelte';
 	import { kaart } from './map.svelte';
 	import { mapFile, mapFileName } from './file';
@@ -21,7 +22,7 @@
 
 <svelte:window
 	onkeydown={(e) => {
-		if (nu && e.key === 'Escape') notice.close();
+		if (nu && takeEscape(e)) notice.close();
 	}}
 />
 

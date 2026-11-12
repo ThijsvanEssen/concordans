@@ -32,7 +32,8 @@ import { capitalize, count, textOf } from '$lib/text/words';
 import { bronLabel } from '$lib/vocabulary';
 import type { Classes } from './classes';
 import type { PaintedColumn } from './paint';
-import { band, coverage, esc, glyph, headRow, readerHead, running, type BandLine } from './markup';
+import { band, coverage, glyph, headRow, readerHead, running, type BandLine } from './markup';
+import { esc } from '$lib/text/html';
 
 type Judgment = Schema<'JudgmentDTO'>;
 

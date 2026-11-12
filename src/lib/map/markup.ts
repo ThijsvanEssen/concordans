@@ -4,6 +4,7 @@
 // (one Enter is a new line), and the text is kept as typed. The parse loses nothing, so the
 // field shows the very characters typed, its signs dimmed (`segmentsOfLine`).
 import { referencesIn, type NoteReference } from './references';
+import { esc } from '$lib/text/html';
 
 export type NoteInline =
 	| { kind: 'text'; text: string }
@@ -193,9 +194,6 @@ export function asRun(md: string): NoteInline[] {
 	return out;
 }
 
-const escape = (s: string) =>
-	s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
 function inlineHtml(parts: NoteInline[], href: (r: NoteReference) => string | null): string {
 	return parts
 		.map((d) => {
@@ -203,9 +201,9 @@ function inlineHtml(parts: NoteInline[], href: (r: NoteReference) => string | nu
 				const tag = d.kind === 'bold' ? 'strong' : 'em';
 				return `<${tag}>${inlineHtml(d.parts, href)}</${tag}>`;
 			}
-			if (d.kind === 'text') return escape(d.text);
+			if (d.kind === 'text') return esc(d.text);
 			const to = d.kind === 'url' ? d.text : href(d.ref);
-			return to ? `<a href="${escape(to)}">${escape(d.text)}</a>` : escape(d.text);
+			return to ? `<a href="${esc(to)}">${esc(d.text)}</a>` : esc(d.text);
 		})
 		.join('');
 }
@@ -230,7 +228,7 @@ export function noteHtml(md: string, href: (r: NoteReference) => string | null):
 export const linesHtml = (text: string): string =>
 	text
 		.split(/\n{2,}/)
-		.map((p) => `<p>${escape(p).replaceAll('\n', '<br>')}</p>`)
+		.map((p) => `<p>${esc(p).replaceAll('\n', '<br>')}</p>`)
 		.join('');
 
 /** The first line of a note that is no kop, without its signs: the bundel's question in a list. */

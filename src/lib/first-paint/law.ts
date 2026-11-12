@@ -32,17 +32,8 @@ import { kindName } from '$lib/text/law-kind';
 import { statusOf } from '$lib/text/validity';
 import { ARTICLES_SOURCE, articleTextHtml } from './article';
 import type { Classes } from './classes';
-import {
-	band,
-	coverage,
-	esc,
-	fact,
-	factStrip,
-	glyph,
-	headRow,
-	asOfFact,
-	readerHead
-} from './markup';
+import { band, coverage, fact, factStrip, glyph, headRow, asOfFact, readerHead } from './markup';
+import { esc } from '$lib/text/html';
 import type { PaintedColumn } from './paint';
 
 type Detail = Schema<'InstrumentDetailDTO'>;
