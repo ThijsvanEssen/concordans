@@ -184,15 +184,12 @@ function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: b
 	}
 }
 
-/** One court of a tier, in a sentence. */
-const COURT_ONE: Record<string, string> = { rechtbank: 'rechtbank' };
-
 /** The arrow into a stage: "hoger beroep"; after a stage with an "anders" row, the court of
  *  that row alone: "hoger beroep, na de rechtbank". */
 export function arrowInto(stage: Stage, before: Stage): string {
 	const name = stage.name.toLowerCase();
 	const other = before.rows.length > 1 ? before.rows.at(-1)?.courts[0] : undefined;
-	return other ? `${name}, na de ${COURT_ONE[other.tier] ?? other.name}` : name;
+	return other ? `${name}, na de ${other.tier === 'rechtbank' ? 'rechtbank' : other.name}` : name;
 }
 
 /** The court an article of the regeling names, by the route's `designations`: "Centrale Raad

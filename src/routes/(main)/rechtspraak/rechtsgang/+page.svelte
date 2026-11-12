@@ -50,7 +50,7 @@
 	const options = $derived(VIEWS.map((v) => ({ waarde: v.id, label: v.short })));
 	const RO = { collection: 'instruments' as const, key: 'bwbr0001830' };
 	const AWB = { collection: 'instruments' as const, key: 'bwbr0005537' };
-	const BIJLAGE_2 = padHref({ kind: 'bijlage', law: 'BWBR0005537', label: '2' });
+	const ANNEX_2 = padHref({ kind: 'bijlage', law: 'BWBR0005537', label: '2' });
 	const lawRef = (bwbId: string) => ({
 		collection: 'instruments' as const,
 		key: bwbId.toLowerCase()
@@ -158,7 +158,7 @@
 			{#if view.id === 'bestuur' && data.regeling.length}
 				<section class="regeling" aria-labelledby="regeling-kop">
 					<h2 id="regeling-kop">Bevoegdheidsregeling bestuursrechtspraak</h2>
-					<p class="stil bijlage"><a href={BIJLAGE_2}>Bijlage 2 bij de Awb</a></p>
+					<p class="stil bijlage"><a href={ANNEX_2}>Bijlage 2 bij de Awb</a></p>
 					<div class="kop-rij stil" aria-hidden="true">
 						<span>Artikel</span><span>Rechter</span><span>Wetten genoemd</span>
 					</div>
