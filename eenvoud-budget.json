@@ -25,7 +25,7 @@
 		"src/lib/verbonden/Verbonden.svelte": 871,
 		"src/lib/verbonden/groups.ts": 1217,
 		"src/lib/verbonden/loaders.ts": 1512,
-		"src/routes/(main)/actueel/+page.svelte": 856,
+		"src/routes/(main)/actueel/+page.svelte": 858,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
 		"src/routes/explore/+page.svelte": 2967
 	},
@@ -43,7 +43,7 @@
 		"src/lib/components/explore/readers/MemberReader.svelte": 44,
 		"src/lib/components/graph/GraphView.svelte": 65,
 		"src/lib/verbonden/Verbonden.svelte": 41,
-		"src/routes/(main)/actueel/+page.svelte": 43,
+		"src/routes/(main)/actueel/+page.svelte": 44,
 		"src/routes/explore/+page.svelte": 106
 	},
 	"complexity": {
@@ -129,7 +129,6 @@
 		"src/lib/verbonden/verbinding.ts": 22,
 		"src/lib/verbonden/view.ts": 19,
 		"src/lib/votes/stembalk.ts": 16,
-		"src/routes/(main)/actueel/+page.svelte": 17,
 		"src/routes/(main)/onderwerpen/+page.svelte": 20,
 		"src/routes/explore/+page.svelte": 39,
 		"src/routes/explore/explore-url.ts": 27,
@@ -163,7 +162,7 @@
 		"src/lib/verbonden/data-source.ts": 418,
 		"src/lib/verbonden/loaders.ts": 90,
 		"src/lib/verbonden/sketch.ts": 291,
-		"src/routes/(main)/actueel/+page.svelte": 163,
+		"src/routes/(main)/actueel/+page.svelte": 161,
 		"src/routes/explore/+page.svelte": 91
 	}
 }

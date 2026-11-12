@@ -9,6 +9,7 @@ import type { IndexCategory } from '../categories';
 import type { Coverage } from '$lib/api/stats';
 import type { Schema } from '$lib/api/types';
 import { LIST_PAGE } from '$lib/api/first-pages';
+import { NL } from '$lib/text/collator';
 import type { IndexParam, IndexParams, IndexPatch } from './params';
 
 /** The rows a list asks at a time (first-pages.json). */
@@ -152,14 +153,9 @@ export function sorted<T>(
 	const sign = dir === 'asc' ? 1 : -1;
 	return [...rows].sort((a, b) => {
 		const [x, y] = [key(a), key(b)];
-		return (typeof x === 'number' ? x - (y as number) : x.localeCompare(y as string, 'nl')) * sign;
+		return (typeof x === 'number' ? x - (y as number) : NL.compare(x, y as string)) * sign;
 	});
 }
-
-/** A facet of the API as value → count; each dimension counted without its own filter. */
-export const facetMap = (
-	facet: { value?: string | boolean | null; count: number }[] | null | undefined
-) => new Map((facet ?? []).map((f) => [String(f.value), f.count]));
 
 /** A filter of one value: on, or off when it was on. */
 export const toggle =
