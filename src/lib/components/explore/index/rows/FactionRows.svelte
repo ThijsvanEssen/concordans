@@ -40,7 +40,7 @@
 			{#snippet aside()}
 				{#if f.seats != null}
 					<span class="num-strong"
-						>{f.seats}<span class="num-lbl">{plural(f.seats, 'zetel', 'zetels')}</span></span
+						>{f.seats}<span class="num-lbl">&nbsp;{plural(f.seats, 'zetel', 'zetels')}</span></span
 					>
 				{/if}
 			{/snippet}

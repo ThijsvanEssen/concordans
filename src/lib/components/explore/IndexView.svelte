@@ -920,7 +920,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		margin-left: var(--s-1);
 	}
 
 	.results :global(.party-dot) {

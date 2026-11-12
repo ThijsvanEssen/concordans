@@ -5,6 +5,7 @@ import type { Schema } from '$lib/api/types';
 import { getConfidenceMotions } from '$lib/api/documents';
 import { padHref, parsePad, remember } from '$lib/bron/address';
 import { addDays, vandaag } from '$lib/text/datum';
+import { dossierNumberText } from '$lib/bron/dossier-naam';
 
 type Paper = Schema<'DocumentListItemDTO'>;
 
@@ -27,6 +28,6 @@ export const loadOpenMotions = (signal?: AbortSignal, today = vandaag()) =>
 		openMotions(r.items ?? [])
 	);
 
-/** `37020-XVI`: the dossier a paper is numbered in, with its suffix. */
+/** `37020 XVI`, `21501-20`: the dossier a paper is numbered in, with its suffix, as text. */
 export const dossierOf = (p: Pick<Paper, 'dossier_number' | 'dossier_suffix'>) =>
-	p.dossier_number ? `${p.dossier_number}${p.dossier_suffix ? `-${p.dossier_suffix}` : ''}` : null;
+	p.dossier_number ? dossierNumberText(p.dossier_number, p.dossier_suffix) : null;

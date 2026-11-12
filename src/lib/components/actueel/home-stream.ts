@@ -1,6 +1,6 @@
 import { votesSentence } from '$lib/votes/stemming';
 import { motionKindLabel } from '$lib/text/motion-kind';
-import { capitalize, joinAnd, truncate } from '$lib/text/words';
+import { capitalize, count as aantal, joinAnd, truncate } from '$lib/text/words';
 import { decidedDate, holdDatesTogether } from '$lib/text/datum';
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/ref';
@@ -85,8 +85,6 @@ const WORDS = [
 export const inWords = (n: number) => WORDS[n] ?? String(n);
 
 const cut = (text: string, max = TITLE_MAX) => truncate(text, max);
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** `A, B en C`; past `max`, `A, B en 4 andere`. */
 function listLine(names: string[], max: number, other: [string, string] = ['ander', 'andere']) {
@@ -265,8 +263,8 @@ function voteBundleLine(day: SummaryDay): TimelineLine[] {
 	const passed = sum(lead, 'aangenomen');
 	const noun: [string, string] = moties ? ['motie', 'moties'] : ['voorstel', 'voorstellen'];
 	const also = [
-		moties && amendementen ? plural(amendementen, 'amendement', 'amendementen') : null,
-		moties && rest ? plural(rest, 'andere stemming', 'andere stemmingen') : null
+		moties && amendementen ? aantal(amendementen, 'amendement', 'amendementen') : null,
+		moties && rest ? aantal(rest, 'andere stemming', 'andere stemmingen') : null
 	].filter((x): x is string => !!x);
 	return [
 		{
@@ -277,7 +275,7 @@ function voteBundleLine(day: SummaryDay): TimelineLine[] {
 			title:
 				count === 1
 					? `Tweede Kamer ${passed ? 'neemt' : 'verwerpt'} een ${noun[0]}${passed ? ' aan' : ''}`
-					: `Tweede Kamer stemt over ${plural(count, noun[0], noun[1])}: ${passed} aangenomen, ${count - passed} verworpen`,
+					: `Tweede Kamer stemt over ${aantal(count, noun[0], noun[1])}: ${passed} aangenomen, ${count - passed} verworpen`,
 			context: also.length ? `Ook ${listLine(also, 2)}` : null,
 			href: actueelDayHref(day.date, ['stemming']),
 			major: false,
@@ -313,7 +311,7 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 		const [first] = group;
 		const more = group.length - 1;
 		const context = [
-			more ? `En ${plural(more, 'andere toezegging', 'andere toezeggingen')}` : null,
+			more ? `En ${aantal(more, 'andere toezegging', 'andere toezeggingen')}` : null,
 			first.dossier ? dossierLabel(first.dossier) : null
 		]
 			.filter(Boolean)
@@ -356,7 +354,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			date,
 			label: 'Wetsvoorstellen',
 			vorm: 'voorstel',
-			title: `${bills.length} wetsvoorstellen ingediend`,
+			title: `${aantal(bills.length, 'wetsvoorstel', 'wetsvoorstellen')} ingediend`,
 			context: listLine(bills.map(name), 3),
 			href: actueelDayHref(date, ['Voorstel van wet']),
 			major: true,
@@ -414,7 +412,7 @@ function kamerstukLine(day: SummaryDay): TimelineLine[] {
 		.sort((a, b) => b.count - a.count)
 		.map(({ d }) => dossierName(d));
 	const counted = listLine(
-		present.map((p) => plural(p.count, p.noun[0], p.noun[1])),
+		present.map((p) => aantal(p.count, p.noun[0], p.noun[1])),
 		present.length
 	);
 	return [
@@ -453,7 +451,7 @@ function countedLine(
 			date: day.date,
 			label,
 			vorm: kind === 'publicatie' ? 'regel' : 'stuk',
-			title: plural(count, noun[0], noun[1]),
+			title: aantal(count, noun[0], noun[1]),
 			context: null,
 			href: actueelDayHref(day.date, [kind]),
 			major: false,

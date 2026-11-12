@@ -49,7 +49,8 @@
 				{/if}
 			{/snippet}
 			{#snippet aside()}
-				<span class="num-strong">{c.members}<span class="num-lbl">bewindspersonen</span></span>
+				<span class="num-strong">{c.members}<span class="num-lbl">&nbsp;bewindspersonen</span></span
+				>
 			{/snippet}
 		</IndexRow>
 	{/each}
