@@ -43,11 +43,6 @@ describe('a period in years or in a sentence', () => {
 						pad: 'lib/bron/menselijk.ts',
 						reden: 'the name of a law version, "versie van … tot …", is a name and not a period',
 						regel: /versie van \$\{van\} tot/
-					},
-					{
-						pad: 'lib/components/parliamentary/procedure.ts',
-						reden: 'the years of a dossier group go to yearsOf with the besluituitslag work',
-						regel: /jaren\[0\]\}–/
 					}
 				]
 			)
