@@ -193,7 +193,7 @@ describe('the courts and the area of law of the judgments on Actueel (B157)', ()
 	});
 
 	it('asks them as `tier` and `subject_area`, the gap as `none`, chosen as chips', async () => {
-		open('/actueel?instantie=rechtbank&rechtsgebied=none');
+		open('/actueel?tier=rechtbank&subject_area=none');
 		const { findAllByText, getAllByText } = render(Page);
 		await findAllByText(/Rechtbanken/);
 		expect(getAllByText(/Onbekend/).length).toBeGreaterThan(0);

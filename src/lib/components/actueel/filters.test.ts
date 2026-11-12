@@ -40,7 +40,7 @@ describe('readFilters: every filter of Actueel by its name in the address', () =
 	});
 
 	it('reads the courts in the order of the judiciary, each once, and the area of law', () => {
-		const f = read('instantie=rechtbank,hoge_raad,onzin,rechtbank&rechtsgebied=Strafrecht');
+		const f = read('tier=rechtbank,hoge_raad,onzin,rechtbank&subject_area=Strafrecht');
 		expect(f.tiers).toEqual(['hoge_raad', 'rechtbank']);
 		expect(f.area).toBe('Strafrecht');
 	});
@@ -124,8 +124,8 @@ describe('FEED_FILTER_PARAMS: the names a shared link keeps', () => {
 			'coalitie',
 			'q',
 			'kamer',
-			'instantie',
-			'rechtsgebied',
+			'tier',
+			'subject_area',
 			'wet',
 			'artikel',
 			'komend'
@@ -158,7 +158,7 @@ describe('feedQuery: the filters as the feed asks them', () => {
 	});
 
 	it('asks the courts as `tier` and the area of law as `subject_area`, the gap as `none`', () => {
-		expect(feedQuery(read('instantie=rechtbank,gerechtshof&rechtsgebied=none'), TODAY)).toEqual({
+		expect(feedQuery(read('tier=rechtbank,gerechtshof&subject_area=none'), TODAY)).toEqual({
 			tier: 'gerechtshof,rechtbank',
 			subject_area: 'none'
 		});
@@ -178,7 +178,7 @@ describe('feedQuery: the filters as the feed asks them', () => {
 describe('summaryQuery: the day counts under the same filters', () => {
 	const all = feedQuery(
 		read(
-			'soort=Motie&van=2026-01-01&tot=2026-02-01&kabinet=schoof&ministerie=fin&dossier=36600&persoon=p1&fractie=d66&coalitie=verdeeld&q=huur&kamer=TK&instantie=rechtbank&rechtsgebied=Strafrecht&wet=BWBR0005289&artikel=6:162'
+			'soort=Motie&van=2026-01-01&tot=2026-02-01&kabinet=schoof&ministerie=fin&dossier=36600&persoon=p1&fractie=d66&coalitie=verdeeld&q=huur&kamer=TK&tier=rechtbank&subject_area=Strafrecht&wet=BWBR0005289&artikel=6:162'
 		),
 		TODAY
 	);
@@ -228,17 +228,17 @@ describe('shownFilters: the filters of Actueel that stand', () => {
 
 	it('keeps a filter with a value chosen, to be undone', () => {
 		expect(shownFilters(read('soort=uitspraak&fractie=vvd'))('fractie')).toBe(true);
-		expect(shownFilters(read('soort=Motie&instantie=rechtbank'))('instantie')).toBe(true);
+		expect(shownFilters(read('soort=Motie&tier=rechtbank'))('tier')).toBe(true);
 	});
 
 	it('drops the filters of the Kamer once a court or an area of law is chosen', () => {
 		for (const query of [
-			'instantie=rechtbank',
-			'rechtsgebied=Strafrecht',
-			'soort=Motie&instantie=rechtbank'
+			'tier=rechtbank',
+			'subject_area=Strafrecht',
+			'soort=Motie&tier=rechtbank'
 		]) {
 			const shown = shownFilters(read(query));
-			expect(['kamer', 'fractie', 'ministerie', 'instantie', 'rechtsgebied'].map(shown)).toEqual([
+			expect(['kamer', 'fractie', 'ministerie', 'tier', 'subject_area'].map(shown)).toEqual([
 				false,
 				false,
 				false,
@@ -256,7 +256,7 @@ describe('shownFilters: the filters of Actueel that stand', () => {
 			['soort=Motie,stemming', false]
 		] as const) {
 			const isShown = shownFilters(read(query));
-			expect([isShown('instantie'), isShown('rechtsgebied')]).toEqual([shown, shown]);
+			expect([isShown('tier'), isShown('subject_area')]).toEqual([shown, shown]);
 		}
 	});
 });

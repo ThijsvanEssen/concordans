@@ -31,10 +31,6 @@ export const VOTED_PARAM = 'stemde';
 export const VOTE_PARAM = 'stem';
 type VoteWord = (typeof VOTES)[number];
 
-/** The names of Instantie and Rechtsgebied in the address. */
-export const TIER_PARAM = 'instantie';
-export const AREA_PARAM = 'rechtsgebied';
-
 const isTier = (v: string): v is Tier => (TIERS as readonly string[]).includes(v);
 
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
@@ -76,8 +72,8 @@ export function shownFilters(f: ActueelFilters): (id: string) => boolean {
 		['coalitie', ofChamber || !!f.coalition],
 		['ministerie', speaksOf(kinds, NOT_OF.ministry) || !!f.ministry],
 		['dossier', speaksOf(kinds, NOT_OF.dossier) || !!f.dossier],
-		[TIER_PARAM, ofJudgment || !!f.tiers.length],
-		[AREA_PARAM, ofJudgment || !!f.area],
+		[PARAM.tier, ofJudgment || !!f.tiers.length],
+		[PARAM.subject_area, ofJudgment || !!f.area],
 		['komend', !kinds.length || kinds.includes('inwerkingtreding') || f.ahead]
 	]);
 	return (id) => shown.get(id) ?? true;
@@ -188,11 +184,14 @@ const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 		ask: (v) => (v ? { chamber: v } : {})
 	},
 	tiers: {
-		param: TIER_PARAM,
-		read: (p) => TIERS.filter((t) => listParam(p.get(TIER_PARAM), isTier).includes(t)),
+		param: PARAM.tier,
+		read: (p) => TIERS.filter((t) => listParam(p.get(PARAM.tier), isTier).includes(t)),
 		ask: (v) => (v.length ? { tier: v.join(',') } : {})
 	},
-	area: { ...plain(AREA_PARAM, 'subject_area'), read: (p) => p.get(AREA_PARAM)?.trim() ?? '' },
+	area: {
+		...plain(PARAM.subject_area, 'subject_area'),
+		read: (p) => p.get(PARAM.subject_area)?.trim() ?? ''
+	},
 	instrument: { ...plain('wet', 'instrument'), read: readLaw },
 	article: {
 		...plain('artikel', 'article'),
@@ -284,19 +283,19 @@ export function judgmentGroups(
 ): FacetGroup[] {
 	return [
 		{
-			id: TIER_PARAM,
+			id: PARAM.tier,
 			label: 'Instantie',
 			kind: 'list',
 			options: tierOptions(facetMap(facets?.tier), tiers, (t) =>
-				patch({ [TIER_PARAM]: t.join(',') || null })
+				patch({ [PARAM.tier]: t.join(',') || null })
 			)
 		},
 		{
-			id: AREA_PARAM,
+			id: PARAM.subject_area,
 			label: 'Rechtsgebied',
 			chip: 'Rechtsgebied',
 			kind: 'list',
-			options: areaOptions(facets?.subject_area, area, (a) => patch({ [AREA_PARAM]: a }))
+			options: areaOptions(facets?.subject_area, area, (a) => patch({ [PARAM.subject_area]: a }))
 		}
 	];
 }
