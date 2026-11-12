@@ -91,6 +91,7 @@
 	import {
 		FILTER_GROUPS,
 		filterGroupOf,
+		filterGroupsOf,
 		filterParams,
 		parseFilter,
 		type FilterGroup,
@@ -1746,11 +1747,7 @@
 	// stays in the address, bronfilter and all: Terug leads back to it as it was.
 	const lijstHref = (bronnen: readonly FilterGroup[]) =>
 		withParams(page.url, { tabel: '1', soort: bronnen.join(',') || null, naast: null });
-	const tabelSoort = $derived(
-		(params.get('soort') ?? '')
-			.split(',')
-			.filter((k): k is FilterGroup => (FILTER_GROUPS as readonly string[]).includes(k))
-	);
+	const tabelSoort = $derived(filterGroupsOf(params.get('soort')));
 	/** The table's bronfilter: of the kinds of ?soort only, where the list came from Tonen. */
 	const tableFilter = $derived<VerbondenFilter>(
 		tabelSoort.length

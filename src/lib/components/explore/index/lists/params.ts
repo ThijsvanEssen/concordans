@@ -1,13 +1,14 @@
 // The address of Bronnen as the lists read it: every filter, the sort and the open row are in
 // the URL, so a view can be shared. A value the site does not know is left out, so the list
 // shows as without it.
+import { dayParam } from '$lib/text/periode';
 import { COURT_KINDS, EUROPEAN_SOURCES, TIERS } from '$lib/vocabulary';
 import { OUTCOME_LABEL, isDossierKind, isPhase, type Outcome } from '$lib/votes/stages';
 import { chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { motionKindFromParam } from '$lib/text/motion-kind';
 import { COMMITMENT_STATUSES, POSTS } from '../government';
 import { MINISTRY_KEYS, choiceOf } from '$lib/util/choice';
-import { PARAM } from '$lib/url/filters';
+import { PARAM, listParam } from '$lib/url/filters';
 import type { ParamPatch } from '$lib/util/address';
 
 const OUTCOMES = Object.keys(OUTCOME_LABEL) as Outcome[];
@@ -68,15 +69,15 @@ export type IndexPatch = { [K in IndexParam]?: ParamPatch[string] };
 /** The address of a list in Bronnen, read. */
 export function readParams(params: URLSearchParams) {
 	const get = (name: string) => params.get(name) ?? '';
-	const q = get(PARAM.q);
+	const q = get(PARAM.q).trim();
 	const dossierStatus = choiceOf(params.get('stand'), ['open', 'closed', 'all'] as const);
 	const track = get('track');
 	return {
 		q,
 		// One phase or several: the dossiers whose current phase is one of them.
-		phases: get('phase').split(',').filter(isPhase),
+		phases: listParam(params.get('phase'), isPhase),
 		/** Phases a dossier must all have passed, comma-separated. */
-		hasPhase: get('has_phase').split(',').filter(isPhase).join(','),
+		hasPhase: listParam(params.get('has_phase'), isPhase).join(','),
 		// A dossier's kind keeps the URL name `track`: `kind` is the tab.
 		track: isDossierKind(track) ? track : ('' as const),
 		/** The kind of the zaak a besluit decides, as the Kamer writes it (`Motie`, `Wetgeving`). */
@@ -103,8 +104,8 @@ export function readParams(params: URLSearchParams) {
 		motionKind: motionKindFromParam(params.get('motie')),
 		/** The artikel 100-brieven of the government (`?brief=artikel-100`, API 0.80.7). */
 		letterKind: choiceOf(params.get('brief'), ['artikel-100'] as const),
-		from: get(PARAM.since),
-		to: get(PARAM.until),
+		from: dayParam(params, PARAM.since),
+		to: dayParam(params, PARAM.until),
 		dossier: get(PARAM.dossier),
 		party: get(PARAM.party),
 		jurisdiction: choiceOf(params.get('jurisdiction'), ['nl', 'eu'] as const),

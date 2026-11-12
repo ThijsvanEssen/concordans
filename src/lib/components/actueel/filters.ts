@@ -1,8 +1,9 @@
 // The filters of Actueel, each once: its name in the address (which shared links keep), how
 // it is read from there, and what it asks the feed. Reading, clearing, the feed's query and
 // the day counts all follow from this table, so a new filter is one row.
+import { dayParam } from '$lib/text/periode';
 import type { paths } from '$lib/api/generated/openapi-types';
-import { PARAM } from '$lib/url/filters';
+import { PARAM, listParam } from '$lib/url/filters';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { isFeedKind, type FeedKind } from './feed';
 
@@ -109,14 +110,15 @@ const readLaw = (p: URLSearchParams) => {
 const FILTERS: { [K in keyof ActueelFilters]: Filter<ActueelFilters[K]> } = {
 	kinds: {
 		param: PARAM.kind,
-		read: (p) => [...new Set((p.get(PARAM.kind) ?? '').split(',').filter(isFeedKind))],
+		read: (p) => listParam(p.get(PARAM.kind), isFeedKind),
 		ask: (v) => (v.length ? { kind: v.join(',') } : {})
 	},
-	since: plain(PARAM.since, 'since'),
+	since: { ...plain(PARAM.since, 'since'), read: (p) => dayParam(p, PARAM.since) },
 	// Only a day in the past: with `until` the API counts apart and took 100+ s (prod, 9 Oct),
 	// without it 0.25 s. What lies ahead is left out by the page instead.
 	until: {
 		...plain(PARAM.until, 'until'),
+		read: (p) => dayParam(p, PARAM.until),
 		ask: (v, today) => (v && v < today ? { until: v } : {})
 	},
 	cabinet: plain(PARAM.cabinet, 'cabinet'),

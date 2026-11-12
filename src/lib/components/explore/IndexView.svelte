@@ -49,7 +49,8 @@
 	} from './index/categories';
 	import SourceTabs from '$lib/nav/SourceTabs.svelte';
 	import { formatCount } from '$lib/text/getal';
-	import { navigate, withParams } from '$lib/util/address';
+	import { filterAddress, withParams } from '$lib/util/address';
+	import { keepList, readKept } from './index/kept';
 	import { LISTS } from './index/lists';
 	import { INDEX_FILTER_PARAMS, readParams, type IndexPatch } from './index/lists/params';
 	import {
@@ -74,9 +75,13 @@
 	const q = $derived(p.q);
 	const kamer = $derived(p.kamer);
 
-	/** A filter is a step in the history; the search text and the open row replace it. */
-	const patchUrl = (patch: IndexPatch, replaceState = false) =>
-		navigate(withParams(page.url, patch), { step: !replaceState });
+	// Every filter closes the open row: it may not stand in the list it gives. The filters go
+	// with Wis alles, the sort stays.
+	const address = filterAddress(() => page.url, {
+		clear: ['open'],
+		filters: INDEX_FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir')
+	});
+	const patchUrl: (patch: IndexPatch, replaceState?: boolean) => void = address.patch;
 
 	// A tab is its list's address without the filters and the open row (no leak between lists).
 	const tabHref = (k: IndexCategory, filters: IndexPatch = {}) =>
@@ -89,31 +94,17 @@
 	// ── Search text ─────────────────────────────────────────────────────────
 	// What is typed goes into the URL when the typing pauses, in place of the last
 	// entry: one step back leaves the search, not one letter.
-	const QUERY_DELAY = 250;
 	/** The text in the field while it is not yet in the URL. */
 	let qDraft = $state<string | null>(null);
-	let qTimer: ReturnType<typeof setTimeout> | undefined;
 	function typeQuery(v: string) {
 		qDraft = v;
-		clearTimeout(qTimer);
-		qTimer = setTimeout(() => patchUrl({ q: v || null, open: null }, true), v ? QUERY_DELAY : 0);
+		address.typeQuery(v);
 	}
 	// Once the URL has the text, or another text by Back, the field follows the URL.
 	$effect(() => {
-		if (qDraft === q) qDraft = null;
+		if (qDraft?.trim() === q) qDraft = null;
 	});
-	$effect(() => () => clearTimeout(qTimer));
-
-	// The filters go, the sort stays.
-	const clearFilters = () =>
-		patchUrl(
-			Object.fromEntries(
-				INDEX_FILTER_PARAMS.filter((name) => name !== 'sort' && name !== 'dir').map((name) => [
-					name,
-					null
-				])
-			)
-		);
+	$effect(() => address.stop);
 
 	// ── Sorting ─────────────────────────────────────────────────────────────
 	// The first option is the default. An option with `dir` is sorted here, with
@@ -293,11 +284,7 @@
 	}
 
 	// ── Coming back ─────────────────────────────────────────────────────────
-	// Back from a bron finds the list as it was left: the pages loaded and the place in
-	// the list, per URL, for as long as the tab is open. A reload or a link loads afresh.
-	const KEPT = 'concordans:bladeren';
-	const KEPT_MAX = 6;
-	type Kept = { url: string; category: IndexCategory; page: AnyPage; scroll: number };
+	// Back from a bron finds the list as it was left (index/kept.ts).
 	let scroller = $state<HTMLElement | null>(null);
 
 	// The open row is not part of what is loaded.
@@ -306,29 +293,15 @@
 		params.delete('open');
 		return `${url.pathname}?${params}`;
 	};
-	function readKept(): Kept[] {
-		try {
-			const kept = JSON.parse(sessionStorage.getItem(KEPT) ?? '[]');
-			return Array.isArray(kept) ? kept : [];
-		} catch {
-			return [];
-		}
-	}
 	function keep(url: URL) {
 		// While a list loads, the one shown is the previous one: nothing to keep.
 		if (!shownPage || !scroller || loading) return;
-		const entry: Kept = {
+		keepList({
 			url: keptUrl(url),
 			category,
 			page: $state.snapshot(shownPage) as AnyPage,
 			scroll: scroller.scrollTop
-		};
-		const rest = readKept().filter((k) => k.url !== entry.url);
-		try {
-			sessionStorage.setItem(KEPT, JSON.stringify([entry, ...rest].slice(0, KEPT_MAX)));
-		} catch {
-			// Storage full or blocked: coming back loads the list again.
-		}
+		});
 	}
 
 	// Leaving Bladeren, for a bron or another page, keeps the list.
@@ -522,8 +495,7 @@
 	// The Kamer is a choice, not a filter: the first of the bar of filters, always one of the
 	// two, and no chip above the list.
 	/** Another Kamer: its own list, without the filters that belonged to the other. */
-	const kiesKamer = (c: Chamber) =>
-		patchUrl({ kamer: c === 'TK' ? null : c, open: null, fractie: null });
+	const kiesKamer = (c: Chamber) => patchUrl({ kamer: c === 'TK' ? null : c, fractie: null });
 	const widen = $derived(list.widen?.(p) ?? null);
 	/** After the count: what the counts the list has already say (`12 aangenomen`). */
 	const summary = $derived(list.summary?.(ctx) ?? null);
@@ -581,7 +553,7 @@
 						stale={facettenFout !== null}
 						show={showLabel}
 						list={() => results}
-						onClear={clearFilters}
+						onClear={address.clearFilters}
 						end={rowsShown && sorts.length > 1 ? sortControl : undefined}
 						count={rowsShown && list.Rows ? countLine : undefined}
 						countEnd={rowsShown && (listSource || follow) ? sourceLine : undefined}

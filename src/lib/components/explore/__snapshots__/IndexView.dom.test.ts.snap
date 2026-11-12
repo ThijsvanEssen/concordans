@@ -2393,6 +2393,6 @@ exports[`Bronnen, the address > drops the filters and the open row in a tab, the
 
 exports[`Bronnen, the address > switches the Kamer as a choice, dropping the fractie and the open row 1`] = `"?q=a&kamer=EK"`;
 
-exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 1`] = `"?sort=title&open=dossiers/1&track=Begroting"`;
+exports[`Bronnen, the address > takes a filter on and off in one step, the sort kept and the open row closed 1`] = `"?sort=title&track=Begroting"`;
 
-exports[`Bronnen, the address > takes a filter on and off in one step, the open row and the sort kept 2`] = `"?sort=title&open=dossiers/1"`;
+exports[`Bronnen, the address > takes a filter on and off in one step, the sort kept and the open row closed 2`] = `"?sort=title"`;

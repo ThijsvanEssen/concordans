@@ -51,7 +51,7 @@
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
 	import { isEscape } from '$lib/actions/keys';
 	import { navigating, page } from '$app/state';
-	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
+	import { filterAddress, withParams, type ParamPatch } from '$lib/util/address';
 	import { getFeed, getFeedCounts, getFeedSummary } from '$lib/api/feed';
 	import { getFactions } from '$lib/api/factions';
 	import { isAborted, isSlow, report } from '$lib/api/errors';
@@ -140,14 +140,11 @@
 	const openId = $derived(page.url.searchParams.get('open'));
 
 	/** A filter is a step in the history and closes the open line; typing or opening replaces it. */
-	function patchUrl(patch: ParamPatch, replaceState = false) {
-		const clear = 'open' in patch ? [] : ['open'];
-		navigate(withParams(page.url, patch, { clear }), { step: !replaceState });
-	}
+	const address = filterAddress(() => page.url, { clear: ['open'], filters: FEED_FILTER_PARAMS });
+	const patchUrl = address.patch;
 	/** Actueel under the patch alone: "Alles over dit dossier" is all of it, whatever the filters. */
 	const filterHref = (patch: ParamPatch) => withParams(new URL('/actueel', page.url), patch);
 	const toggleOpen = (id: string) => patchUrl({ open: openId === id ? null : id }, true);
-	const clearFilters = () => patchUrl(Object.fromEntries(FEED_FILTER_PARAMS.map((f) => [f, null])));
 
 	function toggleKind(kind: FeedKind) {
 		const next = kinds.includes(kind) ? kinds.filter((k) => k !== kind) : [...kinds, kind];
@@ -159,24 +156,15 @@
 	// spaces, its commas) until the address says other words: a filter cleared, a step back.
 	const qText = $derived(q.join('; '));
 	let qDraft = $state<string | null>(null);
-	let qPending = false;
-	let qTimer: ReturnType<typeof setTimeout> | undefined;
 	function typeQuery(v: string) {
 		qDraft = v;
-		qPending = true;
-		clearTimeout(qTimer);
-		qTimer = setTimeout(
-			() => {
-				qPending = false;
-				patchUrl({ q: splitsTermen(v) }, true);
-			},
-			v ? 300 : 0
-		);
+		address.typeQuery(v, (t) => ({ q: splitsTermen(t) }));
 	}
 	$effect(() => {
 		const text = qText;
 		untrack(() => {
-			if (!qPending && qDraft !== null && splitsTermen(qDraft).join('; ') !== text) qDraft = null;
+			if (!address.typing && qDraft !== null && splitsTermen(qDraft).join('; ') !== text)
+				qDraft = null;
 		});
 	});
 
@@ -734,7 +722,7 @@
 				? 'Toon de gebeurtenissen'
 				: `Toon ${formatCount(total)} ${plural(total, 'gebeurtenis', 'gebeurtenissen')}`}
 			list={() => feedEl}
-			onClear={clearFilters}
+			onClear={address.clearFilters}
 			count={countLine}
 		/>
 		<!-- The Tweede Kamer's days without a sitting, and first the motions of censure and of no
