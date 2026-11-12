@@ -15,7 +15,7 @@ test('the route of civiel recht names each court with its article as a link', as
 		'href',
 		'/wetten/BWBR0001830/artikel/42'
 	);
-	await expect(page.getByRole('link', { name: 'art. 78 RO' })).toBeVisible();
+	await expect(page.locator('.gebied').getByRole('link', { name: 'art. 78 RO' })).toBeVisible();
 });
 
 test('Rechtsgang is a tab under Rechtspraak, beside Uitspraken', async ({ page }) => {
@@ -58,7 +58,9 @@ test('bestuursrecht reads as rows "als … / anders", the excepted besluit first
 	]);
 	await expect(first.locator('.rij--anders')).toContainText('Rechtbanken');
 	await expect(page.getByText('hoger beroep, na de rechtbank')).toBeVisible();
-	await expect(page.getByText('Gestippeld: alleen in enkele zaken.')).toBeVisible();
+	await expect(
+		page.locator('.gebied').getByText('Gestippeld: alleen in enkele zaken.')
+	).toBeVisible();
 });
 
 test('cassation in bestuursrecht stands under the Centrale Raad van Beroep alone', async ({
@@ -76,6 +78,26 @@ test('cassation in bestuursrecht stands under the Centrale Raad van Beroep alone
 	expect(order.findIndex((t) => t.startsWith('daarna'))).toBe(
 		order.indexOf('Centrale Raad van Beroep') + 1
 	);
+});
+
+test('the entries into the Hoge Raad name each court before it, with its articles', async ({
+	page
+}) => {
+	await page.goto('/rechtspraak/rechtsgang?gebied=belasting');
+	const entries = page.locator('.ingangen');
+	await expect(
+		entries.getByRole('heading', { level: 2, name: 'Ingangen naar de Hoge Raad' })
+	).toBeVisible();
+	await expect(entries.locator('.in > li')).toHaveCount(5);
+	// Sprongcassatie after the rechtbank: dashed, with art. 398 Rv.
+	const leap = entries.locator('.in > li').filter({ hasText: 'eerste aanleg, civiel' });
+	await expect(leap).toHaveClass(/stippel/);
+	await expect(leap.getByRole('link', { name: 'art. 398 Rv' })).toBeVisible();
+	// The Hoge Raad in first and only instance, and the court after verwijzing.
+	await expect(entries.getByText('Eerste en enige aanleg')).toBeVisible();
+	await expect(entries.getByRole('link', { name: 'art. 76 RO' })).toBeVisible();
+	await expect(entries.getByRole('link', { name: 'art. 440 Sv' })).toBeVisible();
+	await expect(entries.getByText('Gestippeld: alleen in enkele zaken.')).toBeVisible();
 });
 
 test('the area chosen is the address’s, so a reload shows it again', async ({ page }) => {

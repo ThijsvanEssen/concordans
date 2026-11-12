@@ -10,8 +10,8 @@ import type { BronRef } from '$lib/bron/ref';
 import { TIER_LABEL, type Tier } from '$lib/vocabulary';
 
 export type Routes = Schema<'JudgmentRoutesResponse'>;
-type AreaRoute = Schema<'AreaRoute'>;
-type RouteStep = Schema<'RouteStep'>;
+export type AreaRoute = Schema<'AreaRoute'>;
+export type RouteStep = Schema<'RouteStep'>;
 
 /** An article cited, with its readable address where it has one (`articleOfBasis`). */
 export type Cited = { name: string; ref: BronRef; path: string | null; area?: string };
@@ -75,19 +75,19 @@ export const VIEWS: AreaView[] = [
 const EXCEPTED = 'bijlage 2 artikel 1';
 
 /** The stage of a step by its first procedure: Eerste aanleg, Hoger beroep, Cassatie. */
-const stageName = (procedures: string[]) => procedures[0] ?? 'Overig';
+export const stageName = (procedures: string[]) => procedures[0] ?? 'Overig';
 
 /** The name of a court by its tier: "Rechtbanken", "Hoge Raad"; of the Raad van State its
  *  Afdeling, the court of a route. */
-const tierName = (tier: string) =>
+export const tierName = (tier: string) =>
 	tier === 'raad_van_state'
 		? 'Afdeling bestuursrechtspraak van de Raad van State'
 		: (TIER_LABEL[tier as Tier] ?? tier);
 
-/** The entries into the Hoge Raad of API 0.80.39 (sprongcassatie after the rechtbank, the Hoge
- *  Raad in first and only instance, the gerechtshof after verwijzing): built once that release
- *  is live (B144), left out until then. */
-const later = (step: RouteStep) =>
+/** The entries into the Hoge Raad off the main route (sprongcassatie after the rechtbank, the
+ *  Hoge Raad in first and only instance, the gerechtshof after verwijzing): not a stage of a
+ *  view, but in the schema of the entries (`entries.ts`). */
+const entryOnly = (step: RouteStep) =>
 	(step.after_tier != null && step.after_tier !== 'centrale_raad_van_beroep') ||
 	step.procedures[0] === 'Eerste en enige aanleg';
 
@@ -107,7 +107,7 @@ export function routeOf(view: AreaView, routes: Routes): Stage[] {
 	const after: [RouteStep, AreaRoute][] = [];
 	for (const area of areas) {
 		for (const step of area.steps) {
-			if (later(step)) continue;
+			if (entryOnly(step)) continue;
 			if (step.after_tier) {
 				after.push([step, area]);
 				continue;
@@ -172,7 +172,7 @@ function settle(stage: Stage) {
 	stage.rows = [...stage.rows.filter((r) => r !== other), other];
 }
 
-function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: boolean) {
+export function addCourt(courts: CourtStep[], step: RouteStep, area: AreaRoute, many: boolean) {
 	let court = courts.find((c) => c.tier === step.tier);
 	if (!court)
 		courts.push((court = { tier: step.tier, name: tierName(step.tier), articles: [], gap: false }));

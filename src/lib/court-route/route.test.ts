@@ -24,7 +24,7 @@ const ROUTES: Routes = {
 			steps: [
 				step('rechtbank', 'Eerste aanleg', basis(RO, '42')),
 				step('gerechtshof', 'Hoger beroep', basis(RO, '60')),
-				// Of API 0.80.39: left out until its release is live (B144).
+				// Sprongcassatie: in the schema of the entries, not a stage of the view.
 				step('hoge_raad', 'Cassatie', basis(RO, '78'), [basis('BWBR0001827', '398')], 'rechtbank')
 			],
 			gaps: []
@@ -105,7 +105,7 @@ describe('the route of a view', () => {
 		expect(appeal.map((a) => [a.name, a.area])).toEqual([['art. 60 RO', undefined]]);
 	});
 
-	it('leaves out the entries into the Hoge Raad of API 0.80.39 until they are built', () => {
+	it('leaves the entries into the Hoge Raad off the main route to their own schema', () => {
 		expect(rows('civiel')).toEqual([
 			['Eerste aanleg', [[null, 'Rechtbanken']]],
 			['Hoger beroep', [[null, 'Gerechtshoven']]]

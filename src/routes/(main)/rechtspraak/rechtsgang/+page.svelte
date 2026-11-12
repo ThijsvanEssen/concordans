@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Rechtsgang (B143): the route of a case per area of law, each court with the article that
 	// gives it its say as a link to its readable address; a court whose article is not read in
-	// the source shows the gap (WetsartikelGat, as in the Verloop).
+	// the source shows the gap (WetsartikelGat, as in the Verloop). Under it, over every area,
+	// the entries into the Hoge Raad (B144).
 	// Under bestuursrecht the Bevoegdheidsregeling bestuursrechtspraak by chapter, its headings
 	// as the regeling writes them, each article opened to the laws its list names. One answer
 	// of the API (`/api/judgments/routes`); `?gebied=` chooses the area (from the Verloop).
@@ -15,20 +16,21 @@
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { NOT_IN_DATA } from '$lib/text/coverage';
-	import WetsartikelGat from '$lib/court-route/WetsartikelGat.svelte';
+	import CourtArticles from '$lib/court-route/CourtArticles.svelte';
+	import CassationEntries from '$lib/court-route/CassationEntries.svelte';
+	import { entriesOf } from '$lib/court-route/entries';
 	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 	import { SOURCES } from '$lib/nav/sources';
 	import SourceTabs from '$lib/nav/SourceTabs.svelte';
 	import { sourceTabs } from '$lib/components/explore/index/categories';
-	import { count, separatorBefore } from '$lib/text/words';
+	import { count } from '$lib/text/words';
 	import {
 		VIEWS,
 		designatedCourt,
 		annexArticleName,
 		arrowInto,
-		routeOf,
-		type CourtStep
+		routeOf
 	} from '$lib/court-route/route';
 
 	const routes = load(
@@ -44,6 +46,7 @@
 	const choose = (id: string) => navigate(withParams(page.url, { gebied: id }));
 	const data = $derived(routes.state.status === 'ready' ? routes.state.data : null);
 	const route = $derived(data ? routeOf(view, data) : null);
+	const entries = $derived(data ? entriesOf(data) : null);
 	const dashed = $derived(
 		route?.some((s) => s.rows.some((r) => r.courts.some((c) => c.then))) ?? false
 	);
@@ -58,18 +61,6 @@
 </script>
 
 <RouteKop />
-
-{#snippet articles(court: CourtStep)}
-	{#if court.gap}
-		<WetsartikelGat />
-	{:else}
-		{#each court.articles as a, i (a.name + (a.area ?? ''))}{separatorBefore(
-				i,
-				court.articles.length
-			)}<a class="raakvlak" href={openHref(a.ref, { path: a.path })}>{a.name}</a
-			>{#if a.area}{` (${a.area})`}{/if}{/each}
-	{/if}
-{/snippet}
 
 <SourceTabs
 	label={judgments.label}
@@ -136,13 +127,13 @@
 										{#each row.courts as court (court.tier)}
 											<p class="instantie">
 												<span class="naam">{court.name}</span>
-												<span class="art raak-regels">{@render articles(court)}</span>
+												<span class="art raak-regels"><CourtArticles {court} /></span>
 											</p>
 											{#if court.then}
 												<!-- After this court alone, so not a stage of its own (B144 4A). -->
 												<p class="daarna raak-regels">
 													daarna {court.then.stage.toLowerCase()} bij de {court.then.name}, in
-													enkele wetten: {@render articles(court.then)}
+													enkele wetten: <CourtArticles court={court.then} />
 												</p>
 											{/if}
 										{/each}
@@ -154,6 +145,8 @@
 				</ol>
 				{#if dashed}<p class="stil legenda">Gestippeld: alleen in enkele zaken.</p>{/if}
 			</section>
+
+			{#if entries?.into.length}<CassationEntries {entries} />{/if}
 
 			{#if view.id === 'bestuur' && data.regeling.length}
 				<section class="regeling" aria-labelledby="regeling-kop">
@@ -224,7 +217,7 @@
 		font: var(--niveau-1-sectie);
 		color: var(--ink);
 	}
-	.rechtsgang :is(.lede, .bijlage, .als, .instantie, .daarna, .wetten) a {
+	.rechtsgang :is(.lede, .bijlage, .als, .wetten) a {
 		color: inherit;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -246,7 +239,7 @@
 		min-width: 0;
 	}
 	/* An article whole on its line: a link that breaks has no one place to tap. */
-	:is(.art, .als, .daarna) a {
+	.als a {
 		white-space: nowrap;
 	}
 	.gebied[aria-busy] :global([data-slow]) {
