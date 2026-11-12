@@ -20,7 +20,7 @@ const PLACES: Record<string, number> = {
 	// A request whose failure becomes an empty state, a 0 or "niet in de gegevens": the
 	// area packages turn each into ifExists, report, ignore or load with LoadState.
 	'lib/api/dossiers.ts': 1,
-	'lib/api/instrument-cache.ts': 2,
+	'lib/api/instrument-cache.ts': 1,
 	'lib/components/actueel/wetsnetwerk.ts': 2,
 	'lib/components/explore/IndexView.svelte': 1,
 	'lib/map/MapRegelingen.svelte': 1,

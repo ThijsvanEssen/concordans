@@ -19,8 +19,12 @@ const MAX = 400;
 const kept = new Map<string, Promise<unknown>>();
 onForget(() => kept.clear());
 
-/** The answer of `load` for `id`, asked once while it is kept. */
-export function once<T>(id: string, load: () => Promise<T>): Promise<T> {
+/**
+ * The answer of `load` for `id`, asked once while it is kept. The id is kept in lower case:
+ * a key, an ECLI or a BWB-id names the same bron in either case (`BWBR0005537`, `bwbr0005537`).
+ */
+export function once<T>(key: string, load: () => Promise<T>): Promise<T> {
+	const id = key.toLowerCase();
 	const hit = kept.get(id) as Promise<T> | undefined;
 	if (hit) {
 		// The most recently asked stays longest.
@@ -36,6 +40,9 @@ export function once<T>(id: string, load: () => Promise<T>): Promise<T> {
 	if (kept.size > MAX) kept.delete(kept.keys().next().value!);
 	return request;
 }
+
+/** After a failed request, the wait before a list is asked again: no request per render. */
+export const AGAIN_AFTER = 30_000;
 
 /** A request without parameters, asked once while it is kept, as `once` keeps `id`. */
 export const onceFn =
@@ -62,9 +69,7 @@ export function abortable<T>(request: Promise<T>, signal?: AbortSignal): Promise
  * Verbonden draw from, and what a reader can take its own bucket from (a lid's AUTHORED).
  */
 export const getNode = (collection: Collection, key: string) =>
-	once(`nodes/${collection}/${key.toLowerCase()}`, () =>
-		getNodeGraph(collection, key, { limit: NODE_BUCKET })
-	);
+	once(`nodes/${collection}/${key}`, () => getNodeGraph(collection, key, { limit: NODE_BUCKET }));
 
 /**
  * The node of a bron with one neighbour per bucket: its own props and the count of every
@@ -72,7 +77,7 @@ export const getNode = (collection: Collection, key: string) =>
  * a card and the first view need; the canvas fills in from `getNode` after it.
  */
 export const getNodeFirst = (collection: Collection, key: string) =>
-	once(`nodes/${collection}/${key.toLowerCase()}/first`, () =>
+	once(`nodes/${collection}/${key}/first`, () =>
 		getNodeGraph(collection, key, { limit: 1, wait: 'short' })
 	);
 
@@ -83,7 +88,7 @@ export const getNodeFirst = (collection: Collection, key: string) =>
  */
 export const CANVAS_BUCKET = 30;
 export const getNodeCanvas = (collection: Collection, key: string) =>
-	once(`nodes/${collection}/${key.toLowerCase()}/canvas`, () =>
+	once(`nodes/${collection}/${key}/canvas`, () =>
 		getNodeGraph(collection, key, { limit: CANVAS_BUCKET })
 	);
 
@@ -95,7 +100,7 @@ export const getNodeCanvas = (collection: Collection, key: string) =>
  */
 export const getNodeHull = (collection: Collection, key: string) =>
 	collection === 'instruments'
-		? once(`nodes/${collection}/${key.toLowerCase()}/hull`, () =>
+		? once(`nodes/${collection}/${key}/hull`, () =>
 				getNodeGraph(collection, key, {
 					limit: NODE_BUCKET,
 					relations: 'PART_OF',
@@ -112,7 +117,7 @@ export const getNodeHull = (collection: Collection, key: string) =>
  */
 export const VERBONDEN_BUCKET = 5;
 export const getNodeVerbonden = (collection: Collection, key: string) =>
-	once(`nodes/${collection}/${key.toLowerCase()}/verbonden`, () =>
+	once(`nodes/${collection}/${key}/verbonden`, () =>
 		getNodeGraph(collection, key, { limit: VERBONDEN_BUCKET })
 	);
 
@@ -121,7 +126,7 @@ export const getNodeVerbonden = (collection: Collection, key: string) =>
  * the edge (`meta.text`): one bucket, both directions, not the whole node.
  */
 export const getRelatedCases = (key: string) =>
-	once(`nodes/judgments/${key.toLowerCase()}/related`, () =>
+	once(`nodes/judgments/${key}/related`, () =>
 		getNodeGraph('judgments', key, { relations: 'RELATED_TO', nodeTypes: 'judgment', limit: 50 })
 	);
 
@@ -138,7 +143,7 @@ export const getMember = (key: string) =>
  * bucket it reads, not the whole node (150 kB gzip).
  */
 export const getMemberAuthored = (key: string) =>
-	once(`nodes/members/${key.toLowerCase()}/authored`, () =>
+	once(`nodes/members/${key}/authored`, () =>
 		getNodeGraph('members', key, { limit: NODE_BUCKET, relations: 'AUTHORED' })
 	).then(neighborsOf);
 

@@ -1,5 +1,5 @@
-// The two answers of Bronnen en de voet: asked once at a time, given the caller's signal, and
-// asked once more when the first gave up on its time.
+// The two answers of Bronnen en de voet: asked once, shared by every caller, and asked once
+// more when the first gave up on its time.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getCoverage, getStats } from './stats';
 
@@ -29,7 +29,7 @@ describe('getStats', () => {
 		expect(fetch).toHaveBeenCalledTimes(3);
 	});
 
-	it('hands the caller signal to the request, and does not ask again after leaving', async () => {
+	it('ends the wait of a caller that leaves, and does not ask again', async () => {
 		vi.resetModules();
 		const { getStats: fresh } = await import('./stats');
 		const controller = new AbortController();

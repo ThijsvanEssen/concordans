@@ -19,6 +19,7 @@
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef, bwCode } from '$lib/text/bw';
 	import { onDestroy, onMount, untrack } from 'svelte';
+	import { whenIdle } from '$lib/util/idle';
 	import { answer } from '$lib/keys/dispatch.svelte';
 	import { offer, type Target } from '$lib/keys/doen.svelte';
 	import { focusView, keyView, stepBy, werkplekDoer, type ViewId, type Werkplek } from './doen';
@@ -1811,9 +1812,7 @@
 			graphChunk.load();
 			panelChunk.load();
 		};
-		if (typeof requestIdleCallback !== 'function') return void setTimeout(ask, 3000);
-		const idle = requestIdleCallback(ask, { timeout: 5000 });
-		return () => cancelIdleCallback(idle);
+		return whenIdle(ask, { timeout: 5000, fallback: 3000 });
 	});
 	$effect(() => {
 		if (mode === 'index') {

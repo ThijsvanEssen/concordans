@@ -120,6 +120,13 @@
 										<span class="naam">{court.name}</span>
 										<span class="art raak-regels">{@render articles(court)}</span>
 									</p>
+									{#if court.then}
+										<!-- After this court alone, so not a stage of its own (B144 4A). -->
+										<p class="daarna raak-regels">
+											daarna {court.then.stage.toLowerCase()} bij de {court.then.name}, in enkele
+											wetten: {@render articles(court.then)}
+										</p>
+									{/if}
 								{/each}
 							</div>
 						</li>
@@ -207,23 +214,25 @@
 		font: var(--niveau-1-sectie);
 		color: var(--ink);
 	}
-	.rechtsgang :is(.lede, .bijlage, .instantie, .andere-lijst, .wetten) a {
+	.rechtsgang :is(.lede, .bijlage, .instantie, .daarna, .andere-lijst, .wetten) a {
 		color: inherit;
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
+	/* Equal columns, the cards level at the top; the arrow stands in the gap between two, at
+	   the height of the first court's name. */
 	.route {
+		--tussen: 8rem;
 		display: flex;
-		gap: var(--s-2);
+		align-items: flex-start;
+		gap: var(--tussen);
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
 	.stap {
-		display: flex;
-		flex: 1;
-		align-items: center;
-		gap: var(--s-2);
+		position: relative;
+		flex: 1 1 0;
 		min-width: 0;
 	}
 	/* An article whole on its line: a link that breaks has no one place to tap. */
@@ -251,7 +260,11 @@
 		width: 30%;
 	}
 	.pijl {
-		flex: none;
+		position: absolute;
+		right: 100%;
+		top: calc(var(--s-3) + 1.25rem);
+		width: var(--tussen);
+		text-align: center;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
@@ -260,7 +273,6 @@
 		content: ' →';
 	}
 	.vak {
-		flex: 1 1 14rem;
 		min-width: 0;
 		padding: var(--s-3);
 		border: 1px solid var(--ink-3);
@@ -289,6 +301,14 @@
 	}
 	.gat {
 		color: var(--ink-3);
+	}
+	.daarna {
+		margin: var(--s-1) 0 0;
+		padding-top: var(--s-1);
+		border-top: 1px dashed var(--rule);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.andere {
 		margin-top: var(--s-4);
@@ -393,13 +413,21 @@
 		}
 		.route {
 			flex-direction: column;
-		}
-		.stap {
-			flex-direction: column;
 			align-items: stretch;
+			gap: 0;
 		}
-		.vak {
-			flex: none;
+		/* Down the page: the arrow between two cards, in the middle. */
+		.pijl {
+			position: static;
+			display: block;
+			width: auto;
+			padding: var(--s-2) 0;
+		}
+		.pijl::before {
+			content: '↓ ';
+		}
+		.pijl::after {
+			content: none;
 		}
 		.kop-rij {
 			display: none;

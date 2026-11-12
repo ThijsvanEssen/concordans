@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fail, fakeApi } from '$lib/test/fakeApi';
+import { AGAIN_AFTER } from '$lib/api/records';
 import { factionKeyOf, keyOfName } from './names.svelte';
 
 const factions = [
@@ -30,11 +31,16 @@ describe('factionKeyOf', () => {
 	});
 	afterEach(() => vi.unstubAllGlobals());
 
-	it('asks the list again after a failure, instead of leaving every name unlinked', async () => {
+	it('asks the list again after a pause, not on every render, after a failure', async () => {
+		const setTimeout = vi.spyOn(globalThis, 'setTimeout');
 		const answers: unknown[] = [fail(503), [{ key: 'd66', abbreviation: 'D66', name: 'D66' }]];
 		const fake = fakeApi({ '/api/factions': () => answers.shift(), '/api/cabinets': [] });
 		expect(factionKeyOf('D66')).toBeNull();
 		await vi.waitFor(() => expect(console.warn).toHaveBeenCalled());
+		factionKeyOf('D66');
+		expect(fake.asked('/api/factions')).toHaveLength(1);
+		const again = setTimeout.mock.calls.find(([, ms]) => ms === AGAIN_AFTER)![0] as () => void;
+		again();
 		factionKeyOf('D66');
 		await vi.waitFor(() => expect(factionKeyOf('D66')).toBe('d66'));
 		expect(fake.asked('/api/factions')).toHaveLength(2);

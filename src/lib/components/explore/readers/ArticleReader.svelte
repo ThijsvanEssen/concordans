@@ -67,7 +67,6 @@
 	import { citeDate, validityOf } from '$lib/api/validity';
 	import { statusOf } from '$lib/text/validity';
 	import { compareTarget, outcomesOf, ownSuccessionName, successionName } from './succession';
-	import { getNodeGraph } from '$lib/api/nodes';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { articleKey as keyOfArticle, fetchArticle } from './article';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
@@ -525,7 +524,7 @@
 			if (id === null) return new Promise<never>(() => {});
 			const target = parseNodeId(id);
 			if (!target || target.collection !== 'articles') throw new Error(`Geen artikel: ${id}`);
-			const graph = await getNodeGraph('articles', target.key, { limit: 1, wait: 'short', signal });
+			const graph = await abortable(getNodeFirst('articles', target.key), signal);
 			const address = articleOf(graph.node?.props as Record<string, unknown> | undefined);
 			if (!address) throw new Error(`Geen adres voor ${id}`);
 			return { law: address.lawId, number: address.articleNumber };

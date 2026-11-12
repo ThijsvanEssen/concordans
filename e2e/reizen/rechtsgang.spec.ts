@@ -46,6 +46,21 @@ test('a court whose article is not read in the source shows the gap', async ({ p
 	await expect(cassation.getByRole('link')).toHaveCount(0);
 });
 
+test('cassation in bestuursrecht stands under the Centrale Raad van Beroep alone', async ({
+	page
+}) => {
+	await page.goto('/rechtspraak/rechtsgang?gebied=bestuur');
+	await expect(page.locator('.vak')).toHaveCount(2);
+	const appeal = page.locator('.vak').filter({ hasText: 'Hoger beroep' });
+	await expect(appeal.locator('.daarna')).toHaveCount(1);
+	await expect(appeal.locator('.daarna')).toContainText('daarna cassatie bij de Hoge Raad');
+	// The line follows the CRvB, not the Afdeling or the CBb.
+	const order = await appeal.locator('.naam, .daarna').allTextContents();
+	expect(order.findIndex((t) => t.startsWith('daarna'))).toBe(
+		order.indexOf('Centrale Raad van Beroep') + 1
+	);
+});
+
 test('the area chosen is the address’s, so a reload shows it again', async ({ page }) => {
 	await page.goto('/rechtspraak/rechtsgang?gebied=belasting');
 	await page.getByRole('button', { name: 'Bestuur', exact: true }).click();

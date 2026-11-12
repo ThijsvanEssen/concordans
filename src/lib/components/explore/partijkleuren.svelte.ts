@@ -12,6 +12,7 @@
 // de tweede krijgt arcering, de derde stippen, de volgende strepen. Een fractie met twee
 // kleuren (GroenLinks-PvdA) is al onderscheiden.
 import { getPartyColors } from '$lib/api/parties';
+import { AGAIN_AFTER } from '$lib/api/records';
 import { report } from '$lib/api/errors';
 import { onForget } from '$lib/util/forget';
 
@@ -44,9 +45,9 @@ function laad() {
 			eigen.aliassen = data.aliases ?? {};
 		})
 		.catch((e) => {
-			// De terugvalkleur blijft, de naam van de fractie staat erbij; de volgende keer
+			// De terugvalkleur blijft, de naam van de fractie staat erbij; na een pauze
 			// opnieuw gevraagd.
-			gevraagd = false;
+			setTimeout(() => (gevraagd = false), AGAIN_AFTER);
 			report('Partijkleuren', e);
 		});
 }
