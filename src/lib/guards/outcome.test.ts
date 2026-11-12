@@ -17,7 +17,12 @@ describe('the outcome of a vote', () => {
 			{
 				pad: 'lib/components/parliamentary/procedure.ts',
 				reden: 'the values the source gives, compared, not shown',
-				regel: /result === '|zin === '/
+				regel: /zin === '/
+			},
+			{
+				pad: 'lib/votes/decision-kind.ts',
+				reden: "the Eerste Kamer's result, compared, not shown",
+				regel: /result === '/
 			},
 			{ pad: 'lib/text/outcome.ts', reden: 'the one place of the words' }
 		];

@@ -3,6 +3,8 @@
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
 import { outcomeWord } from '$lib/text/outcome';
+import { yearsOf } from '$lib/text/datum';
+import { uitslag } from '$lib/votes/decision-kind';
 import { carriesBillTitle, motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { forAgainst } from '$lib/votes/stemming';
 import { capitalize, count, joinAnd, lowerFirst } from '$lib/text/words';
@@ -174,6 +176,41 @@ function stemdagen(decisions: Entry[]): Regel[] {
 	}));
 }
 
+/** The line of a vote on the bill: its outcome as the source gives it, its tally in place. */
+function voteRow(e: Entry, groep: 'rvs' | 'tk' | 'ek', inhoud: Inhouden): Regel {
+	const b = bodyOf(e);
+	const u = uitslag(b);
+	const tally = (b.tally ?? {}) as Record<string, number>;
+	const { voor, tegen } = forAgainst(tally);
+	if (voor + tegen > 0)
+		inhoud.set(e.node_id, {
+			soort: 'stemming',
+			item: {
+				kind: 'stemming',
+				node: { collection: 'decisions', key: parseNodeId(e.node_id)?.key ?? '' },
+				summary: null,
+				vote: voteOf({ chamber: groep === 'ek' ? 'EK' : 'TK', passed: u.passed, tally })
+			}
+		});
+	const method = typeof b.method === 'string' ? b.method : null;
+	const how = methodPhrase(method, `${e.kind ?? ''} ${e.title ?? ''}`);
+	return {
+		id: e.node_id,
+		datum: e.date,
+		teken: u.passed === null ? 'open' : u.passed ? 'ja' : 'nee',
+		soort: 'decisions',
+		label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
+		zin: capitalize(
+			(how && u.passed !== null ? outcomeWord(u.passed, how, true) : u.word) ?? noneHeld('uitslag')
+		),
+		href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
+		ref: e.node_id,
+		groot: true,
+		// What the coalition did on it (API 0.79.45, #559; Thijs, 10 Oct): the Tweede Kamer only.
+		bij: coalitieVan(e)
+	};
+}
+
 function regelsVan(
 	entries: Entry[],
 	groep: 'rvs' | 'tk' | 'ek',
@@ -196,37 +233,8 @@ function regelsVan(
 			overig.push(e);
 			continue;
 		}
-		if (e.node_type === 'decision') {
-			const b = bodyOf(e);
-			const uitslag = uitslagVan(b);
-			const tally = (b.tally ?? {}) as Record<string, number>;
-			const { voor, tegen } = forAgainst(tally);
-			if (voor + tegen > 0)
-				inhoud.set(e.node_id, {
-					soort: 'stemming',
-					item: {
-						kind: 'stemming',
-						node: { collection: 'decisions', key: parseNodeId(e.node_id)?.key ?? '' },
-						summary: null,
-						vote: voteOf({ chamber: groep === 'ek' ? 'EK' : 'TK', passed: uitslag, tally })
-					}
-				});
-			const method = typeof b.method === 'string' ? b.method : null;
-			const how = methodPhrase(method, `${e.kind ?? ''} ${e.title ?? ''}`);
-			out.push({
-				id: e.node_id,
-				datum: e.date,
-				teken: uitslag === null ? 'open' : uitslag ? 'ja' : 'nee',
-				soort: 'decisions',
-				label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
-				zin: uitslag === null ? capitalize(noneHeld('uitslag')) : (outcomeWord(uitslag, how) ?? ''),
-				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
-				ref: e.node_id,
-				groot: true,
-				// What the coalition did on it (API 0.79.45, #559; Thijs, 10 Oct): the Tweede Kamer only.
-				bij: coalitieVan(e)
-			});
-		} else if (e.node_type === 'activity') {
+		if (e.node_type === 'decision') out.push(voteRow(e, groep, inhoud));
+		else if (e.node_type === 'activity') {
 			const b = bodyOf(e);
 			out.push({
 				id: e.node_id,
@@ -368,7 +376,7 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 			});
 		}
 	// After the vote only what follows it is to come; after a rejection nothing is.
-	const rejected = uitslagVan({ result: d.ek_outcome?.outcome }) === false;
+	const rejected = uitslag({ result: d.ek_outcome?.outcome }).passed === false;
 	const toCome = (s: EkStep) => !rejected && !(besluit && BEFORE_VOTE.has(s.phase ?? ''));
 	const nu = steps.find((s) => s.state === 'geblokt' && toCome(s));
 	const nog = steps.filter((s) => s.state === 'leeg' && toCome(s)).map(stapNaam);
@@ -388,15 +396,10 @@ function ekVoortgang(d: Detail, ek: Regel[]): Regel[] | null {
 	return out;
 }
 
-/**
- * The outcome of a vote as the source gives it: aangenomen (true), verworpen (false), or
- * none (null) for a vote that was postponed or has no result yet. The Tweede Kamer gives
- * `passed`, the Eerste Kamer also `result`; a missing value is no "Aangenomen".
- */
-export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean | null {
-	if (b.passed === true || b.result === 'Aangenomen') return true;
-	if (b.passed === false || b.result === 'Verworpen') return false;
-	return null;
+/** The years of a group's lines, `2024–2026`, for its head; null without a day. */
+function yearSpan(regels: Regel[]): string | null {
+	const days = regels.flatMap((r) => (r.datum ? [r.datum] : [])).sort();
+	return yearsOf(days[0] ?? null, days.at(-1) ?? null) || null;
 }
 
 /**
@@ -496,10 +499,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean, afgek
 
 	// Het jaar staat in de kop van de groep, en niet nog eens onder elke dag.
 	for (const g of groepen) {
-		const jaren = [
-			...new Set(g.regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])))
-		].sort();
-		g.sub = jaren.length ? (jaren.length > 1 ? `${jaren[0]}–${jaren.at(-1)}` : jaren[0]) : null;
+		g.sub = yearSpan(g.regels);
 		g.jaar = enigJaar(g.regels);
 	}
 	return { groepen, overig: overig.length, inhoud };

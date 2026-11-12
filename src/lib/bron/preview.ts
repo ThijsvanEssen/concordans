@@ -3,7 +3,7 @@
 // the API gives: a stuk its dossier, its indieners with their fractie and, for a motie or
 // amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
 // r.o. that overweging; an article its first lid, or the part the reference names.
-import { outcomeWord } from '$lib/text/outcome';
+import { decisionOutcome } from '$lib/votes/decision-kind';
 import { motionOrAmendment, shortKind } from '$lib/text/document-kind';
 import { langeDatum } from '$lib/text/datum';
 import { separatorBefore, textOf, truncate } from '$lib/text/words';
@@ -100,13 +100,11 @@ export function indieners(actors: unknown): string | null {
 }
 
 /** `Aangenomen, 137 voor en 13 tegen`, from a decision's props as the API gives them. */
-export function uitslagVan(props: Record<string, unknown>): string | null {
-	const besluit =
-		textOf(props.decision_text)?.replace(/\.$/, '') ??
-		outcomeWord(typeof props.passed === 'boolean' ? props.passed : null);
-	if (!besluit) return null;
+export function decisionSentence(props: Record<string, unknown>): string | null {
+	const decided = textOf(props.decision_text)?.replace(/\.$/, '') ?? decisionOutcome(props);
+	if (!decided) return null;
 	const stemmen = votesSentence(props.tally, ' en ');
-	return stemmen ? `${besluit}, ${stemmen}` : besluit;
+	return stemmen ? `${decided}, ${stemmen}` : decided;
 }
 
 const clip = (s: string | null) => s && truncate(s, PREVIEW_CHARS);
@@ -314,7 +312,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 			.filter((p) => p.primary_case_id === caseId && (p.passed != null || textOf(p.decision_text)))
 			.sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')));
 		const laatste = eigen.at(-1);
-		return laatste ? { ...preview, outcome: uitslagVan(laatste) } : preview;
+		return laatste ? { ...preview, outcome: decisionSentence(laatste) } : preview;
 	}
 	if (collection === 'judgments' && isOverwegingAnker(at)) {
 		// At an r.o., the overweging the reference means, not the summary (the detail the
