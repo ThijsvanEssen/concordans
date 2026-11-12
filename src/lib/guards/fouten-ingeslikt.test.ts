@@ -27,11 +27,7 @@ const PLACES: Record<string, number> = {
 	// A throw that is no failure: a popover already in that state, a pointer capture
 	// refused, storage or a clipboard that refuses (one storage helper, F32). Each gets a
 	// handler that says so.
-	'lib/components/explore/index/pannable.ts': 1,
-	'lib/components/ui/dicht.svelte.ts': 1,
-	'lib/map/map.svelte.ts': 1,
-	'lib/onderwerpen/onderwerpen.ts': 1,
-	'lib/onderwerpen/strekking.ts': 1
+	'lib/components/explore/index/pannable.ts': 1
 };
 
 describe('errors swallowed', () => {

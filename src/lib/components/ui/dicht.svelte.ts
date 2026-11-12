@@ -6,8 +6,7 @@
 // `Zetels in de Eerste Kamer`, `verbonden:judgments`, `sub:Tweede Kamer`. The panel Netwerk
 // folded on a phone is kept here too.
 import { onForget } from '$lib/util/forget';
-
-const SLEUTEL = 'concordans:kopjes';
+import { entriesOf, FOLDS_KEY, readJson, writeJson } from '$lib/util/storage';
 
 /**
  * The keys of what something else opens or reads by name: a section opened from elsewhere
@@ -22,19 +21,12 @@ export const FOLD = {
 /** The key of a heading inside a section (a group of a timeline, a law's articles). */
 export const subKey = (name: string) => `sub:${name}`;
 
-function lees(): Record<string, boolean> {
-	try {
-		const ruw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '{}') as unknown;
-		if (!ruw || typeof ruw !== 'object' || Array.isArray(ruw)) return {};
-		return Object.fromEntries(
-			Object.entries(ruw as Record<string, unknown>).filter(
-				(e): e is [string, boolean] => typeof e[1] === 'boolean'
-			)
-		);
-	} catch {
-		return {};
-	}
-}
+const lees = (): Record<string, boolean> =>
+	readJson('local', FOLDS_KEY, (ruw) =>
+		Object.fromEntries(
+			entriesOf(ruw).filter((e): e is [string, boolean] => typeof e[1] === 'boolean')
+		)
+	) ?? {};
 
 // Read once in the browser, as the module loads: a first read inside a template would write
 // state during rendering.
@@ -51,9 +43,6 @@ export const isOpen = (sleutel: string, standaard: boolean) => keuzes.open[sleut
 /** Open or close the headings of this kind, and keep it. */
 export function zetOpen(sleutel: string, open: boolean) {
 	keuzes.open = { ...keuzes.open, [sleutel]: open };
-	try {
-		localStorage.setItem(SLEUTEL, JSON.stringify(keuzes.open));
-	} catch {
-		// A browser that keeps nothing: the heading stays as chosen for this page.
-	}
+	// A browser that keeps nothing: the heading stays as chosen for this page.
+	writeJson('local', FOLDS_KEY, keuzes.open);
 }

@@ -10,6 +10,7 @@ import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 import type { Collection } from '$lib/vocabulary';
 import { titleParts } from '$lib/text/title-parts';
 import type { Classes } from './classes';
+import { FOLDS_KEY, readJson } from '$lib/util/storage';
 
 const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
 
@@ -205,18 +206,10 @@ export function glyph(collection: Collection, size: number, k: Classes): string 
 	return `<svg class="kind-glyph ${k.glyph}" width="${size}" height="${size}" viewBox="0 0 16 16" aria-hidden="true" fill="${line ? 'none' : 'currentColor'}" stroke="${line ? 'currentColor' : 'none'}" stroke-width="${line ? 2 : 0}" fill-rule="${v.wijze === 'gat' ? 'evenodd' : 'nonzero'}"><path class="${k.glyph}" d="${v.d}"></path></svg>`;
 }
 
-/** The storage of what headings a reader opened (dicht.svelte.ts). */
-const FOLDS = 'concordans:kopjes';
-
 /** Whether a section of a reader, by its key, stands open in this browser: until closed
  *  (dicht.svelte.ts). */
-export function sectionOpen(key: string): boolean {
-	try {
-		return JSON.parse(localStorage.getItem(FOLDS) ?? '{}')?.[key] !== false;
-	} catch {
-		return true;
-	}
-}
+export const sectionOpen = (key: string): boolean =>
+	readJson('local', FOLDS_KEY, (ruw) => (ruw as Record<string, unknown> | null)?.[key]) !== false;
 
 /**
  * A section of a reader as the first paint draws it (Sectie): its heading and count, open or
