@@ -134,8 +134,6 @@
 		coalition,
 		q,
 		chamber,
-		tiers,
-		area,
 		instrument,
 		article,
 		ahead
@@ -547,7 +545,7 @@
 				options: selectOptions(facetMap(facets?.cabinet), cabinet, cabinetName),
 				onChange: (v) => patchUrl({ kabinet: v || null })
 			},
-			...judgmentGroups(facets, tiers, area, patchUrl),
+			...judgmentGroups(facets, filters.tiers, filters.area, patchUrl),
 			{
 				id: 'dossier',
 				label: 'Dossier',
