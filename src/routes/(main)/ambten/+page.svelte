@@ -4,8 +4,8 @@
 	// nobody holds today (`?ambten=alle`): a former office or a gap, not filled in.
 	import { page } from '$app/state';
 	import { getSeats } from '$lib/api/seats';
-	import BronLink from '$lib/bron/BronLink.svelte';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
+	import Choice from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -25,10 +25,6 @@
 	);
 	const groups = $derived(seats.state.status === 'ready' ? seatGroups(seats.state.data.items) : []);
 	const government = SOURCES.find((x) => x.id === 'regering')!;
-	const options = [
-		{ waarde: 'nu' as const, label: 'Nu bezet' },
-		{ waarde: 'alle' as const, label: 'Ook eerdere' }
-	];
 	const choose = (s: Shown) => navigate(withParams(page.url, { ambten: s === 'alle' ? s : null }));
 </script>
 
@@ -39,7 +35,15 @@
 <div class="blad blad--tekst">
 	<header class="blad__kop"><h1 class="blad__titel">Ambten</h1></header>
 	<div class="keuze">
-		<Keuze label="Ambten" opties={options} waarde={shown} onSelect={choose} />
+		<Choice
+			label="Ambten"
+			opties={[
+				{ waarde: 'nu', label: 'Nu bezet' },
+				{ waarde: 'alle', label: 'Ook eerdere' }
+			]}
+			waarde={shown}
+			onSelect={choose}
+		/>
 	</div>
 	{#if seats.state.status !== 'ready'}
 		<LoadState state={seats.state} what="De ambten" plural retry={seats.retry} />
@@ -47,9 +51,8 @@
 		{#each groups as g (g.ministry)}
 			<section class="ministerie">
 				<h2 class="ministerie__naam">
-					{#if g.ministry}<BronLink ref={`ministries/${g.ministry}`}
-							>{g.name || g.ministry}</BronLink
-						>{:else}Zonder ministerie{/if}
+					{#if g.ministry}<MinistryLink ministry={g.ministry} name={g.name || null} />{:else}Zonder
+						ministerie{/if}
 				</h2>
 				<SeatList seats={g.seats} />
 			</section>

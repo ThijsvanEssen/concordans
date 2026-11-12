@@ -24,7 +24,7 @@
 		type SeatPost
 	} from './occupancy';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
-	import BronLink from '$lib/bron/BronLink.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 	import { seatHref } from '$lib/offices/office';
 	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';
 	import { randen } from '$lib/components/tijdlijn/tijdas';
@@ -119,8 +119,7 @@
 
 <!-- A ministry and an office lead to their pages (B148). -->
 {#snippet ministryName(row: { name: string; ministry: string | null })}
-	{#if row.ministry}<BronLink ref={`ministries/${row.ministry}`}>{row.name}</BronLink
-		>{:else}{row.name}{/if}
+	{#if row.ministry}<MinistryLink ministry={row.ministry} name={row.name} />{:else}{row.name}{/if}
 {/snippet}
 
 {#if !term}

@@ -3,6 +3,8 @@
 import type { Schema } from '$lib/api/types';
 import { daysBetween } from '$lib/text/datum';
 import { capitalize } from '$lib/text/words';
+import { NL } from '$lib/text/collator';
+import { naamVan } from '$lib/bron/menselijk';
 
 type Seat = Schema<'SeatDTO'>;
 type Holder = Schema<'SeatHolderDTO'>;
@@ -141,14 +143,21 @@ export function timeline(holders: readonly Holder[], gaps: readonly Gap[]): Entr
 
 type SeatSummary = Schema<'SeatSummaryDTO'>;
 
+/** A holder by name; where the source gives none, as $lib/bron/menselijk names a person. */
+export const holderName = (member: Schema<'PersonRefDTO'>): string =>
+	member.name ?? naamVan('members', member);
+
 /** The order of the posts in a ministry: the minister first, the staatssecretarissen after. */
-const POST_RANK: Record<string, number> = {
-	'minister-president': 0,
-	minister: 1,
-	minister_zonder_portefeuille: 2,
-	staatssecretaris: 3
+const POST_ORDER = [
+	'minister-president',
+	'minister',
+	'minister_zonder_portefeuille',
+	'staatssecretaris'
+];
+const rank = (s: SeatSummary) => {
+	const i = POST_ORDER.indexOf(s.post ?? '');
+	return i < 0 ? POST_ORDER.length : i;
 };
-const rank = (s: SeatSummary) => POST_RANK[s.post ?? ''] ?? 4;
 
 /** Offices in the order of a ministry: held today first, by post, the oldest first; then the latest ended first. */
 export const bySeatOrder = (a: SeatSummary, b: SeatSummary): number =>
@@ -156,9 +165,9 @@ export const bySeatOrder = (a: SeatSummary, b: SeatSummary): number =>
 	rank(a) - rank(b) ||
 	(b.to_date ?? '9999').localeCompare(a.to_date ?? '9999') ||
 	(a.from_date ?? '').localeCompare(b.from_date ?? '') ||
-	(a.function ?? a.seat).localeCompare(b.function ?? b.seat, 'nl');
+	NL.compare(a.function ?? a.seat, b.function ?? b.seat);
 
-export type SeatGroup = {
+type SeatGroup = {
 	/** The ministry's key; null for the offices of none (a minister without portfolio). */
 	ministry: string | null;
 	name: string;
@@ -183,7 +192,7 @@ export function seatGroups(seats: readonly SeatSummary[]): SeatGroup[] {
 		g.ministry === null ? 3 : g.ministry === 'az' ? 0 : held(g) ? 1 : 2;
 	return [...groups.values()]
 		.map((g) => ({ ...g, seats: g.seats.toSorted(bySeatOrder) }))
-		.sort((a, b) => place(a) - place(b) || a.name.localeCompare(b.name, 'nl'));
+		.sort((a, b) => place(a) - place(b) || NL.compare(a.name, b.name));
 }
 
 /** The office an old key names: a seat without a ministry that later got one (B149). */

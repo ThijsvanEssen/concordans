@@ -10,7 +10,7 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
-	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import Section from '$lib/components/ui/Sectie.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { ministryName } from '../index/ministries.svelte';
@@ -89,13 +89,13 @@
 				</Feiten>
 			{/if}
 			{#if seats.length > 0}
-				<Sectie title="Ambten" aantal={held.length || seats.length} inklapbaar={false}>
+				<Section title="Ambten" aantal={held.length || seats.length} inklapbaar={false}>
 					<SeatList seats={held.length ? held : seats} />
 					{#if held.length && former.length}
 						<h4 class="eerder">Eerder</h4>
 						<SeatList seats={former} />
 					{/if}
-				</Sectie>
+				</Section>
 			{/if}
 		</div>
 	{/snippet}

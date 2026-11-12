@@ -6,7 +6,7 @@
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import { periodWords } from '$lib/components/explore/readers/ministry';
 	import { capitalize, plural } from '$lib/text/words';
-	import { seatHref } from './office';
+	import { holderName, seatHref } from './office';
 
 	let { seats }: { seats: readonly Schema<'SeatSummaryDTO'>[] } = $props();
 </script>
@@ -19,7 +19,7 @@
 				{#if s.current.length}
 					{#each s.current as c, i (c.member.key)}{i ? ', ' : ''}<NameLink
 							collection="members"
-							name={c.member.name ?? c.member.key}
+							name={holderName(c.member)}
 							key={c.member.key}
 							inText
 						/>{#if c.acting}, ad interim{/if}{/each}
@@ -55,7 +55,6 @@
 		color: var(--ink);
 	}
 	.ambt__aantal {
-		font-family: var(--font-ui);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		align-self: baseline;
@@ -67,7 +66,7 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	@media (min-width: 768px) {
+	@media (min-width: 769px) {
 		.ambt {
 			/* A fixed count column: every row its own grid, the columns in line. */
 			grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) 10ch;

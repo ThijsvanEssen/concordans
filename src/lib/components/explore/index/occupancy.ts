@@ -10,7 +10,7 @@ import type { Schema } from '$lib/api/types';
 export type CabinetDetail = Schema<'CabinetDetailDTO'>;
 export type CabinetPost = Schema<'CabinetSeatDTO'>;
 
-export type MinistryGroup = { name: string; ministry: string | null; seats: CabinetPost[] };
+type MinistryGroup = { name: string; ministry: string | null; seats: CabinetPost[] };
 
 /**
  * A cabinet's seats per ministry, as the API lists them. Seats without a ministry are of two

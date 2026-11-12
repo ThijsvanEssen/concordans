@@ -52,7 +52,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { ministryFullName } from '../index/ministries.svelte';
+	import MinistryLink from '$lib/bron/MinistryLink.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 	// One date column down the page: Loopbaan, Commissies and Toezeggingen share a left edge.
@@ -367,9 +367,9 @@
 				{#snippet ambtOnder(id: string)}
 					{@const step = career.find((c) => stapId(c) === id)}
 					{#if step?.kind === 'function'}
-						{#if step.ministry}<BronLink ref={`ministries/${step.ministry}`}
-								>{ministryFullName(step.ministry)}</BronLink
-							>{/if}{#if step.cabinet}{step.ministry ? ', ' : ''}<NameLink
+						<MinistryLink ministry={step.ministry} />{#if step.cabinet}{step.ministry
+								? ', '
+								: ''}<NameLink
 								collection="cabinets"
 								name={step.cabinet}
 							/>{/if}{#if step.count > 0}{`${step.cabinet || step.ministry ? ', ' : ''}${count(step.count, 'stuk', 'stukken')} ondertekend`}{/if}
