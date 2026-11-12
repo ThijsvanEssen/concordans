@@ -28,6 +28,41 @@ type VoteWord = (typeof VOTES)[number];
 /** A law the feed follows by its BWB id: a law or a regulation (BWBR), or a treaty (BWBV). */
 export const isFeedLaw = (value: string) => /^BWB[RV]\d+$/i.test(value);
 
+/**
+ * The kinds a filter has nothing to say about: who submitted or voted, the coalition and the
+ * Kamer are of the papers, votes and commitments of the Kamer; a dossier is not of a
+ * commencement or a judgment; a ministry not of a judgment. A filter stands where the kinds
+ * chosen (none: every kind) hold one it speaks of.
+ */
+export const NOT_OF = {
+	chamber: ['publicatie', 'inwerkingtreding', 'uitspraak'],
+	dossier: ['inwerkingtreding', 'uitspraak'],
+	ministry: ['uitspraak']
+} as const satisfies Record<string, readonly FeedKind[]>;
+
+/** Whether a filter that says nothing about `not` speaks of any of the kinds chosen. */
+export const speaksOf = (kinds: readonly FeedKind[], not: readonly FeedKind[]) =>
+	!kinds.length || kinds.some((k) => !not.includes(k));
+
+/**
+ * Which filters of Actueel stand, by their id: those that speak of the kinds chosen, and a
+ * filter with a value chosen, to be undone. Under Uitspraak alone no Ingediend door, Stemde,
+ * Coalitie or Kamer.
+ */
+export function shownFilters(f: ActueelFilters): (id: string) => boolean {
+	const ofChamber = speaksOf(f.kinds, NOT_OF.chamber);
+	const shown = new Map<string, boolean>([
+		['kamer', ofChamber || !!f.chamber],
+		['fractie', ofChamber || !!f.faction],
+		['stemde', ofChamber || !!f.voted],
+		['coalitie', ofChamber || !!f.coalition],
+		['ministerie', speaksOf(f.kinds, NOT_OF.ministry) || !!f.ministry],
+		['dossier', speaksOf(f.kinds, NOT_OF.dossier) || !!f.dossier],
+		['komend', !f.kinds.length || f.kinds.includes('inwerkingtreding') || f.ahead]
+	]);
+	return (id) => shown.get(id) ?? true;
+}
+
 type ActueelFilters = {
 	kinds: FeedKind[];
 	since: string;
