@@ -1,24 +1,25 @@
 <script lang="ts">
 	// Reader for a ministry under one of its names: when it had the name, the name it followed
-	// and the one that followed it, and the bewindspersonen per cabinet, the newest cabinet first.
+	// and the one that followed it, and its offices (B148): held today, then Eerder. Who held an
+	// office when is on the office's page; who served in which cabinet in Bewindspersonen.
 	// What is its own (laws, open dossiers, open toezeggingen) is in Verbonden, as the
 	// verbindingen of any other bron.
-	import { capitalize, textOf } from '$lib/text/words';
+	import { textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
 	import { getMinistry } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
-	import { sinceDate } from '$lib/text/datum';
 	import { load } from '$lib/util/load.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { POST_LABEL } from '../index/government';
 	import { ministryName } from '../index/ministries.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import { ministryTitle, periodWords } from './ministry';
-	import { seatHref } from '$lib/offices/office';
+	import { getSeats } from '$lib/api/seats';
+	import { bySeatOrder } from '$lib/offices/office';
+	import SeatList from '$lib/offices/SeatList.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -46,19 +47,18 @@
 				}))
 	);
 
-	/** The minister's office of a ministry under its name of now, where it has one. */
-	const ministerSeat = (m: {
-		key: string;
-		until?: string | null;
-		cabinets: { posts: { post?: string | null }[] }[];
-	}) =>
-		!m.until && m.cabinets.some((c) => c.posts.some((x) => x.post === 'minister'))
-			? `${m.key}/minister`
-			: null;
-
-	/** The day a post began, where it is not the cabinet's own. */
-	const since = (from: string | null | undefined, cabinet: string | null | undefined) =>
-		from && from !== cabinet ? sinceDate(from) : null;
+	// Its offices (B148): held today first, then those nobody holds today, as Eerder.
+	const offices = load(
+		() => node.key,
+		(key) => getSeats({ ministry: key }),
+		'Ambten'
+	);
+	const seats = $derived(
+		offices.state.status === 'ready' ? offices.state.data.items.toSorted(bySeatOrder) : []
+	);
+	// Under a name it no longer has, its offices are one list: today they are its successor's.
+	const held = $derived(until ? [] : seats.filter((s) => s.current.length));
+	const former = $derived(seats.filter((s) => !s.current.length));
 </script>
 
 <ReaderFrame state={ministry.state} what="Ministerie" retry={ministry.retry}>
@@ -75,13 +75,9 @@
 		</ReaderHead>
 	{/snippet}
 	{#snippet children(m)}
-		{@const office = ministerSeat(m)}
 		<div class="r-ministry">
-			{#if m.predecessors.length > 0 || m.successor || office}
+			{#if m.predecessors.length > 0 || m.successor}
 				<Feiten>
-					<Veld label="Ambt" value={office}>
-						<a href={seatHref(office ?? '')}>Minister van {name}</a>
-					</Veld>
 					<Veld label="Voorganger" value={m.predecessors.length > 0 ? m.predecessors : null}>
 						{#each m.predecessors as key, i (key)}{i ? ', ' : ''}<BronLink ref={`ministries/${key}`}
 								>{ministryName(key)}</BronLink
@@ -92,29 +88,13 @@
 					</Veld>
 				</Feiten>
 			{/if}
-			{#if m.cabinets.length > 0}
-				<Sectie title="Bewindspersonen" inklapbaar={false}>
-					{#each m.cabinets as c (c.key)}
-						<div class="cabinet">
-							<h4 class="cabinet__name">
-								<BronLink ref={`cabinets/${c.key}`}>{capitalize(c.name ?? '')}</BronLink>
-							</h4>
-							<Feiten small>
-								{#each c.posts as post, i (i)}
-									{@const sinceDay = since(post.from_date, c.from_date)}
-									<Veld
-										label={post.function ?? (post.post ? POST_LABEL[post.post] : '')}
-										value={post.member}
-									>
-										<BronLink ref={`members/${post.member.key}`}>{post.member.name}</BronLink
-										>{#if post.acting}, ad interim{/if}{#if sinceDay}<span class="since">
-												, {sinceDay}</span
-											>{/if}
-									</Veld>
-								{/each}
-							</Feiten>
-						</div>
-					{/each}
+			{#if seats.length > 0}
+				<Sectie title="Ambten" aantal={held.length || seats.length} inklapbaar={false}>
+					<SeatList seats={held.length ? held : seats} />
+					{#if held.length && former.length}
+						<h4 class="eerder">Eerder</h4>
+						<SeatList seats={former} />
+					{/if}
 				</Sectie>
 			{/if}
 		</div>
@@ -129,18 +109,12 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.cabinet + .cabinet {
-		margin-top: var(--s-4);
-	}
-	.cabinet__name {
-		margin: 0 0 var(--s-2);
+	.eerder {
+		margin: var(--s-4) 0 var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
-	}
-	.since {
-		color: var(--ink-3);
 	}
 	/* The abbreviation: a word, not a tag. */
 	.abbr {

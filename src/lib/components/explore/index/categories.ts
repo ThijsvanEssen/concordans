@@ -90,12 +90,12 @@ export function sourceTabs(
 			shape: shapeOfCategory(c.key)
 		})
 	);
-	const pages = source.pages.map((p) => ({
-		key: p.path,
-		label: p.label,
-		href: p.path,
-		about: routeKop(p.path).description
-	}));
-	const tabs = [...lists, ...pages];
+	// Large to small: Kabinetten, Ministeries, Ambten, Bewindspersonen (B148).
+	const tabs = [...lists];
+	for (const p of source.pages) {
+		const after = tabs.findIndex((t) => t.key === p.after);
+		const tab = { key: p.path, label: p.label, href: p.path, about: routeKop(p.path).description };
+		tabs.splice(after < 0 ? tabs.length : after + 1, 0, tab);
+	}
 	return tabs.length > 1 ? tabs : [];
 }

@@ -78,9 +78,9 @@ describe('careerOf with posts in a cabinet', () => {
 			from_date: '2022-01-10',
 			to_date: '2024-07-02',
 			cabinet_key: null,
-			post: null,
-			ministry: null,
-			seat: null,
+			post: 'minister_zonder_portefeuille' as const,
+			ministry: 'ezk' as const,
+			seat: 'minister/klimaat-en-energie#2',
 			party: null
 		},
 		{
@@ -108,6 +108,14 @@ describe('careerOf with posts in a cabinet', () => {
 		]);
 	});
 
+	it('names the office of a post without its lane, and its ministry', () => {
+		const post = career.find((e) => e.kind === 'function' && e.cabinet === 'kabinet-Rutte IV');
+		expect(post?.kind === 'function' && [post.seat, post.ministry]).toEqual([
+			'minister/klimaat-en-energie',
+			'ezk'
+		]);
+	});
+
 	it('names a person by the post they hold now', () => {
 		expect(currentTitle(career, false)).toBe('Minister-president van Nederland');
 	});
@@ -121,7 +129,9 @@ describe('foldPremier', () => {
 			from,
 			to,
 			count,
-			cabinet: null
+			cabinet: null,
+			seat: null,
+			ministry: null
 		});
 		const folded = foldPremier([
 			fn('Minister-president van Nederland', '2026-02-23', null, 6),

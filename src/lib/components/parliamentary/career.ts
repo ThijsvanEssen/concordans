@@ -33,6 +33,9 @@ export type CareerEntry =
 			count: number;
 			/** The cabinet of a post: `kabinet-Rutte IV`. Null for a function known only from stukken. */
 			cabinet: string | null;
+			/** The office of a post (`fin/minister`) and its ministry; null for a function known only from stukken. */
+			seat: string | null;
+			ministry: string | null;
 	  };
 
 /** Two seats in one fractie with at most this many days between them are one seat. */
@@ -102,7 +105,9 @@ export function careerOf(
 				from: g.from_date!.slice(0, 10),
 				to: g.to_date?.slice(0, 10) ?? null,
 				count: 0,
-				cabinet: g.cabinet ?? null
+				cabinet: g.cabinet ?? null,
+				seat: g.seat?.split('#')[0] ?? null,
+				ministry: g.ministry ?? null
 			}
 		}));
 	const functions = new Map<string, Fn>();
@@ -122,7 +127,9 @@ export function careerOf(
 				from: date,
 				to: date,
 				count: 1,
-				cabinet: null
+				cabinet: null,
+				seat: null,
+				ministry: null
 			});
 		else {
 			entry.count++;
@@ -161,6 +168,8 @@ export function foldPremier(entries: CareerEntry[]): CareerEntry[] {
 		if (az.from < mp.from) mp.from = az.from;
 		mp.to = mp.to === null || az.to === null ? null : az.to > mp.to ? az.to : mp.to;
 		mp.cabinet ??= az.cabinet;
+		mp.seat ??= az.seat;
+		mp.ministry ??= az.ministry;
 		folded.add(az);
 	}
 	return entries.filter((e) => !folded.has(e));

@@ -2,6 +2,7 @@
 // holder of the day made: the lists of the API filtered on `seat`.
 import { api, unwrap } from './client';
 import { once } from './records';
+import type { Schema } from './types';
 
 /** One office by any of its names: its holders, gaps and counts. */
 export const getSeat = (seat: string) =>
@@ -19,6 +20,21 @@ export const getSeatDossiers = (seat: string, limit: number, offset: number) =>
 		unwrap(
 			api.GET('/api/dossiers', {
 				params: { query: { seat, limit, offset, sort: 'opened_on' } }
+			})
+		)
+	);
+
+/** Every office, or those of one ministry (any of its names) or those held today: `/api/seats`. */
+export const getSeats = (query: { ministry?: string; current?: boolean } = {}) =>
+	once(`seats?ministry=${query.ministry ?? ''}&current=${!!query.current}`, () =>
+		unwrap(
+			api.GET('/api/seats', {
+				params: {
+					query: {
+						...(query.ministry ? { ministry: query.ministry as Schema<'MinistryKey'> } : {}),
+						...(query.current ? { current: true } : {})
+					}
+				}
 			})
 		)
 	);

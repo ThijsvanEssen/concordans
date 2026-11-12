@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { lacks, NOT_IN_DATA, notHeld } from '$lib/text/coverage';
+	import { NOT_IN_DATA, notHeld } from '$lib/text/coverage';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { fromDate, periodSentence } from '$lib/text/datum';
 	import CabinetPostOpen from './CabinetPostOpen.svelte';
@@ -19,10 +19,13 @@
 		lanesOf,
 		termOf,
 		type CabinetDetail,
+		ministryGroups,
 		type CabinetPost,
 		type SeatPost
 	} from './occupancy';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
+	import BronLink from '$lib/bron/BronLink.svelte';
+	import { seatHref } from '$lib/offices/office';
 	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';
 	import { randen } from '$lib/components/tijdlijn/tijdas';
 
@@ -57,27 +60,13 @@
 	);
 	const phases = $derived(term ? bandsOf(cabinet.phases ?? [], term) : []);
 
-	// Seats without a ministry are of two kinds: a post of none (the viceminister-president)
-	// and a post whose ministry no source names or the sources dispute. The second stands
-	// last, under its own head, and is not placed under a ministry by guess.
 	const rows = $derived.by(() => {
 		if (!term) return [];
 		const t = term;
-		const row = (name: string, seats: CabinetPost[]) => ({
-			name,
-			seats: seats.map((seat) => ({ seat, lanes: lanesOf(seat, t) }))
-		});
-		const unknown = (s: CabinetPost) => s.posts.some((p) => p.ministry_missing);
-		const named = (cabinet.ministries ?? []).filter((m) => m.name && m.seats.length);
-		const loose = (cabinet.ministries ?? []).filter((m) => !m.name).flatMap((m) => m.seats);
-		return [
-			...named.map((m) => row(m.name!, m.seats)),
-			row(
-				'Zonder ministerie',
-				loose.filter((s) => !unknown(s))
-			),
-			row(lacks('ministerie'), loose.filter(unknown))
-		].filter((r) => r.seats.length);
+		return ministryGroups(cabinet).map((g) => ({
+			...g,
+			seats: g.seats.map((seat) => ({ seat, lanes: lanesOf(seat, t) }))
+		}));
 	});
 
 	// The API counts dossiers and toezeggingen per person over the cabinet: they belong with
@@ -128,6 +117,12 @@
 		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodSentence(p.from_date, p.to_date)}${p.acting ? ', waarnemend' : ''}`;
 </script>
 
+<!-- A ministry and an office lead to their pages (B148). -->
+{#snippet ministryName(row: { name: string; ministry: string | null })}
+	{#if row.ministry}<BronLink ref={`ministries/${row.ministry}`}>{row.name}</BronLink
+		>{:else}{row.name}{/if}
+{/snippet}
+
 {#if !term}
 	<p class="occ-note">
 		{rows.length === 0 && !(cabinet.ministries ?? []).length
@@ -153,11 +148,15 @@
 			</div>
 		{/if}
 		{#each rows as ministry (ministry.name)}
-			<h3 class="occ-ministry">{ministry.name}</h3>
+			<h3 class="occ-ministry">{@render ministryName(ministry)}</h3>
 			{#each ministry.seats as { seat } (seat.seat)}
 				{@const name = seatName(seat)}
 				<p class="occ-seat">
-					<span class="occ-post">{name.post}</span>{name.portfolio ? ` ${name.portfolio}` : ''}
+					<a href={seatHref(seat.seat)}
+						><span class="occ-post">{name.post}</span>{name.portfolio
+							? ` ${name.portfolio}`
+							: ''}</a
+					>
 				</p>
 				<ul class="occ-holders">
 					{#each seat.posts as p (postId(seat, p))}
@@ -218,15 +217,17 @@
 		</div>
 
 		{#each rows as ministry (ministry.name)}
-			<h3 class="occ-ministry">{ministry.name}</h3>
+			<h3 class="occ-ministry">{@render ministryName(ministry)}</h3>
 			{#each ministry.seats as { seat, lanes } (seat.seat)}
 				{@const name = seatName(seat)}
 				{@const opened = seat.posts.find((p) => openKey === postId(seat, p))}
 				<div class="occ-row" class:occ-row--open={!!opened}>
 					<span class="occ-seat" title={seat.function ?? undefined}
-						><span class="occ-post">{name.post}</span>{name.portfolio
-							? ` ${name.portfolio}`
-							: ''}</span
+						><a href={seatHref(seat.seat)}
+							><span class="occ-post">{name.post}</span>{name.portfolio
+								? ` ${name.portfolio}`
+								: ''}</a
+						></span
 					>
 					<span class="occ-track" style:--lanes={lanes.length}>
 						{#each phases as b, i (i)}
@@ -309,6 +310,16 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+	.occ-ministry :global(a),
+	.occ-seat a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.occ-ministry :global(a:hover),
+	.occ-seat a:hover {
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* The post is the usual part of a seat's name, the portfolio what tells seats apart. */
 	.occ-post {

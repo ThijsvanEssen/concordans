@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { Schema } from '$lib/api/types';
 import {
 	actingReason,
 	at,
 	bandsOf,
 	lanesOf,
+	ministryGroups,
 	termOf,
 	type CabinetPost,
 	type SeatPost
@@ -155,5 +157,32 @@ describe('actingReason', () => {
 		expect(
 			actingReason({ acting_reason: null, acting_basis: null, acting_other_seat: null })
 		).toBeNull();
+	});
+});
+
+describe('ministryGroups', () => {
+	const seat = (key: string, missing = false) =>
+		({
+			seat: key,
+			posts: [post('A', '2024-07-02', null, { ministry_missing: missing ? 'no_source' : null })]
+		}) as CabinetPost;
+
+	it('keeps the ministries in order, then the posts of none, then those whose ministry is unknown', () => {
+		const groups = ministryGroups({
+			ministries: [
+				{ ministry: 'fin', name: 'Financiën', seats: [seat('fin/minister')] },
+				{ ministry: 'bz', name: 'Buitenlandse Zaken', seats: [] },
+				{
+					ministry: null,
+					name: null,
+					seats: [seat('staatssecretaris/x', true), seat('viceminister-president')]
+				}
+			]
+		} as Schema<'CabinetDetailDTO'>);
+		expect(groups.map((g) => [g.name, g.ministry, g.seats.map((s) => s.seat)])).toEqual([
+			['Financiën', 'fin', ['fin/minister']],
+			['Zonder ministerie', null, ['viceminister-president']],
+			['Ministerie niet in de gegevens', null, ['staatssecretaris/x']]
+		]);
 	});
 });

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
 import {
 	formerTitles,
-	ministerSeats,
+	movedSeat,
 	seatHref,
 	seatName,
+	seatGroups,
 	seatOf,
 	seatTitle,
 	stints,
@@ -111,48 +112,66 @@ describe('an office', () => {
 	});
 });
 
-describe('the ministers of a cabinet', () => {
-	it('lists the seats of the ministers, a lane and the staatssecretarissen left out', () => {
-		const post = (name: string) => ({ member: { key: name, name } }) as Schema<'CabinetPostDTO'>;
-		const seats = ministerSeats({
-			ministries: [
-				{
-					ministry: 'bz',
-					name: 'Buitenlandse Zaken',
-					seats: [
-						{
-							seat: 'bz/minister',
-							post: 'minister',
-							function: 'Minister van Buitenlandse Zaken',
-							portfolio: null,
-							posts: [post('X')]
-						},
-						{
-							seat: 'bz/staatssecretaris#2',
-							post: 'staatssecretaris',
-							function: 'Staatssecretaris',
-							portfolio: null,
-							posts: [post('Y')]
-						}
-					]
-				},
-				{
-					ministry: null,
-					name: null,
-					seats: [
-						{
-							seat: 'viceminister-president',
-							post: 'viceminister-president',
-							function: 'viceminister-president',
-							portfolio: null,
-							posts: [post('Z')]
-						}
-					]
-				}
-			]
-		} as Schema<'CabinetDetailDTO'>);
-		expect(seats).toEqual([
-			{ seat: 'bz/minister', title: 'Minister van Buitenlandse Zaken', holders: ['X'] }
+describe('the offices per ministry', () => {
+	const seat = (
+		seat: string,
+		post: string,
+		ministry: string | null,
+		held: boolean,
+		to_date: string | null = null
+	) =>
+		({
+			seat,
+			post,
+			function: seat,
+			ministry,
+			ministry_name:
+				ministry &&
+				{ az: 'Algemene Zaken', fin: 'Financiën', bz: 'Buitenlandse Zaken', oorlog: 'Oorlog' }[
+					ministry
+				],
+			from_date: '2020-01-01',
+			to_date,
+			holder_count: 1,
+			current: held ? [{ member: { key: 'x', name: 'X' } }] : []
+		}) as Schema<'SeatSummaryDTO'>;
+
+	it('puts Algemene Zaken first, the held ministries by name, the former ones, then those of none', () => {
+		const groups = seatGroups([
+			seat('minister/wonen', 'minister_zonder_portefeuille', null, true),
+			seat('oorlog/minister', 'minister', 'oorlog', false, '1959-01-01'),
+			seat('fin/minister', 'minister', 'fin', true),
+			seat('bz/minister', 'minister', 'bz', true),
+			seat('az/minister-president', 'minister-president', 'az', true)
 		]);
+		expect(groups.map((g) => g.ministry)).toEqual(['az', 'bz', 'fin', 'oorlog', null]);
+	});
+
+	it('lists the offices held today first, the minister before the staatssecretarissen, then the latest ended', () => {
+		const [fin] = seatGroups([
+			seat('fin/staatssecretaris/toeslagen', 'staatssecretaris', 'fin', false, '2024-07-02'),
+			{
+				...seat('fin/staatssecretaris/herstel', 'staatssecretaris', 'fin', true),
+				from_date: '2026-02-23'
+			},
+			seat('fin/staatssecretaris', 'staatssecretaris', 'fin', true),
+			seat('fin/staatssecretaris/fiscaliteit', 'staatssecretaris', 'fin', false, '2026-02-23'),
+			seat('fin/minister', 'minister', 'fin', true)
+		]);
+		expect(fin.seats.map((s) => s.seat)).toEqual([
+			'fin/minister',
+			'fin/staatssecretaris',
+			'fin/staatssecretaris/herstel',
+			'fin/staatssecretaris/fiscaliteit',
+			'fin/staatssecretaris/toeslagen'
+		]);
+	});
+
+	it('finds the office an old key without a ministry names under its ministry', () => {
+		const seats = [{ seat: 'fin/staatssecretaris/fiscaliteit-en-belastingdienst' }];
+		expect(movedSeat('staatssecretaris/fiscaliteit-en-belastingdienst', seats)).toBe(
+			'fin/staatssecretaris/fiscaliteit-en-belastingdienst'
+		);
+		expect(movedSeat('staatssecretaris/onbekend', seats)).toBeNull();
 	});
 });

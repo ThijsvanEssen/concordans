@@ -53,6 +53,9 @@
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import { seatHref } from '$lib/offices/office';
+	import { ministryName } from '../index/ministries.svelte';
+	import { ministryTitle } from './ministry';
 
 	let { node }: { node: GraphNode } = $props();
 	// One date column down the page: Loopbaan, Commissies and Toezeggingen share a left edge.
@@ -367,10 +370,12 @@
 				{#snippet ambtOnder(id: string)}
 					{@const step = career.find((c) => stapId(c) === id)}
 					{#if step?.kind === 'function'}
-						{#if step.cabinet}<NameLink
+						{#if step.ministry}<BronLink ref={`ministries/${step.ministry}`}
+								>{ministryTitle(ministryName(step.ministry))}</BronLink
+							>{/if}{#if step.cabinet}{step.ministry ? ', ' : ''}<NameLink
 								collection="cabinets"
 								name={step.cabinet}
-							/>{/if}{#if step.count > 0}{`${step.cabinet ? ', ' : ''}${count(step.count, 'stuk', 'stukken')} ondertekend`}{/if}
+							/>{/if}{#if step.count > 0}{`${step.cabinet || step.ministry ? ', ' : ''}${count(step.count, 'stuk', 'stukken')} ondertekend`}{/if}
 					{/if}
 				{/snippet}
 				<Sectie title="Loopbaan" id="loopbaan">
@@ -397,7 +402,8 @@
 											}
 										: {
 												zin: capitalize(step.function),
-												onder: step.cabinet || step.count > 0 ? ambtOnder : null,
+												href: step.seat ? seatHref(step.seat) : null,
+												onder: step.cabinet || step.ministry || step.count > 0 ? ambtOnder : null,
 												hint: step.cabinet
 													? null
 													: 'Bekend uit ondertekende stukken; de jaren zijn die van de stukken'

@@ -1,5 +1,5 @@
 // The words and order of an office (/ambten/<seat>): its address, its name, its holders and the
-// stretches without one, newest first, and the ministers' offices of a cabinet for /ambten.
+// stretches without one, newest first, and the offices per ministry for /ambten.
 import type { Schema } from '$lib/api/types';
 import { daysBetween } from '$lib/text/datum';
 import { capitalize } from '$lib/text/words';
@@ -10,12 +10,9 @@ type Gap = Schema<'SeatGapDTO'>;
 
 export const OFFICES_PATH = '/ambten';
 
-/** The posts whose seat /ambten lists: the ministers, the minister-president first. */
-const MINISTER_POSTS = new Set(['minister-president', 'minister', 'minister_zonder_portefeuille']);
-
-/** The address of an office: `/ambten/jenv/minister`, `/ambten/minister/werk-en-participatie`. */
+/** The address of an office: `/ambten/jenv/minister`, `/ambten/minister/werk-en-participatie`; a lane (`#2`) is no part of it. */
 export const seatHref = (seat: string): string =>
-	`${OFFICES_PATH}/${seat.split('/').map(encodeURIComponent).join('/')}`;
+	`${OFFICES_PATH}/${seat.split('#')[0].split('/').map(encodeURIComponent).join('/')}`;
 
 /** The seat an address names, from its segments; a lane (`#2`) is no part of an office. */
 export const seatOf = (...segments: (string | undefined)[]): string =>
@@ -142,22 +139,53 @@ export function timeline(holders: readonly Holder[], gaps: readonly Gap[]): Entr
 		.map(({ entry }) => entry);
 }
 
-type MinisterSeat = { seat: string; title: string; holders: string[] };
+type SeatSummary = Schema<'SeatSummaryDTO'>;
 
-/** The ministers' offices of a cabinet, as it lists its ministries: the seat without its lane. */
-export function ministerSeats(
-	cabinet: Pick<Schema<'CabinetDetailDTO'>, 'ministries'>
-): MinisterSeat[] {
-	const out = new Map<string, MinisterSeat>();
-	for (const m of cabinet.ministries ?? []) {
-		for (const s of m.seats) {
-			if (!s.post || !MINISTER_POSTS.has(s.post)) continue;
-			const seat = s.seat.split('#')[0];
-			const names = s.posts.map((p) => p.member.name ?? '').filter(Boolean);
-			const known = out.get(seat);
-			if (known) known.holders.push(...names.filter((n) => !known.holders.includes(n)));
-			else out.set(seat, { seat, title: capitalize(s.function ?? seat), holders: names });
-		}
+/** The order of the posts in a ministry: the minister first, the staatssecretarissen after. */
+const POST_RANK: Record<string, number> = {
+	'minister-president': 0,
+	minister: 1,
+	minister_zonder_portefeuille: 2,
+	staatssecretaris: 3
+};
+const rank = (s: SeatSummary) => POST_RANK[s.post ?? ''] ?? 4;
+
+/** Offices in the order of a ministry: held today first, by post, the oldest first; then the latest ended first. */
+export const bySeatOrder = (a: SeatSummary, b: SeatSummary): number =>
+	Number(!a.current.length) - Number(!b.current.length) ||
+	rank(a) - rank(b) ||
+	(b.to_date ?? '9999').localeCompare(a.to_date ?? '9999') ||
+	(a.from_date ?? '').localeCompare(b.from_date ?? '') ||
+	(a.function ?? a.seat).localeCompare(b.function ?? b.seat, 'nl');
+
+export type SeatGroup = {
+	/** The ministry's key; null for the offices of none (a minister without portfolio). */
+	ministry: string | null;
+	name: string;
+	seats: SeatSummary[];
+};
+
+/**
+ * The offices per ministry (/ambten): Algemene Zaken first, then the ministries with an office
+ * held today by name, then the former ones, those of no ministry last. A seat whose ministry no
+ * source names stays there, not placed by guess.
+ */
+export function seatGroups(seats: readonly SeatSummary[]): SeatGroup[] {
+	const groups = new Map<string | null, SeatGroup>();
+	for (const s of seats) {
+		const key = s.ministry ?? null;
+		const group = groups.get(key) ?? { ministry: key, name: s.ministry_name ?? '', seats: [] };
+		group.seats.push(s);
+		groups.set(key, group);
 	}
-	return [...out.values()];
+	const held = (g: SeatGroup) => g.seats.some((s) => s.current.length);
+	const place = (g: SeatGroup) =>
+		g.ministry === null ? 3 : g.ministry === 'az' ? 0 : held(g) ? 1 : 2;
+	return [...groups.values()]
+		.map((g) => ({ ...g, seats: g.seats.toSorted(bySeatOrder) }))
+		.sort((a, b) => place(a) - place(b) || a.name.localeCompare(b.name, 'nl'));
 }
+
+/** The office an old key names: a seat without a ministry that later got one (B149). */
+export const movedSeat = (seat: string, seats: readonly Pick<SeatSummary, 'seat'>[]) =>
+	seats.find((s) => s.seat.endsWith(`/${seat}`))?.seat ?? null;

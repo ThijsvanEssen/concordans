@@ -12,6 +12,7 @@
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import KabinetZetels from './KabinetZetels.svelte';
+	import KabinetPloeg from './KabinetPloeg.svelte';
 	import { phaseStarts } from '../index/occupancy';
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
@@ -107,6 +108,7 @@
 				>
 			</Veld>
 		</Feiten>
+		<KabinetPloeg cabinet={c} />
 	{/snippet}
 	{#snippet foot()}
 		<div class="seats">

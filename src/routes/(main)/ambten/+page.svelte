@@ -1,27 +1,35 @@
 <script lang="ts">
-	// The ministers' offices (/ambten, B110): those of the cabinet in office, each with its
-	// holder now, to its page with every holder and what is attributed to it. An office no
-	// longer held is reached from its page under a later name, or by its address.
-	import { getCabinet } from '$lib/api/records';
-	import { getCabinets } from '$lib/api/government';
+	// The offices (/ambten, B110, B148): per ministry the offices held today, each with its holder,
+	// to its page with every holder and what is attributed to it. "Ook eerdere" adds the offices
+	// nobody holds today (`?ambten=alle`): a former office or a gap, not filled in.
+	import { page } from '$app/state';
+	import { getSeats } from '$lib/api/seats';
+	import BronLink from '$lib/bron/BronLink.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { load } from '$lib/util/load.svelte';
-	import { ministerSeats, seatHref } from '$lib/offices/office';
+	import { navigate, withParams } from '$lib/util/address';
+	import { seatGroups } from '$lib/offices/office';
+	import SeatList from '$lib/offices/SeatList.svelte';
 	import { SOURCES } from '$lib/nav/sources';
 	import SourceTabs from '$lib/nav/SourceTabs.svelte';
 	import { sourceTabs } from '$lib/components/explore/index/categories';
 
-	const cabinet = load(
-		() => 'nu',
-		async () => {
-			const [newest] = await getCabinets();
-			return newest ? getCabinet(newest.key) : null;
-		},
+	type Shown = 'nu' | 'alle';
+	const shown = $derived<Shown>(page.url.searchParams.get('ambten') === 'alle' ? 'alle' : 'nu');
+	const seats = load(
+		() => shown,
+		(s) => getSeats({ current: s === 'nu' }),
 		'Ambten'
 	);
+	const groups = $derived(seats.state.status === 'ready' ? seatGroups(seats.state.data.items) : []);
 	const government = SOURCES.find((x) => x.id === 'regering')!;
-	const shown = $derived(cabinet.state.status === 'ready' ? cabinet.state.data : null);
+	const options = [
+		{ waarde: 'nu' as const, label: 'Nu bezet' },
+		{ waarde: 'alle' as const, label: 'Ook eerdere' }
+	];
+	const choose = (s: Shown) => navigate(withParams(page.url, { ambten: s === 'alle' ? s : null }));
 </script>
 
 <RouteKop />
@@ -30,44 +38,40 @@
 
 <div class="blad blad--tekst">
 	<header class="blad__kop"><h1 class="blad__titel">Ambten</h1></header>
-	{#if cabinet.state.status !== 'ready'}
-		<LoadState state={cabinet.state} what="De ambten" plural retry={cabinet.retry} />
-	{:else if shown}
-		<p class="stil kabinet">Ministers van het {shown.name}</p>
-		<ul class="ambten">
-			{#each ministerSeats(shown) as s (s.seat)}
-				<li>
-					<a class="ambt" href={seatHref(s.seat)}>{s.title}</a>
-					{#if s.holders.length}<span class="houder">{s.holders.join(', ')}</span>{/if}
-				</li>
-			{/each}
-		</ul>
+	<div class="keuze">
+		<Keuze label="Ambten" opties={options} waarde={shown} onSelect={choose} />
+	</div>
+	{#if seats.state.status !== 'ready'}
+		<LoadState state={seats.state} what="De ambten" plural retry={seats.retry} />
+	{:else}
+		{#each groups as g (g.ministry)}
+			<section class="ministerie">
+				<h2 class="ministerie__naam">
+					{#if g.ministry}<BronLink ref={`ministries/${g.ministry}`}
+							>{g.name || g.ministry}</BronLink
+						>{:else}Zonder ministerie{/if}
+				</h2>
+				<SeatList seats={g.seats} />
+			</section>
+		{/each}
 	{/if}
 </div>
 
 <style>
-	.kabinet {
+	.keuze {
 		margin-bottom: var(--s-4);
 	}
-	.ambten {
-		list-style: none;
-		margin: 0;
-		padding: 0;
+	.ministerie + .ministerie {
+		margin-top: var(--s-6);
 	}
-	.ambten li {
-		display: flex;
-		flex-direction: column;
-		padding: var(--s-2) 0;
-		border-bottom: 1px solid var(--rule);
-	}
-	.ambt {
+	.ministerie__naam {
+		margin: 0 0 var(--s-1);
 		font-family: var(--font-serif);
-		font-size: var(--t-body);
+		font-size: var(--t-body-2);
+		font-weight: 600;
 		color: var(--ink);
 	}
-	.houder {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
+	.ministerie__naam :global(a) {
+		color: inherit;
 	}
 </style>

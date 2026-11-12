@@ -14,12 +14,12 @@ describe('the tabs of a source', () => {
 		expect(tabs[1].about).toBeTruthy();
 	});
 
-	it('give Regering its offices beside its lists', () => {
+	it('give Regering its offices after Ministeries, large to small', () => {
 		expect(sourceTabs(of('regering')).map((t) => t.label)).toEqual([
 			'Kabinetten',
 			'Ministeries',
-			'Bewindspersonen',
-			'Ambten'
+			'Ambten',
+			'Bewindspersonen'
 		]);
 	});
 

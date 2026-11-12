@@ -17,12 +17,17 @@ type Source = {
 	holds: string;
 	/** The lists of Bladeren it holds, the first its landing. */
 	lists: readonly string[];
-	/** Pages beside the lists, a tab each after them (Rechtsgang beside Uitspraken). */
+	/** Pages beside the lists, a tab each after them (Rechtsgang beside Uitspraken), or after the list it names. */
 	pages: readonly SourcePage[];
 	href: string;
 };
 
-type SourcePage = { path: string; label: string };
+type SourcePage = {
+	path: string;
+	label: string;
+	/** The list whose tab it follows; without it, after the last. */
+	after?: string;
+};
 
 const source = (
 	id: SourceId,
@@ -62,7 +67,7 @@ export const SOURCES: readonly Source[] = [
 		'regering',
 		'kabinetten, ministeries, bewindspersonen, ambten',
 		['cabinets', 'ministries', 'ministers'],
-		[{ path: '/ambten', label: 'Ambten' }]
+		[{ path: '/ambten', label: 'Ambten', after: 'ministries' }]
 	)
 ];
 

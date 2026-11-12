@@ -1,4 +1,5 @@
 import { lowerFirst } from '$lib/text/words';
+import { lacks } from '$lib/text/coverage';
 import { DAY_MS, vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
@@ -8,6 +9,28 @@ import type { Schema } from '$lib/api/types';
 
 export type CabinetDetail = Schema<'CabinetDetailDTO'>;
 export type CabinetPost = Schema<'CabinetSeatDTO'>;
+
+export type MinistryGroup = { name: string; ministry: string | null; seats: CabinetPost[] };
+
+/**
+ * A cabinet's seats per ministry, as the API lists them. Seats without a ministry are of two
+ * kinds: a post of none (the viceminister-president) and a post whose ministry no source names
+ * or the sources dispute. The second stands last, under its own head, not placed by guess.
+ */
+export function ministryGroups(
+	cabinet: Pick<Schema<'CabinetDetailDTO'>, 'ministries'>
+): MinistryGroup[] {
+	const all = cabinet.ministries ?? [];
+	const unknown = (s: CabinetPost) => s.posts.some((p) => p.ministry_missing);
+	const loose = all.filter((m) => !m.name).flatMap((m) => m.seats);
+	return [
+		...all
+			.filter((m) => m.name && m.seats.length)
+			.map((m) => ({ name: m.name!, ministry: m.ministry ?? null, seats: m.seats })),
+		{ name: 'Zonder ministerie', ministry: null, seats: loose.filter((s) => !unknown(s)) },
+		{ name: lacks('ministerie'), ministry: null, seats: loose.filter(unknown) }
+	].filter((g) => g.seats.length);
+}
 export type SeatPost = Schema<'CabinetPostDTO'>;
 type CabinetPhase = Schema<'CabinetPhaseDTO'>;
 

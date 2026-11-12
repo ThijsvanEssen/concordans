@@ -5,7 +5,8 @@
 	// no way to find per office, stand as one quiet line each; nothing is filled in.
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { getSeat, getSeatCommitments, getSeatDossiers } from '$lib/api/seats';
+	import { getSeat, getSeatCommitments, getSeatDossiers, getSeats } from '$lib/api/seats';
+	import { isNotFound } from '$lib/api/errors';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
 	import NameLink from '$lib/bron/NameLink.svelte';
@@ -16,13 +17,21 @@
 	import Section from '$lib/components/ui/Sectie.svelte';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import { commitmentStatusLabel } from '$lib/components/explore/index/government';
-	import { periodWords } from '$lib/components/explore/readers/ministry';
+	import { ministryTitle, periodWords } from '$lib/components/explore/readers/ministry';
 	import { formatCount } from '$lib/text/getal';
 	import { lacks } from '$lib/text/coverage';
 	import { capitalize, plural } from '$lib/text/words';
 	import { load } from '$lib/util/load.svelte';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
-	import { OFFICES_PATH, formerTitles, seatHref, seatName, seatTitle, timeline } from './office';
+	import {
+		OFFICES_PATH,
+		formerTitles,
+		movedSeat,
+		seatHref,
+		seatName,
+		seatTitle,
+		timeline
+	} from './office';
 	import { Paged } from './paged.svelte';
 
 	let { seat, title = $bindable() }: { seat: string; title?: string } = $props();
@@ -52,6 +61,18 @@
 	$effect(() => {
 		if (record && record.seat !== seat) goto(seatHref(record.seat), { replaceState: true });
 	});
+	// An office of no ministry that later got one (B149) moved under it: the old key leads there.
+	$effect(() => {
+		if (office.state.status !== 'error' || !isNotFound(office.state.error)) return;
+		const asked = seat;
+		getSeats().then(
+			(all) => {
+				const moved = movedSeat(asked, all.items);
+				if (moved && asked === seat) goto(seatHref(moved), { replaceState: true });
+			},
+			() => {}
+		);
+	});
 
 	const commitments = $derived(
 		new Paged<Schema<'CommitmentDTO'>>(
@@ -73,7 +94,13 @@
 	const formerSeatName = (key: string) => seatName(key, ministryName);
 </script>
 
-<nav class="stub-eyebrow" aria-label="Hoort bij"><a href={OFFICES_PATH}>Ambten</a></nav>
+<!-- Large to small: Ambten, the ministry, the office (B148). -->
+<nav class="stub-eyebrow kruimel" aria-label="Hoort bij">
+	<a href={OFFICES_PATH}>Ambten</a>{#if record?.ministry}<span aria-hidden="true">›</span><a
+			href={openHref(`ministries/${record.ministry}`, { path: record.ministry_path })}
+			>{ministryTitle(record.ministry_name ?? ministryName(record.ministry))}</a
+		>{/if}
+</nav>
 <header class="blad__kop">
 	<h1 class="blad__titel">{record ? seatTitle(record) : 'Ambt'}</h1>
 </header>
@@ -295,5 +322,12 @@
 		font-size: var(--t-meta);
 		font-style: italic;
 		color: var(--ink-3);
+	}
+	/* Two crumbs that wrap on a phone stand on lines of their own, each a finger high. */
+	.kruimel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		column-gap: var(--s-2);
 	}
 </style>
