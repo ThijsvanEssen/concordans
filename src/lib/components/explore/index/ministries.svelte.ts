@@ -3,6 +3,7 @@
 import { report } from '$lib/api/errors';
 import { onForget } from '$lib/util/forget';
 import { getMinistries } from '$lib/api/government';
+import { ministryTitle } from '../readers/ministry';
 
 let names = $state<Map<string, string>>(new Map());
 let asked = false;
@@ -24,3 +25,6 @@ export function ministryName(key: string | null | undefined): string {
 	}
 	return (key && names.get(key)) || key || '';
 }
+
+/** `Ministerie van Financiën` for `fin`, under its name of the list. */
+export const ministryFullName = (key: string): string => ministryTitle(ministryName(key));

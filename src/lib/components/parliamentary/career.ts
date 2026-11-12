@@ -7,6 +7,7 @@ import { daysBetween } from '$lib/text/datum';
 import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { fractieNaam } from '$lib/bron/menselijk';
+import { seatHref } from '$lib/offices/office';
 
 type Membership = Schema<'FactionMembershipDTO'>;
 type GovernmentFunction = Schema<'GovernmentFunctionDTO'>;
@@ -52,6 +53,10 @@ const names = (post: GovernmentFunction, fn: string) =>
 const within = (date: string, post: GovernmentFunction) =>
 	(!post.from_date || date >= post.from_date.slice(0, 10)) &&
 	(!post.to_date || date <= post.to_date.slice(0, 10));
+
+/** The page of the office a step was held in; none for a function known only from stukken. */
+export const postHref = (step: CareerEntry): string | null =>
+	step.kind === 'function' && step.seat ? seatHref(step.seat) : null;
 
 /** A post in a cabinet as a step of the career: its term, cabinet, office and ministry. */
 const postEntry = (g: GovernmentFunction): Fn => ({

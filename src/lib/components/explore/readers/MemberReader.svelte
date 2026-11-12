@@ -1,8 +1,6 @@
 <script lang="ts">
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { outcomeWord } from '$lib/text/outcome';
-	import { atLeast } from '$lib/text/getal';
-	import { choiceRank } from '$lib/votes/stemming';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, count, textOf } from '$lib/text/words';
@@ -10,7 +8,7 @@
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { atomHref } from '$lib/components/actueel/feed';
-	import { formatCount } from '$lib/text/getal';
+	import { atLeast, formatCount } from '$lib/text/getal';
 	import { korteDatum, vandaag, yearsOf } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
@@ -32,6 +30,7 @@
 	import {
 		careerOf,
 		currentTitle,
+		postHref,
 		inYears,
 		type CareerEntry,
 		type Signature
@@ -41,7 +40,7 @@
 	import { page } from '$app/state';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
-	import { stemmingNaam } from '$lib/votes/stemming';
+	import { choiceRank, stemmingNaam } from '$lib/votes/stemming';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import { ambtZin } from '$lib/components/parliamentary/ambt';
@@ -53,9 +52,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import { seatHref } from '$lib/offices/office';
-	import { ministryName } from '../index/ministries.svelte';
-	import { ministryTitle } from './ministry';
+	import { ministryFullName } from '../index/ministries.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 	// One date column down the page: Loopbaan, Commissies and Toezeggingen share a left edge.
@@ -371,7 +368,7 @@
 					{@const step = career.find((c) => stapId(c) === id)}
 					{#if step?.kind === 'function'}
 						{#if step.ministry}<BronLink ref={`ministries/${step.ministry}`}
-								>{ministryTitle(ministryName(step.ministry))}</BronLink
+								>{ministryFullName(step.ministry)}</BronLink
 							>{/if}{#if step.cabinet}{step.ministry ? ', ' : ''}<NameLink
 								collection="cabinets"
 								name={step.cabinet}
@@ -402,7 +399,7 @@
 											}
 										: {
 												zin: capitalize(step.function),
-												href: step.seat ? seatHref(step.seat) : null,
+												href: postHref(step),
 												onder: step.cabinet || step.ministry || step.count > 0 ? ambtOnder : null,
 												hint: step.cabinet
 													? null
