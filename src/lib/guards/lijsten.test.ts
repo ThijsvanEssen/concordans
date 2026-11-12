@@ -133,4 +133,21 @@ describe('list pages and the feed', () => {
 			/\{#if bar && ctx\.p\.open !== bron\}/
 		);
 	});
+
+	it('counts its facets by untilCounted, the one way a list asks again (audit dubbele helpers, 2)', () => {
+		// A count asked with `facets: true` and asked again by hand stopped after one retry.
+		const eigen = (t: string) => /facets: true/.test(t) && !t.includes('untilCounted');
+		expect(
+			overtreders(eigen, [
+				plek('lib/components/explore/index/lists/decisions.ts', 'api/decisions.ts')
+			])
+		).toEqual([]);
+	});
+
+	it('drops a next page that comes in under other filters (audit dubbele helpers, 1)', () => {
+		// The days of the filters before, and their cursor, added to the new list.
+		const volgende = (t: string) =>
+			/async function (loadMore|verderTerug|appendPage)\b/.test(t) && !/signal\.aborted/.test(t);
+		expect(overtreders(volgende)).toEqual([]);
+	});
 });
