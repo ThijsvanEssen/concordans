@@ -5,11 +5,17 @@
 // drawn one by one: a much cited pair shares hundreds.
 import type { Schema } from '$lib/api/types';
 import { naamVanId } from '$lib/bron/menselijk';
-import { dossierOwnName, dossierUitProps, officialNumber } from '$lib/bron/dossier-naam';
+import {
+	dossierNumberText,
+	dossierOwnName,
+	dossierUitProps,
+	officialNumber
+} from '$lib/bron/dossier-naam';
 import { relationWords } from '$lib/verbonden/relation-words';
 import { citationRecord } from '$lib/text/citation-record';
 import { capitalize, joinAnd, textOf } from '$lib/text/words';
 import type { Collection, Relation } from '$lib/vocabulary';
+import { NL } from '$lib/text/collator';
 
 type Shared = Schema<'SharedNeighborsResponse'>;
 type Neighbor = Schema<'SharedNeighborDTO'>;
@@ -113,8 +119,7 @@ export function rowNotation(
 	const nr = typeof p.sequence === 'number' ? p.sequence : null;
 	const kind = textOf(p.kind);
 	if (!dossier || !kind) return { title: name, detail: textOf(p.title) };
-	const suffix = textOf(p.dossier_suffix);
-	const number = suffix ? `${dossier} ${suffix}` : officialNumber(dossier);
+	const number = dossierNumberText(dossier, textOf(p.dossier_suffix));
 	const year = textOf(p.date)?.slice(0, 4) ?? null;
 	return {
 		title: `${number}${nr !== null ? `, nr. ${nr}` : ''} ${kind}`,
@@ -122,8 +127,8 @@ export function rowNotation(
 	};
 }
 
-/** The name of a shared bron: as a Kamerstuk is cited, else as the API gives it. */
-const nameOf = (n: Neighbor) => rowNotation(n).title;
+/** The name of a bron on a row: as a Kamerstuk is cited, else as the API gives it. */
+export const notationName = (n: Parameters<typeof rowNotation>[0]) => rowNotation(n).title;
 
 const STRUCTURAL = new Set<Collection>(['cabinets', 'factions', 'committees', 'ministries']);
 
@@ -207,7 +212,7 @@ export function verbandModel(
 		};
 	});
 	judgments.sort((x, y) => y.total - x.total || x.at.join().localeCompare(y.at.join()));
-	said.sort((x, y) => x.at.join().localeCompare(y.at.join()) || x.text.localeCompare(y.text));
+	said.sort((x, y) => x.at.join().localeCompare(y.at.join()) || NL.compare(x.text, y.text));
 	pairs.sort((x, y) => x.at.join().localeCompare(y.at.join()));
 	return { rows, judgments, direct: said, pairs };
 }
@@ -239,7 +244,7 @@ function rowOf(
 	return {
 		id: n.id,
 		line: joinLines(how),
-		name: nameOf(n),
+		name: notationName(n),
 		detail: rowNotation(n).detail,
 		collection: n.collection as Collection,
 		node: n,

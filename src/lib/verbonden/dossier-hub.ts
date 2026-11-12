@@ -13,6 +13,7 @@ import { type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
 import { type Neighbor } from '$lib/api/nodes';
 import { kindName } from '$lib/text/law-kind';
+import { NL } from '$lib/text/collator';
 
 export type DossierHub = {
 	laws: Row[];
@@ -83,7 +84,7 @@ export function buildDossierHub(
 			relation: 'LED_BY',
 			direction: 'outbound'
 		}))
-		.sort((a, b) => a.title.localeCompare(b.title, 'nl'));
+		.sort((a, b) => NL.compare(a.title, b.title));
 
 	const rows = (documents?.items ?? []).map((d) => ({
 		// A document of neither chamber (a Staatsblad) stands with the Tweede Kamer's.

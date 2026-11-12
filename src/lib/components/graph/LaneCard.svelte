@@ -13,6 +13,7 @@
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import CanvasKaart from './CanvasKaart.svelte';
 	import LaneChanges from './LaneChanges.svelte';
+	import { NL } from '$lib/text/collator';
 
 	let {
 		unit,
@@ -53,7 +54,7 @@
 			.sort(
 				(a, b) =>
 					String(b.raw?.props?.date ?? '').localeCompare(String(a.raw?.props?.date ?? '')) ||
-					a.label.localeCompare(b.label)
+					NL.compare(a.label, b.label)
 			);
 </script>
 

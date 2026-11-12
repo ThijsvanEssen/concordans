@@ -106,6 +106,12 @@ describe('Verband as the DS writes it', () => {
 		expect(r.detail).toBe('Wijziging van de Gemeentewet, 2018');
 		expect(r.title).not.toContain('…');
 	});
+	it('writes a subdossier as everywhere else: a numeric suffix after a hyphen', () => {
+		const stuk = (dossier_suffix: string) =>
+			rowNotation(paper({ dossier_number: '21501', dossier_suffix, sequence: 7, kind: 'Brief' }));
+		expect(stuk('20').title).toBe('21501-20, nr. 7 Brief');
+		expect(stuk('VIII').title).toBe('21501 VIII, nr. 7 Brief');
+	});
 	it('names a dossier by its number, so that it is not the wet of the same name', () => {
 		const r = rowNotation({
 			id: 'dossiers/36496',

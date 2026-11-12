@@ -6,6 +6,7 @@ import { padHref } from '$lib/bron/address';
 import type { CourseStep } from '$lib/bron/course-layers';
 import type { BronRef } from '$lib/bron/ref';
 import { articleRef, bookNumber } from '$lib/text/bw';
+import { articleNodeKey } from '$lib/text/node-key';
 
 export type Basis = Schema<'CourseBasis'>;
 
@@ -29,7 +30,7 @@ export function articleOfBasis(b: Basis): { name: string; ref: BronRef; path: st
 		name: law ? `${number} ${law}` : number,
 		ref: {
 			collection: 'articles',
-			key: `${b.bwb_id}_${b.article_number}`.toLowerCase().replace(/[^a-z0-9]+/g, '_')
+			key: articleNodeKey(b.bwb_id, b.article_number)
 		},
 		path: /\s/.test(b.article_number)
 			? null

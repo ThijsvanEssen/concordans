@@ -11,7 +11,7 @@ import { atPlace, paragraphNumber } from '$lib/text/anchor';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { changeByEffect, changeVerb, relationWords, type RelationWords } from './relation-words';
 import { langeDatum } from '$lib/text/datum';
-import { formatCount } from '$lib/text/getal';
+import { formatCount, isFiniteNumber } from '$lib/text/getal';
 import {
 	grondslagRegel,
 	grondslagWerkwoord,
@@ -19,7 +19,7 @@ import {
 	uitgewerktIn,
 	type Grondslag
 } from '$lib/text/delegaties';
-import { officialNumber } from '$lib/bron/dossier-naam';
+import { dossierNumberText } from '$lib/bron/dossier-naam';
 import { passageOf, type Row } from './rows';
 import { uitsnede, type PassageParts } from './passage';
 import { confidenceWord } from './filter';
@@ -54,7 +54,7 @@ export type Hoe = {
 	herkomst: string | null;
 };
 
-const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+const num = (v: unknown): number | null => (isFiniteNumber(v) ? v : null);
 const keer = (n: number | null) => (n && n > 1 ? `${n} keer` : null);
 const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
 const erbij = (teken: string, s: string | null) => (s ? `${teken}${s}` : null);
@@ -150,10 +150,9 @@ function paarStuk(kant: unknown, eerste: boolean): string | null {
 	const soort = textOf(k.kind)?.split(/[\s(]/)[0] ?? null;
 	const dossier = textOf(k.dossier_number);
 	if (!soort || !dossier) return null;
-	const suffix = textOf(k.dossier_suffix);
 	const nr = num(k.sequence);
 	const woord = eerste ? capitalize(soort) : soort.toLowerCase();
-	const nummer = suffix ? `${dossier} ${suffix}` : officialNumber(dossier);
+	const nummer = dossierNumberText(dossier, textOf(k.dossier_suffix));
 	return `${woord} ${nummer}${nr != null ? ` nr. ${nr}` : ''}`;
 }
 

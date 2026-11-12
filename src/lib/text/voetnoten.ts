@@ -6,6 +6,7 @@
 import { escapeRegExp, textOf } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
 import { holdDatesTogether } from './datum';
+import { isFiniteNumber } from './getal';
 import { formatAnchor, parseAnchor } from './anchor';
 
 type Span = Schema<'ArticleCitationSpan'>;
@@ -164,14 +165,12 @@ type StukPlaats =
 	| { part: 'text'; at: string | null; bereik: Bereik | null }
 	| { part: 'title'; at: null; bereik: null };
 
-const getal = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-
 export function stukPlaats(meta: Record<string, unknown> | null | undefined): StukPlaats | null {
 	const p = meta?.place;
 	if (!p || typeof p !== 'object') return null;
 	const place = p as Record<string, unknown>;
 	const bereik =
-		getal(place.start) && getal(place.end) && place.end > place.start
+		isFiniteNumber(place.start) && isFiniteNumber(place.end) && place.end > place.start
 			? { start: place.start, end: place.end }
 			: null;
 	if (place.part === 'footnote') {

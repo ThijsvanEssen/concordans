@@ -4,6 +4,7 @@ import type { Schema } from '$lib/api/types';
 import { dossierNumberOf } from '$lib/bron/describe';
 import type { LawChange, SceneUnit } from './scene';
 import type { GraphNode } from './types';
+import { nodeKey } from '$lib/text/node-key';
 
 /** The air kept around what is scrolled into view. */
 const SCROLL_MARGIN = 16;
@@ -23,9 +24,6 @@ export const DOSSIER_ENACTED = 'wijziging vastgesteld';
 export const changeSays = (u: SceneUnit) =>
 	!u.change ? null : u.column === 'laws' ? LAW_CHANGE_WORDS[u.change].says : DOSSIER_ENACTED;
 
-/** A dossier's number as its node's key writes it: `21501-02` is `21501_02`. */
-const keyOfNumber = (number: string) => number.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-
 /**
  * The number the API knows a dossier by, as a bron of this dossier carries it (a bron in the hull
  * may belong to another dossier too); else read from its key.
@@ -38,7 +36,7 @@ export function laneDossierNumber(
 	const key = id.replace(/^dossiers\//, '');
 	for (const m of members) {
 		const number = dossierNumberOf(nodeOf(m)?.raw?.props);
-		if (number && keyOfNumber(number) === key) return number;
+		if (number && nodeKey(number) === key) return number;
 	}
 	return key.replaceAll('_', '-').toUpperCase();
 }

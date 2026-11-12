@@ -6,6 +6,7 @@
 import { MAKER_LANE_ORDER, type MakerLane } from './roles';
 import { LAW_CHANGE_WORDS } from './lane-changes';
 import type { Column, Scene, SceneUnit } from './scene';
+import { NL } from '$lib/text/collator';
 
 export const GUTTER = 76;
 const HULL_GAP = 56;
@@ -223,7 +224,7 @@ const SHAPE_RANK = { tiles: 0, hull: 1, node: 2, group: 3 } as const;
 const byDefault = (a: SceneUnit, b: SceneUnit) =>
 	Number(b.focus) - Number(a.focus) ||
 	SHAPE_RANK[a.shape] - SHAPE_RANK[b.shape] ||
-	a.label.localeCompare(b.label) ||
+	NL.compare(a.label, b.label) ||
 	a.id.localeCompare(b.id);
 
 /** Where a column's units stand; `inner`: its own rails' room right of them. */
