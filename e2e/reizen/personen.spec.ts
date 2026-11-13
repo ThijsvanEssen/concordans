@@ -50,6 +50,11 @@ test('a cabinet names its coalition and shows its seats in both Kamers', async (
 		page.getByRole('group', { name: /^Zetels van de coalitie in de Tweede Kamer/ })
 	).toBeVisible();
 	await expect(page.getByText(/coalitiezetels, van 150/)).toBeVisible();
+	// The ploeg stands once in the reader, under the seats: no row of it in the facts (B160).
+	await expect(page.getByRole('heading', { level: 2, name: 'Ploeg' })).toBeVisible();
+	const facts = page.locator('dl.feiten').first();
+	await expect(facts.locator('dt', { hasText: 'Minister-president' })).toBeVisible();
+	await expect(facts.locator('dt', { hasText: 'Bewindspersonen' })).toHaveCount(0);
 });
 
 test('Bronnen › Fracties: the seats of each Kamer add up to the whole Kamer', async ({ page }) => {

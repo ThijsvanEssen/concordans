@@ -58,9 +58,9 @@ test('bestuursrecht reads as rows "als … / anders", the excepted besluit first
 	]);
 	await expect(first.locator('.rij--anders')).toContainText('Rechtbanken');
 	await expect(page.getByText('hoger beroep, na de rechtbank')).toBeVisible();
-	await expect(
-		page.locator('.gebied').getByText('Gestippeld: alleen in enkele zaken.')
-	).toBeVisible();
+	// The dashed card says it itself: the legend stands once, under the entries (B160).
+	await expect(page.getByText('Gestippeld: alleen in enkele zaken.')).toHaveCount(1);
+	await expect(page.locator('.gebied .legenda')).toHaveCount(0);
 });
 
 test('cassation in bestuursrecht is a dashed card after the Centrale Raad van Beroep alone', async ({
