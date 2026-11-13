@@ -285,6 +285,7 @@ export function judgmentGroups(
 		{
 			id: PARAM.tier,
 			label: 'Instantie',
+			chip: 'Instantie',
 			kind: 'list',
 			options: tierOptions(facetMap(facets?.tier), tiers, (t) =>
 				patch({ [PARAM.tier]: t.join(',') || null })

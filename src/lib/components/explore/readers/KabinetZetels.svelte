@@ -19,11 +19,14 @@
 
 	let {
 		kabinet,
-		fasen = []
+		fasen = [],
+		settled = $bindable(false)
 	}: {
 		kabinet: string;
 		/** The cabinet's phases from its record, once that is in (phaseStarts). */
 		fasen?: { van: string; label: string }[];
+		/** The seats stand (or have nothing to show): what comes under them moves nothing then. */
+		settled?: boolean;
 	} = $props();
 
 	const seats = load(
@@ -54,6 +57,10 @@
 		return () => clearTimeout(t);
 	});
 	const shown = $derived(waited || (tkReady && ekReady));
+	$effect(() => {
+		const st = seats.state.status;
+		settled = st === 'error' || (st === 'ready' && (!zetels?.tk?.length || shown));
+	});
 
 	/** The halls on the first day of a stretch; the last stretch is the halls without ?zetels. */
 	const kies = (s: Stuk) =>

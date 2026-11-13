@@ -9,7 +9,7 @@
 	import Veld from '$lib/components/ui/Veld.svelte';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
-	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
+	// linked to the list in Bladeren that holds its toezeggingen; its ploeg under the seats.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import KabinetZetels from './KabinetZetels.svelte';
 	import CabinetTeam from './CabinetTeam.svelte';
@@ -43,8 +43,10 @@
 	const van = $derived(record ? record.from_date : textOf(p.from_date));
 	const tot = $derived(record ? record.to_date : textOf(p.to_date));
 
-	const listHref = (kind: 'ministers' | 'commitments', key: string) =>
-		indexHref(kind, { kabinet: key });
+	/** The seats stand: the ploeg under them comes after, so it is not pushed down (B160). */
+	let seatsSettled = $state(false);
+
+	const commitmentsHref = (key: string) => indexHref('commitments', { kabinet: key });
 </script>
 
 <ReaderFrame state={cabinet.state} what="Kabinet" retry={cabinet.retry}>
@@ -68,7 +70,7 @@
 		<!-- The rows wait for the record, each with its label in place so nothing under them
 			     moves when they come. -->
 		<Feiten>
-			{#each ['Minister-president', 'Coalitie', 'Bewindspersonen', 'Wetsvoorstellen', 'Toezeggingen'] as label (label)}
+			{#each ['Minister-president', 'Coalitie', 'Wetsvoorstellen', 'Toezeggingen'] as label (label)}
 				<Veld {label} value="…"><span class="stil">…</span></Veld>
 			{/each}
 		</Feiten>
@@ -94,16 +96,13 @@
 					{/each}
 				</span>
 			</Veld>
-			<Veld label="Bewindspersonen" value={c.members}>
-				<a class="nums" href={listHref('ministers', c.key)} data-sveltekit-noscroll
-					>{formatCount(c.members)}</a
-				>
-			</Veld>
+			<!-- No row Bewindspersonen: the ploeg stands under the seats (Ploeg) and in Verbonden,
+			     with its table (B160). -->
 			<Veld label="Wetsvoorstellen" value={c.bills}>
 				<span class="nums">{formatCount(c.bills)}</span>
 			</Veld>
 			<Veld label="Toezeggingen" value={c.commitments}>
-				<a class="nums" href={listHref('commitments', c.key)} data-sveltekit-noscroll
+				<a class="nums" href={commitmentsHref(c.key)} data-sveltekit-noscroll
 					>{formatCount(c.commitments)}</a
 				>
 			</Veld>
@@ -111,10 +110,14 @@
 	{/snippet}
 	{#snippet foot()}
 		<div class="seats">
-			<KabinetZetels kabinet={node.key} fasen={phaseStarts(record?.phases ?? [])} />
+			<KabinetZetels
+				kabinet={node.key}
+				fasen={phaseStarts(record?.phases ?? [])}
+				bind:settled={seatsSettled}
+			/>
 		</div>
-		<!-- Under the seats: it comes with the record and moves nothing above it. -->
-		{#if record}<CabinetTeam cabinet={record} />{/if}
+		<!-- Under the seats, once they stand: it moves nothing above it, nor is it pushed down. -->
+		{#if record && seatsSettled}<CabinetTeam cabinet={record} />{/if}
 	{/snippet}
 </ReaderFrame>
 

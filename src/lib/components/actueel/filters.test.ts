@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
+import { activeFilters } from '$lib/components/explore/index/facets';
 import {
 	FEED_FILTER_PARAMS,
 	NOT_OF,
 	areaOptions,
 	feedQuery,
+	judgmentGroups,
 	readFilters,
 	shownFilters,
 	speaksOf,
@@ -307,5 +309,19 @@ describe('areaOptions: Rechtsgebied as the bar lists it', () => {
 		expect([option.label, option.count, option.on]).toEqual(['Bestuursrecht', 0, true]);
 		option.onClick();
 		expect(picked).toEqual([null]);
+	});
+});
+
+describe('judgmentGroups: Instantie and Rechtsgebied as chips', () => {
+	it('names the filter in its chip, as "Instantie: Rechtbanken" (B160)', () => {
+		const facets = {
+			tier: [{ value: 'rechtbank', count: 4 }],
+			subject_area: [{ value: 'Strafrecht', count: 2 }]
+		} as unknown as Parameters<typeof judgmentGroups>[0];
+		const chips = activeFilters(judgmentGroups(facets, ['rechtbank'], 'Strafrecht', () => {}));
+		expect(chips.map((c) => [c.label, c.short])).toEqual([
+			['Instantie: Rechtbanken', 'Rechtbanken'],
+			['Rechtsgebied: Strafrecht', 'Strafrecht']
+		]);
 	});
 });

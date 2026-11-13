@@ -47,7 +47,6 @@
 	const data = $derived(routes.state.status === 'ready' ? routes.state.data : null);
 	const route = $derived(data ? routeOf(view, data) : null);
 	const entries = $derived(data ? supremeEntries(data) : null);
-	const dashed = $derived(route?.some((s) => s.after) ?? false);
 	const options = $derived(VIEWS.map((v) => ({ waarde: v.id, label: v.short })));
 	const RO = { collection: 'instruments' as const, key: 'bwbr0001830' };
 	const AWB = { collection: 'instruments' as const, key: 'bwbr0005537' };
@@ -107,7 +106,8 @@
 						<li class="stap">
 							{#if i}<span class="pijl" aria-hidden="true">{arrowInto(stage, route[i - 1])}</span
 								>{/if}
-							<!-- After one court alone: dashed (B144, the Hoge Raad after the CRvB). -->
+							<!-- After one court alone: dashed (B144, the Hoge Raad after the CRvB); the card says
+							     so itself ("alleen in enkele zaken"), so no legend under the route. -->
 							<div class="vak" class:vak--stippel={stage.after}>
 								<span class="fase">{stage.name}</span>
 								{#each stage.rows as row (row.when)}
@@ -135,7 +135,6 @@
 						</li>
 					{/each}
 				</ol>
-				{#if dashed}<p class="stil legenda">Gestippeld: alleen in enkele zaken.</p>{/if}
 			</section>
 
 			{#if entries?.into.length}<CassationEntries {entries} />{/if}
@@ -318,11 +317,7 @@
 	.rij .instantie:first-of-type {
 		margin-top: 0;
 	}
-	.legenda {
-		margin: var(--s-3) 0 0;
-		font-size: var(--t-meta);
-	}
-	/* After one court alone: dashed, as the legend says. */
+	/* After one court alone: dashed, as its card says. */
 	.vak--stippel {
 		border-style: dashed;
 	}
