@@ -43,6 +43,9 @@
 	const van = $derived(record ? record.from_date : textOf(p.from_date));
 	const tot = $derived(record ? record.to_date : textOf(p.to_date));
 
+	/** The seats stand: the ploeg under them comes after, so it is not pushed down (B160). */
+	let zetelsKlaar = $state(false);
+
 	const commitmentsHref = (key: string) => indexHref('commitments', { kabinet: key });
 </script>
 
@@ -107,10 +110,14 @@
 	{/snippet}
 	{#snippet foot()}
 		<div class="seats">
-			<KabinetZetels kabinet={node.key} fasen={phaseStarts(record?.phases ?? [])} />
+			<KabinetZetels
+				kabinet={node.key}
+				fasen={phaseStarts(record?.phases ?? [])}
+				bind:klaar={zetelsKlaar}
+			/>
 		</div>
-		<!-- Under the seats: it comes with the record and moves nothing above it. -->
-		{#if record}<CabinetTeam cabinet={record} />{/if}
+		<!-- Under the seats, once they stand: it moves nothing above it, nor is it pushed down. -->
+		{#if record && zetelsKlaar}<CabinetTeam cabinet={record} />{/if}
 	{/snippet}
 </ReaderFrame>
 
