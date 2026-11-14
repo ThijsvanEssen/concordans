@@ -66,7 +66,13 @@ describe('what is new in a bundel', () => {
 		expect(fresh.any).toBe(false);
 		await fresh.load([lid, motie], new AbortController().signal);
 		expect(asked.map((r) => r.params.query)).toEqual([
-			{ instrument: 'BWBR0005290', kind: LAW_FEED_KINDS, since: '2026-10-02', facets: false, limit: 50 },
+			{
+				instrument: 'BWBR0005290',
+				kind: LAW_FEED_KINDS,
+				since: '2026-10-02',
+				facets: false,
+				limit: 50
+			},
 			{ dossier: '36744', since: '2026-10-02', facets: false, limit: 50 },
 			{ limit: 1, sort: 'date_desc' }
 		]);

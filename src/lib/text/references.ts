@@ -52,8 +52,8 @@ export function divisionAnchor(doc: string, crumbs: readonly Crumb[]): string | 
 function resolvedArticle(ref: Reference, citations: readonly Span[]) {
 	if (!ref.key) return null;
 	return (
-		citations.find(({ target: t }) => t.collection === 'articles' && t.key === ref.key)
-			?.target ?? null
+		citations.find(({ target: t }) => t.collection === 'articles' && t.key === ref.key)?.target ??
+		null
 	);
 }
 

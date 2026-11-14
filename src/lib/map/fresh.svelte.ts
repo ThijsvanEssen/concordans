@@ -66,7 +66,9 @@ export class Fresh {
 		}
 		const r = await getFeed(
 			{
-				...(ask.kind === 'law' ? { instrument: ask.bwb, kind: LAW_FEED_KINDS } : { dossier: ask.dossier }),
+				...(ask.kind === 'law'
+					? { instrument: ask.bwb, kind: LAW_FEED_KINDS }
+					: { dossier: ask.dossier }),
 				since: addDays(this.since, 1),
 				facets: false,
 				limit: LINES
