@@ -116,6 +116,7 @@ describe('the footnotes of their own of an article (#881)', () => {
 		kind: 'extref',
 		bwb_id: null,
 		article: null,
+		key: null,
 		celex: '32016R1953',
 		doc: '32016R1953',
 		text: 'Verordening (EU) 2016/1953',
