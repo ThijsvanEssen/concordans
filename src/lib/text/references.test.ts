@@ -17,6 +17,8 @@ const ref = (
 	kind: 'extref',
 	bwb_id: bwb,
 	article,
+	// The API's node key of the article (B164), null for a chapter, a title, an annex, an EU act.
+	key: bwb && article ? `${bwb.toLowerCase()}_${article}` : null,
 	celex: null,
 	doc,
 	text: '',
@@ -54,6 +56,16 @@ const AWR = 'jci1.3:c:BWBR0002320&artikel=5a';
 const citations = [cited(4298, 4352, 'bwbr0002320_5a', 'BWBR0002320', '5a')];
 
 describe('referenceSpans', () => {
+	it('links an article by the key the API gives, and nothing without one', () => {
+		const at20 = (spans: Span[]) => spans.find((s) => s.start === 20);
+		const linked = referenceSpans(citations, [ref(20, 74, 'BWBR0002320', '5a', AWR)]);
+		expect(at20(linked)?.target.key).toBe('bwbr0002320_5a');
+		const unresolved = referenceSpans(citations, [
+			ref(20, 74, 'BWBR0002320', '5a', AWR, { key: null })
+		]);
+		expect(at20(unresolved)).toBeUndefined();
+	});
+
 	it('links every mention of an article a citation resolved, each at its own lid', () => {
 		const spans = referenceSpans(citations, [
 			ref(20, 74, 'BWBR0002320', '5a', AWR),
