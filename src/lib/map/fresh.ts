@@ -12,17 +12,19 @@ export type FeedLine = Schema<'FeedItemDTO'>;
 /**
  * The kinds a law's feed is asked for: every kind but `uitspraak`. A law that many judgments
  * cite would otherwise fill its page with them and push a new version off it; the judgments
- * come per article (`cited-by`). The record keeps the list whole when the API adds a kind.
+ * come per article (`cited-by`). The record keeps the list whole when the API adds a kind;
+ * its keys are values of the API, quoted as strings.
  */
+// prettier-ignore
 const LAW_KINDS: Record<Exclude<FeedLine['kind'], 'uitspraak'>, true> = {
-	toezegging: true,
+	'toezegging': true,
 	'Voorstel van wet': true,
 	'Nota van wijziging': true,
-	Amendement: true,
-	Motie: true,
-	stemming: true,
-	publicatie: true,
-	inwerkingtreding: true,
+	'Amendement': true,
+	'Motie': true,
+	'stemming': true,
+	'publicatie': true,
+	'inwerkingtreding': true,
 	'Brief regering': true
 };
 export const LAW_FEED_KINDS = Object.keys(LAW_KINDS).join(',');
