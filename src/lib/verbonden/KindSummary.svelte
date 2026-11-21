@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	// Verbonden at a glance (mockups V1): per soort a heading with its count over the whole, the
-	// three to read as a title and one line, and "Alle N" that opens the soort with its groups,
-	// its order and its filters. A click on a title opens the row in place, with its passage,
+	// Verbonden at a glance (mockups V1): per soort a heading with its count over the whole and
+	// the three to read as a title and one line. Above three the heading is the button that opens
+	// the soort in place with every row, a page at a time, and its order and filters (B64). A click on a title opens the row in place, with its passage,
 	// its identifier and where it comes from; the bron is one step further (a modified click,
 	// or the row opened). Judgments that cite an article carry their instanties as a bar.
 	import { openHref, refId } from '$lib/bron/href';
@@ -50,7 +50,6 @@
 		tiersPending?: boolean;
 		/** The strook counts `geteld` of the `van` judgments: the rows that are in. */
 		tiersCounted?: { counted: number; of: number } | null;
-		/** "Alle N": the soort with its groups. */
 		/** The soorten opened in place with all their rows. */
 		open?: Set<string>;
 		/** What a soort opened in place shows over its rows: the order of the judgments. */
