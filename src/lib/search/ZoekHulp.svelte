@@ -42,9 +42,8 @@
 	}
 	.kop {
 		margin-top: var(--s-2);
-		font-family: var(--font-ui);
 		font-size: var(--t-label);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	p {
 		margin: 0;
