@@ -76,7 +76,6 @@
 	import { getCabinets } from '$lib/api/government';
 	import { ministryName } from '$lib/components/explore/index/ministries.svelte';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
-	import { vormVanFeed } from '$lib/components/actueel/home-stream';
 	import Doorzocht from '$lib/components/actueel/Doorzocht.svelte';
 	import OpenMotions from '$lib/components/actueel/OpenMotions.svelte';
 	import NextSitting from '$lib/components/parliamentary/NextSitting.svelte';
@@ -92,12 +91,11 @@
 		shownFilters,
 		summaryQuery,
 		type CoalitionWord,
+		kindOptions,
 		type FeedQuery
 	} from '$lib/components/actueel/filters';
 	import {
 		CLOSE_VOTE,
-		FEED_KINDS,
-		KIND_LABEL,
 		atomHref,
 		daysOf,
 		wholeDays,
@@ -448,19 +446,6 @@
 	const coalitionCounts = $derived(facetMap(facets?.coalition));
 	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
 	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
-	/** Each kind of event with its sign, as the timeline shows it, and its count; while counting
-	 *  "…" beside each (FilterBar `pending`). */
-	const kindOptions = $derived.by(() => {
-		const kindCounts = facetMap(facets?.kind);
-		return FEED_KINDS.map((k) => ({
-			id: k,
-			label: KIND_LABEL[k].one,
-			shape: vormVanFeed({ kind: k }),
-			count: facets ? (kindCounts.get(k) ?? 0) : tellen ? 0 : undefined,
-			on: kinds.includes(k),
-			onClick: () => toggleKind(k)
-		}));
-	});
 	const allGroups = $derived.by<FacetGroup[]>(() => {
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
 		const factionCounts = facetOptions(facetMap(facets?.faction), faction);
@@ -469,7 +454,7 @@
 				id: 'soort',
 				label: 'Gebeurtenis',
 				kind: 'list',
-				options: kindOptions
+				options: kindOptions(facets && facetMap(facets.kind), tellen, kinds, toggleKind)
 			},
 			{
 				id: 'fractie',
