@@ -7,7 +7,7 @@
 		href: string;
 		/** What it holds, as its title. */
 		about?: string;
-		/** The glyph of the bron a list holds; a page beside the lists has none. */
+		/** The glyph of the bron a list holds, or of a page beside the lists (sources.ts). */
 		shape?: ReturnType<typeof shapeOfCategory>;
 	};
 </script>

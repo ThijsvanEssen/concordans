@@ -67,17 +67,11 @@ export const INDEX_CATEGORIES = INDEX_GROUPS.flatMap((group) =>
 	}))
 );
 
-/** The tab strip: each group with its categories, in order. */
-export const INDEX_TABS = INDEX_GROUPS.map((group) => ({
-	label: group.label,
-	categories: INDEX_CATEGORIES.filter((c) => c.group === group.label)
-}));
-
 /**
- * The tabs of a source: its lists, each at `listHref` (IndexView keeps the Kamer), then the
- * pages beside them (Rechtsgang). A source of one list and no page has no strip: empty.
+ * What a source holds: its lists, each at `listHref` (IndexView keeps the Kamer), with the
+ * pages beside them (Rechtsgang) where they follow. Its tabs, and its rows in Bronnen.
  */
-export function sourceTabs(
+export function sourceParts(
 	source: (typeof SOURCES)[number],
 	listHref: (category: IndexCategory) => string = (k) => LIST_PATHS[k]
 ): SourceTab[] {
@@ -94,8 +88,23 @@ export function sourceTabs(
 	const tabs = [...lists];
 	for (const p of source.pages) {
 		const after = tabs.findIndex((t) => t.key === p.after);
-		const tab = { key: p.path, label: p.label, href: p.path, about: routeKop(p.path).description };
+		const tab = {
+			key: p.path,
+			label: p.label,
+			href: p.path,
+			about: routeKop(p.path).description,
+			shape: p.shape
+		};
 		tabs.splice(after < 0 ? tabs.length : after + 1, 0, tab);
 	}
+	return tabs;
+}
+
+/** The tab strip of a source: a source of one list and no page has none (empty). */
+export function sourceTabs(
+	source: (typeof SOURCES)[number],
+	listHref?: (category: IndexCategory) => string
+): SourceTab[] {
+	const tabs = sourceParts(source, listHref);
 	return tabs.length > 1 ? tabs : [];
 }

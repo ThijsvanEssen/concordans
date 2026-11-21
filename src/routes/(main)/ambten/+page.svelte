@@ -4,7 +4,8 @@
 	// nobody holds today (`?ambten=alle`): a former office or a gap, not filled in.
 	import { page } from '$app/state';
 	import { getSeats } from '$lib/api/seats';
-	import MinistryLink from '$lib/bron/MinistryLink.svelte';
+	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Choice from '$lib/components/ui/Keuze.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -26,55 +27,55 @@
 	const groups = $derived(seats.state.status === 'ready' ? seatGroups(seats.state.data.items) : []);
 	const government = SOURCES.find((x) => x.id === 'regering')!;
 	const choose = (s: Shown) => navigate(withParams(page.url, { ambten: s === 'alle' ? s : null }));
+	const nameOf = (g: (typeof groups)[number]) => (g.ministry ? g.name : 'Zonder ministerie');
+	const anchorOf = (g: (typeof groups)[number]) => `ministerie-${g.ministry ?? 'geen'}`;
 </script>
 
 <RouteKop />
 
 <SourceTabs label={government.label} tabs={sourceTabs(government)} current="/ambten" />
 
-<div class="blad blad--tekst">
-	<header class="blad__kop"><h1 class="blad__titel">Ambten</h1></header>
-	<div class="keuze">
-		<Choice
-			label="Ambten"
-			opties={[
-				{ waarde: 'nu', label: 'Nu bezet' },
-				{ waarde: 'alle', label: 'Ook eerdere' }
-			]}
-			waarde={shown}
-			onSelect={choose}
-		/>
+<!-- In the frame of Bronnen (B170): the ministries as a way to each in the facet column, each
+     a section of its offices in the list column. The ministry itself is one tab further. -->
+<div class="blad blad__indeling">
+	<!-- The tab names the page, as on a list of Bladeren. -->
+	<h1 class="blad__titel sr-only">Bronnen: Ambten</h1>
+	<Inhoudsopgave items={groups.map((g) => ({ label: nameOf(g), id: anchorOf(g) }))} />
+	<div class="blad__lijst">
+		<div class="keuze">
+			<Choice
+				label="Ambten"
+				opties={[
+					{ waarde: 'nu', label: 'Nu bezet' },
+					{ waarde: 'alle', label: 'Ook eerdere' }
+				]}
+				waarde={shown}
+				onSelect={choose}
+			/>
+		</div>
+		{#if seats.state.status !== 'ready'}
+			<LoadState state={seats.state} what="De ambten" plural retry={seats.retry} />
+		{:else}
+			<div class="groepen">
+				{#each groups as g (g.ministry)}
+					<Sectie title={nameOf(g)} id={anchorOf(g)} niveau={2} inklapbaar={false}>
+						<SeatList seats={g.seats} />
+					</Sectie>
+				{/each}
+			</div>
+		{/if}
 	</div>
-	{#if seats.state.status !== 'ready'}
-		<LoadState state={seats.state} what="De ambten" plural retry={seats.retry} />
-	{:else}
-		{#each groups as g (g.ministry)}
-			<section class="ministerie">
-				<h2 class="ministerie__naam">
-					{#if g.ministry}<MinistryLink ministry={g.ministry} name={g.name || null} />{:else}Zonder
-						ministerie{/if}
-				</h2>
-				<SeatList seats={g.seats} />
-			</section>
-		{/each}
-	{/if}
 </div>
 
 <style>
 	.keuze {
-		margin-bottom: var(--s-4);
+		margin-bottom: var(--s-5);
 	}
-	.ministerie + .ministerie {
-		margin-top: var(--s-6);
-	}
-	.ministerie__naam {
-		margin: 0 0 var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.ministerie__naam :global(a) {
-		color: inherit;
+	/* The step between the groups of Bronnen. */
+	.groepen {
+		display: flex;
+		flex-direction: column;
+		--lezer-stap: var(--s-7);
+		gap: var(--lezer-stap);
 	}
 </style>

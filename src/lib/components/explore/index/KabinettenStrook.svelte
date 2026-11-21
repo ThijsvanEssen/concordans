@@ -4,13 +4,15 @@
 	// of the shared Tijdas. It scrolls and is dragged sideways, zooms with − and +, and opens
 	// at the present or at the cabinet opened. A click opens the cabinet in place under the
 	// strip (OpenRij); the bron is one step further, Kabinet lezen. An end no source gives is
-	// a dotted frame, as a stand-in on a post.
+	// a dotted frame, as a stand-in on a post. An edge that hides cabinets fades out, as the
+	// tab strip's (use:sideScroll, B170).
 	import { NOT_IN_DATA } from '$lib/text/coverage';
 	import { untrack } from 'svelte';
 	import { afterTick } from '$lib/util/after-tick';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import { pannable } from './pannable';
+	import { sideScroll } from '$lib/actions/side-scroll';
 	import { cabinetShortName, inOffice, type Cabinet } from './government';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { DAY_MS, fromDate, yearOf, periodSentence, vandaag } from '$lib/text/datum';
@@ -45,8 +47,8 @@
 	);
 	const open = (c: Cabinet) => inOffice(c, all);
 	/** Without a known end: a stub of a year, dotted. */
-	const onbekend = (c: Cabinet) => !c.to_date && !open(c);
-	const eindVan = (c: Cabinet) =>
+	const endUnknown = (c: Cabinet) => !c.to_date && !open(c);
+	const endOf = (c: Cabinet) =>
 		c.to_date ? ms(c.to_date) : open(c) ? nu : ms(c.from_date!) + JAAR;
 	const periode = $derived(
 		rows.length ? { van: ms(rows[0].from_date!), tot: nu, lopend: true } : null
@@ -57,11 +59,11 @@
 
 	// A cabinet takes the first lane where its name stands free.
 	const NAAM_PX = 7; // a character on t-micro in the serif, generously
-	const geplaatst = $derived.by(() => {
+	const placed = $derived.by(() => {
 		const banen: number[] = [];
 		return rows.map((c) => {
 			const van = x(ms(c.from_date!));
-			const tot = x(eindVan(c));
+			const tot = x(endOf(c));
 			const past = cabinetShortName(c.name).length * NAAM_PX + 8 <= tot - van;
 			// A name that does not fit the block stands right after it.
 			const eind = past
@@ -73,7 +75,7 @@
 			return { c, van, tot, baan, past };
 		});
 	});
-	const aantalBanen = $derived(Math.max(1, ...geplaatst.map((g) => g.baan + 1)));
+	const laneCount = $derived(Math.max(1, ...placed.map((g) => g.baan + 1)));
 
 	function zoom(step: number) {
 		const i = YEAR_WIDTHS.indexOf(yearWidth) + step;
@@ -93,16 +95,16 @@
 		if (!el) return;
 		untrack(() =>
 			afterTick(() => {
-				const g = geplaatst.find((p) => p.c.key === openKey);
+				const g = placed.find((p) => p.c.key === openKey);
 				el.scrollLeft = g ? g.van - el.clientWidth / 2 : el.scrollWidth;
 			})
 		);
 	});
 
-	const gekozen = $derived(rows.find((c) => c.key === openKey) ?? null);
+	const chosen = $derived(rows.find((c) => c.key === openKey) ?? null);
 	const zin = (c: Cabinet) =>
 		`${c.name}, ${
-			onbekend(c)
+			endUnknown(c)
 				? `${fromDate(c.from_date)}, eind ${NOT_IN_DATA}`
 				: periodSentence(c.from_date, c.to_date)
 		}${c.prime_minister?.name ? `, minister-president ${c.prime_minister.name}` : ''}${
@@ -134,17 +136,18 @@
 			data-zijscroll
 			bind:this={scroller}
 			use:pannable
+			use:sideScroll
 			role="region"
 			aria-label="Kabinetten in de tijd"
 		>
-			<div class="canvas" style:width="{breedte}px" style:--lanes={aantalBanen}>
+			<div class="canvas" style:width="{breedte}px" style:--lanes={laneCount}>
 				<div class="banen">
-					{#each geplaatst as g (g.c.key)}
+					{#each placed as g (g.c.key)}
 						<button
 							type="button"
 							class="cab"
 							class:cab--open={openKey === g.c.key}
-							class:cab--onbekend={onbekend(g.c)}
+							class:cab--onbekend={endUnknown(g.c)}
 							class:cab--past={g.past}
 							style:left="{g.van}px"
 							style:top="calc({g.baan} * var(--lane))"
@@ -161,18 +164,18 @@
 				<Tijdas {periode} from={yearOf(rows[0].from_date)} to="nu" plaats="onder" lijnen />
 			</div>
 		</div>
-		{#if gekozen}
+		{#if chosen}
 			<!-- In place, as an opened row in Bladeren; the bron one step further. -->
 			<div class="open">
 				<OpenRij
-					zin={zin(gekozen)}
+					zin={zin(chosen)}
 					links={[
 						{
-							label: `${gekozen.members} bewindspersonen`,
-							href: indexHref('ministers', { kabinet: gekozen.key })
+							label: `${chosen.members} bewindspersonen`,
+							href: indexHref('ministers', { kabinet: chosen.key })
 						}
 					]}
-					lezen={bronHref(`cabinets/${gekozen.key}`, { keepMode: false, mode: 'read' })}
+					lezen={bronHref(`cabinets/${chosen.key}`, { keepMode: false, mode: 'read' })}
 					lezenLabel="Kabinet lezen"
 				/>
 			</div>

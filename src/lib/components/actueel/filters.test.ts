@@ -325,3 +325,21 @@ describe('judgmentGroups: Instantie and Rechtsgebied as chips', () => {
 		]);
 	});
 });
+
+describe('the options of Gebeurtenis', () => {
+	it('give each kind the sign of the timeline, and "…" while counting', async () => {
+		const { kindOptions } = await import('./filters');
+		const counting = kindOptions(null, true, ['stemming'], () => {});
+		expect(counting.find((o) => o.id === 'stemming')).toMatchObject({
+			shape: 'besluit',
+			count: 0,
+			on: true
+		});
+		expect(counting.find((o) => o.id === 'uitspraak')?.shape).toBe('uitspraak');
+		expect(kindOptions(new Map([['Motie', 3]]), false, [], () => {})[4]).toMatchObject({
+			id: 'Motie',
+			shape: 'stuk',
+			count: 3
+		});
+	});
+});

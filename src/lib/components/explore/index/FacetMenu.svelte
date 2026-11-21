@@ -6,6 +6,7 @@
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
@@ -106,6 +107,8 @@
 			{/if}
 			<ul class="options" id="{uid}-o-{g.id}">
 				{#each matching(g, options) as o (o.id)}
+					{@const shape = 'shape' in o ? o.shape : undefined}
+					{#snippet glyph()}{#if shape}<KindGlyph vorm={shape} />{/if}{/snippet}
 					<li>
 						<FilterOptie
 							{menu}
@@ -117,6 +120,7 @@
 							loading={pending && o.count !== undefined}
 							swatch={'swatch' in o ? o.swatch : undefined}
 							indent={'indent' in o ? o.indent : undefined}
+							voor={shape ? glyph : undefined}
 							wrap
 						/>
 					</li>

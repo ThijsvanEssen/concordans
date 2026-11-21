@@ -496,7 +496,7 @@
 <aside class="verbonden" class:verbonden--tekst={tekst} aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
-		<!-- At the right of the heading: Filter, and the werkplek with this bron (Thijs, 29 Oct). -->
+		<!-- At the right of the heading: the werkplek with this bron (Thijs, 29 Oct); no Filter (B64). -->
 		{#if !empty}
 			<span class="head__acties">
 				{#if tekst}
@@ -744,7 +744,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
-	/* The heading, Filter and Open in netwerk at its right, the count on the line under it;
+	/* The heading, Open in netwerk at its right, the count on the line under it;
 	   a rule under all of it (docs/bediening.md). */
 	.head {
 		display: flex;

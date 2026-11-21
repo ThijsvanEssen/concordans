@@ -7,10 +7,11 @@ import { PARAM, listParam } from '$lib/url/filters';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 import { TIERS, TIER_LABEL, type Tier } from '$lib/vocabulary';
 import { capitalize } from '$lib/text/words';
-import { FEED_KINDS, isFeedKind, type FeedKind } from './feed';
+import { FEED_KINDS, KIND_LABEL, isFeedKind, type FeedKind } from './feed';
 import { NO_AREA, NO_AREA_LABEL } from './lower-courts';
 import type { Schema } from '$lib/api/types';
 import { facetMap, type FacetGroup } from '$lib/components/explore/index/facets';
+import { vormVanFeed } from './home-stream';
 
 export type FeedQuery = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
 
@@ -300,3 +301,22 @@ export function judgmentGroups(
 		}
 	];
 }
+
+/**
+ * The options of Gebeurtenis: each kind of event with its sign, as the timeline shows it
+ * (B170), and its count; while counting a count of 0 that FilterBar shows as "…" (`pending`).
+ */
+export const kindOptions = (
+	counts: Map<string, number> | null,
+	counting: boolean,
+	chosen: readonly FeedKind[],
+	toggle: (k: FeedKind) => void
+) =>
+	FEED_KINDS.map((k) => ({
+		id: k,
+		label: KIND_LABEL[k].one,
+		shape: vormVanFeed({ kind: k }),
+		count: counts ? (counts.get(k) ?? 0) : counting ? 0 : undefined,
+		on: chosen.includes(k),
+		onClick: () => toggle(k)
+	}));

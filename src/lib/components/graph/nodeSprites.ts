@@ -358,6 +358,8 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	kabinet: 4.4,
 	ministerie: 4.4,
 	bewindspersoon: 3.2,
+	ambt: 4.4,
+	rechtsgang: 6.5,
 	overig: 3.5
 };
 

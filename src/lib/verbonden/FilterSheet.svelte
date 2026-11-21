@@ -12,8 +12,8 @@
 	import { SORT_SHAPE } from '$lib/bron/vormen';
 	import { STUKSOORTEN, STUKSOORT_LABEL, sortColour } from '$lib/bron/rubrieken';
 	// The filter sheet: soort, relatie, lid, rechter, periode, zekerheid and
-	// status, applied with one button. The same sheet opens from the panel and from
-	// the legend of the network. A Blad: the focus goes to the search field on open, stays inside
+	// status, applied with one button. It opens from the Filter button of the table of
+	// Verbonden (VerbondenTabel). A Blad: the focus goes to the search field on open, stays inside
 	// while it is open, and returns to where it was on close.
 	import type { Collection } from '$lib/vocabulary';
 	import {

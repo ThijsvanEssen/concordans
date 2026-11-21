@@ -5,11 +5,11 @@ import { sourceTabs } from './categories';
 const of = (id: string) => SOURCES.find((s) => s.id === id)!;
 
 describe('the tabs of a source', () => {
-	it('are its lists, each with its glyph, then its pages without one', () => {
+	it('are its lists and the pages beside them, each with its glyph', () => {
 		const tabs = sourceTabs(of('rechtspraak'));
 		expect(tabs.map((t) => [t.label, t.href, t.shape])).toEqual([
 			['Uitspraken', '/uitspraken', 'uitspraak'],
-			['Rechtsgang', '/rechtspraak/rechtsgang', undefined]
+			['Rechtsgang', '/rechtspraak/rechtsgang', 'rechtsgang']
 		]);
 		expect(tabs[1].about).toBeTruthy();
 	});

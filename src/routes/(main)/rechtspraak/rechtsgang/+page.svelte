@@ -67,7 +67,8 @@
 
 <div class="page-wrap">
 	<div class="container blad rechtsgang">
-		<header class="blad__kop"><h1 class="blad__titel">Rechtsgang</h1></header>
+		<!-- The tab names the page, as on a list of Bladeren (B170). -->
+		<h1 class="blad__titel sr-only">Bronnen: Rechtsgang</h1>
 		<p class="stil lede">
 			Instanties per rechtsgebied, volgens de <a href={openHref(RO)}
 				>Wet op de rechterlijke organisatie</a

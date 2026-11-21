@@ -4,6 +4,7 @@
 // of its menu (the courts under Instantie, in the order of the judiciary).
 import { facetOptions } from '$lib/util/choice';
 import { rangeLabel } from './range';
+import type { Shape } from '$lib/bron/vormen';
 
 type FacetOption = {
 	id: string;
@@ -12,6 +13,8 @@ type FacetOption = {
 	onClick: () => void;
 	count?: number | string;
 	swatch?: string;
+	/** Before the label: the sign of the kind it holds, as its rows show it (Actueel, B170). */
+	shape?: Shape;
 	/** Under an option of the same group: a specific area under its rechtsgebied. */
 	indent?: boolean;
 	/** What holds without a choice (the open dossiers): on, but not shown as a filter. */

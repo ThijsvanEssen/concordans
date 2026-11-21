@@ -91,12 +91,11 @@
 		shownFilters,
 		summaryQuery,
 		type CoalitionWord,
+		kindOptions,
 		type FeedQuery
 	} from '$lib/components/actueel/filters';
 	import {
 		CLOSE_VOTE,
-		FEED_KINDS,
-		KIND_LABEL,
 		atomHref,
 		daysOf,
 		wholeDays,
@@ -448,7 +447,6 @@
 	/** Only a vote has a coalition: before the counts are in, room is kept for it where votes may be. */
 	const votesPossible = $derived(kinds.length === 0 || kinds.includes('stemming'));
 	const allGroups = $derived.by<FacetGroup[]>(() => {
-		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
 		const factionCounts = facetOptions(facetMap(facets?.faction), faction);
 		return [
@@ -456,14 +454,7 @@
 				id: 'soort',
 				label: 'Gebeurtenis',
 				kind: 'list',
-				options: FEED_KINDS.map((k) => ({
-					id: k,
-					label: KIND_LABEL[k].one,
-					// While counting, "…" beside each kind (FilterBar `pending`).
-					count: facets ? (kindCounts.get(k) ?? 0) : tellen ? 0 : undefined,
-					on: kinds.includes(k),
-					onClick: () => toggleKind(k)
-				}))
+				options: kindOptions(facets && facetMap(facets.kind), tellen, kinds, toggleKind)
 			},
 			{
 				id: 'fractie',
