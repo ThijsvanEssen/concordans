@@ -7,6 +7,7 @@ import { isExplorePath } from '$lib/bron/address';
 import { listOfPath } from '$lib/bron/lists';
 import { indexHref } from '$lib/bron/href';
 import { RUBRIEK_LABEL, isMinister, rubriekOf, type Rubriek } from '$lib/bron/rubrieken';
+import type { Shape } from '$lib/bron/vormen';
 
 type SourceId = Rubriek;
 
@@ -25,6 +26,8 @@ type Source = {
 type SourcePage = {
 	path: string;
 	label: string;
+	/** Its sign, from the family of its rubriek (vormen.ts): in its tab and in Bronnen. */
+	shape: Shape;
 	/** The list whose tab it follows; without it, after the last. */
 	after?: string;
 };
@@ -50,7 +53,7 @@ export const SOURCES: readonly Source[] = [
 		'rechtspraak',
 		'rechtbank tot Hoge Raad',
 		['judgments'],
-		[{ path: '/rechtspraak/rechtsgang', label: 'Rechtsgang' }]
+		[{ path: '/rechtspraak/rechtsgang', label: 'Rechtsgang', shape: 'rechtsgang' }]
 	),
 	source('kamerstukken', 'dossiers, stukken, stemmingen, toezeggingen', [
 		'dossiers',
@@ -67,7 +70,7 @@ export const SOURCES: readonly Source[] = [
 		'regering',
 		'kabinetten, ministeries, bewindspersonen, ambten',
 		['cabinets', 'ministries', 'ministers'],
-		[{ path: '/ambten', label: 'Ambten', after: 'ministries' }]
+		[{ path: '/ambten', label: 'Ambten', shape: 'ambt', after: 'ministries' }]
 	)
 ];
 

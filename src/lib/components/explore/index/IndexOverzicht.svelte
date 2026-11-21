@@ -5,28 +5,30 @@
 	// frame of the other full-width pages (Gevolgd, Actueel): the heading above both columns, the
 	// groups as anchors in the facet column, and in the list column each group a Sectie with its
 	// kinds as rows (Thijs, 10 Oct: "sluit nog niet helemaal aan op de design language").
-	import { indexHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Inhoudsopgave from '$lib/components/ui/Inhoudsopgave.svelte';
-	import { INDEX_TABS } from './categories';
-	import { shapeOfCategory } from '$lib/bron/vormen';
+	import { sourceParts } from './categories';
+	import { SOURCES } from '$lib/nav/sources';
 	import { getStats } from '$lib/api/stats';
 	import { formatCount } from '$lib/text/getal';
 	import { report } from '$lib/api/errors';
 
 	// Each kind with the total its own list gives without a filter (`/api/stats` `lists`,
 	// API 0.79.41): the number the list shows when opened. Empty while it is not there.
-	let lijsten = $state<Record<string, number | null>>({});
+	let counts = $state<Record<string, number | null>>({});
 	$effect(() => {
 		getStats()
-			.then((s) => (lijsten = s.lists ?? {}))
+			.then((s) => (counts = s.lists ?? {}))
 			.catch((e) => report('Aantallen per soort', e));
 	});
-	/** The key of a kind in `lists`: the bewindspersonen are its name for the ministers. */
-	const telVan = (kind: string) => lijsten[kind === 'ministers' ? 'bewindspersonen' : kind] ?? null;
+	/** The key of a kind in `lists`: the bewindspersonen are its name for the ministers. A page
+	 *  beside the lists (Rechtsgang, Ambten) has no count. */
+	const countOf = (kind: string) => counts[kind === 'ministers' ? 'bewindspersonen' : kind] ?? null;
+	/** Each rubriek with its lists and the pages beside them, as its tab strip holds them. */
+	const groups = SOURCES.map((s) => ({ label: s.label, parts: sourceParts(s) }));
 
-	const anker = (label: string) => `groep-${label.toLowerCase().replace(/\s+/g, '-')}`;
+	const anchor = (label: string) => `groep-${label.toLowerCase().replace(/\s+/g, '-')}`;
 </script>
 
 <div class="overzicht blad blad__indeling">
@@ -35,19 +37,17 @@
 	</header>
 
 	<!-- The groups of the page, as a facet column holds its groups: a way to each. -->
-	<Inhoudsopgave
-		items={INDEX_TABS.map((groep) => ({ label: groep.label, id: anker(groep.label) }))}
-	/>
+	<Inhoudsopgave items={groups.map((group) => ({ label: group.label, id: anchor(group.label) }))} />
 
 	<div class="groepen">
-		{#each INDEX_TABS as groep (groep.label)}
-			<Sectie title={groep.label} id={anker(groep.label)} niveau={2} inklapbaar={false}>
+		{#each groups as group (group.label)}
+			<Sectie title={group.label} id={anchor(group.label)} niveau={2} inklapbaar={false}>
 				<ul class="rijen">
-					{#each groep.categories as cat (cat.key)}
-						{@const n = telVan(cat.key)}
+					{#each group.parts as part (part.key)}
+						{@const n = countOf(part.key)}
 						<li>
-							<a href={indexHref(cat.key)} title={cat.about}
-								><KindGlyph vorm={shapeOfCategory(cat.key)} size={14} /><span>{cat.label}</span
+							<a href={part.href} title={part.about}
+								><KindGlyph vorm={part.shape} size={14} /><span>{part.label}</span
 								>{#if n !== null}<span class="tel">{formatCount(n)}</span>{/if}</a
 							>
 						</li>

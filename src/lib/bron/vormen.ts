@@ -1,7 +1,8 @@
 // De tekens van Concordans. De vorm zegt wat een bron is; in de tekst staat het teken in
 // inkt, in een netwerktekening in de kleur van zijn rubriek (indeling.ts). Eén tabel voor de
 // tekens in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
-// Een rubriek heeft zelf geen teken.
+// Een rubriek heeft zelf geen teken; een pagina naast de lijsten (Rechtsgang, Ambten) een
+// teken uit de familie van haar rubriek (B170).
 import { BILL_KIND, isCollection, isInternational, type Collection } from '$lib/vocabulary';
 import { isMinister, type Sort } from './rubrieken';
 
@@ -23,7 +24,12 @@ export type Vorm =
 	| 'kabinet'
 	| 'ministerie'
 	| 'bewindspersoon'
+	| 'ambt'
+	| 'rechtsgang'
 	| 'overig';
+
+/** A sign by its English name, for code outside this table. */
+export type Shape = Vorm;
 
 /** Hoe een vorm getekend wordt: gevuld, gevuld met een gat, of als lijn. */
 type Wijze = 'vul' | 'gat' | 'lijn';
@@ -32,6 +38,8 @@ const HEX = 'M8 1 14.5 4.75v7.5L8 16 1.5 12.25v-7.5z';
 const HEX_O = 'M8 2.4 13.3 5.45v6.1L8 14.6 2.7 11.55v-6.1z';
 const CIRKEL = (cx: number, cy: number, r: number) =>
 	`M${cx + r} ${cy}a${r} ${r} 0 1 1-${2 * r} 0a${r} ${r} 0 1 1 ${2 * r} 0z`;
+/** De romp van een persoon, als gat in een zeshoek: het ambt. */
+const TORSO_HOLE = 'M3.6 13c0-3 2-4.6 4.4-4.6s4.4 1.6 4.4 4.6z';
 
 export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
 	regel: { d: 'M2 2h12v12H2z', wijze: 'vul' },
@@ -66,6 +74,13 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
 		d: `${CIRKEL(8, 4.6, 3.2)}M1.5 15c0-4.2 2.9-6.4 6.5-6.4s6.5 2.2 6.5 6.4z${CIRKEL(8, 12.1, 1.8)}`,
 		wijze: 'gat'
 	},
+	// Een ambt is de zeshoek van het orgaan met een persoon als gat: de plaats die een
+	// bewindspersoon bezet, naast het kabinet (rond gat) en het ministerie (balk). Kop en romp
+	// groot genoeg dat het op 11 px twee gaten zijn, geen kabinet (ux-toets B170).
+	ambt: { d: `${HEX}${CIRKEL(8, 5.4, 2.4)}${TORSO_HOLE}`, wijze: 'gat' },
+	// De rechtsgang: drie treden, van rechtbank via hof naar Hoge Raad. Kralen van de
+	// uitspraak lazen op 11 px als een streep (B170).
+	rechtsgang: { d: 'M1 15v-4.5h4.5V6H10V1.5h5V15z', wijze: 'vul' },
 	overig: { d: CIRKEL(8, 8, 4), wijze: 'lijn' }
 };
 
