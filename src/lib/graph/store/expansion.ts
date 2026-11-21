@@ -26,6 +26,24 @@ import {
 	type NeighborhoodReach
 } from './types';
 
+type SubNode = Schema<'NodeNeighborhoodResponse'>['nodes'][number];
+type SubEdge = Schema<'NodeNeighborhoodResponse'>['edges'][number];
+
+/** The node as the canvas draws it, or the whole one where that is in already (see `GraphStore`). */
+function canvasResponseOf(
+	cache: Map<string, Schema<'NodeGraphResponse'>>,
+	signal: AbortSignal | undefined,
+	collection: Collection,
+	key: string
+) {
+	const full = cache.get(nodeId(collection, key.toLowerCase()));
+	if (full) return Promise.resolve(full);
+	return abortable(
+		withLatestFirst(collection, key, getNodeCanvasWhole(collection, key), 'canvas'),
+		signal
+	);
+}
+
 export function createExpansion(
 	ctx: GraphContext
 ): Pick<
@@ -84,18 +102,6 @@ export function createExpansion(
 			}
 		);
 	};
-
-	const canvasResponse: GraphStore['canvasResponse'] = (collection, key) => {
-		const full = cache.get(nodeId(collection, key.toLowerCase()));
-		if (full) return Promise.resolve(full);
-		return abortable(
-			withLatestFirst(collection, key, getNodeCanvasWhole(collection, key), 'canvas'),
-			signal()
-		);
-	};
-
-	type SubNode = Schema<'NodeNeighborhoodResponse'>['nodes'][number];
-	type SubEdge = Schema<'NodeNeighborhoodResponse'>['edges'][number];
 
 	/**
 	 * Draws the nodes and edges of a subgraph (a neighbourhood) by the canvas's rules: a container becomes a hull, a wet a stuk changes its
@@ -201,11 +207,8 @@ export function createExpansion(
 
 	return {
 		nodeResponse,
-
-		canvasResponse,
-
+		canvasResponse: (c, k) => canvasResponseOf(cache, signal(), c, k),
 		askNeighborhood,
-
 		// The bron itself before its neighbours: from the light node (`getNodeFirst`), so the
 		// reader and the panels start while the full node is still on its way.
 		peekNode: async (collection, key) => {
