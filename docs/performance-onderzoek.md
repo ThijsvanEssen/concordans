@@ -30,7 +30,7 @@ Legenda: **[gemeten]** = uit build-output of curl; **[vermoed]** = uit code afge
 ### 2. GraphView-chunk laadt altijd op /explore, ook in leesmodus
 
 - **Bewijs:** `src/routes/explore/+page.svelte:1691` `$effect(() => graphChunk.load())` zonder voorwaarde (de index-chunk op :1693 is wel voorwaardelijk). `exploreMode()` (`src/lib/bron/href.ts:20-27`) geeft `'read'` voor elk leesbaar adres (`/wetten/...`, `/uitspraken/...`, `focus=`) en `'graph'` alleen voor netwerkmodus; daar is het canvas niet zichtbaar (`canvasZichtbaar`, :1676). **[gemeten]** chunk `GraphView`+graphology: 176 KB raw / 54 KB gz (graphology 178 KB bron, `GraphCanvas` 57 KB, `hulls` 22 KB). Sigma (15 KB gz) komt pas bij mount van het canvas. **[vermoed]** dat leesverkeer (zoekmachine-landingen op leesbare adressen) hem niet nodig heeft; hij concurreert op trage verbinding met de lezer-chunk.
-- **Fix:** `graphChunk.load()` alleen bij `mode === 'graph'`, anders prefetch in `requestIdleCallback` na het eerste lezer-resultaat (zodat wisselen naar netwerk niet wacht).
+- **Fix:** `graphChunk.load()` alleen bij `mode === 'graph'`, anders prefetch in `requestIdleCallback` zodra de pagina geen API-antwoord meer verwacht (`whenApiQuiet`, `$lib/api/quiet.ts`), en niet bij Data Saver of 3g of trager (zodat wisselen naar netwerk niet wacht, en de lezer de lijn houdt).
 - **Risico:** laag-middel: canvas verschijnt later bij directe klik zonder prefetch; e2e voor netwerk-wissel draaien.
 - **Schatting:** -54 KB gz op de kritieke weg van leesbare adressen. Inspanning 1-2 uur.
 

@@ -19,7 +19,7 @@
 	import { NOT_IN_DATA, noneHeld, notHeld } from '$lib/text/coverage';
 	import { articleRef, bwCode } from '$lib/text/bw';
 	import { onDestroy, onMount, untrack } from 'svelte';
-	import { whenIdle } from '$lib/util/idle';
+	import { preloadAfterAnswers } from '$lib/api/quiet';
 	import { answer } from '$lib/keys/dispatch.svelte';
 	import { offer, type Target } from '$lib/keys/doen.svelte';
 	import { focusView, keyView, stepBy, werkplekDoer, type ViewId, type Werkplek } from './doen';
@@ -1795,8 +1795,8 @@
 		() => import('$lib/components/explore/index/IndexOverzicht.svelte'),
 		'Verkenner onderdeel'
 	);
-	// Reading needs none of them: the canvas comes with the Netwerk, and while the page is idle
-	// ahead of that, so the switch finds it in.
+	// Reading needs none of them: the canvas comes with the Netwerk, and ahead of that once the
+	// page has had its answers and is idle (not on a sparing line), so the switch finds it in.
 	$effect(() => {
 		if (mode === 'graph') {
 			graphChunk.load();
@@ -1809,7 +1809,7 @@
 			graphChunk.load();
 			panelChunk.load();
 		};
-		return whenIdle(ask, { timeout: 5000, fallback: 3000 });
+		return preloadAfterAnswers(ask);
 	});
 	$effect(() => {
 		if (mode === 'index') {

@@ -1,6 +1,7 @@
 import createClient from 'openapi-fetch';
 import { API_BASE_URL } from './base-url';
 import type { paths } from './generated/openapi-types';
+import { tracked } from './quiet';
 
 export const TIMEOUT_MS = 10_000;
 /** A search of the slow kinds (judgments, articles and stukken): the API's own deadline. */
@@ -31,10 +32,12 @@ const bewaak = import.meta.env.DEV && !import.meta.env.VITEST ? teller() : null;
 /** A fetch that gives up after `ms`, beside the caller's own abort. */
 export const timedFetch = (ms: number) => (request: Request) => (
 	bewaak?.(request.url),
-	fetch(
-		new Request(request, {
-			signal: AbortSignal.any([request.signal, AbortSignal.timeout(ms)])
-		})
+	tracked(
+		fetch(
+			new Request(request, {
+				signal: AbortSignal.any([request.signal, AbortSignal.timeout(ms)])
+			})
+		)
 	)
 );
 
