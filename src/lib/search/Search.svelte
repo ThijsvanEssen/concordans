@@ -6,6 +6,7 @@
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import ZoekHulp from './ZoekHulp.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import { chamberLinks } from './kamer';
@@ -469,6 +470,7 @@
 						{/if}
 					</span>
 				</div>
+				<ZoekHulp searched={search.searched} onleave={() => onOpen?.()} />
 			{/if}
 		</div>
 		{#snippet aside()}

@@ -30,6 +30,8 @@
 	} from '$lib/search/results';
 	import { SearchResults } from '$lib/search/results.svelte';
 	import ResultRow from '$lib/search/ResultRow.svelte';
+	import ZoekHulp from '$lib/search/ZoekHulp.svelte';
+	import { FEW_HITS } from '$lib/search/hulp';
 	import { filterAddress, withParams } from '$lib/util/address';
 	import { atLeast, formatCount } from '$lib/text/getal';
 	import { uniqueBy } from '$lib/util/unique';
@@ -182,6 +184,21 @@
 	const filteredAway = $derived(
 		q.length >= 2 && results.done && !empty && total === 0 && results.failed.length === 0
 	);
+	/** One or two hits, none cut off at the limit, on words asked unfiltered: nearly nothing. */
+	const few = $derived(
+		q.length >= 2 &&
+			results.done &&
+			results.failed.length === 0 &&
+			!chosen &&
+			!from &&
+			!to &&
+			total > 0 &&
+			total <= FEW_HITS &&
+			narrowerWords(q).length > 0
+	);
+	const searchedAll = $derived(
+		Object.assign({}, ...LANES.map((l) => results.lanes[l.id].searched))
+	);
 	const leftOut = $derived([...new Set(SEARCH_KINDS.flatMap((k) => results.laneOf(k).leftOut))]);
 	const failedNames = $derived(
 		results.failed.map((l) => ({ id: l.id, name: l.kinds.map((k) => groupLabel(k)).join(' en ') }))
@@ -189,6 +206,18 @@
 </script>
 
 <RouteKop />
+
+<!-- The ways on from a search that found nothing or little: its words one by one. -->
+{#snippet verder()}
+	<span class="verder">
+		{#each narrowerWords(q) as word (word)}
+			<TextLink href={resultsHref(word, from, to)}>Zoek "{word}"</TextLink>
+		{/each}
+		{#if empty && (from || to)}
+			<TextLink href={hrefWith({ [P.from]: null, [P.to]: null })}>Zonder periode</TextLink>
+		{/if}
+	</span>
+{/snippet}
 
 <!-- How many hits, before the filters chosen. -->
 {#snippet countLine()}
@@ -312,20 +341,18 @@
 		{#if empty}
 			<div class="staat stil" role="status">
 				<span>Geen resultaten voor "{q}"</span>
-				<span class="verder">
-					{#each narrowerWords(q) as word (word)}
-						<TextLink href={resultsHref(word, from, to)}>Zoek "{word}"</TextLink>
-					{/each}
-					{#if from || to}
-						<TextLink href={hrefWith({ [P.from]: null, [P.to]: null })}>Zonder periode</TextLink>
-					{/if}
-				</span>
+				{@render verder()}
 			</div>
+			<ZoekHulp searched={searchedAll} />
 		{:else if filteredAway}
 			<div class="staat stil" role="status">
 				<span>Geen resultaten met deze filters</span>
 				<span class="verder"><TextLink onclick={clearFilters}>Wissen</TextLink></span>
 			</div>
+		{/if}
+
+		{#if few}
+			<div class="staat stil">{@render verder()}</div>
 		{/if}
 	</div>
 </div>

@@ -57,7 +57,7 @@ export const noneHeld = (what: string) => `geen ${what} ${IN_DATA}`;
 export const notHeld = (name: string) => `${name} staat ${NOT_IN_DATA}`;
 
 /** What a search reads, as the API names it: `title` → titels. */
-const SEARCHED: Record<Schema<'Searched'>, string> = {
+export const SEARCHED: Record<Schema<'Searched'>, string> = {
 	title: 'titels',
 	name: 'namen',
 	number: 'nummers',

@@ -109,9 +109,40 @@ test('nothing found has a page that offers a way on', async ({ page }) => {
 	await answerSearch(page, {});
 	await page.goto('/zoeken?q=xqzvbnm+qwertzpl');
 	await expect(page.getByText('Geen resultaten voor "xqzvbnm qwertzpl"')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Kamerstukken', exact: true }).last()).toBeVisible();
+	await expect(page.getByText('Blader in')).toBeVisible();
 	await page.getByRole('link', { name: 'Zoek "qwertzpl"' }).click();
 	await expect(page).toHaveURL(/q=qwertzpl/);
 	await expect(page.getByText('Geen resultaten voor "qwertzpl"')).toBeVisible();
+});
+
+test('nothing found says what was not read', async ({ page }) => {
+	const searched = (fields: string[], text: string) => ({
+		fields,
+		completeness: { text: { state: text, as_of: null, missing: null, reason: null } },
+		signed_for: []
+	});
+	await answerSearch(
+		page,
+		{},
+		{
+			searched: {
+				documents: searched(['title', 'number'], 'none'),
+				judgments: searched(['title', 'number'], 'none')
+			}
+		}
+	);
+	await page.goto('/zoeken?q=coalitiecrisis');
+	await expect(
+		page.getByText('Gezocht in titels en nummers, niet in de tekst van kamerstukken en uitspraken')
+	).toBeVisible();
+});
+
+test('a search with one or two hits offers its words one by one, no more', async ({ page }) => {
+	await answerSearch(page, { articles: [article(74)] });
+	await page.goto('/zoeken?q=opzegtermijn+coalitie');
+	await expect(page.getByRole('link', { name: 'Zoek "coalitie"' })).toBeVisible();
+	await expect(page.getByText('Blader in')).toHaveCount(0);
 });
 
 test('the source of a hit is a word wide, not squeezed to a letter by a long text', async ({
