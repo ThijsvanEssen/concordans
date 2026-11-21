@@ -118,6 +118,11 @@ export type GraphStore = {
 	containers: Readable<Map<string, ContainerGroup>>;
 	/** The node response of a bron, from the cache or the API. Nothing is drawn. */
 	nodeResponse: (collection: Collection, key: string) => Promise<Schema<'NodeGraphResponse'>>;
+	/**
+	 * The node of a bron with only what the canvas draws (`props=canvas`, 200 a bucket). Not kept
+	 * with `nodeResponse`: a panel that reads more props asks `nodeResponse` itself.
+	 */
+	canvasResponse: (collection: Collection, key: string) => Promise<Schema<'NodeGraphResponse'>>;
 	expandNode: (
 		collection: Collection,
 		key: string,

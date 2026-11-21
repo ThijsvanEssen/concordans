@@ -176,7 +176,7 @@ export class NetwerkComposer {
 	#fullOf(id: string): Promise<NodeResponse> {
 		let request = this.#full.get(id);
 		if (!request) {
-			request = apiKey(id).then(({ collection, key }) => this.#store.nodeResponse(collection, key));
+			request = apiKey(id).then(({ collection, key }) => this.#store.canvasResponse(collection, key));
 			request.then(
 				() => this.#fullIn.add(id),
 				() => this.#full.delete(id)

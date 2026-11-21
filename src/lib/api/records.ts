@@ -89,7 +89,18 @@ export const getNodeFirst = (collection: Collection, key: string) =>
 export const CANVAS_BUCKET = 30;
 export const getNodeCanvas = (collection: Collection, key: string) =>
 	once(`nodes/${collection}/${key}/canvas`, () =>
-		getNodeGraph(collection, key, { limit: CANVAS_BUCKET })
+		getNodeGraph(collection, key, { limit: CANVAS_BUCKET, props: 'canvas' })
+	);
+
+/**
+ * The whole node of a bron as the canvas draws it: 200 per bucket with only the props the canvas
+ * reads (`props=canvas`; the Awb on prod: 0.93 MB against 1.5 MB, 151 kB against 253 kB gzip).
+ * What a netwerk and the keten draw from. A panel that wants more asks it of the bron itself
+ * when it opens (`getNode`, `getNodeVerbonden`), never from this.
+ */
+export const getNodeCanvasWhole = (collection: Collection, key: string) =>
+	once(`nodes/${collection}/${key}/canvas-whole`, () =>
+		getNodeGraph(collection, key, { limit: NODE_BUCKET, props: 'canvas' })
 	);
 
 /**
@@ -105,7 +116,8 @@ export const getNodeHull = (collection: Collection, key: string) =>
 					limit: NODE_BUCKET,
 					relations: 'PART_OF',
 					nodeTypes: 'article',
-					direction: 'inbound'
+					direction: 'inbound',
+					props: 'canvas'
 				})
 			)
 		: getNode(collection, key);

@@ -5,6 +5,7 @@ import {
 	CANVAS_BUCKET,
 	getNode,
 	getNodeCanvas,
+	getNodeCanvasWhole,
 	getNodeFirst,
 	getNodeHull
 } from '$lib/api/records';
@@ -34,6 +35,7 @@ export function createExpansion(
 	| 'expandNeighborhood'
 	| 'askNeighborhood'
 	| 'nodeResponse'
+	| 'canvasResponse'
 	| 'neighborhood'
 > {
 	const {
@@ -80,6 +82,15 @@ export function createExpansion(
 				cache.set(id, response);
 				return response;
 			}
+		);
+	};
+
+	const canvasResponse: GraphStore['canvasResponse'] = (collection, key) => {
+		const full = cache.get(nodeId(collection, key.toLowerCase()));
+		if (full) return Promise.resolve(full);
+		return abortable(
+			withLatestFirst(collection, key, getNodeCanvasWhole(collection, key), 'canvas'),
+			signal()
 		);
 	};
 
@@ -190,6 +201,8 @@ export function createExpansion(
 
 	return {
 		nodeResponse,
+
+		canvasResponse,
 
 		askNeighborhood,
 

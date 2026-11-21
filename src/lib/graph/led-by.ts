@@ -32,7 +32,8 @@ export const LED_BY_FOCUS: ReadonlySet<Collection> = new Set(Object.keys(OTHER) 
 export async function withLatestFirst(
 	collection: Collection,
 	key: string,
-	full: Promise<NodeResponse>
+	full: Promise<NodeResponse>,
+	props?: 'canvas'
 ): Promise<NodeResponse> {
 	if (collection !== 'committees') return full;
 	const other = OTHER[collection]!;
@@ -43,7 +44,8 @@ export async function withLatestFirst(
 			relations: 'LED_BY',
 			nodeTypes: NODE_TYPES[other.collection],
 			direction: other.direction,
-			sort: 'importance'
+			sort: 'importance',
+			props
 		}).catch(ignore('Commissie: dossiers, de laatste eerst'))
 	]);
 	const bucket = sorted && ledBucket(collection, sorted);

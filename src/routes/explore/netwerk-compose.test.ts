@@ -65,6 +65,7 @@ describe('the steps of a netwerk', () => {
 	const setup = (capped = false) => {
 		const store = {
 			nodeResponse: vi.fn(async (c: string, k: string) => responseOf(c, k)),
+			canvasResponse: vi.fn(async (c: string, k: string) => responseOf(c, k)),
 			compose: vi.fn((_input: { fresh: boolean }) => ({ alone: new Set<string>(), joining: [] })),
 			releaseNetwerk: vi.fn(),
 			expandNeighborhood: vi.fn(
@@ -101,12 +102,12 @@ describe('the steps of a netwerk', () => {
 		composer.light = true;
 		composer.compose(netwerk('members/a'));
 		await settle(composer);
-		expect(store.nodeResponse).not.toHaveBeenCalled();
+		expect(store.canvasResponse).not.toHaveBeenCalled();
 		expect(store.expandNeighborhood).not.toHaveBeenCalled();
 		composer.light = false;
 		composer.compose(netwerk('members/a'));
 		await settle(composer);
-		expect(store.nodeResponse).toHaveBeenCalledTimes(1);
+		expect(store.canvasResponse).toHaveBeenCalledTimes(1);
 		expect(store.expandNeighborhood).toHaveBeenCalledTimes(1);
 	});
 
