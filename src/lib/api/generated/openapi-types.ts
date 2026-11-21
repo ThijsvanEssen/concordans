@@ -1496,6 +1496,8 @@ export interface paths {
          *
          *     A query that is a term of the curated list of concepts (`wanprestatie`, `ontslag op staande voet`, `GDPR`, `minimum wage`; the whole query or its words without its stop words, any case, without accents and punctuation; docs/api.md "Concepts") has the article or law the term is about first among the hits of its type, score 1, `exact`, with `concept` the term (not with a period, nor when its type is not in `types`); it is `best` unless `resolved` names something with confidence 0.9 or more.
          *
+         *     Recent work (`mode=full`): a hit of the last 12 months by a day of its own (a judgment the day of its decision, a paper its date, a dossier the day it was opened, a law the day it came into force; not an article) ranks 1.5 times as high by its words: of the hits whose words weigh about the same this year's come first, never above a better tier nor above what `q` names exactly. `sort=newest` orders the hits of those types newest first instead (unranked; what `q` names exactly first).
+         *
          *     Pages and facets (`mode=full`): `offset` skips that many hits of each type (a page of `limit`, `offset` at most 500). `facets=true` adds `counts`, per type how many hits it has (`total`; `capped`: at least that many, the count stops after 5,000 rows), and `facets`, the hits divided by instance (`tier`) and decision year (`year`) for `judgments`, by `kind` for `documents`, by `validity` (in force, expired, not in force yet) for `instruments`; the rows that hold the words, unranked, so a count may be more than the hits a citation or a name puts first. A type without a count of its own (`members`, ...) has the hits it found, `capped` when it found as many as asked for. A count that takes over a second is null. `mode=live` has neither.
          */
         get: operations["search_api_search_get"];
@@ -1811,6 +1813,46 @@ export interface paths {
          * @description The one table of abbreviations the search, the titles and the short addresses (`/bw/7/658`) read: every abbreviation that stands for one law, from the BWB (the WTI) and, where it gives none, kept by hand; and the codes whose books are regulations of their own (`BW`), with their books and names. Changes with the data version alone (its `ETag`).
          */
         get: operations["get_aliases_api_aliases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/concepts/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A concept: articles that make one doctrine, and what cites them
+         * @description A concept kept by hand (`concepts` of an article names its keys): its articles in the order of the list, each with its heading or the start of its text and the judgments that cite it; the judgments that cite any of them, each once (`judgment_total`), and the newest five; the papers an edge joins to any of them (a memorandum that explains it, a paper that names it), each once (`document_total`), and the newest two; and a link to an official page that explains it. `missing` names an article of the list the data does not hold. 404 when no concept has the key.
+         */
+        get: operations["get_concept_api_concepts__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/courts/districts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Court map
+         * @description The arrondissement (rechtbank) and ressort (gerechtshof) of every municipality in `year` (default the newest), as the CBS gives them, with the article of the Wet op de rechterlijke indeling that draws each. The year of the text the data holds is `checked`: per municipality whether that text puts it where the CBS does (`district_check`, `circuit_check`). A municipality the text does not name is `not_in_text`: a gap, shown and never filled in. A year without a map is 404.
+         */
+        get: operations["get_districts_api_courts_districts_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3214,6 +3256,11 @@ export interface components {
              * @description Formerly: the articles of the old law whose place this article takes (`TRANSPOSED_TO` read backwards).
              */
             predecessors: components["schemas"]["ArticleSuccessionDTO"][];
+            /**
+             * Concepts
+             * @description The concepts kept by hand the article is one of (articles that together make one doctrine); `/api/concepts/{key}` gives each.
+             */
+            concepts: components["schemas"]["ConceptRefDTO"][];
         };
         /**
          * ArticleExplanationDTO
@@ -5594,6 +5641,130 @@ export interface components {
             substitute: boolean;
         };
         /**
+         * ConceptArticleDTO
+         * @description One article of a concept.
+         */
+        ConceptArticleDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Display Name
+             * @description `Art. 120 Gw`.
+             */
+            display_name: string | null;
+            /**
+             * Heading
+             * @description Its heading in the law; null where the law gives none.
+             */
+            heading: string | null;
+            /**
+             * Opening
+             * @description The start of its text, about 300 characters cut at a word (`…` when it goes on): what the block shows where the law gives no heading.
+             */
+            opening: string | null;
+            /**
+             * Judgment Total
+             * @description The judgments that cite it.
+             */
+            judgment_total: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ConceptDocumentDTO
+         * @description A paper an edge joins to an article of the concept (it explains or names it).
+         */
+        ConceptDocumentDTO: {
+            document: components["schemas"]["ExplainingDocumentDTO"];
+            /**
+             * Article Ids
+             * @description The articles of the concept it is joined to.
+             */
+            article_ids: string[];
+        };
+        /**
+         * ConceptExplanationDTO
+         * @description An official page that explains the concept: a link, no text of ours.
+         */
+        ConceptExplanationDTO: {
+            /**
+             * Label
+             * @description Who publishes it: `Rijksoverheid`.
+             */
+            label: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * ConceptJudgmentDTO
+         * @description A judgment that cites an article of the concept.
+         */
+        ConceptJudgmentDTO: {
+            judgment: components["schemas"]["CitedByJudgment"];
+            /**
+             * Article Ids
+             * @description The articles of the concept it cites (`ConceptArticleDTO.id`).
+             */
+            article_ids: string[];
+        };
+        /**
+         * ConceptRefDTO
+         * @description A concept an article is one of: what ``/api/concepts/{key}`` answers for.
+         */
+        ConceptRefDTO: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+        };
+        /**
+         * ConceptResponse
+         * @description Response for GET /api/concepts/{key}.
+         */
+        ConceptResponse: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** @description An official page that explains it; null where none is kept. */
+            explanation: components["schemas"]["ConceptExplanationDTO"] | null;
+            /**
+             * Articles
+             * @description Its articles, in the order of the list.
+             */
+            articles: components["schemas"]["ConceptArticleDTO"][];
+            /**
+             * Missing
+             * @description Its articles (`<BWB id>/<number>`) the data does not hold.
+             */
+            missing: string[];
+            /**
+             * Judgment Total
+             * @description The judgments that cite any of its articles, each once.
+             */
+            judgment_total: number;
+            /**
+             * Judgments
+             * @description The newest of them (5 at most), newest first.
+             */
+            judgments: components["schemas"]["ConceptJudgmentDTO"][];
+            /**
+             * Document Total
+             * @description The papers joined to any of its articles, each once.
+             */
+            document_total: number;
+            /**
+             * Documents
+             * @description The newest of them (2 at most), newest first.
+             */
+            documents: components["schemas"]["ConceptDocumentDTO"][];
+        };
+        /**
          * CourseBasis
          * @description The article of law that gives the court its say in this step.
          */
@@ -5688,6 +5859,96 @@ export interface components {
             current: boolean;
             /** Links */
             links: components["schemas"]["CourseLink"][];
+        };
+        /**
+         * CourtAreaDTO
+         * @description An arrondissement or ressort as the CBS names it, with the article of the Wet op de
+         *     rechterlijke indeling that draws it.
+         */
+        CourtAreaDTO: {
+            /**
+             * Code
+             * @description The code of the CBS: ``AR09``, ``RT12``.
+             */
+            code: string;
+            /**
+             * Name
+             * @description As the CBS names it: ``Oost-Brabant``, ``Gerechtshof Arnhem-Leeuwarden``.
+             */
+            name: string;
+            /**
+             * Article Number
+             * @description The number of the article of the law that draws it (4 to 13 for an arrondissement, 14 to 17 for a ressort); null when the text names it otherwise.
+             */
+            article_number: string | null;
+        };
+        /**
+         * CourtDistrictDTO
+         * @description A municipality with the courts of its first instance and appeal.
+         */
+        CourtDistrictDTO: {
+            /**
+             * Code
+             * @description The code of the municipality: ``GM0796``.
+             */
+            code: string;
+            /** Name */
+            name: string;
+            /** Province */
+            province: string;
+            /** @description The rechtbank of first instance. */
+            district: components["schemas"]["CourtAreaDTO"];
+            /** @description The gerechtshof of appeal. */
+            circuit: components["schemas"]["CourtAreaDTO"];
+            /**
+             * Law District
+             * @description The arrondissement the text of the law puts it in; null when it puts it in none or in more than one, or the year is not checked.
+             */
+            law_district: string | null;
+            /**
+             * District Check
+             * @description How the text of the law compares to the CBS for the arrondissement: `agrees`, `differs` or `not_in_text` (a gap, shown and never filled in); null when the year is not checked.
+             */
+            district_check: ("agrees" | "differs" | "not_in_text") | null;
+            /**
+             * Circuit Check
+             * @description The same for the ressort of its arrondissement.
+             */
+            circuit_check: ("agrees" | "differs" | "not_in_text") | null;
+        };
+        /**
+         * CourtDistrictsDTO
+         * @description The court map of one year, by arrondissement and municipality.
+         */
+        CourtDistrictsDTO: {
+            /** Year */
+            year: number;
+            /**
+             * Years
+             * @description Every year there is, newest first.
+             */
+            years: number[];
+            /**
+             * Checked
+             * @description Whether this year is checked against the text of the law (only the year of the text the data holds, today's).
+             */
+            checked: boolean;
+            /**
+             * Law Bwb Id
+             * @description The BWB id of the Wet op de rechterlijke indeling.
+             * @default BWBR0002080
+             */
+            law_bwb_id: string;
+            /**
+             * Source
+             * @description Where the map comes from.
+             * @default CBS, Gebieden in Nederland (CC BY 4.0)
+             */
+            source: string;
+            /** Total */
+            total: number;
+            /** Items */
+            items: components["schemas"]["CourtDistrictDTO"][];
         };
         /**
          * CourtKind
@@ -18940,6 +19201,8 @@ export interface operations {
                 offset?: number;
                 /** @description Also count the hits per type (`counts`) and divide them by property (`facets`); only with `mode=full`. */
                 facets?: boolean;
+                /** @description `relevance` (the default): best first, of the hits whose words weigh about the same those of the last 12 months first; `newest`: the hits of a type with a day of its own (a judgment, a paper, a dossier, a law, a vote, a commitment) newest first, those without a day last, what `q` names exactly (`exact`, a concept) still first, a match on words only scoring 0.1; the other types best first. Only with `mode=full`. */
+                sort?: "relevance" | "newest";
             };
             header?: never;
             path?: never;
@@ -19566,6 +19829,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AliasesResponse"];
+                };
+            };
+        };
+    };
+    get_concept_api_concepts__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description `toetsing-van-wetten`. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConceptResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_districts_api_courts_districts_get: {
+        parameters: {
+            query?: {
+                /** @description The year of the map; default the newest. */
+                year?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourtDistrictsDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
