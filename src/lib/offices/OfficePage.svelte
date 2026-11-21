@@ -9,6 +9,7 @@
 	import { isNotFound } from '$lib/api/errors';
 	import type { Schema } from '$lib/api/types';
 	import { openHref } from '$lib/bron/href';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import { officialNumber } from '$lib/bron/dossier-naam';
 	import AllN from '$lib/components/ui/AlleN.svelte';
@@ -96,7 +97,8 @@
 
 <!-- Large to small: Ambten, the ministry, the office (B148). -->
 <nav class="stub-eyebrow kruimel" aria-label="Hoort bij">
-	<a href={OFFICES_PATH}>Ambten</a>{#if record?.ministry}<span aria-hidden="true">›</span><a
+	<a class="soort" href={OFFICES_PATH}><KindGlyph vorm="ambt" />Ambten</a
+	>{#if record?.ministry}<span aria-hidden="true">›</span><a
 			href={openHref(`ministries/${record.ministry}`, { path: record.ministry_path })}
 			>{ministryTitle(record.ministry_name ?? ministryName(record.ministry))}</a
 		>{/if}
@@ -324,6 +326,11 @@
 		color: var(--ink-3);
 	}
 	/* Two crumbs that wrap on a phone stand on lines of their own, each a finger high. */
+	.kruimel .soort {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-1);
+	}
 	.kruimel {
 		display: flex;
 		flex-wrap: wrap;

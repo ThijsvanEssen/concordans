@@ -20,6 +20,7 @@
 		mark,
 		niveau = 2,
 		inklapbaar = true,
+		rijen = false,
 		sleutel,
 		children
 	}: {
@@ -38,6 +39,9 @@
 		niveau?: 2 | 3 | 4;
 		/** Whether the heading opens and closes it; off for a page of sections (Bladeren). */
 		inklapbaar?: boolean;
+		/** The section is a list of rows (the ambten): on a phone they follow the heading at the
+		 *  step of a group, not at the --s-5 of a text section. */
+		rijen?: boolean;
 		/** The kind of section whose state it shares; its title where none is given. A group
 		 *  inside a section keeps its own: `subKey(name)` (dicht.svelte.ts). A section that
 		 *  something else opens has its key in FOLD. */
@@ -60,6 +64,7 @@
 <section
 	class="sectie niveau-{niveau}"
 	class:section-block={niveau === 2}
+	class:rijen
 	class:is-dicht={!isOpen}
 	{id}
 >
@@ -142,6 +147,9 @@
 		}
 		.niveau-2 {
 			gap: var(--s-5);
+		}
+		.niveau-2.rijen {
+			gap: var(--s-2);
 		}
 	}
 	.is-dicht {

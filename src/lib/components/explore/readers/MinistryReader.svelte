@@ -89,7 +89,7 @@
 				</Feiten>
 			{/if}
 			{#if seats.length > 0}
-				<Section title="Ambten" aantal={held.length || seats.length} inklapbaar={false}>
+				<Section title="Ambten" aantal={held.length || seats.length} inklapbaar={false} rijen>
 					<SeatList seats={held.length ? held : seats} />
 					{#if held.length && former.length}
 						<h4 class="eerder">Eerder</h4>

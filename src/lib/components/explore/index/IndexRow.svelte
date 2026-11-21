@@ -240,9 +240,11 @@
 			justify-content: flex-start;
 			padding-top: var(--s-2);
 		}
-		/* A count stays at the right edge, as on a wide screen (UX-toets 16 Oct). */
+		/* A count stays at the right edge, as on a wide screen (UX-toets 16 Oct); the actions of
+		   44 px stand at the left of the line, not between the count and the edge. */
 		.row-aside:has(:global(.num-strong)) {
-			justify-content: flex-end;
+			flex-direction: row-reverse;
+			justify-content: space-between;
 		}
 		/* The detail as far in as the row's title, its kept bar inside it (A53 #8). */
 		.detail {

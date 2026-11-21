@@ -58,7 +58,7 @@
 		{:else}
 			<div class="groepen">
 				{#each groups as g (g.ministry)}
-					<Sectie title={nameOf(g)} id={anchorOf(g)} niveau={2} inklapbaar={false}>
+					<Sectie title={nameOf(g)} id={anchorOf(g)} niveau={2} inklapbaar={false} rijen>
 						<SeatList seats={g.seats} />
 					</Sectie>
 				{/each}

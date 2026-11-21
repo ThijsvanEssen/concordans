@@ -150,7 +150,13 @@ const FLOWS: Record<string, (page: Page) => Promise<void>> = {
 		// A result the keys are on: the right column offers its netwerk and its keten.
 		await palette(page, 'keten awb');
 		await expect(page.getByRole('dialog').getByRole('option').nth(1)).toBeVisible();
+		// The column asks the first article of the law once the row is chosen: wait for that
+		// answer, so the request is neither lost to the Escape below nor left without a fixture.
+		const first = page.waitForResponse(
+			(r) => r.url().includes('/instruments/BWBR0005537/articles') && r.url().includes('limit=1')
+		);
 		await page.keyboard.press('ArrowDown');
+		await first;
 		const preview = page.getByRole('complementary', { name: 'Voorbeeld' });
 		await expect(preview.getByRole('button', { name: 'Netwerk', exact: true })).toBeVisible();
 		await expect(preview.getByRole('button', { name: 'Keten', exact: true })).toBeVisible();
