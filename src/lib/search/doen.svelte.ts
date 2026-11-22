@@ -6,7 +6,7 @@ import { COMMANDS, isCombo, SHORTCUTS } from '$lib/keys/register';
 import { hereRows, rowsFor, type DoRow, type Target } from '$lib/keys/doen.svelte';
 import { recentRows } from '$lib/keys/recent.svelte';
 import { page } from '$app/state';
-import { hasChain } from '$lib/network/lineage';
+import { hasChain } from '$lib/vocabulary';
 import { collectionOfBron } from './palette-preview';
 import { AliasSuggestions } from './aliases.svelte';
 import type { SearchSession } from './session.svelte';

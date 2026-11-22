@@ -31,7 +31,9 @@
 		type Collection,
 		type Relation,
 		AMENDING_RELATIONS,
+		LINEAGE,
 		NODE_TYPES,
+		hasChain,
 		parseNodeId
 	} from '$lib/vocabulary';
 	import type { NeighborhoodAnswer } from '$lib/graph/store/types';
@@ -134,23 +136,10 @@
 	import { keyEcli } from '$lib/text/ecli';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import {
-		chain,
-		chainTally,
-		isRegulation,
-		type ChainLayer,
-		type ChainNode
-	} from '$lib/network/chain';
-	import { hasChain, LINEAGE, lineage } from '$lib/network/lineage';
-	import { verbandModel, type DirectLink } from '$lib/network/shared';
-	import { pairOf, resolveChoice } from '$lib/network/pairs';
-	import {
-		chainsModel,
-		MAX_ROWS,
-		MAX_STEPS,
-		type ChainsResponse,
-		type ChainsState
-	} from '$lib/network/linkchains';
+	import type { ChainLayer, ChainNode } from '$lib/network/chain';
+	import type { DirectLink } from '$lib/network/shared';
+	import { MAX_ROWS, MAX_STEPS } from '$lib/network/limits';
+	import type { ChainsResponse, ChainsState } from '$lib/network/linkchains';
 	import { getChains, getNodeGraph, getShared, getSurroundings } from '$lib/api/nodes';
 	import { SURROUNDED, surroundingRows } from '$lib/graph/surroundings';
 	import { LED_BY_FOCUS, ledByRows } from '$lib/graph/led-by';
@@ -194,7 +183,8 @@
 	import { afterTick } from '$lib/util/after-tick';
 	import { citedByName, pathByName } from '$lib/bron/law-name';
 	import { followServerMove } from '$lib/bron/moved-law';
-	import { NetwerkComposer } from './netwerk-compose.svelte';
+	import { ComposerHandle } from './composer-handle.svelte';
+	import { askLogic, logicIn, loadLogic } from './netwerk-logic-load.svelte';
 	import { InFlux } from './in-flux.svelte';
 	import { Proposals } from './proposals.svelte';
 	import TocSheet from './TocSheet.svelte';
@@ -206,8 +196,10 @@
 	// ?grens=800 is a trial: the places the canvas keeps (1000), read once, at the page's start.
 	const cap = capFrom(page.url.searchParams.get('grens'));
 	const store = createGraphStore({ cap });
-	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts).
-	const composer = new NetwerkComposer(store, cap);
+	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts), with the logic of
+	// the keten, Verband and the pairs in a chunk of its own, asked when a netwerk is shown (B178).
+	const composer = new ComposerHandle(store, cap);
+	const netwerkLogic = $derived(logicIn());
 
 	let selectedNode = $state<GraphNode | null>(null);
 	// The Topbalk marks a person by their current role, and the wissel names the bron of the
@@ -508,21 +500,6 @@
 		() => (chainError = null),
 		(bwb, error) => (chainError = { bwb, error })
 	);
-	/** Up to `max` bronnen a layer drawn, and `keep`; the rest listed under Alle N. */
-	function capLayers(layers: ChainLayer[], max: number, keep: string | null) {
-		const rest: Record<string, number> = {};
-		const more: Record<string, ChainNode[]> = {};
-		const drawn = layers.map((l) => {
-			const kept = l.nodes.filter((n, i) => i < max || n.id === keep);
-			const over = l.nodes.filter((n) => !kept.includes(n));
-			if (over.length) {
-				rest[l.id] = over.length;
-				more[l.id] = over;
-			}
-			return { ...l, nodes: kept };
-		});
-		return { layers: drawn, rest, more };
-	}
 	/** The keten of a judgment, a fractie or a Kamerlid (lineage.ts), by the start's id. */
 	let lineageData = $state.raw<{ id: string; layers: ChainLayer[] } | null>(null);
 	$effect(() => {
@@ -541,7 +518,7 @@
 		let current = true;
 		chainError = null;
 		ask(n.id)
-			.then((start) => (start ? lineage(start, relations, ask) : []))
+			.then(async (start) => (start ? (await loadLogic()).lineage(start, relations, ask) : []))
 			.then((layers) => {
 				if (current) lineageData = { id: n.id, layers };
 			})
@@ -582,7 +559,7 @@
 	const chainOf = (mentions: boolean, max = telefoon ? 4 : Math.max(12, chainFit)) => {
 		const bwb = chainLaw;
 		const asked = chainData.asked;
-		if (!bwb || asked?.bwb !== bwb) return null;
+		if (!bwb || asked?.bwb !== bwb || !netwerkLogic) return null;
 		const id = `instruments/${bwb.toLowerCase()}`;
 		const start = chainStart;
 		// A publication by its name (Stb. 2018, 101), never its key (R3-K F11).
@@ -591,7 +568,7 @@
 				? (lawName($instrumentMetaStore.get(bwb), null) ?? bronNaam(start, $instrumentMetaStore))
 				: lawName($instrumentMetaStore.get(bwb), bwb);
 		const eu = chainData.eu?.bwb === bwb ? chainData.eu.eu : null;
-		return chain(
+		return netwerkLogic.chain(
 			{ id, name, abbreviation: bwCode(bwb) ?? $instrumentMetaStore.get(bwb)?.shortTitle ?? null },
 			asked.delegated,
 			asked.basis,
@@ -613,9 +590,9 @@
 	};
 	const chainModel = $derived(
 		lineageStart
-			? lineageData?.id === lineageStart.id
+			? lineageData?.id === lineageStart.id && netwerkLogic
 				? {
-						...capLayers(lineageData.layers, 6, marked),
+						...netwerkLogic.capLayers(lineageData.layers, 6, marked),
 						total: lineageData.layers.reduce((n, l) => n + l.nodes.length, 0) - 1,
 						amending: [],
 						missing: []
@@ -644,7 +621,8 @@
 		if (!m) return null;
 		if (m.missing.length) return `${joinAnd(m.missing)}: grondslag ${NOT_IN_DATA}`;
 		// A regulation whose grondslag the data lacks says so, as the law above it does (F3).
-		const withoutBasis = isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
+		const withoutBasis =
+			!!netwerkLogic?.isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
 		const none =
 			m.total === 0 && !m.layers.some((l) => l.id === 'implementation')
 				? noneHeld(
@@ -805,10 +783,12 @@
 		const here = sharedData?.key === sharedKey ? sharedData : null;
 		if (!here || here.failure) return null;
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
-		return verbandModel(here.answers, here.direct, (id) => ({
-			name: byId.get(id)?.name ?? id,
-			collection: byId.get(id)?.collection ?? null
-		}));
+		return (
+			netwerkLogic?.verbandModel(here.answers, here.direct, (id) => ({
+				name: byId.get(id)?.name ?? id,
+				collection: byId.get(id)?.collection ?? null
+			})) ?? null
+		);
 	});
 	/**
 	 * Aantal stappen of Verband: 1 is what the bronnen share (/api/nodes/shared), 2 and 3 add the
@@ -818,8 +798,14 @@
 	 */
 	const pairSteps = $derived(Math.max(1, Math.min(MAX_STEPS, explicitDepth ?? 1)));
 	const PAIR_PARAM = 'paar';
-	const pairChoice = $derived(resolveChoice(params.get(PAIR_PARAM), sharedDrawn, sharedState));
-	const vcPair = $derived(sharedDrawn.length === 2 || sharedState ? pairOf(pairChoice) : null);
+	const pairChoice = $derived(
+		netwerkLogic?.resolveChoice(params.get(PAIR_PARAM), sharedDrawn, sharedState) ?? ''
+	);
+	const vcPair = $derived(
+		(sharedDrawn.length === 2 || sharedState) && netwerkLogic
+			? netwerkLogic.pairOf(pairChoice)
+			: null
+	);
 	const vcKey = $derived(vcPair && pairSteps >= 2 ? `${vcPair.join(',')}:${pairSteps}` : '');
 	let vcData = $state.raw<
 		{ key: string; response: ChainsResponse } | { key: string; error: unknown } | null
@@ -846,14 +832,14 @@
 		};
 	});
 	const vcState = $derived.by((): ChainsState | null => {
-		if (!vcKey || !vcPair) return null;
+		if (!vcKey || !vcPair || !netwerkLogic) return null;
 		const here = vcData?.key === vcKey ? vcData : null;
 		if (!here) return { status: 'loading' };
 		if ('error' in here) return { status: 'error', error: here.error, retry: () => vcTries++ };
 		const byId = new Map(sharedEnds.map((e) => [e.id, e]));
 		return {
 			status: 'ready',
-			model: chainsModel(
+			model: netwerkLogic.chainsModel(
 				here.response,
 				vcPair,
 				(id) => ({
@@ -881,7 +867,9 @@
 	);
 	// On its way, Soort counts nothing: not the canvas's numbers that the keten's replace (F6).
 	const chainCounts = $derived(
-		chainModel && chainAll ? chainTally(chainModel, chainAll) : { kinds: {}, lines: {} }
+		chainModel && chainAll && netwerkLogic
+			? netwerkLogic.chainTally(chainModel, chainAll)
+			: { kinds: {}, lines: {} }
 	);
 	/** Verband without content (on its way, nothing shared): Soort holds no rows, not the canvas's. */
 	const NO_COUNTS = { kinds: {}, lines: {} } satisfies Pick<CanvasCounts, 'kinds' | 'lines'>;
@@ -1736,6 +1724,7 @@
 	// page has had its answers and is idle (not on a sparing line), so the switch finds it in.
 	$effect(() => {
 		if (mode === 'graph') {
+			askLogic();
 			graphChunk.load();
 			panelChunk.load();
 			if (view === 'keten') chainView.load();
@@ -1743,6 +1732,7 @@
 			return;
 		}
 		const ask = () => {
+			askLogic();
 			graphChunk.load();
 			panelChunk.load();
 		};

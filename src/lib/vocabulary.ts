@@ -273,3 +273,14 @@ export const isInternational = (n: {
 
 /** A document that proposes or enacts a change: a wetsvoorstel or an amendment to it. */
 export const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|amendement)\b/i;
+
+/** The kinds of bron with a keten of their own, and the relations it walks. */
+export const LINEAGE: Partial<Record<Collection, readonly Relation[]>> = {
+	judgments: ['APPEAL_OF', 'ADVISES_ON'],
+	factions: ['CONTINUES'],
+	members: ['MEMBER_OF', 'SERVED_IN']
+};
+
+/** Whether a kind of bron has a keten: a law or an article, or one of the kinds above. */
+export const hasChain = (collection: Collection): boolean =>
+	collection === 'instruments' || collection === 'articles' || !!LINEAGE[collection];

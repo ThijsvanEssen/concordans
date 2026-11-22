@@ -7,9 +7,9 @@ import { formatCount } from '$lib/text/getal';
 import { joinAnd } from '$lib/text/words';
 import { dossierNummer, dossierNumberLabel, officialNumber } from '$lib/bron/dossier-naam';
 import { bothPhrase, joinsAll } from './both-words';
+import { MAX_ROWS } from './limits';
 import type { Collection } from '$lib/vocabulary';
 import {
-	MAX_ROWS,
 	countOf,
 	type ChainBlock,
 	type ChainBron,

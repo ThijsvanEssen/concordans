@@ -13,10 +13,7 @@ import type { Collection, Relation } from '$lib/vocabulary';
 export type ChainsResponse = Schema<'ChainsResponse'>;
 type Edge = ChainsResponse['edges'][number];
 
-/** The longest chain Verband asks for, and the shortest that needs /api/chains. */
-export const MAX_STEPS = 3;
-/** The most rows a block draws. */
-export const MAX_ROWS = 12;
+import { MAX_ROWS, MAX_STEPS } from './limits';
 const BLOCK_TITLE: Record<number, string> = {
 	1: 'Eén stap',
 	2: 'Twee stappen',

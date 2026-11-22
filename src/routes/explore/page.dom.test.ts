@@ -158,6 +158,9 @@ function view(container: HTMLElement) {
 
 // The keys with Alt are the register's (lib/keys): the dispatcher stands on the window as the
 // layout puts it.
+// The Netwerk's logic is a chunk of its own, asked by the page: in, as it is in the browser
+// once the page has had its answers (cold, its transform outlasts a test's settle).
+beforeAll(() => import('./netwerk-logic'));
 beforeAll(() => window.addEventListener('keydown', onKeydown));
 afterAll(() => window.removeEventListener('keydown', onKeydown));
 const key = async (k: string) => {
