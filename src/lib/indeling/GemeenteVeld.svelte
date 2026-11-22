@@ -19,7 +19,8 @@
 		onClear: () => void;
 	} = $props();
 
-	let typed = $state('');
+	// A municipality chosen elsewhere (the address, a row of the table) fills the field.
+	let typed = $derived(chosen?.name ?? '');
 	let open = $state(false);
 	let at = $state(0);
 	let box: HTMLDivElement | undefined = $state();
@@ -27,10 +28,6 @@
 	const matches = $derived(open ? findGemeenten(items, typed) : []);
 	const listed = $derived(open && typed.trim() !== '');
 
-	// A municipality chosen elsewhere (the address, a row of the table) fills the field.
-	$effect(() => {
-		typed = chosen?.name ?? '';
-	});
 	$effect(() => {
 		if (!open) return;
 		const away = (e: Event) => {
