@@ -222,7 +222,7 @@ describe('the Verkenner reads its state from the address', () => {
 			['&diepte=9', 3],
 			['&diepte=0', 0],
 			['&diepte=x', 2],
-			['&alles=1&diepte=3', 1]
+			['&alles=1&diepte=3', 3]
 		];
 		for (const [query, depth] of cases) {
 			const v = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk${query}`);
