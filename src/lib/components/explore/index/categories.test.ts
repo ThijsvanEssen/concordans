@@ -33,7 +33,7 @@ describe('the tabs of a source', () => {
 		]);
 	});
 
-	it('are none for a source of one list and no page', () => {
-		expect(sourceTabs(of('wetten'))).toEqual([]);
+	it('are the list and the page beside it for a source of one list', () => {
+		expect(sourceTabs(of('wetten')).map((t) => t.href)).toEqual(['/wetten', '/europa']);
 	});
 });

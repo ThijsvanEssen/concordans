@@ -9,6 +9,7 @@
 	import { officialNumber, dossierNumberLabel } from '$lib/bron/dossier-naam';
 	import { LIST_PATHS } from '$lib/bron/lists';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { OUTCOME_LABEL, isOutcome } from '$lib/votes/stages';
 	import AllLink from '$lib/components/ui/AlleN.svelte';
 	import DateTime from '$lib/components/ui/DateTime.svelte';
@@ -22,7 +23,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import {
 		LEGISLATIVE_TRAIN,
-		courtName,
+		unionCourt,
 		actOf,
 		comOf,
 		eurLexAct,
@@ -163,13 +164,20 @@
 					<ul class="list">
 						{#each rulings.state.data.items as j (j.id)}
 							{@const bron = `judgments/${j.key}`}
-							<IndexRow {bron} title={j.display_name ?? j.ecli} href={openHref(bron)} acties>
+							<IndexRow
+								{bron}
+								title={j.display_name ?? j.ecli ?? j.key}
+								href={openHref(bron)}
+								acties
+							>
 								{#snippet lead()}
 									<span class="row-id-main"><DateTime iso={j.date} /></span>
-									<span class="row-id-sub">{courtName(j.court)}</span>
+									<span class="row-id-sub">{unionCourt(j.court)}</span>
 								{/snippet}
 								{#snippet body()}
-									{#if j.cite}<span class="row-sub">{j.cite.short}</span>{/if}
+									{@const record = citationRecord({ ...j, kind: 'judgment' })}<span class="row-sub"
+										>{record?.short}</span
+									>
 								{/snippet}
 							</IndexRow>
 						{/each}
@@ -198,7 +206,7 @@
 		flex-direction: column;
 		--lezer-stap: var(--s-7);
 		gap: var(--lezer-stap);
-		--row-aside: 0px;
+		--row-aside: 0;
 	}
 	.results :global(.list) {
 		list-style: none;
@@ -214,7 +222,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		margin-top: 2px;
+		margin-top: var(--s-1);
 	}
 	.results :global(.row-sub) {
 		display: block;

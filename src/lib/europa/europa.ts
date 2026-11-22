@@ -34,5 +34,5 @@ export const eurLexAct = (a: { kind: 'dir' | 'reg'; year: string; number: string
 export const LEGISLATIVE_TRAIN = 'https://www.europarl.europa.eu/legislative-train/';
 
 /** The court of a judgment of the Union by its code in the ECLI (`ECLI:EU:C:…`, `ECLI:EU:T:…`). */
-export const courtName = (code: string | null | undefined): string =>
+export const unionCourt = (code: string | null | undefined): string =>
 	code === 'T' ? 'Gerecht van de EU' : code === 'C' ? 'Hof van Justitie' : 'Europese rechter';
