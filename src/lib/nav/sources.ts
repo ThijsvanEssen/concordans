@@ -48,7 +48,12 @@ const source = (
 
 /** The five rubrieken, in their order and under their names (indeling.ts). */
 export const SOURCES: readonly Source[] = [
-	source('wetten', 'wetten, regelingen, artikelen', ['instruments']),
+	source(
+		'wetten',
+		'wetten, regelingen, artikelen, Europa',
+		['instruments'],
+		[{ path: '/europa', label: 'Europa', shape: 'regel-int' }]
+	),
 	source(
 		'rechtspraak',
 		'rechtbank tot Hoge Raad',

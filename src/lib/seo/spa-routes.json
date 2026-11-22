@@ -118,6 +118,11 @@
 		"description": "De besluiten van de Kamers over een onderwerp, per soort, uitkomst, jaar en fractie."
 	},
 	{
+		"path": "/europa",
+		"title": "Europa, Concordans",
+		"description": "EU-voorstellen bij de Tweede Kamer, wetsvoorstellen die Europese regels omzetten en de nieuwste arresten van het Hof van Justitie, met EUR-Lex."
+	},
+	{
 		"path": "/ambten",
 		"title": "Ambten, Concordans",
 		"description": "De ambten van de ministers, elk met de houders over de namen van het ministerie heen en de toezeggingen en dossiers van het ambt."

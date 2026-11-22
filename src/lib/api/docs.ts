@@ -92,22 +92,22 @@ function paramDoc(p: OpenApiParam): ParamDoc {
 /** The GET routes of `spec`, sorted by path; a route without a tag under 'root'. */
 export function apiDocs(spec: OpenApiSpec): ApiDocs {
 	const endpoints = Object.entries(spec.paths).flatMap(([path, ops]) => {
-		const op = ops.get;
-		if (!op) return [];
+		const operation = ops.get;
+		if (!operation) return [];
 		return [
 			{
-				tag: op.tags?.[0] ?? 'root',
+				tag: operation.tags?.[0] ?? 'root',
 				method: 'GET',
 				path,
-				summary: op.summary ?? '',
-				description: op.description ?? '',
-				parameters: (op.parameters ?? []).map(paramDoc),
-				responses: Object.entries(op.responses ?? {}).map(([status, r]) => ({
+				summary: operation.summary ?? '',
+				description: operation.description ?? '',
+				parameters: (operation.parameters ?? []).map(paramDoc),
+				responses: Object.entries(operation.responses ?? {}).map(([status, r]) => ({
 					status,
 					description: r.description ?? '',
 					schema: schemaName(r.content?.['application/json']?.schema)
 				})),
-				operationId: op.operationId ?? `get-${path}`
+				operationId: operation.operationId ?? `get-${path}`
 			}
 		];
 	});
