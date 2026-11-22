@@ -11,7 +11,6 @@
 		afterRemoval,
 		keepNetwork,
 		networkState,
-		onLanes,
 		onNetwork,
 		readerBron,
 		withReader
@@ -100,19 +99,10 @@
 	import type { CanvasCounts } from '$lib/components/graph/canvas-count';
 	import type { Row } from '$lib/verbonden/rows';
 	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/data-source';
-	import { edgeKey } from '$lib/verbonden/edge-meta';
-	import {
-		edgeLids,
-		kaartVanEdge,
-		rowOfEdge,
-		verbindingOfEdge,
-		verbindingOfRow,
-		withRow,
-		type Verbinding
-	} from '$lib/verbonden/verbinding';
+	import { verbindingOfRow, type Verbinding } from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts, memberCountsUnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/dev/perf';
-	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
+	import type { GraphNode, DrawClass } from '$lib/graph/types';
 	import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 	import { containerKindOf, type ContainerKind } from '$lib/graph/container-membership';
 	import {
@@ -217,7 +207,7 @@
 	const cap = capFrom(page.url.searchParams.get('grens'));
 	const store = createGraphStore({ cap });
 	// The netwerk of chosen bronnen, put on the canvas (netwerk-compose.svelte.ts).
-	const composer = new NetwerkComposer(store, () => graphView, cap);
+	const composer = new NetwerkComposer(store, cap);
 
 	let selectedNode = $state<GraphNode | null>(null);
 	// The Topbalk marks a person by their current role, and the wissel names the bron of the
@@ -358,13 +348,13 @@
 	// The address is the state; the netwerk kept in this browser is offered only where it names no bron.
 	leesBewaard();
 	const netwerkQuery = $derived(
-		withReader(netwerkQueryOf(params), mode === 'graph' && focus, onLanes(params))
+		withReader(netwerkQueryOf(params), mode === 'graph' && focus, true)
 	);
 	const telefoon = typeof window !== 'undefined' && window.matchMedia(PHONE).matches;
 	// Nothing chosen, the canvas is empty: the field Bron toevoegen is all (Thijs, 23 Oct).
 	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
 	const netwerkActive = $derived(netwerk.ids.length > 0);
-	const bronAlone = $derived(onLanes(params) && !!focus && netwerk.ids.length === 1);
+	const bronAlone = $derived(!!focus && netwerk.ids.length === 1);
 
 	// What Aantal stappen shows: with a netwerk the steps of its bronnen (the most any asks), else
 	// the bron the canvas is drawn around.
@@ -1027,59 +1017,16 @@
 	);
 
 	// ── The card Verbinding ──────────────────────────────────────────────────
-	let card = $state<{ verbinding: Verbinding; edgeId: string | null; row: Row | null } | null>(
-		null
-	);
-	/** The edge whose card is on its way: a later click or another card wins. */
-	let cardAsked: string | null = null;
+	let card = $state<{ verbinding: Verbinding; row: Row | null } | null>(null);
 	$effect(() => {
 		void selectedNode?.id;
 		card = null;
-		cardAsked = null;
 	});
 	function openRowCard(row: Row) {
-		cardAsked = null;
 		if (!selectedNode) return;
 		const v = verbindingOfRow(row, selectedNode);
-		if (v) card = { verbinding: v, edgeId: null, row };
+		if (v) card = { verbinding: v, row };
 	}
-	function openEdgeCard(edge: GraphEdge) {
-		const from = store.getNodeById(edge.source);
-		const to = store.getNodeById(edge.target);
-		if (!from || !to) return;
-		// What the row of the selected bron says of this edge, where the panel has it: the card
-		// names the lid and the place the row names.
-		const row = selectedNode ? rowOfEdge(allRows(verbonden.groups), selectedNode.id, edge) : null;
-		if (row && selectedNode) {
-			cardAsked = null;
-			card = {
-				verbinding: withRow(verbindingOfEdge(edge, from, to), row, selectedNode),
-				edgeId: edge.id,
-				row: null
-			};
-			return;
-		}
-		// The passage, which the canvas does not load: the card opens with it, once.
-		const asked = (cardAsked = edge.id);
-		const node = selectedNode;
-		kaartVanEdge(edge, from, to)
-			.then((verbinding) => {
-				if (cardAsked === asked && selectedNode === node)
-					card = { verbinding, edgeId: edge.id, row: null };
-			})
-			.catch((e) => report('Verbinding', e));
-	}
-	// The lid each line names, as its row or its card names it: the canvas has the edge's light
-	// meta only, which names no lid where the judgment cites several places (UX-toets #49).
-	const lineLids = $derived.by(() => {
-		const lids = selectedNode
-			? edgeLids(allRows(verbonden.groups), selectedNode.id)
-			: new Map<string, string>();
-		const edge = card?.edgeId ? store.getEdgeById(card.edgeId) : null;
-		if (edge && card?.verbinding.lid)
-			lids.set(edgeKey(edge.source, edge.target, edge.relation), card.verbinding.lid);
-		return lids;
-	});
 	/** Aan het netwerk toevoegen from the card Verbinding: the row's bron joins the netwerk. */
 	function showInNetwork(row: Row) {
 		const id = focusOf(row.ref);
@@ -1364,7 +1311,6 @@
 			}
 			if (!replace && onCanvas && (withNetwerk || deepenedId)) {
 				store.focusNode(onCanvas.id);
-				if (withNetwerk) graphView?.inBeeld();
 				return;
 			}
 			if (!replace && withNetwerk && inGraph) {
@@ -1372,7 +1318,6 @@
 				if (id !== loadedFocus) return;
 				if (node) {
 					store.focusNode(node.id);
-					graphView?.inBeeld();
 				} else missing(id);
 				return;
 			}
@@ -1465,7 +1410,6 @@
 		deepenedDepth = d;
 		deepenedAlles = alles;
 		anchorClass = node.drawClass;
-		graphView?.suppressFit();
 		// The focus it was asked for: a link followed while the neighbourhood comes in moves
 		// the focus on, and the reader stays on the new bron (#48).
 		const voor = loadedFocus;
@@ -1473,8 +1417,6 @@
 		await expandAround(node, epoch, ahead);
 		if (epoch !== focusEpoch) return;
 		if (loadedFocus === voor) store.focusNode(node.id);
-		graphView?.reseatAround(node.id);
-		graphView?.fitWhenSettled();
 	}
 
 	/**
@@ -1757,14 +1699,9 @@
 	const readHref = $derived(withParams(page.url, { tabel: null, soort: null }));
 
 	const inFlux = new InFlux(() => mode === 'graph');
-	// Voorstellen: the lopende voorstellen of the bronnen on the canvas beside them (besluit 37).
-	const PROPOSALS = 'voorstellen';
-	const proposalsOn = $derived(params.get(PROPOSALS) === 'ja');
-	// Omgeving as lanes (PLAN-doek-banen); ?doek=sigma draws the canvas of before.
-	const lanesOn = $derived(onLanes(params) && view === 'omgeving');
-	const proposals = new Proposals(
+	// Voorstellen: the lopende voorstellen of the bronnen on the canvas stand beside them (besluit 37).
+	new Proposals(
 		store,
-		() => proposalsOn || lanesOn,
 		() => inFlux.counts,
 		() => mode === 'graph' && view === 'omgeving'
 	);
@@ -2411,8 +2348,6 @@
 								counting={netwerkActive && (composer.loading || composer.extending)}
 								expecting={netwerkActive ? netwerk.ids.length : 0}
 								pending={inflight > 0}
-								selectedEdgeId={card?.edgeId ?? null}
-								{lineLids}
 								inFluxMap={inFlux.counts}
 								{marked}
 								onMark={(id) => setUrl({ [MARK_PARAM]: id })}
@@ -2421,16 +2356,13 @@
 								onToggleChosen={toggleChosen}
 								onAdd={addIdToNetwerk}
 								netwerkActive={netwerkActive && !bronAlone}
-								onEdgeClick={openEdgeCard}
 								onClear={() => (card = null)}
 								onFilter={applyFilter}
 								onDepth={setDepth}
 								lijstHref={bronAlone || !netwerkActive ? lijstHref : undefined}
 								{view}
 								onToevoegen={() => (toevoegenOpen = true)}
-								lanes={lanesOn}
 								midden={view === 'omgeving' ? undefined : viewMiddle}
-								surroundings={view === 'omgeving'}
 								externCounts={view === 'keten'
 									? chainCounts
 									: view === 'verband'
@@ -2451,15 +2383,6 @@
 										}
 									: null}
 								chain={chainStart && { start: chainStart.collection, labels: !lineageStart }}
-								proposals={view === 'omgeving' && !lanesOn
-									? {
-											on: proposalsOn,
-											available: proposals.available,
-											count: proposals.count,
-											loading: proposals.loading,
-											onToggle: () => setUrl({ [PROPOSALS]: proposalsOn ? null : 'ja' })
-										}
-									: undefined}
 								externStippen={view === 'keten'
 									? chainDots
 									: view === 'verband'

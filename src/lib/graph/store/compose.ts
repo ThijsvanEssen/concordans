@@ -2,7 +2,6 @@ import type { Schema } from '$lib/api/types';
 import { neighborsOf } from '$lib/api/nodes';
 import { instrumentContainerId } from '$lib/text/instrument-meta';
 import { between, type Between } from '$lib/selection/netwerk';
-import { CLUSTER_MAX_LOOSE, looseMaxFor } from '$lib/selection/cluster';
 import { get, writable } from 'svelte/store';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
@@ -17,7 +16,7 @@ import { nodeId } from '$lib/vocabulary';
  */
 export function createCompose(
 	ctx: GraphContext
-): Pick<GraphStore, 'compose' | 'releaseNetwerk' | 'core' | 'looseMax'> {
+): Pick<GraphStore, 'compose' | 'releaseNetwerk' | 'core'> {
 	const {
 		nodes,
 		edges,
@@ -35,7 +34,6 @@ export function createCompose(
 
 	/** The chosen bronnen and what ties them; null while no netwerk is composed. */
 	const coreStore = writable<ReadonlySet<string> | null>(null);
-	const looseMaxStore = writable(CLUSTER_MAX_LOOSE);
 
 	/** Every bron an edge path reaches from `start`. */
 	const reachable = (start: Iterable<string>) => {
@@ -53,12 +51,7 @@ export function createCompose(
 		return seen;
 	};
 
-	const compose: GraphStore['compose'] = ({
-		participants,
-		fresh,
-		surroundings = false,
-		steps = 1
-	}) => {
+	const compose: GraphStore['compose'] = ({ participants, fresh, surroundings = false }) => {
 		const selectedId = get(selectionStore)?.id ?? null;
 		const on: string[] = participants.map((p) => nodeIdOf(p.response));
 		const result: Between = between(
@@ -97,9 +90,6 @@ export function createCompose(
 		for (const id of on) pinned.add(id);
 		pinnedStore.set(new Set(pinned));
 		network.core = core;
-		network.surroundings = surroundings;
-		network.looseMax = looseMaxFor(on.length, steps);
-		looseMaxStore.set(network.looseMax);
 		trimToCap();
 		coreStore.set(core);
 		emit();
@@ -109,15 +99,11 @@ export function createCompose(
 	return {
 		compose,
 		core: { subscribe: coreStore.subscribe },
-		looseMax: { subscribe: looseMaxStore.subscribe },
 		releaseNetwerk: () => {
 			pinned.clear();
 			pinnedStore.set(new Set());
 			coreStore.set(null);
 			network.core = null;
-			network.surroundings = false;
-			network.looseMax = CLUSTER_MAX_LOOSE;
-			looseMaxStore.set(CLUSTER_MAX_LOOSE);
 		}
 	};
 }

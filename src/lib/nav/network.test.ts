@@ -12,12 +12,12 @@ const net = (...ids: string[]): Netwerk => ({ ids, uit: new Set() });
 const chosen = (query: string, focus: string | null) =>
 	parseNetwerk(new URLSearchParams(withReader(query, focus))).ids;
 
-const onLanesChosen = (query: string, focus: string) =>
+const aloneChosen = (query: string, focus: string) =>
 	parseNetwerk(new URLSearchParams(withReader(query, focus, true))).ids;
 
 describe('the link of Thijs: the path says WVW, netwerk= only Cbb', () => {
 	const link = at(
-		`/wetten/BWBR0006622?doek=banen&diepte=2&voorstellen=ja&mode=netwerk&netwerk=${CBB}&weergave=keten`
+		`/wetten/BWBR0006622?diepte=2&voorstellen=ja&mode=netwerk&netwerk=${CBB}&weergave=keten`
 	);
 	it('names the bron of the page as the focus a netwerk uses', () => {
 		expect(focusIn(link)).toBe(WVW);
@@ -27,7 +27,7 @@ describe('the link of Thijs: the path says WVW, netwerk= only Cbb', () => {
 		expect(networkCount(link, null)).toBe(2);
 	});
 	it('leads Lezer to the WVW, not to the first of netwerk=', () => {
-		expect(networkHref(link)).toBe('/wetten/BWBR0006622?doek=banen&diepte=2&voorstellen=ja');
+		expect(networkHref(link)).toBe('/wetten/BWBR0006622?diepte=2&voorstellen=ja');
 	});
 });
 
@@ -35,10 +35,10 @@ describe('withReader', () => {
 	it('leaves one bron alone: it is drawn as itself, not composed', () => {
 		expect(withReader('', WVW)).toBe('');
 	});
-	it('makes one bron a netwerk of one on the lanes, as a link with netwerk= (B84)', () => {
-		expect(onLanesChosen('', WVW)).toEqual([WVW]);
+	it('makes one bron a netwerk of one in the werkplek, as a link with netwerk= (B84)', () => {
+		expect(aloneChosen('', WVW)).toEqual([WVW]);
 		// The button counts nothing for one bron alone (B85).
-		expect(networkCount(at('/wetten/BWBR0006622?doek=banen&mode=netwerk'), null)).toBe(0);
+		expect(networkCount(at('/wetten/BWBR0006622?mode=netwerk'), null)).toBe(0);
 	});
 	it('does not name a bron twice, and keeps the order of the address', () => {
 		const query = `netwerk=${CBB},${WVW}`;

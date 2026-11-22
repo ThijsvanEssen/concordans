@@ -1,38 +1,36 @@
 import { describe, expect, it } from 'vitest';
 import { NODE_TYPES, type Collection } from '$lib/vocabulary';
-import { kolomVan } from '$lib/selection/kolommen';
 import { COLLECTION_ROLE, GROUP_LABEL, isDrawn } from './collection-role';
 import { containerKindOf, focusKindOf } from './container-membership';
 import { drawClassOf } from './types';
 
 // The role of every collection, as the canvas has it: its kind, the hull it is drawn as
-// (a cabinet as a commissie's), whether it is asked and drawn as a neighbour of a focus,
-// and its column in a netwerk's first layout.
-const ROLES: Record<Collection, [string, string | null, boolean, 0 | 1 | 2]> = {
-	instruments: ['instrument', 'instrument', true, 1],
-	instrument_versions: ['other', null, false, 1],
-	articles: ['article', null, true, 1],
-	article_versions: ['other', null, false, 1],
-	annexes: ['other', null, true, 1],
-	judgments: ['judgment', null, true, 2],
-	dossiers: ['dossier', 'dossier', true, 0],
-	cases: ['activity', null, false, 0],
-	documents: ['document', null, true, 0],
-	activities: ['activity', null, true, 0],
-	decisions: ['activity', null, true, 0],
-	commitments: ['activity', null, true, 0],
-	members: ['member', null, true, 0],
-	factions: ['faction', 'faction', true, 0],
-	committees: ['committee', 'committee', true, 0],
-	cabinets: ['cabinet', 'cabinet', true, 0],
-	ministries: ['cabinet', null, true, 0]
+// (a cabinet as a commissie's), and whether it is asked and drawn as a neighbour of a focus.
+const ROLES: Record<Collection, [string, string | null, boolean]> = {
+	instruments: ['instrument', 'instrument', true],
+	instrument_versions: ['other', null, false],
+	articles: ['article', null, true],
+	article_versions: ['other', null, false],
+	annexes: ['other', null, true],
+	judgments: ['judgment', null, true],
+	dossiers: ['dossier', 'dossier', true],
+	cases: ['activity', null, false],
+	documents: ['document', null, true],
+	activities: ['activity', null, true],
+	decisions: ['activity', null, true],
+	commitments: ['activity', null, true],
+	members: ['member', null, true],
+	factions: ['faction', 'faction', true],
+	committees: ['committee', 'committee', true],
+	cabinets: ['cabinet', 'cabinet', true],
+	ministries: ['cabinet', null, true]
 };
 
 describe('the role of a collection', () => {
 	it('is one row per collection, read by every place that asks', () => {
 		for (const c of Object.keys(NODE_TYPES) as Collection[]) {
-			const [kind, hull, neighbour, column] = ROLES[c];
-			expect([drawClassOf(c), containerKindOf(c), kolomVan(c)], c).toEqual([kind, hull, column]);
+			const [kind, hull, neighbour] = ROLES[c];
+			expect([drawClassOf(c), containerKindOf(c)], c).toEqual([kind, hull]);
 			expect(COLLECTION_ROLE[c].neighbour, c).toBe(neighbour);
 		}
 	});

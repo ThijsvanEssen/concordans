@@ -1,4 +1,4 @@
-// Omgeving as lanes (?doek=banen): the tiles of a law's dossiers and their Zijpaneel, the heads and
+// Omgeving as lanes: the tiles of a law's dossiers and their Zijpaneel, the heads and
 // markers of changed wetten, the legend that switches a lijnsoort, Lezer and back, and the button
 // Netwerk that draws what a link with netwerk= draws (B84).
 import type { Locator, Page } from '@playwright/test';
@@ -7,9 +7,9 @@ import { netwerkKnop } from '../support/navigation';
 import { closeSheet, openSheet } from '../support/sheet';
 import { expect, test } from '../support/test';
 
-const WVW = '/wetten/BWBR0006622?doek=banen';
-const WVW_NETWERK = `${WVW}&mode=netwerk`;
-const WVW_LINK = '/explore?mode=netwerk&netwerk=instruments/bwbr0006622&doek=banen';
+const WVW = '/wetten/BWBR0006622';
+const WVW_NETWERK = `${WVW}?mode=netwerk`;
+const WVW_LINK = '/explore?mode=netwerk&netwerk=instruments/bwbr0006622';
 const TILE_36164 = '[data-tile="dossiers/36164"]';
 
 const tiles = (page: Page) => page.locator('[data-tile]');
@@ -158,7 +158,7 @@ test('changed wetten stand under their heads, with a marker the legend explains'
 	page,
 	isMobile
 }) => {
-	await page.goto('/dossiers/36702?doek=banen&mode=netwerk&diepte=2');
+	await page.goto('/dossiers/36702?mode=netwerk&diepte=2');
 	await expect(page.getByTestId('banen')).toBeVisible();
 	await expect(page.locator('.changed-mark').first()).toBeAttached();
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
@@ -174,7 +174,7 @@ test('the legend switches a lijnsoort off and on, and the address keeps it', asy
 	page,
 	isMobile
 }) => {
-	await page.goto('/dossiers/36702?doek=banen&mode=netwerk&diepte=2');
+	await page.goto('/dossiers/36702?mode=netwerk&diepte=2');
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
 	const change = legend.getByRole('button', { name: 'Voorgestelde wijziging' });
 	await expect(change).toHaveAttribute('aria-pressed', 'true');
@@ -211,7 +211,7 @@ test('a second step that fails says so, the first stays, Opnieuw asks it again',
 }) => {
 	guard.allow(/status of 503/);
 	await failApi(page, /^\/api\/nodes\/articles\/bwbr0005289_162\/neighborhood/, 503);
-	await page.goto('/wetten/BWBR0005289/artikel/6:162?doek=banen&mode=netwerk');
+	await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
 	const alert = page
 		.getByRole('alert')
 		.filter({ hasText: 'Het netwerk kon niet op tijd worden geladen.' });
@@ -236,7 +236,6 @@ test('Lezer and Netwerk go there and back, the lanes as they were', async ({ pag
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Wegenverkeerswet');
 	await netwerkKnop(page).click();
 	await expect(page).toHaveURL(/mode=netwerk/);
-	await expect(page).toHaveURL(/doek=banen/);
 	await expect(tiles(page)).toHaveCount(20);
 });
 
@@ -250,17 +249,11 @@ test('the button Netwerk draws what a link with netwerk= draws (B84)', async ({ 
 	expect(await numbers(page)).toEqual(linked);
 });
 
-test('Omgeving draws lanes without ?doek=banen', async ({ page }) => {
+test('Omgeving draws lanes, no canvas', async ({ page }) => {
 	await page.goto('/wetten/BWBR0006622?mode=netwerk');
 	await expect(page.getByTestId('banen')).toBeVisible();
 	await expect(tiles(page)).toHaveCount(20);
 	await expect(page.locator('canvas')).toHaveCount(0);
-});
-
-test('?doek=sigma is the way back to the canvas', async ({ page }) => {
-	await page.goto('/wetten/BWBR0006622?mode=netwerk&doek=sigma');
-	await expect(page.locator('canvas').first()).toBeVisible();
-	await expect(page.getByTestId('banen')).toHaveCount(0);
 });
 
 test('the legend names the same lijnsoorten whatever is switched off', async ({ page }) => {

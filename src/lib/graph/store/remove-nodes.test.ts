@@ -1,12 +1,9 @@
-// Whatever takes bronnen off the canvas (hiding rows, pruning, a new netwerk, the soft
-// cap) leaves no line without an end, and the soft cap trims the oldest first.
+// Whatever takes bronnen off the canvas (hiding rows, pruning, a new netwerk) leaves no line without an end.
 import { describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import { createGraphStore } from '../graph-store';
 import { createGraphContext } from './context';
-import { SOFT_NODE_CAP } from './types';
-import { createViewActions } from './view-actions';
 
 const judgment = (key: string) => ({
 	id: `judgments/${key}`,
@@ -94,30 +91,5 @@ describe('taking bronnen off the canvas', () => {
 		});
 		expect(ids(store)).not.toContain('judgments/a');
 		expect(loose(store)).toEqual([]);
-	});
-
-	it('the soft cap trims the oldest first, and a row shown last stays', () => {
-		const ctx = createGraphContext();
-		const many = Array.from({ length: SOFT_NODE_CAP }, (_, i) => `n${i}`);
-		ctx.mergeResponse(referring('focus', many));
-		expect(ctx.nodes.size).toBe(SOFT_NODE_CAP);
-		createViewActions(ctx).showRows('judgments/focus', [
-			{
-				ref: { collection: 'judgments', key: 'row' },
-				title: 'row',
-				relation: 'REFERS_TO',
-				direction: 'outbound'
-			}
-		]);
-		// The focus has the most lines and stays; of the rest the oldest goes.
-		const first = [...ctx.nodes.keys()][1];
-		ctx.trimToCap();
-		expect(ctx.nodes.size).toBe(SOFT_NODE_CAP);
-		expect(ctx.nodes.has(first)).toBe(false);
-		expect(ctx.nodes.has('judgments/row')).toBe(true);
-		const nodeIds = new Set(ctx.nodes.keys());
-		expect(
-			[...ctx.edges.values()].filter((e) => !nodeIds.has(e.source) || !nodeIds.has(e.target))
-		).toEqual([]);
 	});
 });

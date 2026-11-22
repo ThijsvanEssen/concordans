@@ -1,7 +1,7 @@
 // Maakt de favicon, de app-iconen en de deelafbeeldingen (static/og) in de kleuren van
 // src/lib/styles/tokens.css (bron: het Design System, tokens.json). De schets op een
 // deelafbeelding tekent met de code van het canvas: de soorttekens uit vormen.ts, de lijnen
-// uit line-kind.ts en nodeSprites.ts, de omhullingen zoals GraphCanvas, de keten zoals
+// uit line-kind.ts en nodeSprites.ts, de omhullingen zoals de schets, de keten zoals
 // ChainView.
 // Gebruik: node scripts/deelafbeeldingen.mjs
 import { chromium } from '@playwright/test';

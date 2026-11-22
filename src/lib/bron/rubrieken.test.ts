@@ -14,7 +14,6 @@ import { SEARCH_KINDS } from '$lib/search/lanes';
 import { groupLabel } from '$lib/search/present';
 import { chain } from '$lib/network/chain';
 import { lineage } from '$lib/network/lineage';
-import { clusterHeading, clustersOf, CLUSTER_MAX_LOOSE } from '$lib/selection/cluster';
 import { kindRowCount, type KindRow } from '$lib/components/graph/kind-rows';
 import { FILTER_GROUP_LABEL, FILTER_GROUPS, filterGroupOf } from '$lib/verbonden/filter';
 import { SORT_NAMES, kindLabelOn, kindOfBron, kindsOf } from '$lib/verbonden/summary';
@@ -673,31 +672,8 @@ describe('the order of the rubrieken', () => {
 	});
 });
 
-describe('the clusters', () => {
-	const around = (n: number) => {
-		const nodes = [
-			{ id: 'judgments/focus', collection: 'judgments' as const },
-			...Array.from({ length: n }, (_, i) => ({
-				id: `judgments/j${i}`,
-				collection: 'judgments' as const
-			}))
-		];
-		const edges = nodes
-			.slice(1)
-			.map((m) => ({ source: m.id, target: 'judgments/focus', relation: 'REFERS_TO' }));
-		return clustersOf(nodes, edges, 'judgments/focus', new Set(), new Set());
-	};
-
-	it('begin above 40, not at 40', () => {
-		expect(CLUSTER_MAX_LOOSE).toBe(40);
-		expect(around(40)).toHaveLength(0);
-		expect(around(41)).toHaveLength(1);
-	});
-
-	it('say "N van M" where the API holds more, and the soort where it does not', () => {
-		const [cluster] = around(41);
-		expect(clusterHeading(cluster, 63600)).toBe('41 van 63.600 uitspraken');
-		expect(clusterHeading(cluster, 41)).toBe('41 uitspraken');
+describe('the count of a row of Soort', () => {
+	it('says "N van M" where the API holds more, and the count alone where it does not', () => {
 		const row = (drawn: number, total: number | null): KindRow => ({
 			id: 'x',
 			label: 'Uitspraken',

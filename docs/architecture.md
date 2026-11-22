@@ -5,7 +5,7 @@
 | Layer        | Choice                                                                                     |
 | ------------ | ------------------------------------------------------------------------------------------ |
 | Framework    | SvelteKit 2, Svelte 5 runes; a static build that fetches everything in the browser         |
-| Network view | graphology (data) and Sigma 3 (WebGL); hulls, halos and badges are HTML or SVG             |
+| Network view | The lanes: the scene of the canvas as SVG in columns per soort                             |
 | API          | The LawGraph API, read-only; types come from its schema ([`api-client.md`](api-client.md)) |
 | Tests        | Vitest for pure logic (`npm test`); `npm run check` for the rest                           |
 

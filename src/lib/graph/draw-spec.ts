@@ -1,9 +1,6 @@
-// The measures of the drawing that the werkplek's canvas and the Netwerkschets share
-// (Netwerkcanvas, Maten): the hull's margin, line and fill, the rim of a cluster's disc, the
-// ring of the chosen one. GraphCanvas, hulls.ts and nodeSprites.ts read them here, and so does
-// the sketch; a number changed here changes both drawings, and the guard (draw-spec.test)
-// holds the canvas's CSS to it. Colours and dashes are not here: nodeSprites.ts reads them
-// from the tokens (`hullColorFor`, `hullDashFor`, `edgeColorFor`).
+// The measures of the Netwerkschets (Netwerkcanvas, Maten): the hull's margin, line and fill, the
+// rim of a cluster's disc, the ring of the chosen one. Colours and dashes are not here:
+// nodeSprites.ts reads them from the tokens (`hullColorFor`, `hullDashFor`, `edgeColorFor`).
 
 /** A hull: a disc round its members plus this margin, the line, its fill and its halo. */
 export const HULL = {

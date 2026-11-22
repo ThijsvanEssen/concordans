@@ -18,9 +18,6 @@ import type { DirectLink } from '$lib/network/shared';
 type NodeResponse = Schema<'NodeGraphResponse'>;
 type Settled = PromiseSettledResult<NodeResponse>;
 
-/** What the canvas offers the composer: to keep its view while it draws, and to fit after. */
-export type CanvasView = { suppressFit(): void; fitWhenSettled(): void };
-
 const canvasIdOf = (r: NodeResponse) => `${r.node.collection}/${r.node.key}`;
 
 /** A link names a dossier by its number (`37020-XV`); the API gives its node key. */
@@ -109,7 +106,6 @@ export class NetwerkComposer {
 
 	#store: GraphStore;
 	#room: number;
-	#view: () => CanvasView | null;
 	#epoch = 0;
 	/** The first composition grows out of the current canvas instead of starting anew. */
 	#keepCanvas = false;
@@ -121,10 +117,9 @@ export class NetwerkComposer {
 	/** How far the last composition went: 0 only the chosen, 1 their surroundings, n steps. */
 	#level = 0;
 
-	constructor(store: GraphStore, view: () => CanvasView | null, room = SOFT_NODE_CAP) {
+	constructor(store: GraphStore, room = SOFT_NODE_CAP) {
 		this.#store = store;
 		this.#room = room;
-		this.#view = view;
 	}
 
 	/** The next composition keeps what is on the canvas, as context. */
@@ -240,7 +235,6 @@ export class NetwerkComposer {
 		if (epoch !== this.#epoch) return;
 		this.#draw(n, results);
 		this.loading = false;
-		this.#view()?.fitWhenSettled();
 		await this.#extend(n, results, epoch);
 	}
 
@@ -275,7 +269,6 @@ export class NetwerkComposer {
 		sum();
 		if (todo.length === 0) return;
 		this.extending = true;
-		this.#view()?.suppressFit();
 		try {
 			await inPool(
 				todo,
@@ -302,7 +295,6 @@ export class NetwerkComposer {
 		} finally {
 			if (epoch === this.#epoch) {
 				this.extending = false;
-				this.#view()?.fitWhenSettled();
 			}
 		}
 	}
@@ -356,11 +348,9 @@ export class NetwerkComposer {
 		}
 		const fresh = (!this.composed && !this.#keepCanvas) || shorter;
 		this.#keepCanvas = false;
-		this.#view()?.suppressFit();
 		const { alone } = this.#store.compose({
 			participants,
 			surroundings: this.surroundings,
-			steps: level,
 			fresh
 		});
 		this.composed = true;

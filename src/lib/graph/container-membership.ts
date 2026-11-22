@@ -108,26 +108,6 @@ const overlaps = (a: Period, b: Period) =>
 	(a.to === null || b.from === null || b.from <= a.to);
 
 /**
- * The moment a lid's hulls stand for when no period is chosen: today, or, for someone
- * no longer on a commissie or in a fractie, the day their last seat ended.
- */
-export function momentOf(
-	memberId: string | null,
-	groups: Iterable<ContainerGroup>,
-	today: string
-): Period | null {
-	if (!memberId) return null;
-	let last: string | null = null;
-	for (const group of groups) {
-		const period = group.periods.get(memberId);
-		if (!period) continue;
-		if (period.to === null || period.to >= today) return { from: today, to: today };
-		if (last === null || period.to > last) last = period.to;
-	}
-	return last ? { from: last, to: last } : null;
-}
-
-/**
  * Whether a group is drawn as a hull.
  * - A dossier is, when it holds a stuk or zaak of its own or is the focus: an activity
  *   about forty dossiers (a regeling van werkzaamheden) would otherwise draw forty hulls

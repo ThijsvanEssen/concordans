@@ -1,6 +1,6 @@
 // The generated types are the contract (code-eenvoud F54): no cast past them.
 import { describe, expect, it } from 'vitest';
-import { overtreders, plek } from '$lib/test/bronnen';
+import { overtreders } from '$lib/test/bronnen';
 
 describe('the generated types as the contract (code-eenvoud F54)', () => {
 	it('reads what the API gives without a cast past its types', () => {
@@ -12,11 +12,6 @@ describe('the generated types as the contract (code-eenvoud F54)', () => {
 	});
 
 	it('reads the meta of a neighbour as the API types it, without a cast', () => {
-		expect(
-			overtreders(
-				(t) => /meta as Record<string, unknown>/.test(t),
-				[plek('lib/components/graph/hulls.ts', 'graphology does not type its attributes')]
-			)
-		).toEqual([]);
+		expect(overtreders((t) => /meta as Record<string, unknown>/.test(t))).toEqual([]);
 	});
 });

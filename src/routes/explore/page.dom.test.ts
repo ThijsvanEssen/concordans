@@ -214,18 +214,18 @@ describe('the Verkenner reads its state from the address', () => {
 		expect(seen.IndexView?.category).toBe('judgments');
 	});
 
-	it('draws two steps around an ordinary bron, ?diepte between 1 and 3 (0 is for a netwerk), ?alles=1 one step', async () => {
+	it('draws two steps around an ordinary bron, ?diepte between 0 (Alleen gekozen) and 3, ?alles=1 one step', async () => {
 		const cases: [string, number][] = [
 			['', 2],
 			['&diepte=1', 1],
 			['&diepte=3', 3],
 			['&diepte=9', 3],
-			['&diepte=0', 1],
+			['&diepte=0', 0],
 			['&diepte=x', 2],
 			['&alles=1&diepte=3', 1]
 		];
 		for (const [query, depth] of cases) {
-			const v = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma${query}`);
+			const v = await openAt(`/explore?focus=${ARTICLE}&mode=netwerk${query}`);
 			expect(seen.GraphView.depth, query).toBe(depth);
 			v.unmount();
 		}
@@ -349,25 +349,26 @@ describe('the netwerk of chosen bronnen', () => {
 	};
 
 	it('adds a bron in place, removes it as a step, and remembers it', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		const toggle = (id: string) =>
 			(seen.GraphView.onToggleChosen as (n: ReturnType<typeof graphNode>) => void)(graphNode(id));
-		toggle(ARTICLE);
+		// The bron of the page is chosen already: a second one makes the netwerk of two.
+		toggle(MEMBER);
 		await settle();
-		expect(param('netwerk')).toBe(ARTICLE);
+		expect(param('netwerk')).toBe(`${ARTICLE},${MEMBER}`);
 		expect(seen.GraphView.netwerkActive).toBe(true);
 		expect(history().entries).toHaveLength(1);
 		expect(localStorage.getItem('concordans:netwerk')).toBe(
-			`netwerk=${encodeURIComponent(ARTICLE)}`
+			`netwerk=${encodeURIComponent(`${ARTICLE},${MEMBER}`)}`
 		);
-		toggle(ARTICLE);
+		toggle(MEMBER);
 		await settle();
 		expect(param('netwerk')).toBeNull();
 		expect(history().entries).toHaveLength(2);
 		expect(localStorage.getItem('concordans:netwerk')).toBeNull();
 		back();
 		await settle();
-		expect(param('netwerk')).toBe(ARTICLE);
+		expect(param('netwerk')).toBe(`${ARTICLE},${MEMBER}`);
 	});
 
 	it('opens on the remembered netwerk where nothing is chosen, the bronnen between shown', async () => {
@@ -407,7 +408,7 @@ describe('the werkplek (besluit 39)', () => {
 
 	it('draws a clean link as it says, whatever is kept in this browser (N7)', async () => {
 		localStorage.setItem('concordans:netwerk', `netwerk=${MEMBER}`);
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		expect(param('netwerk')).toBeNull();
 		expect(param('focus')).toBe(ARTICLE);
 		expect(seen.GraphView.netwerkActive).toBe(false);
@@ -419,16 +420,15 @@ describe('the werkplek (besluit 39)', () => {
 		expect(localStorage.getItem('concordans:netwerk')).toBeNull();
 	});
 
-	it('on the lanes a bron alone is a netwerk of one, the address unchanged (B84)', async () => {
+	it('a bron alone is a netwerk of one, the address unchanged (B84)', async () => {
 		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		expect(param('netwerk')).toBeNull();
 		expect(seen.GraphView.expecting).toBe(1);
 		expect(seen.GraphView.netwerkActive).toBe(false);
-		expect(seen.GraphView.lanes).toBe(true);
 	});
 
 	it('begins with the bron alone where no netwerk is kept', async () => {
-		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk&doek=sigma`);
+		await openAt(`/explore?focus=${ARTICLE}&mode=netwerk`);
 		expect(param('netwerk')).toBeNull();
 		expect(seen.GraphView.netwerkActive).toBe(false);
 	});

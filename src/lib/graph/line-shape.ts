@@ -12,7 +12,7 @@ export const AIR = 3;
 /** An arrowhead's width to its length. */
 export const ARROW_WIDTH = 0.8;
 /** An arrowhead is at least this long, in px (Netwerkcanvas, Maten). */
-export const MIN_ARROW_PX = 5.5;
+const MIN_ARROW_PX = 5.5;
 
 type Point = { x: number; y: number };
 

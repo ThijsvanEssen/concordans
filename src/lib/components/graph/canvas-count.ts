@@ -1,7 +1,6 @@
 // What the Legenda, the sidebar and the keyboard's list of bronnen say of the canvas. What is
-// drawn comes from the canvas itself (GraphCanvas `onDrawn`: the filter, the years, the
+// drawn comes from the lanes themselves (LanesView `onDrawn`: the filter, the years, the
 // strays); the count per kind is before the filter, so the sidebar says what the filter hides.
-import type Graph from 'graphology';
 import { kindColour } from '$lib/bron/kleur';
 import { sortColour } from '$lib/bron/rubrieken';
 import { makerSorts } from '$lib/graph/roles';
@@ -13,6 +12,22 @@ import type { Stuksoort } from '$lib/bron/rubrieken';
 import { lineKindOf, type LineKind } from '$lib/graph/line-kind';
 import type { DrawClass, GraphEdge, GraphNode } from '$lib/graph/types';
 import type { Relation } from '$lib/vocabulary';
+
+/** What the counts read of a bron on the lanes: its kind, its shape, its day, its court. */
+export type CountNode = {
+	drawClass: DrawClass;
+	vorm?: Vorm;
+	collection: string;
+	filterGroup?: FilterGroup;
+	stuksoort: Stuksoort | null;
+	rechter: Rechter | null;
+	date: string | null;
+	/** A wet's anchor: a point its hull stands on, no bron of its own. */
+	anchor: boolean;
+};
+
+/** A line between two bronnen, as the counts read it. */
+export type CountEdge = { source: string; target: string; relation: Relation };
 
 export type CanvasCounts = {
 	nodes: number;
@@ -78,8 +93,10 @@ const outsideOf = (period: Period | null | undefined, day: string | null) =>
 	day !== null &&
 	((period.from !== null && day < period.from) || (period.to !== null && day > period.to));
 
-export function countCanvas(o: {
-	graph: Graph;
+type CountInput = {
+	/** The bronnen of the lanes by id, and the lines between them. */
+	nodes: ReadonlyMap<string, CountNode>;
+	edges: readonly CountEdge[];
 	/** The bronnen the canvas draws. */
 	drawn: ReadonlySet<string>;
 	selectionId: string | null;
@@ -94,70 +111,74 @@ export function countCanvas(o: {
 	rings?: readonly { filterGroup: FilterGroup }[];
 	/** Of those, the ones drawn now; without it, all of `rings`. */
 	ringsShown?: readonly { filterGroup: FilterGroup }[];
-}): { counts: CanvasCounts; drawnIds: string[] } {
-	const { graph, drawn, selectionId, hiddenKinds, rechter, verborgen } = o;
-	let nodes = 0;
+};
+
+type Tally = Pick<CanvasCounts, 'kinds' | 'vormen' | 'metGroep'> & {
+	nodes: number;
+	annexes: number;
+	drawnKinds: NonNullable<CanvasCounts['drawnKinds']>;
+	stuksoorten: NonNullable<CanvasCounts['stuksoorten']>;
+	/** Per kind, the bronnen the filter leaves. */
+	bronnen: Partial<Record<FilterGroup, number>>;
+	drawnIds: string[];
+};
+
+/** One bron into the counts: before the filter per kind, then what the filter leaves. */
+function tally(t: Tally, o: CountInput, id: string, attrs: CountNode) {
+	const kind = attrs.filterGroup;
+	const other = attrs.drawClass === 'other' && !attrs.anchor;
+	if (other) t.annexes++;
+	const outside = id !== o.selectionId && outsideOf(o.period, attrs.date);
+	if (kind && !other && !outside) {
+		add(t.kinds, kind);
+		if (o.drawn.has(id)) add(t.drawnKinds, kind);
+	}
+	if (attrs.stuksoort && !other) add(t.stuksoorten, attrs.stuksoort);
+	if (o.drawn.has(id)) {
+		t.drawnIds.push(id);
+		t.nodes++;
+		if (attrs.vorm && !attrs.anchor) add(t.vormen, attrs.vorm);
+	}
+	if (!kind || attrs.anchor) return;
+	const otherCourt = o.rechter && attrs.collection === 'judgments' && attrs.rechter !== o.rechter;
+	const hiddenFacet =
+		!!attrs.stuksoort && o.hiddenKinds.has(`stuksoort:${attrs.stuksoort}` as HiddenKind);
+	if (id !== o.selectionId && (o.hiddenKinds.has(kind) || hiddenFacet || otherCourt)) return;
+	add(t.bronnen, kind);
+	const groep = o.verborgen.get(id);
+	if (!groep) return;
+	const m = (t.metGroep[kind] ??= { count: 0, van: 0, groepen: [] });
+	m.count++;
+	if (!m.groepen.includes(groep)) m.groepen.push(groep);
+}
+
+export function countCanvas(o: CountInput): { counts: CanvasCounts; drawnIds: string[] } {
+	const t: Tally = {
+		nodes: 0,
+		annexes: 0,
+		kinds: {},
+		drawnKinds: {},
+		stuksoorten: {},
+		vormen: {},
+		metGroep: {},
+		bronnen: {},
+		drawnIds: []
+	};
+	for (const [id, attrs] of o.nodes) tally(t, o, id, attrs);
+	for (const r of o.rings ?? []) add(t.kinds, r.filterGroup);
+	for (const r of o.ringsShown ?? o.rings ?? []) add(t.drawnKinds, r.filterGroup);
 	let edges = 0;
-	let annexes = 0;
-	const kinds: CanvasCounts['kinds'] = {};
-	const drawnKinds: CanvasCounts['kinds'] = {};
-	const stuksoorten: NonNullable<CanvasCounts['stuksoorten']> = {};
-	const vormen: CanvasCounts['vormen'] = {};
-	const metGroep: CanvasCounts['metGroep'] = {};
-	const bronnen: Partial<Record<FilterGroup, number>> = {};
-	const drawnIds: string[] = [];
-	graph.forEachNode((id, attrs) => {
-		const kind = attrs.filterGroup as FilterGroup | undefined;
-		const other = attrs.drawClass === 'other' && !attrs.anchor;
-		if (other) annexes++;
-		const dated = typeof attrs.date === 'string' ? attrs.date : null;
-		const outsidePeriod = (day: string | null) => outsideOf(o.period, day);
-		const outside = id !== selectionId && outsidePeriod(dated);
-		// A group counts the members inside the period, as the strip does (not its whole size).
-		const memberDates = Array.isArray(attrs.memberDates)
-			? (attrs.memberDates as (string | null)[])
-			: null;
-		const inside = memberDates
-			? memberDates.filter((day) => !outsidePeriod(day)).length
-			: ((attrs.members as number | undefined) ?? 1);
-		if (kind && !other && !outside) {
-			add(kinds, kind, inside);
-			if (drawn.has(id)) add(drawnKinds, kind, inside);
-		}
-		if (attrs.stuksoort && !other)
-			add(stuksoorten, attrs.stuksoort as Stuksoort, (attrs.members as number | undefined) ?? 1);
-		if (drawn.has(id)) {
-			drawnIds.push(id);
-			nodes++;
-			const vorm = attrs.vorm as Vorm | undefined;
-			if (vorm && !attrs.anchor) add(vormen, vorm);
-		}
-		if (!kind || attrs.anchor) return;
-		const otherCourt = rechter && attrs.collection === 'judgments' && attrs.rechter !== rechter;
-		const hiddenFacet =
-			!!attrs.stuksoort && hiddenKinds.has(`stuksoort:${attrs.stuksoort}` as HiddenKind);
-		if (id !== selectionId && (hiddenKinds.has(kind) || hiddenFacet || otherCourt)) return;
-		add(bronnen, kind);
-		const groep = verborgen.get(id);
-		if (!groep) return;
-		const m = (metGroep[kind] ??= { count: 0, van: 0, groepen: [] });
-		m.count++;
-		if (!m.groepen.includes(groep)) m.groepen.push(groep);
-	});
-	for (const r of o.rings ?? []) add(kinds, r.filterGroup);
-	for (const r of o.ringsShown ?? o.rings ?? []) add(drawnKinds, r.filterGroup);
 	const lines: CanvasCounts['lines'] = {};
-	graph.forEachEdge((_id, attrs, src, tgt) => {
-		if (attrs.layoutOnly || !drawn.has(src) || !drawn.has(tgt)) return;
-		const relation = attrs.relation as Relation;
-		const kind = lineKindOf(relation, graph.getNodeAttribute(src, 'drawClass') as DrawClass);
+	for (const { source, target, relation } of o.edges) {
+		if (!o.drawn.has(source) || !o.drawn.has(target)) continue;
+		const kind = lineKindOf(relation, o.nodes.get(source)?.drawClass ?? 'other');
 		add(lines, kind);
-		if (o.hiddenLines.has(kind)) return;
-		edges++;
-	});
-	for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as FilterGroup] ?? 0;
+		if (!o.hiddenLines.has(kind)) edges++;
+	}
+	for (const [k, m] of Object.entries(t.metGroep)) m.van = t.bronnen[k as FilterGroup] ?? 0;
+	const { nodes, annexes, kinds, drawnKinds, stuksoorten, vormen, metGroep } = t;
 	return {
 		counts: { nodes, edges, kinds, drawnKinds, stuksoorten, vormen, metGroep, annexes, lines },
-		drawnIds
+		drawnIds: t.drawnIds
 	};
 }

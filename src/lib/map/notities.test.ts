@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MapItem } from './map';
-import { gemerkt, notesOfBundels, notitiesPerBron } from './notities';
+import { notesOfBundels, notitiesPerBron } from './notities';
 
 const cbw = 'Cyberbeveiligingswet (Cbw)';
 const lid3: MapItem = {
@@ -67,7 +67,6 @@ describe('the notes of a map per bron', () => {
 		const per = notitiesPerBron(map([lid3, art22]));
 		expect(per.has(art22.id)).toBe(false);
 		expect(per.has('articles/bwbr0052872_23')).toBe(false);
-		expect(gemerkt(per)).toEqual(new Set([lid3.id]));
 	});
 
 	it('adds the note on a group under its name, once per bron; a judgment its own without', () => {
@@ -79,13 +78,11 @@ describe('the notes of a map per bron', () => {
 		expect(per.get(art22.id)).toEqual([{ waar: cbw, tekst: 'Over de Cbw.', soort: 'groep' }]);
 		expect(per.get(lid3.id)?.filter((n) => n.soort === 'groep')).toHaveLength(1);
 		expect(per.get(ro.id)?.at(-1)).toEqual({ waar: null, tekst: 'Leading case.', soort: 'groep' });
-		expect(gemerkt(per)).toEqual(new Set([lid3.id, art22.id, ro.id]));
 	});
 
 	it("adds the map's own note last, under the map's name, without a mark of its own", () => {
 		const per = notitiesPerBron(map([art22], { notitie: ' De vraag. ' }));
 		expect(per.get(art22.id)).toEqual([{ waar: 'Cbw', tekst: 'De vraag.', soort: 'map' }]);
-		expect(gemerkt(per).size).toBe(0);
 	});
 
 	it('shows the notes of every bundel, one after the other (decision 20A)', () => {

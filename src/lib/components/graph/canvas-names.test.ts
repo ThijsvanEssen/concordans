@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNodeLabel } from '$lib/graph/types';
-import { maandJaar } from '$lib/text/datum';
-import { ecliTail, withDossier, distinctNames, paperDossier } from './canvas-names';
+import { ecliTail, distinctNames } from './canvas-names';
 
 /** A Memorie van toelichting of dossier `d`, as a neighbourhood with `props=canvas` gives it. */
 const mvt = (d: string, suffix: string | null = null) => ({
@@ -24,40 +23,6 @@ const uitspraak = (key: string, short: string) => ({
 	key,
 	raw: { props: {} },
 	short
-});
-
-describe('metDossier', () => {
-	it('names fifteen Memories van toelichting around Boek 6 BW each by its dossier (N4)', () => {
-		const stukken = ['34710', '34071', '34234', '35755', '34442', '35971', '32621'].map((d) =>
-			mvt(d)
-		);
-		const namen = stukken.map((s) =>
-			withDossier('Memorie van toelichting, nr. 3', s.raw.props, new Set())
-		);
-		expect(namen[0]).toBe('Memorie van toelichting, 34710, nr. 3');
-		expect(new Set(namen).size).toBe(stukken.length);
-	});
-
-	it('writes a dossier with its suffix as a citation does', () => {
-		const s = mvt('33000', 'VI');
-		expect(paperDossier(s.raw.props)).toBe('33000 VI');
-		expect(withDossier('Memorie van toelichting, nr. 3', s.raw.props, new Set())).toBe(
-			'Memorie van toelichting, 33000 VI, nr. 3'
-		);
-	});
-
-	it('leaves the number out for a stuk of the dossier in focus: its hull names it', () => {
-		const s = mvt('36410');
-		expect(withDossier('Amendement Verkuijlen, nr. 3', s.raw.props, new Set(['36410']))).toBe(
-			'Amendement Verkuijlen, nr. 3'
-		);
-	});
-
-	it('puts the dossier before the month of a stuk without a number', () => {
-		const props = { dossier_number: '28684', date: '2020-03-12' };
-		const maand = maandJaar('2020-03-12');
-		expect(withDossier(`Brief, ${maand}`, props, new Set())).toBe(`Brief, 28684, ${maand}`);
-	});
 });
 
 describe('onderscheiden', () => {

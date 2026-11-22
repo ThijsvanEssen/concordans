@@ -28,29 +28,3 @@ export function edgesByNode<E extends Edge>(edges: Iterable<E>): Map<string, E[]
 	}
 	return ties;
 }
-
-/**
- * The relation most of `members` have with `end` (their `ties` from `edgesByNode`), and
- * whether it runs from the members to the end; RELATED_TO toward the end without one.
- */
-export function mostCommonRelation(
-	members: ReadonlySet<string>,
-	ties: ReadonlyMap<string, readonly (Edge & { relation: string })[]>,
-	end: string
-): { relation: string; toEnd: boolean } {
-	const counts = new Map<string, { relation: string; toEnd: boolean; count: number }>();
-	for (const id of members) {
-		for (const e of ties.get(id) ?? []) {
-			if (e.source !== end && e.target !== end) continue;
-			const toEnd = members.has(e.source);
-			const key = `${e.relation}|${toEnd}`;
-			const at = counts.get(key) ?? { relation: e.relation, toEnd, count: 0 };
-			at.count += 1;
-			counts.set(key, at);
-		}
-	}
-	const [top] = [...counts.values()].sort((a, b) => b.count - a.count);
-	return top
-		? { relation: top.relation, toEnd: top.toEnd }
-		: { relation: 'RELATED_TO', toEnd: true };
-}

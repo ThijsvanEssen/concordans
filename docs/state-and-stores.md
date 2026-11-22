@@ -31,7 +31,7 @@ Module-level caches: `$lib/api/records.ts` (`once`, the records of readers and o
 
 - `nodes`, `edges`, `selection`, `pinned`, `filters` and `trimmedCount` are `Readable`; components subscribe.
 - `nodeResponse(collection, key)` reads a bron through `getNode` (`records.ts`): one request serves the canvas and the panel Verbonden.
-- The graphology graph belongs to `GraphView`, built from the store's arrays. Components never receive the store's maps.
+- What the counts read of the bronnen on the lanes belongs to `GraphView`, built from the store's arrays. Components never receive the store's maps.
 - `reset()` aborts every request in flight and empties the canvas; the records stay.
 - Node kinds, edge categories and labels come from `src/lib/graph/types.ts`; collections and relations from `src/lib/vocabulary.ts`.
 

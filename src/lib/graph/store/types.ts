@@ -164,17 +164,11 @@ export type GraphStore = {
 		fresh: boolean;
 		/** The weergave Omgeving: every neighbour of each chosen bron, not only what they share. */
 		surroundings?: boolean;
-		/** How many steps the netwerk reaches: with more, groups fold earlier (`looseMaxFor`). */
-		steps?: number;
 	}) => { alone: ReadonlySet<string> };
 	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
 	core: Readable<ReadonlySet<string> | null>;
-	/** More loose bronnen of one kind than this fold into a cluster bron. */
-	looseMax: Readable<number>;
 	/** Ends the netwerk: nothing is chosen any more, the canvas stays as it is. */
 	releaseNetwerk: () => void;
-	/** Omgeving as lanes (?doek=banen): the budget counts the groups of their scene. */
-	setLanes: (on: boolean) => void;
 	setSelection: (nodeId: string | null) => void;
 	focusNode: (nodeId: string) => GraphNode | null;
 	/** Draws bronnen next to `focusId`, each with the verbinding that ties it to the focus;

@@ -52,7 +52,3 @@ export function notesOfBundels(
 		for (const [id, notes] of notitiesPerBron(m)) all.set(id, [...(all.get(id) ?? []), ...notes]);
 	return all;
 }
-
-/** The bronnen whose card holds a note of their own or of their group: these carry a mark. */
-export const gemerkt = (per: ReadonlyMap<string, NodeNotitie[]>): Set<string> =>
-	new Set([...per].filter(([, n]) => n.some((x) => x.soort !== 'map')).map(([id]) => id));

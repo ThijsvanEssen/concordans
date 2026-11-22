@@ -20,9 +20,6 @@ export function createGraphStore(opts: { cap?: number } = {}): GraphStore {
 		...createExpansion(ctx),
 		...view,
 		...netwerk,
-		setLanes: (on) => {
-			ctx.network.lanes = on;
-		},
 		reset: () => {
 			view.reset();
 			netwerk.releaseNetwerk();

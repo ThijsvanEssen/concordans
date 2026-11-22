@@ -1,13 +1,10 @@
 // The colours and shapes of the canvas, read from the design tokens.
 //
-// Sigma draws in WebGL and cannot read CSS variables, so the tokens are read once
-// from `getComputedStyle` (`tokens()`) and every colour on the canvas comes from
-// them: change a token in $lib/styles/tokens.css and the canvas follows after a reload.
-// Each bron is drawn as its vorm (vormen.ts), a sprite for sigma's NodeImageProgram.
+// The tokens are read once from `getComputedStyle` (`tokens()`) and every colour of the
+// lines comes from them: change a token in $lib/styles/tokens.css and the lines follow after a reload.
 // This module is the one place that defines the colour and line style per relation and the
 // colour of a hull; the legend reads it too.
 
-import { VORMEN, type Vorm } from '$lib/bron/vormen';
 import type { ContainerKind } from '$lib/graph/container-membership';
 import type { DrawClass } from '$lib/graph/types';
 import {
@@ -18,7 +15,6 @@ import {
 	type Tone
 } from '$lib/graph/line-kind';
 import { lineStrength } from '$lib/graph/line-strength';
-import { CLUSTER_FILL } from '$lib/graph/draw-spec';
 import type { Relation } from '$lib/vocabulary';
 
 type Tokens = {
@@ -145,8 +141,8 @@ export function withAlpha(color: string, alpha: number): string {
 
 /**
  * `color` mixed toward `--paper`, opaque: `strength` 1 is the colour itself, 0 the paper.
- * Sigma draws on a transparent WebGL canvas, where a line with a low alpha blends toward
- * white rather than toward the paper behind it; an opaque mix keeps its hue.
+ * A line with a low alpha blends toward white rather than toward the paper behind it; an opaque
+ * mix keeps its hue.
  */
 export function towardPaper(color: string, strength: number): string {
 	const c = HEX.exec(color.trim());
@@ -155,15 +151,6 @@ export function towardPaper(color: string, strength: number): string {
 	const mix = (i: number) =>
 		Math.round(parseInt(c[i], 16) * strength + parseInt(p[i], 16) * (1 - strength));
 	return `rgb(${mix(1)}, ${mix(2)}, ${mix(3)})`;
-}
-
-/**
- * The colour of an edge or a node border pushed out of focus (hover, stale context):
- * `--rule-strong` alone is close enough to `--paper` to read as a blank line, so
- * de-emphasis mixes `--ink-3` toward the paper instead of picking a paler grey.
- */
-export function dimColor(strength = 0.4): string {
-	return towardPaper(tokens().ink3, strength);
 }
 
 /** A line in its tone at rest, as the drawings of the Design System show it: the top of its window. */
@@ -242,160 +229,3 @@ export function edgeDashFor(style: EdgeStyle): string | undefined {
 /** The cap of a stroke: round, so a dot is round; flat for a dash, so it keeps its length. */
 export const edgeCapFor = (style: EdgeStyle): 'round' | 'butt' =>
 	style === 'kort' || style === 'lang' ? 'butt' : 'round';
-
-// A sprite is drawn in a 32×32 box onto a canvas of SPRITE_PX and handed over as a PNG. Not
-// as an SVG: sigma's image program draws its atlas once, as soon as an image has loaded, and
-// Chrome may not have rasterized an SVG by then, so the atlas holds a blank and the bron never
-// shows. The image program fits the box to the node's circle: half the box is its radius.
-const VB = 32;
-const SPRITE_PX = 128;
-/** The 16-box of vormen.ts in the 32-box: moved in by 4 and scaled by 1.5, room for a halo. */
-const VORM_INSET = 4;
-const VORM_SCALE = 1.5;
-
-// Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
-// omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
-const vormCache: Map<string, string> = new Map();
-/** A colour token (`var(--rubriek-wetten)`) as the canvas paints it. */
-function kleurUit(waarde: string | undefined, fallback: string): string {
-	const naam = waarde?.match(/^var\((--[\w-]+)\)$/)?.[1];
-	if (!naam) return waarde || fallback;
-	if (typeof document === 'undefined') return fallback;
-	return getComputedStyle(document.documentElement).getPropertyValue(naam).trim() || fallback;
-}
-
-/**
- * The edge of an open sign: a vorm drawn as a line 2 px, in its kind's colour; an open sign
- * standing for a bron that is gone or outside the period (a repealed article), 1.3 px in ink-3
- * (Netwerkcanvas, Open teken).
- */
-export const openStroke = (stub: boolean, wijze: string): number =>
-	stub ? 1.3 : wijze === 'lijn' ? 2 : 1.3;
-
-/**
- * The focus's ring in the 16-box of vormen.ts: the ink, centred on the edge of the vorm, and the
- * paper halo under it. An open sign (a vorm drawn as a line) keeps 2 px of its own edge inside
- * the ring, so its ring is that much wider.
- */
-export const focusRing = (wijze: string): { ink: number; halo: number } => {
-	const ink = (wijze === 'lijn' ? 2 : 0) + 3;
-	return { ink, halo: ink + 3.2 };
-};
-
-/**
- * The sprite of a vorm in ink, or in the colour of its kind (`colour`, kindColour): the werkplek
- * draws the kinds as the mockups do (A197).
- */
-export function spriteForVorm(
-	vorm: Vorm,
-	stub: boolean,
-	focused: boolean,
-	colour?: string
-): string {
-	const k = `${vorm}:${stub}:${focused}:${colour ?? ''}`;
-	let url = vormCache.get(k);
-	if (url) return url;
-	const t = tokens();
-	const canvas = document.createElement('canvas');
-	canvas.width = canvas.height = SPRITE_PX;
-	const ctx = canvas.getContext('2d');
-	if (!ctx) return '';
-	ctx.scale(SPRITE_PX / VB, SPRITE_PX / VB);
-	ctx.translate(VORM_INSET, VORM_INSET);
-	ctx.scale(VORM_SCALE, VORM_SCALE);
-	const v = VORMEN[vorm];
-	const path = new Path2D(v.d);
-	const inkt = kleurUit(colour, t.ink);
-	if (focused) {
-		// The ring of ink on a halo of paper, outside the vorm: the sign is drawn over its inner
-		// half, so an open sign's own edge (2 px) does not hide it.
-		const ring = focusRing(v.wijze);
-		ctx.lineJoin = 'round';
-		ctx.strokeStyle = t.paper;
-		ctx.lineWidth = ring.halo;
-		ctx.stroke(path);
-		ctx.strokeStyle = t.ink;
-		ctx.lineWidth = ring.ink;
-		ctx.stroke(path);
-	}
-	if (stub || v.wijze === 'lijn') {
-		ctx.fillStyle = t.paper;
-		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
-		ctx.strokeStyle = stub ? t.ink3 : inkt;
-		ctx.lineWidth = openStroke(stub, v.wijze);
-		ctx.stroke(path);
-	} else {
-		ctx.fillStyle = inkt;
-		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
-	}
-	url = canvas.toDataURL('image/png');
-	vormCache.set(k, url);
-	return url;
-}
-
-export const IMAGE_SIZE_BUMP = 1.35;
-
-/**
- * Where a ray from the centre (8, 8) towards the top right leaves each vorm, per axis, in the
- * 16-box of vormen.ts: the edge the badge of Open dossiers and the mark of a note stand on. A
- * vorm drawn as a line counts the outer half of its stroke.
- */
-export const EDGE_AT_45: Record<Vorm, number> = {
-	regel: 6,
-	'regel-int': 6,
-	'regel-o': 5.7,
-	publicatie: 6,
-	uitspraak: 4.6,
-	stuk: 4.5,
-	voorstel: 4.5,
-	dossier: 3,
-	besluit: 2.3,
-	activiteit: 2.4,
-	toezegging: 6,
-	persoon: 3.2,
-	orgaan: 4.4,
-	'orgaan-o': 4.3,
-	kabinet: 4.4,
-	ministerie: 4.4,
-	bewindspersoon: 3.2,
-	ambt: 4.4,
-	rechtsgang: 6.5,
-	districts: 6.5,
-	overig: 3.5
-};
-
-/** The per-axis offset of a vorm's edge at 45° (top right), in units of the node's radius. */
-export const badgeAxisOffset = (vorm: Vorm): number => (EDGE_AT_45[vorm] * VORM_SCALE) / (VB / 2);
-
-/**
- * The sprite of a cluster (Netwerkcanvas, Cluster): a disc in the colour of its kind on a rim
- * of paper, its count inside in paper, "250".
- */
-export function clusterSprite(count: string, colour: string | undefined): string {
-	const k = `cluster:${count}:${colour ?? ''}`;
-	let url = vormCache.get(k);
-	if (url) return url;
-	const t = tokens();
-	const canvas = document.createElement('canvas');
-	canvas.width = canvas.height = SPRITE_PX;
-	const ctx = canvas.getContext('2d');
-	if (!ctx) return '';
-	const c = SPRITE_PX / 2;
-	ctx.fillStyle = t.paper;
-	ctx.beginPath();
-	ctx.arc(c, c, c, 0, Math.PI * 2);
-	ctx.fill();
-	ctx.fillStyle = kleurUit(colour, t.ink);
-	ctx.beginPath();
-	ctx.arc(c, c, c * CLUSTER_FILL, 0, Math.PI * 2);
-	ctx.fill();
-	ctx.fillStyle = t.paper;
-	ctx.textAlign = 'center';
-	ctx.textBaseline = 'middle';
-	const size = count.length > 3 ? 30 : 38;
-	ctx.font = `600 ${size}px ${t.fontSerif}`;
-	ctx.fillText(count, c, c + 2);
-	url = canvas.toDataURL('image/png');
-	vormCache.set(k, url);
-	return url;
-}

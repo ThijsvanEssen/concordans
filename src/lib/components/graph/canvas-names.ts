@@ -1,11 +1,9 @@
-// The names of the bronnen on the canvas and in its list for the keyboard, each one telling
-// its bron apart (UX review N4): a Kamerstuk with its dossier ("Memorie van toelichting,
-// 34710, nr. 3", not fifteen times "nr. 3" around Boek 6 BW), and where two names are still
-// the same, what tells them apart: a judgment by its ECLI ("Hof Amsterdam 2 april 2024,
+// The names of the bronnen in the list for the keyboard, each one telling its bron apart (UX
+// review N4): where two names are the same, what tells them apart: a judgment by its ECLI ("Hof Amsterdam 2 april 2024,
 // GHAMS:2024:812", not eight times the court and the day).
 import { textOf } from '$lib/text/words';
-import { dossierNumberText, dossierNummer, officialNumber } from '$lib/bron/dossier-naam';
-import { korteDatum, maandJaar } from '$lib/text/datum';
+import { dossierNumberText } from '$lib/bron/dossier-naam';
+import { korteDatum } from '$lib/text/datum';
 
 type Bron = {
 	id: string;
@@ -17,39 +15,9 @@ type Bron = {
 };
 
 /** `36600 VIII`: the dossier of a stuk as a citation writes it, or null. */
-export function paperDossier(props: Record<string, unknown> | null | undefined): string | null {
+function paperDossier(props: Record<string, unknown> | null | undefined): string | null {
 	const number = textOf(props?.dossier_number);
 	return number ? dossierNumberText(number, textOf(props?.dossier_suffix)) : null;
-}
-
-/** `36600 VIII`: the number of a dossier bron, as `paperDossier` writes a stuk's. */
-export const dossierOfBron = (b: Bron): string | null => {
-	const num = dossierNummer(b.raw?.props, b.key);
-	return num ? officialNumber(num) : null;
-};
-
-/**
- * A Kamerstuk's short name with its dossier before its number: `Memorie van toelichting, nr. 3`
- * becomes `Memorie van toelichting, 34710, nr. 3`. Not for a stuk of a dossier that is itself
- * the focus or chosen (`own`): its hull names it.
- */
-export function withDossier(
-	name: string,
-	props: Record<string, unknown> | null | undefined,
-	own: ReadonlySet<string>
-): string {
-	const dossier = paperDossier(props);
-	if (!dossier || own.has(dossier) || name.includes(dossier)) return name;
-	// Its place in the dossier as `stukLabel` writes it: its number, else its month.
-	const number =
-		textOf(props?.number) ?? (props?.sequence != null ? textOf(String(props.sequence)) : null);
-	const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
-	const date = textOf(props?.date);
-	const place = nr ?? (date ? maandJaar(date) : null);
-	const tail = place ? `, ${place}` : null;
-	return tail && name.endsWith(tail)
-		? `${name.slice(0, -tail.length)}, ${dossier}${tail}`
-		: `${name}, ${dossier}`;
 }
 
 const ECLI = /ECLI:[A-Z]{2}:([A-Z0-9]+):(\d{4}):([A-Z0-9.]+)/i;

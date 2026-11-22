@@ -250,7 +250,7 @@ export function containersOnCanvas(o: {
 	selectionId: string | null;
 	hasNode: (id: string) => boolean;
 	propsOf: (id: string) => Record<string, unknown> | undefined;
-	/** What the lanes draw; null on another canvas. */
+	/** What the lanes draw. */
 	lanesDrawn: ReadonlySet<string> | null;
 }) {
 	const shown = new Set(o.ids);

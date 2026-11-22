@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Omgeving as lanes (PLAN-doek-banen, fasen 4 en 5): the scene of the canvas (scene.ts) in
+	// Omgeving as lanes: the scene of the canvas (scene.ts) in
 	// columns per soort, as SVG in a field that scrolls, the lines as the Keten draws them. On a
 	// wide screen the columns side by side (lane-layout.ts, lane-lines.ts), on a phone as strips
 	// from top to bottom with only the lines to the chosen bronnen (lane-strips.ts). One click on a

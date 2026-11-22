@@ -1,21 +1,23 @@
 <script lang="ts">
 	import { clickOutside } from '$lib/actions/top-layer';
-	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag, yearFraction } from '$lib/text/datum';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onMount, untrack } from 'svelte';
-	import { afterTick } from '$lib/util/after-tick';
-	import { hasModifier, isEscape, isTyping } from '$lib/actions/keys';
+	import { hasModifier, isTyping } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
-	import Graph from 'graphology';
-	import GraphCanvas from './GraphCanvas.svelte';
 	import LanesView from './LanesView.svelte';
-	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
-	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder, stepPointer } from './canvas-keys';
-	import { canvasKinds, countCanvas, NO_COUNTS, sameIds, type CanvasCounts } from './canvas-count';
+	import {
+		canvasKinds,
+		countCanvas,
+		NO_COUNTS,
+		sameIds,
+		type CanvasCounts,
+		type CountEdge,
+		type CountNode
+	} from './canvas-count';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import NetworkChoice from './NetworkChoice.svelte';
 	import ViewSheet from './ViewSheet.svelte';
@@ -27,7 +29,7 @@
 		kindFocus,
 		type DrawnBron
 	} from './kind-rows';
-	import { contextGroups, panelSettled, panelKinds } from '$lib/verbonden/view';
+	import { panelSettled, panelKinds } from '$lib/verbonden/view';
 	import { lazeKernIds } from '$lib/bron/behoort';
 	import { parseNodeId } from '$lib/vocabulary';
 	import Tijdstrook from './Tijdstrook.svelte';
@@ -36,51 +38,27 @@
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/store/types';
 	import type { LineKind } from '$lib/graph/line-kind';
-	import type { GraphEdge, GraphNode, DrawClass } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode } from '$lib/graph/types';
 	import { drawClassOf, kort } from '$lib/graph/types';
 	import { isDrawn } from '$lib/graph/collection-role';
-	import { canvasClusters, isCanvasNode, type ClusterInput } from '$lib/graph/canvas-clusters';
-	import {
-		CLUSTER_MAX_LOOSE,
-		clusterHeading,
-		clusterLabel,
-		edgesToClusters,
-		clusterBinding,
-		isClusterId,
-		type Cluster
-	} from '$lib/selection/cluster';
-	import { groupFor, openGroup } from '$lib/verbonden/open-group';
-	import { bronPlural } from '$lib/vocabulary';
-	import { clusterSprite, spriteForVorm, IMAGE_SIZE_BUMP, tokens } from './nodeSprites';
-	import { formatCount } from '$lib/text/getal';
+	import { isCanvasNode } from '$lib/graph/canvas-clusters';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
-	import { dossierOfBron, withDossier, distinctNames } from './canvas-names';
-	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import IconButtonPaar from '$lib/components/ui/IconButtonPaar.svelte';
 	import { vormVanBron } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
 		formerMembers,
-		momentOf,
 		type Period,
 		isContainerKind,
 		type ContainerGroup,
 		type ContainerKind
 	} from '$lib/graph/container-membership';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
-	import { kolomPlekken } from '$lib/selection/kolommen';
-	import { radialLayout } from '$lib/graph/layout';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Collection, Relation } from '$lib/vocabulary';
-	import {
-		FILTER_GROUPS,
-		hiddenKindsOf,
-		rechterOf,
-		type VerbondenFilter
-	} from '$lib/verbonden/filter';
+	import { hiddenKindsOf, rechterOf, type VerbondenFilter } from '$lib/verbonden/filter';
 	import { stuksoortOf } from '$lib/bron/rubrieken';
 	import type { VerbondenState } from '$lib/verbonden/data-source';
 	import { relationWords } from '$lib/verbonden/relation-words';
@@ -88,9 +66,7 @@
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { kaart } from '$lib/map/map.svelte';
-	import { gemerkt, notesOfBundels } from '$lib/map/notities';
-	import { keepsCamera, saveCamera, savedCamera } from './camera';
-	import { NL } from '$lib/text/collator';
+	import { notesOfBundels } from '$lib/map/notities';
 
 	/** The card of a bron marked in a weergave of its own: its node and what it says of it. */
 	type ExternalCard = {
@@ -103,7 +79,7 @@
 	/** What the legend (GraphSidebar) asks of the page, handed through as one. */
 	type LegendProps = Pick<
 		ComponentProps<typeof GraphSidebar>,
-		'onFilter' | 'lijstHref' | 'counting' | 'proposals' | 'chain'
+		'onFilter' | 'lijstHref' | 'counting' | 'chain'
 	>;
 
 	let {
@@ -113,8 +89,6 @@
 		reach = null,
 		expecting = 0,
 		pending = false,
-		selectedEdgeId = null,
-		lineLids = new Map() as ReadonlyMap<string, string>,
 		inFluxMap = new Map() as NodeCounts,
 		marked = null,
 		onMark,
@@ -124,7 +98,6 @@
 		onAdd,
 		netwerkActive = false,
 		pairSteps = 1,
-		onEdgeClick,
 		onClear,
 		canvasOverlay,
 		balk,
@@ -133,13 +106,11 @@
 		onDepth,
 		view = 'omgeving',
 		midden,
-		surroundings = false,
 		externCounts = null,
 		extern = null,
 		externStippen = null,
 		externLines = null,
 		onToevoegen,
-		lanes = false,
 		...legend
 	}: {
 		store: GraphStore;
@@ -151,9 +122,6 @@
 		expecting?: number;
 		/** The focus or its neighbourhood is on its way: the list of bronnen is not yet whole. */
 		pending?: boolean;
-		selectedEdgeId?: string | null;
-		/** The lid a line names, by its edge (`edgeKey`), where its row or card knows it. */
-		lineLids?: ReadonlyMap<string, string>;
 		inFluxMap?: NodeCounts;
 		/** The bron marked, as the address holds it (?marked): its card open. */
 		marked?: string | null;
@@ -170,7 +138,6 @@
 		netwerkActive?: boolean;
 		/** Aantal stappen of Verband (1 to 3): what Aantal stappen shows there, not the canvas's depth. */
 		pairSteps?: number;
-		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
 		/** The panel Netwerk, in the strip at the left. */
@@ -180,8 +147,6 @@
 		/** After the chosen bronnen: the Weergave (Omgeving, Verband, Keten). */
 		viewChoice?: Snippet;
 		/** First under Meer of the legend: the netwerk's own filters. */
-		/** The weergave Omgeving: each chosen bron with its own neighbours, clustered per kind. */
-		surroundings?: boolean;
 		/** Soort and Relatie of a weergave of its own: what it draws, not the canvas. */
 		externCounts?: Pick<CanvasCounts, 'kinds' | 'lines'> | null;
 		/**
@@ -200,8 +165,6 @@
 		} | null;
 		/** Empty canvas: what the reader can do, add a bron. */
 		onToevoegen?: () => void;
-		/** Omgeving as lanes (?doek=banen, PLAN-doek-banen): SVG in columns per soort, not sigma. */
-		lanes?: boolean;
 		/** The steps of the neighbourhood, chosen in Netwerkkeuze. */
 		depth: number;
 		onDepth: (d: number) => void;
@@ -209,33 +172,31 @@
 	/** Zoom over a weergave of its own; Keten fits its width and scrolls instead. */
 	const middenZoom = $derived(view !== 'keten');
 
-	// ── graphology (data + layout, no sigma) ─────────────────────────────────
-	const g = new Graph();
+	// ── what the counts read ──────────────────────────────────────────────────
+	/** The bronnen of the lanes as the counts read them, by id; the lines between them. */
+	let kept: ReadonlyMap<string, CountNode> = new Map();
+	let countedEdges: CountEdge[] = [];
+	/** A line by its two ends, for the ties of a card and the steps from the focus. */
+	const lineBetween = new Map<string, GraphEdge>();
+	const pairKey = (van: string, naar: string) => `${van}\n${naar}`;
+	const areNeighbours = (a: string, b: string) =>
+		lineBetween.has(pairKey(a, b)) || lineBetween.has(pairKey(b, a));
 	const lookup = new Map<string, GraphNode>();
-	let canvas: GraphCanvasApi | null = null;
 
 	let selection = $state<GraphNode | null>(null);
 	let pinnedIds = $state<Set<string>>(new Set());
-	let coreIds = $state<ReadonlySet<string> | null>(null);
-	let looseMax = $state(CLUSTER_MAX_LOOSE);
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
 	/** No bron chosen and none on its way: the canvas says so, the strip offers + Bron toevoegen. */
 	const nothingChosen = $derived(!hasNodes && !midden && !selection && expecting === 0);
 	let canvasCounts = $state<CanvasCounts>(NO_COUNTS);
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
-	// When the selection is a container, there is no canvas node to focus around: its
-	// own children take that role in the dim/highlight pass instead (GraphCanvas).
+	// When the selection is a container, there is no canvas node to focus around.
 	const focusContainerId = $derived(
 		selection && isContainerKind(selection.drawClass) && selection.raw
 			? containerIdFor(selection.raw)
 			: null
 	);
-	const focusNodeId = $derived(
-		selection && !isContainerKind(selection.drawClass) ? selection.id : null
-	);
-	// The time a lid's commissies and fracties are drawn for: the years of the bronfilter,
-	// else the lid's own moment (today, or the end of their last seat).
 	// The years of the bronfilter as dates; the canvas hides a dated bron outside them.
 	const yearPeriod = $derived<Period | null>(
 		filter.van !== null || filter.tot !== null
@@ -245,13 +206,10 @@
 				}
 			: null
 	);
-	const groupPeriod = $derived<Period | null>(
-		yearPeriod ?? momentOf(focusNodeId, containerGroups.values(), vandaag())
-	);
 
 	const hiddenKinds = $derived(hiddenKindsOf(filter));
 
-	// What the canvas draws, as it says it (GraphCanvas `onDrawn`), counted for the Legenda,
+	// What the canvas draws, as it says it (LanesView `onDrawn`), counted for the Legenda,
 	// the sidebar and the keyboard's list.
 	let drawn: ReadonlySet<string> = new Set();
 	/** The bronnen drawn, a cluster's members each, the anchors and the focus left out. */
@@ -265,19 +223,20 @@
 			groups: containerGroups,
 			focusContainerId,
 			selectionId: selection?.id ?? null,
-			hasNode: (id) => g.hasNode(id),
+			hasNode: (id) => kept.has(id),
 			propsOf: (id) => lookup.get(id)?.raw?.props ?? undefined,
-			lanesDrawn: lanes ? new Set(held ? [...drawn, ...laneHeld] : drawn) : null
+			lanesDrawn: new Set(held ? [...drawn, ...laneHeld] : drawn)
 		});
 	function drawnBronnenOf(ids: readonly string[], held = true): DrawnBron[] {
 		const focal = (reach?.focal ?? verbonden.id ?? '').toLowerCase();
 		// A focus drawn as a hull (a wet, a dossier, a fractie) holds what it draws: one step.
-		const focus = g.findNode(
-			(id, a) =>
-				id.toLowerCase() === focal &&
-				!a.anchor &&
-				!isContainerKind(lookup.get(id)?.drawClass ?? 'other')
-		);
+		const focus =
+			[...kept].find(
+				([id, a]) =>
+					id.toLowerCase() === focal &&
+					!a.anchor &&
+					!isContainerKind(lookup.get(id)?.drawClass ?? 'other')
+			)?.[0] ?? null;
 		const out: DrawnBron[] = [];
 		const take = (n: GraphNode | undefined, direct: boolean) => {
 			if (!n || n.anchor || n.id.toLowerCase() === focal || drawClassOf(n.collection) === 'other')
@@ -287,10 +246,7 @@
 			out.push({ id: n.id, collection: n.collection, key: n.key, props, filterGroup, direct });
 		};
 		for (const id of ids) {
-			const c = isClusterId(id) ? clusterById.get(id) : undefined;
-			// A cluster's members hang on the focus alone.
-			if (c) for (const m of c.members) take(store.getNodeById(m) ?? lookup.get(m), true);
-			else take(lookup.get(id), !focus || g.areNeighbors(focus, id));
+			take(lookup.get(id), !focus || areNeighbours(focus, id));
 		}
 		// A commissie or dossier drawn as a ring or a point is one bron of its soort (B41).
 		const counted = new Set(out.map((b) => b.id));
@@ -298,7 +254,7 @@
 			if (!counted.has(ring.id))
 				out.push({
 					...ring,
-					direct: !focus || holdsFocus || (point && g.areNeighbors(focus, ring.id))
+					direct: !focus || holdsFocus || (point && areNeighbours(focus, ring.id))
 				});
 		return out;
 	}
@@ -351,7 +307,8 @@
 		onMetGroep?.(verborgen);
 		const focalId = (selection?.id ?? '').toLowerCase();
 		const geteld = countCanvas({
-			graph: g,
+			nodes: kept,
+			edges: countedEdges,
 			drawn,
 			selectionId: selection?.id ?? null,
 			hiddenKinds,
@@ -364,7 +321,7 @@
 		});
 		canvasCounts = geteld.counts;
 		drawnBronnen = drawnBronnenOf(geteld.drawnIds);
-		shownIds = lanes ? new Set(drawnBronnenOf(geteld.drawnIds, false).map((b) => b.id)) : undefined;
+		shownIds = new Set(drawnBronnenOf(geteld.drawnIds, false).map((b) => b.id));
 		telJaren();
 		// The keyboard's list sorts what is drawn: only a change sorts it again.
 		const before = untrack(() => drawnIds);
@@ -375,81 +332,11 @@
 		void hiddenKinds;
 		void filters;
 		telCanvas();
-		canvas?.refresh();
 	});
-
-	// A filter that changes what is drawn frames what is left, as ⤢ does (zicht.ts).
-	let vorigeZicht: string | null = null;
-	$effect(() => {
-		const nu = zichtSleutel({
-			verborgen: hiddenKinds,
-			rechter: filter.rechter,
-			van: filter.van,
-			tot: filter.tot
-		});
-		const passen = naFilter(vorigeZicht, nu);
-		vorigeZicht = nu;
-		// After the refresh above has hidden what the filter leaves out.
-		if (passen && !untrack(() => fitSuppressed)) afterTick(() => canvas?.fit());
-	});
-
-	// ── camera ────────────────────────────────────────────────────────────────
-	let fitScheduled = false;
-	let skipNextFit = false;
-	let fitSuppressed = false;
-	// After `fitWhenSettled` the fit follows every burst that comes after it (the layers of
-	// a new focus settle in several), which would otherwise keep the first viewport, until
-	// the pointer is on the canvas: the camera never moves under the reader's hand.
-	let fitFollows = false;
-	function scheduleFit() {
-		if (fitSuppressed || (skipNextFit && !fitFollows)) return;
-		if (fitScheduled) return;
-		fitScheduled = true;
-		// The next frame, or a moment later where no frame comes (a hidden or background tab):
-		// a frame that never came kept fitScheduled set, and no fit followed again (UX-toets
-		// e7a2f95, #37: after kabinet → uitspraak 5 of 9 hull labels outside the canvas).
-		let gedaan = false;
-		const pas = () => {
-			if (gedaan) return;
-			gedaan = true;
-			fitScheduled = false;
-			canvas?.fit();
-		};
-		requestAnimationFrame(pas);
-		setTimeout(pas, 150);
-	}
-
-	/** Tell the view to swallow scheduleFit calls until `fitWhenSettled` runs. */
-	export function suppressFit() {
-		fitSuppressed = true;
-	}
-
-	/** Order the canvas again around `focalId`, the bron it is drawn around now. */
-	export function reseatAround(focalId: string) {
-		if (g.hasNode(focalId)) runLayout();
-	}
-
-	// A new focus from outside the canvas (a link in a reader, Back) frames the network as
-	// a first load does; one chosen on the canvas keeps the view under the hand (UX test 10
-	// Oct, #25: from a kabinet to HR 2019:2006 the netwerk kept the kabinet's camera).
-	let handOpCanvas = false;
-	export function inBeeld() {
-		if (!handOpCanvas) fitWhenSettled();
-	}
-
-	/** Lift the suppression and fit, once the order of this change stands. */
-	export function fitWhenSettled() {
-		// An explicit request: it overrides the viewport an additive sync kept.
-		fitSuppressed = false;
-		skipNextFit = false;
-		fitFollows = true;
-		setTimeout(scheduleFit, 50);
-	}
 
 	// The reader's notes in every bundel, per bron: in its card, and a mark on
 	// the bronnen that hold one of their own. From this browser, so no request.
 	const notities = $derived(notesOfBundels(kaart.mappen));
-	const notitieIds = $derived(gemerkt(notities));
 
 	// The bron whose card stands in the strip at the right: the one marked, or the keyboard's.
 	let hoverNode = $state<GraphNode | null>(null);
@@ -569,7 +456,6 @@
 	let markedBefore: string | null = null;
 	$effect(() => {
 		const id = marked;
-		const drawnNow = drawnIds;
 		void laneDrawn;
 		const had = markedBefore;
 		markedBefore = id;
@@ -578,7 +464,7 @@
 				if (had && gemarkeerd?.id === had) ontmarkeer(false);
 				return;
 			}
-			if (gemarkeerd?.id === id || !(lanes ? laneDrawn.has(id) : drawnNow.includes(id))) return;
+			if (gemarkeerd?.id === id || !laneDrawn.has(id)) return;
 			const n = lookup.get(id);
 			if (!n) return;
 			gemarkeerd = n;
@@ -587,167 +473,15 @@
 		});
 	});
 
-	/** Every node is drawn by sigma's image program: its sprite on a background of this. */
-	const TRANSPARENT = 'rgba(0,0,0,0)';
-
-	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
-	// (dossier, fractie, commissie) een stap groter.
-	/** A cluster bron stands for forty or more: a step larger than a group. */
-	const CLUSTER_SIZE = 16;
-	const NODE_SIZE: Record<DrawClass, number> = {
-		article: 8,
-		instrument: 8,
-		judgment: 8,
-		dossier: 10,
-		committee: 10,
-		cabinet: 10,
-		faction: 10,
-		member: 8,
-		document: 8,
-		activity: 8,
-		other: 8
-	};
-	function nodeSize(id: string): number {
-		const n = lookup.get(id);
-		if (!n) return 4;
-		const seeded = (n as GraphNode & { size?: number }).size;
-		if (typeof seeded === 'number') return seeded;
-		return NODE_SIZE[n.drawClass];
-	}
-
 	function applyFilters() {
 		telCanvas();
-		canvas?.refresh();
 	}
 
-	$effect(() => {
-		void $instrumentMetaStore;
-		if (g.order === 0) return;
-		untrack(() => nameAll([...lookup.values()].filter((n) => g.hasNode(n.id))));
-		g.forEachNode((id) => {
-			const n = lookup.get(id);
-			if (n) g.setNodeAttribute(id, 'label', nodeLabel(n));
-		});
-		canvas?.refresh();
-	});
-
-	/** Within a sector: by date, the oldest first, then by name. */
-	const inOrder = (a: string, b: string) => {
-		// Clusters beside the bron they hang on: by where that bron stands, left to right.
-		const endX = (id: string) => {
-			const c = clusterById.get(id);
-			const end = c?.ends?.[0]?.id ?? (c ? selection?.id : undefined);
-			return end && g.hasNode(end) ? (g.getNodeAttribute(end, 'x') as number) : null;
-		};
-		const xa = endX(a);
-		const xb = endX(b);
-		if (xa !== null && xb !== null && xa !== xb) return xb - xa;
-		const da = String(g.getNodeAttribute(a, 'date') ?? '');
-		const db = String(g.getNodeAttribute(b, 'date') ?? '');
-		return da && db && da !== db
-			? da.localeCompare(db)
-			: NL.compare(
-					String(g.getNodeAttribute(a, 'label') ?? ''),
-					String(g.getNodeAttribute(b, 'label') ?? '')
-				);
-	};
-
-	/**
-	 * The order of the canvas (layout.ts, mockup A197): the chosen bronnen, or the bron it is
-	 * drawn around, in the middle; every other bron in the sector of its kind. No force layout:
-	 * one netwerk is drawn the same way each time.
-	 */
-	/** The group an anchor stands for: its own container. */
-	const anchorGroup = (id: string): string | null => {
-		const n = lookup.get(id);
-		return n ? containerIdFor(n.raw ?? { collection: n.collection, key: n.key }) : null;
-	};
-
-	function runLayout() {
-		// The lanes lay out their own scene (lane-layout.ts).
-		if (g.order === 0 || lanes) return;
-		const centre = pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : [];
-		// The hull a bron stands in: a wet's own for its anchor, else the first that holds it.
-		const hullOf = (id: string): string | null => {
-			// A chosen law's own articles as one cluster stand in its disc.
-			const own = /^cluster:articles@(.+)$/.exec(id)?.[1];
-			if (own) return anchorGroup(own);
-			let first: string | null = null;
-			for (const [gid, group] of containerGroups) {
-				if (!group.members.has(id)) continue;
-				if (g.hasNode(id) && g.getNodeAttribute(id, 'anchor') && gid === anchorGroup(id))
-					return gid;
-				// An article in its wet first; then the first other group that holds it.
-				if (group.kind === 'instrument' && !g.getNodeAttribute(id, 'anchor')) return gid;
-				first ??= gid;
-			}
-			return first;
-		};
-		radialLayout(
-			g,
-			centre,
-			(id) => String(g.getNodeAttribute(id, 'filterGroup') ?? 'overig'),
-			FILTER_GROUPS,
-			inOrder,
-			hullOf,
-			(hull, id) => !!containerGroups.get(hull)?.members.has(id)
-		);
-		canvas?.refresh();
-		scheduleFit();
-	}
-
-	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
-	// Kamerstuk by its kind, its dossier and its number (`stukLabel`, `metDossier`). The full
-	// name is in the panel and the card.
-	const baseName = (n: GraphNode, eigen = ownDossiers()) =>
-		isClusterId(n.id)
-			? n.label
-			: n.drawClass === 'document'
-				? withDossier(n.label, n.raw?.props, eigen)
-				: kort(bronNaam(n, $instrumentMetaStore));
-	/** The dossiers in focus or chosen: their stukken stand in their hull without the number. */
-	const ownDossiers = () =>
-		new Set(
-			[selection?.id, ...pinnedIds]
-				.filter((id): id is string => !!id && id.startsWith('dossiers/'))
-				.map((id) =>
-					dossierOfBron(lookup.get(id) ?? { id, collection: 'dossiers', key: id.slice(9) })
-				)
-				.filter((d): d is string => !!d)
-		);
-	/** The names of the canvas, each its own (`onderscheiden`): set before the nodes are drawn. */
-	let canvasNames = new Map<string, string>();
-	const nameAll = (nodes: GraphNode[]) => {
-		const eigen = ownDossiers();
-		canvasNames = distinctNames(nodes, (n) => baseName(n, eigen));
-	};
-	/** An article that no longer holds (Netwerkcanvas, Vervallen): a dimmed sign, "vervallen" in its name. */
-	const isRepealed = (n: GraphNode) =>
-		n.collection === 'articles' && n.raw?.props?.repealed === true;
-	/** In its wet's hull an article is its number: the hull's pill names the wet (DS: "art. 7:248"). */
-	const inLawHull = (id: string) =>
-		[...containerGroups.values()].some((gr) => gr.kind === 'instrument' && gr.members.has(id));
-	const nodeLabel = (n: GraphNode) => {
-		const full = canvasNames.get(n.id) ?? baseName(n);
-		const short =
-			n.collection === 'articles' && inLawHull(n.id) && /^art(?:ikel|\.)?\s+(\S+)/i.exec(full);
-		const name = short ? `art. ${short[1]}` : full;
-		return isRepealed(n) ? `${name}, vervallen` : name;
-	};
-
-	// ── clusters ────────────────────────────────────────────────────────────────
-	// What the store holds goes to the canvas through the clusters ($lib/selection/cluster):
-	// past forty loose bronnen of one kind around the focus, one cluster bron stands for
-	// them. Shown in full (`expanded`) until the reader folds them again or the focus moves.
+	// ── what the store holds ────────────────────────────────────────────────────
 	let rawNodes: GraphNode[] = [];
 	let rawEdges: GraphEdge[] = [];
 	let kinds = canvasKinds([], []);
-	let clusters = $state<Cluster[]>([]);
-	const clusterById = new Map<string, Cluster>();
-	let expanded = $state<ReadonlySet<string>>(new Set());
-	/** Kinds shown in full that would fold: their count, for the button that folds them. */
-	let foldable = $state<Cluster[]>([]);
-	/** What the lanes draw: the store's nodes and edges as they are, unfolded. */
+	/** What the lanes draw: the store's nodes and edges as they are. */
 	let laneNodes = $state.raw<GraphNode[]>([]);
 	/** What the lanes draw, their hulls' wetten and dossiers too: those can be marked there. */
 	let laneDrawn = $state.raw<ReadonlySet<string>>(new Set());
@@ -757,20 +491,15 @@
 		const n = lookup.get(id) ?? store.getNodeById(id);
 		if (n) then(n);
 	};
-	const isOnCanvas = (id: string) => (lanes ? laneDrawn.has(id) : drawnIds.includes(id));
+	const isOnCanvas = (id: string) => laneDrawn.has(id);
 	let laneEdges = $state.raw<GraphEdge[]>([]);
 	const laneChosen = $derived(
 		pinnedIds.size > 0 ? [...pinnedIds] : selection ? [selection.id] : []
 	);
-	let clusteredFor: string | null = null;
-	/** The cluster whose card stands in the strip at the right (Canvaskaart). */
-	let clusterCard = $state<{ cluster: Cluster } | null>(null);
 
 	let rawChanged = false;
-	let drawnClusters = '';
-	// The store gives nodes and then edges for one change: they are drawn once, together,
-	// in a microtask, before anyone awaiting that change goes on. Drawn separately, the
-	// Awb's 456 bronnen were laid out twice for every response (1.1 s, then 0.6 s).
+	// The store gives nodes and then edges for one change: they are counted once, together,
+	// in a microtask, before anyone awaiting that change goes on.
 	let redrawQueued = false;
 	const queueRedraw = () => {
 		if (redrawQueued) return;
@@ -791,247 +520,30 @@
 		queueRedraw();
 	};
 
-	/** The whole of a collection around the focus, as the API counts it. */
-	const bucketTotal = (collection: Collection): number | null =>
-		(reach?.buckets ?? lightBuckets(verbonden.buckets)).find((b) => b.collection === collection)
-			?.total ?? null;
-
-	/** Draw what the store holds, through the clusters; only when that or they changed. */
+	/** Hand what the store holds to the lanes, and keep the data the counts read; only when it changed. */
 	function redraw() {
-		// A fractie, commissie or dossier as focus clusters too: its anchor is the point its
-		// neighbours tie to ("332 dossiers" beside VVD); its own members stay in its hull.
-		const focus = selection?.id ?? null;
-		if (focus !== clusteredFor) {
-			clusteredFor = focus;
-			expanded = new Set();
-			clusterCard = null;
-		}
-		const canvasNodes = rawNodes.filter(isCanvasNode);
-		const input: ClusterInput = {
-			nodes: canvasNodes,
-			edges: rawEdges.filter((e) => isDrawn(e.relation)),
-			focus,
-			pinned: pinnedIds,
-			core: coreIds,
-			surroundings,
-			looseMax,
-			groups: containerGroups,
-			nodeOf: (id) => lookup.get(id) ?? rawNodes.find((r) => r.id === id),
-			ledTotal: bucketTotal('dossiers')
-		};
-		const alle = (open: ReadonlySet<string>) => canvasClusters(input, open);
-		// The lanes group by their scene (scene.ts): the canvas folds nothing then.
 		laneNodes = rawNodes;
 		laneEdges = rawEdges;
-		clusters = lanes ? [] : alle(expanded);
-		foldable = !lanes && expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
-		const signature = clusters.map((c) => `${c.id}:${c.members.length}:${c.total}`).join(',');
-		if (!rawChanged && signature === drawnClusters) {
-			if (layoutStale) {
-				layoutStale = false;
-				runLayout();
-			}
-			applyFilters();
-			return;
+		if (rawChanged) {
+			rawChanged = false;
+			kinds = canvasKinds(rawNodes, rawEdges);
+			keepNodes(rawNodes);
+			keepEdges(rawEdges);
 		}
-		rawChanged = false;
-		drawnClusters = signature;
-		clusterById.clear();
-		const folded = new Set<string>();
-		for (const c of clusters) {
-			clusterById.set(c.id, c);
-			for (const id of c.members) folded.add(id);
-		}
-		const toDraw = [...rawNodes.filter((n) => !folded.has(n.id)), ...clusters.map(clusterNode)];
-		nameAll(toDraw.filter(isCanvasNode));
-		kinds = canvasKinds(rawNodes, rawEdges);
-		drawNodes(toDraw);
-		drawEdges([
-			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
-			// A line to a bron in a folded cluster ends at the cluster: one line, rand to rand.
-			...edgesToClusters(
-				rawEdges.filter((e) => isDrawn(e.relation)),
-				clusters,
-				new Map(clusters.map((c) => [c.id, focus ? [focus] : []]))
-			).map((e) => ({
-				...e,
-				relation: e.relation as Relation,
-				label: '',
-				directed: true as const
-			})),
-			// What belongs to a wet stands in its disc: no Deel van-line from its articles' cluster.
-			...clusters.flatMap((c) =>
-				c.id.startsWith('cluster:articles@')
-					? []
-					: c.ends
-						? c.ends.map((end) =>
-								clusterEdge({ ...c, relation: end.relation, toFocus: end.toEnd }, end.id)
-							)
-						: focus
-							? [clusterEdge(c, focus)]
-							: []
-			)
-		]);
-		// Counted and drawn once, nodes and edges together.
+		// Counted once, nodes and edges together.
 		applyFilters();
 	}
 
-	// Another weergave folds otherwise, the lanes not at all: drawn again.
-	$effect(() => {
-		void surroundings;
-		// The budget counts the lanes' groups then, not the canvas's clusters.
-		store.setLanes(lanes);
-		untrack(() => {
-			rawChanged = true;
-			layoutStale = true;
-			queueRedraw();
-		});
-	});
-
-	const clusterNode = (c: Cluster): GraphNode =>
-		({
-			id: c.id,
-			collection: c.collection,
-			key: c.id,
-			drawClass: drawClassOf(c.collection),
-			label: clusterLabel(c),
-			size: CLUSTER_SIZE,
-			members: c.members.length,
-			total: c.total
-		}) as GraphNode;
-
-	/** The count in a cluster's circle: the whole it stands for, else its members. */
-	const clusterCount = (n: GraphNode & { total?: number; members?: number }) =>
-		formatCount(n.total ?? n.members ?? 0);
-
-	const clusterEdge = (c: Cluster, focus: string): GraphEdge => ({
-		id: `${c.id}~${focus}`,
-		source: c.toFocus ? c.id : focus,
-		target: c.toFocus ? focus : c.id,
-		relation: c.relation as Relation,
-		label: '',
-		directed: true
-	});
-
-	function showCluster(c: Cluster) {
-		expanded = new Set([...expanded, c.id]);
-		clusterCard = null;
-		redraw();
-	}
-
-	function foldCluster(c: Cluster) {
-		const next = new Set(expanded);
-		next.delete(c.id);
-		expanded = next;
-		redraw();
-	}
-
-	/**
-	 * One click on a cluster: its card in the strip at the right, as the card of a bron stands
-	 * (Canvaskaart). Opened from the list of the network (Enter), the focus goes into the card
-	 * and comes back on Escape.
-	 */
-	let clusterOpener: HTMLElement | null = null;
-	function openCluster(id: string, opener: HTMLElement | null = null) {
-		const c = clusterById.get(id);
-		if (!c) return;
-		clusterOpener = opener;
-		if (opener)
-			afterTick(() =>
-				canvasWrap?.parentElement?.querySelector<HTMLElement>('.cluster-kaart button')?.focus()
-			);
-		clusterCard = { cluster: c };
-	}
-	/** The group in Verbonden that lists the cluster's kind, as "Bekijk in Verbonden" opens it. */
-	const groupOf = (c: Cluster) => {
-		// The groups Verbonden shows: its kern and inhoud stand elsewhere.
-		const own = verbonden.id?.split('/')[0] ?? '';
-		return groupFor(contextGroups(verbonden.groups, own as Collection), c.collection);
-	};
-	/**
-	 * Of how many a cluster's kind there are, as Soort says it: the row of the legend that draws
-	 * most of that kind, else the API's whole of its collection (N2). Null when all are there.
-	 */
-	const clusterTotal = (c: Cluster): number | null => {
-		if (c.ends) return null;
-		const row = (kindRowsShown ?? [])
-			.filter((r) => r.collection === c.collection)
-			.sort((a, b) => b.drawn - a.drawn)[0];
-		if (row) return row.total;
-		return bucketTotal(c.collection);
-	};
-	function closeClusterCard(e: PointerEvent) {
-		if (clusterCard && !(e.target as HTMLElement | null)?.closest?.('.cluster-kaart'))
-			clusterCard = null;
-	}
-
-	function drawNodes(nodes: GraphNode[]) {
-		const newIds = new Set(nodes.map((n) => n.id));
-		skipNextFit = keepsCamera(newIds);
-
-		let changed = false;
-		const addedThisSync = new Set<string>();
-		const keep = newIds;
-		const toDrop = g.nodes().filter((id) => !keep.has(id));
-
-		const wholesaleReplace =
-			toDrop.length > 0 && toDrop.length === g.order && [...keep].every((id) => !g.hasNode(id));
-		if (wholesaleReplace && toDrop.length > 50) {
-			toDrop.forEach((id) => lookup.delete(id));
-			g.clear();
-			changed = true;
-		} else {
-			toDrop.forEach((id) => {
-				g.dropNode(id);
-				lookup.delete(id);
-				changed = true;
-			});
-		}
-		let unseededCount = 0;
-		for (const n of nodes) {
-			if (!isCanvasNode(n) || g.hasNode(n.id)) continue;
-			const seed = n as GraphNode & { x?: number; y?: number };
-			if (typeof seed.x !== 'number' || typeof seed.y !== 'number') unseededCount++;
-		}
-		const focalIdForSeed = selection && g.hasNode(selection.id) ? selection.id : null;
-		const fxSeed = focalIdForSeed ? ((g.getNodeAttribute(focalIdForSeed, 'x') as number) ?? 0) : 0;
-		const fySeed = focalIdForSeed ? ((g.getNodeAttribute(focalIdForSeed, 'y') as number) ?? 0) : 0;
-		const seedRingR = Math.max(18, 8 + Math.sqrt(Math.max(unseededCount, 1)) * 7);
-		let seededIdx = 0;
-		// A netwerk starts in the homepage's columns: parliament, the law, the judgments.
-		const kolommen =
-			pinnedIds.size > 0
-				? kolomPlekken(
-						nodes.filter((n) => {
-							const seed = n as GraphNode & { x?: number };
-							return isCanvasNode(n) && !g.hasNode(n.id) && typeof seed.x !== 'number';
-						}),
-						fxSeed,
-						fySeed,
-						seedRingR * 1.5,
-						seedRingR * 2
-					)
-				: null;
-
+	/** What the counts read of a bron: its kind, its day, its court, its stuksoort. */
+	function keepNodes(nodes: GraphNode[]) {
+		lookup.clear();
+		const next = new Map<string, CountNode>();
 		for (const n of nodes) {
 			lookup.set(n.id, n);
 			if (!isCanvasNode(n)) continue;
-			// Elke bron als teken uit vormen.ts, op een doorzichtige ondergrond.
-			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
-			const repealed = isRepealed(n);
-			const colour = repealed ? tokens().ink3 : pinnedIds.has(n.id) ? undefined : kinds.colourOf(n);
-			const attrs: Record<string, unknown> = {
-				label: nodeLabel(n),
-				cluster: isClusterId(n.id),
-				// A chosen law's own articles as one cluster: drawn in its disc (hulls.ts).
-				inHull: /^cluster:articles@(.+)$/.exec(n.id)?.[1]
-					? anchorGroup(/^cluster:articles@(.+)$/.exec(n.id)![1])
-					: null,
-				// A cluster counts its members in Soort: "Uitspraken 200", not 1.
-				members: (n as GraphNode & { members?: number }).members ?? 1,
-				color: TRANSPARENT,
+			next.set(n.id, {
 				drawClass: n.drawClass,
-				vorm,
+				vorm: vormVanBron(n.collection, n.raw?.props, n.key),
 				collection: n.collection,
 				filterGroup: kinds.kindOf(n),
 				stuksoort: n.collection === 'documents' ? stuksoortOf(n.raw?.props) : null,
@@ -1044,104 +556,28 @@
 								ref: { collection: 'judgments', key: n.key }
 							})
 						: null,
-				stub: !!n.stub || repealed,
 				date: stripDate(n.raw?.props, n.collection as Collection, n.id)?.slice(0, 10) ?? null,
-				// A group's members by their days, so Tonen counts those inside the period only.
-				memberDates: isClusterId(n.id)
-					? (clusterById.get(n.id)?.members ?? []).map(
-							(m) => memberDate(m, n.collection as Collection)?.slice(0, 10) ?? null
-						)
-					: undefined,
-				size: nodeSize(n.id) * IMAGE_SIZE_BUMP,
-				// The kinds in their colour, the chosen bronnen in ink (mockup A197-b).
-				kleur: colour,
-				image: isClusterId(n.id)
-					? clusterSprite(clusterCount(n), colour)
-					: spriteForVorm(vorm, !!n.stub || repealed, false, colour),
-				forceLabel: true
-			};
-			// A wet's anchor is a point its hull and the lines of a change end at: no sprite.
-			if (n.anchor)
-				Object.assign(attrs, {
-					anchor: true,
-					// What it is drawn as when nothing of its hull is: an ordinary bron.
-					ownImage: attrs.image,
-					ownSize: attrs.size,
-					image: undefined,
-					size: 2,
-					label: '',
-					// Its hull's name where the law's meta has none (a law that only joins a netwerk).
-					anchorNaam: kort(bronNaam(n, $instrumentMetaStore))
-				});
-			const seed = n as GraphNode & { x?: number; y?: number };
-			const seedHasPos = typeof seed.x === 'number' && typeof seed.y === 'number';
-			if (g.hasNode(n.id)) {
-				const merged = seedHasPos ? { ...attrs, x: seed.x, y: seed.y } : attrs;
-				g.mergeNodeAttributes(n.id, merged);
-			} else {
-				let x: number, y: number;
-				const kolom = kolommen?.get(n.id);
-				if (seedHasPos) {
-					x = seed.x!;
-					y = seed.y!;
-				} else if (kolom) {
-					x = kolom.x + (Math.random() - 0.5) * 2;
-					y = kolom.y + (Math.random() - 0.5) * 2;
-				} else {
-					const angle = (seededIdx / Math.max(unseededCount, 1)) * Math.PI * 2;
-					const rJitter = (Math.random() - 0.5) * 4;
-					const aJitter = (Math.random() - 0.5) * 0.15;
-					x = fxSeed + Math.cos(angle + aJitter) * (seedRingR + rJitter);
-					y = fySeed + Math.sin(angle + aJitter) * (seedRingR + rJitter);
-					seededIdx++;
-				}
-				g.addNode(n.id, { ...attrs, x, y });
-				addedThisSync.add(n.id);
-				changed = true;
-			}
-		}
-		hasNodes = g.order > 0;
-		if (changed) scheduleFit();
-		// A change of what stands in the middle orders the canvas again too.
-		const centre = pinnedIds.size > 0 ? [...pinnedIds].join() : (selection?.id ?? '');
-		if (changed || centre !== centreBefore || layoutStale) runLayout();
-		layoutStale = false;
-		centreBefore = centre;
-	}
-	let centreBefore = '';
-	let layoutStale = false;
-
-	function drawEdges(allEdges: GraphEdge[]) {
-		const es = allEdges.filter((e) => isDrawn(e.relation));
-		let changed = false;
-		const keep = new Set(es.map((e) => e.id));
-		g.edges()
-			.filter((id) => !keep.has(id))
-			.forEach((id) => {
-				g.dropEdge(id);
-				changed = true;
+				// A wet's anchor is a point its hull and the lines of a change end at.
+				anchor: !!n.anchor
 			});
-		for (const e of es) {
-			const attrs = {
-				relation: e.relation,
-				confidence: e.confidence ?? null,
-				status: e.status ?? null,
-				meta: e.meta ?? null,
-				type: 'arrow'
-			};
-			if (g.hasEdge(e.id)) {
-				g.mergeEdgeAttributes(e.id, attrs);
-			} else if (
-				g.hasNode(e.source) &&
-				g.hasNode(e.target) &&
-				// A simple graph: one directed edge per source and target, whatever its key.
-				!g.hasDirectedEdge(e.source, e.target)
-			) {
-				g.addDirectedEdgeWithKey(e.id, e.source, e.target, attrs);
-				changed = true;
-			}
 		}
-		if (changed) scheduleFit();
+		kept = next;
+		hasNodes = next.size > 0;
+	}
+
+	/** A simple graph: one line per source and target, whatever its key. */
+	function keepEdges(allEdges: GraphEdge[]) {
+		lineBetween.clear();
+		for (const e of allEdges) {
+			if (!isDrawn(e.relation) || !kept.has(e.source) || !kept.has(e.target)) continue;
+			const key = pairKey(e.source, e.target);
+			if (!lineBetween.has(key)) lineBetween.set(key, e);
+		}
+		countedEdges = [...lineBetween.values()].map(({ source, target, relation }) => ({
+			source,
+			target,
+			relation: relation as Relation
+		}));
 	}
 
 	onMount(() => {
@@ -1157,23 +593,12 @@
 				pinnedIds = new Set(s);
 				queueRedraw();
 			}),
-			store.core.subscribe((c) => {
-				coreIds = c;
-				queueRedraw();
-			}),
-			store.looseMax.subscribe((m) => {
-				looseMax = m;
-				rawChanged = true;
-				queueRedraw();
-			}),
 			store.filters.subscribe((f) => {
 				filters = f;
 				applyFilters();
 			}),
 			store.containers.subscribe((groups) => {
 				containerGroups = groups;
-				// Who stands in which hull decides where they stand.
-				layoutStale = true;
 				queueRedraw();
 			})
 		];
@@ -1186,10 +611,6 @@
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.defaultPrevented || hasModifier(e) || isTyping(e.target)) return;
-		if (e.key === 'Escape' && clusterCard) {
-			clusterCard = null;
-			return;
-		}
 		const opCanvas = !!canvasWrap?.contains(document.activeElement);
 		// Escape: first the bron pointed at, then the one chosen.
 		if (e.key === 'Escape' && pijl && opCanvas) {
@@ -1204,8 +625,7 @@
 		const kies = pijl ?? gemarkeerd;
 		if (e.key === 'Enter' && kies && opCanvas) {
 			e.preventDefault();
-			if (isClusterId(kies.id)) openCluster(kies.id, canvasWrap);
-			else markeer(kies);
+			markeer(kies);
 			return;
 		}
 		if (e.key === 'Escape') {
@@ -1235,6 +655,9 @@
 	/** The scale of a weergave of its own, by its zoom. */
 	let middleScale = $state(1);
 	const zoomBy = (f: number) => () => (middleScale = Math.min(3, Math.max(0.5, middleScale * f)));
+	const zoomOfMidden = $derived(
+		middenZoom ? { in: zoomBy(1.25), out: zoomBy(0.8), all: () => (middleScale = 1) } : null
+	);
 	/** The canvas and the cards over it (see the markup). */
 	let buhne = $state<HTMLDivElement | null>(null);
 
@@ -1270,11 +693,6 @@
 					undefined)
 			: undefined;
 	};
-	/** The day of a member of a group: its own, or a publication's day of publication. */
-	const memberDate = (id: string, collection: Collection) => {
-		const n = store.getNodeById(id);
-		return stripDate(n?.raw?.props, collection, id);
-	};
 	function telJaren() {
 		const nieuw: Stip[] = [];
 		const zonder: Collection[] = [];
@@ -1288,13 +706,7 @@
 			const jaar = yearFraction(date);
 			if (jaar > 1000) nieuw.push({ jaar, collection, change: changeName(id) });
 		};
-		g.forEachNode((id, a) => {
-			// A group counts its members by their years: 143 uitspraken are 143 dots (R3-N B8).
-			if (isClusterId(id))
-				for (const m of clusterById.get(id)?.members ?? [])
-					add(memberDate(m, a.collection as Collection), a.collection as Collection, m);
-			else add(typeof a.date === 'string' ? a.date : null, a.collection as Collection, id);
-		});
+		for (const [id, a] of kept) add(a.date, a.collection as Collection, id);
 		const sleutel =
 			nieuw.map((s) => `${s.jaar}${s.collection}${s.change ?? ''}`).join() + zonder.join();
 		if (sleutel !== stippenSleutel) {
@@ -1321,24 +733,23 @@
 	const ties = $derived.by(() => {
 		const n = hoverNode;
 		void drawnIds;
-		if (!n || !g.hasNode(n.id)) return [];
+		if (!n || !kept.has(n.id)) return [];
 		const lines: { text: string; collection: Collection | null }[] = [];
 		for (const other of pinnedIds) {
-			if (other === n.id || !g.hasNode(other)) continue;
+			if (other === n.id || !kept.has(other)) continue;
 			const ander = lookup.get(other);
 			const naam = ander ? kort(bronNaam(ander, $instrumentMetaStore)) : other;
 			for (const [van, naar] of [
 				[n.id, other],
 				[other, n.id]
 			]) {
-				const edge = g.edge(van, naar);
+				const edge = lineBetween.get(pairKey(van, naar));
 				if (!edge) continue;
-				const relation = g.getEdgeAttribute(edge, 'relation') as Relation;
 				const w = relationWords(
-					relation,
+					edge.relation,
 					lookup.get(van)?.collection ?? null,
 					lookup.get(naar)?.collection ?? null,
-					g.getEdgeAttribute(edge, 'meta') as Record<string, unknown> | null
+					edge.meta
 				);
 				lines.push({
 					text: sentence(w.actief, naam, van === n.id ? 'naar' : 'van'),
@@ -1350,19 +761,18 @@
 	});
 </script>
 
-<svelte:window onkeydown={handleKeydown} onpointerdown={closeClusterCard} />
+<svelte:window onkeydown={handleKeydown} />
 
 <!-- Deel and the zoom, the same over the canvas and over a weergave of its own. -->
-{#snippet controls(zoomIn: () => void, zoomOut: () => void, all: () => void, zoomen = true)}
-	<!-- data-over-doek: what stands over the canvas, kept free by a fit (GraphCanvas). -->
-	{#if balk}<div class="doek-balk" data-over-doek>{@render balk()}</div>{/if}
-	{#if zoomen}<div class="zoom" data-over-doek>
+{#snippet controls(zoom: { in: () => void; out: () => void; all: () => void } | null)}
+	{#if balk}<div class="doek-balk">{@render balk()}</div>{/if}
+	{#if zoom}<div class="zoom">
 			<IconButtonPaar
 				name="Zoom"
-				first={{ label: 'Uitzoomen', onclick: zoomOut, sign: '−' }}
-				second={{ label: 'Inzoomen', onclick: zoomIn, sign: '+' }}
+				first={{ label: 'Uitzoomen', onclick: zoom.out, sign: '−' }}
+				second={{ label: 'Inzoomen', onclick: zoom.in, sign: '+' }}
 			/>
-			<IconButton label="Alles in beeld" onclick={all}>⤢</IconButton>
+			<IconButton label="Alles in beeld" onclick={zoom.all}>⤢</IconButton>
 		</div>{/if}
 {/snippet}
 
@@ -1386,7 +796,7 @@
 		onToggleAnnexes={toggleAnnexes}
 		hiddenLines={externLines?.hidden ?? filters.hiddenLines}
 		onToggleLine={externLines?.toggle ?? toggleLine}
-		showLines={!lanes || !!externLines}
+		showLines={!!externLines}
 		onToggleGroup={toggleGroup}
 		canvasCounts={externCounts ?? canvasCounts}
 		hasNodes={hasNodes || !!externCounts}
@@ -1425,21 +835,12 @@
 		     over it they covered its bronnen and the rows of a list (UX-toets T10b, B48, R3). -->
 		<div class="control-bar">
 			{@render sheetButton()}
-			{#if midden}
-				{@render controls(zoomBy(1.25), zoomBy(0.8), () => (middleScale = 1), middenZoom)}
-			{:else}
-				{@render controls(
-					() => canvas?.zoom(1.5),
-					() => canvas?.zoom(1 / 1.5),
-					() => canvas?.fit(),
-					!lanes
-				)}
-			{/if}
+			{@render controls(midden ? zoomOfMidden : null)}
 		</div>
 		{#if midden}
 			<div class="middle-stage">
 				{@render midden(middleScale)}
-				{@render controls(zoomBy(1.25), zoomBy(0.8), () => (middleScale = 1), middenZoom)}
+				{@render controls(zoomOfMidden)}
 			</div>
 		{/if}
 		<div class="buhne" bind:this={buhne} hidden={!!midden}>
@@ -1456,7 +857,6 @@
 				onEscape={closeCard}
 				houdt={(el) => !!el && (!!citeEl?.contains(el) || el === canvasWrap)}
 				{onToggleChosen}
-				onOpenCluster={(n, opener) => openCluster(n.id, opener)}
 			/>
 			<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
 			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -1471,25 +871,14 @@
 					// Tab elsewhere: no bron pointed at. A tap (focus to nowhere) keeps it.
 					if (e.relatedTarget && !canvasWrap?.contains(e.relatedTarget as Node)) pijl = null;
 				}}
-				onpointerenter={() => {
-					fitFollows = false;
-					handOpCanvas = true;
-				}}
-				onpointerleave={() => (handOpCanvas = false)}
 				onpointerdown={(e) => {
 					// Not from the card of a bron: its own buttons take the press, and the focus
 					// leaving the list for the canvas closed the card before their click (#38).
 					if ((e.target as Element | null)?.closest?.('.citepanel')) return;
 					canvasWrap?.focus({ preventScroll: true });
 				}}
-				onwheel={() => (fitFollows = false)}
 			>
-				{@render controls(
-					() => canvas?.zoom(1.5),
-					() => canvas?.zoom(1 / 1.5),
-					() => canvas?.fit(),
-					!lanes
-				)}
+				{@render controls(null)}
 				{#if !hasNodes && !midden && !selection && onToevoegen}
 					<!-- Nothing on the canvas yet (Netwerkkeuze, Leeg): the way on, not a white field. -->
 					<div class="canvas-leeg">
@@ -1499,101 +888,25 @@
 						>
 					</div>
 				{/if}
-				{#if lanes}
-					<LanesView
-						nodes={laneNodes}
-						filter={{ period: yearPeriod, court: filter.rechter }}
-						edges={laneEdges}
-						chosen={laneChosen}
-						visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
-						onToggleLine={toggleLine}
-						marked={gemarkeerd?.id ?? null}
-						pointed={pijl?.id ?? keyNode?.id ?? null}
-						onMark={(id) => markById(id, markeer)}
-						onOpen={(id) => markById(id, open)}
-						onUnmark={ontmarkeer}
-						onDrawn={(set, held) => {
-							drawn = set;
-							laneDrawn = set;
-							laneHeld = held;
-							untrack(telCanvas);
-						}}
-					/>
-				{:else}
-					<GraphCanvas
-						graph={g}
-						focusedId={selection && !isContainerKind(selection.drawClass) ? selection.id : null}
-						{filters}
-						{hiddenKinds}
-						{pinnedIds}
-						{coreIds}
-						{containerGroups}
-						{focusContainerId}
-						{groupPeriod}
-						{yearPeriod}
-						rechter={filter.rechter}
-						{selectedEdgeId}
-						{lineLids}
-						{inFluxMap}
-						externalHoveredId={pijl?.id ?? keyNode?.id ?? gemarkeerd?.id ?? hoverNode?.id ?? null}
-						{notitieIds}
-						onNodeClick={(id) => {
-							if (isClusterId(id)) return openCluster(id);
-							const n = lookup.get(id);
-							if (n) markeer(n);
-						}}
-						onNodeDoubleClick={(id) => {
-							// The second click: the bron opens. "Omgeving tonen" on its card draws its own
-							// neighbourhood, as a double click did before.
-							if (isClusterId(id)) return;
-							const n = lookup.get(id);
-							if (n) open(n);
-						}}
-						markedId={gemarkeerd?.id ?? null}
-						onHullClick={(id) => {
-							// The name or the rim of a hull chooses the wet it stands for, its card in the strip.
-							const n = lookup.get(id);
-							if (n) markeer(n);
-						}}
-						onEdgeClick={(id) => {
-							const e = store.getEdgeById(id);
-							if (e) onEdgeClick?.(e);
-						}}
-						onStageClick={() => {
-							ontmarkeer();
-							onClear?.();
-						}}
-						onDrawn={(set) => {
-							drawn = set;
-							laneDrawn = set;
-							untrack(telCanvas);
-						}}
-						onReady={(api) => {
-							canvas = api;
-							canvas.refresh();
-							const camera = skipNextFit && savedCamera();
-							if (camera) {
-								canvas.restoreCamera(camera);
-								skipNextFit = false;
-							} else {
-								canvas.fit();
-							}
-						}}
-						onCameraChange={(state) => {
-							saveCamera(state);
-						}}
-					/>
-				{/if}
-
-				{#if foldable.length > 0}
-					<div class="vouw">
-						{#each foldable as c (c.id)}
-							<button type="button" class="btn" onclick={() => foldCluster(c)}
-								><KindGlyph collection={c.collection} size={12} />{bronPlural(c.collection)} samenvouwen</button
-							>
-						{/each}
-					</div>
-				{/if}
+				<LanesView
+					nodes={laneNodes}
+					filter={{ period: yearPeriod, court: filter.rechter }}
+					edges={laneEdges}
+					chosen={laneChosen}
+					visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
+					onToggleLine={toggleLine}
+					marked={gemarkeerd?.id ?? null}
+					pointed={pijl?.id ?? keyNode?.id ?? null}
+					onMark={(id) => markById(id, markeer)}
+					onOpen={(id) => markById(id, open)}
+					onUnmark={ontmarkeer}
+					onDrawn={(set, held) => {
+						drawn = set;
+						laneDrawn = set;
+						laneHeld = held;
+						untrack(telCanvas);
+					}}
+				/>
 
 				<!-- On a phone, what the last action on the network did, with the way back: the
 			     place it was done from (Verbonden) is out of sight on the Netwerk tab. -->
@@ -1644,57 +957,11 @@
 	<!-- The strip at the right: the card of the bron marked; on a phone a sheet under the canvas. -->
 	<aside
 		class="strook strook--kaart"
-		class:is-open={!!clusterCard || !!(midden ? extern : hoverNode)}
+		class:is-open={!!(midden ? extern : hoverNode)}
 		aria-label="Kaart"
 		bind:clientHeight={cardHeight}
 	>
-		{#if clusterCard}
-			{@const c = clusterCard.cluster}
-			<CanvasKaart
-				class="cluster-kaart"
-				title={clusterHeading(c, clusterTotal(c))}
-				role="dialog"
-				tabindex="-1"
-				onkeydown={(e: KeyboardEvent) => {
-					if (!isEscape(e)) return;
-					e.preventDefault();
-					clusterCard = null;
-					if (clusterOpener?.isConnected) clusterOpener.focus();
-				}}
-			>
-				{#snippet kop()}
-					<p class="cluster-naam">
-						<KindGlyph collection={c.collection} size={14} />{clusterHeading(c, clusterTotal(c))}
-					</p>
-				{/snippet}
-				{@const tied = clusterBinding(
-					c,
-					(c.ends ?? []).flatMap((e) => {
-						const n = lookup.get(e.id);
-						return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
-					})
-				)}
-				{#if tied}<p class="cluster-zin">{tied}</p>{/if}
-				<div class="cluster-knoppen">
-					<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
-					<AlleN
-						aantal={c.members.length}
-						noun={bronPlural(c.collection).toLowerCase()}
-						onclick={() => showCluster(c)}
-					/>
-					{#if !c.ends && groupOf(c)}
-						<button
-							type="button"
-							class="btn is-text"
-							onclick={() => {
-								openGroup(c.collection);
-								clusterCard = null;
-							}}>Bekijk in Verbonden</button
-						>
-					{/if}
-				</div>
-			</CanvasKaart>
-		{:else if midden ? extern : hoverNode}
+		{#if midden ? extern : hoverNode}
 			{@const kaartNode = midden ? extern!.node : hoverNode!}
 			<CanvasHoverCard
 				node={kaartNode}
@@ -1709,7 +976,7 @@
 				openCount={inFluxMap.get(kaartNode.id) ?? 0}
 				chosen={pinnedIds}
 				{onAdd}
-				changes={lanes}
+				changes
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
@@ -1946,7 +1213,7 @@
 		flex-direction: column;
 		overflow: hidden;
 	}
-	/* Under a weergave of its own the canvas keeps its size, unseen: sigma needs one. */
+	/* Under a weergave of its own the lanes keep their size, unseen: they measure it. */
 	.buhne[hidden] {
 		position: absolute;
 		inset: 0;

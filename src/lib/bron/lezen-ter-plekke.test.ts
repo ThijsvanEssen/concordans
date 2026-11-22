@@ -117,8 +117,6 @@ describe('the place of a verbinding in its source', () => {
 			plaatsVanMeta({ paragraph_number: '5.1', paragraph_id: 'rov-5.1' }, 'ecli_nl_hr_2019_2006')
 		).toEqual({ position: 'r.o. 5.1', at: 'rov-5.1' });
 		expect(plaatsVanMeta({}, 'x')).toEqual({ position: null, at: null });
-		expect(bron('lib/components/graph/GraphCanvas.svelte')).toMatch(/readEdge\(/);
-		expect(bron('lib/components/graph/GraphCanvas.svelte')).not.toMatch(/meta\.paragraph_number/);
 	});
 
 	it('opens Lees bij r.o. N at the r.o. where the selected judgment cites the row’s article', () => {

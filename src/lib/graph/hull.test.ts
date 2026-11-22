@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { exitPoint, hullOutline, pointInPolygon, type Point } from './hull';
+import { hullOutline, type Point } from './hull';
 
 const around = (outline: Point[], polygon: Point[]) => ({ outline, polygon });
 
@@ -52,26 +52,5 @@ describe('hullOutline: a disc, the members plus 16', () => {
 
 	it('has no path for no points', () => {
 		expect(hullOutline([], 16)).toEqual({ outline: [], polygon: [], path: '' });
-	});
-
-	it('cuts a line between hulls at the outline it leaves', () => {
-		const { polygon } = hullOutline([{ x: 0, y: 0 }], 16);
-		const exit = exitPoint({ x: 0, y: 0 }, { x: 100, y: 0 }, polygon);
-		expect(exit.x).toBeCloseTo(16, 6);
-		expect(exit.y).toBeCloseTo(0, 6);
-	});
-});
-
-describe('pointInPolygon', () => {
-	const square = [
-		{ x: 0, y: 0 },
-		{ x: 10, y: 0 },
-		{ x: 10, y: 10 },
-		{ x: 0, y: 10 }
-	];
-	it('finds a point inside and not one outside', () => {
-		expect(pointInPolygon({ x: 5, y: 5 }, square)).toBe(true);
-		expect(pointInPolygon({ x: 15, y: 5 }, square)).toBe(false);
-		expect(pointInPolygon({ x: 5, y: -1 }, [])).toBe(false);
 	});
 });

@@ -1,26 +1,16 @@
-// The canvas and the Netwerkschets draw a hull and a cluster by the same measures
-// ($lib/graph/draw-spec): the canvas's CSS and the sketch read them, they are not typed twice.
+// The Netwerkschets draws a hull and a cluster by the measures of $lib/graph/draw-spec and the
+// colours and dashes of nodeSprites: it has none of its own.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { HULL } from '$lib/graph/draw-spec';
 
 const source = (path: string) => readFileSync(`src/${path}`, 'utf8');
 
-describe('the shared measures of canvas and sketch', () => {
-	it('holds the canvas CSS of a hull to the spec', () => {
-		const css = source('lib/components/graph/GraphCanvas.svelte');
-		expect(css).toContain(`stroke-width: ${HULL.line};`);
-		expect(css).toContain(`stroke-width: ${HULL.lineChosen};`);
-		expect(css).toContain(`stroke-width: ${HULL.halo};`);
-	});
-
-	it('has the sketch and the canvas read the spec, not their own numbers', () => {
+describe('the measures of the sketch', () => {
+	it('reads the spec, not its own numbers', () => {
 		expect(source('lib/verbonden/NetworkSketch.svelte')).toContain("from '$lib/graph/draw-spec'");
-		expect(source('lib/components/graph/hulls.ts')).toContain("from '$lib/graph/draw-spec'");
-		expect(source('lib/components/graph/nodeSprites.ts')).toContain('CLUSTER_FILL');
 	});
 
-	it('draws a hull of the sketch with the canvas kind colour and dash, nothing of its own', () => {
+	it('draws a hull with the kind colour and dash, nothing of its own', () => {
 		const sketch = source('lib/verbonden/NetworkSketch.svelte');
 		expect(sketch).toContain('hullColorFor(h.kind)');
 		expect(sketch).toContain('hullDashFor(h.kind)');

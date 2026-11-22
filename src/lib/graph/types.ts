@@ -62,10 +62,6 @@ export interface GraphNode {
 	 */
 	anchor?: boolean;
 	raw?: BaseNode;
-	/** Set by a loader that lays out its nodes; Sigma starts from these. */
-	x?: number;
-	y?: number;
-	size?: number;
 }
 
 export interface GraphEdge {

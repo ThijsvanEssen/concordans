@@ -75,7 +75,7 @@ describe('the steps of a netwerk', () => {
 				}
 			)
 		};
-		const composer = new NetwerkComposer(store as never, () => null);
+		const composer = new NetwerkComposer(store as never);
 		composer.surroundings = true;
 		return { store, composer };
 	};

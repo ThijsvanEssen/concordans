@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { edgesByNode, mostCommonRelation, neighbours, pushTo } from './adjacency';
+import { edgesByNode, neighbours, pushTo } from './adjacency';
 
 const edge = (source: string, target: string, relation = 'REFERS_TO') => ({
 	source,
@@ -32,40 +32,5 @@ describe('edgesByNode', () => {
 		const ties = edgesByNode([ab, bc]);
 		expect(ties.get('b')).toEqual([ab, bc]);
 		expect(ties.get('a')).toEqual([ab]);
-	});
-});
-
-describe('mostCommonRelation', () => {
-	it('is the relation most members have with the end, and its way', () => {
-		const edges = [
-			edge('m1', 'f', 'REFERS_TO'),
-			edge('m2', 'f', 'REFERS_TO'),
-			edge('f', 'm3', 'CITES')
-		];
-		const ties = edgesByNode(edges);
-		expect(mostCommonRelation(new Set(['m1', 'm2', 'm3']), ties, 'f')).toEqual({
-			relation: 'REFERS_TO',
-			toEnd: true
-		});
-	});
-
-	it('runs from the end when most edges start there', () => {
-		const edges = [edge('f', 'm1', 'AMENDS'), edge('f', 'm2', 'AMENDS'), edge('m3', 'f')];
-		expect(mostCommonRelation(new Set(['m1', 'm2', 'm3']), edgesByNode(edges), 'f')).toEqual({
-			relation: 'AMENDS',
-			toEnd: false
-		});
-	});
-
-	it('counts only edges to the end', () => {
-		const edges = [edge('m1', 'other', 'AMENDS'), edge('m1', 'other', 'AMENDS'), edge('m1', 'f')];
-		expect(mostCommonRelation(new Set(['m1']), edgesByNode(edges), 'f').relation).toBe('REFERS_TO');
-	});
-
-	it('is RELATED_TO toward the end without an edge to it', () => {
-		expect(mostCommonRelation(new Set(['m1']), new Map(), 'f')).toEqual({
-			relation: 'RELATED_TO',
-			toEnd: true
-		});
 	});
 });

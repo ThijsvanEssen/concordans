@@ -96,10 +96,10 @@ test.describe('on a phone', () => {
 		});
 	}
 
-	// The segments of a Keuze and the halves of a zoom pair are 44 px themselves, measured as
-	// drawn (live toets 27 Oct, B2: 42 px inside a 1 px frame).
-	test('the steps and the zoom buttons of the werkplek are 44 px', async ({ page }) => {
-		await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk&doek=sigma');
+	// The segments of a Keuze are 44 px themselves, measured as drawn (live toets 27 Oct, B2: 42 px
+	// inside a 1 px frame).
+	test('the steps of the werkplek are 44 px', async ({ page }) => {
+		await page.goto('/wetten/BWBR0005289/artikel/6:162?mode=netwerk');
 		await openSheet(page);
 		const hoogtes = async (group: string) =>
 			page
@@ -118,16 +118,6 @@ test.describe('on a phone', () => {
 		const stappen = await hoogtes('Aantal stappen');
 		expect(stappen.map((b) => b.naam)).toEqual(['1 stap', '2 stappen', '3 stappen']);
 		for (const b of stappen) expect.soft(b.h, b.naam ?? '').toBeGreaterThanOrEqual(44);
-		await page
-			.getByRole('dialog', { name: 'Weergave' })
-			.getByRole('button', { name: 'Sluiten' })
-			.click();
-		const zoom = await hoogtes('Zoom');
-		expect(zoom.map((b) => b.naam)).toEqual(['Uitzoomen', 'Inzoomen']);
-		for (const b of zoom) {
-			expect.soft(b.h, b.naam ?? '').toBeGreaterThanOrEqual(44);
-			expect.soft(b.w, b.naam ?? '').toBeGreaterThanOrEqual(44);
-		}
 	});
 
 	// The werkplek (N12, N17a): its sheet Weergave, the chosen bronnen and the canvas's own
@@ -168,7 +158,7 @@ test.describe('on a phone', () => {
 			/citeren|Wetten|Rechtspraak|Kamerstukken/.test(k.naam)
 		);
 		expect(small).toEqual([]);
-		await page.goto(`${ARTICLE}?mode=netwerk&doek=sigma`);
+		await page.goto(`${ARTICLE}?mode=netwerk`);
 		await openSheet(page);
 		await page.waitForLoadState('networkidle');
 		await expect(

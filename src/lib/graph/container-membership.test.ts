@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
 	containerIdFor,
 	isDrawnGroup,
-	momentOf,
 	type ContainerGroup,
 	isContainment
 } from './container-membership';
@@ -20,23 +19,6 @@ const group = (id: string, from: string | null, to: string | null): ContainerGro
 
 const lnv = group('committees/lnv', '2017-11-14', '2021-04-06');
 const iv = group('committees/iv', '2025-11-12', '2026-02-09');
-
-describe('momentOf', () => {
-	it('is the end of the last seat for someone who no longer sits', () => {
-		expect(momentOf(lid, [lnv, iv], '2026-09-24')).toEqual({
-			from: '2026-02-09',
-			to: '2026-02-09'
-		});
-	});
-
-	it('is today for someone who still sits', () => {
-		const now = group('committees/biza', '2025-11-12', null);
-		expect(momentOf(lid, [lnv, now], '2026-09-24')).toEqual({
-			from: '2026-09-24',
-			to: '2026-09-24'
-		});
-	});
-});
 
 describe('isDrawnGroup', () => {
 	it('draws the commissies of the lid for the period only', () => {

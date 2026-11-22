@@ -31,10 +31,7 @@
 		"check:start": "npm run sync:start && git diff --exit-code -- src/lib/components/home/start-server.html"
 	},
 	"dependencies": {
-		"@sigma/node-image": "^3.0.0",
-		"graphology": "^0.26.0",
-		"openapi-fetch": "^0.17.0",
-		"sigma": "^3.0.2"
+		"openapi-fetch": "^0.17.0"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",

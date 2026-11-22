@@ -1,23 +1,36 @@
-import Graph from 'graphology';
 import { describe, expect, it } from 'vitest';
-import { countCanvas, sameIds } from './canvas-count';
+import { countCanvas, sameIds, type CountNode } from './canvas-count';
+
+const node = (over: Partial<CountNode>): CountNode => ({
+	drawClass: 'document',
+	collection: 'documents',
+	stuksoort: null,
+	rechter: null,
+	date: null,
+	anchor: false,
+	...over
+});
+const stuk = () => node({ filterGroup: 'stukken', vorm: 'stuk' });
 
 /** A focus, a stuk in the chosen years, one before them, and one in a dossier switched off. */
 function canvas() {
-	const graph = new Graph();
-	graph.addNode('f', { filterGroup: 'stukken', vorm: 'stuk' });
-	graph.addNode('in', { filterGroup: 'stukken', vorm: 'stuk' });
-	graph.addNode('voor', { filterGroup: 'stukken', vorm: 'stuk' });
-	graph.addNode('dossier', { filterGroup: 'stukken', vorm: 'stuk' });
-	graph.addDirectedEdge('in', 'f', { relation: 'CITES' });
-	graph.addDirectedEdge('voor', 'f', { relation: 'CITES' });
-	graph.addUndirectedEdge('in', 'dossier', { layoutOnly: true });
-	return graph;
+	return {
+		nodes: new Map([
+			['f', stuk()],
+			['in', stuk()],
+			['voor', stuk()],
+			['dossier', stuk()]
+		]),
+		edges: [
+			{ source: 'in', target: 'f', relation: 'REFERS_TO' as const },
+			{ source: 'voor', target: 'f', relation: 'REFERS_TO' as const }
+		]
+	};
 }
 
 const count = (drawn: string[]) =>
 	countCanvas({
-		graph: canvas(),
+		...canvas(),
 		drawn: new Set(drawn),
 		selectionId: 'f',
 		hiddenKinds: new Set(),
@@ -44,7 +57,7 @@ describe('countCanvas', () => {
 	it('counts per kind what is drawn now, a ring drawn now too (B116)', () => {
 		const ring = { filterGroup: 'dossiers' as const };
 		const { counts } = countCanvas({
-			graph: canvas(),
+			...canvas(),
 			drawn: new Set(['f', 'in']),
 			selectionId: 'f',
 			hiddenKinds: new Set(),
@@ -69,12 +82,14 @@ describe('sameIds', () => {
 
 describe('countCanvas, the period', () => {
 	it('counts per kind what stands inside the years, and every bron without a date', () => {
-		const graph = new Graph();
-		graph.addNode('a', { filterGroup: 'uitspraken', date: '2012-05-01' });
-		graph.addNode('b', { filterGroup: 'uitspraken', date: '2020-05-01' });
-		graph.addNode('c', { filterGroup: 'artikelen' });
+		const nodes = new Map([
+			['a', node({ filterGroup: 'uitspraken', date: '2012-05-01' })],
+			['b', node({ filterGroup: 'uitspraken', date: '2020-05-01' })],
+			['c', node({ filterGroup: 'artikelen' })]
+		]);
 		const { counts } = countCanvas({
-			graph,
+			nodes,
+			edges: [],
 			drawn: new Set(['a', 'b', 'c']),
 			selectionId: null,
 			hiddenKinds: new Set(),
@@ -85,31 +100,12 @@ describe('countCanvas, the period', () => {
 		});
 		expect(counts.kinds).toEqual({ uitspraken: 1, artikelen: 1 });
 	});
-	it('counts of a group the members inside the years, as the strip does', () => {
-		const graph = new Graph();
-		graph.addNode('g', {
-			filterGroup: 'stukken',
-			members: 4,
-			memberDates: ['2012-05-01', '2020-05-01', '2013-01-01', null]
-		});
-		const { counts } = countCanvas({
-			graph,
-			drawn: new Set(['g']),
-			selectionId: null,
-			hiddenKinds: new Set(),
-			rechter: null,
-			period: { from: '2011-01-01', to: '2016-12-31' },
-			verborgen: new Map(),
-			hiddenLines: new Set()
-		});
-		expect(counts.kinds).toEqual({ stukken: 3 });
-	});
 });
 
 describe('a commissie drawn as a ring (B41)', () => {
 	it('is one bron of its soort, with no point of its own', () => {
 		const { counts } = countCanvas({
-			graph: canvas(),
+			...canvas(),
 			drawn: new Set(['f', 'in']),
 			selectionId: 'f',
 			hiddenKinds: new Set(),

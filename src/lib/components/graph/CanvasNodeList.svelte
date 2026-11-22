@@ -15,7 +15,6 @@
 	import { articleTitle } from '$lib/text/citation-record';
 	import { bronNaam, stemmingKop } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { isClusterId } from '$lib/selection/cluster';
 	import { untrack } from 'svelte';
 	import { distinctNames } from './canvas-names';
 
@@ -27,7 +26,6 @@
 		onKies,
 		aangewezen = null,
 		onToggleChosen,
-		onOpenCluster,
 		onTab,
 		onEscape,
 		houdt
@@ -45,7 +43,6 @@
 		aangewezen?: GraphNode | null;
 		onToggleChosen?: (node: GraphNode) => void;
 		/** A cluster bron ("250 uitspraken"): Enter opens its card, as a click does. */
-		onOpenCluster?: (node: GraphNode, opener: HTMLElement) => void;
 		/** Tab from a bron: true where the focus went into its card. */
 		onTab?: (opener: HTMLElement) => boolean;
 		/** Escape on a bron: true where it closed the bron's card (the focus stays on the bron). */
@@ -71,11 +68,7 @@
 	});
 
 	const kindOf = (n: GraphNode) =>
-		isClusterId(n.id)
-			? 'groep'
-			: isCollection(n.collection)
-				? bronKind(n.collection, n.raw?.props)
-				: '';
+		isCollection(n.collection) ? bronKind(n.collection, n.raw?.props) : '';
 	/**
 	 * The full name, where the canvas shows a short one (`2011-07, Memorie`): the name the
 	 * chips and Verbonden give (bronNaam: "Hoge Raad, 20 december 2019", an article with its
@@ -83,13 +76,11 @@
 	 * dossier's text names it.
 	 */
 	const fullName = (n: GraphNode) =>
-		isClusterId(n.id)
-			? n.label
-			: n.collection === 'decisions'
-				? stemmingKop(n)
-				: n.collection === 'articles' && n.raw?.props?.instrument_abbreviation
-					? articleTitle(n.raw?.display_name ?? n.label, n.raw.props)
-					: bronNaam(n, $instrumentMetaStore);
+		n.collection === 'decisions'
+			? stemmingKop(n)
+			: n.collection === 'articles' && n.raw?.props?.instrument_abbreviation
+				? articleTitle(n.raw?.display_name ?? n.label, n.raw.props)
+				: bronNaam(n, $instrumentMetaStore);
 	/** Each its own name: eight judgments of one court on one day by their ECLI (UX review N4). */
 	const names = $derived(distinctNames(nodes, fullName));
 	const nameOf = (n: GraphNode) => {
@@ -153,13 +144,7 @@
 			return;
 		}
 		const n = nodes[active];
-		if (
-			n &&
-			!isClusterId(n.id) &&
-			onToggleChosen &&
-			(e.key === 'n' || e.key === 'N') &&
-			mayShortcut(e)
-		) {
+		if (n && onToggleChosen && (e.key === 'n' || e.key === 'N') && mayShortcut(e)) {
 			e.preventDefault();
 			const was = isChosen(n.id);
 			onToggleChosen(n);
@@ -184,14 +169,12 @@
 		{#each nodes as n, i (n.id)}
 			<li>
 				<a
-					href={isClusterId(n.id) ? '#' : bronHref(refOf(n.collection, n.key, n.raw?.props))}
-					aria-haspopup={isClusterId(n.id) ? 'dialog' : undefined}
+					href={bronHref(refOf(n.collection, n.key, n.raw?.props))}
 					aria-current={aangewezen?.id === n.id ? 'true' : undefined}
 					onclick={(e) => {
-						if (!isClusterId(n.id) && !onKies) return;
+						if (!onKies) return;
 						e.preventDefault();
-						if (isClusterId(n.id)) onOpenCluster?.(n, e.currentTarget);
-						else onKies?.(n);
+						onKies(n);
 					}}
 					data-sveltekit-noscroll
 					data-index={i}

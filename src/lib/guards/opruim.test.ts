@@ -264,7 +264,6 @@ describe('nothing left over', () => {
 			'Stuk',
 			'Uitkomst',
 			'feedQuery',
-			'kolomVan',
 			'matches',
 			'metStrekking',
 			'placeOf',

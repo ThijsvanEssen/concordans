@@ -248,10 +248,6 @@ export const COURT_KIND_LABEL: Record<CourtKind, string> = {
 
 export const COURT_KINDS = Object.keys(COURT_KIND_LABEL) as CourtKind[];
 
-/** The status of a verbinding as the API writes it, and as the screen prints it. */
-export const statusLabel = (status: string | null | undefined) =>
-	status === 'voorgesteld' ? 'voorgesteld' : 'vastgesteld';
-
 /** The three ways to look at the material: Lezen, Netwerk and Bronnen. */
 export type Mode = 'read' | 'graph' | 'index';
 

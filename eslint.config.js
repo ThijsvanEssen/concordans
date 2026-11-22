@@ -75,15 +75,12 @@ export default defineConfig(
 		rules: {
 			// A promise is awaited, handled or marked as left on purpose: `.catch(ignore('…'))` or
 			// `.catch((e) => report('…', e))` ($lib/api/errors.ts). A navigation is SvelteKit's to
-			// show, a camera animation does not fail, and `afterTick` reports its own.
+			// show, and `afterTick` reports its own.
 			'@typescript-eslint/no-floating-promises': [
 				'error',
 				{
 					ignoreVoid: false,
-					allowForKnownSafeCalls: [
-						{ from: 'package', name: 'goto', package: '@sveltejs/kit' },
-						{ from: 'package', name: ['animate', 'animatedReset'], package: 'sigma' }
-					]
+					allowForKnownSafeCalls: [{ from: 'package', name: 'goto', package: '@sveltejs/kit' }]
 				}
 			]
 		}
