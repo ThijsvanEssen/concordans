@@ -13,7 +13,7 @@ import type { Schema } from '$lib/api/types';
 type Concept = Schema<'ConceptResponse'>;
 
 /** Whitespace as one space: a title with a hyphen taken out leaves two ("opsporingsambtenaar  een"). */
-export const squash = (text: string | null | undefined): string | null =>
+export const oneSpace = (text: string | null | undefined): string | null =>
 	text ? text.replace(/\s+/g, ' ').trim() || null : null;
 
 const LAW = /^(Art\.\s*\S+)\s+(.+)$/;
@@ -23,10 +23,13 @@ const LAW = /^(Art\.\s*\S+)\s+(.+)$/;
  * articles are of one law (the page is that law; the long name broke over three lines), else
  * `Art. 94 Gw` as the API names it.
  */
-export function articleLabel(concept: Concept, name: string | null | undefined): string | null {
-	const own = squash(name);
+export function conceptArticleName(
+	concept: Concept,
+	name: string | null | undefined
+): string | null {
+	const own = oneSpace(name);
 	if (!own) return null;
-	const laws = new Set(concept.articles.map((a) => LAW.exec(squash(a.display_name) ?? '')?.[2]));
+	const laws = new Set(concept.articles.map((a) => LAW.exec(oneSpace(a.display_name) ?? '')?.[2]));
 	const m = LAW.exec(own);
 	return m && laws.size === 1 && !laws.has(undefined) ? m[1] : own;
 }
@@ -35,7 +38,7 @@ export function articleLabel(concept: Concept, name: string | null | undefined):
 export function aboutArticles(concept: Concept, ids: readonly string[]): string | null {
 	const names = concept.articles
 		.filter((a) => ids.includes(a.id))
-		.map((a) => squash(a.display_name))
+		.map((a) => oneSpace(a.display_name))
 		.filter((n): n is string => !!n);
 	return names.length ? joinAnd(names) : null;
 }
@@ -43,7 +46,7 @@ export function aboutArticles(concept: Concept, ids: readonly string[]): string 
 export function judgmentRows(concept: Concept): Row[] {
 	return concept.judgments.map(({ judgment: j, article_ids }) => ({
 		...judgmentBase(j),
-		title: squash(judgmentBase(j).title) ?? '',
+		title: oneSpace(judgmentBase(j).title) ?? '',
 		// No ECLI in the line: the title is how a lawyer cites it.
 		identifier: null,
 		context: aboutArticles(concept, article_ids)
@@ -60,7 +63,7 @@ export function documentRows(concept: Concept): Row[] {
 		return {
 			ref: { collection: 'documents', key: d.key },
 			...base,
-			title: squash(base.title) ?? '',
+			title: oneSpace(base.title) ?? '',
 			date: null,
 			identifier: null,
 			context: [day, about].filter(Boolean).join(', ') || null,

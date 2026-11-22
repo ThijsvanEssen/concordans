@@ -16,7 +16,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
 	import type { GraphNode } from '$lib/graph/types';
-	import { articleLabel, documentRows, judgmentRows } from './concept-rows';
+	import { conceptArticleName, documentRows, judgmentRows } from './concept-rows';
 
 	let { conceptKey, node }: { conceptKey: string; node: GraphNode } = $props();
 
@@ -52,10 +52,10 @@
 						{@const current = same(a.id)}
 						<li class="article" aria-current={current ? 'true' : undefined}>
 							<span class="name">
-								{#if current}<b>{articleLabel(c, a.display_name)}</b><small>dit artikel</small
+								{#if current}<b>{conceptArticleName(c, a.display_name)}</b><small>dit artikel</small
 									>{:else if a.path}<a href={a.path} data-sveltekit-noscroll
-										>{articleLabel(c, a.display_name)}</a
-									>{:else}{articleLabel(c, a.display_name)}{/if}
+										>{conceptArticleName(c, a.display_name)}</a
+									>{:else}{conceptArticleName(c, a.display_name)}{/if}
 							</span>
 							<span class="opening">{a.heading ?? a.opening}</span>
 							<span class="count"

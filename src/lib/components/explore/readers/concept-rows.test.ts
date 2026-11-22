@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { aboutArticles, articleLabel, documentRows, judgmentRows, squash } from './concept-rows';
+import {
+	aboutArticles,
+	conceptArticleName,
+	documentRows,
+	judgmentRows,
+	oneSpace
+} from './concept-rows';
 import fixture from '$lib/fixtures/concept.json';
 import type { Schema } from '$lib/api/types';
 
@@ -31,11 +37,11 @@ describe('the rows of a concept', () => {
 	});
 
 	it('says one space for many, and the article of a one-law concept short', () => {
-		expect(squash('De buitengewoon opsporingsambtenaar  een ')).toBe(
+		expect(oneSpace('De buitengewoon opsporingsambtenaar  een ')).toBe(
 			'De buitengewoon opsporingsambtenaar een'
 		);
-		expect(squash('  ')).toBeNull();
-		expect(articleLabel(CONCEPT, 'Art. 120 Gw')).toBe('Art. 120');
+		expect(oneSpace('  ')).toBeNull();
+		expect(conceptArticleName(CONCEPT, 'Art. 120 Gw')).toBe('Art. 120');
 		const mixed = {
 			...CONCEPT,
 			articles: [
@@ -43,6 +49,6 @@ describe('the rows of a concept', () => {
 				...CONCEPT.articles.slice(1)
 			]
 		};
-		expect(articleLabel(mixed, 'Art. 120 Gw')).toBe('Art. 120 Gw');
+		expect(conceptArticleName(mixed, 'Art. 120 Gw')).toBe('Art. 120 Gw');
 	});
 });
