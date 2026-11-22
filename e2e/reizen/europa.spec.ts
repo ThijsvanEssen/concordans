@@ -6,12 +6,14 @@ import { expect, test } from '../support/test';
 test('/europa lists the three, with EUR-Lex where the title names the act', async ({ page }) => {
 	await page.goto('/europa');
 	await expect(
-		page.getByRole('heading', { level: 2, name: 'Voorstellen van de Commissie' })
+		page.getByRole('heading', { level: 2, name: 'EU-voorstellen in behandeling' })
 	).toBeVisible();
 	await expect(
 		page.getByRole('heading', { level: 2, name: 'Omzetting in Nederland' })
 	).toBeVisible();
-	await expect(page.getByRole('heading', { level: 2, name: 'Hof van Justitie' })).toBeVisible();
+	await expect(
+		page.getByRole('heading', { level: 2, name: 'Hof van Justitie en Gerecht' })
+	).toBeVisible();
 	const eurLex = page.getByRole('link', { name: /^EUR-Lex, / }).first();
 	await expect(eurLex).toHaveAttribute('href', /^https:\/\/eur-lex\.europa\.eu\//);
 	await expect(eurLex).toHaveAttribute('rel', /external/);

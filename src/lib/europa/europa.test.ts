@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { actOf, comOf, eurLexAct, eurLexCom, euTitle } from './europa';
+import {
+	actOf,
+	caseNumberOf,
+	comOf,
+	eurLexAct,
+	eurLexCom,
+	eurLexEcli,
+	euTitle,
+	proposalKind
+} from './europa';
 
 describe('euTitle', () => {
 	it('drops the label of the Kamer', () => {
@@ -46,6 +55,37 @@ describe('actOf', () => {
 	it('builds the ELI', () => {
 		expect(eurLexAct({ kind: 'dir', year: '2024', number: '1640' })).toBe(
 			'https://eur-lex.europa.eu/eli/dir/2024/1640/oj/nld'
+		);
+	});
+});
+
+describe('proposalKind', () => {
+	it('names what the title says it is', () => {
+		expect(proposalKind('EU-voorstel: Commissiemededeling: Actieplan tegen cyberpesten')).toBe(
+			'Mededeling'
+		);
+		expect(proposalKind('EU-voorstel: Gezamenlijke mededeling inzake economische veiligheid')).toBe(
+			'Mededeling'
+		);
+		expect(proposalKind('EU-voorstellen: Besluit van de Raad betreffende de sluiting')).toBe(
+			'Raadsbesluit'
+		);
+		expect(proposalKind('EU-voorstel: Voorstel voor een Verordening tot wijziging')).toBe(
+			'Voorstel'
+		);
+	});
+});
+
+describe('the judgments of the Union', () => {
+	it('reads the case number from the citation', () => {
+		expect(caseNumberOf('HvJ EU 11 juni 2026, C-216/25')).toBe('C-216/25');
+		expect(caseNumberOf('Gerecht EU 17 juni 2026, T-659/24')).toBe('T-659/24');
+		expect(caseNumberOf('HR 20 december 2019')).toBeNull();
+		expect(caseNumberOf(null)).toBeNull();
+	});
+	it('builds the address of EUR-Lex by the ECLI', () => {
+		expect(eurLexEcli('ECLI:EU:C:2026:483')).toBe(
+			'https://eur-lex.europa.eu/legal-content/NL/TXT/?uri=ecli:ECLI:EU:C:2026:483'
 		);
 	});
 });

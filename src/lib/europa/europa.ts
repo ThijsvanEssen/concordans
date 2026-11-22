@@ -36,3 +36,22 @@ export const LEGISLATIVE_TRAIN = 'https://www.europarl.europa.eu/legislative-tra
 /** The court of a judgment of the Union by its code in the ECLI (`ECLI:EU:C:…`, `ECLI:EU:T:…`). */
 export const unionCourt = (code: string | null | undefined): string =>
 	code === 'T' ? 'Gerecht van de EU' : code === 'C' ? 'Hof van Justitie' : 'Europese rechter';
+
+/**
+ * What kind of act a proposal is, as its title says: a communication (`Commissiemededeling`,
+ * `Gezamenlijke mededeling`), a decision of the Council, else a proposal, as the Kamer names it.
+ */
+export function proposalKind(title: string): 'Mededeling' | 'Raadsbesluit' | 'Voorstel' {
+	const t = euTitle(title);
+	if (/mededeling/i.test(t)) return 'Mededeling';
+	if (/^besluit van de raad|^raadsbesluit/i.test(t)) return 'Raadsbesluit';
+	return 'Voorstel';
+}
+
+/** The case number of a judgment of the Union as its citation gives it (`C-216/25`), or null. */
+export const caseNumberOf = (cite: string | null | undefined): string | null =>
+	/\b([CT]-\d+\/\d+)\b/.exec(cite ?? '')?.[1] ?? null;
+
+/** The judgment on EUR-Lex, by its ECLI. */
+export const eurLexEcli = (ecli: string) =>
+	`https://eur-lex.europa.eu/legal-content/NL/TXT/?uri=ecli:${ecli}`;

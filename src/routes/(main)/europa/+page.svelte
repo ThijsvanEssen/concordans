@@ -9,7 +9,6 @@
 	import { officialNumber, dossierNumberLabel } from '$lib/bron/dossier-naam';
 	import { LIST_PATHS } from '$lib/bron/lists';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
-	import { citationRecord } from '$lib/text/citation-record';
 	import { OUTCOME_LABEL, isOutcome } from '$lib/votes/stages';
 	import AllLink from '$lib/components/ui/AlleN.svelte';
 	import DateTime from '$lib/components/ui/DateTime.svelte';
@@ -23,6 +22,9 @@
 	import { load } from '$lib/util/load.svelte';
 	import {
 		LEGISLATIVE_TRAIN,
+		caseNumberOf,
+		eurLexEcli,
+		proposalKind,
 		unionCourt,
 		actOf,
 		comOf,
@@ -44,15 +46,17 @@
 	const rulings = load(
 		() => 'hof',
 		() => getCourtRulings(),
-		'Europa, Hof van Justitie'
+		'Europa, Hof van Justitie en Gerecht'
 	);
+
+	const NIEUW_TABBLAD = 'opent in nieuw tabblad';
 
 	const laws = SOURCES.find((x) => x.id === 'wetten')!;
 
 	const SECTIONS = [
-		{ id: 'voorstellen', label: 'Voorstellen van de Commissie' },
+		{ id: 'voorstellen', label: 'EU-voorstellen in behandeling' },
 		{ id: 'omzetting', label: 'Omzetting in Nederland' },
-		{ id: 'hof', label: 'Hof van Justitie' }
+		{ id: 'hof', label: 'Hof van Justitie en Gerecht' }
 	];
 	// The whole lists, in the list of Bladeren they are rows of.
 	const ALL_PROPOSALS = `${LIST_PATHS.dossiers}?q=EU-voorstel&stand=open`;
@@ -70,7 +74,8 @@
 	<Inhoudsopgave items={SECTIONS} />
 	<div class="blad__lijst results">
 		<p class="intro">
-			Wat de Europese Unie voorbereidt, hoe Nederland het omzet en wat het Hof van Justitie beslist.
+			Wat de Europese Commissie voorstelt, behandelt de Tweede Kamer als dossier. Daaronder staat
+			hoe Nederland Europese regels omzet en wat het Hof van Justitie en het Gerecht beslissen.
 		</p>
 
 		<div class="groepen">
@@ -93,13 +98,17 @@
 									<span class="row-id-sub">{dossierNumberLabel(d.number)}</span>
 								{/snippet}
 								{#snippet body()}
+									<span class="row-sub">{proposalKind(d.title ?? '')}</span>
 									{#if com}
 										<span class="row-sub"
 											><a
 												class="raakvlak"
 												href={eurLexCom(com)}
 												target="_blank"
-												rel="external noopener">EUR-Lex, COM ({com.year}) {com.number}</a
+												rel="external noopener"
+												>EUR-Lex, COM ({com.year}) {com.number}<span class="sr-only"
+													>, {NIEUW_TABBLAD}</span
+												></a
 											></span
 										>
 									{/if}
@@ -110,7 +119,9 @@
 					<p class="alle">
 						<AllLink noun="EU-voorstellen" href={ALL_PROPOSALS} />
 						<a class="raakvlak" href={LEGISLATIVE_TRAIN} target="_blank" rel="external noopener"
-							>Legislative Train</a
+							>Voortgang bij het Europees Parlement (Legislative Train)<span class="sr-only"
+								>, {NIEUW_TABBLAD}</span
+							></a
 						>
 					</p>
 				{/if}
@@ -135,9 +146,9 @@
 									<span class="row-id-sub">{dossierNumberLabel(d.number)}</span>
 								{/snippet}
 								{#snippet body()}
-									<span class="row-sub"
-										>{isOutcome(d.outcome) ? OUTCOME_LABEL[d.outcome] : 'In behandeling'}</span
-									>
+									{#if isOutcome(d.outcome)}
+										<span class="row-sub">{OUTCOME_LABEL[d.outcome]}</span>
+									{/if}
 									{#if act}
 										<span class="row-sub"
 											><a
@@ -145,7 +156,9 @@
 												href={eurLexAct(act)}
 												target="_blank"
 												rel="external noopener"
-												>EUR-Lex, {act.kind === 'dir' ? 'Richtlijn' : 'Verordening'} (EU) {act.year}/{act.number}</a
+												>EUR-Lex, {act.kind === 'dir' ? 'Richtlijn' : 'Verordening'} (EU) {act.year}/{act.number}<span
+													class="sr-only">, {NIEUW_TABBLAD}</span
+												></a
 											></span
 										>
 									{/if}
@@ -175,15 +188,28 @@
 									<span class="row-id-sub">{unionCourt(j.court)}</span>
 								{/snippet}
 								{#snippet body()}
-									{@const record = citationRecord({ ...j, kind: 'judgment' })}<span class="row-sub"
-										>{record?.short}</span
-									>
+									{@const zaak = caseNumberOf(j.cite?.short)}
+									{#if j.ecli}
+										<span class="row-sub"
+											><a
+												class="raakvlak"
+												href={eurLexEcli(j.ecli)}
+												target="_blank"
+												rel="external noopener"
+												>EUR-Lex{zaak ? `, ${zaak}` : ''}<span class="sr-only"
+													>, {NIEUW_TABBLAD}</span
+												></a
+											></span
+										>
+									{/if}
 								{/snippet}
 							</IndexRow>
 						{/each}
 					</ul>
-					<!-- What no call gives yet: which judgments answer a Dutch court. -->
+					<!-- The list says how far it reaches: the newest row is its date. -->
 					<p class="dekking">
+						{#if rulings.state.data.items[0]}Gegevens tot
+							<DateTime iso={rulings.state.data.items[0].date} form="long" />.{/if}
 						Verwijzingen van Nederlandse rechters zijn hier nog niet te onderscheiden.
 					</p>
 					<p class="alle"><AllLink noun="arresten" href={ALL_RULINGS} /></p>
