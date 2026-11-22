@@ -4,6 +4,7 @@
 import { padHref } from '$lib/bron/address';
 import { listPath } from '$lib/bron/lists';
 import { queryHref } from '$lib/util/address';
+import { articleRef } from '$lib/text/bw';
 import type { Schema } from '$lib/api/types';
 
 export type Map = Schema<'CourtDistrictsDTO'>;
@@ -52,7 +53,7 @@ export const articleHref = (area: Area): string | null =>
 
 /** `art. 8 RI`. */
 export const articleLabel = (area: Area): string | null =>
-	area.article_number ? `art. ${area.article_number} RI` : null;
+	area.article_number ? `${articleRef(RI, area.article_number)} RI` : null;
 
 /** Whether the text of the law names the municipality otherwise than the CBS does. */
 export const textDiffers = (g: Gemeente): boolean =>
