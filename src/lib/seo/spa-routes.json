@@ -30,6 +30,11 @@
 		"description": "De route van een zaak langs de instanties per rechtsgebied, met het wetsartikel van elke rechter en de Bevoegdheidsregeling bestuursrechtspraak."
 	},
 	{
+		"path": "/rechtspraak/indeling",
+		"title": "Indeling, Concordans",
+		"description": "De rechtbank en het gerechtshof van elke gemeente, volgens de Wet op de rechterlijke indeling en de gegevens van het CBS."
+	},
+	{
 		"path": "/dossiers",
 		"title": "Dossiers, Concordans",
 		"description": "Kamerdossiers: wetsvoorstellen, begrotingen, verdragen en andere onderwerpen, met hun stukken, behandeling en uitkomst."

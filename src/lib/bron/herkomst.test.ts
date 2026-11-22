@@ -33,7 +33,8 @@ describe('the sources of Bronnen en hergebruik', () => {
 			staatscourant: 'Staatscourant',
 			rijksoverheid: 'rijksoverheid.nl',
 			tooi: 'TOOI',
-			verdragenbank: 'Verdragenbank'
+			verdragenbank: 'Verdragenbank',
+			cbs: 'CBS'
 		});
 	});
 
@@ -48,6 +49,7 @@ describe('the sources of Bronnen en hergebruik', () => {
 			'Regering',
 			'Europees recht',
 			'Verdragen',
+			'Gebieden',
 			'Organisaties'
 		]);
 		expect(PUBLISHERS.every((p) => p.licence.url.startsWith('https://'))).toBe(true);

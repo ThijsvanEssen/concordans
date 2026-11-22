@@ -53,7 +53,10 @@ export const SOURCES: readonly Source[] = [
 		'rechtspraak',
 		'rechtbank tot Hoge Raad',
 		['judgments'],
-		[{ path: '/rechtspraak/rechtsgang', label: 'Rechtsgang', shape: 'rechtsgang' }]
+		[
+			{ path: '/rechtspraak/rechtsgang', label: 'Rechtsgang', shape: 'rechtsgang' },
+			{ path: '/rechtspraak/indeling', label: 'Indeling', shape: 'indeling' }
+		]
 	),
 	source('kamerstukken', 'dossiers, stukken, stemmingen, toezeggingen', [
 		'dossiers',

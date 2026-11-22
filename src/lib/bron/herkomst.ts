@@ -84,6 +84,15 @@ export const PUBLISHERS: readonly Publisher[] = [
 		sources: { verdragenbank: 'Verdragenbank' }
 	},
 	{
+		name: 'Gebieden',
+		gives: 'Gemeenten, arrondissementen en ressorten uit Gebieden in Nederland van het CBS',
+		licence: {
+			name: 'CC BY 4.0 van het CBS',
+			url: 'https://creativecommons.org/licenses/by/4.0/deed.nl'
+		},
+		sources: { cbs: 'CBS' }
+	},
+	{
 		name: 'Organisaties',
 		gives: 'Ministeries en rechtsgebieden uit de waardelijsten van de overheid (TOOI)',
 		licence: { name: terms('TOOI'), url: 'https://standaarden.overheid.nl/tooi' },
