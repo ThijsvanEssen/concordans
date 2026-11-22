@@ -53,6 +53,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import ArticleSuccession from './ArticleSuccession.svelte';
+	import ConceptBlok from './ConceptBlok.svelte';
 	import {
 		dossierExplanation,
 		explanatoryLabel,
@@ -966,6 +967,11 @@
 				/>
 			{/if}
 		</div>
+
+		<!-- The concepts the article is one of: under the text, over Vorig and Volgend. -->
+		{#each d.concepts ?? [] as c (c.key)}
+			<ConceptBlok conceptKey={c.key} {node} />
+		{/each}
 
 		{#if prev || next}
 			<nav class="reader-nav-footer" aria-label="Artikelen">
