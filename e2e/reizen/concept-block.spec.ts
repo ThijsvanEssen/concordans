@@ -15,7 +15,7 @@ test('Art. 120 Gw shows its concept under the text, over Vorig and Volgend', asy
 	const dit = page.locator('.article[aria-current="true"]');
 	await expect(dit).toContainText('dit artikel');
 	await expect(dit.getByRole('link')).toHaveCount(0);
-	await expect(page.getByRole('link', { name: 'Art. 94 Gw' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Art. 94', exact: true })).toHaveAttribute(
 		'href',
 		'/wetten/BWBR0001840/artikel/94'
 	);
@@ -23,10 +23,12 @@ test('Art. 120 Gw shows its concept under the text, over Vorig and Volgend', asy
 	// On a phone the lists stand behind a fold-out (its 44 px target is the shared .raakvlak).
 	const uitklap = page.getByRole('button', { name: /Uitspraken en stukken bij deze artikelen/ });
 	if (touch) {
-		await expect(uitklap).toHaveAttribute('aria-expanded', 'true');
-		await uitklap.click();
 		await expect(uitklap).toHaveAttribute('aria-expanded', 'false');
 		await expect(page.getByRole('heading', { level: 3, name: /^Uitspraken bij/ })).toBeHidden();
+		expect((await uitklap.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+		await uitklap.click();
+		await expect(uitklap).toHaveAttribute('aria-expanded', 'true');
+		await expect(page.getByRole('heading', { level: 3, name: /^Uitspraken bij/ })).toBeVisible();
 	} else {
 		await expect(uitklap).toBeHidden();
 		await expect(page.getByRole('heading', { level: 3, name: /^Uitspraken bij/ })).toBeVisible();

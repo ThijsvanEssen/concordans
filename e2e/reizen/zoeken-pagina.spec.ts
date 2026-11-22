@@ -174,7 +174,9 @@ test('the source of a hit is a word wide, not squeezed to a letter by a long tex
 	expect(doos.height).toBeLessThan(30);
 });
 
-test('Volgorde: Nieuwste eerst asks sort=newest and stands in the address', async ({ page }) => {
+test('Volgorde: Datum (nieuw → oud) asks sort=newest and stands in the address', async ({
+	page
+}) => {
 	const asked: (string | null)[] = [];
 	await answerSearch(page, { articles: [article(74)], judgments: [judgment(1, 'HR', 2019)] });
 	// Registered last, so it sees the request first.
@@ -186,11 +188,13 @@ test('Volgorde: Nieuwste eerst asks sort=newest and stands in the address', asyn
 	await expect(page.getByRole('heading', { level: 2, name: /Artikelen/ })).toBeVisible();
 	expect(asked.every((s) => s === null)).toBe(true);
 	await page.getByRole('button', { name: /Volgorde/ }).click();
-	await page.getByRole('menuitemradio', { name: 'Nieuwste eerst' }).click();
+	await page.getByRole('menuitemradio', { name: 'Datum (nieuw → oud)' }).click();
 	await expect(page).toHaveURL(/volgorde=nieuwste/);
 	await expect.poll(() => asked.includes('newest')).toBe(true);
-	await expect(page.getByRole('button', { name: /Volgorde/ })).toContainText('Nieuwste eerst');
+	// Artikelen the API does not order by date: the section says it stays on relevance.
+	await expect(page.locator('#groep-articles')).toContainText('op relevantie');
+	await expect(page.getByRole('button', { name: /Volgorde/ })).toContainText('Datum (nieuw → oud)');
 	// Shared address: the order is read from it.
 	await page.reload();
-	await expect(page.getByRole('button', { name: /Volgorde/ })).toContainText('Nieuwste eerst');
+	await expect(page.getByRole('button', { name: /Volgorde/ })).toContainText('Datum (nieuw → oud)');
 });

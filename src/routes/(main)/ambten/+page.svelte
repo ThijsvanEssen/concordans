@@ -78,4 +78,10 @@
 		--lezer-stap: var(--s-7);
 		gap: var(--lezer-stap);
 	}
+	/* The groups hold few rows each: on a phone a step of a row's height tells them apart. */
+	@media (max-width: 768px) {
+		.groepen {
+			--lezer-stap: var(--s-4);
+		}
+	}
 </style>

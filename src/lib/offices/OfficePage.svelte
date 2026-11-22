@@ -157,6 +157,7 @@
 									collection="members"
 									name={h.member.name ?? ''}
 									key={h.member.key}
+									inText
 								/>{#if h.acting}, ad interim{/if}</span
 							>
 							<span class="row-sub"

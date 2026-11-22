@@ -33,9 +33,9 @@ describe('ConceptBlock', () => {
 		expect(container.textContent).toContain('1 van 1.900');
 		expect(container.textContent).toContain('1 van 437');
 		const links = [...container.querySelectorAll('.articles a')].map((a) => a.textContent);
-		expect(links).toEqual(['Art. 93 Gw']);
+		expect(links).toEqual(['Art. 93']);
 		const dit = container.querySelector('[aria-current="true"]');
-		expect(dit?.textContent).toContain('Art. 120 Gw');
+		expect(dit?.textContent).toContain('Art. 120');
 		expect(dit?.textContent).toContain('dit artikel');
 	});
 
@@ -49,10 +49,12 @@ describe('ConceptBlock', () => {
 	it('folds the lists behind a button with aria-expanded', async () => {
 		const { container } = await shown();
 		const button = container.querySelector<HTMLButtonElement>('.fold-toggle button')!;
-		expect(button.getAttribute('aria-expanded')).toBe('true');
-		await fireEvent.click(button);
-		await tick();
+		// Closed at first (the design); a choice is kept.
 		expect(button.getAttribute('aria-expanded')).toBe('false');
 		expect(container.querySelector('.lists')?.classList.contains('is-dicht')).toBe(true);
+		await fireEvent.click(button);
+		await tick();
+		expect(button.getAttribute('aria-expanded')).toBe('true');
+		expect(container.querySelector('.lists')?.classList.contains('is-dicht')).toBe(false);
 	});
 });

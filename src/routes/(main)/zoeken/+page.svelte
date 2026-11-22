@@ -240,7 +240,7 @@
 		waarde={sort}
 		opties={[
 			{ waarde: 'relevance', label: 'Relevantie' },
-			{ waarde: 'newest', label: 'Nieuwste eerst' }
+			{ waarde: 'newest', label: 'Datum (nieuw → oud)' }
 		]}
 		onSelect={(v) => patchUrl({ [P.order]: v === 'newest' ? 'nieuwste' : null })}
 	/>
@@ -304,6 +304,8 @@
 				>
 					{#snippet naast()}{#if lane.matched === 'any'}<span class="deel"
 								>treffers met een deel van de woorden</span
+							>{/if}{#if sort === 'newest' && group.kind === 'articles'}<span class="deel"
+								>op relevantie</span
 							>{/if}{/snippet}
 					{#if lane.searched[group.kind]}
 						<p class="gezocht"><Coverage searched={lane.searched[group.kind]} /></p>

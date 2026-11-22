@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aboutArticles, documentRows, judgmentRows } from './concept-rows';
+import { aboutArticles, articleLabel, documentRows, judgmentRows, squash } from './concept-rows';
 import fixture from '$lib/fixtures/concept.json';
 import type { Schema } from '$lib/api/types';
 
@@ -28,5 +28,21 @@ describe('the rows of a concept', () => {
 		expect(row.ref).toEqual({ collection: 'documents', key: 'abc' });
 		expect(row.context?.replace(/\u00a0/g, ' ')).toBe('15 september 2026, Art. 120 Gw');
 		expect(row.date).toBeNull();
+	});
+
+	it('says one space for many, and the article of a one-law concept short', () => {
+		expect(squash('De buitengewoon opsporingsambtenaar  een ')).toBe(
+			'De buitengewoon opsporingsambtenaar een'
+		);
+		expect(squash('  ')).toBeNull();
+		expect(articleLabel(CONCEPT, 'Art. 120 Gw')).toBe('Art. 120');
+		const mixed = {
+			...CONCEPT,
+			articles: [
+				{ ...CONCEPT.articles[0], display_name: 'Art. 1 BW' },
+				...CONCEPT.articles.slice(1)
+			]
+		};
+		expect(articleLabel(mixed, 'Art. 120 Gw')).toBe('Art. 120 Gw');
 	});
 });

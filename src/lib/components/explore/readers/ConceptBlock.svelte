@@ -9,7 +9,6 @@
 	import { load } from '$lib/util/load.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Section from '$lib/components/ui/Sectie.svelte';
-	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import FoldButton from '$lib/components/ui/FoldButton.svelte';
 	import { isOpen } from '$lib/components/ui/dicht.svelte';
 	import ConnectedRow from '$lib/verbonden/VerbondenRow.svelte';
@@ -17,13 +16,13 @@
 	import { formatCount } from '$lib/text/getal';
 	import { plural } from '$lib/text/words';
 	import type { GraphNode } from '$lib/graph/types';
-	import { documentRows, judgmentRows } from './concept-rows';
+	import { articleLabel, documentRows, judgmentRows } from './concept-rows';
 
 	let { conceptKey, node }: { conceptKey: string; node: GraphNode } = $props();
 
 	const concept = load(() => conceptKey, getConcept, 'Concept');
 	let opened = $state<string | null>(null);
-	const listsOpen = $derived(isOpen('concept-lists', true));
+	const listsOpen = $derived(isOpen('concept-lists', false));
 	const uid = $props.id();
 
 	const same = (id: string) => id.toLowerCase() === node.id.toLowerCase();
@@ -40,8 +39,11 @@
 			<Section title={c.name} inklapbaar={false}>
 				{#if c.explanation}
 					<p class="explanation">
-						<TextLink href={c.explanation.url} target="_blank" rel="noopener noreferrer external"
-							>Uitleg: {c.explanation.label}</TextLink
+						<a
+							class="raak-rij"
+							href={c.explanation.url}
+							target="_blank"
+							rel="noopener noreferrer external">Uitleg: {c.explanation.label}</a
 						>
 					</p>
 				{/if}
@@ -50,10 +52,10 @@
 						{@const current = same(a.id)}
 						<li class="article" aria-current={current ? 'true' : undefined}>
 							<span class="name">
-								{#if current}<b>{a.display_name}</b><small>dit artikel</small>{:else if a.path}<a
-										href={a.path}
-										data-sveltekit-noscroll>{a.display_name}</a
-									>{:else}{a.display_name}{/if}
+								{#if current}<b>{articleLabel(c, a.display_name)}</b><small>dit artikel</small
+									>{:else if a.path}<a href={a.path} data-sveltekit-noscroll
+										>{articleLabel(c, a.display_name)}</a
+									>{:else}{articleLabel(c, a.display_name)}{/if}
 							</span>
 							<span class="opening">{a.heading ?? a.opening}</span>
 							<span class="count"
@@ -122,6 +124,18 @@
 		margin: 0;
 		text-align: right;
 		font-size: var(--t-meta);
+	}
+	/* One line, the arrow after the words (basis.css), a finger's 44 px high on a touch screen. */
+	.explanation a {
+		white-space: nowrap;
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+	}
+	.explanation a:hover,
+	.explanation a:focus-visible {
+		text-decoration-color: currentColor;
 	}
 	ul {
 		list-style: none;
@@ -195,6 +209,11 @@
 		}
 		.fold-toggle {
 			display: block;
+		}
+		/* The heading is the button: a finger's 44 px high, as the row of the design. */
+		.fold-toggle :global(.fold-knop) {
+			align-items: center;
+			min-height: var(--veld-h-raak);
 		}
 		.lists {
 			grid-template-columns: minmax(0, 1fr);
