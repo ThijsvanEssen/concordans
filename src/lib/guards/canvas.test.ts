@@ -20,7 +20,7 @@ describe('the canvas', () => {
 		expect(COMPONENTS.filter((s) => geometry.test(s.text)).map((s) => s.path)).toEqual([]);
 	});
 
-	it('asks the graph whether a node or an edge is there instead of catching graphology', () => {
+	it('asks the graph whether a node or an edge is there instead of catching', () => {
 		expect(COMPONENTS.filter((s) => /\btry\s*\{/.test(s.text)).map((s) => s.path)).toEqual([]);
 	});
 });

@@ -330,8 +330,8 @@ describe('the readers', () => {
 	});
 
 	it('keeps the canvas and the lists of Bronnen out of the Verkenner’s own chunk', () => {
-		// A reader's first request waits for the Verkenner's chunk: the canvas (GraphView with
-		// graphology) and IndexView come as chunks of their own (213 → 145 kB gz, 10 Oct).
+		// A reader's first request waits for the Verkenner's chunk: the canvas (GraphView) and
+		// IndexView come as chunks of their own (213 → 145 kB gz, 10 Oct).
 		const t = bron('routes/explore/+page.svelte');
 		expect(t).not.toMatch(/^\s*import (GraphView|IndexView) from/m);
 		expect(t).toMatch(/import\('\$lib\/components\/graph\/GraphView\.svelte'\)/);
