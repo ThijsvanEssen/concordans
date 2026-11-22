@@ -49,7 +49,7 @@ export function proposalKind(title: string): 'Mededeling' | 'Raadsbesluit' | 'Vo
 }
 
 /** The case number of a judgment of the Union as its citation gives it (`C-216/25`), or null. */
-export const caseNumberOf = (cite: string | null | undefined): string | null =>
+export const unionCaseNumber = (cite: string | null | undefined): string | null =>
 	/\b([CT]-\d+\/\d+)\b/.exec(cite ?? '')?.[1] ?? null;
 
 /** The judgment on EUR-Lex, by its ECLI. */

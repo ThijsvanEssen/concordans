@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	actOf,
-	caseNumberOf,
+	unionCaseNumber,
 	comOf,
 	eurLexAct,
 	eurLexCom,
@@ -78,10 +78,10 @@ describe('proposalKind', () => {
 
 describe('the judgments of the Union', () => {
 	it('reads the case number from the citation', () => {
-		expect(caseNumberOf('HvJ EU 11 juni 2026, C-216/25')).toBe('C-216/25');
-		expect(caseNumberOf('Gerecht EU 17 juni 2026, T-659/24')).toBe('T-659/24');
-		expect(caseNumberOf('HR 20 december 2019')).toBeNull();
-		expect(caseNumberOf(null)).toBeNull();
+		expect(unionCaseNumber('HvJ EU 11 juni 2026, C-216/25')).toBe('C-216/25');
+		expect(unionCaseNumber('Gerecht EU 17 juni 2026, T-659/24')).toBe('T-659/24');
+		expect(unionCaseNumber('HR 20 december 2019')).toBeNull();
+		expect(unionCaseNumber(null)).toBeNull();
 	});
 	it('builds the address of EUR-Lex by the ECLI', () => {
 		expect(eurLexEcli('ECLI:EU:C:2026:483')).toBe(

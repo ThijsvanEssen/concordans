@@ -5,6 +5,7 @@
 	// the sources behind them (EUR-Lex, the Legislative Train) are one step further, by the
 	// number the title names. What no call can give yet is said in the list it belongs to.
 	import { getCourtRulings, getEuProposals, getTransposingBills } from '$lib/api/europa';
+	import { citationRecord } from '$lib/text/citation-record';
 	import { openHref } from '$lib/bron/href';
 	import { officialNumber, dossierNumberLabel } from '$lib/bron/dossier-naam';
 	import { LIST_PATHS } from '$lib/bron/lists';
@@ -22,7 +23,7 @@
 	import { load } from '$lib/util/load.svelte';
 	import {
 		LEGISLATIVE_TRAIN,
-		caseNumberOf,
+		unionCaseNumber,
 		eurLexEcli,
 		proposalKind,
 		unionCourt,
@@ -49,7 +50,7 @@
 		'Europa, Hof van Justitie en Gerecht'
 	);
 
-	const NIEUW_TABBLAD = 'opent in nieuw tabblad';
+	const NEW_TAB = 'opent in nieuw tabblad';
 
 	const laws = SOURCES.find((x) => x.id === 'wetten')!;
 
@@ -107,7 +108,7 @@
 												target="_blank"
 												rel="external noopener"
 												>EUR-Lex, COM ({com.year}) {com.number}<span class="sr-only"
-													>, {NIEUW_TABBLAD}</span
+													>, {NEW_TAB}</span
 												></a
 											></span
 										>
@@ -120,7 +121,7 @@
 						<AllLink noun="EU-voorstellen" href={ALL_PROPOSALS} />
 						<a class="raakvlak" href={LEGISLATIVE_TRAIN} target="_blank" rel="external noopener"
 							>Voortgang bij het Europees Parlement (Legislative Train)<span class="sr-only"
-								>, {NIEUW_TABBLAD}</span
+								>, {NEW_TAB}</span
 							></a
 						>
 					</p>
@@ -157,7 +158,7 @@
 												target="_blank"
 												rel="external noopener"
 												>EUR-Lex, {act.kind === 'dir' ? 'Richtlijn' : 'Verordening'} (EU) {act.year}/{act.number}<span
-													class="sr-only">, {NIEUW_TABBLAD}</span
+													class="sr-only">, {NEW_TAB}</span
 												></a
 											></span
 										>
@@ -188,7 +189,9 @@
 									<span class="row-id-sub">{unionCourt(j.court)}</span>
 								{/snippet}
 								{#snippet body()}
-									{@const zaak = caseNumberOf(j.cite?.short)}
+									{@const caseNo = unionCaseNumber(
+										citationRecord({ ...j, kind: 'judgment' })?.short
+									)}
 									{#if j.ecli}
 										<span class="row-sub"
 											><a
@@ -196,8 +199,7 @@
 												href={eurLexEcli(j.ecli)}
 												target="_blank"
 												rel="external noopener"
-												>EUR-Lex{zaak ? `, ${zaak}` : ''}<span class="sr-only"
-													>, {NIEUW_TABBLAD}</span
+												>EUR-Lex{caseNo ? `, ${caseNo}` : ''}<span class="sr-only">, {NEW_TAB}</span
 												></a
 											></span
 										>
