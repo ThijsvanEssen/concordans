@@ -28,7 +28,10 @@ const fresh = (status: ResultsLane['status']): ResultsLane => ({
 	searched: {}
 });
 
-type ResultsRequest = { q: string; from: string; to: string };
+/** The order of the hits: best first, or the newest first (`sort` of /api/search). */
+export type ResultsSort = 'relevance' | 'newest';
+
+type ResultsRequest = { q: string; from: string; to: string; sort?: ResultsSort };
 
 export class SearchResults {
 	lanes = $state(
@@ -71,7 +74,7 @@ export class SearchResults {
 	}
 
 	#request(lane: Lane) {
-		const { q, from, to } = this.#asked;
+		const { q, from, to, sort } = this.#asked;
 		this.#controllers.get(lane.id)?.abort();
 		if (q.length < 2) {
 			this.lanes[lane.id] = fresh('done');
@@ -88,6 +91,7 @@ export class SearchResults {
 				types: [...lane.kinds],
 				limit: RESULT_LIMIT,
 				mode: 'full',
+				sort: sort === 'newest' ? sort : undefined,
 				from: from || undefined,
 				to: to || undefined
 			},

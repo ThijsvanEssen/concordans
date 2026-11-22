@@ -173,3 +173,24 @@ test('the source of a hit is a word wide, not squeezed to a letter by a long tex
 	expect(doos.width).toBeGreaterThan(tekst.length * 4);
 	expect(doos.height).toBeLessThan(30);
 });
+
+test('Volgorde: Nieuwste eerst asks sort=newest and stands in the address', async ({ page }) => {
+	const asked: (string | null)[] = [];
+	await answerSearch(page, { articles: [article(74)], judgments: [judgment(1, 'HR', 2019)] });
+	// Registered last, so it sees the request first.
+	await page.route(apiPath(/\/api\/search/), async (route) => {
+		asked.push(new URL(route.request().url()).searchParams.get('sort'));
+		await route.fallback();
+	});
+	await page.goto('/zoeken?q=wanprestatie');
+	await expect(page.getByRole('heading', { level: 2, name: /Artikelen/ })).toBeVisible();
+	expect(asked.every((s) => s === null)).toBe(true);
+	await page.getByRole('button', { name: /Volgorde/ }).click();
+	await page.getByRole('menuitemradio', { name: 'Nieuwste eerst' }).click();
+	await expect(page).toHaveURL(/volgorde=nieuwste/);
+	await expect.poll(() => asked.includes('newest')).toBe(true);
+	await expect(page.getByRole('button', { name: /Volgorde/ })).toContainText('Nieuwste eerst');
+	// Shared address: the order is read from it.
+	await page.reload();
+	await expect(page.getByRole('button', { name: /Volgorde/ })).toContainText('Nieuwste eerst');
+});

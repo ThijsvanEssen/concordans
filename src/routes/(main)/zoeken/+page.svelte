@@ -12,6 +12,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import AllN from '$lib/components/ui/AlleN.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TextLink from '$lib/components/ui/TekstLink.svelte';
 	import FilterBar from '$lib/components/explore/index/FilterBar.svelte';
 	import { selectOptions, type FacetGroup } from '$lib/components/explore/index/facets';
@@ -28,7 +29,7 @@
 		resultsHref,
 		RESULT_LIMIT
 	} from '$lib/search/results';
-	import { SearchResults } from '$lib/search/results.svelte';
+	import { SearchResults, type ResultsSort } from '$lib/search/results.svelte';
 	import ResultRow from '$lib/search/ResultRow.svelte';
 	import ZoekHulp from '$lib/search/ZoekHulp.svelte';
 	import { FEW_HITS } from '$lib/search/hulp';
@@ -47,6 +48,7 @@
 		kind: 'soort',
 		court: 'instantie',
 		year: 'jaar',
+		order: 'volgorde',
 		page: 'pagina'
 	} as const;
 	const params = $derived(page.url.searchParams);
@@ -58,11 +60,13 @@
 	);
 	const court = $derived(chosen === 'judgments' ? (params.get(P.court) ?? '') : '');
 	const year = $derived(chosen === 'judgments' ? (params.get(P.year) ?? '') : '');
+	// A choice, not a filter: Wissen leaves it, a change starts at the first page.
+	const sort = $derived<ResultsSort>(params.get(P.order) === 'nieuwste' ? 'newest' : 'relevance');
 	const pageNumber = $derived(Number(params.get(P.page)) || 1);
 
 	const results = new SearchResults();
 	$effect(() => {
-		const request = { q, from, to };
+		const request = { q, from, to, sort };
 		untrack(() => results.ask(request));
 	});
 	$effect(() => () => results.stop());
@@ -228,6 +232,20 @@
 	</p>
 {/snippet}
 
+<!-- The order of the hits, at the right of the bar of filters, as every list has it. -->
+{#snippet sortControl()}
+	<TekstMenu
+		rechts
+		label="Volgorde"
+		waarde={sort}
+		opties={[
+			{ waarde: 'relevance', label: 'Relevantie' },
+			{ waarde: 'newest', label: 'Nieuwste eerst' }
+		]}
+		onSelect={(v) => patchUrl({ [P.order]: v === 'newest' ? 'nieuwste' : null })}
+	/>
+{/snippet}
+
 <div class="zoeken blad">
 	<header class="blad__kop">
 		<div>
@@ -253,6 +271,7 @@
 			show={results.done ? `Toon ${formatCount(total)} resultaten` : 'Toon de resultaten'}
 			list={() => listEl}
 			onClear={clearFilters}
+			end={q.length >= 2 ? sortControl : undefined}
 			count={q.length >= 2 ? countLine : undefined}
 		/>
 
