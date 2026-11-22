@@ -115,7 +115,7 @@ const vormOf = (collection: string): Vorm =>
 	isCollection(collection) ? VORM_VAN[collection] : 'overig';
 
 /** De vorm van een bron uit zijn id (`decisions/…`) of collectie. */
-export const vormVan = (idOfCollectie: string): Vorm => vormOf(idOfCollectie.split('/')[0]);
+export const vormVan = (idOfCollection: string): Vorm => vormOf(idOfCollection.split('/')[0]);
 
 /** Het teken van een soort: in Tonen, het filter en Verbonden. */
 export const SORT_SHAPE = Object.fromEntries([
