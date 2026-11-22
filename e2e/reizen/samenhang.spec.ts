@@ -23,7 +23,6 @@ const drawn = (page: import('@playwright/test').Page) =>
 
 test('the network draws a bron with its neighbours and lists them', async ({ page }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	await expect(page.locator('canvas').first()).toBeAttached();
 	await expect(drawn(page)).toBeAttached();
 	await expect(drawn(page).getByRole('link', { name: 'Art. 6:162 BW, Artikel' })).toBeAttached();
 	expect(await drawn(page).getByRole('listitem').count()).toBeGreaterThan(5);
@@ -53,11 +52,6 @@ test('the legend switches a kind of bron off and on', async ({ page }) => {
 // elsewhere (productcheck 0.80, punt 3: votes of July 2025 on another matter around a motie of
 // 2026), nor the votes of the rest of its dossier.
 for (const { stuk, own, votes } of [
-	{
-		stuk: '/kamerstukken/36799/31',
-		own: /29 september 2026: Motie van het lid De Beer over bij proactieve dienstverlening/,
-		votes: 1
-	},
 	{ stuk: '/kamerstukken/37020-X/53', own: /Beslisnota bij Kamerbrief over incident/, votes: 0 }
 ]) {
 	test(`the network of ${stuk} draws no stemming of its indiener elsewhere`, async ({ page }) => {

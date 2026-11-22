@@ -888,25 +888,27 @@
 						>
 					</div>
 				{/if}
-				<LanesView
-					nodes={laneNodes}
-					filter={{ period: yearPeriod, court: filter.rechter }}
-					edges={laneEdges}
-					chosen={laneChosen}
-					visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
-					onToggleLine={toggleLine}
-					marked={gemarkeerd?.id ?? null}
-					pointed={pijl?.id ?? keyNode?.id ?? null}
-					onMark={(id) => markById(id, markeer)}
-					onOpen={(id) => markById(id, open)}
-					onUnmark={ontmarkeer}
-					onDrawn={(set, held) => {
-						drawn = set;
-						laneDrawn = set;
-						laneHeld = held;
-						untrack(telCanvas);
-					}}
-				/>
+				{#if !midden}
+					<LanesView
+						nodes={laneNodes}
+						filter={{ period: yearPeriod, court: filter.rechter }}
+						edges={laneEdges}
+						chosen={laneChosen}
+						visibility={{ hiddenKinds, hiddenLines: filters.hiddenLines }}
+						onToggleLine={toggleLine}
+						marked={gemarkeerd?.id ?? null}
+						pointed={pijl?.id ?? keyNode?.id ?? null}
+						onMark={(id) => markById(id, markeer)}
+						onOpen={(id) => markById(id, open)}
+						onUnmark={ontmarkeer}
+						onDrawn={(set, held) => {
+							drawn = set;
+							laneDrawn = set;
+							laneHeld = held;
+							untrack(telCanvas);
+						}}
+					/>
+				{/if}
 
 				<!-- On a phone, what the last action on the network did, with the way back: the
 			     place it was done from (Verbonden) is out of sight on the Netwerk tab. -->
@@ -1213,7 +1215,7 @@
 		flex-direction: column;
 		overflow: hidden;
 	}
-	/* Under a weergave of its own the lanes keep their size, unseen: they measure it. */
+	/* Under a weergave of its own the buhne stands unseen. */
 	.buhne[hidden] {
 		position: absolute;
 		inset: 0;

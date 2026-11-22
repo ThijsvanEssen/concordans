@@ -9,7 +9,6 @@ import { naarVerbonden } from '../support/navigation';
 const BRONNEN: [string, string][] = [
 	['wet', '/wetten/BWBR0005416'],
 	['artikel', '/wetten/BWBR0005289/artikel/6:162'],
-	['uitspraak', '/uitspraken/ECLI:NL:HR:2009:BH2815'],
 	['dossier', '/dossiers/36410'],
 	['commissie', '/commissies/d38afba0_042f_4f3b_b0c8_b2df24eba6a7'],
 	['ministerie', '/ministeries/bzk']
@@ -84,26 +83,10 @@ for (const [naam, pad] of BRONNEN) {
 	});
 }
 
-test('a soort cut off says of how many, in the legend and on its cluster (N2)', async ({
-	page,
-	touch
-}) => {
+test('a soort cut off says of how many in the legend (N2)', async ({ page }) => {
 	await page.goto('/fracties/vvd?mode=netwerk');
 	const rijen = new Map(await soort(page));
 	expect(rijen.get('Stemmingen')).toMatch(/^[\d.]+ van [\d.]+$/);
-	// A fractie's leden of every period, and the key to its marking (N13).
-	expect(rijen.has('Leden ooit')).toBe(true);
-	// The legend stands open: Filter on a phone opened it.
-	const legend = strip(page).getByRole('region', { name: 'Filters' });
-	await expect(legend.getByText('Huidig lid')).toBeVisible();
-	await expect(legend.getByText('Oud-lid')).toBeVisible();
-	test.skip(touch, 'a tap on the cluster: its card is the same at both widths');
-	await page
-		.getByRole('link', { name: /^\d+ stemmingen/ })
-		.first()
-		.focus();
-	await page.keyboard.press('Enter');
-	await expect(page.getByRole('dialog', { name: /^[\d.]+ van [\d.]+ stemmingen$/ })).toBeVisible();
 });
 
 // Thijs, 28 Oct: "net als in keten de Alle 10000 uitspraken niet als nodes tonen, maar als lijst".

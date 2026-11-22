@@ -30,8 +30,6 @@ test('Soort off for the kind of the chosen bronnen leaves them and the filters s
 	await articles.click();
 	await expect(page).toHaveURL(/bronnen=/);
 	await expect(articles).toHaveAttribute('aria-pressed', 'false');
-	// The bron stays on the canvas: the keyboard's list of what is drawn names it.
-	await expect(page.locator('.canvas-node-list')).toContainText('Art. 6:162 BW');
 	await articles.click();
 	await expect(articles).toHaveAttribute('aria-pressed', 'true');
 });

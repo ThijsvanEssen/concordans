@@ -88,13 +88,14 @@ test('a relation switched off stays in the address and after a reload, with one 
 	page
 }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
-	const noemt = (await legend(page)).getByRole('button', { name: /^Aanhaling/ });
+	const lijnsoorten = page.getByRole('list', { name: 'Lijnsoorten' });
+	const noemt = lijnsoorten.getByRole('button', { name: /^Aanhaling/ });
 	await expect(noemt).toHaveAttribute('aria-pressed', 'true');
 	await noemt.click();
 	await expect(page).toHaveURL(/[?&]uit=citation/);
 	await page.reload();
 	await expect(page).toHaveURL(/[?&]uit=citation/);
-	await expect((await legend(page)).getByRole('button', { name: /^Aanhaling/ })).toHaveAttribute(
+	await expect(lijnsoorten.getByRole('button', { name: /^Aanhaling/ })).toHaveAttribute(
 		'aria-pressed',
 		'false'
 	);
