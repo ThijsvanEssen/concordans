@@ -2,10 +2,10 @@
 	// The field of Indeling: a municipality by name, with the matches beneath it as a list to
 	// choose from (Bergen, Noord-Holland and Bergen, Limburg tell themselves apart by their
 	// province). Typing opens the list, the arrows and Enter choose, Escape closes; a tap outside
-	// closes it in the capture phase, so a touch on the canvas or a link beneath does not leave
-	// it open (actions/menu.ts). "Wissen" empties the field.
+	// closes it through clickOutside (actions/top-layer.ts). "Wissen" empties the field.
+	import { clickOutside } from '$lib/actions/top-layer';
 	import Tekstveld from '$lib/components/ui/Tekstveld.svelte';
-	import { findGemeenten, sharesName, type Gemeente } from './indeling';
+	import { findMunicipalities, sharesName, type Municipality } from './court-map';
 
 	let {
 		items,
@@ -13,9 +13,9 @@
 		onChoose,
 		onClear
 	}: {
-		items: readonly Gemeente[];
-		chosen: Gemeente | null;
-		onChoose: (g: Gemeente) => void;
+		items: readonly Municipality[];
+		chosen: Municipality | null;
+		onChoose: (m: Municipality) => void;
 		onClear: () => void;
 	} = $props();
 
@@ -24,23 +24,21 @@
 	let open = $state(false);
 	let at = $state(0);
 	let box: HTMLDivElement | undefined = $state();
-	const shown = $derived(typed);
-	const matches = $derived(open ? findGemeenten(items, typed) : []);
+	const matches = $derived(open ? findMunicipalities(items, typed) : []);
 	const listed = $derived(open && typed.trim() !== '');
 
 	$effect(() => {
 		if (!open) return;
-		const away = (e: Event) => {
-			if (box && e.target instanceof Node && !box.contains(e.target)) open = false;
-		};
-		document.addEventListener('pointerdown', away, true);
-		return () => document.removeEventListener('pointerdown', away, true);
+		return clickOutside(
+			() => [box],
+			() => (open = false)
+		);
 	});
 
-	function choose(g: Gemeente) {
-		typed = g.name;
+	function choose(m: Municipality) {
+		typed = m.name;
 		open = false;
-		onChoose(g);
+		onChoose(m);
 	}
 	function onKey(e: KeyboardEvent) {
 		if (e.key === 'Escape') open = false;
@@ -62,12 +60,12 @@
 	}
 </script>
 
-<div class="veld" bind:this={box}>
-	<label class="etiket" for="gemeente">Gemeente</label>
-	<div class="kader">
+<div class="field" bind:this={box}>
+	<label for="gemeente">Gemeente</label>
+	<div class="frame">
 		<Tekstveld
 			id="gemeente"
-			value={shown}
+			value={typed}
 			placeholder="Typ een gemeente"
 			role="combobox"
 			autocomplete="off"
@@ -82,26 +80,26 @@
 			}}
 			onkeydown={onKey}
 		/>
-		{#if shown}<button type="button" class="wis" onclick={clear}>Wissen</button>{/if}
+		{#if typed}<button type="button" class="clear-btn" onclick={clear}>Wissen</button>{/if}
 	</div>
 	{#if listed}
-		<ul id="gemeente-lijst" class="lijst" role="listbox" aria-label="Gemeenten">
-			{#each matches as g, i (g.code)}
-				<li id="gemeente-{g.code}" role="option" aria-selected={i === at} class:op={i === at}>
-					<button type="button" tabindex="-1" onclick={() => choose(g)}
-						>{g.name}{#if sharesName(items, g)}<span class="provincie">{g.province}</span
+		<ul id="gemeente-lijst" class="options" role="listbox" aria-label="Gemeenten">
+			{#each matches as m, i (m.code)}
+				<li id="gemeente-{m.code}" role="option" aria-selected={i === at} class:on={i === at}>
+					<button type="button" tabindex="-1" onclick={() => choose(m)}
+						>{m.name}{#if sharesName(items, m)}<span class="province">{m.province}</span
 							>{/if}</button
 					>
 				</li>
 			{:else}
-				<li class="geen">Geen gemeente met deze naam</li>
+				<li class="none">Geen gemeente met deze naam</li>
 			{/each}
 		</ul>
 	{/if}
 </div>
 
 <style>
-	.veld {
+	.field {
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -109,18 +107,17 @@
 		width: 25rem;
 		max-width: 100%;
 	}
-	.etiket {
-		font-family: var(--font-ui);
+	label {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.kader {
+	.frame {
 		position: relative;
 	}
-	.kader :global(.tekstveld) {
+	.frame :global(.tekstveld) {
 		padding-right: 5rem;
 	}
-	.wis {
+	.clear-btn {
 		position: absolute;
 		top: 0;
 		right: 0;
@@ -136,7 +133,7 @@
 		text-underline-offset: 3px;
 		cursor: pointer;
 	}
-	.lijst {
+	.options {
 		position: absolute;
 		top: 100%;
 		left: 0;
@@ -149,10 +146,10 @@
 		border-radius: var(--r-1);
 		background: var(--paper);
 	}
-	.lijst li button {
+	.options li button {
 		display: flex;
 		gap: var(--s-2);
-		align-items: baseline;
+		align-items: center;
 		width: 100%;
 		min-height: var(--veld-h-raak);
 		padding: 0 var(--s-3);
@@ -163,18 +160,16 @@
 		color: var(--ink);
 		text-align: left;
 		cursor: pointer;
-		align-items: center;
 	}
-	.lijst li.op button,
-	.lijst li button:hover {
+	.options li.on button,
+	.options li button:hover {
 		background: var(--paper-2);
 	}
-	.provincie {
+	.province {
 		color: var(--ink-3);
 	}
-	.geen {
+	.none {
 		padding: var(--s-3);
-		font-family: var(--font-ui);
 		font-size: var(--t-ui);
 		color: var(--ink-2);
 	}

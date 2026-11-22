@@ -10,32 +10,34 @@
 	import { openHref } from '$lib/bron/href';
 	import { padHref } from '$lib/bron/address';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
-	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import Section from '$lib/components/ui/Sectie.svelte';
+	import YearMenu from '$lib/components/ui/TekstMenu.svelte';
 	import SlowLoad from '$lib/components/ui/SlowLoad.svelte';
 	import { sourceTabs } from '$lib/components/explore/index/categories';
-	import GemeenteVeld from '$lib/indeling/GemeenteVeld.svelte';
+	import MunicipalityField from '$lib/court-map/MunicipalityField.svelte';
 	import {
 		RI,
 		articleHref,
-		articleLabel,
-		hofName,
+		riLabel,
+		circuitName,
 		judgmentsHref,
-		peildatum,
-		perRechtbank,
-		rechtbankName,
+		yearLabel,
+		byDistrict,
+		districtName,
 		textDiffers,
-		type Gemeente
-	} from '$lib/indeling/indeling';
+		type Municipality
+	} from '$lib/court-map/court-map';
 	import { SOURCES } from '$lib/nav/sources';
 	import SourceTabs from '$lib/nav/SourceTabs.svelte';
-	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { formatCount } from '$lib/text/getal';
-	import { plural } from '$lib/text/words';
+	import RouteHead from '$lib/seo/RouteKop.svelte';
+	import { count } from '$lib/text/words';
 	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 
+	/** The address parameter of the day of reckoning. */
+	const YEAR = 'jaar';
 	const judgments = SOURCES.find((x) => x.id === 'rechtspraak')!;
-	const year = $derived(Number(page.url.searchParams.get('jaar')) || undefined);
+	const year = $derived(Number(page.url.searchParams.get(YEAR)) || undefined);
 	const code = $derived(page.url.searchParams.get('gemeente'));
 	const map = load(
 		() => year ?? 0,
@@ -44,24 +46,24 @@
 	);
 	const data = $derived(map.state.status === 'ready' ? map.state.data : null);
 	const chosen = $derived(data?.items.find((g) => g.code === code) ?? null);
-	const groups = $derived(data ? perRechtbank(data.items) : []);
+	const groups = $derived(data ? byDistrict(data.items) : []);
 	let opened = $state<string | null>(null);
 
-	const choose = (g: Gemeente) => navigate(withParams(page.url, { gemeente: g.code }));
+	const choose = (g: Municipality) => navigate(withParams(page.url, { gemeente: g.code }));
 	const clear = () => navigate(withParams(page.url, { gemeente: null }));
-	const pick = (g: Gemeente) => {
+	const pick = (g: Municipality) => {
 		choose(g);
 		document.getElementById('gemeente')?.scrollIntoView({ block: 'center' });
 	};
 	const setYear = (y: string) =>
 		navigate(
-			withParams(page.url, { jaar: Number(y) === data?.years[0] ? null : y, gemeente: code })
+			withParams(page.url, { [YEAR]: Number(y) === data?.years[0] ? null : y, gemeente: code })
 		);
 	const cassation = padHref({ kind: 'artikel', law: 'BWBR0001830', number: '78' });
 	const lawRef = { collection: 'instruments' as const, key: RI.toLowerCase() };
 </script>
 
-<RouteKop />
+<RouteHead />
 
 <SourceTabs label={judgments.label} tabs={sourceTabs(judgments)} current="/rechtspraak/indeling" />
 
@@ -81,19 +83,18 @@
 			<LoadState state={map.state} what="De indeling" retry={map.retry} />
 		{:else if !data}
 			<!-- The API holds no map yet (the CBS source has not run): a gap, shown and not filled in. -->
-			<p class="gat">De indeling per gemeente van het CBS is nog niet geladen.</p>
+			<p class="gat">De indeling per gemeente is nog niet beschikbaar.</p>
 		{:else}
 			<div class="invoer">
-				<GemeenteVeld items={data.items} {chosen} onChoose={choose} onClear={clear} />
+				<MunicipalityField items={data.items} {chosen} onChoose={choose} onClear={clear} />
 				<div class="peil">
-					<label for="peildatum">Peildatum</label>
-					<select
-						id="peildatum"
-						value={String(data.year)}
-						onchange={(e) => setYear(e.currentTarget.value)}
-					>
-						{#each data.years as y (y)}<option value={String(y)}>{peildatum(y)}</option>{/each}
-					</select>
+					<span class="peil-label">Peildatum</span>
+					<YearMenu
+						label="Peildatum"
+						opties={data.years.map((y) => ({ waarde: String(y), label: yearLabel(y) }))}
+						waarde={String(data.year)}
+						onSelect={setYear}
+					/>
 				</div>
 			</div>
 
@@ -104,14 +105,14 @@
 					<div class="kaarten">
 						<div class="kaart">
 							<span class="fase">Eerste aanleg</span>
-							<span class="naam">{rechtbankName(chosen.district)}</span>
+							<span class="naam">{districtName(chosen.district)}</span>
 							<p class="regel raak-regels">
 								Arrondissement {chosen.district.name}{#if articleHref(chosen.district)}, <a
-										href={articleHref(chosen.district)}>{articleLabel(chosen.district)}</a
+										href={articleHref(chosen.district)}>{riLabel(chosen.district)}</a
 									>{/if}
 							</p>
-							<a class="uitspraken" href={judgmentsHref(rechtbankName(chosen.district))}
-								>Uitspraken van de {rechtbankName(chosen.district).replace(
+							<a class="uitspraken" href={judgmentsHref(districtName(chosen.district))}
+								>Uitspraken van de {districtName(chosen.district).replace(
 									/^Rechtbank/,
 									'rechtbank'
 								)}</a
@@ -119,17 +120,17 @@
 						</div>
 						<div class="kaart">
 							<span class="fase">Hoger beroep</span>
-							<span class="naam">{hofName(chosen.circuit)}</span>
+							<span class="naam">{circuitName(chosen.circuit)}</span>
 							<p class="regel raak-regels">
 								Ressort {chosen.circuit.name.replace(
 									/^Gerechtshof /,
 									''
 								)}{#if articleHref(chosen.circuit)}, <a href={articleHref(chosen.circuit)}
-										>{articleLabel(chosen.circuit)}</a
+										>{riLabel(chosen.circuit)}</a
 									>{/if}
 							</p>
-							<a class="uitspraken" href={judgmentsHref(hofName(chosen.circuit))}
-								>Uitspraken van het {hofName(chosen.circuit).replace(
+							<a class="uitspraken" href={judgmentsHref(circuitName(chosen.circuit))}
+								>Uitspraken van het {circuitName(chosen.circuit).replace(
 									/^Gerechtshof/,
 									'gerechtshof'
 								)}</a
@@ -147,14 +148,14 @@
 					{#if data.checked && textDiffers(chosen)}
 						<p class="afwijking">
 							De tekst van <a href={articleHref(chosen.district) ?? openHref(lawRef)}
-								>{articleLabel(chosen.district) ?? 'de wet'}</a
+								>{riLabel(chosen.district) ?? 'de wet'}</a
 							> noemt deze gemeente niet zoals het CBS; de indeling volgt het CBS.
 						</p>
 					{/if}
 				</section>
 			{/if}
 
-			<Sectie title="Per arrondissement" niveau={2} inklapbaar={false} rijen>
+			<Section title="Per arrondissement" niveau={2} inklapbaar={false} rijen>
 				<table class="tabel">
 					<thead>
 						<tr>
@@ -169,13 +170,13 @@
 							{@const here = chosen?.district.code === g.district.code}
 							<tr class:hier={here}>
 								<th scope="row"
-									>{#if judgmentsHref(rechtbankName(g.district))}<a
-											href={judgmentsHref(rechtbankName(g.district))}>{rechtbankName(g.district)}</a
-										>{:else}{rechtbankName(g.district)}{/if}{#if here}<span class="hier-in"
+									>{#if judgmentsHref(districtName(g.district))}<a
+											href={judgmentsHref(districtName(g.district))}>{districtName(g.district)}</a
+										>{:else}{districtName(g.district)}{/if}{#if here}<span class="hier-in"
 											>({chosen?.name})</span
 										>{/if}</th
 								>
-								<td data-label="Gerechtshof">{hofName(g.circuit)}</td>
+								<td data-label="Gerechtshof">{circuitName(g.circuit)}</td>
 								<td class="getal" data-label="Gemeenten"
 									><button
 										type="button"
@@ -183,14 +184,12 @@
 										aria-expanded={opened === g.district.code}
 										aria-controls="gemeenten-{g.district.code}"
 										onclick={() => (opened = opened === g.district.code ? null : g.district.code)}
-										>{formatCount(g.gemeenten.length)}<span class="woord">
-											{plural(g.gemeenten.length, 'gemeente', 'gemeenten')}</span
-										></button
+										>{count(g.municipalities.length, 'gemeente', 'gemeenten')}</button
 									></td
 								>
 								<td data-label="Artikel"
 									>{#if articleHref(g.district)}<a href={articleHref(g.district)}
-											>{articleLabel(g.district)}</a
+											>{riLabel(g.district)}</a
 										>{/if}</td
 								>
 							</tr>
@@ -198,7 +197,7 @@
 								<tr class="gemeenten" id="gemeenten-{g.district.code}">
 									<td colspan="4">
 										<ul>
-											{#each g.gemeenten as m (m.code)}
+											{#each g.municipalities as m (m.code)}
 												<li><button type="button" onclick={() => pick(m)}>{m.name}</button></li>
 											{/each}
 										</ul>
@@ -208,7 +207,7 @@
 						{/each}
 					</tbody>
 				</table>
-			</Sectie>
+			</Section>
 			<p class="bron">Indeling: {data.source}.</p>
 		{/if}
 	</div>
@@ -240,20 +239,9 @@
 		flex-direction: column;
 		gap: var(--s-1);
 	}
-	.peil label {
-		font-family: var(--font-ui);
+	.peil-label {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.peil select {
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
 	}
 	.resultaat {
 		margin-top: var(--s-6);
@@ -265,7 +253,6 @@
 	}
 	.provincie {
 		margin: var(--s-1) 0 0;
-		font-family: var(--font-ui);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -366,14 +353,6 @@
 		font-weight: 400;
 		color: var(--ink-3);
 	}
-	.woord {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
-	}
 	.aantal,
 	.gemeenten button {
 		min-height: var(--veld-h);
@@ -396,7 +375,6 @@
 	}
 	.bron {
 		margin: var(--s-3) 0 0;
-		font-family: var(--font-ui);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -404,10 +382,6 @@
 		.kaarten {
 			grid-template-columns: 1fr;
 			gap: var(--s-3);
-		}
-		.peil select {
-			height: var(--veld-h-raak);
-			font-size: var(--t-input);
 		}
 		.tabel thead {
 			display: none;
@@ -430,28 +404,9 @@
 		.tabel tbody tr :is(th, td[data-label='Gerechtshof']) {
 			flex: 0 0 100%;
 		}
-		.woord {
-			position: static;
-			width: auto;
-			height: auto;
-			overflow: visible;
-			clip-path: none;
-			margin-left: var(--s-1);
-		}
 		.aantal,
 		.gemeenten button {
 			min-height: var(--veld-h-raak);
-		}
-		.tabel :is(th, td) {
-			padding: 0;
-			border: 0;
-			text-align: left;
-		}
-		.tabel .getal {
-			text-align: left;
-		}
-		.tabel tbody th {
-			font-weight: 600;
 		}
 		.tabel :is(tbody th a, td:last-child a) {
 			display: inline-flex;

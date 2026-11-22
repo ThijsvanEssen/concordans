@@ -75,16 +75,20 @@ test('every arrondissement is a row, its municipalities opened in place', async 
 
 test('the day of reckoning is the address’s', async ({ page }) => {
 	await page.goto('/rechtspraak/indeling');
-	await page.getByLabel('Peildatum').selectOption('2025');
+	await page.getByRole('button', { name: 'Peildatum' }).click();
+	await page.getByRole('menuitemradio', { name: '1 jan. 2025' }).click();
 	await expect(page).toHaveURL(/\?jaar=2025$/);
-	await expect(page.getByLabel('Peildatum')).toHaveValue('2025');
+	await expect(page.getByRole('button', { name: 'Peildatum' })).toContainText('1 jan. 2025');
 	await page.goto('/rechtspraak/indeling?jaar=2025&gemeente=GM0383');
 	// An older year is not checked against the text: no remark on the municipality.
 	await expect(page.getByRole('region', { name: 'Castricum' })).toBeVisible();
 	await expect(page.getByText('noemt deze gemeente niet zoals het CBS')).toHaveCount(0);
 });
 
-test('where the API holds no map yet the page marks it as not loaded', async ({ page, guard }) => {
+test('where the API holds no map yet the page says it is not yet available', async ({
+	page,
+	guard
+}) => {
 	guard.allow(/status of 404/);
 	await page.route(apiPath('/api/courts/districts'), (route) =>
 		route.fulfill({
@@ -95,9 +99,7 @@ test('where the API holds no map yet the page marks it as not loaded', async ({ 
 		})
 	);
 	await page.goto('/rechtspraak/indeling');
-	await expect(
-		page.getByText('De indeling per gemeente van het CBS is nog niet geladen')
-	).toBeVisible();
+	await expect(page.getByText('De indeling per gemeente is nog niet beschikbaar')).toBeVisible();
 	await expect(page.getByRole('combobox')).toHaveCount(0);
 });
 
@@ -122,7 +124,10 @@ test('the targets of Indeling stand a finger’s size apart', async ({ page, tou
 		.getByRole('button', { name: /gemeenten?$/ })
 		.click();
 	expect(
-		await smallTargets(page, '.indeling a:not(.lede a), .indeling button, .indeling select'),
+		await smallTargets(
+			page,
+			'.indeling a:not(.lede a), .indeling button, .indeling [aria-haspopup]'
+		),
 		'tap targets under 44 px'
 	).toEqual([]);
 });

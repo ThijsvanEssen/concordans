@@ -26,7 +26,7 @@ export type Vorm =
 	| 'bewindspersoon'
 	| 'ambt'
 	| 'rechtsgang'
-	| 'indeling'
+	| 'districts'
 	| 'overig';
 
 /** A sign by its English name, for code outside this table. */
@@ -82,9 +82,12 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze }> = {
 	// De rechtsgang: drie treden, van rechtbank via hof naar Hoge Raad. Kralen van de
 	// uitspraak lazen op 11 px als een streep (B170).
 	rechtsgang: { d: 'M1 15v-4.5h4.5V6H10V1.5h5V15z', wijze: 'vul' },
-	// De indeling: een gebied in vier vakken, de kaart van arrondissementen. Vier gelijke
+	// De indeling (districts): een gebied in vier vakken, de kaart van arrondissementen. Vier gelijke
 	// vakken van 6 met een naad van 1, zodat het op 11 px geen vierkant (regel) is.
-	indeling: { d: 'M1.5 1.5h6v6h-6zM8.5 1.5h6v6h-6zM1.5 8.5h6v6h-6zM8.5 8.5h6v6h-6z', wijze: 'vul' },
+	districts: {
+		d: 'M1.5 1.5h6v6h-6zM8.5 1.5h6v6h-6zM1.5 8.5h6v6h-6zM8.5 8.5h6v6h-6z',
+		wijze: 'vul'
+	},
 	overig: { d: CIRKEL(8, 8, 4), wijze: 'lijn' }
 };
 

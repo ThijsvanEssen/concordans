@@ -55,7 +55,7 @@ export const SOURCES: readonly Source[] = [
 		['judgments'],
 		[
 			{ path: '/rechtspraak/rechtsgang', label: 'Rechtsgang', shape: 'rechtsgang' },
-			{ path: '/rechtspraak/indeling', label: 'Indeling', shape: 'indeling' }
+			{ path: '/rechtspraak/indeling', label: 'Indeling', shape: 'districts' }
 		]
 	),
 	source('kamerstukken', 'dossiers, stukken, stemmingen, toezeggingen', [

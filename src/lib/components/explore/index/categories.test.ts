@@ -10,7 +10,7 @@ describe('the tabs of a source', () => {
 		expect(tabs.map((t) => [t.label, t.href, t.shape])).toEqual([
 			['Uitspraken', '/uitspraken', 'uitspraak'],
 			['Rechtsgang', '/rechtspraak/rechtsgang', 'rechtsgang'],
-			['Indeling', '/rechtspraak/indeling', 'indeling']
+			['Indeling', '/rechtspraak/indeling', 'districts']
 		]);
 		expect(tabs[1].about).toBeTruthy();
 	});

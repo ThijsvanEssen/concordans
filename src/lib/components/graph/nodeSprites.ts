@@ -360,7 +360,7 @@ export const EDGE_AT_45: Record<Vorm, number> = {
 	bewindspersoon: 3.2,
 	ambt: 4.4,
 	rechtsgang: 6.5,
-	indeling: 6.5,
+	districts: 6.5,
 	overig: 3.5
 };
 
