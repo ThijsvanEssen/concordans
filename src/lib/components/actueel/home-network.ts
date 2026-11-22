@@ -3,7 +3,6 @@
 // ministerie and commissie that lead it. One step from the article, within a budget: past it a
 // soort is one circle with its count. The same layout as Verbonden (verbonden/sketch); the
 // light node of Verbonden (five per bucket and the counts), asked after the first paint.
-import { getNodeVerbonden } from '$lib/api/records';
 import { rowOfNeighbor, type Row } from '$lib/verbonden/rows';
 import { sketch, type Sketch, type SketchGroup } from '$lib/verbonden/sketch';
 import { bronPlural, isCollection, type Collection } from '$lib/vocabulary';
@@ -13,7 +12,7 @@ import { refOf } from '$lib/bron/ref';
 import { dossierNumberLabel } from '$lib/bron/dossier-naam';
 import { bwCode } from '$lib/text/bw';
 import { lawIdOf } from '$lib/graph/types';
-import type { Schets } from './wetsnetwerk';
+import { networkNodes, type Schets } from './wetsnetwerk';
 
 /** Who leads a dossier: drawn in its hull, as on the canvas. */
 const LEIDT = new Set(['ministries', 'committees']);
@@ -87,10 +86,7 @@ export const HOME_LIMIT = 10;
 
 export async function homeNetwork(s: Schets): Promise<Sketch> {
 	const key = s.centrum.id.slice(s.centrum.id.indexOf('/') + 1);
-	const [art, dos] = await Promise.all([
-		getNodeVerbonden('articles', key),
-		getNodeVerbonden('dossiers', s.kandidaat.number)
-	]);
+	const [art, dos] = await networkNodes(s);
 	const leiders = leidersVan(dos);
 	const props = art.node.props as Record<string, unknown> | undefined;
 	const home = textOf(props?.['instrument_abbreviation']) ?? bwCode(lawIdOf(props));
