@@ -12,6 +12,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "vitest run",
 		"e2e": "playwright test",
+		"fonts": "bash scripts/fonts.sh",
 		"e2e:record": "bash scripts/e2e-record.sh",
 		"e2e:update": "bash scripts/e2e-update.sh",
 		"check:e2e": "tsc -p e2e",
