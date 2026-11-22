@@ -114,7 +114,7 @@
 		"src/lib/text/segments.ts": 20,
 		"src/lib/text/version-diff.ts": 19,
 		"src/lib/verbonden/NetworkSketch.svelte": 18,
-		"src/lib/verbonden/cited-by.ts": 19,
+		"src/lib/verbonden/cited-by.ts": 17,
 		"src/lib/verbonden/dossier-hub.ts": 32,
 		"src/lib/verbonden/edge-meta.ts": 22,
 		"src/lib/verbonden/filter.ts": 40,
