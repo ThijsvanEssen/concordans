@@ -10,6 +10,20 @@ import { bundleMentions, type Row } from './rows';
 import { describeBron } from '$lib/bron/describe';
 import { citedOutcome } from './cited-outcome';
 
+/** What every row of a judgment that cites an article has: its citation, how it ended, its props. */
+export const judgmentBase = (
+	j: Schema<'CitedByJudgment'>,
+	straf = false,
+	withCount = false
+): Row => ({
+	ref: { collection: 'judgments', key: j.key },
+	...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
+	filterGroup: 'uitspraken',
+	uitkomst: citedOutcome(j, straf),
+	cited: withCount ? (j.inbound_citation_count ?? null) : null,
+	props: { ...j }
+});
+
 /**
  * One row per judgment. With `withCount` (the order Meest aangehaald) a row says how often the
  * judgment itself is cited, not how often it names the article. Each row says how its judgment
@@ -31,11 +45,7 @@ export function rowsOfCitedBy(
 		mentions.set(j.key, of);
 		if (of.has(at ?? '')) continue;
 		of.set(at ?? '', {
-			ref: { collection: 'judgments', key: j.key },
-			...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
-			filterGroup: 'uitspraken',
-			uitkomst: citedOutcome(j, straf),
-			cited: withCount ? (j.inbound_citation_count ?? null) : null,
+			...judgmentBase(j, straf, withCount),
 			at,
 			lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
 			position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,
@@ -46,8 +56,7 @@ export function rowsOfCitedBy(
 			passageAt: at,
 			relation: 'REFERS_TO',
 			direction: 'inbound',
-			edge: { origin: item.origin },
-			props: { ...j }
+			edge: { origin: item.origin }
 		});
 	}
 	return [...mentions.values()].map((of) => bundleMentions([...of.values()]));

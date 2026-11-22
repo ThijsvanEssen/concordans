@@ -2,7 +2,7 @@
 // the articles of a concept, as the rows of Verbonden, so a row looks and opens as it does
 // there. A row says which of the articles it is about; the verbinding itself is no line
 // (no relation), because the block names no one article.
-import { citedOutcome } from '$lib/verbonden/cited-outcome';
+import { judgmentBase } from '$lib/verbonden/cited-by';
 import { describeBron } from '$lib/bron/describe';
 import { stuksoortOf } from '$lib/bron/rubrieken';
 import { onDate } from '$lib/text/datum';
@@ -23,14 +23,10 @@ export function aboutArticles(concept: Concept, ids: readonly string[]): string 
 
 export function judgmentRows(concept: Concept): Row[] {
 	return concept.judgments.map(({ judgment: j, article_ids }) => ({
-		ref: { collection: 'judgments', key: j.key },
-		...describeBron('judgments', j.key, j.display_name, { ...j }, j.cite),
-		filterGroup: 'uitspraken',
+		...judgmentBase(j),
 		// No ECLI in the line: the title is how a lawyer cites it.
 		identifier: null,
-		uitkomst: citedOutcome(j, false),
-		context: aboutArticles(concept, article_ids),
-		props: { ...j }
+		context: aboutArticles(concept, article_ids)
 	}));
 }
 
