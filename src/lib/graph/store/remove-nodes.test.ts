@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import { createGraphStore } from '../graph-store';
-import { createGraphContext } from './context';
 
 const judgment = (key: string) => ({
 	id: `judgments/${key}`,
