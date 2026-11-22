@@ -166,7 +166,7 @@
 							{@const bron = `judgments/${j.key}`}
 							<IndexRow
 								{bron}
-								title={j.display_name ?? j.ecli ?? j.key}
+								title={j.display_name ?? j.ecli ?? 'Uitspraak'}
 								href={openHref(bron)}
 								acties
 							>
