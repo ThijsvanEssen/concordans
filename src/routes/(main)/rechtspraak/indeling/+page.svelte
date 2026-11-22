@@ -29,7 +29,7 @@
 	} from '$lib/court-map/court-map';
 	import { SOURCES } from '$lib/nav/sources';
 	import SourceTabs from '$lib/nav/SourceTabs.svelte';
-	import RouteHead from '$lib/seo/RouteKop.svelte';
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { count } from '$lib/text/words';
 	import { navigate, withParams } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
@@ -63,7 +63,7 @@
 	const lawRef = { collection: 'instruments' as const, key: RI.toLowerCase() };
 </script>
 
-<RouteHead />
+<RouteKop />
 
 <SourceTabs label={judgments.label} tabs={sourceTabs(judgments)} current="/rechtspraak/indeling" />
 
@@ -91,7 +91,7 @@
 					<span class="peil-label">Peildatum</span>
 					<YearMenu
 						label="Peildatum"
-						opties={data.years.map((y) => ({ waarde: String(y), label: yearLabel(y) }))}
+						opties={data.years.map((y) => ({ ['waarde']: String(y), label: yearLabel(y) }))}
 						waarde={String(data.year)}
 						onSelect={setYear}
 					/>
