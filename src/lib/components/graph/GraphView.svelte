@@ -473,10 +473,6 @@
 		});
 	});
 
-	function applyFilters() {
-		telCanvas();
-	}
-
 	// ── what the store holds ────────────────────────────────────────────────────
 	let rawNodes: GraphNode[] = [];
 	let rawEdges: GraphEdge[] = [];
@@ -531,7 +527,7 @@
 			keepEdges(rawEdges);
 		}
 		// Counted once, nodes and edges together.
-		applyFilters();
+		telCanvas();
 	}
 
 	/** What the counts read of a bron: its kind, its day, its court, its stuksoort. */
@@ -595,7 +591,7 @@
 			}),
 			store.filters.subscribe((f) => {
 				filters = f;
-				applyFilters();
+				telCanvas();
 			}),
 			store.containers.subscribe((groups) => {
 				containerGroups = groups;

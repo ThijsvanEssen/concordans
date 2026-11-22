@@ -18,7 +18,7 @@
 		"src/lib/components/explore/readers/ArticleReader.svelte": 1215,
 		"src/lib/components/explore/readers/DocumentReader.svelte": 853,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
-		"src/lib/components/graph/GraphView.svelte": 1375,
+		"src/lib/components/graph/GraphView.svelte": 1373,
 		"src/lib/network/ChainView.svelte": 1182,
 		"src/lib/text/judgment-text.ts": 1108,
 		"src/lib/verbonden/Verbonden.svelte": 871,
