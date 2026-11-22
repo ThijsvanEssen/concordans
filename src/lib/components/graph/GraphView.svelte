@@ -1281,41 +1281,6 @@
 		}
 	}
 
-	.cluster-naam {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		color: var(--ink);
-	}
-	.cluster-zin {
-		margin: var(--s-1) 0 0;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.cluster-knoppen,
-	.vouw {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
-	}
-	.cluster-knoppen {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-3);
-		margin-top: var(--s-3);
-	}
-	.vouw {
-		position: absolute;
-		bottom: var(--s-3);
-		left: 50%;
-		transform: translateX(-50%);
-		z-index: var(--z-float);
-		white-space: nowrap;
-	}
-
 	.legenda-inhoud {
 		padding-top: 0;
 	}
