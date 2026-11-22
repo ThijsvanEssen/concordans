@@ -5,7 +5,7 @@
 import { citedOutcome } from '$lib/verbonden/cited-outcome';
 import { describeBron } from '$lib/bron/describe';
 import { stuksoortOf } from '$lib/bron/rubrieken';
-import { langeDatum } from '$lib/text/datum';
+import { onDate } from '$lib/text/datum';
 import { joinAnd } from '$lib/text/words';
 import type { Row } from '$lib/verbonden/rows';
 import type { Schema } from '$lib/api/types';
@@ -39,14 +39,14 @@ export function documentRows(concept: Concept): Row[] {
 		const props = { ...d };
 		const about = aboutArticles(concept, article_ids);
 		const base = describeBron('documents', d.key, d.title, props);
-		// The day in full, as the rest of the block has it; it stands before the articles.
-		const dag = d.date ? langeDatum(d.date) : null;
+		// The day in full (onDate says it with its word, which the line leaves out); it stands before the articles.
+		const day = d.date ? onDate(d.date).replace(/^op /, '') : null;
 		return {
 			ref: { collection: 'documents', key: d.key },
 			...base,
 			date: null,
 			identifier: null,
-			context: [dag, about].filter(Boolean).join(', ') || null,
+			context: [day, about].filter(Boolean).join(', ') || null,
 			filterGroup: 'stukken',
 			stuksoort: stuksoortOf(props, null),
 			props

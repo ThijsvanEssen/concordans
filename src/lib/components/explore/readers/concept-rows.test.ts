@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { aboutArticles, documentRows, judgmentRows } from './concept-rows';
-import { CONCEPT } from './concept-fixture';
+import fixture from '$lib/fixtures/concept.json';
+import type { Schema } from '$lib/api/types';
+
+const CONCEPT = fixture as unknown as Schema<'ConceptResponse'>;
 
 describe('the rows of a concept', () => {
 	it('names the articles a bron is about, in the order of the list', () => {
@@ -12,7 +15,7 @@ describe('the rows of a concept', () => {
 
 	it('makes a judgment a row as Verbonden has it: its citation, how it ended, the articles', () => {
 		const [row] = judgmentRows(CONCEPT);
-		expect(row.title).toBe('Rb. Den Haag 20 november 2026');
+		expect(row.title).toBe('Rb. Den Haag');
 		expect(row.uitkomst?.text).toBe('Ongegrond');
 		expect(row.context).toBe('Art. 93 Gw en Art. 120 Gw');
 		expect(row.identifier).toBeNull();

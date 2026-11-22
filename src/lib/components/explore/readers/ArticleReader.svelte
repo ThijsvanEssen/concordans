@@ -53,7 +53,7 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import ArticleSuccession from './ArticleSuccession.svelte';
-	import ConceptBlok from './ConceptBlok.svelte';
+	import ConceptBlock from './ConceptBlock.svelte';
 	import {
 		dossierExplanation,
 		explanatoryLabel,
@@ -970,7 +970,7 @@
 
 		<!-- The concepts the article is one of: under the text, over Vorig and Volgend. -->
 		{#each d.concepts ?? [] as c (c.key)}
-			<ConceptBlok conceptKey={c.key} {node} />
+			<ConceptBlock conceptKey={c.key} {node} />
 		{/each}
 
 		{#if prev || next}
