@@ -36,6 +36,7 @@
 		overlay = false,
 		dropdown = false,
 		picker = false,
+		periode = true,
 		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
 		onOpen,
@@ -55,6 +56,8 @@
 		dropdown?: boolean;
 		/** A field that picks one bron (Bron toevoegen): no period and no line of what is searched. */
 		picker?: boolean;
+		/** The period under the field; the start page has none (the results have it). */
+		periode?: boolean;
 		placeholder?: string;
 		/** Called when a bron is opened; the overlay closes on it. */
 		onOpen?: () => void;
@@ -227,7 +230,7 @@
 
 	{@render belowField?.()}
 
-	{#if !picker}
+	{#if !picker && periode}
 		<!-- The same period as every list with dates (Periode), there before the first letter so
 		     nothing moves when typing starts. -->
 		<div class="periode">

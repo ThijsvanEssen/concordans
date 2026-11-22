@@ -23,24 +23,16 @@ test('search lists its lanes, and no hit stands above them', async ({ page }) =>
 	await expect(results.getByText('Beste treffer')).toHaveCount(0);
 });
 
-test('the period stands under the field before typing, as wide as it: nothing moves', async ({
-	page
-}) => {
+test('the start page has no period under the field: the results have it', async ({ page }) => {
 	await page.goto('/');
 	const field = page.getByRole('combobox', { name: 'Zoeken' });
-	const period = page.getByRole('button', { name: 'Alle jaren Wijzig' });
-	await expect(period).toBeVisible();
-	const before = (await period.boundingBox())!;
-	const box = (await field.locator('..').boundingBox())!;
-	expect(before.x).toBeCloseTo(box.x, 0);
-	expect(before.width).toBeCloseTo(box.width, 0);
+	await expect(field).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Alle jaren Wijzig' })).toHaveCount(0);
 	await field.fill('ontslag op staande voet');
 	await expect(
 		page.getByRole('listbox', { name: 'Resultaten' }).getByRole('option').first()
-	).toBeVisible({
-		timeout: 30_000
-	});
-	expect((await period.boundingBox())!.y).toBeCloseTo(before.y, 0);
+	).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByRole('button', { name: 'Alle jaren Wijzig' })).toHaveCount(0);
 });
 
 test('ontslag op staande voet finds the article of the Burgerlijk Wetboek', async ({ page }) => {

@@ -9,7 +9,8 @@
 	import { load } from '$lib/util/load.svelte';
 	import { getFeedSummary } from '$lib/api/feed';
 	import { bronHref } from '$lib/bron/href';
-	import type { Collection } from '$lib/vocabulary';
+	import { SORT_SHAPE, type Vorm } from '$lib/bron/vormen';
+	import type { Sort } from '$lib/bron/rubrieken';
 	import { atomHref, dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
 	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/home-stream';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
@@ -28,40 +29,38 @@
 	import { takeServerField } from '$lib/seo/server-text';
 	import { SEARCH_FRAGMENT } from '$lib/seo/moved';
 
-	// Four ways in to search, each with the glyphs of what it holds.
+	// Four ways in to search, each with the signs of what it holds: those of the soorten
+	// (SORT_SHAPE), the same as the legend, Tonen and the filter.
 	const SCOPES: {
 		id: string;
 		label: string;
 		kinds: string[];
-		marks: Collection[];
-	}[] = [
-		{
-			id: 'wetten',
-			label: 'Wetten',
-			kinds: ['instruments', 'articles'],
-			marks: ['instruments', 'articles']
-		},
-		{
-			id: 'uitspraken',
-			label: 'Uitspraken',
-			kinds: ['judgments'],
-			marks: ['judgments']
-		},
-		{
-			id: 'parlement',
-			label: 'Parlement',
-			kinds: ['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
-			marks: ['dossiers', 'documents', 'decisions', 'members']
-		},
-		{
-			id: 'kabinet',
-			label: 'Regering',
-			kinds: ['cabinets', 'members', 'commitments'],
-			marks: ['cabinets', 'members', 'commitments']
-		}
-	];
+		marks: Vorm[];
+	}[] = (
+		[
+			['wetten', 'Wetten', ['instruments', 'articles'], ['wetten', 'artikelen', 'internationaal']],
+			['uitspraken', 'Uitspraken', ['judgments'], ['uitspraken']],
+			[
+				'parlement',
+				'Parlement',
+				['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
+				['dossiers', 'stukken', 'stemmingen', 'kamerleden']
+			],
+			[
+				'kabinet',
+				'Regering',
+				['cabinets', 'members', 'commitments'],
+				['kabinetten', 'bewindspersonen', 'toezeggingen']
+			]
+		] as [string, string, string[], Sort[]][]
+	).map(([id, label, kinds, sorts]) => ({
+		id,
+		label,
+		kinds,
+		marks: sorts.map((k) => SORT_SHAPE[k])
+	}));
 	/** Alle bronnen: the first mark of each way in, in the same order. */
-	const ALL_MARKS: Collection[] = SCOPES.map((sc) => sc.marks[0]);
+	const ALL_MARKS: Vorm[] = SCOPES.map((sc) => sc.marks[0]);
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
 
@@ -238,7 +237,7 @@
 						{#snippet voor(w)}
 							{@const marks = w === 'alles' ? ALL_MARKS : SCOPES.find((x) => x.id === w)?.marks}
 							{#if marks}<span class="glyphs"
-									>{#each marks as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+									>{#each marks as v (v)}<KindGlyph vorm={v} size={12} />{/each}</span
 								>{/if}{#if w === 'alles'}<span class="lang">Alle bronnen</span><span class="kort"
 									>Alles</span
 								>{/if}
@@ -251,6 +250,7 @@
 					onWiden={() => (scope = null)}
 					initial={query}
 					dropdown
+					periode={false}
 					placeholder={chosen ? `Zoek in ${chosen.label.toLowerCase()}` : START.placeholder}
 				/>
 			</div>
