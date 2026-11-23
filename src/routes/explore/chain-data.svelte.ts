@@ -122,7 +122,11 @@ export class ChainData {
 			const laws = others();
 			if (!bwb || this.asked?.bwb !== bwb || !laws.length) return;
 			let current = true;
-			Promise.all(laws.map((law) => getLawDelegatedSummary(law.bwb, kept).catch(() => null)))
+			Promise.all(
+				laws.map((law) =>
+					getLawDelegatedSummary(law.bwb, kept).catch((e) => (report('Keten zusterwet', e), null))
+				)
+			)
 				.then((found) => {
 					if (current)
 						this.beside = {
