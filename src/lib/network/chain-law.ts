@@ -3,7 +3,7 @@
 import type { ChainLayer, ChainNode } from '$lib/network/chain';
 
 /** How high a kind stands: the Grondwet over the wet, the wet over the AMvB, and so down. */
-export const RANK: Record<string, number> = {
+const RANK: Record<string, number> = {
 	grondwet: 0,
 	wet: 1,
 	rijkswet: 1,
