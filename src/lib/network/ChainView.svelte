@@ -632,7 +632,7 @@
 {/snippet}
 
 {#snippet section(layer: ChainLayer)}
-	<section class="list__layer" class:keeps={keeps(layer)} aria-label={layer.label}>
+	<section class="list__layer" class:keeps={layer.awaiting} aria-label={layer.label}>
 		<h3 class="list__head">{layer.label}</h3>
 		<ul>
 			{#each layer.nodes as k (k.id)}{@render row(k)}{/each}
@@ -1116,8 +1116,8 @@
 	.list__layer {
 		margin-top: var(--s-4);
 	}
-	.list__layer.keeps {
-		min-height: calc(var(--veld-h-raak) * 9);
+	.list__layer.keeps ul {
+		padding-bottom: calc(var(--veld-h-raak) * 8);
 	}
 	.list__head {
 		margin: 0 0 var(--s-2);
