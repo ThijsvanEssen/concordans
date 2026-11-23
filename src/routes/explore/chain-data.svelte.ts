@@ -69,6 +69,37 @@ export class ChainData {
 			: [];
 	}
 
+	/** The regulations of the other chosen laws, asked once the keten's own are there. */
+	private askBeside(
+		law: () => string | null,
+		validity: () => Validity,
+		others: () => readonly BesideLaw[]
+	) {
+		$effect(() => {
+			const bwb = law();
+			const kept = validity();
+			const laws = others();
+			if (!bwb || this.asked?.bwb !== bwb || !laws.length) return;
+			let current = true;
+			Promise.all(
+				laws.map((law) =>
+					getLawDelegatedSummary(law.bwb, kept).catch((e) => (report('Keten zusterwet', e), null))
+				)
+			)
+				.then((found) => {
+					if (current)
+						this.beside = {
+							validity: kept,
+							laws: laws.map((law, i) => ({ law, delegated: found[i] }))
+						};
+				})
+				.catch((e) => report('Keten zusterwetten', e));
+			return () => {
+				current = false;
+			};
+		});
+	}
+
 	constructor(
 		law: () => string | null,
 		validity: () => Validity,
@@ -116,29 +147,7 @@ export class ChainData {
 				current = false;
 			};
 		});
-		$effect(() => {
-			const bwb = law();
-			const kept = validity();
-			const laws = others();
-			if (!bwb || this.asked?.bwb !== bwb || !laws.length) return;
-			let current = true;
-			Promise.all(
-				laws.map((law) =>
-					getLawDelegatedSummary(law.bwb, kept).catch((e) => (report('Keten zusterwet', e), null))
-				)
-			)
-				.then((found) => {
-					if (current)
-						this.beside = {
-							validity: kept,
-							laws: laws.map((law, i) => ({ law, delegated: found[i] }))
-						};
-				})
-				.catch((e) => report('Keten zusterwetten', e));
-			return () => {
-				current = false;
-			};
-		});
+		this.askBeside(law, validity, others);
 		$effect(() => {
 			const bwb = law();
 			if (!bwb || this.asked?.bwb !== bwb) return;
