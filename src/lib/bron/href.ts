@@ -8,6 +8,7 @@ import { isExplorePath, exploreHref, exploreUrl, parsePad } from './address';
 import { queryHref } from '$lib/util/address';
 import { listPath } from './lists';
 import type { BronRef } from './ref';
+import { versieDoelOfFocus } from './versie';
 import type { SharedParam } from '$lib/url/filters';
 
 /** The value of ?mode that shows a bron on the canvas of Samenhang. */
@@ -93,12 +94,34 @@ export function focusOf(ref: BronRef | string): string | null {
 	return ref.number ? `dossiers/${ref.number}` : null;
 }
 
+/** A version opens as its law on the day it began (versie.ts); anything else as it is. */
+function asLaw(
+	focus: string | null,
+	own: BronHrefOptions['params'],
+	path: string | null | undefined
+) {
+	const versie = focus ? versieDoelOfFocus(focus) : null;
+	if (!versie) return { focus, own, path };
+	return {
+		focus: `instruments/${versie.law}`,
+		own: { ...own, peildatum: versie.peildatum },
+		path: null
+	};
+}
+
 export function buildBronHref(
 	current: URL | null,
 	ref: BronRef | string,
-	{ at, keepMode = true, mode, keepNetwerk = true, params: own, path }: BronHrefOptions = {}
+	{
+		at,
+		keepMode = true,
+		mode,
+		keepNetwerk = true,
+		params: ownParams,
+		path: ownPath
+	}: BronHrefOptions = {}
 ): string {
-	const focus = focusOf(ref);
+	const { focus, own, path } = asLaw(focusOf(ref), ownParams, ownPath);
 	const target = focus && parseNodeId(focus);
 	if (!focus || !target) return '/explore';
 	const onExplorePath = !!current && isExplorePath(current.pathname);

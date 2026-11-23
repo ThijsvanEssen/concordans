@@ -124,6 +124,7 @@
 		buttonTitle
 	} from '$lib/bron/naam';
 	import { lookUp } from '$lib/bron/leesbaar';
+	import { versieDoelOfFocus } from '$lib/bron/versie';
 	import {
 		padOfFocus,
 		parsePad,
@@ -296,6 +297,17 @@
 				loadFailure = { what: nameOfPad(p, lawNameOf), error: e, retry: () => padRetries++ };
 			});
 		return () => ac.abort();
+	});
+
+	// A version of a law is read as its law on the day it began (bron/versie.ts): an old link
+	// to one is put there at once, in place.
+	$effect(() => {
+		const versie = versieDoelOfFocus(focus);
+		if (!versie) return;
+		const next = new URLSearchParams(logisch.searchParams);
+		next.set('focus', `instruments/${versie.law}`);
+		next.set('peildatum', versie.peildatum);
+		navigate(exploreHref(next, page.url.hash));
 	});
 
 	// A bron opened at /explore?focus=… gets its readable address once it is known, in
