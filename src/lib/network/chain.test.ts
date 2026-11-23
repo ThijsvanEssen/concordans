@@ -104,14 +104,14 @@ describe('the keten of a law', () => {
 			]
 		} as never;
 		const k = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis);
-		expect(k.layers.map((l) => l.id)).toEqual(['basis', 'law']);
-		// A law under a law: the layer above is Grondslag, not a second Wet (UX-toets 5 Nov).
-		expect(k.layers.map((l) => l.label)).toEqual(['Grondslag', 'Wet']);
+		// A law under a law: one layer Wet, never a layer named for the relation (UX-toets 5 Nov).
+		expect(k.layers.map((l) => [l.id, l.label])).toEqual([['law', 'Wet']]);
+		expect(k.layers[0].nodes.map((n) => n.name)).toEqual(['Asbest', 'Arbowet']);
 		const amvb = chain({ id: 'instruments/bwbr0019316', name: 'Asbest' }, null, basis, {
 			kind: 'amvb'
 		});
 		expect(amvb.layers.map((l) => l.label)).toEqual(['Wet', 'AMvB']);
-		expect(k.layers[1].nodes[0].parents).toEqual([
+		expect(k.layers[0].nodes[0].parents).toEqual([
 			{
 				id: 'instruments/bwbr0010346',
 				way: 'delegates',
@@ -146,7 +146,8 @@ describe('the keten of a law', () => {
 
 	it('heads the start by its kind: an AMvB is no Wet (R3-K F2)', () => {
 		const k = chain({ id: 'instruments/bwbr0022762', name: 'Activiteitenbesluit' }, null, null, {
-			kind: 'AMvB'
+			kind: 'AMvB',
+			refers: []
 		});
 		expect(k.layers[0].label).toBe('AMvB');
 		const publication = chain(
@@ -154,7 +155,8 @@ describe('the keten of a law', () => {
 			null,
 			null,
 			{
-				kind: 'publicatie'
+				kind: 'publicatie',
+				refers: []
 			}
 		);
 		expect(publication.layers[0].label).toBe('Publicatie');
@@ -195,11 +197,12 @@ describe('the keten of a law', () => {
 		expect(upward.layers[1].nodes[0].parents).toEqual([{ id: directive.id, way: 'delegates' }]);
 		const downward = chain({ id: directive.id, name: 'Richtlijn (EU) 2015/2302' }, null, null, {
 			kind: 'richtlijn',
+			refers: [],
 			eu: { implements: [], implementedBy: [act] }
 		});
 		expect(downward.layers.map((l) => [l.id, l.label])).toEqual([
 			['law', 'Richtlijn'],
-			['implementation', 'Implementatie']
+			['implementation', 'Wet']
 		]);
 	});
 
@@ -516,7 +519,7 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		expect(gedeeld.parents.map((p) => p.id)).toEqual(['instruments/kb']);
 	});
 
-	it('draws all of them, with the mention as a dashed line, under Noemt', () => {
+	it('draws all of them, with the mention as a dashed line', () => {
 		const k = chain(gw, delegated, null, { mentions: true });
 		expect(ids(k)).toEqual(expect.arrayContaining(['instruments/amar', 'instruments/defensie']));
 		const amarNode = k.layers.flatMap((l) => l.nodes).find((n) => n.id === 'instruments/amar')!;
@@ -576,12 +579,13 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		}
 	] as never;
 
-	it('draws a wet that only names the law in its text in Noemt, under the rest, with its articles (B48)', () => {
+	it('draws a wet that only names the law in its text in the layer Wet, with its articles (B48)', () => {
 		const k = chain(gw, delegated, null, { mentions: true, refers });
-		const named = k.layers[k.layers.length - 1];
-		expect(named).toMatchObject({ id: 'named', label: 'Noemt' });
-		expect(k.layers.find((l) => l.id === 'law')!.nodes.map((n) => n.name)).toEqual([gw.name]);
-		expect(named.nodes.map((n) => n.name)).toEqual(['Kieswet']);
+		// A layer is a kind, never a relation: no layer Noemt, the dashed line says it.
+		expect(k.layers.map((l) => l.label)).not.toContain('Noemt');
+		const wet = k.layers.find((l) => l.id === 'law')!;
+		expect(wet.nodes.map((n) => n.name)).toEqual([gw.name, 'Kieswet']);
+		const named = { nodes: wet.nodes.slice(1) };
 		// the articles of the law it names, never a count alone ("2 art." reads as article 2)
 		expect(named.nodes[0].parents).toMatchObject([
 			{ id: 'instruments/bwbr0001840', way: 'mentioned', relation: 'REFERS_TO', named: 2 }
@@ -590,7 +594,7 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		expect(named.nodes[0].mentions).toBe('art. 56, 57 Gw');
 	});
 
-	it('puts a wet that names an AMvB in Noemt, and not the law it rests on', () => {
+	it('puts a wet that names an AMvB in the layer Wet over it, with the law it rests on', () => {
 		const cbb = {
 			id: 'instruments/bwbr0052875',
 			name: 'Cyberbeveiligingsbesluit',
@@ -618,13 +622,18 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		] as never;
 		const k = chain(cbb, null, basis, { kind: 'amvb', mentions: true, refers: naming });
 		const ids = (id: string) => k.layers.find((l) => l.id === id)?.nodes.map((n) => n.id);
-		expect(ids('basis')).toEqual([cbw.id]);
+		expect(k.layers.map((l) => l.label)).toEqual(['Wet', 'AMvB']);
+		expect(ids('statute')).toEqual([cbw.id, 'instruments/hrw']);
 		expect(ids('law')).toEqual([cbb.id]);
-		expect(ids('named')).toEqual(['instruments/hrw']);
+		// The line is the relation: a power given, and a mention down from the wet that names it.
+		expect(k.layers[1].nodes[0].parents.map((p) => [p.id, p.way])).toEqual([
+			[cbw.id, 'delegates'],
+			['instruments/hrw', 'mentioned']
+		]);
 		expect(k.layers.flatMap((l) => l.nodes).filter((n) => n.id === cbw.id)).toHaveLength(1);
 	});
 
-	it('puts a wet that names a regulation in Noemt, not above the AMvB it rests on (B71)', () => {
+	it('puts a wet that names a regulation in the layer Wet over it, above the AMvB it rests on (B71)', () => {
 		const regeling = {
 			id: 'instruments/bwbr0052878',
 			name: 'Cyberbeveiligingsregeling IenW'
@@ -650,9 +659,9 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			refers: naming
 		});
 		expect(k.layers.map((l) => [l.id, l.nodes.map((n) => n.name)])).toEqual([
-			['basis', ['Cyberbeveiligingsbesluit']],
-			['law', ['Cyberbeveiligingsregeling IenW']],
-			['named', ['Cyberbeveiligingswet']]
+			['statute', ['Cyberbeveiligingswet']],
+			['above|AMvB', ['Cyberbeveiligingsbesluit']],
+			['law', ['Cyberbeveiligingsregeling IenW']]
 		]);
 	});
 
@@ -668,10 +677,12 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			mentions: true,
 			refers: [advocaten, ...(refers as never as [])] as never
 		});
-		expect(k.layers.find((l) => l.id === 'named')!.nodes.map((n) => n.name)).toEqual([
-			'Kieswet',
-			'Advocatenwet'
-		]);
+		expect(
+			k.layers
+				.find((l) => l.id === 'law')!
+				.nodes.slice(1)
+				.map((n) => n.name)
+		).toEqual(['Kieswet', 'Advocatenwet']);
 	});
 
 	// B109: `related-instruments` comes late; what stood before it stands after it.
@@ -698,31 +709,32 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 		const rows = (k: ReturnType<typeof chain>) =>
 			k.layers.map((l) => [l.id, l.nodes.map((n) => n.name)]);
 
-		it('leaves in Wet what rests on the law, and a wet regulations hang from', () => {
+		it('keeps in Wet what rests on the law, a wet regulations hang from, and a wet that names it', () => {
 			const k = chain(gw, first, null, { mentions: true });
 			expect(rows(k)).toEqual([
-				['law', [gw.name, 'Organieke wet', 'Uitvoeringswet AVG']],
-				['amvb', ['Besluit AVG']],
-				['named', ['Verzamelwet']]
+				['law', [gw.name, 'Organieke wet', 'Uitvoeringswet AVG', 'Verzamelwet']],
+				['amvb', ['Besluit AVG']]
 			]);
 		});
 
-		it('changes nothing above Noemt, and keeps what it held first in front', () => {
+		it('keeps what stood in front, and puts what comes late after it', () => {
 			const before = chain(gw, first, null, { mentions: true });
 			const after = chain(gw, first, null, { mentions: true, refers });
-			expect(rows(after).slice(0, -1)).toEqual(rows(before).slice(0, -1));
-			expect(rows(after).at(-1)).toEqual(['named', ['Verzamelwet', 'Kieswet']]);
+			expect(rows(after)).toEqual([
+				['law', [...before.layers[0].nodes.map((n) => n.name), 'Kieswet']],
+				...rows(before).slice(1)
+			]);
 			expect(after.total).toBe(before.total);
 		});
 
-		it('has no Noemt without a wet that names it, nor with Noemt off', () => {
-			const none = chain(gw, delegated, null, { mentions: true, refers: [] });
-			expect(none.layers.some((l) => l.id === 'named')).toBe(false);
+		it('has no layer of its own for them, nor with Noemt off', () => {
+			const k = chain(gw, first, null, { mentions: true, refers });
+			expect(k.layers.map((l) => l.id)).toEqual(['law', 'amvb']);
 			const off = chain(gw, first, null, { mentions: false, refers });
-			expect(off.layers.some((l) => l.id === 'named')).toBe(false);
+			expect(off.layers.flatMap((l) => l.nodes.map((n) => n.name))).not.toContain('Kieswet');
 		});
 
-		it('lists those not drawn under Noemt itself', () => {
+		it('lists those not drawn under the layer Wet itself', () => {
 			const many = ['A', 'B', 'C'].map((name, i) => ({
 				...(refers as never as Record<string, unknown>[])[0],
 				id: `instruments/${name}`,
@@ -731,11 +743,11 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 				inbound_cited_count: 3 - i
 			}));
 			const k = chain(gw, null, null, { mentions: true, refers: many as never, max: 2 });
-			expect(k.rest).toEqual({ named: 1 });
-			expect(k.more.named?.map((n) => n.name)).toEqual(['C']);
+			expect(k.rest).toEqual({ law: 1 });
+			expect(k.more.law?.map((n) => n.name)).toEqual(['C']);
 		});
 
-		it('places Noemt out from under its law, and what comes late beyond what stands', () => {
+		it('places what comes late beyond what stands, a slot each, and moves nothing', () => {
 			const at = (k: ReturnType<typeof chain>) =>
 				placeLayers(k.layers, {
 					rest: k.rest,
@@ -749,9 +761,23 @@ describe('the keten of the Grondwet: what only names the law, and what the data 
 			const before = at(chain(gw, first, null, { mentions: true }));
 			const after = at(chain(gw, first, null, { mentions: true, refers }));
 			for (const [id, p] of before) expect(after.get(id)).toEqual(p);
-			expect(after.get('instruments/bwbr0004627')!.x).toBe(
-				before.get('instruments/verzamelwet')!.x + 192
-			);
+			const stood = Math.max(...[...before.values()].filter((p) => p.y === 122).map((p) => p.x));
+			expect(after.get('instruments/bwbr0004627')!.x).toBe(stood + 192);
+		});
+
+		it('keeps the row of the wetten that will name the law while they are asked', () => {
+			const asking = chain(gw, first, null, { mentions: true });
+			expect(asking.layers.find((l) => l.id === 'law')!.awaiting).toBe(true);
+			const done = chain(gw, first, null, { mentions: true, refers });
+			expect(done.layers.find((l) => l.id === 'law')!.nodes.some((n) => n.late)).toBe(true);
+			const regeling = chain({ id: 'instruments/r', name: 'Regeling' }, null, null, {
+				kind: 'ministeriele-regeling',
+				mentions: true
+			});
+			expect(regeling.layers.map((l) => [l.id, l.awaiting])).toEqual([
+				['statute', true],
+				['law', undefined]
+			]);
 		});
 	});
 

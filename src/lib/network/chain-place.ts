@@ -16,7 +16,7 @@ type Measures = {
 	halfOf: (k: ChainNode, n: number) => number;
 };
 
-/** The slot of the j-th bron of Noemt: 0, 1, -1, 2, -2…, with `before` slots to the left. */
+/** The slot of the j-th of what came late: 0, 1, -1, 2, -2…, with `before` slots to the left. */
 const outward = (j: number, before: number) =>
 	j > 2 * before ? j - before : j % 2 ? (j + 1) / 2 : -j / 2;
 
@@ -34,30 +34,20 @@ export function placeLayers(layers: readonly ChainLayer[], o: Measures) {
 	// aside, so the line does not run through its name.
 	const rowOf = new Map<string, number>();
 	layers.forEach((l, i) => l.nodes.forEach((k) => rowOf.set(k.id, i)));
-	// Noemt comes late: its lines make no bron above it step aside.
 	const bypassed = (i: number) =>
 		layers
 			.slice(i + 1)
-			.some(
-				(l) =>
-					l.id !== 'named' && l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i))
-			);
+			.some((l) => l.nodes.some((k) => k.parents.some((p) => (rowOf.get(p.id) ?? i) < i)));
 	layers.forEach((layer, i) => {
-		const n = layer.nodes.length;
-		// Noemt fills out from under its law, a slot each: what comes late stands beyond what stands.
-		if (layer.id === 'named') {
-			const from = m.get(layer.nodes[0].parents[0]?.id)?.x ?? (left + end) / 2;
-			const before = Math.max(0, Math.floor((from - left - o.slot / 2) / o.slot));
-			layer.nodes.forEach((k, j) =>
-				m.set(k.id, { x: from + outward(j, before) * o.slot, y: o.tops[i] + o.drop })
-			);
-			return;
-		}
+		// What came late is placed after, beyond what stands: nothing that stands moves for it.
+		const stay = layer.nodes.filter((k) => !k.late);
+		const n = stay.length;
+		if (!n) return;
 		// "N andere" stands a slot past the last: its room is kept.
 		const right = o.rest[layer.id] ? end - o.slot : end;
 		// Apart by a slot at most; a layer without a place above it is centred on the drawing.
 		const sep = Math.min((right - left) / n, o.slot);
-		const wish = layer.nodes.map((k, j) => {
+		const wish = stay.map((k, j) => {
 			const at = k.parents.map((p) => m.get(p.id)?.x).filter((x): x is number => x !== undefined);
 			return {
 				k,
@@ -88,13 +78,31 @@ export function placeLayers(layers: readonly ChainLayer[], o: Measures) {
 		const shift = Math.max(0, left + sep / 2 - xs[0]) || Math.min(0, right - sep / 2 - xs[n - 1]);
 		for (let j = 0; j < n; j++) xs[j] += shift;
 		// Half its name and some air, to the side that has room.
-		const room = (layer.nodes[0] ? o.halfOf(layer.nodes[0], n) : 0) + 48;
+		const room = (stay[0] ? o.halfOf(stay[0], n) : 0) + 48;
 		const aside = n === 1 && bypassed(i) ? (xs[0] + room <= right - 40 ? room : -room) : 0;
 		// A name stays within the drawing, whichever side its node stands on.
 		wish.forEach((w, j) => {
 			const half = o.halfOf(w.k, n);
 			const x = Math.min(Math.max(xs[j] + aside, half), Math.max(half, right + 24 - half));
 			m.set(w.k.id, { x, y: o.tops[i] + o.drop });
+		});
+	});
+	// What came late: beyond the rightmost that stands in its layer, else outward from what it
+	// is a line to (a slot each: 0, 1, -1, 2, -2…), so what stands is where it stood.
+	layers.forEach((layer, i) => {
+		const late = layer.nodes.filter((k) => k.late);
+		if (!late.length) return;
+		const stayed = layer.nodes.filter((k) => !k.late).map((k) => m.get(k.id)!.x);
+		const child = layers
+			.flatMap((l) => l.nodes)
+			.find((k) => k.parents.some((p) => p.id === late[0].id));
+		const from = m.get(child?.id ?? '')?.x ?? (left + end) / 2;
+		const before = Math.max(0, Math.floor((from - left - o.slot / 2) / o.slot));
+		late.forEach((k, j) => {
+			const x = stayed.length
+				? Math.max(...stayed) + (j + 1) * o.slot
+				: from + outward(j, before) * o.slot;
+			m.set(k.id, { x, y: o.tops[i] + o.drop });
 		});
 	});
 	return m;
@@ -115,7 +123,7 @@ export const linesOf = (s: string, max = 22) => {
 export const KIND_WORDS: Record<string, [string, string]> = {
 	basis: ['wet', 'wetten'],
 	law: ['wet', 'wetten'],
-	named: ['wet', 'wetten'],
+	statute: ['wet', 'wetten'],
 	implementation: ['wet', 'wetten'],
 	eu: ['EU-akte', 'EU-akten'],
 	amvb: ['AMvB', 'AMvB’s'],

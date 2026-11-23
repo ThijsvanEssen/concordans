@@ -593,7 +593,8 @@
 						...netwerkLogic.capLayers(lineageData.layers, 6, marked),
 						total: lineageData.layers.reduce((n, l) => n + l.nodes.length, 0) - 1,
 						amending: [],
-						missing: []
+						missing: [],
+						basis: true
 					}
 				: null
 			: chainOf(chainMentions)
@@ -619,8 +620,7 @@
 		if (!m) return null;
 		if (m.missing.length) return `${joinAnd(m.missing)}: grondslag ${NOT_IN_DATA}`;
 		// A regulation whose grondslag the data lacks says so, as the law above it does (F3).
-		const withoutBasis =
-			!!netwerkLogic?.isRegulation(chainKind) && !m.layers.some((l) => l.id === 'basis');
+		const withoutBasis = !!netwerkLogic?.isRegulation(chainKind) && !m.basis;
 		const none =
 			m.total === 0 && !m.layers.some((l) => l.id === 'implementation')
 				? noneHeld(

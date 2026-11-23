@@ -1,4 +1,4 @@
-// The keten of a ministeriële regeling (B71, B109): the wetten it names stand in Noemt, under it,
+// The keten of a ministeriële regeling (B71, B109): the wetten it names stand in the layer Wet, over it,
 // with a dashed line to it; the AMvB it is issued under keeps its own row above it.
 import { expect, test } from '../support/test';
 
@@ -14,7 +14,7 @@ const WETTEN = [
 /** A name as the drawing breaks it over lines: without its spaces. */
 const bare = (s: string) => s.replace(/\s+/g, '');
 
-test('the wetten a regulation names stand in Noemt, its AMvB in the row AMvB', async ({
+test('the wetten a regulation names stand in the row Wet over it, its AMvB in the row AMvB', async ({
 	page,
 	isMobile
 }) => {
@@ -22,7 +22,7 @@ test('the wetten a regulation names stand in Noemt, its AMvB in the row AMvB', a
 	if (isMobile) {
 		const layer = (name: string) => page.locator(`.chain .list__layer[aria-label="${name}"]`);
 		// A phone's list shows the first four of a layer, the rest under "N andere".
-		for (const wet of WETTEN.slice(0, 4)) await expect(layer('Noemt')).toContainText(wet);
+		for (const wet of WETTEN.slice(0, 4)) await expect(layer('Wet')).toContainText(wet);
 		await expect(layer('AMvB')).toHaveText(/Cyberbeveiligingsbesluit/);
 		for (const wet of WETTEN) await expect(layer('AMvB')).not.toContainText(wet);
 		return;
@@ -45,9 +45,9 @@ test('the wetten a regulation names stand in Noemt, its AMvB in the row AMvB', a
 				.map((n) => n.textContent!.replace(/\s+/g, ''))
 		}));
 	});
-	expect(rows.map((r) => r.label)).toEqual(['AMVB', 'MINISTERIËLE REGELING', 'NOEMT']);
-	expect(rows[0].names).toEqual([bare('Cyberbeveiligingsbesluit')]);
-	expect(rows[2].names.sort()).toEqual(WETTEN.map(bare).sort());
+	expect(rows.map((r) => r.label)).toEqual(['WET', 'AMVB', 'MINISTERIËLE REGELING']);
+	expect(rows[0].names.sort()).toEqual(WETTEN.map(bare).sort());
+	expect(rows[1].names).toEqual([bare('Cyberbeveiligingsbesluit')]);
 	// Each wet a dashed line down to the regulation; the Cbb its grondslag, drawn whole.
 	expect(await svg.locator('path.line[stroke-dasharray]').count()).toBe(WETTEN.length);
 	expect(await svg.locator('path.line:not([stroke-dasharray])').count()).toBe(1);

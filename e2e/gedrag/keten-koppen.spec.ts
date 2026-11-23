@@ -45,10 +45,7 @@ test('on a phone each link above the keten has a target of 44 px of its own', as
 }) => {
 	test.skip(!touch, 'a finger');
 	await page.goto('/explore?netwerk=instruments/bwbr0006622&weergave=keten');
-	const links = [
-		page.getByRole('button', { name: /^Ook \d+ vervallen/ }),
-		page.getByRole('button', { name: /^Genoemd in/ })
-	];
+	const links = [page.getByRole('button', { name: /^Ook \d+ vervallen/ })];
 	for (const link of links) {
 		await expect(link).toBeVisible();
 		const taken = await link.evaluate((el) => {

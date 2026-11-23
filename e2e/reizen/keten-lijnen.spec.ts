@@ -225,8 +225,7 @@ test('Cbw: a regeling stands in the row of its kind, its line labelled with the 
 		'RICHTLIJN',
 		'WET',
 		'AMVB',
-		'MINISTERIËLE REGELING',
-		'NOEMT'
+		'MINISTERIËLE REGELING'
 	]);
 	// A line says which articles of which law it rests on.
 	await expect(
@@ -255,8 +254,7 @@ test('Cbb: the laws it rests on stand above it, each line labelled, no Richtlijn
 	await expect(page.locator('.chain .layer-label')).toHaveText([
 		'WET',
 		'AMVB',
-		'MINISTERIËLE REGELING',
-		'NOEMT'
+		'MINISTERIËLE REGELING'
 	]);
 	await expect(page.locator('.chain .cite text', { hasText: 'art. 3 +10 Cbw' })).toBeAttached();
 });

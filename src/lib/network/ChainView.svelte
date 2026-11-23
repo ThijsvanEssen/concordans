@@ -39,8 +39,7 @@
 	import { plainClick } from '$lib/actions/klik';
 	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import MentionsLink from '$lib/network/MentionsLink.svelte';
-	import { fullWidthOf, liftsOf, sharing, widthOf } from '$lib/network/chain-room';
+	import { crowd, fullWidthOf, liftsOf, rowHeight, widthOf } from '$lib/network/chain-room';
 	import {
 		isMention,
 		isOutside,
@@ -130,9 +129,7 @@
 	/** The room of a bron in its layer, across: a name of 22 characters, and the label of its line. */
 	const SLOT = 192;
 	const LEFT = 120;
-	/** Noemt comes late: the rest is placed as if it were not there, and it takes what room it needs. */
-	const fixed = $derived(shown.filter((l) => l.id !== 'named'));
-	const width = $derived(widthOf(fixed, rest, avail, { left: LEFT, slot: SLOT }));
+	const width = $derived(widthOf(shown, rest, avail, { left: LEFT, slot: SLOT }));
 	$effect(() => {
 		room = avail;
 	});
@@ -154,16 +151,13 @@
 	const lifts = $derived(liftsOf(shown, STACK));
 	/**
 	 * A layer is 104 px high, or higher where a name of it runs over more lines than fit: no name
-	 * ever lies over the rail under its layer.
+	 * ever lies over the rail under its layer (chain-room.ts).
 	 */
+	const measures = { row: ROW, drop: DROP, line: LINE, stack: STACK };
 	const rowHeights = $derived(
-		shown.map((l, i) => {
-			const most = Math.max(1, ...l.nodes.map((k) => infoOf.get(k.id)?.lines.length ?? 1));
-			// A wet with two lines beside the law: their labels under each other.
-			const here = (id: string) => l.nodes.some((n) => n.id === id);
-			const two = l.nodes.some((k) => k.parents.filter((p) => p.cite && here(p.id)).length > 1);
-			return Math.max(ROW, DROP + 24 + LINE * (most - 1) + 58) + (two ? STACK + 4 : 0) + lifts[i];
-		})
+		shown.map(
+			(l, i) => rowHeight(l, (id) => infoOf.get(id)?.lines.length ?? 1, measures) + lifts[i]
+		)
 	);
 	/** Where each layer begins. */
 	const tops = $derived(
@@ -190,7 +184,7 @@
 		for (const l of shown)
 			for (const k of l.nodes)
 				m.set(k.id, {
-					lines: linesOf(k.name, charsFor(sharing(l)))
+					lines: linesOf(k.name, charsFor(crowd(l)))
 				});
 		return m;
 	});
@@ -206,7 +200,7 @@
 			for (const k of l.nodes) {
 				const p = place.get(k.id);
 				if (!p) continue;
-				const half = halfOf(k, sharing(l));
+				const half = halfOf(k, crowd(l));
 				const at = p.x - half;
 				out.push({
 					id: k.id,
@@ -453,7 +447,7 @@
 	$effect(() => {
 		const root = start ?? shown.find((l) => l.id === 'law')?.nodes[0]?.id;
 		const at = root ? place.get(root)?.x : undefined;
-		const key = `${root}:${fixed.length}:${Math.round(width)}`;
+		const key = `${root}:${shown.length}:${Math.round(width)}`;
 		if (!pan || at === undefined || key === centredFor || width <= avail) return;
 		centredFor = key;
 		pan.scrollTo({ left: centred(at), behavior: 'instant' });
@@ -503,8 +497,8 @@
 		others.filter((o) => !shown.some((l) => l.nodes.some((n) => n.id === o.id)))
 	);
 	/** The layers of the list (a phone): the start and what stands above it as the list's head (F12). */
-	const head = $derived(shown.filter((l) => l.id === 'law' || l.id === 'basis' || l.id === 'eu'));
-	const listed = $derived(shown.filter((l) => l.id !== 'law' && l.id !== 'basis' && l.id !== 'eu'));
+	const head = $derived(shown.filter((l) => l.id === 'law' || l.above));
+	const listed = $derived(shown.filter((l) => l.id !== 'law' && !l.above));
 </script>
 
 {#snippet row(k: ChainNode)}
@@ -662,7 +656,6 @@
 						? 'Zonder vervallen regelingen'
 						: `Ook ${formatCount(expired.total)} vervallen ${plural(expired.total, 'regeling', 'regelingen')}`}</TekstLink
 				>{/if}
-			<MentionsLink layer={shown.find((l) => l.id === 'named')} rest={rest.named} />
 		</div>
 	{/if}
 	<div

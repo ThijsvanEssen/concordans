@@ -1,6 +1,6 @@
 // The keten stands as soon as its regulations are in; the wetten that only name the law
-// (`related-instruments`) come later, cold up to 5 s, in the layer Noemt under all the rest (B109).
-// What stands stays where it is: the layers, the law, the regulations. At 1440 and on a phone.
+// (`related-instruments`) come later, cold up to 5 s, in the layer Wet beside the law (B109): a
+// layer is a kind, the dashed line is the relation. The layers stay as they are. At 1440 and on a phone.
 import type { Page } from '@playwright/test';
 import { expect, test } from '../support/test';
 import { noemt } from '../support/noemt';
@@ -8,7 +8,6 @@ import { noemt } from '../support/noemt';
 const WVW = '/explore?netwerk=instruments/bwbr0006622&weergave=keten';
 const GRONDWET = '/explore?netwerk=instruments/bwbr0001840&weergave=keten';
 const LATE = 2_000;
-const NAAR_NOEMT = /^Genoemd in \d+ wet(ten)?$/;
 
 /** Where every layer heading, and on a wide screen every bron, stands (page coordinates). */
 const standing = (page: Page) =>
@@ -28,6 +27,12 @@ const standing = (page: Page) =>
 			...nodes.map((el) => [el.textContent?.trim(), at(el)])
 		]) as Record<string, number[]>;
 	});
+
+/** The bronnen of the layer Wet, drawn or listed. */
+const wetten = (page: Page, touch: boolean) =>
+	touch
+		? page.locator('.list__layer[aria-label="Wet"] .list__row')
+		: page.locator('g.node[data-layer="law"]');
 
 for (const [name, url] of [
 	['WVW', WVW],
@@ -53,113 +58,28 @@ for (const [name, url] of [
 		await expect(amvb).toBeVisible();
 		await page.waitForTimeout(500);
 		const before = await standing(page);
+		const early = await wetten(page, touch).count();
 		measured();
-		const noemt = touch
-			? page.locator('.list__head', { hasText: 'Noemt' })
-			: page.locator('svg.drawing .layer-label', { hasText: 'NOEMT' });
-		await expect(noemt).toBeVisible({ timeout: LATE + 5_000 });
+		await expect
+			.poll(() => wetten(page, touch).count(), { timeout: LATE + 5_000 })
+			.toBeGreaterThan(early);
 		await page.waitForTimeout(250);
 		const after = await standing(page);
+		// The layers, the law and the regulations stand where they stood (B109).
 		for (const [what, place] of Object.entries(before))
 			expect(after[what], `${what} stays where it stood`).toEqual(place);
-		// Noemt under all the rest.
-		const heads = Object.entries(after).filter(([k]) => k.startsWith('kop '));
-		const lowest = heads.reduce((a, b) => (a[1][1] > b[1][1] ? a : b));
-		expect(lowest[0]).toBe('kop noemt');
-		await expect(page.getByRole('button', { name: NAAR_NOEMT })).toBeVisible();
+		// A layer is a kind, never a relation.
+		expect(Object.keys(after)).not.toContain('kop noemt');
 	});
 
-for (const [name, url] of [
-	['WVW', WVW],
-	['Grondwet', GRONDWET]
-] as const)
-	test(`Genoemd in of the ${name} keten counts the layer Noemt and takes you there`, async ({
-		page,
-		touch
-	}) => {
-		if (!touch) await page.setViewportSize({ width: 1440, height: 900 });
-		await page.goto(url);
-		const naar = page.getByRole('button', { name: NAAR_NOEMT });
-		await expect(naar).toBeVisible();
-		// What the layer draws, and those under its "N andere".
-		const layer = touch ? page.locator('.list__layer[aria-label="Noemt"]') : null;
-		const drawn = layer
-			? await layer.locator('.list__row').count()
-			: await page.locator('g.node[data-layer="named"]').count();
-		const other = layer ? layer.locator('.alle') : page.locator('.others[data-layer="named"]');
-		const others = (await other.count()) ? parseInt((await other.textContent())!) : 0;
-		const shown = parseInt((await naar.innerText()).replace(/\D/g, ''));
-		expect(shown).toBe(drawn + others);
-		await naar.click();
-		const head = touch
-			? page.locator('.list__head', { hasText: 'Noemt' })
-			: page.locator('svg.drawing .layer-label', { hasText: 'NOEMT' });
-		await expect(head).toBeInViewport();
-		// The keyboard goes on from its first bron.
-		const focused = touch
-			? page.locator('.list__layer[aria-label="Noemt"] .list__row').first()
-			: page.locator('g.node[data-layer="named"]').first();
-		await expect(focused).toBeFocused();
-		await expect(focused).toBeInViewport();
-		// And Tab to the next of the layer, in view too; in the drawing the labels of its lines
-		// come first, each in view (B121).
-		await page.keyboard.press('Tab');
-		if (!touch)
-			for (let i = 0; i < 4 && (await page.locator('a.cite:focus').count()); i++) {
-				await expect(page.locator('a.cite:focus')).toBeInViewport();
-				await page.keyboard.press('Tab');
-			}
-		const next = touch
-			? page.locator('.list__layer[aria-label="Noemt"] .list__row').nth(1)
-			: page.locator('g.node[data-layer="named"]').nth(1);
-		await expect(next).toBeFocused();
-		await expect(next).toBeInViewport();
-	});
-
-test('with Noemt off there is no Genoemd in, and nothing above it moved for it', async ({
-	page,
-	touch
-}) => {
+test('with Noemt off the wetten that only name the law are not drawn', async ({ page, touch }) => {
 	if (!touch) await page.setViewportSize({ width: 1440, height: 900 });
-	await page.goto(WVW);
-	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toBeVisible();
-	const amvb = () =>
-		(touch
-			? page.locator('.list__head', { hasText: 'AMvB' })
-			: page.locator('svg.drawing .layer-label', { hasText: 'AMVB' })
-		).boundingBox();
-	const before = (await amvb())!.y;
-	const naarCount = page.getByRole('button', { name: NAAR_NOEMT }).innerText();
-	await noemt(page);
-	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveCount(0);
-	if (touch) expect((await amvb())!.y).toBe(before);
-	// Back on: the same count, the layer again, nothing else moved.
-	const count = await naarCount;
-	await noemt(page);
-	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveText(count);
-	await expect(
-		page
-			.locator('.list__head, svg.drawing .layer-label')
-			.filter({ hasText: /^noemt$/i })
-			.first()
-	).toBeAttached();
-	expect((await amvb())!.y).toBe(before);
-});
-
-test('a law without a wet that names it has no heading Noemt', async ({ page }) => {
-	await page.route(/\/related-instruments\b/, (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: 'application/json',
-			headers: { 'access-control-allow-origin': '*' },
-			body: JSON.stringify({ bwb_id: 'BWBR0006622', total: 0, items: [] })
-		})
-	);
 	await page.goto(WVW);
 	await expect(page.getByText('AMvB', { exact: false }).first()).toBeAttached();
 	await page.waitForLoadState('networkidle');
-	await expect(
-		page.locator('.list__head, svg.drawing .layer-label').filter({ hasText: /^noemt$/i })
-	).toHaveCount(0);
-	await expect(page.getByRole('button', { name: NAAR_NOEMT })).toHaveCount(0);
+	const on = await wetten(page, touch).count();
+	await noemt(page);
+	await expect.poll(() => wetten(page, touch).count()).toBeLessThan(on);
+	await noemt(page);
+	await expect.poll(() => wetten(page, touch).count()).toBe(on);
 });
