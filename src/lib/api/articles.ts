@@ -49,6 +49,24 @@ export const getArticleVersion = (bwbId: string, articleNumber: string, key: str
 		)
 	);
 
+/**
+ * The numbers in the text of an article (`/amounts`) of the version in force on `date`, the
+ * current one without it, once per session; null where the API does not have the article.
+ */
+export const getArticleAmounts = (bwbId: string, articleNumber: string, date?: string | null) =>
+	once(`articles/${bwbId}/${articleNumber}/amounts/${date ?? ''}`, () =>
+		ifExists(
+			unwrap(
+				api.GET('/api/articles/{bwb_id}/{article_number}/amounts', {
+					params: {
+						path: { bwb_id: bwbId, article_number: articleNumber },
+						query: date ? { date } : {}
+					}
+				})
+			)
+		)
+	);
+
 /** Keep the address of an article under its node key, as a lookup gives it. */
 export const onthoudArtikel = (key: string, bwbId: string, articleNumber: string) =>
 	adresVan.set(key.toLowerCase(), { bwbId, articleNumber });

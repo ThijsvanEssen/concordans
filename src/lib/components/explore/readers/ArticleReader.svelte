@@ -26,11 +26,12 @@
 	// (two tekstversies, `van..tot`, or one lid, `lid-4`) the text gives way to the
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { getDocumentPassages } from '$lib/api/documents';
-	import { getArticleVersion, getDelegated } from '$lib/api/articles';
+	import { getArticleAmounts, getArticleVersion, getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
+	import GetallenBlok from '$lib/components/articles/GetallenBlok.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn } from '$lib/bron/landing';
@@ -286,6 +287,22 @@
 	const shownVersion = $derived(
 		shown && shownText.state.status === 'ready' ? shownText.state.data : null
 	);
+	// The numbers in the text, asked after the text itself (first paint on the cheapest call):
+	// of the version on screen. A failure or an article without numbers leaves the text as it is.
+	const amounts = load(
+		() =>
+			articleKey && article.state.status === 'ready' ? `${articleKey}|${shown?.from ?? ''}` : null,
+		async (key) => {
+			if (!key) return [];
+			const r = await getArticleAmounts(bwbId, articleNumber, shown?.from ?? null).catch((e) => {
+				report('Getallen', e);
+				return null;
+			});
+			return r?.amounts ?? [];
+		},
+		'Getallen'
+	);
+	const getallen = $derived(amounts.state.status === 'ready' ? amounts.state.data : []);
 	/** The tekstversie whose text is on screen, and the dossier of the wet that made it. */
 	const onScreen = $derived(shown ?? current);
 	const wordingDossier = $derived(onScreen?.first.amended_by?.dossiers?.[0] ?? null);
@@ -950,6 +967,7 @@
 					begrippen={shownVersion ? [] : (d.term_spans ?? [])}
 					definities={d.definitions ?? []}
 					delegaties={shownVersion ? [] : (d.delegations ?? [])}
+					{getallen}
 					grondslag={() => getDelegated(bwbId, articleNumber)}
 					counts={shown ? new Map() : lidCounts}
 					tellend={!shown && lidCounting}
@@ -967,6 +985,10 @@
 				/>
 			{/if}
 		</div>
+
+		{#if !shown || shownVersion}
+			<GetallenBlok {getallen} />
+		{/if}
 
 		<!-- The concepts the article is one of: under the text, over Vorig and Volgend. -->
 		{#each d.concepts ?? [] as c (c.key)}

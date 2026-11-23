@@ -82,6 +82,14 @@ export async function serveApi(context: BrowserContext, missing: string[]) {
 		if (existsSync(file))
 			recorded = JSON.parse(gunzipSync(readFileSync(file)).toString()) as Recorded;
 		else if (RECORD) recorded = await record(key, file).catch(() => null);
+		// The numbers of an article (`/amounts`) are filled by a nightly run: where a test has no
+		// answer for them, the article holds none.
+		if (!recorded && /^\/api\/articles\/[^/]+\/[^/]+\/amounts(\?|$)/.test(key))
+			return route.fulfill({
+				status: 200,
+				headers: { ...CORS, 'content-type': 'application/json' },
+				body: JSON.stringify(noAmounts(key))
+			});
 		if (!recorded) {
 			missing.push(key);
 			return route.fulfill({ status: 404, headers: CORS, body: '{"detail":"no fixture"}' });
@@ -92,6 +100,30 @@ export async function serveApi(context: BrowserContext, missing: string[]) {
 			body: wire(recorded)
 		});
 	});
+}
+
+/** The answer of an article with no numbers. */
+const noAmounts = (key: string) => {
+	const [, , , bwb, nr] = key.split('?')[0].split('/');
+	return {
+		bwb_id: decodeURIComponent(bwb),
+		article_number: decodeURIComponent(nr),
+		version_key: null,
+		valid_from: null,
+		valid_until: null,
+		amounts: []
+	};
+};
+
+/** Answers `path` with `body`, for what the live API does not give yet: no fixture needed. */
+export async function stubApi(target: Page | BrowserContext, path: RegExp, body: unknown) {
+	await target.route(apiPath(path), (route) =>
+		route.fulfill({
+			status: 200,
+			headers: { ...CORS, 'content-type': 'application/json' },
+			body: JSON.stringify(body)
+		})
+	);
 }
 
 /** Requests the page means for the API, matched on the path (and query) without the host. */

@@ -7,6 +7,7 @@ import { splitsOpNummers } from './meervoud';
 import type { Begrip, Definitie } from './begrippen';
 import type { DelegatieSpan } from './delegaties';
 import type { Bereik, NootMarker } from './voetnoten';
+import type { GetalSpan } from './getallen';
 
 export type Span = Schema<'ArticleCitationSpan'> & {
 	definition_ref?: string | null;
@@ -26,6 +27,7 @@ export type Segment = {
 	at?: string | null;
 	begrip?: Definitie;
 	formule?: DelegatieSpan;
+	getal?: GetalSpan;
 };
 
 /** Each article once, where the API gives a span twice for it. */
@@ -35,7 +37,7 @@ const uniekeDoelen = (spans: Span[]) =>
 /** How much of what follows a span is read for a qualifier ("…, tweede lid,"). */
 const FOLLOWING = 80;
 
-const isLink = (seg: Segment) => !!(seg.span || seg.begrip || seg.formule);
+const isLink = (seg: Segment) => !!(seg.span || seg.begrip || seg.formule || seg.getal);
 
 /**
  * The text in segments. A term inside a citation is no span of its own (the API leaves it
@@ -48,20 +50,23 @@ export function segmentsOf(
 		citations = [],
 		begrippen = [],
 		definities = new Map(),
-		delegaties = []
+		delegaties = [],
+		getallen = []
 	}: {
 		citations?: Span[];
 		begrippen?: Begrip[];
 		definities?: Map<string, Definitie>;
 		delegaties?: DelegatieSpan[];
+		getallen?: GetalSpan[];
 	}
 ): Segment[] {
 	const out: Segment[] = [];
 	let cursor = 0;
-	const rang = (x: object) => ('formule' in x ? 1 : 'begrip' in x ? 2 : 0);
+	const rang = (x: object) => ('formule' in x ? 1 : 'begrip' in x ? 2 : 'getal' in x ? 3 : 0);
 	const sorted = [
 		...citations.filter((c) => c.start != null && c.end != null),
 		...delegaties.map((d) => ({ start: d.start, end: d.end, formule: d })),
+		...getallen.map((g) => ({ start: g.start, end: g.end, getal: g })),
 		...begrippen.flatMap((b) => {
 			const begrip = definities.get(b.definition_ref);
 			return begrip ? [{ ...b, begrip }] : [];
@@ -72,6 +77,11 @@ export function segmentsOf(
 		if (item.start! > cursor) out.push({ content: text.slice(cursor, item.start!) });
 		if ('formule' in item) {
 			out.push({ content: text.slice(item.start, item.end), formule: item.formule });
+			cursor = item.end;
+			continue;
+		}
+		if ('getal' in item) {
+			out.push({ content: text.slice(item.start, item.end), getal: item.getal });
 			cursor = item.end;
 			continue;
 		}

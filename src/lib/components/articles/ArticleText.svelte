@@ -34,6 +34,7 @@
 	import { withHeadings, type Heading } from '$lib/text/headings';
 	import { spansWithin } from '$lib/text/spans';
 	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
+	import { getallenIn, getallenWithin, type Getal } from '$lib/text/getallen';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
 	import {
 		namesOwnDivision,
@@ -85,6 +86,7 @@
 		begrippen = [],
 		definities = [],
 		delegaties = [],
+		getallen = [],
 		grondslag = null,
 		counts = new Map(),
 		tellend = false,
@@ -130,6 +132,8 @@
 		definities?: Definitie[];
 		/** The delegation formulas of the text (`delegations`). */
 		delegaties?: Delegatie[];
+		/** The numbers in the text (`/amounts`): each marked, its card the previous toestand. */
+		getallen?: Getal[] | null;
 		/** The regulations issued under the article, asked when a formula is first pointed at. */
 		grondslag?: (() => Promise<Gedelegeerd | null>) | null;
 		/** Verbindingen per lid; a lid without an entry shows no count. */
@@ -196,6 +200,8 @@
 	);
 	const perRef = $derived(definitiesOp(definities));
 	const tables = $derived(apiTables ?? []);
+	/** The numbers the text still holds where the API read them. */
+	const getallenOnText = $derived(getallenIn(source, getallen));
 	const parts = $derived(partsOf(source, apiParts, tables));
 	/** The notes the markers refer to, by their number. */
 	const notes = $derived(articleNotes(source, footnoteMarks, tables));
@@ -275,7 +281,8 @@
 	const marks = (start: number, end: number) => ({
 		citations: spansWithin(links, start, end - start),
 		begrippen: spansWithin(begrippen, start, end - start),
-		delegaties: delegatiesWithin(delegaties, start, end - start)
+		delegaties: delegatiesWithin(delegaties, start, end - start),
+		getallen: getallenWithin(getallenOnText, start, end - start)
 	});
 
 	/** A part's own text: its paragraphs (trimmed, none empty), its headings, its tables and
@@ -563,6 +570,7 @@
 		begrippen={m.begrippen}
 		definities={perRef}
 		delegaties={m.delegaties}
+		getallen={m.getallen}
 		{grondslag}
 		noten={hasNotes ? markersIn(start, end) : []}
 	/>
