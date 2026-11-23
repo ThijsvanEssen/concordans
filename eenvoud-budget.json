@@ -130,7 +130,7 @@
 		"src/lib/actions/selection.ts": 93,
 		"src/lib/bron/describe.ts": 82,
 		"src/lib/bron/preview.ts": 113,
-		"src/lib/components/explore/index/lists/dossiers.ts": 97,
+		"src/lib/components/explore/index/lists/dossiers.ts": 81,
 		"src/lib/components/explore/index/lists/instruments.ts": 101,
 		"src/lib/components/explore/law-list.ts": 149,
 		"src/lib/components/graph/kind-rows.ts": 113,
