@@ -204,6 +204,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/articles/{bwb_id}/{article_number}/amounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The numbers in the text of an article
+         * @description The amounts, percentages, time limits and dates in the text of the version in force on `date` (the current one without it), each with the part that holds it, from when to when it holds, and its value in every version around it (`history`): a calculation on a day takes the value of that day. Read from the text of each version (`semantic bwb-amounts`), never set by hand; what is in doubt is left out. An empty list when the text holds none; 404 when the article is unknown.
+         */
+        get: operations["get_article_amounts_api_articles__bwb_id___article_number__amounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/judgments": {
         parameters: {
             query?: never;
@@ -215,7 +235,7 @@ export interface paths {
          * Paginated list of judgments
          * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter). `facets=false` leaves them out (null): the pages after the first need none.
          *
-         *     paged list, without the judgments known only because something cites them (stubs: no date, court or text) unless `include_stubs=true`, and without a publication of a decision that another publication replaces (`same_as`; `q` its exact ECLI finds it); `q` (a query that is the whole of an ECLI or of a case number, `18/04298`, gives the judgments with it and only those; other text is searched), `court` (ECLI code), `tier` (the `Type` of the court in the Instanties list, repeated for any of several, one of `core.courts.TIERS`: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket` (the conclusions of the Parket bij de Hoge Raad), `gerechtshof`, `rechtbank`, `kantongerecht`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, `kroon`, `buitenlandse_instantie`, `hvj_eu`, `ehrm`), `court_kind` (the kind of court within the tier, one of `core.courts.COURT_KINDS`: `ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …; a tier of one kind of court is its own; see pipelines (docs/pipelines.md#courts)), `source`, `subject` (an area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`), `subject_area` (a main area of law, the part of a subject before its first `;`: `Bestuursrecht` holds `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike), `from`, `to`, `cited_by_min`, `sort` (`date_desc`, `date_asc`, `citation_count`); each item has `tier`, `court_kind`, `subjects` (the areas of law of the source, empty when it gives none), `names` (what lawyers call it, `Haviltex`; empty for most), `decision_kind` (`arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie`, `prejudiciële beslissing`, or null; see pipelines (docs/pipelines.md#rechtspraak)), `series_id` and `series_size`, `inbound_citation_count` (the judgments that cite it or a publication `SAME_AS` it) and `outbound_citation_count` (the judgments it cites); `q` also matches `names`. `facets` counts the judgments under the filters, each without its own: `tier` (`value`, `count`, most first; without the `tier` and `court_kind` filters), `court_kind` (the same, without the `court_kind` filter), `source` (`value` `rechtspraak`, `echr`, `cjeu`, `count`, most first; without the `source` filter) `year` (`value` the year of `date`, `count`, oldest first after null, no date; without `from` and `to`), `subjects` (per area of law as written, `Strafrecht`, `Bestuursrecht; Belastingrecht`, most first; a judgment counts for each of its areas; without the `subject` filter), `subject_area` (per main area of law, most first; a judgment counts once for each of its main areas; with `narrower`, the subjects of the source under it, `value` as written for the `subject` filter, `label` the part after its first `;`, `count`; the whole tree without the `subject_area` and `subject` filters) and `procedure` (per Rechtspraak `psi:procedure` as written, `Hoger beroep`, `Cassatie`, null for none, most first; without the `procedure` filter, which filters on that value); the counts of `tier`, `court_kind`, `source` and `year` read an index, not the judgments; the facets and `total` are kept an hour whatever the data does (`db/version_cache.py`), the page itself is read fresh; `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first
+         *     paged list, without the judgments known only because something cites them (stubs: no date, court or text) unless `include_stubs=true`, and without a publication of a decision that another publication replaces (`same_as`; `q` its exact ECLI finds it); `q` (a query that is the whole of an ECLI or of a case number, `18/04298`, gives the judgments with it and only those; other text is searched), `court` (ECLI code), `tier` (the `Type` of the court in the Instanties list, repeated for any of several, one of `core.courts.TIERS`: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket` (the conclusions of the Parket bij de Hoge Raad), `gerechtshof`, `rechtbank`, `kantongerecht`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, `kroon`, `buitenlandse_instantie`, `hvj_eu`, `ehrm`), `court_kind` (the kind of court within the tier, one of `core.courts.COURT_KINDS`: `ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …; a tier of one kind of court is its own; see pipelines (docs/pipelines.md#courts)), `source`, `subject` (an area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`), `subject_area` (a main area of law, the part of a subject before its first `;`: `Bestuursrecht` holds `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike), `from`, `to`, `cited_by_min`, `sort` (`date_desc`, `date_asc`, `citation_count`); each item has `tier`, `court_kind`, `subjects` (the areas of law of the source, empty when it gives none), `names` (what lawyers call it, `Haviltex`; empty for most), `decision_kind` (`arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie`, `prejudiciële beslissing`, or null; see pipelines (docs/pipelines.md#rechtspraak)), `series_id` and `series_size`, `inbound_citation_count` (the judgments that cite it or a publication `SAME_AS` it) and `outbound_citation_count` (the judgments it cites); `q` also matches `names`. `facets` counts the judgments under the filters, each without its own: `tier` (`value`, `count`, most first; without the `tier` and `court_kind` filters), `court_kind` (the same, without the `court_kind` filter), `source` (`value` `rechtspraak`, `echr`, `cjeu`, `count`, most first; without the `source` filter) `year` (`value` the year of `date`, `count`, oldest first after null, no date; without `from` and `to`), `subjects` (per area of law as written, `Strafrecht`, `Bestuursrecht; Belastingrecht`, most first; a judgment counts for each of its areas; without the `subject` filter), `subject_area` (per main area of law, most first; a judgment counts once for each of its main areas; with `narrower`, the subjects of the source under it, `value` as written for the `subject` filter, `label` the part after its first `;`, `count`; the whole tree without the `subject_area` and `subject` filters) and `procedure` (per Rechtspraak `psi:procedure` as written, `Hoger beroep`, `Cassatie`, null for none, most first; without the `procedure` filter, which filters on that value); `referred_by` (a country, `NL`) keeps the judgments that answer the questions of a decision with an ECLI of that country (`ANSWERS`; with `tier=hvj_eu` the preliminary rulings on questions of a Dutch court whose decision CELLAR names, from `semantic eurlex-cjeu`; a ruling whose referring decision is not known is not among them), and each item has `referring_decision` (`ecli`, `court_code`, `date`, or null); the counts of `tier`, `court_kind`, `source` and `year` read an index, not the judgments; the facets and `total` are kept an hour whatever the data does (`db/version_cache.py`), the page itself is read fresh; `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -721,9 +741,9 @@ export interface paths {
         };
         /**
          * Dossiers
-         * @description Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter; ``facets=false`` leaves them out (null): the pages after the first need none.
+         * @description Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative, the day it opened and what it says of the EU (``eu``, ``celex``). ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter; ``facets=false`` leaves them out (null): the pages after the first need none.
          *
-         *     every dossier, open and closed; `status` (`open`, `closed`, `all`, default `all`), `outcome`, `kind` (comma-separated, the values of `facets.kind`), `number` (the start of the label: `36264` gives that dossier and its chapters, `37020-` the chapters of 37020), `committee` (slug), `subject` (a number, a dossier such as `37035-XXII`, or words of the title, which holds the short title: `Verzamelwet gegevensbescherming`), `phase` (the current one; comma-separated, one of them), `has_phase` (all listed phases done), `ministry`, `initiative`, `opened_from`, `opened_to` (dates), `sort` (`number`: in the order of the Kamer, no suffix, numeric suffixes by value, budget chapters by value with their letter, then the rest (`props.order`); `opened_on`, `last_activity` and `closed_on` newest first; `title`; ties by key; default `number` with a `number` filter, else `opened_on`), `limit`, `offset`; `total` counts every match. `facets`: per `status`, `outcome`, `kind`, `phase` and `ministry` a list of `{value, count}` under the current filters, each dimension counted without its own filter, the largest first (`value` null counts the dossiers without one); `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first. Every dossier summary in the API carries `short_title` (a budget by its chapter and year, `Begroting Defensie 2027`, a change of it also by its nota, `Suppletoire begroting gemeentefonds 2026 (Miljoenennota)`, a slotwet as `Slotwet Defensie 2025`; else the parentheses that end the title, before where the act it carries out was published: not `PbEU 2022, L 173`, `Trb.`, `Stb.`), and `ministry` (of the bewindspersoon who signed its earliest signed document first), `initiative` (a Kamerlid signed first) and `cabinet` (in office then), null when unknown
+         *     every dossier, open and closed; `status` (`open`, `closed`, `all`, default `all`), `outcome`, `kind` (comma-separated, the values of `facets.kind`), `number` (the start of the label: `36264` gives that dossier and its chapters, `37020-` the chapters of 37020), `committee` (slug), `subject` (a number, a dossier such as `37035-XXII`, or words of the title, which holds the short title: `Verzamelwet gegevensbescherming`), `phase` (the current one; comma-separated, one of them), `has_phase` (all listed phases done), `ministry`, `initiative`, `opened_from`, `opened_to` (dates), `eu` (`proposal`: a non-empty `eu_ref`; `implementation`: a non-empty `implements`), `celex` (in `eu_ref` or `implements`), `sort` (`number`: in the order of the Kamer, no suffix, numeric suffixes by value, budget chapters by value with their letter, then the rest (`props.order`); `opened_on`, `last_activity` and `closed_on` newest first; `title`; ties by key; default `number` with a `number` filter, else `opened_on`), `limit`, `offset`; `total` counts every match. `facets`: per `status`, `outcome`, `kind`, `phase` and `ministry` a list of `{value, count}` under the current filters, each dimension counted without its own filter, the largest first (`value` null counts the dossiers without one); `facets=false` gives `facets` null and counts nothing but `total`, the choice for the pages after the first. Every dossier summary in the API carries `short_title` (a budget by its chapter and year, `Begroting Defensie 2027`, a change of it also by its nota, `Suppletoire begroting gemeentefonds 2026 (Miljoenennota)`, a slotwet as `Slotwet Defensie 2025`; else the parentheses that end the title, before where the act it carries out was published: not `PbEU 2022, L 173`, `Trb.`, `Stb.`), and `ministry` (of the bewindspersoon who signed its earliest signed document first), `initiative` (a Kamerlid signed first) and `cabinet` (in office then), null when unknown; `eu_ref` (`{com, celex}` per COM number its title names, `celex` null while the graph lacks that document) and `implements` (`{celex, bases}` of the EU acts it implements: `title` its title, `national_implementing_measure` or `considerans` the `IMPLEMENTS` of a law it legislated), empty for none (`semantic tk-dossier-eu`)
          */
         get: operations["list_dossiers_api_dossiers_get"];
         put?: never;
@@ -1500,6 +1520,8 @@ export interface paths {
          *
          *     What plays now (`mode=full`, the first page): when a hit of `dossiers` had activity in the last 30 days, `active_dossier` is that dossier (of several the best `score`, then the newest activity) with its newest papers, the votes on its motions of those 30 days, its open commitments and the law it makes or changes, as the pages of the dossier, the votes and the commitments give them; null when none had, with `matched` `any`, or without `dossiers` in `types`.
          *
+         *     Suggestions (`mode=full`, the first page): a search that found nothing and names nothing (`best` null) has in `suggestions` at most 3 queries to try instead, each of which finds a law, a dossier or what a concept is about: the names most like its words by their trigrams (`pg_trgm` similarity 0.4 or more): a term of the list of concepts, a name of an act of `eu-core` (`aiact`: `AI Act`) or a word of the titles of the laws and dossiers (`wanprestatei`: `wanprestatie`).
+         *
          *     Pages and facets (`mode=full`): `offset` skips that many hits of each type (a page of `limit`, `offset` at most 500). `facets=true` adds `counts`, per type how many hits it has (`total`; `capped`: at least that many, the count stops after 5,000 rows), and `facets`, the hits divided by instance (`tier`) and decision year (`year`) for `judgments`, by `kind` for `documents`, by `validity` (in force, expired, not in force yet) for `instruments`; the rows that hold the words, unranked, so a count may be more than the hits a citation or a name puts first. A type without a count of its own (`members`, ...) has the hits it found, `capped` when it found as many as asked for. A count that takes over a second is null. `mode=live` has neither.
          */
         get: operations["search_api_search_get"];
@@ -1835,6 +1857,46 @@ export interface paths {
          * @description A concept kept by hand (`concepts` of an article names its keys): its articles in the order of the list, each with its heading or the start of its text and the judgments that cite it; the judgments that cite any of them, each once (`judgment_total`), and the newest five; the papers an edge joins to any of them (a memorandum that explains it, a paper that names it), each once (`document_total`), and the newest two; and a link to an official page that explains it. `missing` names an article of the list the data does not hold. 404 when no concept has the key.
          */
         get: operations["get_concept_api_concepts__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/concepts/{key}/judgments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The judgments that cite an article of a concept
+         * @description The judgments that cite any article of the concept, each once with the articles of the concept it cites (`article_ids`), as the block of `/api/concepts/{key}` lists its newest five. Filters and `sort` as the passages of an article (`/api/articles/{bwb_id}/{article_number}/cited-by`): `court` (ECLI court code), `tier` (repeated: any of them), `year` (of the judgment's date) and `subject_area` (a main area of law of the judgment's source: `Strafrecht`); `total` counts the judgments that match, whatever the page (without filters the `judgment_total` of the block). `facets` counts them per `year` (oldest first, null for none first), per `tier` and per `subject_area` (most first), each without its own filter, under the others. `sort`: `date_desc` (default) the newest first, `citation_count` the most cited first (a standard judgment), then the newest. 404 when no concept has the key.
+         */
+        get: operations["get_concept_judgments_api_concepts__key__judgments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/concepts/{key}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The papers joined to an article of a concept
+         * @description The papers an edge joins to any article of the concept (a memorandum that explains it, a paper that names it), each once with the articles of the concept it is joined to (`article_ids`), newest first, as the block of `/api/concepts/{key}` lists its newest two. `year` (of the paper's date) filters; `total` counts the papers that match, whatever the page (without `year` the `document_total` of the block). 404 when no concept has the key.
+         */
+        get: operations["get_concept_documents_api_concepts__key__documents_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2367,6 +2429,16 @@ export interface components {
          *     ``document_count`` the distinct documents authored in the dossier.
          */
         ActorDossierDTO: {
+            /**
+             * Eu Ref
+             * @description The COM documents its title names (an EU proposal); empty for none.
+             */
+            eu_ref: components["schemas"]["EuRefDTO"][];
+            /**
+             * Implements
+             * @description The EU acts it implements, by CELEX; empty for none known.
+             */
+            implements: components["schemas"]["DossierImplementsDTO"][];
             /** Id */
             id: string;
             /** Key */
@@ -2888,6 +2960,93 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * AmountDTO
+         * @description A number in the text of the version read, with its value in each version.
+         */
+        AmountDTO: {
+            /**
+             * Kind
+             * @description `bedrag`, `percentage`, `termijn` or `datum`.
+             */
+            kind: string;
+            /**
+             * Unit
+             * @description `EUR`, `%`, `dag`, `werkdag`, `week`, `maand`, `jaar`, `uur` or `datum`.
+             */
+            unit: string;
+            /**
+             * Text
+             * @description The number as the text prints it: `€ 3.115`.
+             */
+            text: string;
+            /**
+             * Part
+             * @description The id of the part that holds it (`lid-2-onder-a`, as the `anchor` of a block of `/text`); null in an article without parts.
+             */
+            part: string | null;
+            /**
+             * Start
+             * @description Offset into the text of the version.
+             */
+            start: number;
+            /**
+             * End
+             * @description Offset into the text of the version.
+             */
+            end: number;
+            /**
+             * Source
+             * @description `text`: as the law prints it; `redaction`: in what the editors of the BWB add after it ('per 1 juli 2026: € 14,99'), the value in force from `valid_from`.
+             */
+            source: string;
+            /**
+             * Cell
+             * @description In a table: its row and its cell in that row, from 0; else null.
+             */
+            cell: number[] | null;
+            /**
+             * History
+             * @description The same number in each version around the one read, oldest first, as long as its part holds as many numbers of its kind; the step of the version read is `selected`.
+             */
+            history: components["schemas"]["AmountStepDTO"][];
+        };
+        /**
+         * AmountStepDTO
+         * @description A number in one version of the article.
+         */
+        AmountStepDTO: {
+            /**
+             * Version Key
+             * @description The `key` of the version (`history`).
+             */
+            version_key: string;
+            /**
+             * Valid From
+             * @description The day it holds from: of its redaction, else its version's start.
+             */
+            valid_from: string | null;
+            /**
+             * Valid Until
+             * @description The day its version ends (exclusive); null while in force.
+             */
+            valid_until: string | null;
+            /**
+             * Value
+             * @description The value; null for a date.
+             */
+            value: number | null;
+            /**
+             * Date
+             * @description A date as `yyyy-mm-dd`, a day of every year as `--mm-dd`.
+             */
+            date: string | null;
+            /**
+             * Selected
+             * @description True for the step of the version read.
+             */
+            selected: boolean;
+        };
+        /**
          * AnnexDTO
          * @description An annex: its heading, its text as that of an article (paragraphs, lists, tables,
          *     headings) and its list as entries.
@@ -3047,6 +3206,36 @@ export interface components {
             steps: components["schemas"]["RouteStep"][];
             /** Gaps */
             gaps: components["schemas"]["RouteGap"][];
+        };
+        /**
+         * ArticleAmountsResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/amounts.
+         */
+        ArticleAmountsResponse: {
+            /** Bwb Id */
+            bwb_id: string;
+            /** Article Number */
+            article_number: string;
+            /**
+             * Version Key
+             * @description The version read: in force on `date`, else the current one; null when none holds.
+             */
+            version_key: string | null;
+            /**
+             * Valid From
+             * @description The start of that version.
+             */
+            valid_from: string | null;
+            /**
+             * Valid Until
+             * @description The end of that version (exclusive); null while in force.
+             */
+            valid_until: string | null;
+            /**
+             * Amounts
+             * @description Its numbers in text order.
+             */
+            amounts: components["schemas"]["AmountDTO"][];
         };
         /**
          * ArticleCellSpanDTO
@@ -4398,6 +4587,32 @@ export interface components {
             articles: components["schemas"]["BasisArticleDTO"][];
         };
         /**
+         * BestBlockDTO
+         * @description The concept block (``/api/concepts/{key}``) the query is a term of.
+         */
+        BestBlockDTO: {
+            /**
+             * Key
+             * @description Its key: `bezwaar-en-beroep`.
+             */
+            key: string;
+            /**
+             * Name
+             * @description Its name: `Bezwaar en beroep`.
+             */
+            name: string;
+            /**
+             * Concept
+             * @description The term of the curated list of concepts the query is: `bezwaar maken`.
+             */
+            concept: string;
+            /**
+             * Concept Why
+             * @description The source that ties the term to the block, the `why` of the list.
+             */
+            concept_why: string | null;
+        };
+        /**
          * BusyCallDTO
          * @description A call a thread of a shared pool runs now (queries side by side, the searches).
          */
@@ -5017,8 +5232,8 @@ export interface components {
         };
         /**
          * CitedByFacets
-         * @description The judgments that cite an article, counted whatever the page, each facet under the
-         *     other filters.
+         * @description The judgments that cite an article (or any article of a concept), counted whatever
+         *     the page, each facet under the other filters.
          */
         CitedByFacets: {
             /**
@@ -5750,6 +5965,21 @@ export interface components {
             article_ids: string[];
         };
         /**
+         * ConceptDocumentsResponse
+         * @description Response for GET /api/concepts/{key}/documents.
+         */
+        ConceptDocumentsResponse: {
+            /** Key */
+            key: string;
+            /**
+             * Total
+             * @description The papers joined to any article of the concept and of the `year`, each once, whatever the page; without `year` `document_total` of `/api/concepts/{key}`.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["ConceptDocumentDTO"][];
+        };
+        /**
          * ConceptExplanationDTO
          * @description An official page that explains the concept: a link, no text of ours.
          */
@@ -5773,6 +6003,22 @@ export interface components {
              * @description The articles of the concept it cites (`ConceptArticleDTO.id`).
              */
             article_ids: string[];
+        };
+        /**
+         * ConceptJudgmentsResponse
+         * @description Response for GET /api/concepts/{key}/judgments.
+         */
+        ConceptJudgmentsResponse: {
+            /** Key */
+            key: string;
+            /**
+             * Total
+             * @description The judgments that cite any article of the concept and match the filters, each once, whatever the page; without filters `judgment_total` of `/api/concepts/{key}`.
+             */
+            total: number;
+            facets: components["schemas"]["CitedByFacets"];
+            /** Items */
+            items: components["schemas"]["ConceptJudgmentDTO"][];
         };
         /**
          * ConceptRefDTO
@@ -7341,6 +7587,16 @@ export interface components {
          * @description A dossier with the size of everything attached to it, and what it links to.
          */
         DossierDetailResponse: {
+            /**
+             * Eu Ref
+             * @description The COM documents its title names (an EU proposal); empty for none.
+             */
+            eu_ref: components["schemas"]["EuRefDTO"][];
+            /**
+             * Implements
+             * @description The EU acts it implements, by CELEX; empty for none known.
+             */
+            implements: components["schemas"]["DossierImplementsDTO"][];
             /** Id */
             id: string;
             /** Key */
@@ -7670,6 +7926,22 @@ export interface components {
             phase: components["schemas"]["FacetCountDTO"][];
             /** Ministry */
             ministry: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
+         * DossierImplementsDTO
+         * @description An EU act the dossier implements.
+         */
+        DossierImplementsDTO: {
+            /**
+             * Celex
+             * @example 32024L2811
+             */
+            celex: string;
+            /**
+             * Bases
+             * @description What says so: ``title`` the dossier's title ("ter implementatie van Richtlijn (EU) 2024/2811"); ``national_implementing_measure`` and ``considerans`` the ``IMPLEMENTS`` of a law the dossier legislated (``GET /api/instruments/{identifier}/eu-links``).
+             */
+            bases: ("title" | ("national_implementing_measure" | "considerans"))[];
         };
         /**
          * DossierInstrumentDTO
@@ -8051,6 +8323,16 @@ export interface components {
          *     its outcome in the Eerste Kamer.
          */
         DossierSummaryDTO: {
+            /**
+             * Eu Ref
+             * @description The COM documents its title names (an EU proposal); empty for none.
+             */
+            eu_ref: components["schemas"]["EuRefDTO"][];
+            /**
+             * Implements
+             * @description The EU acts it implements, by CELEX; empty for none known.
+             */
+            implements: components["schemas"]["DossierImplementsDTO"][];
             /** Id */
             id: string;
             /** Key */
@@ -8644,6 +8926,24 @@ export interface components {
             meta: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * EuRefDTO
+         * @description A document of the European Commission the dossier is about, by the COM number its
+         *     title names (the Tweede Kamer gives no field for it).
+         */
+        EuRefDTO: {
+            /**
+             * Com
+             * @description As EUR-Lex writes it: ``COM(2025) 80``.
+             * @example COM(2025) 80
+             */
+            com: string;
+            /**
+             * Celex
+             * @description The CELEX number of that document (``52025PC0080`` a proposal, ``52025DC0080`` another document) when the graph holds it (``GET /api/instruments/{identifier}``); null when it does not.
+             */
+            celex: string | null;
         };
         /**
          * ExplainedTargetDTO
@@ -12451,6 +12751,8 @@ export interface components {
             series_id: string | null;
             /** Series Size */
             series_size: number | null;
+            /** @description The decision whose questions it answers (`ANSWERS`): of a preliminary ruling of the Court of Justice the Dutch decision that referred them, of a prejudiciële beslissing of the Hoge Raad the decision that asked it; the first by date when it answers several. Null for another judgment, and for a ruling whose referring decision is not known (a gap, never a guess). */
+            referring_decision: components["schemas"]["ReferringDecisionDTO"] | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -14229,6 +14531,24 @@ export interface components {
             /** Id */
             readonly id: string;
         };
+        /**
+         * ReferringDecisionDTO
+         * @description The decision whose questions a preliminary ruling answers (``ANSWERS``).
+         */
+        ReferringDecisionDTO: {
+            /** Ecli */
+            ecli: string;
+            /**
+             * Court Code
+             * @description Its court code (`RBROT`), of a decision not in the graph from its ECLI.
+             */
+            court_code: string | null;
+            /**
+             * Date
+             * @description Its date; null for a decision not in the graph.
+             */
+            date: string | null;
+        };
         /** RegelingArticle */
         RegelingArticle: {
             /**
@@ -14662,9 +14982,11 @@ export interface components {
             matched: "all" | "any";
             /**
              * Best
-             * @description The id of what `q` names exactly, for a search box to open on Enter: the match of `resolved` when its confidence is 0.9 or more (a citation, an identifier, a law, faction or member by its whole name or abbreviation), else the hit of the concept `q` is the term of (`concept`), else the one hit of `results` that is `exact`. Null when none is, or more than one (`BW`: each book), however well words match (`huurverhoging`).
+             * @description The id of what `q` names exactly, for a search box to open on Enter: the match of `resolved` when its confidence is 0.9 or more (a citation, an identifier, a law, faction or member by its whole name or abbreviation), else the hit of the concept `q` is the term of (`concept`), else the one hit of `results` that is `exact`. Null when none is, or more than one (`BW`: each book), however well words match (`huurverhoging`), and when `best_block` is set.
              */
             best: string | null;
+            /** @description The concept block `q` is a term of (`bezwaar maken`), for a search box to open on Enter instead of `best`, unless `resolved` names something with confidence 0.9 or more. Null for every other query. */
+            best_block: components["schemas"]["BestBlockDTO"] | null;
             /**
              * Offset
              * @description The hits of each type skipped (`offset` of the request): `results` holds the hits from the offset-th on.
@@ -14689,6 +15011,11 @@ export interface components {
             } | null;
             /** @description Of the full search (`mode=full`, the first page), when a hit of `dossiers` had activity in the last 30 days (`extra.last_activity`): that dossier with what plays in it. Of several the one of the best `score`, then the newest activity. Null when none does, with `matched` `any`, or without `dossiers` in `types`. */
             active_dossier: components["schemas"]["ActiveDossierDTO"] | null;
+            /**
+             * Suggestions
+             * @description Of the full search (`mode=full`, the first page) that found nothing and names nothing (`best` null): at most 3 queries to try instead, best first, each of which finds a law, a dossier or what a concept is about: the names most like it by their trigrams, a term or variant of the list of concepts, a name of an act of `eu-core` (`aiact`: `AI Act`) or a word of the titles of the laws and dossiers (`wanprestatei`: `wanprestatie`). Empty otherwise.
+             */
+            suggestions: string[];
         };
         /**
          * SearchResultItem
@@ -14726,6 +15053,11 @@ export interface components {
              * @description The term of the curated list of concepts the query is (`wanprestatie`, `GDPR`), when the hit is the article or law that term is about (art. 6:74 BW, the AVG): a hit found by the list, not by its own words. Null for every other hit.
              */
             concept: string | null;
+            /**
+             * Concept Why
+             * @description With `concept`: the source that ties the term to this hit, the `why` of the list (`art. 6:74 BW: elke tekortkoming in de nakoming verplicht tot schadevergoeding`). Null for a name of an act of `eu-core` (`DSA`), which is its own name, and for every other hit.
+             */
+            concept_why: string | null;
             /** Extra */
             extra: {
                 [key: string]: unknown;
@@ -16695,9 +17027,9 @@ export interface operations {
                 offset?: number;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS' */
                 court?: string | null;
-                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them. */
+                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them; `facets.tier` still counts every tier. */
                 tier?: components["schemas"]["Tier"][] | null;
-                /** @description The judgments of this year (of their date) alone; ``facets.year`` still counts every year. */
+                /** @description The judgments of this year (of their date) alone; `facets.year` still counts every year. */
                 year?: string | null;
                 /** @description A lid number the passage names: '3', '2a' */
                 lid?: string | null;
@@ -16968,6 +17300,50 @@ export interface operations {
             };
         };
     };
+    get_article_amounts_api_articles__bwb_id___article_number__amounts_get: {
+        parameters: {
+            query?: {
+                /** @description The day, YYYY-MM-DD; the current version when left out. */
+                date?: string | null;
+            };
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleAmountsResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_judgments_api_judgments_get: {
         parameters: {
             query?: {
@@ -16999,6 +17375,8 @@ export interface operations {
                 /** @description Also the judgments known only because something cites them (no date, court or text). */
                 include_stubs?: boolean;
                 sort?: "date_desc" | "date_asc" | "citation_count";
+                /** @description The country of the decision whose questions it answers (`ANSWERS`, the ECLI's country): with `tier=hvj_eu` and `NL` the preliminary rulings on questions of a Dutch court. */
+                referred_by?: string | null;
             };
             header?: never;
             path?: never;
@@ -17313,11 +17691,11 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "date" | "cited" | "citation_count";
-                /** @description The judgments of this year (of their date) alone; ``facets.year`` still counts every year. */
+                /** @description The judgments of this year (of their date) alone; `facets.year` still counts every year. */
                 year?: string | null;
-                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them; ``facets.tier`` still counts every tier. */
+                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them; `facets.tier` still counts every tier. */
                 tier?: components["schemas"]["Tier"][] | null;
-                /** @description A main area of law of the judgment's source, as ``facets.subject_area`` writes it: `Strafrecht`, `Civiel recht`, `Bestuursrecht`; ``facets.subject_area`` still counts every area. */
+                /** @description A main area of law of the judgment's source, as `facets.subject_area` writes it: `Strafrecht`, `Civiel recht`, `Bestuursrecht`; `facets.subject_area` still counts every area. */
                 subject_area?: string | null;
             };
             header?: never;
@@ -17940,6 +18318,10 @@ export interface operations {
                 facets?: boolean;
                 /** @description An office, by any of its names (``GET /api/seats/{seat}``): the dossiers its holder that day signed first. */
                 seat?: string | null;
+                /** @description ``proposal``: the dossiers about a COM document (``eu_ref``); ``implementation``: those that implement an EU act (``implements``). */
+                eu?: ("proposal" | "implementation") | null;
+                /** @description A CELEX number: the dossiers whose ``eu_ref`` or ``implements`` holds it, e.g. ``32024L2811``. */
+                celex?: string | null;
             };
             header?: never;
             path?: never;
@@ -19916,6 +20298,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConceptResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_concept_judgments_api_concepts__key__judgments_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description `date_desc`: the newest judgment first; `citation_count`: the most cited judgment first (a standard judgment), then the newest. */
+                sort?: "date_desc" | "citation_count";
+                /** @description ECLI court code, e.g. 'HR', 'RBAMS' */
+                court?: string | null;
+                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …; repeated, the judgments of any of them; `facets.tier` still counts every tier. */
+                tier?: components["schemas"]["Tier"][] | null;
+                /** @description The judgments of this year (of their date) alone; `facets.year` still counts every year. */
+                year?: string | null;
+                /** @description A main area of law of the judgment's source, as `facets.subject_area` writes it: `Strafrecht`, `Civiel recht`, `Bestuursrecht`; `facets.subject_area` still counts every area. */
+                subject_area?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description `toetsing-van-wetten`. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConceptJudgmentsResponse"];
+                };
+            };
+            /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_concept_documents_api_concepts__key__documents_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description The papers of this year (of their date). */
+                year?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description `toetsing-van-wetten`. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConceptDocumentsResponse"];
                 };
             };
             /** @description Not found: `{"detail": "<What> '<key>' not found."}`. */
