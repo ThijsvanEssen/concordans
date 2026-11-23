@@ -224,6 +224,17 @@ type ChainOptions = {
 	 * mentions: with `mentions` off they are not part of the keten.
 	 */
 	refers?: readonly Referring[] | null;
+	/**
+	 * The other chosen laws beside the law: one that gives a power for a regulation drawn here
+	 * too (the Wwke beside the Cbw, both grondslag of the Cbb) stands in its layer, with its
+	 * line to that regulation. One that shares none stays out.
+	 */
+	beside?: readonly {
+		id: string;
+		name: string;
+		abbreviation?: string | null;
+		delegated: Delegated | null;
+	}[];
 	/** The EU acts the law implements, above it, and the laws that implement it, below (F1). */
 	eu?: { implements: readonly EuInstrument[]; implementedBy: readonly EuInstrument[] } | null;
 };
@@ -320,6 +331,7 @@ export function chain(
 		article = null,
 		eu = null,
 		refers = null,
+		beside = [],
 		mentions = true
 	}: ChainOptions = {}
 ): {
@@ -498,6 +510,17 @@ export function chain(
 				sub,
 				parentsOf(item.instrument.id, sub.articles, abbrOf(item.instrument), wayOf(sub.basis_kind))
 			);
+	// A regulation under the law that another chosen law gives a power for too: that law stands
+	// beside this one, tied to it (Thijs, 22 Nov: the Cbb under the Cbw and the Wwke).
+	const sisters = beside.flatMap((b) => {
+		let shared = false;
+		for (const item of b.delegated?.items ?? []) {
+			if (!byId.has(item.instrument.id)) continue;
+			shared = true;
+			take(item, parentsOf(b.id, item.articles, b.abbreviation ?? b.name, wayOf(item.basis_kind)));
+		}
+		return shared ? [b] : [];
+	});
 	// The laws that only name this one in their text, as mentions; not a law the keten draws
 	// already (the Cbw over the Cbb): its first answer said how it hangs.
 	const above = new Set((basis?.items ?? []).map((b) => b.instrument.id));
@@ -507,7 +530,7 @@ export function chain(
 	}
 	// Without the mentions, only what rests on the law is part of its keten: a regulation under
 	// a regulation that is left out goes with it, unless a power given leads to it another way.
-	const alive = new Set<string>([law.id]);
+	const alive = new Set<string>([law.id, ...sisters.map((b) => b.id)]);
 	if (mentions) for (const id of byId.keys()) alive.add(id);
 	else
 		for (let grown = true; grown; ) {
@@ -580,6 +603,21 @@ export function chain(
 		perLayer.set(id, drawn);
 	}
 	lawLayer.nodes.push(...(perLayer.get('statute') ?? []));
+	for (const b of sisters)
+		if (!lawLayer.nodes.some((n) => n.id === b.id))
+			lawLayer.nodes.push({
+				id: b.id,
+				name: b.name,
+				short: b.name,
+				collection: 'instruments',
+				kind: 'wet',
+				since: null,
+				grondslag: null,
+				mentions: null,
+				unknown: null,
+				parents: [],
+				further: []
+			});
 	if (eu?.implementedBy.length)
 		layers.push({
 			id: 'implementation',

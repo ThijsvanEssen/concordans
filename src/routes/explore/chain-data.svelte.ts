@@ -24,6 +24,12 @@ export class ChainData {
 		items: Awaited<ReturnType<typeof getRelatedInstruments>>['items'];
 	} | null>(null);
 
+	/** The regulations of the other chosen laws, by law: the laws that stand beside the keten's. */
+	beside = $state.raw<{
+		validity: Validity;
+		laws: Map<string, Awaited<ReturnType<typeof getLawDelegatedSummary>>>;
+	} | null>(null);
+
 	constructor(
 		law: () => string | null,
 		validity: () => Validity,
@@ -33,7 +39,9 @@ export class ChainData {
 		mentions: () => boolean,
 		/** A new keten is asked: its failure of before is gone. */
 		onAsk: () => void,
-		onFailure: (bwb: string, error: unknown) => void
+		onFailure: (bwb: string, error: unknown) => void,
+		/** The other chosen laws (BWB ids): their regulations come after the keten's own. */
+		others: () => readonly string[] = () => []
 	) {
 		$effect(() => {
 			const bwb = law();
@@ -65,6 +73,22 @@ export class ChainData {
 					report('Keten', e);
 					if (current) onFailure(bwb, e);
 				});
+			return () => {
+				current = false;
+			};
+		});
+		$effect(() => {
+			const bwb = law();
+			const kept = validity();
+			const ids = others();
+			if (!bwb || this.asked?.bwb !== bwb || !ids.length) return;
+			let current = true;
+			Promise.all(ids.map((id) => getLawDelegatedSummary(id, kept).catch(() => null))).then(
+				(found) => {
+					if (current)
+						this.beside = { validity: kept, laws: new Map(ids.map((id, i) => [id, found[i]])) };
+				}
+			);
 			return () => {
 				current = false;
 			};

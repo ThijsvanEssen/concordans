@@ -492,13 +492,26 @@
 			? { what: 'De keten', error: chainError.error, retry: () => chainTries++ }
 			: null
 	);
+	/** The other chosen laws: one that shares a regulation with the keten stands beside its law. */
+	const chainSisters = $derived(
+		chainStart?.collection === 'instruments'
+			? chainChosen.filter(
+					(n) =>
+						n.id !== chainStart.id &&
+						n.collection === 'instruments' &&
+						(!textOf(n.raw?.props?.kind) ||
+							/^(?:wet|rijkswet)$/i.test(textOf(n.raw?.props?.kind) ?? ''))
+				)
+			: []
+	);
 	const chainData = new ChainData(
 		() => chainLaw,
 		() => (chainExpired ? 'all' : 'in_force'),
 		() => chainTries,
 		() => chainMentions && !chainArticle,
 		() => (chainError = null),
-		(bwb, error) => (chainError = { bwb, error })
+		(bwb, error) => (chainError = { bwb, error }),
+		() => chainSisters.map((n) => lawIdOf(n.raw?.props) ?? n.key.toUpperCase())
 	);
 	/** The keten of a judgment, a fractie or a Kamerlid (lineage.ts), by the start's id. */
 	let lineageData = $state.raw<{ id: string; layers: ChainLayer[] } | null>(null);
@@ -579,6 +592,18 @@
 				article: chainArticle,
 				mentions,
 				refers: chainData.refers?.bwb === bwb ? chainData.refers.items : null,
+				beside: chainSisters.map((n) => {
+					const other = lawIdOf(n.raw?.props) ?? n.key.toUpperCase();
+					return {
+						id: n.id,
+						name: bronFullName(n, $instrumentMetaStore),
+						abbreviation: bronNaam(n, $instrumentMetaStore),
+						delegated:
+							chainData.beside?.validity === (chainExpired ? 'all' : 'in_force')
+								? (chainData.beside.laws.get(other) ?? null)
+								: null
+					};
+				}),
 				eu: eu
 					? {
 							implements: eu.implements.map((l) => l.instrument),

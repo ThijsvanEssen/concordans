@@ -399,6 +399,40 @@ describe('the keten of a law and of its AMvB', () => {
 	});
 });
 
+describe('the keten of a law with another chosen law beside it', () => {
+	const sister = (items: ReturnType<typeof item>[]) => ({
+		id: 'instruments/bwbr0052871',
+		name: 'Wet weerbaarheid kritieke entiteiten',
+		abbreviation: 'Wwke',
+		delegated: { bwb_id: 'BWBR0052871', total: items.length, items } as never
+	});
+	const start = { id: 'instruments/bwbr0010346', name: 'Arbowet' };
+
+	it('draws it in the layer of the law when it gives a power for a regulation drawn too, with its line', () => {
+		const k = chain(start, delegated, null, {
+			beside: [sister([item('instruments/b', 'Productenbesluit asbest', 'amvb', [article('7')])])]
+		});
+		expect(k.layers.find((l) => l.id === 'law')!.nodes.map((n) => n.id)).toEqual([
+			'instruments/bwbr0010346',
+			'instruments/bwbr0052871'
+		]);
+		const b = k.layers.find((l) => l.id === 'amvb')!.nodes.find((n) => n.id === 'instruments/b')!;
+		expect(b.parents.map((p) => p.id)).toEqual([
+			'instruments/bwbr0010346',
+			'instruments/bwbr0052871'
+		]);
+		expect(b.grondslag).toBe('art. 16, 33 Arbowet, art. 7 Wwke');
+	});
+
+	it('leaves it out when it shares no regulation, and draws no regulation of its own', () => {
+		const k = chain(start, delegated, null, {
+			beside: [sister([item('instruments/z', 'Besluit Z', 'amvb', [article('1')])])]
+		});
+		expect(k.layers.find((l) => l.id === 'law')!.nodes).toHaveLength(1);
+		expect(k.layers.flatMap((l) => l.nodes).some((n) => n.id === 'instruments/z')).toBe(false);
+	});
+});
+
 describe('what Soort and Relatie count in a keten', () => {
 	it('counts the bronnen listed under Alle N with those drawn, so Tonen and the layer say one number', () => {
 		const k = chain(
