@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getalRijen, getallenIn, stapTekst, vorigeStap, type Getal } from './getallen';
+import { getalRijen, getallenIn, stapTekst, vorigeStap, type Getal } from './amounts';
 
 const stap = (value: number | null, valid_from: string, selected = false) => ({
 	version_key: valid_from,

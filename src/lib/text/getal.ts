@@ -18,6 +18,13 @@ export const isAtLeast = (label: string): boolean => label.startsWith('meer dan 
 export const formatDecimal = (n: number, decimals = 1): string =>
 	n.toLocaleString('nl-NL', { maximumFractionDigits: decimals });
 
+/** An amount in euros without the sign: `3.115`, `14,99`; cents only where there are some. */
+export const formatEuro = (n: number): string =>
+	n.toLocaleString('nl-NL', {
+		minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+		maximumFractionDigits: 2
+	});
+
 /** The ordinals a lid is named by in words, up to twenty: `tweede lid`. */
 export const ORDINAL_WORDS = [
 	'eerste',

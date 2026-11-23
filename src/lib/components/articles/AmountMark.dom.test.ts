@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import ArticleText from './ArticleText.svelte';
-import type { Getal } from '$lib/text/getallen';
+import type { Getal } from '$lib/text/amounts';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
 

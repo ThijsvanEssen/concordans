@@ -4,8 +4,8 @@
 // calculated here and nothing is worked out of the text: what the API leaves out stays text.
 import type { Schema } from '$lib/api/types';
 import { anchorLabel } from './anchor';
-import { dagVan, langeDatum, MONTHS } from './datum';
-import { formatDecimal } from './getal';
+import { dagVan, fromDate, langeDatum, MONTHS } from './datum';
+import { formatDecimal, formatEuro } from './getal';
 import { spansWithin } from './spans';
 
 export type Getal = Schema<'AmountDTO'>;
@@ -56,8 +56,7 @@ export function stapTekst(unit: string, stap: Pick<Stap, 'value' | 'date'>): str
 	if (unit === 'datum') return stap.date ? datumTekst(stap.date) || null : null;
 	const n = stap.value;
 	if (n === null || n === undefined) return null;
-	if (unit === 'EUR')
-		return `€${NBSP}${n.toLocaleString('nl-NL', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
+	if (unit === 'EUR') return `€${NBSP}${formatEuro(n)}`;
 	if (unit === '%') return `${formatDecimal(n, 2)}%`;
 	const woord = EENHEID[unit];
 	return woord ? `${formatDecimal(n, 2)}${NBSP}${woord[n === 1 ? 0 : 1]}` : null;
@@ -78,13 +77,12 @@ export const SOORT: Record<string, string> = {
 };
 
 /** The day a step holds from, `vanaf 1 januari 2025`; empty where the API names none. */
-export const vanaf = (stap: Pick<Stap, 'valid_from'>): string =>
-	stap.valid_from ? `vanaf ${langeDatum(stap.valid_from)}` : '';
+export const vanaf = (stap: Pick<Stap, 'valid_from'>): string => fromDate(stap.valid_from);
 
 /** A step of the course in the block. */
 export type Verloop = { tekst: string; vanaf: string; gekozen: boolean };
 
-export type GetalRij = {
+type GetalRij = {
 	/** Where the number stands, `lid 2, onder a`; null in an article without parts. */
 	plaats: string | null;
 	/** As the text prints it. */

@@ -34,7 +34,7 @@
 	import { withHeadings, type Heading } from '$lib/text/headings';
 	import { spansWithin } from '$lib/text/spans';
 	import { definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
-	import { getallenIn, getallenWithin, type Getal } from '$lib/text/getallen';
+	import { getallenIn, getallenWithin, type Getal } from '$lib/text/amounts';
 	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
 	import {
 		namesOwnDivision,

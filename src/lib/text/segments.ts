@@ -7,7 +7,7 @@ import { splitsOpNummers } from './meervoud';
 import type { Begrip, Definitie } from './begrippen';
 import type { DelegatieSpan } from './delegaties';
 import type { Bereik, NootMarker } from './voetnoten';
-import type { GetalSpan } from './getallen';
+import type { GetalSpan } from './amounts';
 
 export type Span = Schema<'ArticleCitationSpan'> & {
 	definition_ref?: string | null;

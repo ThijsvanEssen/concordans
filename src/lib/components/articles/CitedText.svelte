@@ -13,9 +13,9 @@
 		type Definitie
 	} from '$lib/text/begrippen';
 	import type { DelegatieSpan, Gedelegeerd } from '$lib/text/delegaties';
-	import type { GetalSpan } from '$lib/text/getallen';
+	import type { GetalSpan } from '$lib/text/amounts';
 	import GrondslagFormule from './GrondslagFormule.svelte';
-	import Getal from './Getal.svelte';
+	import AmountMark from './AmountMark.svelte';
 	import FootnoteLink from './FootnoteLink.svelte';
 	import type { Bereik, NootMarker } from '$lib/text/voetnoten';
 	import { nootStand } from '$lib/text/voetnoten.svelte';
@@ -91,8 +91,8 @@
 {#snippet plain(content: string)}{#each splitDates(content) as d, k (k)}{#if d.date}<span
 				class="date">{d.text}</span
 			>{:else}{d.text}{/if}{/each}{/snippet}
-{#snippet stuk(seg: Segment)}{#if seg.getal}<Getal getal={seg.getal}
-			>{@render plain(seg.content)}</Getal
+{#snippet stuk(seg: Segment)}{#if seg.getal}<AmountMark getal={seg.getal}
+			>{@render plain(seg.content)}</AmountMark
 		>{:else if seg.formule && grondslag}<GrondslagFormule formule={seg.formule} laad={grondslag}
 			>{@render plain(seg.content)}</GrondslagFormule
 		>{:else if seg.begrip}<BronLink

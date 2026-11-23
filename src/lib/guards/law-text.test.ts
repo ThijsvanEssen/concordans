@@ -171,6 +171,7 @@ describe('the card of a footnote (besluit 29)', () => {
 			[
 				'lib/actions/hover-card.svelte.ts',
 				'lib/bron/BronLink.svelte',
+				'lib/components/articles/AmountMark.svelte',
 				'lib/components/articles/FootnoteLink.svelte'
 			].toSorted()
 		);

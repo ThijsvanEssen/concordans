@@ -3,7 +3,7 @@
 	// its course over the versions, oldest first, the one on screen marked. Nothing here is
 	// added up or worked out; an article without numbers shows no block.
 	import Section from '$lib/components/ui/Sectie.svelte';
-	import { getalRijen, type Getal } from '$lib/text/getallen';
+	import { getalRijen, type Getal } from '$lib/text/amounts';
 
 	let { getallen }: { getallen: readonly Getal[] } = $props();
 
@@ -50,7 +50,6 @@
 		gap: var(--s-2) var(--s-4);
 		padding: var(--s-3) var(--s-2);
 		border-top: 1px solid var(--rule);
-		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 	}

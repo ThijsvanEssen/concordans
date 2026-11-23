@@ -31,7 +31,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import GetallenBlok from '$lib/components/articles/GetallenBlok.svelte';
+	import AmountsBlock from '$lib/components/articles/AmountsBlock.svelte';
 	import { Lazy } from '$lib/util/lazy.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn } from '$lib/bron/landing';
@@ -977,7 +977,7 @@
 			{/if}
 		</div>
 
-		<GetallenBlok {getallen} />
+		<AmountsBlock {getallen} />
 
 		<!-- The concepts the article is one of: under the text, over Vorig and Volgend. -->
 		{#each d.concepts ?? [] as c (c.key)}
