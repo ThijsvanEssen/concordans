@@ -44,13 +44,13 @@
 				'parlement',
 				'Parlement',
 				['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
-				['dossiers', 'stukken', 'stemmingen', 'kamerleden']
+				['dossiers', 'stukken', 'stemmingen', 'kamerleden', 'fracties', 'commissies']
 			],
 			[
 				'kabinet',
 				'Regering',
-				['cabinets', 'members', 'commitments'],
-				['kabinetten', 'bewindspersonen', 'toezeggingen']
+				['cabinets', 'ministries', 'members', 'commitments'],
+				['kabinetten', 'ministeries', 'bewindspersonen', 'toezeggingen']
 			]
 		] as [string, string, string[], Sort[]][]
 	).map(([id, label, kinds, sorts]) => ({
