@@ -39,7 +39,7 @@
 	import { plainClick } from '$lib/actions/klik';
 	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { crowd, fullWidthOf, keeps, liftsOf, rowHeight, widthOf } from '$lib/network/chain-room';
+	import { crowd, fullWidthOf, liftsOf, rowHeight, widthOf } from '$lib/network/chain-room';
 	import {
 		isMention,
 		isOutside,
