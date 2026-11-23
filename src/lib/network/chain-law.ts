@@ -29,7 +29,6 @@ export function nameLaw(
 		layers: ChainLayer[];
 		ups: { rank: number; layer: ChainLayer }[];
 		wetLane: boolean;
-		label: string;
 		awaiting: boolean;
 		mentions: boolean;
 	}
@@ -44,13 +43,13 @@ export function nameLaw(
 			n.parents = [];
 		}
 	}
-	if (naming.length && !over) o.layers.push({ id: 'statute', label: o.label, nodes: naming });
+	if (naming.length && !over) o.layers.push({ id: 'statute', label: 'Wet', nodes: naming });
 	else if (naming.length || (waits && over)) {
 		if (!up)
 			o.ups.push(
 				(up = {
 					rank: RANK.wet,
-					layer: { id: 'statute', label: o.label, above: true, nodes: [] }
+					layer: { id: 'statute', label: 'Wet', above: true, nodes: [] }
 				})
 			);
 		up.layer.nodes.push(...naming);

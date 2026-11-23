@@ -607,7 +607,6 @@ export function chain(
 		layers,
 		ups,
 		wetLane,
-		label: LAYER_LABEL.statute,
 		awaiting: !refers && !article,
 		mentions
 	});
