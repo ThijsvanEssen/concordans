@@ -5,8 +5,8 @@
 	import { page } from '$app/state';
 	import { getConcept } from '$lib/api/concepts';
 	import ConceptArticles from '$lib/components/explore/readers/ConceptArticles.svelte';
-	import ConceptDocuments from '$lib/begrippen/ConceptDocuments.svelte';
-	import ConceptJudgments from '$lib/begrippen/ConceptJudgments.svelte';
+	import ConceptDocuments from '$lib/concepts/ConceptDocuments.svelte';
+	import ConceptJudgments from '$lib/concepts/ConceptJudgments.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Section from '$lib/components/ui/Sectie.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -25,7 +25,7 @@
 		{#snippet children(c)}
 			<header class="blad__kop">
 				<div>
-					<p class="kop"><a href={BEGRIP_METHODE}>{BEGRIP_KOP}</a></p>
+					<p class="label"><a href={BEGRIP_METHODE}>{BEGRIP_KOP}</a></p>
 					<h1 class="blad__titel">{c.name}</h1>
 				</div>
 				{#if c.explanation}
@@ -47,11 +47,11 @@
 </div>
 
 <style>
-	.kop {
+	.label {
 		margin: 0 0 var(--s-1);
 		font-size: var(--t-micro);
 	}
-	.kop a,
+	.label a,
 	.uitleg {
 		color: var(--ink-3);
 		text-decoration: underline;

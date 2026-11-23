@@ -30,7 +30,7 @@
 		RESULT_LIMIT
 	} from '$lib/search/results';
 	import { SearchResults, type ResultsSort } from '$lib/search/results.svelte';
-	import BegripTreffer from '$lib/search/BegripTreffer.svelte';
+	import ConceptHit from '$lib/search/ConceptHit.svelte';
 	import ResultRow from '$lib/search/ResultRow.svelte';
 	import ZoekHulp from '$lib/search/ZoekHulp.svelte';
 	import { FEW_HITS } from '$lib/search/hulp';
@@ -300,7 +300,7 @@
 		{/if}
 
 		{#if results.block && !chosen}
-			<BegripTreffer block={results.block} />
+			<ConceptHit block={results.block} />
 		{/if}
 
 		{#each shown as slot (slot.kind)}
