@@ -62,31 +62,27 @@ export function segmentsOf(
 ): Segment[] {
 	const out: Segment[] = [];
 	let cursor = 0;
-	const rang = (x: object) => ('formule' in x ? 1 : 'begrip' in x ? 2 : 'getal' in x ? 3 : 0);
+	// Where several start at one place: a citation, a delegation formula, a term, a number.
+	const eigen = (rang: number, start: number, end: number, own: Partial<Segment>) => ({
+		start,
+		end,
+		rang,
+		own
+	});
 	const sorted = [
 		...citations.filter((c) => c.start != null && c.end != null),
-		...delegaties.map((d) => ({ start: d.start, end: d.end, formule: d })),
-		...getallen.map((g) => ({ start: g.start, end: g.end, getal: g })),
+		...delegaties.map((d) => eigen(1, d.start, d.end, { formule: d })),
 		...begrippen.flatMap((b) => {
 			const begrip = definities.get(b.definition_ref);
-			return begrip ? [{ ...b, begrip }] : [];
-		})
-	].sort((a, b) => a.start! - b.start! || rang(a) - rang(b));
+			return begrip ? [eigen(2, b.start, b.end, { begrip })] : [];
+		}),
+		...getallen.map((g) => eigen(3, g.start, g.end, { getal: g }))
+	].sort((a, b) => a.start! - b.start! || ('rang' in a ? a.rang : 0) - ('rang' in b ? b.rang : 0));
 	for (const item of sorted) {
 		if (item.start! < cursor) continue;
 		if (item.start! > cursor) out.push({ content: text.slice(cursor, item.start!) });
-		if ('formule' in item) {
-			out.push({ content: text.slice(item.start, item.end), formule: item.formule });
-			cursor = item.end;
-			continue;
-		}
-		if ('getal' in item) {
-			out.push({ content: text.slice(item.start, item.end), getal: item.getal });
-			cursor = item.end;
-			continue;
-		}
-		if ('begrip' in item) {
-			out.push({ content: text.slice(item.start, item.end), begrip: item.begrip });
+		if ('own' in item) {
+			out.push({ content: text.slice(item.start, item.end), ...item.own });
 			cursor = item.end;
 			continue;
 		}

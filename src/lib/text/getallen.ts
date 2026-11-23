@@ -15,7 +15,7 @@ export type Stap = Schema<'AmountStepDTO'>;
 export type GetalSpan = Getal & { start: number; end: number };
 
 const NBSP = ' ';
-const kaal = (s: string) => s.replace(/[\s ]+/g, '');
+const kaal = (s: string) => s.replace(/\s+/g, '');
 
 /**
  * The numbers whose words the text still holds at their offsets: a number the text no longer
