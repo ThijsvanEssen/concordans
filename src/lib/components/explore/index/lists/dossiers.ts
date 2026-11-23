@@ -8,7 +8,7 @@ import { OPEN_STATUS } from '../government';
 import { ministryName } from '../ministries.svelte';
 import DossierRows from '../rows/DossierRows.svelte';
 import { PAGE, defineList, toggle, type SortDef } from './list';
-import { facetMap } from '../facets';
+import { facetMap, type FacetGroup } from '../facets';
 import type { IndexParams } from './params';
 
 type Row = Schema<'DossierSummaryDTO'>;
@@ -23,11 +23,52 @@ const query = (p: IndexParams, sort: SortDef) => ({
 	phase: p.phases.length ? p.phases.join(',') : undefined,
 	has_phase: p.hasPhase || undefined,
 	kind: p.track || undefined,
+	eu: p.eu,
 	ministry: p.ministry || undefined,
 	opened_from: p.from || undefined,
 	opened_to: p.to || undefined,
 	sort: choiceOf(sort.id, ['number', 'opened_on', 'last_activity', 'closed_on', 'title'] as const),
 	limit: PAGE
+});
+
+/** The dossiers about an EU proposal or that implement an EU act (`eu`, API 0.80.45). */
+const euGroup = (p: IndexParams, patch: Parameters<typeof toggle>[0]): FacetGroup => ({
+	id: 'eu',
+	label: 'Europa',
+	kind: 'list',
+	options: (
+		[
+			['proposal', 'EU-voorstellen'],
+			['implementation', 'Omzetting van EU-recht']
+		] as const
+	).map(([id, label]) => ({
+		id,
+		label,
+		on: p.eu === id,
+		onClick: toggle(patch, 'eu', p.eu, id)
+	}))
+});
+
+/** The phases a dossier is in, each with its count. */
+const phaseGroup = (
+	p: IndexParams,
+	counts: Map<string, number>,
+	patch: Parameters<typeof toggle>[0]
+): FacetGroup => ({
+	id: 'phase',
+	label: 'Fase',
+	note: `${formatCount(PHASES.reduce((n, ph) => n + (counts.get(ph) ?? 0), 0))} met fase`,
+	kind: 'list',
+	options: PHASES.map((ph) => ({
+		id: ph,
+		label: ph,
+		count: counts.get(ph) ?? 0,
+		on: p.phases.includes(ph),
+		onClick: () => {
+			const next = p.phases.includes(ph) ? p.phases.filter((x) => x !== ph) : [...p.phases, ph];
+			patch({ phase: next.length ? next.join(',') : null });
+		}
+	}))
 });
 
 export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
@@ -126,24 +167,8 @@ export const dossiers = defineList<Row, State, ReturnType<typeof query>>({
 					onClick: toggle(patch, 'track', p.track, k)
 				}))
 			},
-			{
-				id: 'phase',
-				label: 'Fase',
-				note: `${formatCount(PHASES.reduce((n, ph) => n + (phaseCounts.get(ph) ?? 0), 0))} met fase`,
-				kind: 'list',
-				options: PHASES.map((ph) => ({
-					id: ph,
-					label: ph,
-					count: phaseCounts.get(ph) ?? 0,
-					on: p.phases.includes(ph),
-					onClick: () => {
-						const next = p.phases.includes(ph)
-							? p.phases.filter((x) => x !== ph)
-							: [...p.phases, ph];
-						patch({ phase: next.length ? next.join(',') : null });
-					}
-				}))
-			},
+			euGroup(p, patch),
+			phaseGroup(p, phaseCounts, patch),
 			{
 				id: 'ministry',
 				label: 'Ministerie',

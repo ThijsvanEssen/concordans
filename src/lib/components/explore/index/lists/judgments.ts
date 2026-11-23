@@ -36,6 +36,7 @@ const query = (p: IndexParams, sort: SortDef) => ({
 	// Without a source every judgment, the European among them; `echr` the EHRM alone, `cjeu`
 	// the courts of the EU.
 	source: p.source,
+	referred_by: p.referredBy,
 	from: p.from || undefined,
 	to: p.to || undefined,
 	sort: choiceOf(sort.id, ['date_desc', 'date_asc', 'citation_count'] as const),
@@ -103,6 +104,25 @@ function courtCounts({ p, state, shared }: Context) {
 	return counts;
 }
 
+/** The rulings of the Court of Justice on questions of a Dutch court, beneath the Court itself. */
+const fromNetherlands = ({ p, patch }: Context, source: EuropeanSource) => {
+	const on = p.source === source && p.referredBy === 'NL';
+	return {
+		id: 'zaken-uit-nederland',
+		indent: true,
+		label: 'Zaken uit Nederland',
+		on,
+		onClick: () =>
+			patch({
+				tier: null,
+				court_kind: null,
+				court: null,
+				source: on ? null : source,
+				referred_by: on ? null : 'NL'
+			})
+	};
+};
+
 /** The courts under their group, each group a filter group under its own heading. */
 function courtGroups(ctx: Context): FacetGroup[] {
 	const { p, state, shared, patch } = ctx;
@@ -138,7 +158,11 @@ function courtGroups(ctx: Context): FacetGroup[] {
 		const count = counts && tiers.reduce((n, t) => n + (counts.get(t) ?? 0), 0);
 		const options = tiers.flatMap((t) => {
 			const source = own[t] ?? null;
-			const on = source ? p.source === source : !p.source && !p.court && p.tier === t;
+			// The Court of Justice's own rulings, all or only those on questions of a Dutch court.
+			const hof = t === 'hvj_eu' && !!source;
+			const on = source
+				? p.source === source && !(hof && p.referredBy)
+				: !p.source && !p.court && p.tier === t;
 			return [
 				{
 					id: t,
@@ -151,9 +175,11 @@ function courtGroups(ctx: Context): FacetGroup[] {
 							tier: on || source ? null : t,
 							court_kind: null,
 							court: null,
-							source: source && !on ? source : null
+							source: source && !on ? source : null,
+							referred_by: null
 						})
 				},
+				...(hof && source ? [fromNetherlands(ctx, source)] : []),
 				...(on && MIXED_TIERS.includes(t) ? kindOptions() : [])
 			];
 		});

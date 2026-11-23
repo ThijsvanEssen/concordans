@@ -5,6 +5,7 @@
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { plural } from '$lib/text/words';
 	import { formatCount } from '$lib/text/getal';
+	import Verwijzer from './Verwijzer.svelte';
 	import IndexRow from '../IndexRow.svelte';
 	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle, unionRow } from '../judgment-row';
 	import type { ViewProps } from '../lists/list';
@@ -38,6 +39,7 @@
 				{#if context.length}
 					<span class="row-sub">{context.join(', ')}</span>
 				{/if}
+				<Verwijzer decision={j.referring_decision} />
 			{/snippet}
 			{#snippet aside()}
 				{#if j.inbound_citation_count}

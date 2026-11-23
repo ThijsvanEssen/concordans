@@ -319,8 +319,30 @@ describe('the courts of the judgments', () => {
 		const patched: object[] = [];
 		const hof = options('', (p) => patched.push(p)).find((o) => o.id === 'hvj_eu')!;
 		hof.onClick?.();
-		expect(patched).toEqual([{ tier: null, court_kind: null, court: null, source: 'cjeu' }]);
+		expect(patched).toEqual([
+			{ tier: null, court_kind: null, court: null, source: 'cjeu', referred_by: null }
+		]);
 		expect(query('judgments', 'source=cjeu')).toMatchObject({ source: 'cjeu' });
+	});
+
+	it('offers the cases from the Netherlands beneath the Court, as a filter on the same list', () => {
+		const on = (address: string) => Object.fromEntries(options(address).map((o) => [o.id, o.on]));
+		expect(on('source=cjeu')).toMatchObject({ hvj_eu: true, 'zaken-uit-nederland': false });
+		expect(on('source=cjeu&referred_by=NL')).toMatchObject({
+			hvj_eu: false,
+			'zaken-uit-nederland': true
+		});
+		const patched: object[] = [];
+		options('', (p) => patched.push(p))
+			.find((o) => o.id === 'zaken-uit-nederland')!
+			.onClick?.();
+		expect(patched).toEqual([
+			{ tier: null, court_kind: null, court: null, source: 'cjeu', referred_by: 'NL' }
+		]);
+		expect(query('judgments', 'source=cjeu&referred_by=NL')).toMatchObject({
+			source: 'cjeu',
+			referred_by: 'NL'
+		});
 	});
 
 	it('keeps the Hof van Justitie EU a tier while the data holds none of its own judgments', () => {

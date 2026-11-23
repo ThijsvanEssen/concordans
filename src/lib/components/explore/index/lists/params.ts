@@ -39,6 +39,8 @@ export const INDEX_FILTER_PARAMS = [
 	'policy_domain',
 	'leeg',
 	'source',
+	'referred_by',
+	'eu',
 	'sort',
 	'dir',
 	'only_active',
@@ -117,6 +119,10 @@ export function readParams(params: URLSearchParams) {
 		// be left out by a parameter, a wet needs an article and a judgment a source.
 		withEmpty: params.get('leeg') === '1',
 		source: choiceOf(params.get('source'), EUROPEAN_SOURCES),
+		// The preliminary rulings of the Court of Justice on questions of a court of this country.
+		referredBy: choiceOf(params.get('referred_by'), ['NL'] as const),
+		// Dossiers about an EU proposal or that implement an EU act (API 0.80.45).
+		eu: choiceOf(params.get('eu'), ['proposal', 'implementation'] as const),
 		tier: choiceOf(params.get('tier'), TIERS),
 		courtKind: choiceOf(params.get('court_kind'), COURT_KINDS),
 		// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).

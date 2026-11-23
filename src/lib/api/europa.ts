@@ -1,7 +1,6 @@
-// What the page Europa asks: the three lists, each its own call, so the first paints on the
-// cheapest and the rest fill in. The dossiers are found by the words of their title (the API
-// has no filter for them): the Kamer names an EU proposal "EU-voorstel: …", a bill that
-// transposes a directive "… ter implementatie van …".
+// What the page Europa asks: the lists, each its own call, so the first paints on the
+// cheapest and the rest fill in. The dossiers are found by what the API says of the EU
+// (`eu`: a proposal has an `eu_ref`, a bill that transposes an act `implements`).
 import { api, unwrap } from './client';
 import { once } from './records';
 
@@ -13,7 +12,7 @@ export const getEuProposals = (limit = ROWS) =>
 		unwrap(
 			api.GET('/api/dossiers', {
 				params: {
-					query: { subject: 'EU-voorstel', status: 'open', sort: 'opened_on', limit, facets: false }
+					query: { eu: 'proposal', status: 'open', sort: 'opened_on', limit, facets: false }
 				}
 			})
 		)
@@ -26,8 +25,7 @@ export const getTransposingBills = (limit = ROWS) =>
 			api.GET('/api/dossiers', {
 				params: {
 					query: {
-						subject: 'implementatie',
-						kind: 'Wetgeving',
+						eu: 'implementation',
 						status: 'all',
 						sort: 'opened_on',
 						limit,
@@ -44,6 +42,18 @@ export const getCourtRulings = (limit = ROWS) =>
 		unwrap(
 			api.GET('/api/judgments', {
 				params: { query: { tier: ['hvj_eu'], sort: 'date_desc', limit, facets: false } }
+			})
+		)
+	);
+
+/** The newest preliminary rulings of the Court of Justice on questions of a Dutch court. */
+export const getDutchCases = (limit = ROWS) =>
+	once(`europa/nederland/${limit}`, () =>
+		unwrap(
+			api.GET('/api/judgments', {
+				params: {
+					query: { tier: ['hvj_eu'], referred_by: 'NL', sort: 'date_desc', limit, facets: false }
+				}
 			})
 		)
 	);

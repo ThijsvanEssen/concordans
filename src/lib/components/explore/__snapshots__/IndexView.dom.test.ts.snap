@@ -867,6 +867,8 @@ exports[`Bronnen, list by list > dossiers ? > view 1`] = `
     },
     "Meer": {
       "opties": [
+        "EU-voorstellen",
+        "Omzetting van EU-recht",
         "Voorstel van wet 0",
         "Memorie van toelichting 0",
         "Advies Raad van State 104",
@@ -881,7 +883,7 @@ exports[`Bronnen, list by list > dossiers ? > view 1`] = `
         "ocw 182",
         "vws 179",
       ],
-      "tekst": "Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+      "tekst": "Europa EU-voorstellen Omzetting van EU-recht Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
     },
     "Periode": {
       "opties": [],
@@ -965,6 +967,8 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
     },
     "Meer": {
       "opties": [
+        "EU-voorstellen",
+        "Omzetting van EU-recht",
         "Voorstel van wet 0",
         "Memorie van toelichting 0",
         "Advies Raad van State 104",
@@ -979,7 +983,7 @@ exports[`Bronnen, list by list > dossiers ?q=36600 > view 1`] = `
         "ocw 182",
         "vws 179",
       ],
-      "tekst": "Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+      "tekst": "Europa EU-voorstellen Omzetting van EU-recht Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
     },
     "Periode": {
       "opties": [],
@@ -1061,6 +1065,8 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1
     },
     "Meer": {
       "opties": [
+        "EU-voorstellen",
+        "Omzetting van EU-recht",
         "Voorstel van wet 0",
         "Memorie van toelichting 0",
         "Advies Raad van State 104",
@@ -1075,7 +1081,7 @@ exports[`Bronnen, list by list > dossiers ?stand=all&sort=last_activity > view 1
         "ocw 182",
         "vws 179",
       ],
-      "tekst": "Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+      "tekst": "Europa EU-voorstellen Omzetting van EU-recht Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
     },
     "Periode": {
       "opties": [],
@@ -1163,6 +1169,8 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
     },
     "Meer: bzk": {
       "opties": [
+        "EU-voorstellen",
+        "Omzetting van EU-recht",
         "Voorstel van wet 0",
         "Memorie van toelichting 0",
         "Advies Raad van State 104",
@@ -1177,7 +1185,7 @@ exports[`Bronnen, list by list > dossiers ?stand=closed&uitkomst=aangenomen&phas
         "ocw 182",
         "vws 179",
       ],
-      "tekst": "Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
+      "tekst": "Europa EU-voorstellen Omzetting van EU-recht Fase 1.147 met fase Voorstel van wet 0 Memorie van toelichting 0 Advies Raad van State 104 Verslag 115 Nota n.a.v. het verslag 0 Nota van wijziging / Amendement 120 Stemmingen 315 Eindtekst 493 Ministerie Buitenlandse Zaken 414 bzk 327 fin 259 ocw 182 vws 179",
     },
     "Periode: Sinds 2020": {
       "opties": [],
