@@ -141,7 +141,7 @@
 		"src/lib/graph/store/expansion.ts": 196,
 		"src/lib/graph/store/view-actions.ts": 117,
 		"src/lib/network/ChainView.svelte": 97,
-		"src/lib/network/chain.ts": 229,
+		"src/lib/network/chain.ts": 221,
 		"src/lib/network/lineage.ts": 116,
 		"src/lib/search/present.ts": 151,
 		"src/lib/text/judgment-text.ts": 95,
