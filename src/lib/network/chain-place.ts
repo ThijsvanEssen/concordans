@@ -1,6 +1,7 @@
 // Where the bronnen of the keten stand and what they say: pure, so the drawing only draws
 // (ChainView.svelte).
 import type { ChainLayer, ChainNode } from '$lib/network/chain';
+import { keeps } from '$lib/network/chain-room';
 import { capitalize } from '$lib/text/words';
 
 type Measures = {
@@ -44,7 +45,7 @@ export function placeLayers(layers: readonly ChainLayer[], o: Measures) {
 		const n = stay.length;
 		if (!n) return;
 		// "N andere" stands a slot past the last: its room is kept.
-		const right = o.rest[layer.id] ? end - o.slot : end;
+		const right = o.rest[layer.id] && !keeps(layer) ? end - o.slot : end;
 		// Apart by a slot at most; a layer without a place above it is centred on the drawing.
 		const sep = Math.min((right - left) / n, o.slot);
 		const wish = stay.map((k, j) => {

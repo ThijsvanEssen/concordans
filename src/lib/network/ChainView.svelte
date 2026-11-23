@@ -39,7 +39,7 @@
 	import { plainClick } from '$lib/actions/klik';
 	import { PANEL_ID, openInPanel, readOpen } from '$lib/reading/panel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { crowd, fullWidthOf, liftsOf, rowHeight, widthOf } from '$lib/network/chain-room';
+	import { crowd, fullWidthOf, keeps, liftsOf, rowHeight, widthOf } from '$lib/network/chain-room';
 	import {
 		isMention,
 		isOutside,
@@ -175,7 +175,15 @@
 		Math.ceil((Math.max(...linesOf(k.name, charsFor(n)).map((r) => r.length)) * CHAR) / 2) + 8;
 	/** Where each node stands (chain-place.ts). */
 	const place = $derived(
-		placeLayers(shown, { rest, tops: rowTops, left: LEFT, width, drop: DROP, slot: SLOT, halfOf })
+		placeLayers(shown, {
+			rest,
+			tops: rowTops,
+			left: LEFT,
+			width,
+			drop: DROP,
+			slot: SLOT,
+			halfOf
+		})
 	);
 	const fullWidth = $derived(fullWidthOf(shown, rest, place, width, SLOT));
 	/** What a node says under its sign: its name over lines (a judgment cited with its day). */
@@ -496,9 +504,6 @@
 	const notHere = $derived(
 		others.filter((o) => !shown.some((l) => l.nodes.some((n) => n.id === o.id)))
 	);
-	/** The layers of the list (a phone): the start and what stands above it as the list's head (F12). */
-	const head = $derived(shown.filter((l) => l.id === 'law' || l.above));
-	const listed = $derived(shown.filter((l) => l.id !== 'law' && !l.above));
 </script>
 
 {#snippet row(k: ChainNode)}
@@ -626,6 +631,17 @@
 	>
 {/snippet}
 
+{#snippet section(layer: ChainLayer)}
+	<section class="list__layer" class:keeps={keeps(layer)} aria-label={layer.label}>
+		<h3 class="list__head">{layer.label}</h3>
+		<ul>
+			{#each layer.nodes as k (k.id)}{@render row(k)}{/each}
+			{#if open.has(layer.id)}{#each more[layer.id] ?? [] as k (k.id)}{@render row(k)}{/each}{/if}
+		</ul>
+		{#if rest[layer.id]}{@render allButton(layer)}{/if}
+	</section>
+{/snippet}
+
 <div class="chain" bind:clientWidth={avail}>
 	{#if failure}
 		<div class="failure">
@@ -639,7 +655,7 @@
 		</div>
 	{:else if loading}
 		<SlowLoad label="Keten laden…" visible />
-	{:else if gap || expired?.total || outsideCount || notHere.length || head.some((l) => l.id === 'law')}
+	{:else if gap || expired?.total || outsideCount || notHere.length || shown.some((l) => l.id === 'law')}
 		<div class="kop">
 			{#if outsideCount}<span class="stil">{formatCount(outsideCount)} buiten de periode</span>{/if}
 			{#if notHere.length}<span class="ook"
@@ -882,26 +898,7 @@
 	<!-- On a phone: a list, the law (and what it rests on) at its head, the regulations under
 	     their heading (R3-K F12). -->
 	<div class="list">
-		{#each head as layer (layer.id)}
-			<section class="list__layer" aria-label={layer.label}>
-				<h3 class="list__head">{layer.label}</h3>
-				<ul>
-					{#each layer.nodes as k (k.id)}{@render row(k)}{/each}
-				</ul>
-			</section>
-		{/each}
-		{#each listed as layer (layer.id)}
-			<section class="list__layer" aria-label={layer.label}>
-				<h3 class="list__head">{layer.label}</h3>
-				<ul>
-					{#each layer.nodes as k (k.id)}{@render row(k)}{/each}
-					{#if open.has(layer.id)}{#each more[layer.id] ?? [] as k (k.id)}{@render row(
-								k
-							)}{/each}{/if}
-				</ul>
-				{#if rest[layer.id]}{@render allButton(layer)}{/if}
-			</section>
-		{/each}
+		{#each shown as layer (layer.id)}{@render section(layer)}{/each}
 	</div>
 </div>
 
@@ -1118,6 +1115,9 @@
 	}
 	.list__layer {
 		margin-top: var(--s-4);
+	}
+	.list__layer.keeps ul {
+		min-height: calc(var(--veld-h-raak) * 7);
 	}
 	.list__head {
 		margin: 0 0 var(--s-2);

@@ -10,7 +10,10 @@ export const widthOf = (layers: readonly ChainLayer[], rest: Rest, avail: number
 	Math.max(
 		avail,
 		...layers.map(
-			(l) => o.left + 24 + (l.nodes.filter((k) => !k.late).length + (rest[l.id] ? 1 : 0)) * o.slot
+			(l) =>
+				o.left +
+				24 +
+				(l.nodes.filter((k) => !k.late).length + (rest[l.id] && !keeps(l) ? 1 : 0)) * o.slot
 		)
 	);
 
@@ -50,12 +53,12 @@ type Row = { row: number; drop: number; line: number; stack: number };
 
 /**
  * How high a layer is: its least, or more where a name runs over more lines or a wet has two
- * labels beside the law; a row that keeps its room (`keeps`) has that of three lines and a label.
+ * labels beside the law; a row that keeps its room (`keeps`) has that of five lines and a label.
  */
 export const rowHeight = (l: ChainLayer, lines: (id: string) => number, m: Row) => {
 	const most = Math.max(1, ...l.nodes.map((k) => lines(k.id)));
 	const here = (id: string) => l.nodes.some((n) => n.id === id);
 	const two = l.nodes.some((k) => k.parents.filter((p) => p.cite && here(p.id)).length > 1);
 	const asked = Math.max(m.row, m.drop + 24 + m.line * (most - 1) + 58) + (two ? m.stack + 4 : 0);
-	return keeps(l) ? Math.max(asked, m.drop + 24 + m.line * 2 + 58 + m.stack + 4) : asked;
+	return keeps(l) ? Math.max(asked, m.drop + 24 + m.line * 4 + 58 + m.stack + 4) : asked;
 };
