@@ -26,7 +26,7 @@
 		"src/lib/verbonden/loaders.ts": 1512,
 		"src/routes/(main)/actueel/+page.svelte": 832,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2876
+		"src/routes/explore/+page.svelte": 2874
 	},
 	"effects_per_svelte": {
 		"src/lib/verbonden/Verbonden.svelte": 10,
@@ -141,7 +141,7 @@
 		"src/lib/graph/store/expansion.ts": 196,
 		"src/lib/graph/store/view-actions.ts": 117,
 		"src/lib/network/ChainView.svelte": 97,
-		"src/lib/network/chain.ts": 258,
+		"src/lib/network/chain.ts": 250,
 		"src/lib/network/lineage.ts": 116,
 		"src/lib/search/present.ts": 151,
 		"src/lib/text/judgment-text.ts": 95,
