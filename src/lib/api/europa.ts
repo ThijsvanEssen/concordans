@@ -36,16 +36,6 @@ export const getTransposingBills = (limit = ROWS) =>
 		)
 	);
 
-/** The newest judgments of the Court of Justice and the General Court. */
-export const getCourtRulings = (limit = ROWS) =>
-	once(`europa/hof/${limit}`, () =>
-		unwrap(
-			api.GET('/api/judgments', {
-				params: { query: { tier: ['hvj_eu'], sort: 'date_desc', limit, facets: false } }
-			})
-		)
-	);
-
 /** The newest preliminary rulings of the Court of Justice on questions of a Dutch court. */
 export const getDutchCases = (limit = ROWS) =>
 	once(`europa/nederland/${limit}`, () =>

@@ -34,7 +34,7 @@
 	}
 	.vragen__lijst {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: var(--s-4);
 	}
 	.vraag {
@@ -70,7 +70,7 @@
 	}
 	.vragen__lijst > :global(.voorbeeld) {
 		grid-column: 2;
-		grid-row: 1 / span 3;
+		grid-row: 1 / span 4;
 	}
 	@media (max-width: 768px) {
 		.vragen__lijst,

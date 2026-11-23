@@ -35,7 +35,7 @@ describe('the start page of the server and of the app', () => {
 		expect(SERVER).toMatch(/<form action="\/" method="get"[^>]*><input type="search" name="q"/);
 	});
 
-	it('has the three questions, each with its sentence and its way in', () => {
+	it('has the questions, each with its sentence and its way in', () => {
 		const { questions } = START;
 		expect(all(SERVER, 'h2').map(text)).toEqual([questions.heading]);
 		const tiles = all(SERVER, 'section', 'vraag');

@@ -22,6 +22,12 @@
 				"text": "Bewaar artikelen, uitspraken en stukken met aantekeningen in een bundel en deel de link.",
 				"linkLabel": "Begin een bundel",
 				"href": "/bundels"
+			},
+			{
+				"title": "Wat speelt er in Europa?",
+				"text": "Voorstellen van de Europese Commissie, de omzetting van richtlijnen in Nederlandse wetten en de vragen van Nederlandse rechters aan het Hof van Justitie.",
+				"linkLabel": "Bekijk Europa",
+				"href": "/europa"
 			}
 		]
 	}
