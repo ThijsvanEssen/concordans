@@ -31,7 +31,8 @@ test('Noemt, on from the start, draws the wetten that only name the Grondwet in 
 }) => {
 	await page.goto(GRONDWET);
 	await expect(page.getByText('Koninklijk besluit', { exact: true }).first()).toBeAttached();
-	// on from the start
+	// on from the start; on a phone the layer shows four and the rest stands under its Alle
+	for (const alle of await page.locator('.list__layer .alle:visible').all()) await alle.click();
 	await expect(page.getByText('Kieswet').first()).toBeAttached();
 	await expect(page.getByText('Wet op de Raad van State').first()).toBeAttached();
 	// Its lines are dashed (a mention), on the drawing.

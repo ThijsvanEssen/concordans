@@ -58,11 +58,9 @@ for (const [name, url] of [
 		await expect(amvb).toBeVisible();
 		await page.waitForTimeout(500);
 		const before = await standing(page);
-		const early = await wetten(page, touch).count();
+		const late = page.waitForResponse(/\/related-instruments\b/);
 		measured();
-		await expect
-			.poll(() => wetten(page, touch).count(), { timeout: LATE + 5_000 })
-			.toBeGreaterThan(early);
+		await late;
 		await page.waitForTimeout(250);
 		const after = await standing(page);
 		// The layers, the law and the regulations stand where they stood (B109).

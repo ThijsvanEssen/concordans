@@ -1116,8 +1116,8 @@
 	.list__layer {
 		margin-top: var(--s-4);
 	}
-	.list__layer.keeps ul {
-		min-height: calc(var(--veld-h-raak) * 7);
+	.list__layer.keeps {
+		min-height: calc(var(--veld-h-raak) * 9);
 	}
 	.list__head {
 		margin: 0 0 var(--s-2);
