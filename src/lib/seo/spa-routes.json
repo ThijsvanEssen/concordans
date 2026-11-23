@@ -113,6 +113,12 @@
 		"description": "Een bundel op één pagina: de onderzoeksvraag, de groepen en de bronnen met hun citeervorm, om te lezen en als PDF te bewaren."
 	},
 	{
+		"path": "/begrippen/[key]",
+		"index": false,
+		"title": "Begrip, Concordans",
+		"description": "Een begrip dat Concordans bijhoudt: de artikelen die samen één leer vormen, met alle uitspraken en stukken erbij, te filteren."
+	},
+	{
 		"path": "/onderwerpen/overzicht",
 		"title": "Overzicht, Concordans",
 		"description": "De besluiten van de Kamers over een onderwerp, per soort, uitkomst, jaar en fractie."

@@ -28,10 +28,16 @@ describe('ConceptBlock', () => {
 		]);
 	});
 
-	it('says "5 van N" of each list and links the other articles but not this one', async () => {
+	it('links "Alle N" of each list to the page of the begrip, and the other articles but not this one', async () => {
 		const { container } = await shown();
-		expect(container.textContent).toContain('1 van 1.900');
-		expect(container.textContent).toContain('1 van 437');
+		const alle = [...container.querySelectorAll('.alle a')].map((a) => [
+			a.textContent,
+			a.getAttribute('href')
+		]);
+		expect(alle).toEqual([
+			['Alle 1.900 uitspraken', '/begrippen/toetsing-van-wetten#uitspraken'],
+			['Alle 437 stukken', '/begrippen/toetsing-van-wetten#stukken']
+		]);
 		const links = [...container.querySelectorAll('.articles a')].map((a) => a.textContent);
 		expect(links).toEqual(['Art. 93']);
 		const dit = container.querySelector('[aria-current="true"]');

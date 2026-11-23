@@ -105,6 +105,56 @@ test('a hit found by a begrip says so', async ({ page }) => {
 	await expect(page.getByText('via begrip wanprestatie')).toHaveCount(1);
 });
 
+test('a hit found by a begrip names the source that ties the term to it', async ({ page }) => {
+	await answerSearch(page, {
+		articles: [
+			article(74, {
+				concept: 'wanprestatie',
+				concept_why: 'art. 6:74 BW: elke tekortkoming verplicht tot schadevergoeding',
+				exact: true
+			})
+		]
+	});
+	await page.goto('/zoeken?q=wanprestatie');
+	await expect(page.getByText('Bron: art. 6:74 BW: elke tekortkoming')).toBeVisible();
+});
+
+test('a query that is the term of a concept block shows the block first, with its source', async ({
+	page
+}) => {
+	await answerSearch(
+		page,
+		{},
+		{
+			best_block: {
+				key: 'bezwaar-en-beroep',
+				name: 'Bezwaar en beroep',
+				concept: 'bezwaar maken',
+				concept_why: 'Awb 6:7, 6:8, 6:11, 7:1 en 8:1: termijn en beroep bij de bestuursrechter'
+			}
+		}
+	);
+	await page.goto('/zoeken?q=bezwaar+maken');
+	const kader = page.getByRole('region', { name: 'Begrip, bijgehouden door Concordans' });
+	await expect(kader.getByRole('link', { name: 'Bezwaar en beroep' })).toHaveAttribute(
+		'href',
+		'/begrippen/bezwaar-en-beroep'
+	);
+	await expect(kader.getByText('via begrip bezwaar maken')).toBeVisible();
+	await expect(kader.getByText(/Awb 6:7, 6:8/)).toBeVisible();
+	// The block is the result: no "Geen resultaten" beside it.
+	await expect(page.getByText(/Geen resultaten voor/)).toHaveCount(0);
+});
+
+test('nothing found offers the spelling the API suggests', async ({ page }) => {
+	await answerSearch(page, {}, { suggestions: ['wanprestatie'] });
+	await page.goto('/zoeken?q=wanprestatei');
+	await expect(page.getByText('Geen resultaten voor "wanprestatei"')).toBeVisible();
+	await expect(page.getByText(/^Bedoelde je/)).toBeVisible();
+	await page.getByRole('link', { name: 'wanprestatie', exact: true }).click();
+	await expect(page).toHaveURL(/q=wanprestatie$/);
+});
+
 test('nothing found has a page that offers a way on', async ({ page }) => {
 	await answerSearch(page, {});
 	await page.goto('/zoeken?q=xqzvbnm+qwertzpl');

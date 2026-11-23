@@ -35,7 +35,7 @@
 		{/if}
 		{#if concept}<span class="begrip" title={BEGRIP_TITEL}
 				>{BEGRIP_VIA} {concept}, {BEGRIP_LIJST}</span
-			>{/if}
+			>{#if hit.concept_why}<span class="begrip">Bron: {hit.concept_why}</span>{/if}{/if}
 	</span>
 	{#if shown.chamber || shown.context || shown.expired}
 		<span class="context"

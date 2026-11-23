@@ -30,6 +30,7 @@
 		RESULT_LIMIT
 	} from '$lib/search/results';
 	import { SearchResults, type ResultsSort } from '$lib/search/results.svelte';
+	import BegripTreffer from '$lib/search/BegripTreffer.svelte';
 	import ResultRow from '$lib/search/ResultRow.svelte';
 	import ZoekHulp from '$lib/search/ZoekHulp.svelte';
 	import { FEW_HITS } from '$lib/search/hulp';
@@ -182,7 +183,11 @@
 	let listEl = $state<HTMLElement | null>(null);
 
 	const empty = $derived(
-		q.length >= 2 && results.done && results.failed.length === 0 && all.every((g) => !g.hits.length)
+		q.length >= 2 &&
+			results.done &&
+			results.failed.length === 0 &&
+			!results.block &&
+			all.every((g) => !g.hits.length)
 	);
 	/** Chosen and filtered down to nothing: the hits there are, but not these. */
 	const filteredAway = $derived(
@@ -214,6 +219,17 @@
 <!-- The ways on from a search that found nothing or little: its words one by one. -->
 {#snippet verder()}
 	<span class="verder">
+		{#if empty && results.suggestions.length}
+			<span class="bedoeld"
+				>Bedoelde je
+				{#each results.suggestions as suggestion, n (suggestion)}{n > 0
+						? n === results.suggestions.length - 1
+							? ' of '
+							: ', '
+						: ''}<TextLink href={resultsHref(suggestion, from, to)}>{suggestion}</TextLink
+					>{/each}?</span
+			>
+		{/if}
 		{#each narrowerWords(q) as word (word)}
 			<TextLink href={resultsHref(word, from, to)}>Zoek "{word}"</TextLink>
 		{/each}
@@ -281,6 +297,10 @@
 
 		{#if leftOut.length > 0}
 			<p class="stil weggelaten">Weggelaten: {leftOut.join(', ')}</p>
+		{/if}
+
+		{#if results.block && !chosen}
+			<BegripTreffer block={results.block} />
 		{/if}
 
 		{#each shown as slot (slot.kind)}
@@ -425,6 +445,9 @@
 	}
 	.staat {
 		margin: var(--s-4) 0;
+	}
+	.bedoeld {
+		flex-basis: 100%;
 	}
 	.verder {
 		display: flex;

@@ -16,6 +16,10 @@ type ResultsLane = {
 	/** `any`: no hit held every word. */
 	matched: 'all' | 'any';
 	leftOut: string[];
+	/** The concept block the query is a term of (`best_block`). */
+	block: Schema<'BestBlockDTO'> | null;
+	/** Of a query that found nothing: what to try instead. */
+	suggestions: string[];
 	searched: Partial<Record<SearchKind, Schema<'SearchedDTO'>>>;
 	error?: unknown;
 };
@@ -25,6 +29,8 @@ const fresh = (status: ResultsLane['status']): ResultsLane => ({
 	hits: {},
 	matched: 'all',
 	leftOut: [],
+	block: null,
+	suggestions: [],
 	searched: {}
 });
 
@@ -44,6 +50,16 @@ export class SearchResults {
 	/** Every lane has answered (or failed) for the query asked last. */
 	readonly done = $derived(LANES.every((l) => this.lanes[l.id].status !== 'loading'));
 	readonly failed = $derived(LANES.filter((l) => this.lanes[l.id].status === 'failed'));
+
+	/** The concept block the query is a term of, as the first lane that names one says. */
+	readonly block = $derived(
+		LANES.map((l) => this.lanes[l.id].block).find((b) => b != null) ?? null
+	);
+
+	/** What to try instead of a query that found nothing: the lanes' suggestions, each once, three at most. */
+	readonly suggestions = $derived(
+		[...new Set(LANES.flatMap((l) => this.lanes[l.id].suggestions))].slice(0, 3)
+	);
 
 	/** The hits of a kind, as its lane last answered. */
 	hitsOf(kind: SearchKind): Hit[] {
@@ -104,6 +120,8 @@ export class SearchResults {
 					hits: r.results as ResultsLane['hits'],
 					matched: r.matched ?? 'all',
 					leftOut: r.left_out ?? [],
+					block: r.best_block ?? null,
+					suggestions: r.suggestions ?? [],
 					searched: r.searched as ResultsLane['searched']
 				};
 			})

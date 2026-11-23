@@ -292,5 +292,8 @@ export const BEGRIP_TITEL =
 	'Concordans houdt een lijst bij die termen als deze aan het artikel koppelt waar ze over gaan. De treffer komt uit die lijst, niet uit de woorden van het artikel zelf.';
 /** Where the method explains that list. */
 export const BEGRIP_METHODE = '/docs/methode#begrippen';
+/** The page of a begrip, or one of its lists (`uitspraken`, `stukken`). */
+export const begripPath = (key: string, list?: 'uitspraken' | 'stukken') =>
+	`/begrippen/${key}${list ? `#${list}` : ''}`;
 /** The label over the block of a begrip under an article. */
 export const BEGRIP_KOP = 'Begrip, bijgehouden door Concordans';
