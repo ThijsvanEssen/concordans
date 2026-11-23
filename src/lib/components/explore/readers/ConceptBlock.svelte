@@ -14,6 +14,7 @@
 	import ConnectedRow from '$lib/verbonden/VerbondenRow.svelte';
 	import { rowKey } from '$lib/verbonden/rows';
 	import { formatCount } from '$lib/text/getal';
+	import { BEGRIP_KOP, BEGRIP_METHODE } from '$lib/vocabulary';
 	import { plural } from '$lib/text/words';
 	import type { GraphNode } from '$lib/graph/types';
 	import { conceptArticleName, documentRows, judgmentRows } from './concept-rows';
@@ -36,92 +37,116 @@
 		{#snippet children(c)}
 			{@const judgments = judgmentRows(c)}
 			{@const documents = documentRows(c)}
-			<Section title={c.name} inklapbaar={false}>
-				{#if c.explanation}
+			<div class="kader">
+				<p class="kop"><a href={BEGRIP_METHODE}>{BEGRIP_KOP}</a></p>
+				<Section title={c.name} inklapbaar={false}>
 					<p class="explanation">
-						<a
-							class="raak-rij"
-							href={c.explanation.url}
-							target="_blank"
-							rel="noopener noreferrer external">Uitleg: {c.explanation.label}</a
-						>
+						{#if c.explanation}<a
+								class="raak-rij"
+								href={c.explanation.url}
+								target="_blank"
+								rel="noopener noreferrer external">Uitleg: {c.explanation.label}</a
+							>{/if}
 					</p>
-				{/if}
-				<ul class="articles">
-					{#each c.articles as a (a.id)}
-						{@const current = same(a.id)}
-						<li class="article" aria-current={current ? 'true' : undefined}>
-							<span class="name">
-								{#if current}<b>{conceptArticleName(c, a.display_name)}</b><small>dit artikel</small
-									>{:else if a.path}<a href={a.path} data-sveltekit-noscroll
-										>{conceptArticleName(c, a.display_name)}</a
-									>{:else}{conceptArticleName(c, a.display_name)}{/if}
-							</span>
-							<span class="opening">{a.heading ?? a.opening}</span>
-							<span class="count"
-								>{formatCount(a.judgment_total)}
-								{plural(a.judgment_total, 'uitspraak', 'uitspraken')}</span
-							>
-						</li>
-					{/each}
-				</ul>
+					<ul class="articles">
+						{#each c.articles as a (a.id)}
+							{@const current = same(a.id)}
+							<li class="article" aria-current={current ? 'true' : undefined}>
+								<span class="name">
+									{#if current}<b>{conceptArticleName(c, a.display_name)}</b><small
+											>dit artikel</small
+										>{:else if a.path}<a href={a.path} data-sveltekit-noscroll
+											>{conceptArticleName(c, a.display_name)}</a
+										>{:else}{conceptArticleName(c, a.display_name)}{/if}
+								</span>
+								<span class="opening">{a.heading ?? a.opening}</span>
+								<span class="count"
+									>{formatCount(a.judgment_total)}
+									{plural(a.judgment_total, 'uitspraak', 'uitspraken')}</span
+								>
+							</li>
+						{/each}
+					</ul>
 
-				<div class="fold-toggle">
-					<FoldButton sleutel="concept-lists" open={listsOpen} controls="{uid}-lists"
-						>Uitspraken en stukken bij deze artikelen</FoldButton
-					>
-				</div>
-				<div class="lists" class:is-dicht={!listsOpen} id="{uid}-lists">
-					{#if judgments.length}
-						<Section
-							title="Uitspraken bij deze artikelen"
-							niveau={3}
-							inklapbaar={false}
-							aantal="{judgments.length} van {formatCount(c.judgment_total)}"
+					<div class="fold-toggle">
+						<FoldButton sleutel="concept-lists" open={listsOpen} controls="{uid}-lists"
+							>Uitspraken en stukken bij deze artikelen</FoldButton
 						>
-							<ul class="list">
-								{#each judgments as row (rowKey(row))}
-									<ConnectedRow
-										{row}
-										selection={node}
-										open={opened === rowKey(row)}
-										onToggle={() => (opened = opened === rowKey(row) ? null : rowKey(row))}
-									/>
-								{/each}
-							</ul>
-						</Section>
-					{/if}
-					{#if documents.length}
-						<Section
-							title="Stukken bij deze artikelen"
-							niveau={3}
-							inklapbaar={false}
-							aantal="{documents.length} van {formatCount(c.document_total)}"
-						>
-							<ul class="list">
-								{#each documents as row (rowKey(row))}
-									<ConnectedRow
-										{row}
-										selection={node}
-										open={opened === rowKey(row)}
-										onToggle={() => (opened = opened === rowKey(row) ? null : rowKey(row))}
-									/>
-								{/each}
-							</ul>
-						</Section>
-					{/if}
-				</div>
-			</Section>
+					</div>
+					<div class="lists" class:is-dicht={!listsOpen} id="{uid}-lists">
+						{#if judgments.length}
+							<Section
+								title="Uitspraken bij deze artikelen"
+								niveau={3}
+								inklapbaar={false}
+								aantal="{judgments.length} van {formatCount(c.judgment_total)}"
+							>
+								<ul class="list">
+									{#each judgments as row (rowKey(row))}
+										<ConnectedRow
+											{row}
+											selection={node}
+											open={opened === rowKey(row)}
+											onToggle={() => (opened = opened === rowKey(row) ? null : rowKey(row))}
+										/>
+									{/each}
+								</ul>
+							</Section>
+						{/if}
+						{#if documents.length}
+							<Section
+								title="Stukken bij deze artikelen"
+								niveau={3}
+								inklapbaar={false}
+								aantal="{documents.length} van {formatCount(c.document_total)}"
+							>
+								<ul class="list">
+									{#each documents as row (rowKey(row))}
+										<ConnectedRow
+											{row}
+											selection={node}
+											open={opened === rowKey(row)}
+											onToggle={() => (opened = opened === rowKey(row) ? null : rowKey(row))}
+										/>
+									{/each}
+								</ul>
+							</Section>
+						{/if}
+					</div>
+				</Section>
+			</div>
 		{/snippet}
 	</LoadState>
 {/if}
 
 <style>
+	/* Concordans' own, not the law's: a frame and a label say so. */
+	.kader {
+		margin-block: var(--s-6);
+		padding: var(--s-3) var(--s-4) var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		background: var(--paper);
+	}
+	.kop {
+		margin: 0;
+		font-size: var(--t-micro);
+	}
+	.kop a {
+		color: var(--ink-3);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+	}
 	.concept-wait {
 		min-height: 24rem;
 	}
 	.explanation {
 		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0 var(--s-4);
 		text-align: right;
 		font-size: var(--t-meta);
 	}

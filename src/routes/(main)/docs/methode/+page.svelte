@@ -32,6 +32,17 @@
 			</p>
 		</Sectie>
 
+		<Sectie title="Begrippen" niveau={2} inklapbaar={false} id="begrippen">
+			<p>
+				Concordans houdt met de hand een lijst van begrippen bij, zoals wanprestatie of AVG. Elk
+				begrip heeft varianten, het artikel of de wet waar het over gaat en de bron die het daaraan
+				verbindt. Zoek je een begrip uit de lijst, dan staat dat artikel bovenaan, met de vermelding
+				‘via begrip’. Ook de artikelen die samen één leer vormen, zoals Gw 93, 94 en 120, zijn met
+				de hand gegroepeerd. Wat niet in de lijst staat, vindt de zoekfunctie alleen op de woorden
+				van de bron zelf.
+			</p>
+		</Sectie>
+
 		<Sectie title="Betrouwbaarheid" niveau={2} inklapbaar={false} id="betrouwbaarheid">
 			<p>De kaart van een verbinding noemt haar herkomst:</p>
 			<KeyList>

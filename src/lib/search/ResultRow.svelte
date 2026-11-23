@@ -7,6 +7,7 @@
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { expiredWord, hitName, presentHit } from './present';
 	import { conceptOf } from './results';
+	import { BEGRIP_LIJST, BEGRIP_TITEL, BEGRIP_VIA } from '$lib/vocabulary';
 
 	let {
 		hit,
@@ -32,7 +33,9 @@
 						>{:else}{part.text}{/if}{/each}</span
 			>
 		{/if}
-		{#if concept}<span class="begrip">via begrip {concept}</span>{/if}
+		{#if concept}<span class="begrip" title={BEGRIP_TITEL}
+				>{BEGRIP_VIA} {concept}, {BEGRIP_LIJST}</span
+			>{/if}
 	</span>
 	{#if shown.chamber || shown.context || shown.expired}
 		<span class="context"

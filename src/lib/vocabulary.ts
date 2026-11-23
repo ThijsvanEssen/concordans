@@ -284,3 +284,13 @@ export const LINEAGE: Partial<Record<Collection, readonly Relation[]>> = {
 /** Whether a kind of bron has a keten: a law or an article, or one of the kinds above. */
 export const hasChain = (collection: Collection): boolean =>
 	collection === 'instruments' || collection === 'articles' || !!LINEAGE[collection];
+
+/** What a hit found by the curated list of begrippen says, and what hovering it explains. */
+export const BEGRIP_VIA = 'via begrip';
+export const BEGRIP_LIJST = 'uit de lijst van Concordans';
+export const BEGRIP_TITEL =
+	'Concordans houdt een lijst bij die termen als deze aan het artikel koppelt waar ze over gaan. De treffer komt uit die lijst, niet uit de woorden van het artikel zelf.';
+/** Where the method explains that list. */
+export const BEGRIP_METHODE = '/docs/methode#begrippen';
+/** The label over the block of a begrip under an article. */
+export const BEGRIP_KOP = 'Begrip, bijgehouden door Concordans';

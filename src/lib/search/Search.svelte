@@ -19,6 +19,7 @@
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { notHeld, searchedLine } from '$lib/text/coverage';
 	import { conceptOf, resultsHref } from './results';
+	import { BEGRIP_LIJST, BEGRIP_TITEL, BEGRIP_VIA } from '$lib/vocabulary';
 	import { expiredTitle, expiredWord, groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId } from '$lib/vocabulary';
@@ -392,7 +393,9 @@
 												>{:else}{part.text}{/if}{/each}</span
 									>
 								{/if}
-								{#if conceptOf(hit)}<span class="row-begrip">via begrip {conceptOf(hit)}</span>{/if}
+								{#if conceptOf(hit)}<span class="row-begrip" title={BEGRIP_TITEL}
+										>{BEGRIP_VIA} {conceptOf(hit)}, {BEGRIP_LIJST}</span
+									>{/if}
 							</span>
 							{#if picker && chosen.includes(focusOf(hitName(hit)) ?? '')}<span class="row-al"
 									>al in het netwerk</span
