@@ -82,8 +82,15 @@ test('the kinds of one source are its lists, the sources themselves are the navi
 		'aria-current',
 		'page'
 	);
+	// Rechtspraak has its own lists too (Rechtsgang, Indeling), so its strip is there from the
+	// first page; the assertion waits for it, instead of passing before the page has drawn it.
 	await page.goto('/uitspraken');
-	await expect(page.getByRole('navigation', { name: 'Rechtspraak', exact: true })).toHaveCount(0);
+	const rechtspraak = page.getByRole('navigation', { name: 'Rechtspraak', exact: true });
+	await expect(rechtspraak.getByRole('link')).toHaveText(['Uitspraken', 'Rechtsgang', 'Indeling']);
+	await expect(rechtspraak.getByRole('link', { name: 'Uitspraken' })).toHaveAttribute(
+		'aria-current',
+		'page'
+	);
 });
 
 test('Mijn holds Bundels and Gevolgd', async ({ page }) => {
