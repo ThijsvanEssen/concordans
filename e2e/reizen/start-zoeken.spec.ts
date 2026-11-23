@@ -87,10 +87,20 @@ test('the first question of the start page opens an article with what refers to 
 	await expect(vragen.locator('.vraag').getByRole('heading', { level: 3 })).toHaveText([
 		'Wie haalt dit artikel aan?',
 		'Hoe stemde de Kamer?',
-		'Hoe houd ik bij wat ik vind?'
+		'Hoe houd ik bij wat ik vind?',
+		'Wat speelt er in Europa?'
 	]);
 	await vragen.getByRole('link', { name: /art\. 6:162 BW/ }).click();
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('6:162');
+});
+
+test('the fourth question of the start page leads to Europa', async ({ page }) => {
+	await page.goto('/');
+	await page
+		.getByRole('region', { name: 'Begin met een vraag' })
+		.getByRole('link', { name: 'Bekijk Europa' })
+		.click();
+	await expect(page).toHaveURL(/\/europa$/);
 });
 
 test('Ctrl K opens search from any page', async ({ page, touch }) => {
