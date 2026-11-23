@@ -6,7 +6,7 @@
 	import { plural } from '$lib/text/words';
 	import { formatCount } from '$lib/text/getal';
 	import IndexRow from '../IndexRow.svelte';
-	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from '../judgment-row';
+	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle, unionRow } from '../judgment-row';
 	import type { ViewProps } from '../lists/list';
 
 	let { ctx }: ViewProps<Schema<'JudgmentListItemDTO'>, object> = $props();
@@ -15,10 +15,13 @@
 <ul class="list">
 	{#each ctx.rows ?? [] as j (j.id)}
 		{@const bron = `judgments/${j.key}`}
-		<IndexRow {bron} title={judgmentRowTitle(j)} href={openHref(bron)} acties>
+		{@const union = j.tier === 'hvj_eu' ? unionRow(j) : null}
+		<IndexRow {bron} title={union?.title ?? judgmentRowTitle(j)} href={openHref(bron)} acties>
 			{#snippet lead()}
 				<span class="row-id-main"><DateTime iso={j.date} /></span>
-				<span class="row-id-sub"><Waarde value={judgmentCourt(j.display_name, j.court)} /></span>
+				<span class="row-id-sub"
+					><Waarde value={union?.court ?? judgmentCourt(j.display_name, j.court)} /></span
+				>
 			{/snippet}
 			{#snippet body()}
 				{#if j.summary}
@@ -26,10 +29,12 @@
 				{/if}
 				<!-- The case number and the rechtsgebied, as rechtspraak.nl lists them;
 				     the ECLI is the title unless the case has a name. -->
-				{@const zaak = judgmentCaseNumber(j.display_name)}
-				{@const context = [j.names?.length ? j.ecli : null, zaak, j.subjects?.join('; ')].filter(
-					Boolean
-				)}
+				{@const zaak = union ? union.caseNumber : judgmentCaseNumber(j.display_name)}
+				{@const context = [
+					union || j.names?.length ? j.ecli : null,
+					zaak,
+					j.subjects?.join('; ')
+				].filter(Boolean)}
 				{#if context.length}
 					<span class="row-sub">{context.join(', ')}</span>
 				{/if}

@@ -5,7 +5,7 @@
 	// the sources behind them (EUR-Lex, the Legislative Train) are one step further, by the
 	// number the title names. What no call can give yet is said in the list it belongs to.
 	import { getCourtRulings, getEuProposals, getTransposingBills } from '$lib/api/europa';
-	import { citationRecord } from '$lib/text/citation-record';
+	import { unionRow } from '$lib/components/explore/index/judgment-row';
 	import { openHref } from '$lib/bron/href';
 	import { officialNumber, dossierNumberLabel } from '$lib/bron/dossier-naam';
 	import { LIST_PATHS } from '$lib/bron/lists';
@@ -23,10 +23,8 @@
 	import { load } from '$lib/util/load.svelte';
 	import {
 		LEGISLATIVE_TRAIN,
-		unionCaseNumber,
 		eurLexEcli,
 		proposalKind,
-		unionCourt,
 		actOf,
 		comOf,
 		eurLexAct,
@@ -178,20 +176,13 @@
 					<ul class="list">
 						{#each rulings.state.data.items as j (j.id)}
 							{@const bron = `judgments/${j.key}`}
-							<IndexRow
-								{bron}
-								title={j.display_name ?? j.ecli ?? 'Uitspraak'}
-								href={openHref(bron)}
-								acties
-							>
+							{@const row = unionRow(j)}
+							<IndexRow {bron} title={row.title} href={openHref(bron)} acties>
 								{#snippet lead()}
 									<span class="row-id-main"><DateTime iso={j.date} /></span>
-									<span class="row-id-sub">{unionCourt(j.court)}</span>
+									<span class="row-id-sub">{row.court}</span>
 								{/snippet}
 								{#snippet body()}
-									{@const caseNo = unionCaseNumber(
-										citationRecord({ ...j, kind: 'judgment' })?.short
-									)}
 									{#if j.ecli}
 										<span class="row-sub"
 											><a
@@ -199,7 +190,8 @@
 												href={eurLexEcli(j.ecli)}
 												target="_blank"
 												rel="external noopener"
-												>EUR-Lex{caseNo ? `, ${caseNo}` : ''}<span class="sr-only">, {NEW_TAB}</span
+												>EUR-Lex{row.caseNumber ? `, ${row.caseNumber}` : ''}<span class="sr-only"
+													>, {NEW_TAB}</span
 												></a
 											></span
 										>

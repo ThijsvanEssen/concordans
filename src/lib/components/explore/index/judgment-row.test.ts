@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from './judgment-row';
+import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle, unionRow } from './judgment-row';
 
 describe('a judgment in the list', () => {
 	const j = {
@@ -21,5 +21,22 @@ describe('a judgment in the list', () => {
 			'Rechtbank Zeeland-West-Brabant'
 		);
 		expect(judgmentCourt(null, 'HR')).toBe('HR');
+	});
+
+	it('gives a judgment of the Union its case name and court in full, as Europa does', () => {
+		const row = unionRow({
+			key: 'ECLI:EU:T:2026:1',
+			ecli: 'ECLI:EU:T:2026:1',
+			display_name: 'Bloom tegen Europese Commissie',
+			court: 'T'
+		});
+		expect(row).toMatchObject({
+			title: 'Bloom tegen Europese Commissie',
+			court: 'Gerecht van de EU'
+		});
+		expect(unionRow({ key: 'k', ecli: 'ECLI:EU:C:2026:2', court: 'C' })).toMatchObject({
+			title: 'ECLI:EU:C:2026:2',
+			court: 'Hof van Justitie'
+		});
 	});
 });

@@ -1,4 +1,6 @@
 // A judgment in a list: its name, its case number and its court, from its display name.
+import { unionCaseNumber, unionCourt } from '$lib/europa/europa';
+import { citationRecord } from '$lib/text/citation-record';
 import { keyEcli } from '$lib/text/ecli';
 
 /** "Raad van State 2026-09-23 / 202406462/1/R2" in its parts: the court in full, the case number. */
@@ -34,3 +36,22 @@ export const judgmentCaseNumber = (displayName: string | null | undefined) =>
  */
 export const judgmentCourt = (displayName: string | null | undefined, code?: string | null) =>
 	parts(displayName).court ?? code ?? null;
+
+/**
+ * A judgment of the Court of Justice or the General Court as one row, here and on the page
+ * Europa: the case name as its title, the court in full, the case number (`C-216/25`).
+ */
+export function unionRow(j: {
+	display_name?: string | null;
+	ecli?: string | null;
+	court?: string | null;
+	key: string;
+	cite?: unknown;
+}) {
+	const record = citationRecord({ ...j, kind: 'judgment' } as Parameters<typeof citationRecord>[0]);
+	return {
+		title: j.display_name ?? j.ecli ?? 'Uitspraak',
+		court: unionCourt(j.court),
+		caseNumber: unionCaseNumber(record?.short)
+	};
+}
