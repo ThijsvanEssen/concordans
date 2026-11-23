@@ -26,7 +26,7 @@
 	// (two tekstversies, `van..tot`, or one lid, `lid-4`) the text gives way to the
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { getDocumentPassages } from '$lib/api/documents';
-	import { getArticleAmounts, getArticleVersion, getDelegated } from '$lib/api/articles';
+	import { getArticleVersion, getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import Coverage from '$lib/components/ui/Coverage.svelte';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
@@ -70,7 +70,7 @@
 	import { statusOf } from '$lib/text/validity';
 	import { compareTarget, outcomesOf, ownSuccessionName, successionName } from './succession';
 	import { parseNodeId } from '$lib/vocabulary';
-	import { articleKey as keyOfArticle, fetchArticle } from './article';
+	import { articleKey as keyOfArticle, fetchAmounts, fetchArticle } from './article';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { load } from '$lib/util/load.svelte';
 	import { report } from '$lib/api/errors';
@@ -287,19 +287,10 @@
 	const shownVersion = $derived(
 		shown && shownText.state.status === 'ready' ? shownText.state.data : null
 	);
-	// The numbers in the text, asked after the text itself (first paint on the cheapest call):
-	// of the version on screen. A failure or an article without numbers leaves the text as it is.
+	// The numbers of the version on screen, asked after its text (fetchAmounts).
 	const amounts = load(
-		() =>
-			articleKey && article.state.status === 'ready' ? `${articleKey}|${shown?.from ?? ''}` : null,
-		async (key) => {
-			if (!key) return [];
-			const r = await getArticleAmounts(bwbId, articleNumber, shown?.from ?? null).catch((e) => {
-				report('Getallen', e);
-				return null;
-			});
-			return r?.amounts ?? [];
-		},
+		() => (loaded ? `${articleKey}|${shown?.from ?? ''}` : null),
+		fetchAmounts,
 		'Getallen'
 	);
 	const getallen = $derived(amounts.state.status === 'ready' ? amounts.state.data : []);
@@ -986,9 +977,7 @@
 			{/if}
 		</div>
 
-		{#if !shown || shownVersion}
-			<GetallenBlok {getallen} />
-		{/if}
+		<GetallenBlok {getallen} />
 
 		<!-- The concepts the article is one of: under the text, over Vorig and Volgend. -->
 		{#each d.concepts ?? [] as c (c.key)}

@@ -1,6 +1,6 @@
 // The text of an article and its tekstversies, asked together by one key: the status line
 // ("tekst sinds …") stands with the text instead of growing over it after.
-import { getArticleDetail, getArticleHistory } from '$lib/api/articles';
+import { getArticleAmounts, getArticleDetail, getArticleHistory } from '$lib/api/articles';
 import { recordArticleLaw } from '$lib/api/instrument-cache';
 import { report } from '$lib/api/errors';
 import type { Schema } from '$lib/api/types';
@@ -31,4 +31,21 @@ export function fetchArticle(key: string | null) {
 		recordArticleLaw(law, detail.instrument);
 		return { detail, versions: versionState };
 	});
+}
+
+/**
+ * The numbers of an article (`law/number|day`: the version in force on that day, the current
+ * one without): none where it fails, the text stands without them and the failure is reported.
+ */
+export async function fetchAmounts(key: string | null) {
+	if (!key) return stillLoading<never>();
+	const [article, day] = key.split('|');
+	const cut = article.indexOf('/');
+	const found = await getArticleAmounts(article.slice(0, cut), article.slice(cut + 1), day).catch(
+		(e) => {
+			report('Getallen', e);
+			return null;
+		}
+	);
+	return found?.amounts ?? [];
 }

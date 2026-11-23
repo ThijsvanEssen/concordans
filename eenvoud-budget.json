@@ -12,10 +12,10 @@
 		"first_paint_files": 13
 	},
 	"lines_per_file": {
-		"src/lib/components/articles/ArticleText.svelte": 1092,
+		"src/lib/components/articles/ArticleText.svelte": 1098,
 		"src/lib/components/articles/VersionCompare.svelte": 972,
 		"src/lib/components/explore/IndexView.svelte": 946,
-		"src/lib/components/explore/readers/ArticleReader.svelte": 1215,
+		"src/lib/components/explore/readers/ArticleReader.svelte": 1226,
 		"src/lib/components/explore/readers/DocumentReader.svelte": 853,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 836,
 		"src/lib/components/graph/GraphView.svelte": 1338,
@@ -34,7 +34,7 @@
 	},
 	"imports_per_svelte": {
 		"src/lib/components/explore/WholeLawReader.svelte": 49,
-		"src/lib/components/explore/readers/ArticleReader.svelte": 55,
+		"src/lib/components/explore/readers/ArticleReader.svelte": 56,
 		"src/lib/components/explore/readers/DocumentReader.svelte": 48,
 		"src/lib/components/explore/readers/DossierReader.svelte": 42,
 		"src/lib/components/explore/readers/JudgmentReader.svelte": 44,

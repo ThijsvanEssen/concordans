@@ -132,7 +132,7 @@
 		definities?: Definitie[];
 		/** The delegation formulas of the text (`delegations`). */
 		delegaties?: Delegatie[];
-		/** The numbers in the text (`/amounts`): each marked, its card the previous toestand. */
+		/** The numbers in the text (`/amounts`), each marked. */
 		getallen?: Getal[] | null;
 		/** The regulations issued under the article, asked when a formula is first pointed at. */
 		grondslag?: (() => Promise<Gedelegeerd | null>) | null;
@@ -200,8 +200,6 @@
 	);
 	const perRef = $derived(definitiesOp(definities));
 	const tables = $derived(apiTables ?? []);
-	/** The numbers the text still holds where the API read them. */
-	const getallenOnText = $derived(getallenIn(source, getallen));
 	const parts = $derived(partsOf(source, apiParts, tables));
 	/** The notes the markers refer to, by their number. */
 	const notes = $derived(articleNotes(source, footnoteMarks, tables));
@@ -282,7 +280,7 @@
 		citations: spansWithin(links, start, end - start),
 		begrippen: spansWithin(begrippen, start, end - start),
 		delegaties: delegatiesWithin(delegaties, start, end - start),
-		getallen: getallenWithin(getallenOnText, start, end - start)
+		getallen: getallenWithin(getallenIn(source, getallen), start, end - start)
 	});
 
 	/** A part's own text: its paragraphs (trimmed, none empty), its headings, its tables and
