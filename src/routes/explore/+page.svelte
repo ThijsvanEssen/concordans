@@ -176,7 +176,7 @@
 		netwerkQuery as netwerkQueryOf
 	} from './explore-url';
 	import { verbondenInView, type Panel } from './panels';
-	import { ChainData } from './chain-data.svelte';
+	import { ChainData, besideLaws } from './chain-data.svelte';
 	import ReadTabs from './ReadTabs.svelte';
 	import ConnectedEntry from './ConnectedEntry.svelte';
 	import { mayShortcut, takeEscape } from '$lib/actions/keys';
@@ -436,10 +436,7 @@
 	 * fractie or a Kamerlid as the bron or among the chosen ones; elsewhere it is not offered
 	 * (R3-K F9, R3-I F1, besluit 41).
 	 */
-	const chainPossible = $derived(
-		mode === 'graph' &&
-			[selectedNode, ...composer.entries.filter((e) => e.on).map((e) => e.node)].some(withChain)
-	);
+	const chainPossible = $derived(mode === 'graph' && chainChosen.some(withChain));
 	/** A judgment, a fractie or a Kamerlid: its keten is its lineage (lineage.ts). */
 	const lineageStart = $derived(
 		chainStart && LINEAGE[chainStart.collection] && !chainStart.id.startsWith('synth:')
@@ -492,18 +489,6 @@
 			? { what: 'De keten', error: chainError.error, retry: () => chainTries++ }
 			: null
 	);
-	/** The other chosen laws: one that shares a regulation with the keten stands beside its law. */
-	const chainSisters = $derived(
-		chainStart?.collection === 'instruments'
-			? chainChosen.filter(
-					(n) =>
-						n.id !== chainStart.id &&
-						n.collection === 'instruments' &&
-						(!textOf(n.raw?.props?.kind) ||
-							/^(?:wet|rijkswet)$/i.test(textOf(n.raw?.props?.kind) ?? ''))
-				)
-			: []
-	);
 	const chainData = new ChainData(
 		() => chainLaw,
 		() => (chainExpired ? 'all' : 'in_force'),
@@ -511,7 +496,7 @@
 		() => chainMentions && !chainArticle,
 		() => (chainError = null),
 		(bwb, error) => (chainError = { bwb, error }),
-		() => chainSisters.map((n) => lawIdOf(n.raw?.props) ?? n.key.toUpperCase())
+		() => besideLaws(chainChosen, chainStart, $instrumentMetaStore)
 	);
 	/** The keten of a judgment, a fractie or a Kamerlid (lineage.ts), by the start's id. */
 	let lineageData = $state.raw<{ id: string; layers: ChainLayer[] } | null>(null);
@@ -564,7 +549,6 @@
 	$effect(() => {
 		if (chainArticle) ensureInstrumentName(chainLaw);
 	});
-	/** The keten with or without its mentions: drawn, and counted for Relatie. */
 	/** The room the keten measured, and the bronnen of a layer that fit in it (160 px each, 144 for the labels). */
 	let chainRoom = $state(0);
 	const chainFit = $derived(Math.max(0, Math.floor((chainRoom - 144) / 176)));
@@ -574,11 +558,11 @@
 		const asked = chainData.asked;
 		if (!bwb || asked?.bwb !== bwb || !netwerkLogic) return null;
 		const id = `instruments/${bwb.toLowerCase()}`;
-		const start = chainStart;
 		// A publication by its name (Stb. 2018, 101), never its key (R3-K F11).
 		const name =
-			start?.collection === 'instruments'
-				? (lawName($instrumentMetaStore.get(bwb), null) ?? bronNaam(start, $instrumentMetaStore))
+			chainStart?.collection === 'instruments'
+				? (lawName($instrumentMetaStore.get(bwb), null) ??
+					bronNaam(chainStart, $instrumentMetaStore))
 				: lawName($instrumentMetaStore.get(bwb), bwb);
 		const eu = chainData.eu?.bwb === bwb ? chainData.eu.eu : null;
 		return netwerkLogic.chain(
@@ -592,18 +576,7 @@
 				article: chainArticle,
 				mentions,
 				refers: chainData.refers?.bwb === bwb ? chainData.refers.items : null,
-				beside: chainSisters.map((n) => {
-					const other = lawIdOf(n.raw?.props) ?? n.key.toUpperCase();
-					return {
-						id: n.id,
-						name: bronFullName(n, $instrumentMetaStore),
-						abbreviation: bronNaam(n, $instrumentMetaStore),
-						delegated:
-							chainData.beside?.validity === (chainExpired ? 'all' : 'in_force')
-								? (chainData.beside.laws.get(other) ?? null)
-								: null
-					};
-				}),
+				beside: chainData.sisters(chainExpired ? 'all' : 'in_force'),
 				eu: eu
 					? {
 							implements: eu.implements.map((l) => l.instrument),

@@ -316,6 +316,57 @@ function basisLabel(items: Basis['items'], lawLabel: string): string {
 }
 
 /**
+ * The regulations a decree that only changes names, which the data lacks: only one of this law by
+ * its name (Arbeidsomstandighedenwet: the Arbeidsomstandighedenbesluit), not one of another law
+ * the decree changes too.
+ */
+function missingOf(amending: readonly string[], lawName: string, named: ReadonlySet<string>) {
+	const stem = lawName.replace(/wet$/i, '').toLowerCase();
+	return [
+		...new Set(
+			amending.flatMap((title) => {
+				const changed = CHANGES.exec(title)?.[1]?.trim();
+				return changed &&
+					stem.length > 3 &&
+					changed.toLowerCase().startsWith(stem) &&
+					!named.has(changed.toLowerCase())
+					? [changed]
+					: [];
+			})
+		)
+	];
+}
+
+type Beside = NonNullable<ChainOptions['beside']>[number];
+
+/** A law beside the start's, in its layer: only a node, its lines hang from the regulations. */
+const besideNode = (b: Beside): ChainNode => ({
+	id: b.id,
+	name: b.name,
+	short: b.name,
+	collection: 'instruments',
+	kind: 'wet',
+	since: null,
+	grondslag: null,
+	mentions: null,
+	unknown: null,
+	parents: [],
+	further: []
+});
+
+/** The regulations of `b` the keten draws already (the Cbb under the Cbw and the Wwke). */
+const sharing = (
+	beside: readonly Beside[] | undefined,
+	drawn: ReadonlyMap<string, unknown>,
+	tie: (b: Beside, item: NonNullable<Beside['delegated']>['items'][number]) => void
+) =>
+	(beside ?? []).filter((b) => {
+		const items = (b.delegated?.items ?? []).filter((item) => drawn.has(item.instrument.id));
+		for (const item of items) tie(b, item);
+		return items.length > 0;
+	});
+
+/**
  * The layers of the keten of `wet` (its summary), from what /delegated, /basis and /eu-links
  * give. Up to `max` regulations a layer, and `keep`; the rest are listed apart (`more`), not
  * drawn.
@@ -331,7 +382,7 @@ export function chain(
 		article = null,
 		eu = null,
 		refers = null,
-		beside = [],
+		beside,
 		mentions = true
 	}: ChainOptions = {}
 ): {
@@ -355,22 +406,7 @@ export function chain(
 		return false;
 	});
 	const named = new Set(own.map((item) => nameOf(item.instrument).toLowerCase()));
-	const missing = [
-		...new Set(
-			amending.flatMap((title) => {
-				const changed = CHANGES.exec(title)?.[1]?.trim();
-				// Only a regulation of this law by its name (Arbeidsomstandighedenwet: the
-				// Arbeidsomstandighedenbesluit), not one of another law the decree changes too.
-				const stem = law.name.replace(/wet$/i, '').toLowerCase();
-				return changed &&
-					stem.length > 3 &&
-					changed.toLowerCase().startsWith(stem) &&
-					!named.has(changed.toLowerCase())
-					? [changed]
-					: [];
-			})
-		)
-	];
+	const missing = missingOf(amending, law.name, named);
 	const rest: Partial<Record<LayerId, number>> = {};
 	const more: Partial<Record<LayerId, ChainNode[]>> = {};
 	/** A layer of EU acts or implementing laws: up to `max` drawn, the rest listed. */
@@ -512,15 +548,9 @@ export function chain(
 			);
 	// A regulation under the law that another chosen law gives a power for too: that law stands
 	// beside this one, tied to it (Thijs, 22 Nov: the Cbb under the Cbw and the Wwke).
-	const sisters = beside.flatMap((b) => {
-		let shared = false;
-		for (const item of b.delegated?.items ?? []) {
-			if (!byId.has(item.instrument.id)) continue;
-			shared = true;
-			take(item, parentsOf(b.id, item.articles, b.abbreviation ?? b.name, wayOf(item.basis_kind)));
-		}
-		return shared ? [b] : [];
-	});
+	const sisters = sharing(beside, byId, (b, item) =>
+		take(item, parentsOf(b.id, item.articles, b.abbreviation ?? b.name, wayOf(item.basis_kind)))
+	);
 	// The laws that only name this one in their text, as mentions; not a law the keten draws
 	// already (the Cbw over the Cbb): its first answer said how it hangs.
 	const above = new Set((basis?.items ?? []).map((b) => b.instrument.id));
@@ -603,21 +633,7 @@ export function chain(
 		perLayer.set(id, drawn);
 	}
 	lawLayer.nodes.push(...(perLayer.get('statute') ?? []));
-	for (const b of sisters)
-		if (!lawLayer.nodes.some((n) => n.id === b.id))
-			lawLayer.nodes.push({
-				id: b.id,
-				name: b.name,
-				short: b.name,
-				collection: 'instruments',
-				kind: 'wet',
-				since: null,
-				grondslag: null,
-				mentions: null,
-				unknown: null,
-				parents: [],
-				further: []
-			});
+	lawLayer.nodes.push(...sisters.map(besideNode));
 	if (eu?.implementedBy.length)
 		layers.push({
 			id: 'implementation',

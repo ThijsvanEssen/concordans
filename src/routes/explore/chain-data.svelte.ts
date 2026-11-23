@@ -4,9 +4,36 @@
 // as does all the werkplek asks besides (chainFirst).
 import { getLawBasis, getLawDelegatedSummary } from '$lib/api/articles';
 import { isNotFound, report } from '$lib/api/errors';
+import type { GraphNode } from '$lib/graph/types';
+import { lawIdOf } from '$lib/graph/types';
+import { bronFullName, bronNaam } from '$lib/bron/naam';
+import type { InstrumentMeta } from '$lib/text/instrument-meta';
+import { textOf } from '$lib/text/words';
 import { getEuLinks, getRelatedInstruments } from '$lib/api/verbonden';
 
 type Validity = 'in_force' | 'all';
+type Delegated = Awaited<ReturnType<typeof getLawDelegatedSummary>>;
+
+/** A chosen law that may stand beside the keten's: its node id, BWB id and names. */
+export type BesideLaw = { id: string; bwb: string; name: string; abbreviation: string };
+
+/** The chosen laws other than the start: each may share a regulation with the keten. */
+export function besideLaws(
+	chosen: readonly GraphNode[],
+	start: GraphNode | null,
+	meta: Map<string, InstrumentMeta>
+): BesideLaw[] {
+	if (start?.collection !== 'instruments') return [];
+	return chosen
+		.filter((n) => n.id !== start.id && n.collection === 'instruments')
+		.filter((n) => /^(?:wet|rijkswet|)$/i.test(textOf(n.raw?.props?.kind) ?? ''))
+		.map((n) => ({
+			id: n.id,
+			bwb: lawIdOf(n.raw?.props) ?? n.key.toUpperCase(),
+			name: bronFullName(n, meta),
+			abbreviation: bronNaam(n, meta)
+		}));
+}
 
 export class ChainData {
 	/** The regulations of the law, and the laws above it (null: none could be asked). */
@@ -24,11 +51,23 @@ export class ChainData {
 		items: Awaited<ReturnType<typeof getRelatedInstruments>>['items'];
 	} | null>(null);
 
-	/** The regulations of the other chosen laws, by law: the laws that stand beside the keten's. */
-	beside = $state.raw<{
+	/** The other chosen laws with their regulations: those that may stand beside the keten's. */
+	private beside = $state.raw<{
 		validity: Validity;
-		laws: Map<string, Awaited<ReturnType<typeof getLawDelegatedSummary>>>;
+		laws: { law: BesideLaw; delegated: Delegated }[];
 	} | null>(null);
+
+	/** The laws beside the keten's that share a regulation with it, as `chain` takes them. */
+	sisters(validity: Validity) {
+		return this.beside?.validity === validity
+			? this.beside.laws.map(({ law, delegated }) => ({
+					id: law.id,
+					name: law.name,
+					abbreviation: law.abbreviation,
+					delegated
+				}))
+			: [];
+	}
 
 	constructor(
 		law: () => string | null,
@@ -40,8 +79,8 @@ export class ChainData {
 		/** A new keten is asked: its failure of before is gone. */
 		onAsk: () => void,
 		onFailure: (bwb: string, error: unknown) => void,
-		/** The other chosen laws (BWB ids): their regulations come after the keten's own. */
-		others: () => readonly string[] = () => []
+		/** The other chosen laws: their regulations come after the keten's own. */
+		others: () => readonly BesideLaw[]
 	) {
 		$effect(() => {
 			const bwb = law();
@@ -80,15 +119,18 @@ export class ChainData {
 		$effect(() => {
 			const bwb = law();
 			const kept = validity();
-			const ids = others();
-			if (!bwb || this.asked?.bwb !== bwb || !ids.length) return;
+			const laws = others();
+			if (!bwb || this.asked?.bwb !== bwb || !laws.length) return;
 			let current = true;
-			Promise.all(ids.map((id) => getLawDelegatedSummary(id, kept).catch(() => null))).then(
-				(found) => {
+			Promise.all(laws.map((law) => getLawDelegatedSummary(law.bwb, kept).catch(() => null)))
+				.then((found) => {
 					if (current)
-						this.beside = { validity: kept, laws: new Map(ids.map((id, i) => [id, found[i]])) };
-				}
-			);
+						this.beside = {
+							validity: kept,
+							laws: laws.map((law, i) => ({ law, delegated: found[i] }))
+						};
+				})
+				.catch((e) => report('Keten zusterwetten', e));
 			return () => {
 				current = false;
 			};
