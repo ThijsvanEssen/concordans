@@ -18,9 +18,6 @@
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import Section from '$lib/components/ui/Sectie.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import { SOURCES } from '$lib/nav/sources';
-	import SourceTabs from '$lib/nav/SourceTabs.svelte';
-	import { sourceTabs } from '$lib/components/explore/index/categories';
 	import { load } from '$lib/util/load.svelte';
 	import {
 		LEGISLATIVE_TRAIN,
@@ -50,8 +47,6 @@
 
 	const NEW_TAB = 'opent in nieuw tabblad';
 
-	const laws = SOURCES.find((x) => x.id === 'wetten')!;
-
 	const SECTIONS = [
 		{ id: 'voorstellen', label: 'EU-voorstellen in behandeling' },
 		{ id: 'omzetting', label: 'Omzetting in Nederland' },
@@ -66,11 +61,8 @@
 
 <RouteKop />
 
-<SourceTabs label={laws.label} tabs={sourceTabs(laws)} current="/europa" />
-
 <div class="blad blad__indeling">
-	<!-- The tab names the page, as on the other pages beside the lists. -->
-	<h1 class="blad__titel sr-only">Bronnen: Europa</h1>
+	<h1 class="blad__titel sr-only">Europa</h1>
 	<Inhoudsopgave items={SECTIONS} />
 	<div class="blad__lijst results">
 		<div class="groepen">

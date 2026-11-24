@@ -1,4 +1,4 @@
-// Europa (/europa, B176): EU proposals before the Tweede Kamer, bills that transpose EU acts and
+// Europa (/europa, B176; no tab of Wetten, its lists are filters of Dossiers and Uitspraken): EU proposals before the Tweede Kamer, bills that transpose EU acts and
 // the preliminary rulings on questions of Dutch courts, each row opening its bron, with the
 // official source (EUR-Lex) one step further where the API names the number.
 import { expect, test } from '../support/test';
@@ -21,8 +21,15 @@ test('/europa lists the three, with EUR-Lex where the API names the act', async 
 	);
 });
 
-test('Europa is a tab beside the lists of Wetten', async ({ page }) => {
+test('Europa is no tab of Wetten; its lists are filters of Dossiers and Uitspraken', async ({
+	page
+}) => {
 	await page.goto('/wetten');
-	await page.getByRole('link', { name: 'Europa', exact: true }).click();
-	await expect(page).toHaveURL(/\/europa$/);
+	await expect(page.getByRole('link', { name: 'Europa', exact: true })).toHaveCount(0);
+	await page.goto('/europa');
+	await page
+		.getByRole('link', { name: /EU-voorstellen/ })
+		.first()
+		.click();
+	await expect(page).toHaveURL(/\/dossiers\?.*eu=proposal/);
 });
