@@ -27,9 +27,8 @@ test('Europa is no tab of Wetten; its lists are filters of Dossiers and Uitsprak
 	await page.goto('/wetten');
 	await expect(page.getByRole('link', { name: 'Europa', exact: true })).toHaveCount(0);
 	await page.goto('/europa');
-	await page
-		.getByRole('link', { name: /EU-voorstellen/ })
-		.first()
-		.click();
-	await expect(page).toHaveURL(/\/dossiers\?.*eu=proposal/);
+	await expect(page.getByRole('link', { name: 'Alle EU-voorstellen' })).toHaveAttribute(
+		'href',
+		/\/dossiers\?.*eu=proposal/
+	);
 });
