@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FOLD } from '$lib/components/ui/dicht.svelte';
+	import { FOLD, isOpen } from '$lib/components/ui/dicht.svelte';
 	// The amendments of a bill as a timetable (amendementen.ts; Thijs, 10 Oct: "schematisch
 	// als spoorboekje wel beter, omdat het info communiceert zonder al die tekst, dus een
 	// tussenweg"). A row per amendment as it came to the vote; a column per day on which a
@@ -28,7 +28,19 @@
 	let { dossierNumber }: { dossierNumber: string } = $props();
 
 	let zichtbaar = $state(false);
-	// Asked once the section comes into view.
+	// Asked once the section comes into view, or, where the reader left it open and it lies
+	// below the fold, when the page is idle: a section that stands open is not left on
+	// "laden…" for want of a scroll. Closed, it asks nothing.
+	$effect(() => {
+		if (zichtbaar || !isOpen(FOLD.amendments, true)) return;
+		const vroeg = () => (zichtbaar = true);
+		if (typeof requestIdleCallback === 'undefined') {
+			const t = setTimeout(vroeg, 1500);
+			return () => clearTimeout(t);
+		}
+		const id = requestIdleCallback(vroeg, { timeout: 2500 });
+		return () => cancelIdleCallback(id);
+	});
 	const timetable = load(
 		() => (zichtbaar ? dossierNumber : null),
 		(number): Promise<Dienstregeling | null> =>
@@ -147,7 +159,10 @@
 								</th>
 								{#each regeling.kolommen as k, i (k)}
 									{@const s = stand(r, k)}
-									<td class="dag {s} {grens(i)}">
+									<td
+										class="dag {s} {grens(i)}"
+										data-dag="{Number(k.slice(8))} {monthName(k, true)}"
+									>
 										{#if s.startsWith('halte')}
 											{#each r.haltes.filter((h) => kolomVan(regeling!, h.datum) === k) as h (h.id)}
 												<BronLink
@@ -357,11 +372,69 @@
 		color: var(--ink-2);
 		text-decoration: none;
 	}
+	/* On a phone no timetable: a card per amendment, the outcome first, then the name and
+	   the title, then its papers each with its day. Nothing scrolls sideways. */
 	@media (max-width: 640px) {
-		.regeling {
-			--naam: 120px;
-			--dag: 44px;
-			--eind: 104px;
+		.regeling,
+		.regeling tbody {
+			display: block;
+			min-width: 0;
+		}
+		.regeling colgroup {
+			display: none;
+		}
+		.regeling thead {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
+		.regeling tbody tr {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: var(--s-1) var(--s-3);
+			padding: var(--s-3) 0;
+		}
+		.regeling tbody tr::after {
+			content: '';
+			order: 2;
+			flex-basis: 100%;
+			height: 0;
+		}
+		td.eind {
+			order: 0;
+			padding: 0;
+		}
+		tbody th.naam {
+			order: 1;
+			flex: 1 1 0;
+			min-width: 0;
+			position: static;
+			padding: 0;
+			box-shadow: none;
+		}
+		td.dag {
+			display: none;
+		}
+		.regeling td.dag.halte {
+			order: 3;
+			display: inline-flex;
+			align-items: center;
+			gap: var(--s-2);
+			height: auto;
+			min-height: 44px;
+			border: 0;
+			color: var(--ink-3);
+		}
+		.regeling td.dag.halte::before {
+			content: none;
+		}
+		.regeling td.dag.halte::after {
+			content: attr(data-dag);
+			position: static;
+			border: 0;
 		}
 	}
 </style>
