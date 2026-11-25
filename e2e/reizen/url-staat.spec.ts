@@ -5,7 +5,7 @@
 import type { Page } from '@playwright/test';
 import { CORS } from '../support/api';
 import { expect, test } from '../support/test';
-import { openSheet, closeSheet } from '../support/sheet';
+import { closeSheet, openLegend, openSheet } from '../support/sheet';
 
 const ARTICLE = '/wetten/BWBR0005289/artikel/6:162';
 const KEPT = 'netwerk=instruments%2Fbwbr0005289';
@@ -88,6 +88,7 @@ test('a relation switched off stays in the address and after a reload, with one 
 	page
 }) => {
 	await page.goto(`${ARTICLE}?mode=netwerk`);
+	await openLegend(page);
 	const lijnsoorten = page.getByRole('list', { name: 'Lijnsoorten' });
 	const noemt = lijnsoorten.getByRole('button', { name: /^Aanhaling/ });
 	await expect(noemt).toHaveAttribute('aria-pressed', 'true');
@@ -95,6 +96,7 @@ test('a relation switched off stays in the address and after a reload, with one 
 	await expect(page).toHaveURL(/[?&]uit=citation/);
 	await page.reload();
 	await expect(page).toHaveURL(/[?&]uit=citation/);
+	await openLegend(page);
 	await expect(lijnsoorten.getByRole('button', { name: /^Aanhaling/ })).toHaveAttribute(
 		'aria-pressed',
 		'false'

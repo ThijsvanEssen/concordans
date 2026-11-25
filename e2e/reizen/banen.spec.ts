@@ -4,7 +4,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { failApi } from '../support/api';
 import { netwerkKnop } from '../support/navigation';
-import { closeSheet, openSheet } from '../support/sheet';
+import { closeSheet, openLegend, openSheet } from '../support/sheet';
 import { expect, test } from '../support/test';
 
 const WVW = '/wetten/BWBR0006622';
@@ -161,6 +161,7 @@ test('changed wetten stand under their heads, with a marker the legend explains'
 	await page.goto('/dossiers/36702?mode=netwerk&diepte=2');
 	await expect(page.getByTestId('banen')).toBeVisible();
 	await expect(page.locator('.changed-mark').first()).toBeAttached();
+	await openLegend(page);
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
 	await expect(legend.getByText('Voorgesteld', { exact: true })).toBeVisible();
 	if (isMobile) {
@@ -175,6 +176,7 @@ test('the legend switches a lijnsoort off and on, and the address keeps it', asy
 	isMobile
 }) => {
 	await page.goto('/dossiers/36702?mode=netwerk&diepte=2');
+	await openLegend(page);
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
 	const change = legend.getByRole('button', { name: 'Voorgestelde wijziging' });
 	await expect(change).toHaveAttribute('aria-pressed', 'true');
@@ -259,6 +261,7 @@ test('Omgeving draws lanes, no canvas', async ({ page }) => {
 test('the legend names the same lijnsoorten whatever is switched off', async ({ page }) => {
 	await page.goto(WVW_NETWERK);
 	await expect(tiles(page)).toHaveCount(20);
+	await openLegend(page);
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
 	const names = () => legend.getByRole('listitem').allInnerTexts();
 	const before = await names();
@@ -271,6 +274,7 @@ test('the legend names the same lijnsoorten whatever is switched off', async ({ 
 test('the legend and the field stand still when Stukken goes off', async ({ page, touch }) => {
 	await page.goto(WVW_NETWERK);
 	await expect(tiles(page)).toHaveCount(20);
+	await openLegend(page);
 	const legend = page.getByRole('list', { name: 'Lijnsoorten' });
 	const names = () => legend.getByRole('listitem').allInnerTexts();
 	const top = async () => (await box(page.locator('svg.drawing'))).y;

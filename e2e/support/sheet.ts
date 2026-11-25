@@ -20,3 +20,10 @@ export async function closeSheet(page: Page) {
 	await sheet.getByRole('button', { name: 'Sluiten' }).click();
 	await expect(sheet).toHaveCount(0);
 }
+
+/** On a phone the legend of the lanes is a bar "Legenda" that opens; wider it stands open. */
+export async function openLegend(page: Page) {
+	if ((page.viewportSize()?.width ?? 1024) > 768) return;
+	const bar = page.getByRole('button', { name: 'Legenda', exact: true });
+	if ((await bar.getAttribute('aria-expanded')) === 'false') await bar.click();
+}
