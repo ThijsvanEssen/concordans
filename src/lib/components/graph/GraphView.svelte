@@ -605,8 +605,16 @@
 	// while the network has the focus, never while reading or selecting text.
 	let canvasWrap = $state<HTMLDivElement | null>(null);
 
+	/** Enter on a button or link of the canvas (the legend) is that button's own. */
+	const isOwnEnter = (e: KeyboardEvent) =>
+		e.key === 'Enter' && !!(e.target as Element | null)?.closest?.('button, a[href]');
+
+	/** A key that is not the canvas's: handled, modified, typed into a field, or a button's Enter. */
+	const isOthers = (e: KeyboardEvent) =>
+		e.defaultPrevented || hasModifier(e) || isTyping(e.target) || isOwnEnter(e);
+
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.defaultPrevented || hasModifier(e) || isTyping(e.target)) return;
+		if (isOthers(e)) return;
 		const opCanvas = !!canvasWrap?.contains(document.activeElement);
 		// Escape: first the bron pointed at, then the one chosen.
 		if (e.key === 'Escape' && pijl && opCanvas) {
@@ -977,6 +985,10 @@
 				changes
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
+				onSluit={() => {
+					ontmarkeer();
+					keyNode = null;
+				}}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
 				onBack={keyNode ? () => kaartUit('lijst') : undefined}
 			/>

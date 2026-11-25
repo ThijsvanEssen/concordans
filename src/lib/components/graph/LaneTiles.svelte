@@ -20,6 +20,7 @@
 		unit,
 		box,
 		open,
+		pointed = null,
 		nodeOf,
 		onOpen
 	}: {
@@ -27,6 +28,8 @@
 		box: UnitBox;
 		/** The dossier whose Zijpaneel is open. */
 		open: string | null;
+		/** The bron the keyboard's list is on: its tile carries the ring. */
+		pointed?: string | null;
 		nodeOf: (id: string) => GraphNode | undefined;
 		onOpen: (dossier: SceneUnit) => void;
 	} = $props();
@@ -129,6 +132,7 @@
 			<g
 				class="tile"
 				class:is-open={open === u.id}
+				class:is-pointed={!!pointed && (u.id === pointed || u.members.includes(pointed))}
 				role="button"
 				tabindex={u.id === stop ? 0 : -1}
 				aria-label={fullName(u)}
@@ -209,6 +213,11 @@
 	.plate {
 		fill: var(--paper);
 		stroke-width: 1px;
+	}
+	.tile.is-pointed .hit {
+		fill: color-mix(in srgb, var(--ink) 6%, transparent);
+		stroke: var(--netwerk-focus);
+		stroke-width: 3px;
 	}
 	.tile.is-open .plate {
 		stroke-width: 2px;

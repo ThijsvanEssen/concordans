@@ -164,3 +164,15 @@ export function showBeside(field: HTMLElement, unit: string, linked: readonly st
 	const up = scrollToShow(own, box, card).y;
 	field.scrollBy(x, up);
 }
+
+/** Scrolls the field so that the bron the keyboard's list is on (`.is-pointed`) is in view, beside any card. */
+export function showPointed(field: HTMLElement) {
+	const el = field.querySelector<SVGElement>('.is-pointed');
+	if (!el) return;
+	const { x, y } = scrollToShow(
+		el.getBoundingClientRect(),
+		field.getBoundingClientRect(),
+		cardOver(field)
+	);
+	field.scrollBy(x, y);
+}

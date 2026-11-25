@@ -4,6 +4,10 @@
 import { textOf } from '$lib/text/words';
 import { dossierNumberText } from '$lib/bron/dossier-naam';
 import { korteDatum } from '$lib/text/datum';
+import type { GraphNode } from '$lib/graph/types';
+import type { InstrumentMeta } from '$lib/api/instrument-cache';
+import { articleTitle } from '$lib/text/citation-record';
+import { bronNaam, stemmingKop } from '$lib/bron/naam';
 
 type Bron = {
 	id: string;
@@ -64,3 +68,16 @@ export function distinctNames<B extends Bron>(
 	}
 	return names;
 }
+
+/**
+ * The full name, where the canvas shows a short one (`2011-07, Memorie`): the name the chips and
+ * Verbonden give (bronNaam: "Hoge Raad, 20 december 2019", an article with its law, #23); a BW
+ * article as cited (Artikel 6:162 BW); a vote as the dossier's text names it. The list for the
+ * keyboard and the squares on the lanes say the same.
+ */
+export const fullName = (n: GraphNode, meta: Map<string, InstrumentMeta>) =>
+	n.collection === 'decisions'
+		? stemmingKop(n)
+		: n.collection === 'articles' && n.raw?.props?.instrument_abbreviation
+			? articleTitle(n.raw?.display_name ?? n.label, n.raw.props)
+			: bronNaam(n, meta);

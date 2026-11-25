@@ -37,9 +37,11 @@
 		numberedSquares,
 		cardWidth,
 		chosenOn,
+		showPointed,
 		showBeside
 	} from '$lib/graph/lane-changes';
 	import { afterTick } from '$lib/util/after-tick';
+	import { fullName } from './canvas-names';
 	import LaneCard from './LaneCard.svelte';
 	import LaneEdge from './LaneEdge.svelte';
 	import LaneLegend from './LaneLegend.svelte';
@@ -173,6 +175,12 @@
 			openUnitOn ??
 			null
 	);
+	/** A square's name beside it, under the pointer or on the keyboard's bron: "Artikel 1 Embw". */
+	let hoverTip = $state<{ x: number; y: number; text: string } | null>(null);
+	let keyTip = $state<{ x: number; y: number; text: string } | null>(null);
+	const tip = $derived(hoverTip ?? keyTip);
+	const nameOf = (n: GraphNode | undefined, m: string) =>
+		n ? fullName(n, $instrumentMetaStore) : m;
 	/** The line under the pointer: it alone lit, with what it says on it. */
 	let hoveredLine = $state<string | null>(null);
 	const touches = (p: LanePath) =>
@@ -183,6 +191,19 @@
 		if (!marked) hovered = null;
 	});
 	const markedUnit = $derived(marked ? (unitOf.get(marked)?.id ?? null) : null);
+	/** The unit holding the bron the keyboard's list is on: it, or its square, carries the ring. */
+	const pointedUnit = $derived(pointed ? (unitOf.get(pointed)?.id ?? null) : null);
+	const perLineOf = (box: UnitBox) => Math.max(1, Math.floor((box.mark.width - 32) / DOT));
+	/** Is the bron pointed at drawn as a square or row of this hull? Else the hull's pill holds the ring. */
+	function drawnIn(u: SceneUnit, box: UnitBox) {
+		if (!pointed) return false;
+		if (phone) return u.rows.some((r) => r.members.includes(pointed));
+		return u.rows.some((r) =>
+			changedFirst(r.members, changed)
+				.slice(0, 2 * perLineOf(box))
+				.includes(pointed)
+		);
+	}
 
 	/** The dossier marked or open: its changed articles get a ring and, where it fits, their number. */
 	const changing = $derived.by(() => {
@@ -228,6 +249,34 @@
 		void scale;
 		if (!id || !f) return;
 		const frame = requestAnimationFrame(() => showBeside(f, id, linkedOf(id)));
+		return () => cancelAnimationFrame(frame);
+	});
+	// The keyboard's list moves to a bron the field does not show (a bundle further down): it scrolls
+	// into view, so that the ring is seen.
+	$effect(() => {
+		const id = pointed;
+		const f = field;
+		void scale;
+		if (!id || !f) return;
+		const frame = requestAnimationFrame(() => showPointed(f));
+		return () => cancelAnimationFrame(frame);
+	});
+	// The name of the square the keyboard's list is on stands beside it (its ring says which).
+	$effect(() => {
+		const id = pointed;
+		const f = field;
+		void scale;
+		void nodes;
+		if (!id || !f) {
+			keyTip = null;
+			return;
+		}
+		const frame = requestAnimationFrame(() => {
+			const el = f.querySelector<SVGElement>('.member.is-pointed[data-name]');
+			keyTip = el
+				? { x: Number(el.dataset.x), y: Number(el.dataset.y), text: el.dataset.name ?? '' }
+				: null;
+		});
 		return () => cancelAnimationFrame(frame);
 	});
 	// A card closed with its × took the focus with it: back to what opened it, as Escape leaves it.
@@ -325,6 +374,10 @@
 	/>
 {/snippet}
 
+{#snippet pointRing(cx: number, cy: number, r: number)}
+	<circle class="point" {cx} {cy} {r} />
+{/snippet}
+
 {#snippet focusRing(box: UnitBox, air = 5)}
 	<circle
 		class="halo"
@@ -343,7 +396,8 @@
 {#snippet hull(u: SceneUnit, box: UnitBox)}
 	{@const colour = sortColour(u.sort)}
 	{@const dossier = u.column === 'papers'}
-	{@const perLine = Math.max(1, Math.floor((box.mark.width - 32) / DOT))}
+	{@const perLine = perLineOf(box)}
+	{@const ringed = pointedUnit === u.id && !drawnIn(u, box)}
 	{@const headed = u.rows.length > 1 || u.rows.some((r) => r.label)}
 	<rect
 		class="hull"
@@ -358,6 +412,7 @@
 	/>
 	<g
 		class="pill"
+		class:is-pointed={ringed}
 		role="button"
 		tabindex="-1"
 		aria-label={titleOf(u)}
@@ -395,6 +450,7 @@
 				{@const holdsChosen = row.members.find((m) => chosen.includes(m))}
 				<g
 					class="member"
+					class:is-pointed={!!pointed && row.members.includes(pointed)}
 					role="button"
 					tabindex="-1"
 					aria-label="{row.label || u.label} {rowCount(row.members.length)}"
@@ -424,16 +480,28 @@
 					<g
 						class="member"
 						class:is-active={marked === m}
+						class:is-pointed={pointed === m}
 						role="button"
 						tabindex="-1"
-						aria-label={n?.label ?? m}
+						aria-label={nameOf(n, m)}
 						aria-pressed={marked === m}
+						data-name={nameOf(n, m)}
+						data-x={cx + GLYPH / 2}
+						data-y={cy}
+						onpointerenter={() => (hoverTip = { x: cx + GLYPH / 2, y: cy, text: nameOf(n, m) })}
+						onpointerleave={() => (hoverTip = null)}
+						onfocus={() => (hoverTip = { x: cx + GLYPH / 2, y: cy, text: nameOf(n, m) })}
+						onblur={() => (hoverTip = null)}
 						onclick={() => onMark(m)}
 						ondblclick={() => onOpen(m)}
 						onkeydown={(e) => onKey(e, () => onMark(m))}
 					>
-						<title>{n?.label ?? m}</title>
 						<rect class="hit" x={cx - 5} y={cy - 5} width={GLYPH + 10} height={GLYPH + 10} />
+						{#if pointed === m}{@render pointRing(
+								cx + GLYPH / 2,
+								cy + GLYPH / 2,
+								GLYPH / 2 + 6
+							)}{/if}
 						{#if own || changed.has(m)}{@render focusRing(
 								{ ...box, mark: square },
 								own ? 5 : 2.5
@@ -460,7 +528,14 @@
 			onpointerenter={() => (hovered = u.id)}
 			onpointerleave={() => (hovered = null)}
 		>
-			<LaneTiles unit={u} {box} open={openId} nodeOf={(id) => byId.get(id)} onOpen={toggleCard} />
+			<LaneTiles
+				unit={u}
+				{box}
+				open={openId}
+				{pointed}
+				nodeOf={(id) => byId.get(id)}
+				onOpen={toggleCard}
+			/>
 		</g>
 	{:else if u.shape === 'hull' && (!phone || u.focus)}
 		<g
@@ -482,6 +557,7 @@
 		<g
 			class="unit"
 			class:is-active={markedUnit === u.id}
+			class:is-pointed={pointedUnit === u.id}
 			class:is-dim={!!lit &&
 				lit !== u.id &&
 				!paths.some((p) => touches(p) && (p.from === u.id || p.to === u.id))}
@@ -500,6 +576,11 @@
 		>
 			<title>{titleOf(u)}</title>
 			<rect class="hit" {...unitTarget(box, phone)} />
+			{#if pointedUnit === u.id}{@render pointRing(
+					box.mark.x + box.mark.width / 2,
+					box.mark.y + box.mark.height / 2,
+					Math.max(box.mark.width, box.mark.height) / 2 + 7
+				)}{/if}
 			{#if u.focus || markedUnit === u.id || openId === u.id}{@render focusRing(box)}{/if}
 			{#if disc}
 				<circle class="disc" {cx} {cy} r={box.mark.width / 2} style:--tint={sortColour(u.sort)} />
@@ -618,6 +699,9 @@
 					{@const box = layout.units.get(u.id)}
 					{#if box}{@render unit(u, box)}{/if}
 				{/each}
+				{#if tip}
+					<text class="tip" x={tip.x} y={tip.y - 8}>{tip.text}</text>
+				{/if}
 				{#each styled.filter((p) => p.id === hoveredLine && p.label) as p (p.id)}
 					<text class="line-label" x={p.at.x} y={p.at.y - 6}>{p.label}</text>
 				{/each}
@@ -642,12 +726,6 @@
 		inset: 0;
 		overflow: auto;
 		background: var(--paper);
-	}
-	/* A phone: the button Weergave floats over the foot of the canvas; the lanes end above it. */
-	@media (max-width: 768px) {
-		.banen {
-			padding-bottom: calc(44px + 2 * var(--s-4));
-		}
 	}
 	.banen.has-card {
 		--card-room: var(--lane-card-w);
@@ -766,6 +844,17 @@
 		stroke: var(--paper);
 		stroke-width: 5px;
 	}
+	/* The bron the keyboard is on: a ring in the focus colour, its halo in paper, over a dimmed field. */
+	.point {
+		fill: none;
+		stroke: var(--netwerk-focus);
+		stroke-width: 3px;
+		paint-order: stroke;
+	}
+	.pill.is-pointed rect {
+		stroke: var(--netwerk-focus);
+		stroke-width: 3px;
+	}
 	.unit.is-dim {
 		opacity: 0.35;
 	}
@@ -774,6 +863,16 @@
 		stroke: transparent;
 		stroke-width: 12px;
 		pointer-events: stroke;
+	}
+	.tip {
+		font-size: var(--t-note);
+		fill: var(--ink);
+		text-anchor: middle;
+		paint-order: stroke;
+		stroke: var(--paper);
+		stroke-width: 4px;
+		stroke-linejoin: round;
+		pointer-events: none;
 	}
 	.line-label {
 		font-size: var(--t-note);

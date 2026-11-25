@@ -12,11 +12,9 @@
 	import { bronKind } from '$lib/components/graph/bron-kind';
 	import { moveIndex } from './canvas-keys';
 	import { isEscape } from '$lib/actions/keys';
-	import { articleTitle } from '$lib/text/citation-record';
-	import { bronNaam, stemmingKop } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { untrack } from 'svelte';
-	import { distinctNames } from './canvas-names';
+	import { distinctNames, fullName } from './canvas-names';
 
 	let {
 		nodes,
@@ -69,22 +67,11 @@
 
 	const kindOf = (n: GraphNode) =>
 		isCollection(n.collection) ? bronKind(n.collection, n.raw?.props) : '';
-	/**
-	 * The full name, where the canvas shows a short one (`2011-07, Memorie`): the name the
-	 * chips and Verbonden give (bronNaam: "Hoge Raad, 20 december 2019", an article with its
-	 * law, UX test 10 Oct, #23); a BW article as cited (Artikel 6:162 BW); a vote as the
-	 * dossier's text names it.
-	 */
-	const fullName = (n: GraphNode) =>
-		n.collection === 'decisions'
-			? stemmingKop(n)
-			: n.collection === 'articles' && n.raw?.props?.instrument_abbreviation
-				? articleTitle(n.raw?.display_name ?? n.label, n.raw.props)
-				: bronNaam(n, $instrumentMetaStore);
+	const fullNameOf = (n: GraphNode) => fullName(n, $instrumentMetaStore);
 	/** Each its own name: eight judgments of one court on one day by their ECLI (UX review N4). */
-	const names = $derived(distinctNames(nodes, fullName));
+	const names = $derived(distinctNames(nodes, fullNameOf));
 	const nameOf = (n: GraphNode) => {
-		const name = names.get(n.id) ?? fullName(n);
+		const name = names.get(n.id) ?? fullNameOf(n);
 		return n.collection === 'articles' && n.raw?.props?.repealed === true
 			? `${name}, vervallen`
 			: name;

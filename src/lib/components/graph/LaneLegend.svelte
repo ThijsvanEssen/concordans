@@ -37,6 +37,8 @@
 		foot?: boolean;
 	} = $props();
 
+	/** On a phone the key is one bar at the foot, in view; its samples open above it. */
+	let open = $state(false);
 	const hidden = $derived(visibility.hiddenLines);
 	const kinds = $derived(whole.kinds);
 	const lines = $derived(scene.lines);
@@ -83,7 +85,16 @@
      the field under it does not move (N17c). -->
 {#if kinds.length > 0 || hidden.size > 0}
 	<div class="legend" class:foot>
-		<ul class="kinds" aria-label="Lijnsoorten">
+		{#if foot}
+			<button
+				type="button"
+				class="toggle"
+				aria-expanded={open}
+				aria-controls="legenda-lijst"
+				onclick={() => (open = !open)}>Legenda</button
+			>
+		{/if}
+		<ul class="kinds" id="legenda-lijst" aria-label="Lijnsoorten" hidden={foot && !open}>
 			{#each items as { kind, samples } (kind)}
 				<li>
 					<button
@@ -223,9 +234,33 @@
 	/* Under the strips of a phone, a key at the foot: what comes in later moves nothing above it,
 	   so it needs no room. */
 	.legend.foot {
-		position: static;
+		position: sticky;
+		top: auto;
+		bottom: 0;
+		display: block;
+		width: 100%;
 		max-width: 100%;
 		margin: 0;
+		background: var(--paper);
+		border-top: 1px solid var(--rule);
+	}
+	.legend.foot > .kinds[hidden] {
+		display: none;
+	}
+	.toggle {
+		display: block;
+		min-height: 44px;
+		padding: 0 var(--s-4);
+		border: 0;
+		background: none;
+		font: inherit;
+		font-family: var(--font-serif);
+		font-size: var(--t-note);
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.toggle[aria-expanded='true'] {
+		font-weight: 600;
 	}
 	.foot > .room {
 		display: none;

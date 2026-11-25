@@ -9,6 +9,7 @@
 	import { articleOf, lawIdOf } from '$lib/graph/types';
 	import { getArticleDetail } from '$lib/api/articles';
 	import { abortable } from '$lib/api/records';
+	import IconButton from '$lib/components/ui/IconButton.svelte';
 	import LoadState from '$lib/components/ui/LoadState.svelte';
 	import { load } from '$lib/util/load.svelte';
 	import { langeDatum } from '$lib/text/datum';
@@ -36,6 +37,7 @@
 		tiesHeading = 'Verbonden met de gekozen bronnen',
 		facts = [],
 		onClose,
+		onSluit,
 		onVerder,
 		onBack,
 		notities = [],
@@ -60,6 +62,8 @@
 		facts?: readonly { term: string; value: string }[];
 		/** Escape in the card (reached from the keyboard's list of bronnen). */
 		onClose?: () => void;
+		/** The button Sluiten, at the top right: the card closes and the bron is no longer marked. */
+		onSluit?: () => void;
 		/** Tab past its last action, and Shift+Tab before its first. */
 		onVerder?: () => void;
 		onBack?: () => void;
@@ -261,16 +265,34 @@
 			</ul>
 		</section>
 	{/if}
+
+	<!-- Last in the order of the Tab key (the card hands the focus on after its last action), at the
+	     top right on the page. -->
+	{#if onSluit}
+		<div class="sluit">
+			<IconButton label="Sluiten" keys={['Esc', 'Escape']} onclick={onSluit}>×</IconButton>
+		</div>
+	{/if}
 </div>
 
 <style>
 	/* In the strip at the right of the werkplek, on its paper: no frame of its own. */
 	.citepanel {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
 	}
 
+	.sluit {
+		position: absolute;
+		top: 0;
+		right: 0;
+	}
+	/* The title does not run under the button. */
+	.citepanel:has(.sluit) .title {
+		padding-right: var(--s-8);
+	}
 	.head {
 		display: flex;
 		align-items: center;
