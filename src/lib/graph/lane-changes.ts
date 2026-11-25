@@ -176,3 +176,19 @@ export function showPointed(field: HTMLElement) {
 	);
 	field.scrollBy(x, y);
 }
+
+/** Is the bron pointed at drawn as a square (or, on a phone, `perLine` 0, in a row) of the hull? Else its pill holds the ring. */
+export const drawnAsSquare = (
+	rows: readonly { members: readonly string[] }[],
+	changed: ReadonlyMap<string, string>,
+	pointed: string | null,
+	perLine: number
+) =>
+	!!pointed &&
+	rows.some((r) =>
+		perLine === 0
+			? r.members.includes(pointed)
+			: changedFirst(r.members, changed)
+					.slice(0, 2 * perLine)
+					.includes(pointed)
+	);

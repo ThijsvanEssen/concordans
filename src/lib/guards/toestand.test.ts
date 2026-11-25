@@ -21,6 +21,7 @@ const STATES = [
 	'is-klikbaar',
 	'is-old',
 	'is-open',
+	'is-pointed',
 	'is-proposed',
 	'is-quiet',
 	'is-resizing',

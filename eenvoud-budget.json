@@ -65,7 +65,7 @@
 		"src/lib/components/explore/readers/related-cases.ts": 21,
 		"src/lib/components/explore/readers/succession.ts": 20,
 		"src/lib/components/graph/CanvasHoverCard.svelte": 19,
-		"src/lib/components/graph/GraphView.svelte": 18,
+		"src/lib/components/graph/GraphView.svelte": 16,
 		"src/lib/components/graph/canvas-count.ts": 25,
 		"src/lib/components/graph/kind-rows.ts": 25,
 		"src/lib/components/open/rij-inhoud.ts": 21,

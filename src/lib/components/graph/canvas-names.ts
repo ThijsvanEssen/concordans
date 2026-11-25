@@ -5,7 +5,7 @@ import { textOf } from '$lib/text/words';
 import { dossierNumberText } from '$lib/bron/dossier-naam';
 import { korteDatum } from '$lib/text/datum';
 import type { GraphNode } from '$lib/graph/types';
-import type { InstrumentMeta } from '$lib/api/instrument-cache';
+import type { InstrumentMeta } from '$lib/text/instrument-meta';
 import { articleTitle } from '$lib/text/citation-record';
 import { bronNaam, stemmingKop } from '$lib/bron/naam';
 

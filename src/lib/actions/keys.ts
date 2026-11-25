@@ -54,3 +54,11 @@ export function modalOpen(): boolean {
 		!!document.querySelector('[aria-modal="true"], [role="menu"]')
 	);
 }
+
+/** Enter on a button or link inside a region that takes Enter itself (the legend on the canvas). */
+const isButtonEnter = (e: Pick<KeyboardEvent, 'key' | 'target'>) =>
+	e.key === 'Enter' && !!(e.target as Element | null)?.closest?.('button, a[href]');
+
+/** A key that is not the canvas's: handled, modified, typed into a field, or a button's Enter. */
+export const isOthers = (e: KeyboardEvent) =>
+	e.defaultPrevented || hasModifier(e) || isTyping(e.target) || isButtonEnter(e);

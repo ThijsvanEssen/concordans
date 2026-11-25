@@ -3,7 +3,7 @@
 	import { vandaag, yearFraction } from '$lib/text/datum';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onMount, untrack } from 'svelte';
-	import { hasModifier, isTyping } from '$lib/actions/keys';
+	import { isOthers } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
 	import LanesView from './LanesView.svelte';
 	import CanvasHoverCard from './CanvasHoverCard.svelte';
@@ -601,17 +601,8 @@
 		return () => unsub.forEach((u) => u());
 	});
 
-	// The canvas as a focusable region: ← and → step through the bronnen shown only
-	// while the network has the focus, never while reading or selecting text.
+	// The canvas as a focusable region: ← and → step through the bronnen shown only while it has the focus.
 	let canvasWrap = $state<HTMLDivElement | null>(null);
-
-	/** Enter on a button or link of the canvas (the legend) is that button's own. */
-	const isOwnEnter = (e: KeyboardEvent) =>
-		e.key === 'Enter' && !!(e.target as Element | null)?.closest?.('button, a[href]');
-
-	/** A key that is not the canvas's: handled, modified, typed into a field, or a button's Enter. */
-	const isOthers = (e: KeyboardEvent) =>
-		e.defaultPrevented || hasModifier(e) || isTyping(e.target) || isOwnEnter(e);
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (isOthers(e)) return;
@@ -985,10 +976,7 @@
 				changes
 				bind:el={citeEl}
 				onClose={keyNode ? () => kaartUit('lijst', true) : undefined}
-				onSluit={() => {
-					ontmarkeer();
-					keyNode = null;
-				}}
+				onSluit={() => ontmarkeer() ?? (keyNode = null)}
 				onVerder={keyNode ? () => kaartUit('canvas') : undefined}
 				onBack={keyNode ? () => kaartUit('lijst') : undefined}
 			/>

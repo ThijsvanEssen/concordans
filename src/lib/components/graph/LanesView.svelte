@@ -10,11 +10,10 @@
 	import { kindColour } from '$lib/bron/kleur';
 	import { sortColour, type Sort } from '$lib/bron/rubrieken';
 	import { formatCount } from '$lib/text/getal';
-	import { relationLabel } from '$lib/verbonden/relation-words';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { arrowHead, DOT_RADIUS, longestRunMiddle } from '$lib/graph/line-shape';
-	import { LINE_KIND_STYLE, type LineKind } from '$lib/graph/line-kind';
+	import { DOT_RADIUS } from '$lib/graph/line-shape';
+	import type { LineKind } from '$lib/graph/line-kind';
 	import { buildScene, type Scene, type SceneUnit } from '$lib/graph/scene';
 	import { CHANGED_ROOM, laneLayout, type LaneLayout, type UnitBox } from '$lib/graph/lane-layout';
 	import { laneLines, type LanePath } from '$lib/graph/lane-lines';
@@ -23,8 +22,6 @@
 	import { SHOW_ALL, type Visibility } from '$lib/graph/visibility';
 	import type { LaneFilter } from '$lib/graph/lane-filter';
 	import type { GraphEdge, GraphNode } from '$lib/graph/types';
-	import { arrowLength, edgeCapFor, edgeDashFor, tokens } from './nodeSprites';
-	import { laneLineColour } from '$lib/graph/line-strength';
 	import { getChangedArticles } from '$lib/api/dossiers';
 	import { amendedOf } from './amended-by.svelte';
 	import { load } from '$lib/util/load.svelte';
@@ -35,13 +32,11 @@
 		changedNumbers,
 		laneDossierNumber,
 		numberedSquares,
-		cardWidth,
-		chosenOn,
-		showPointed,
-		showBeside
+		drawnAsSquare
 	} from '$lib/graph/lane-changes';
-	import { afterTick } from '$lib/util/after-tick';
 	import { fullName } from './canvas-names';
+	import { laneField } from './lane-field.svelte';
+	import { styledLines } from './lane-style';
 	import LaneCard from './LaneCard.svelte';
 	import LaneEdge from './LaneEdge.svelte';
 	import LaneLegend from './LaneLegend.svelte';
@@ -175,10 +170,11 @@
 			openUnitOn ??
 			null
 	);
-	/** A square's name beside it, under the pointer or on the keyboard's bron: "Artikel 1 Embw". */
-	let hoverTip = $state<{ x: number; y: number; text: string } | null>(null);
-	let keyTip = $state<{ x: number; y: number; text: string } | null>(null);
-	const tip = $derived(hoverTip ?? keyTip);
+	const squareTip = (cx: number, cy: number, n: GraphNode | undefined, m: string) => ({
+		x: cx + GLYPH / 2,
+		y: cy,
+		text: nameOf(n, m)
+	});
 	const nameOf = (n: GraphNode | undefined, m: string) =>
 		n ? fullName(n, $instrumentMetaStore) : m;
 	/** The line under the pointer: it alone lit, with what it says on it. */
@@ -191,20 +187,8 @@
 		if (!marked) hovered = null;
 	});
 	const markedUnit = $derived(marked ? (unitOf.get(marked)?.id ?? null) : null);
-	/** The unit holding the bron the keyboard's list is on: it, or its square, carries the ring. */
 	const pointedUnit = $derived(pointed ? (unitOf.get(pointed)?.id ?? null) : null);
 	const perLineOf = (box: UnitBox) => Math.max(1, Math.floor((box.mark.width - 32) / DOT));
-	/** Is the bron pointed at drawn as a square or row of this hull? Else the hull's pill holds the ring. */
-	function drawnIn(u: SceneUnit, box: UnitBox) {
-		if (!pointed) return false;
-		if (phone) return u.rows.some((r) => r.members.includes(pointed));
-		return u.rows.some((r) =>
-			changedFirst(r.members, changed)
-				.slice(0, 2 * perLineOf(box))
-				.includes(pointed)
-		);
-	}
-
 	/** The dossier marked or open: its changed articles get a ring and, where it fits, their number. */
 	const changing = $derived.by(() => {
 		const u = openUnit ?? (marked?.startsWith('dossiers/') ? unitOf.get(marked) : null);
@@ -224,104 +208,25 @@
 	);
 
 	let field = $state<HTMLElement | null>(null);
-	// The card lies over the field (Thijs, 1 nov.): the drawing shrinks as far as it may, and what
-	// the card would still cover scrolls out from under it.
-	$effect(() => {
-		const open = !!(markedUnit ?? openId);
-		const f = field;
-		void avail;
-		if (!open || !f) {
-			covered = 0;
-			return;
-		}
-		const frame = requestAnimationFrame(() => (covered = cardWidth(f)));
-		return () => cancelAnimationFrame(frame);
-	});
 	/** The units at the other end of a unit's lines, the wetten last: those are to be seen first. */
 	const linkedOf = (id: string) => {
 		const other = scene.lines.flatMap((l) => (l.from === id ? l.to : l.to === id ? l.from : []));
 		const inLaws = (u: string) => unitOf.get(u)?.column === 'laws';
 		return [...other.filter((u) => !inLaws(u)), ...other.filter(inLaws)];
 	};
-	$effect(() => {
-		const id = markedUnit ?? openUnitOn;
-		const f = field;
-		void scale;
-		if (!id || !f) return;
-		const frame = requestAnimationFrame(() => showBeside(f, id, linkedOf(id)));
-		return () => cancelAnimationFrame(frame);
-	});
-	// The keyboard's list moves to a bron the field does not show (a bundle further down): it scrolls
-	// into view, so that the ring is seen.
-	$effect(() => {
-		const id = pointed;
-		const f = field;
-		void scale;
-		if (!id || !f) return;
-		const frame = requestAnimationFrame(() => showPointed(f));
-		return () => cancelAnimationFrame(frame);
-	});
-	// The name of the square the keyboard's list is on stands beside it (its ring says which).
-	$effect(() => {
-		const id = pointed;
-		const f = field;
-		void scale;
-		void nodes;
-		if (!id || !f) {
-			keyTip = null;
-			return;
-		}
-		const frame = requestAnimationFrame(() => {
-			const el = f.querySelector<SVGElement>('.member.is-pointed[data-name]');
-			keyTip = el
-				? { x: Number(el.dataset.x), y: Number(el.dataset.y), text: el.dataset.name ?? '' }
-				: null;
-		});
-		return () => cancelAnimationFrame(frame);
-	});
-	// A card closed with its × took the focus with it: back to what opened it, as Escape leaves it.
-	$effect(() => {
-		const id = markedUnit ?? openUnitOn;
-		const chosen = id && field ? chosenOn(field, id) : null;
-		return () => {
-			afterTick(() => {
-				if (chosen?.isConnected && document.activeElement === document.body)
-					chosen.focus({ preventScroll: true });
-			});
-		};
-	});
-	// ── the look of a line ────────────────────────────────────────────────────
-	const lineColour = (p: LanePath) => {
-		const line = scene.lines.find((l) => l.id === p.id);
-		const style = line ? LINE_KIND_STYLE[line.kind] : null;
-		if (!style) return 'var(--ink-3)';
-		const t = tokens();
-		return laneLineColour(t[style.colour], t.paper, line!.proposed ? 'licht' : style.tone);
-	};
-	/** What a line says on hover, in the words of the canvas: "haalt aan, 3 keer, voorgesteld". */
-	function lineLabel(p: LanePath): string | null {
-		const line = scene.lines.find((l) => l.id === p.id);
-		if (!line) return null;
-		const from = byId.get(unitOf.get(line.from)?.members[0] ?? '')?.collection ?? null;
-		const to = byId.get(unitOf.get(line.to)?.members[0] ?? '')?.collection ?? null;
-		const parts = [relationLabel(line.relation, from, to)];
-		if (line.count > 1) parts.push(`${formatCount(line.count)} keer`);
-		if (line.proposed) parts.push('voorgesteld');
-		return parts.join(', ');
-	}
-	const styled = $derived(
-		paths.map((p) => ({
-			...p,
-			colour: lineColour(p),
-			dash: edgeDashFor(p.stroke),
-			cap: edgeCapFor(p.stroke),
-			head: arrowHead(p, arrowLength()),
-			label: lineLabel(p),
-			at: longestRunMiddle(p.points)
-		}))
+	const tips = laneField(
+		() => ({
+			field,
+			redraw: [avail, scale, nodes],
+			open: !!(markedUnit ?? openId),
+			unit: markedUnit ?? openUnitOn,
+			linked: linkedOf,
+			pointed
+		}),
+		(width) => (covered = width)
 	);
+	const styled = $derived(styledLines(paths, scene, byId, unitOf));
 
-	// ── units ─────────────────────────────────────────────────────────────────
 	/** The mark of a bron in the colour of its kind, as the canvas draws it (`markOf`). */
 	function glyphOf(n: GraphNode | undefined, sort: Sort) {
 		if (!n) return markOf('', sortColour(sort));
@@ -397,7 +302,8 @@
 	{@const colour = sortColour(u.sort)}
 	{@const dossier = u.column === 'papers'}
 	{@const perLine = perLineOf(box)}
-	{@const ringed = pointedUnit === u.id && !drawnIn(u, box)}
+	{@const ringed =
+		pointedUnit === u.id && !drawnAsSquare(u.rows, changed, pointed, phone ? 0 : perLineOf(box))}
 	{@const headed = u.rows.length > 1 || u.rows.some((r) => r.label)}
 	<rect
 		class="hull"
@@ -488,10 +394,10 @@
 						data-name={nameOf(n, m)}
 						data-x={cx + GLYPH / 2}
 						data-y={cy}
-						onpointerenter={() => (hoverTip = { x: cx + GLYPH / 2, y: cy, text: nameOf(n, m) })}
-						onpointerleave={() => (hoverTip = null)}
-						onfocus={() => (hoverTip = { x: cx + GLYPH / 2, y: cy, text: nameOf(n, m) })}
-						onblur={() => (hoverTip = null)}
+						onpointerenter={() => tips.show(squareTip(cx, cy, n, m))}
+						onpointerleave={tips.hide}
+						onfocus={() => tips.show(squareTip(cx, cy, n, m))}
+						onblur={tips.hide}
 						onclick={() => onMark(m)}
 						ondblclick={() => onOpen(m)}
 						onkeydown={(e) => onKey(e, () => onMark(m))}
@@ -699,8 +605,8 @@
 					{@const box = layout.units.get(u.id)}
 					{#if box}{@render unit(u, box)}{/if}
 				{/each}
-				{#if tip}
-					<text class="tip" x={tip.x} y={tip.y - 8}>{tip.text}</text>
+				{#if tips.tip}
+					<text class="tip" x={tips.tip.x} y={tips.tip.y - 8}>{tips.tip.text}</text>
 				{/if}
 				{#each styled.filter((p) => p.id === hoveredLine && p.label) as p (p.id)}
 					<text class="line-label" x={p.at.x} y={p.at.y - 6}>{p.label}</text>
