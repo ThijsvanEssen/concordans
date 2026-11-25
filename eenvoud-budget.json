@@ -26,7 +26,7 @@
 		"src/lib/verbonden/loaders.ts": 1512,
 		"src/routes/(main)/actueel/+page.svelte": 832,
 		"src/routes/(main)/onderwerpen/overzicht/+page.svelte": 1004,
-		"src/routes/explore/+page.svelte": 2874
+		"src/routes/explore/+page.svelte": 2873
 	},
 	"effects_per_svelte": {
 		"src/lib/verbonden/Verbonden.svelte": 10,
