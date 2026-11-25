@@ -1778,18 +1778,12 @@
 	let readTab = $state<Panel>('tekst');
 	$effect(() => {
 		void selectedNode?.id;
+		const q = untrack(() => page.url.searchParams);
 		// A link that names the bronnen (?bronnen=, the start page's) comes for Verbonden (R3-I).
 		// So does the network asked in the address (?toon=netwerk): it is drawn in Verbonden.
-		readTab = untrack(
-			() => page.url.searchParams.get('bronnen') || page.url.searchParams.get('toon') === 'netwerk'
-		)
-			? 'verbonden'
-			: 'tekst';
-	});
-	// What opens beside the text (?naast=) stands in the text's tab: on a phone Verbonden hides
-	// it, and a panel opened there would have no height (B224).
-	$effect(() => {
-		if (besideId) untrack(() => (readTab = 'tekst'));
+		// Not a Zijpaneel (?naast=): it stands in the text's tab, which Verbonden hides (B224).
+		readTab =
+			!besideId && (q.get('bronnen') || q.get('toon') === 'netwerk') ? 'verbonden' : 'tekst';
 	});
 	// The hint of a phone's tab of before (?paneel) is dropped from the address: the werkplek
 	// has no tabs, the text and Verbonden stand under each other.
