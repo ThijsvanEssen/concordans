@@ -1786,6 +1786,11 @@
 			? 'verbonden'
 			: 'tekst';
 	});
+	// What opens beside the text (?naast=) stands in the text's tab: on a phone Verbonden hides
+	// it, and a panel opened there would have no height (B224).
+	$effect(() => {
+		if (besideId) untrack(() => (readTab = 'tekst'));
+	});
 	// The hint of a phone's tab of before (?paneel) is dropped from the address: the werkplek
 	// has no tabs, the text and Verbonden stand under each other.
 	$effect(() => {
@@ -2738,7 +2743,7 @@
 	@media (max-width: 768px) {
 		.reader__close {
 			top: 0;
-			right: 0;
+			right: var(--s-2);
 		}
 	}
 
