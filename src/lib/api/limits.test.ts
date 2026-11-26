@@ -11,6 +11,8 @@ import { volledig } from './limits';
 import { LUS, SLOW_TIMEOUT_MS } from './client';
 import { CITED_BY_PAGE, CITED_BY_TOP } from './first-pages';
 import { QUERY_MAX_LENGTH } from './search';
+import { CANVAS_BUCKET } from './records';
+import { NODE_BUCKET } from './nodes';
 
 const maxima = limitMaxima(spec as never);
 const SRC = join(process.cwd(), 'src');
@@ -99,6 +101,10 @@ describe('first-pages.json', () => {
 			{ sort: 'citation_count', limit: CITED_BY_PAGE },
 			{ sort: 'citation_count', limit: CITED_BY_TOP }
 		]);
+	});
+
+	it('asks the network of a law as its canvas opens it (getNodeCanvas, then whole)', () => {
+		expect(pages.law_network).toEqual({ limits: [CANVAS_BUCKET, NODE_BUCKET], props: 'canvas' });
 	});
 
 	it('asks every list a page as large as Bladeren asks', () => {

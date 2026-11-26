@@ -5,6 +5,7 @@
 		{ "sort": "citation_count", "limit": 200 },
 		{ "sort": "citation_count", "limit": 6 }
 	],
+	"law_network": { "limits": [30, 200], "props": "canvas" },
 	"law_judgments": 100,
 	"instrument_names": { "sort": "article_count", "limit": 200 },
 	"lists": {
