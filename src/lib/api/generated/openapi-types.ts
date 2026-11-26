@@ -13016,7 +13016,7 @@ export interface components {
             celex: string | null;
             /**
              * Basis
-             * @description Where it shows: `voorstel` (a bill of the dossier proposes the change), `staatsblad` (an amending publication of the dossier enacted it), `wet` (the act of the dossier implements it).
+             * @description `amends`: `voorstel` (a bill proposes the change) or `staatsblad` (a publication enacted it). `implements`: what it rests on, as `bases` of a dossier's `implements`: `national_implementing_measure`, `considerans`.
              */
             basis: string[];
         };
