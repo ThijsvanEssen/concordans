@@ -2013,7 +2013,8 @@ export interface paths {
          *     are ``warm_version``, ``data_version`` and ``computing``. ``pools`` has ``requests``
          *     and ``background`` (null until it is first needed); ``busy`` names a computation of
          *     the cache by its kind alone (``cache: <kind>``, never what was asked) and a part of
-         *     the warm-up as ``warm-up: <part>``, longest first. ``pools`` and ``busy`` are read
+         *     the warm-up as ``warm-up: <part>``, longest first. ``pools``, ``busy`` and
+         *     ``warm_up`` (per part of the warm-up its last run: began, seconds, outcome) are read
          *     from memory.
          */
         get: operations["health_api_health_get"];
@@ -10377,6 +10378,11 @@ export interface components {
              * @description The calls the threads of the shared pools run now, longest first.
              */
             busy: components["schemas"]["BusyCallDTO"][];
+            /**
+             * Warm Up
+             * @description Per part of the warm-up its last run in this process, the newest first; a part left because its tables did not change keeps its run before.
+             */
+            warm_up: components["schemas"]["WarmRunDTO"][];
         };
         /**
          * ImplementedBasisArticleDTO
@@ -16896,6 +16902,29 @@ export interface components {
              * @description The cabinet: ``kabinet-Rutte IV``.
              */
             cabinet: string | null;
+        };
+        /**
+         * WarmRunDTO
+         * @description The last run of one part of the warm-up in this process.
+         */
+        WarmRunDTO: {
+            /** Part */
+            part: string;
+            /**
+             * Began
+             * @description When it began (UTC, ISO 8601).
+             */
+            began: string;
+            /**
+             * Seconds
+             * @description How long it took (null while it runs).
+             */
+            seconds: number | null;
+            /**
+             * Outcome
+             * @description `running`, `done`, `failed` or `stopped: its time` (it reached its limit of time before its last item).
+             */
+            outcome: string;
         };
     };
     responses: never;
